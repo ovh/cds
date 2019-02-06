@@ -35,8 +35,11 @@ export class WorkflowWNodeComponent implements OnInit {
 
     zone = new NgZone({});
 
-    constructor(private _activatedRoute: ActivatedRoute, private _router: Router,
-                private _workflowEventStore: WorkflowEventStore) {}
+    constructor(
+        private _activatedRoute: ActivatedRoute,
+        private _router: Router,
+        private _workflowEventStore: WorkflowEventStore
+    ) { }
 
     ngOnInit(): void {
         // Subscribe to node run events
@@ -93,8 +96,10 @@ export class WorkflowWNodeComponent implements OnInit {
             return;
         }
 
-        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
-            queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref}});
+        let url = this._router.createUrlTree(['./'], {
+            relativeTo: this._activatedRoute,
+            queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref }
+        });
         this._router.navigateByUrl(url.toString());
     }
 
@@ -104,13 +109,17 @@ export class WorkflowWNodeComponent implements OnInit {
                 if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
                     this._router.navigate([
                         'node', this.currentNodeRun.id
-                    ], {relativeTo: this._activatedRoute, queryParams: {name: this.node.name,
-                            node_id: this.node.id, node_ref: this.node.ref}});
+                    ], {
+                        relativeTo: this._activatedRoute, queryParams: {
+                            name: this.node.name,
+                            node_id: this.node.id, node_ref: this.node.ref
+                        }
+                        });
                 } else {
                     this._router.navigate([
                         '/project', this.project.key,
                         'pipeline', Workflow.getPipeline(this.workflow, this.node).name
-                    ], {queryParams: {workflow: this.workflow.name, node_id: this.node.id, node_ref: this.node.ref}});
+                    ], { queryParams: { workflow: this.workflow.name, node_id: this.node.id, node_ref: this.node.ref } });
                 }
                 break;
             case WNodeType.OUTGOINGHOOK:

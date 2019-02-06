@@ -1,104 +1,77 @@
-<div class="sidebar-node-run" *ngIf="!loading && node">
-    <h3 class="ui header ml5">
-        <i class="cubes icon"></i>
-        <div class="content">
-            <ng-container *ngIf="node.type === 'pipeline' || node.type === 'outgoinghook'">
-                <span>{{node.name}}</span>
-            </ng-container>
-            <ng-container *ngIf="node.type !== 'pipeline' && node.type !== 'outgoinghook'">
-                <span>{{node.type}}</span>
-            </ng-container>
-            <a class="inline pointing ml5"
-              *ngIf="displayEditOption"
-              (click)="goToEditNode()">
-              <i class="pencil icon float"></i>
-            </a>
-            <div class="sub header" *ngIf="node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
-              <span>{{ 'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}</span>
+<div class="sidebarNodeRun" *ngIf="!loading && node">
+    <div class="title">
+        <h3 class="ui header">
+            <div class="content">
+                <span *ngIf="node.type === 'pipeline' || node.type === 'outgoinghook'">{{node.name}}</span>
+                <span *ngIf="node.type !== 'pipeline' && node.type !== 'outgoinghook'">{{node.type}}</span>
+                <a class="inline pointing" *ngIf="displayEditOption" (click)="goToEditNode()">
+                    <i class="pencil icon float"></i>
+                </a>
+                <div class="sub header" *ngIf="node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
+                    {{ 'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}
+                </div>
             </div>
-        </div>
-    </h3>
-    <div class="padding">
-      <div class="ui fluid buttons" *ngIf="currentWorkflowRun">
-        <button class="ui positive icon button"
-            [class.loading]="loading"
-            [disabled]="loading || !canBeRun"
-            [title]="'btn_run' | translate" (click)="openRunNode()"
-            *ngIf="currentWorkflowNodeRun?.status !== pipelineStatusEnum.BUILDING &&
+        </h3>
+    </div>
+    <div class="control">
+        <div class="ui fluid buttons" *ngIf="currentWorkflowRun">
+            <button class="ui positive icon button" [class.loading]="loading" [disabled]="loading || !canBeRun" [title]="'btn_run' | translate"
+                (click)="openRunNode()" *ngIf="currentWorkflowNodeRun?.status !== pipelineStatusEnum.BUILDING &&
                 currentWorkflowNodeRun?.status !== pipelineStatusEnum.WAITING">
-            <i class="play icon"></i>
-        </button>
-        <button class="ui red icon button"
-            [class.loading]="loading"
-            [disabled]="loading || workflow.permission < perm.READ_EXECUTE"
-            [title]="'btn_run' | translate"
-            (click)="stopNodeRun()"
-            *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
-            <i class="stop icon"></i>
-        </button>
-        <ng-container *ngIf="(node.context && node.context.pipeline_id)
+                <i class="play icon"></i>
+            </button>
+            <button class="ui red icon button" [class.loading]="loading" [disabled]="loading || workflow.permission < perm.READ_EXECUTE"
+                [title]="'btn_run' | translate" (click)="stopNodeRun()" *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
+                <i class="stop icon"></i>
+            </button>
+            <ng-container *ngIf="(node.context && node.context.pipeline_id)
             || (node.type === wNodeType.OUTGOINGHOOK && currentWorkflowNodeRun?.status === pipelineStatusEnum.SUCCESS && node.outgoing_hook && node.outgoing_hook.config['target_workflow'])">
-              <button class="ui icon blue button" [class.disabled]="!currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
-                  <i class="file text icon"></i>
-              </button>
-          </ng-container>
-      </div>
+                <button class="ui icon blue button" [class.disabled]="!currentWorkflowNodeRun" [title]="'btn_logs' | translate"
+                    (click)="displayLogs()">
+                    <i class="file text icon"></i>
+                </button>
+            </ng-container>
+        </div>
     </div>
     <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowRun">
-        <div class="ui list ml5 listmrt">
-            <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
-                <div class="content pointing"
-                  [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.num, 'node', currentWorkflowNodeRun.id]"
-                  [queryParams]="{name: node.name, tab: 'test'}">
-                    <div>
-                        <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
-                        <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
-                        <span *ngIf="!currentWorkflowNodeRun || !currentWorkflowNodeRun.tests || currentWorkflowNodeRun.tests.total < 2">{{ 'common_test' | translate }}</span>
-                        <ng-container *ngIf="currentWorkflowRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 0">
-                            (<i class="green check icon no-mrr"></i>{{currentWorkflowNodeRun.tests.ok}} <i class="red remove icon status"></i>{{currentWorkflowNodeRun.tests.ko}} <i class="grey ban icon status"></i>{{currentWorkflowNodeRun.tests.skipped}})
-                        </ng-container>
-                    </div>
-                </div>
+        <div class="info">
+            <div *ngIf="currentWorkflowNodeRun.tests" class="item pointing" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.num, 'node', currentWorkflowNodeRun.id]"
+                [queryParams]="{name: node.name, tab: 'test'}">
+                <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
+                <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 1">{{
+                    'common_tests' | translate }}</span>
+                <span *ngIf="!currentWorkflowNodeRun || !currentWorkflowNodeRun.tests || currentWorkflowNodeRun.tests.total < 2">{{
+                    'common_test' | translate }}</span>
+                <ng-container *ngIf="currentWorkflowRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 0">
+                    (<i class="green check icon no-mrr"></i>{{currentWorkflowNodeRun.tests.ok}} <i class="red remove icon status"></i>{{currentWorkflowNodeRun.tests.ko}}
+                    <i class="grey ban icon status"></i>{{currentWorkflowNodeRun.tests.skipped}})
+                </ng-container>
             </div>
-            <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
-                <div class="content pointing"
-                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.num, 'node', currentWorkflowNodeRun.id]"
-                [queryParams]="{name: node.name, tab: 'artifact'}"
-                [title]="'common_artifacts' | translate">
-                    <div>
-                        <i class="cloud upload icon"></i> {{currentWorkflowNodeRun.artifacts.length}}
-                        <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.artifacts && currentWorkflowNodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
-                        <span *ngIf="!currentWorkflowNodeRun || !currentWorkflowNodeRun.artifacts || currentWorkflowNodeRun.artifacts.length < 2">{{ 'common_artifact' | translate }}</span>
-                    </div>
-                </div>
+            <div *ngIf="currentWorkflowNodeRun.artifacts" class="item pointing" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.num, 'node', currentWorkflowNodeRun.id]"
+                [queryParams]="{name: node.name, tab: 'artifact'}" [title]="'common_artifacts' | translate">
+                <i class="cloud upload icon"></i> {{currentWorkflowNodeRun.artifacts.length}}
+                <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.artifacts && currentWorkflowNodeRun.artifacts.length > 1">{{
+                    'common_artifacts' | translate }}</span>
+                <span *ngIf="!currentWorkflowNodeRun || !currentWorkflowNodeRun.artifacts || currentWorkflowNodeRun.artifacts.length < 2">{{
+                    'common_artifact' | translate }}</span>
             </div>
-            <div class="item padding" *ngIf="duration">
-                <div class="content" [title]="'common_duration_title' | translate">
-                    <div><i class="clock icon"></i> {{duration}}</div>
-                </div>
+            <div *ngIf="duration" class="item" [title]="'common_duration_title' | translate">
+                <i class="clock icon"></i> {{duration}}
             </div>
-            <div class="item padding">
-                <div class="content" [title]="'common_pipeline_start_title' | translate">
-                    <div><i class="calendar icon"></i> {{currentWorkflowNodeRun.start | date:'short' }}</div>
-                </div>
+            <div class="item" [title]="'common_pipeline_start_title' | translate">
+                <div><i class="calendar icon"></i> {{currentWorkflowNodeRun.start | date:'short' }}</div>
             </div>
         </div>
-        <div>
-          <ng-container *ngIf="currentWorkflowNodeRun">
-            <div class="ui vertical fluid steps">
-              <ng-container *ngFor="let stage of currentWorkflowNodeRun.stages">
-                <app-stage-step-summary
-                  [stage]="stage"
-                  [workflowRun]="currentWorkflowRun"
-                  [workflowNode]="node"
-                  [workflowNodeRun]="currentWorkflowNodeRun">
+        <div *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.stages && currentWorkflowNodeRun.stages.length > 0"
+            class="ui vertical fluid steps">
+            <ng-container *ngFor="let stage of currentWorkflowNodeRun.stages">
+                <app-stage-step-summary [stage]="stage" [workflowRun]="currentWorkflowRun" [workflowNode]="node"
+                    [workflowNodeRun]="currentWorkflowNodeRun">
                 </app-stage-step-summary>
-              </ng-container>
-            </div>
-          </ng-container>
+            </ng-container>
         </div>
     </ng-container>
-    <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.callback">
+    <div class="logs" *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.callback">
         <h4 class="ui header">
             <i class="newspaper icon"></i>
             <div class="content">
@@ -108,16 +81,11 @@
         <pre>
             {{ currentWorkflowNodeRun.callback.log.trim() }}
         </pre>
-    </ng-container>
+    </div>
 </div>
 <div class="ui text active loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
 <ng-container *ngIf="project && node && currentWorkflowRun">
-    <app-workflow-node-run-param
-        [workflow]="workflow"
-        [project]="project"
-        [nodeRun]="currentWorkflowNodeRun"
-        [workflowRun]="currentWorkflowRun"
-        [nodeToRun]="node"
-        [num]="currentWorkflowRun.num" #workflowRunNode>
+    <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentWorkflowNodeRun"
+        [workflowRun]="currentWorkflowRun" [nodeToRun]="node" [num]="currentWorkflowRun.num" #workflowRunNode>
     </app-workflow-node-run-param>
 </ng-container>

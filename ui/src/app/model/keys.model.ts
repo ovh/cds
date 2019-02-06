@@ -6,28 +6,28 @@ export class Keys {
     static formatForSelect(keys: any): AllKeys {
         let k = new AllKeys();
         if (keys.project_key) {
-            k.ssh.push(...keys.project_key.filter(key => key.type === KeyType.SSH).map(key => key.name ));
-            k.pgp.push(...keys.project_key.filter(key => key.type === KeyType.PGP).map(key => key.name ));
+            k.ssh.push(...keys.project_key.filter(key => key.type === KeyType.SSH));
+            k.pgp.push(...keys.project_key.filter(key => key.type === KeyType.PGP));
         }
         if (keys.application_key) {
-            k.ssh.push(...keys.application_key.filter(key => key.type === KeyType.SSH).map(key => key.name ));
-            k.pgp.push(...keys.application_key.filter(key => key.type === KeyType.PGP).map(key => key.name ));
+            k.ssh.push(...keys.application_key.filter(key => key.type === KeyType.SSH));
+            k.pgp.push(...keys.application_key.filter(key => key.type === KeyType.PGP));
         }
         if (keys.environment_key) {
-            k.ssh.push(...keys.environment_key.filter(key => key.type === KeyType.SSH).map(key => key.name ));
-            k.pgp.push(...keys.environment_key.filter(key => key.type === KeyType.PGP).map(key => key.name ));
+            k.ssh.push(...keys.environment_key.filter(key => key.type === KeyType.SSH));
+            k.pgp.push(...keys.environment_key.filter(key => key.type === KeyType.PGP));
         }
         return k;
     }
 }
 
 export class AllKeys {
-    ssh: Array<string>;
-    pgp: Array<string>;
+    ssh: Array<Key>;
+    pgp: Array<Key>;
 
     constructor() {
-        this.ssh = new Array<string>();
-        this.pgp = new Array<string>();
+        this.ssh = new Array<Key>();
+        this.pgp = new Array<Key>();
     }
 }
 
@@ -41,7 +41,7 @@ export class Key {
     pipeline_id: number;
 
     constructor() {
-        this.name  = '';
+        this.name = '';
     }
 }
 

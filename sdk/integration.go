@@ -162,7 +162,7 @@ func (pf *ProjectIntegration) HideSecrets() {
 	pf.Model.DeploymentDefaultConfig.HideSecrets()
 }
 
-// MergeWith merge two config
+// MergeWith set new values from new config and update existing values if not default.
 func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
 	for k, v := range cfg {
 		val, has := config[k]

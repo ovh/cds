@@ -92,28 +92,14 @@
     </div>
 </app-workflow-breadcrumb>
 <aside class="sidebar expanded">
-    <div class="floated right">
-        <button class="ui large icon button transparent close-button" (click)="changeToRunsMode()" *ngIf="sidebarMode !== sidebarModes.RUNS">
-            <i class="black close icon"></i>
-        </button>
-    </div>
+    <i *ngIf="sidebarMode !== sidebarModes.RUNS" class="ui icon black close closeButton" (click)="changeToRunsMode()"></i>
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.EDIT">
-            <app-workflow-sidebar-wnode-edit [project]="project" [workflow]="workflow"></app-workflow-sidebar-wnode-edit>
-        </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.EDIT_HOOK">
-            <app-workflow-sidebar-hook [project]="project" [workflow]="workflow"></app-workflow-sidebar-hook>
-        </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
-            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-list>
-        </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
-            <app-workflow-sidebar-run-node [project]="project" [workflow]="workflow">
-            </app-workflow-sidebar-run-node>
-        </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_HOOK">
-            <app-workflow-sidebar-run-hook [project]="project">
-            </app-workflow-sidebar-run-hook>
+        <ng-container *ngIf="project && workflow" [ngSwitch]="sidebarMode">
+            <app-workflow-sidebar-wnode-edit *ngSwitchCase="sidebarModes.EDIT" [project]="project" [workflow]="workflow"></app-workflow-sidebar-wnode-edit>
+            <app-workflow-sidebar-hook *ngSwitchCase="sidebarModes.EDIT_HOOK" [project]="project" [workflow]="workflow"></app-workflow-sidebar-hook>
+            <app-workflow-sidebar-run-list *ngSwitchCase="sidebarModes.RUNS" [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-list>
+            <app-workflow-sidebar-run-node *ngSwitchCase="sidebarModes.RUN_NODE" [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-node>
+            <app-workflow-sidebar-run-hook *ngSwitchCase="sidebarModes.RUN_HOOK" [project]="project"></app-workflow-sidebar-run-hook>
         </ng-container>
     </div>
 </aside>

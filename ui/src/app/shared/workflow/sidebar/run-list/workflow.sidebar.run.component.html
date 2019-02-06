@@ -1,6 +1,6 @@
-<div class="workflowSidebar">
+<div *ngIf="ready" class="workflowSidebar">
     <sui-multi-select class="selection" [(ngModel)]="selectedTags" [options]="tagsSelectable" [isSearchable]="true"
-        (ngModelChange)="filterRuns()" #multiSelect>
+        (ngModelChange)="filterRuns()" [optionsFilter]="filterTags" #multiSelect>
         <sui-select-option *ngFor="let option of multiSelect.filteredOptions" [value]="option">
         </sui-select-option>
     </sui-multi-select>
@@ -49,8 +49,8 @@
             </div>
         </ng-container>
         <div class="empty" *ngIf="workflowRuns.length === 0">
-            {{'workflow_run_never' | translate}}
+            {{'workflow_no_run_found' | translate}}
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!ready">{{ 'workflow_run_loading' | translate }}</div>
+<div *ngIf="!ready" class="ui text active loader">{{ 'workflow_run_loading' | translate }}</div>

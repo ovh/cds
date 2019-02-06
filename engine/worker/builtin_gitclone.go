@@ -60,6 +60,13 @@ func runGitClone(w *currentWorker) BuiltInAction {
 					sendLog(res.Reason)
 					return res
 				}
+			} else {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("Unable to setup ssh key. Cannot find your secret/key '%s'", privateKey.Value),
+				}
+				sendLog(res.Reason)
+				return res
 			}
 
 			if deprecatedKey {

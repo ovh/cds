@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -705,5 +706,107 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	test.NoError(t, err)
 	assert.Equal(t, "my-secret-token-2", actualApp.DeploymentStrategies[pfname]["token"].Value)
 	assert.Equal(t, "my-url-3", actualApp.DeploymentStrategies[pfname]["url"].Value)
+}
 
+func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(t *testing.T) {
+	// init test case, create a project with deployment integration then an application with deployment config
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	pfname := sdk.RandomString(10)
+	pf := sdk.IntegrationModel{
+		Name:       pfname,
+		Deployment: true,
+		DeploymentDefaultConfig: sdk.IntegrationConfig{
+			"token": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypePassword,
+				Value: "my-secret-token",
+			},
+			"url": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypeString,
+				Value: "my-url",
+			},
+		},
+	}
+	test.NoError(t, integration.InsertModel(db, &pf))
+	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
+
+	pp := sdk.ProjectIntegration{
+		Model:              pf,
+		Name:               pf.Name,
+		IntegrationModelID: pf.ID,
+		ProjectID:          proj.ID,
+	}
+	test.NoError(t, integration.InsertIntegration(db, &pp))
+
+	app := sdk.Application{
+		Name: "myNewApp",
+	}
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+
+	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
+			Value: "my-secret-token-2",
+		},
+		"url": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
+			Value: "my-url",
+		},
+	}))
+
+	// import updated application without deployment token
+
+	appUpdated := exportentities.Application{
+		Name: "myNewApp",
+		DeploymentStrategies: map[string]map[string]exportentities.VariableValue{
+			pp.Name: {
+				"url": exportentities.VariableValue{
+					Type:  sdk.IntegrationConfigTypeString,
+					Value: "my-url-2",
+				},
+			},
+		},
+	}
+
+	uri := api.Router.GetRoute("POST", api.postApplicationImportHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?force=true", nil)
+
+	buf, err := yaml.Marshal(appUpdated)
+	test.NoError(t, err)
+	req.Body = ioutil.NopCloser(bytes.NewReader(buf))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	t.Logf(">>%s", rec.Body.String())
+
+	// check that the token is still present in the application
+
+	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, map[string]string{
+		"key":                 proj.Key,
+		"permApplicationName": app.Name,
+	})
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	t.Logf(">>%s", rec.Body.String())
+
+	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
+	test.NoError(t, err)
+	assert.Equal(t, "my-secret-token-2", actualApp.DeploymentStrategies[pfname]["token"].Value)
+	assert.Equal(t, "my-url-2", actualApp.DeploymentStrategies[pfname]["url"].Value)
 }

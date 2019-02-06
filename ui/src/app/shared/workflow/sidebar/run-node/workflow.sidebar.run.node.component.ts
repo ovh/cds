@@ -52,16 +52,13 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     durationIntervalID: number;
 
     constructor(
-      private _wrService: WorkflowRunService,
-      private _router: Router,
-      private _durationService: DurationService,
-      private _workflowEventStore: WorkflowEventStore,
-      private _sidebarStore: WorkflowSidebarStore,
-      private _cd: ChangeDetectorRef
-    ) {
-
-    }
-
+        private _wrService: WorkflowRunService,
+        private _router: Router,
+        private _durationService: DurationService,
+        private _workflowEventStore: WorkflowEventStore,
+        private _sidebarStore: WorkflowSidebarStore,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnInit(): void {
         this.subNode = this._workflowEventStore.selectedNode().subscribe(n => {
@@ -86,7 +83,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
                 this.loading = false;
                 this._cd.detectChanges();
             } else if (!this.node) {
-                this.loading  = true;
+                this.loading = true;
                 this._cd.detectChanges();
             }
 
@@ -125,7 +122,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         this.displayEditOption = this.node != null;
         this.canBeRun = this.getCanBeRun();
         // TODO REMOVE
-        if (this.node &&  (this.node.type === WNodeType.FORK || this.node.type === WNodeType.OUTGOINGHOOK)
+        if (this.node && (this.node.type === WNodeType.FORK || this.node.type === WNodeType.OUTGOINGHOOK)
             && ((this.currentWorkflowRun && this.currentWorkflowRun.version < 2) || !this.currentWorkflowRun)) {
             this.canBeRun = false;
         }
@@ -142,7 +139,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
                         'run', this.currentWorkflowNodeRun.callback.workflow_run_number
                     ], { queryParams: {} });
                 }
-            break;
+                break;
             default:
                 this._router.navigate([
                     '/project', this.project.key,
@@ -263,11 +260,11 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     goToEditNode(): void {
-      this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
-      this._workflowEventStore.setSelectedNodeRun(null, false);
-      this._workflowEventStore.setSelectedRun(null);
-      this._router.navigate(
-          ['/project', this.project.key, 'workflow', this.workflow.name],
-          {queryParams: {'node_id': this.node.id, 'node_ref': this.node.ref}});
+        this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
+        this._workflowEventStore.setSelectedNodeRun(null, false);
+        this._workflowEventStore.setSelectedRun(null);
+        this._router.navigate(
+            ['/project', this.project.key, 'workflow', this.workflow.name],
+            { queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref } });
     }
 }
