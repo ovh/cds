@@ -928,12 +928,6 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		opts.Manual = &sdk.WorkflowNodeRunManual{}
 	}
 	opts.Manual.User = *u
-	//Copy the user but empty groups and permissions
-	opts.Manual.User.Groups = nil
-	//Clean all permissions except for environments
-	opts.Manual.User.Permissions = sdk.UserPermissions{
-		ProjectsPerm: opts.Manual.User.Permissions.ProjectsPerm,
-	}
 
 	if len(opts.FromNodeIDs) > 0 && lastRun != nil {
 		fromNode := wf.WorkflowData.NodeByID(opts.FromNodeIDs[0])

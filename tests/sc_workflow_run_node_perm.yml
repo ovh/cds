@@ -19,13 +19,26 @@ testcases:
 
 - name: grant new group in workflow
   steps:
+  - script: {{.cds.build.cdsctl}} group user add ITSCWRKFLW10-ro cds.integration.tests.ro
   - script: {{.cds.build.cdsctl}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 4 --only-project
   - script: {{.cds.build.cdsctl}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 7 --workflow ITSCWRKFLW10-WORKFLOW
 
-- name: run workflow
+- name: run workflow should fail
   steps:
   - script:  {{.cds.build.cdsctlro}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
     assertions:
     - result.code ShouldNotEqual 0
-    - result.systemout ShouldContainSubstring forbidden
+    - "result.systemout ShouldContainSubstring you don't have execution right"
+
+- name: add user in right group
+  steps:
+  - script: {{.cds.build.cdsctl}} group user add ITSCWRKFLW10 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctlro}} group create TESTITSCWRKFLW10
+  - script: {{.cds.build.cdsctlro}} group delete TESTITSCWRKFLW10 --force
+
+- name: run workflow should success
+  steps:
+  - script:  {{.cds.build.cdsctlro}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
 
