@@ -669,7 +669,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"ref": base64.RawURLEncoding.EncodeToString([]byte("latest")),
+		"ref":             base64.RawURLEncoding.EncodeToString([]byte("latest")),
+		"integrationName": sdk.DefaultStorageIntegrationName,
+		"permProjectKey":  ctx.project.Key,
 	}
 
 	uri = router.GetRoute("POST", api.postWorkflowJobArtifactHandler, vars)

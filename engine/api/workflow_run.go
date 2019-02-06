@@ -1028,6 +1028,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
+		// TODO YESNAULT
 		f, err := api.SharedStorage.Fetch(art)
 		if err != nil {
 			_ = f.Close()
@@ -1077,6 +1078,8 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 				wg.Add(1)
 				go func(a *sdk.WorkflowNodeRunArtifact) {
 					defer wg.Done()
+
+					// TODO YESNAULT
 					s, temporaryURLSupported := api.SharedStorage.(objectstore.DriverWithRedirect)
 					if temporaryURLSupported { // with temp URL
 						fURL, _, err := s.FetchURL(a)

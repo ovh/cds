@@ -105,6 +105,8 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			}
 			defer file.Close()
 
+			// TODO YESNAULT
+
 			publicURL, err := api.SharedStorage.ServeStaticFiles(&staticFile, staticFile.EntryPoint, file)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot serve static files in store")
@@ -230,6 +232,8 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 				return sdk.WrapError(err, "cannot open file")
 			}
 
+			// TODO YESNAULT
+
 			objectPath, err := api.SharedStorage.Store(&art, file)
 			if err != nil {
 				file.Close()
@@ -242,6 +246,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
+			// TODO YESNAULT
 			_ = api.SharedStorage.Delete(&art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
@@ -251,6 +256,8 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
+		// TODO YESNAULT
 		if !api.SharedStorage.TemporaryURLSupported() {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler")
 		}
@@ -277,6 +284,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
+			// TODO YESNAULT
 			_ = api.SharedStorage.Delete(&art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
@@ -287,6 +295,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO YESNAULT
 		if !api.SharedStorage.TemporaryURLSupported() {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler")
 		}

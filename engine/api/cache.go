@@ -35,6 +35,8 @@ func (api *API) postPushCacheHandler() service.Handler {
 			Tag:     tag,
 		}
 
+		// TODO YESNAULT
+
 		if _, err := api.SharedStorage.Store(&cacheObject, r.Body); err != nil {
 			return sdk.WrapError(err, "postPushCacheHandler>Cannot store cache")
 		}
@@ -73,6 +75,8 @@ func (api *API) getPullCacheHandler() service.Handler {
 			return nil
 		}
 
+		// TODO YESNAULT
+
 		ioread, err := api.SharedStorage.Fetch(&cacheObject)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getPullCacheHandler> Cannot fetch artifact cache.tar : %v", err)
@@ -100,6 +104,8 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 		if !regexp.MatchString(tag) {
 			return sdk.ErrInvalidName
 		}
+
+		// TODO YESNAULT
 
 		store, ok := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if !ok {
@@ -134,6 +140,8 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 		if !regexp.MatchString(tag) {
 			return sdk.ErrInvalidName
 		}
+
+		// TODO YESNAULT
 
 		store, ok := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if !ok {
