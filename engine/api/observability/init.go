@@ -41,10 +41,7 @@ func Init(cfg Configuration, serviceName string) error {
 		},
 	)
 
-	if statsExporter == nil {
-		log.Info("observability> initializing prometheus exporter")
-		statsExporter, err = prometheus.NewExporter(prometheus.Options{})
-	}
+	statsExporter, err = prometheus.NewExporter(prometheus.Options{})
 	if err != nil {
 		return err
 	}
