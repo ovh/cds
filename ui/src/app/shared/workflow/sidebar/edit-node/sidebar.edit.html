@@ -69,8 +69,10 @@
                 <i class="angle right icon"></i>
             </a>
             <a class="item noborder" (click)="openNodePermissions()">
-                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_permissions_edit' | translate }}</span>
-                <span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_permissions_show' | translate }}</span>
+                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{
+                    'workflow_node_permissions_edit' | translate }}</span>
+                <span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{
+                    'workflow_node_permissions_show' | translate }}</span>
                 <i class="angle right icon"></i>
             </a>
         </ng-container>
@@ -156,20 +158,11 @@
         (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)" #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
 
     <!-- Add hook -->
-<<<<<<< HEAD
-    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                 (hookEvent)="updateWorkflow($event, workflowAddHook.modal)"
-                                 #workflowAddHook></app-hook-modal>
-    <!-- Add node permissions -->
-    <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node"
-                                 #workflowNodePermissions></app-workflow-node-permissions>
-=======
     <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateWorkflow($event, workflowAddHook.modal)"
         #workflowAddHook></app-hook-modal>
->>>>>>> 9b2fd5210f0e2d60c09f10a3fb6fb0cbcf59c451
+    <!-- Add node permissions -->
+    <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node" #workflowNodePermissions></app-workflow-node-permissions>
 </ng-container>
-
-
 
 <ng-template let-context let-modal="modal" #nodeNameWarningModal>
     <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>
