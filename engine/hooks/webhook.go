@@ -121,7 +121,8 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 
 		for _, pushChange := range pushEvent.Changes {
 			if pushChange.Type == "DELETE" {
-
+				// TODO: delelete all runs for this branch
+				continue
 			}
 			payload := make(map[string]interface{})
 			payload["git.author"] = pushEvent.Actor.Name
