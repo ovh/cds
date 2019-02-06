@@ -154,7 +154,10 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 			}
 			switch ope.Status {
 			case sdk.OperationStatusError:
-				return sdk.WrapError(fmt.Errorf("%s", ope.Error), "getImportAsCodeHandler> Operation in error. %+v", ope)
+				opeTrusted := *ope
+				opeTrusted.RepositoryStrategy.SSHKeyContent = "***"
+				opeTrusted.RepositoryStrategy.Password = "***"
+				return sdk.WrapError(fmt.Errorf("%s", ope.Error), "getImportAsCodeHandler> Operation in error. %+v", opeTrusted)
 			case sdk.OperationStatusDone:
 				return nil
 			}
