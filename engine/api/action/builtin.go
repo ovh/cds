@@ -284,6 +284,13 @@ Semver used if fully compatible with https://semver.org/
 		Type:        sdk.StringParameter,
 		Value:       "",
 		Advanced:    true})
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "destination",
+		Description: "Destination of uploading. Use the name of integration attached on your project",
+		Value:       "", // empty is the default value
+		Type:        sdk.StringParameter,
+		Advanced:    true,
+	})
 
 	return checkBuiltinAction(db, serveStaticAct)
 }

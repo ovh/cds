@@ -210,7 +210,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 
 	var errPush error
 	for i := 0; i < 10; i++ {
-		if errPush = wk.client.WorkflowCachePush(projectKey, c.IntegrationName, vars["ref"], res); errPush == nil {
+		if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), vars["ref"], res); errPush == nil {
 			return
 		}
 		time.Sleep(3 * time.Second)
