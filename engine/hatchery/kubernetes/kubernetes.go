@@ -156,7 +156,6 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	fmt.Printf("%+v\n", hconfig.Namespace)
 	if hconfig.API.HTTP.URL == "" {
 		return fmt.Errorf("API HTTP(s) URL is mandatory")
 	}
