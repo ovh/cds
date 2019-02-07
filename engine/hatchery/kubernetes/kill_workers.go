@@ -12,7 +12,7 @@ import (
 )
 
 func (h *HatcheryKubernetes) killAwolWorkers() error {
-	pods, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
+	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
 	if err != nil {
 		return err
 	}
