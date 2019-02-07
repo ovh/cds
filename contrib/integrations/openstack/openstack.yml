@@ -20,3 +20,6 @@ default_config:
   "password": 
     type: password
     value: xxxxxxxx
+  "storage_temporary_url_supported":
+    type: string
+    value: true

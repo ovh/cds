@@ -4,6 +4,7 @@ package sdk
 const (
 	KafkaIntegrationModel         = "Kafka"
 	RabbitMQIntegrationModel      = "RabbitMQ"
+	OpenstackIntegrationModel     = "Openstack"
 	DefaultStorageIntegrationName = "shared.infra"
 )
 
@@ -12,8 +13,9 @@ var (
 	BuiltinIntegrationModels = []*IntegrationModel{
 		&KafkaIntegration,
 		&RabbitMQIntegration,
+		&OpenstackIntegration,
 	}
-	// KafkaIntegration represent a kafka integration
+	// KafkaIntegration represents a kafka integration
 	KafkaIntegration = IntegrationModel{
 		Name:       KafkaIntegrationModel,
 		Author:     "CDS",
@@ -33,7 +35,7 @@ var (
 		Disabled: false,
 		Hook:     true,
 	}
-	// RabbitMQIntegration represent a kafka integration
+	// RabbitMQIntegration represents a kafka integration
 	RabbitMQIntegration = IntegrationModel{
 		Name:       RabbitMQIntegrationModel,
 		Author:     "CDS",
@@ -52,6 +54,42 @@ var (
 		},
 		Disabled: false,
 		Hook:     true,
+	}
+	// OpenstackIntegration represents an openstack integration
+	OpenstackIntegration = IntegrationModel{
+		Name:       OpenstackIntegrationModel,
+		Author:     "CDS",
+		Identifier: "github.com/ovh/cds/integration/builtin/openstack",
+		Icon:       "",
+		DefaultConfig: IntegrationConfig{
+			"address": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"region": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"domain": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"tenant": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"user": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"password": IntegrationConfigValue{
+				Type: IntegrationConfigTypePassword,
+			},
+			"storage_container_prefix": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"storage_temporary_url_supported": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+		},
+		Storage:  true,
+		Disabled: false,
+		Hook:     false,
 	}
 )
 

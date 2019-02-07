@@ -71,8 +71,8 @@ func LoadProjectIntegrationByName(db gorp.SqlExecutor, key string, name string, 
 	return p, nil
 }
 
-// LoadByID returns integration, selecting by its id
-func LoadByID(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectIntegration, error) {
+// LoadProjectIntegrationByID returns integration, selecting by its id
+func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectIntegration, error) {
 	var pp dbProjectIntegration
 	if err := db.SelectOne(&pp, "SELECT * from project_integration WHERE id = $1", id); err != nil {
 		if err == sql.ErrNoRows {

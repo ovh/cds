@@ -16,6 +16,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
@@ -1028,8 +1029,23 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		// TODO YESNAULT
-		f, err := api.SharedStorage.Fetch(art)
+		var integrationName string
+		if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
+			projectIntegration, err := integration.LoadProjectIntegrationByID(api.mustDB(), *art.ProjectIntegrationID, false)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot load LoadProjectIntegrationByID %s/%d", proj.Key, *art.ProjectIntegrationID)
+			}
+			integrationName = projectIntegration.Name
+		} else {
+			integrationName = sdk.DefaultStorageIntegrationName
+		}
+
+		storageDriver, err := api.getStorageDriver(proj.Key, integrationName)
+		if err != nil {
+			return err
+		}
+
+		f, err := storageDriver.Fetch(art)
 		if err != nil {
 			_ = f.Close()
 			return sdk.WrapError(err, "Cannot fetch artifact")
@@ -1076,17 +1092,34 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 			wg := &sync.WaitGroup{}
 			for i := range runs[0].Artifacts {
 				wg.Add(1)
-				go func(a *sdk.WorkflowNodeRunArtifact) {
+				go func(art *sdk.WorkflowNodeRunArtifact) {
 					defer wg.Done()
 
-					// TODO YESNAULT
-					s, temporaryURLSupported := api.SharedStorage.(objectstore.DriverWithRedirect)
+					var integrationName string
+					if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
+						projectIntegration, err := integration.LoadProjectIntegrationByID(api.mustDB(), *art.ProjectIntegrationID, false)
+						if err != nil {
+							log.Error("Cannot load LoadProjectIntegrationByID %s/%d: err: %v", key, *art.ProjectIntegrationID, err)
+							return
+						}
+						integrationName = projectIntegration.Name
+					} else {
+						integrationName = sdk.DefaultStorageIntegrationName
+					}
+
+					storageDriver, err := api.getStorageDriver(key, integrationName)
+					if err != nil {
+						log.Error("Cannot load storage driver: %v", err)
+						return
+					}
+
+					s, temporaryURLSupported := storageDriver.(objectstore.DriverWithRedirect)
 					if temporaryURLSupported { // with temp URL
-						fURL, _, err := s.FetchURL(a)
+						fURL, _, err := s.FetchURL(art)
 						if err != nil {
 							log.Error("Cannot fetch cache object: %v", err)
 						} else if fURL != "" {
-							a.TempURL = fURL
+							art.TempURL = fURL
 						}
 					}
 				}(&runs[0].Artifacts[i])

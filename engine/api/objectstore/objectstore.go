@@ -7,6 +7,10 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-gorp/gorp"
+	"github.com/ncw/swift"
+
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -14,6 +18,7 @@ import (
 // - Openstack / Swift
 // - Filesystem
 type Driver interface {
+	GetProjectIntegration() sdk.ProjectIntegration
 	Status() sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
@@ -75,20 +80,64 @@ type ConfigOptionsFilesystem struct {
 	Basedir string
 }
 
+// InitDriver init a storage driver from a project integration
+func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
+	projectIntegration, err := integration.LoadProjectIntegrationByName(db, projectKey, integrationName, false)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
+	}
+
+	if projectIntegration.Model.Storage == false {
+		return nil, fmt.Errorf("projectIntegration.Model %t is not a storage integration", projectIntegration.Model.Storage)
+	}
+
+	if projectIntegration.Model.Name == sdk.OpenstackIntegrationModel {
+		s := SwiftStore{
+			Connection: swift.Connection{
+				AuthUrl:  projectIntegration.Config["address"].Value,
+				Region:   projectIntegration.Config["region"].Value,
+				Tenant:   projectIntegration.Config["tenant"].Value,
+				Domain:   projectIntegration.Config["domain"].Value,
+				UserName: projectIntegration.Config["user"].Value,
+				ApiKey:   projectIntegration.Config["password"].Value,
+			},
+			containerprefix:    projectIntegration.Config["storage_container_prefix"].Value,
+			disableTempURL:     projectIntegration.Config["storage_temporary_url_supported"].Value == "true",
+			projectIntegration: projectIntegration,
+		}
+
+		if err := s.Authenticate(); err != nil {
+			return nil, sdk.WrapError(err, "Unable to authenticate")
+		}
+		return &s, nil
+	}
+
+	return nil, fmt.Errorf("Invalid Integration %s", projectIntegration.Model.Name)
+}
+
 // Init initialise a new ArtifactStorage
 func Init(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack, Swift:
-		return newSwiftStore(cfg.Options.Openstack.Address,
-			cfg.Options.Openstack.Username,
-			cfg.Options.Openstack.Password,
-			cfg.Options.Openstack.Region,
-			cfg.Options.Openstack.Tenant,
-			cfg.Options.Openstack.Domain,
-			cfg.Options.Openstack.ContainerPrefix,
-			cfg.Options.Openstack.DisableTempURL)
+		s := SwiftStore{
+			Connection: swift.Connection{
+				AuthUrl:  cfg.Options.Openstack.Address,
+				Region:   cfg.Options.Openstack.Region,
+				Tenant:   cfg.Options.Openstack.Tenant,
+				Domain:   cfg.Options.Openstack.Domain,
+				UserName: cfg.Options.Openstack.Username,
+				ApiKey:   cfg.Options.Openstack.Password,
+			},
+			containerprefix:    cfg.Options.Openstack.ContainerPrefix,
+			disableTempURL:     cfg.Options.Openstack.DisableTempURL,
+			projectIntegration: sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName},
+		}
+		if err := s.Authenticate(); err != nil {
+			return nil, sdk.WrapError(err, "Unable to authenticate on swift storage")
+		}
+		return &s, nil
 	case Filesystem:
-		return newFilesystemStore(cfg.Options.Filesystem.Basedir)
+		return newFilesystemStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Filesystem.Basedir)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}

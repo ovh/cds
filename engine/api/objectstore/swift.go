@@ -15,34 +15,19 @@ import (
 // SwiftStore implements ObjectStore interface with openstack swift implementation
 type SwiftStore struct {
 	swift.Connection
-	containerprefix string
-	disableTempURL  bool
-}
-
-// newSwiftStore create a new ObjectStore with openstack driver and check configuration
-func newSwiftStore(authURL, user, password, region, tenant, domain, containerprefix string, disableTempURL bool) (Driver, error) {
-	s := SwiftStore{
-		swift.Connection{
-			AuthUrl:  authURL,
-			Region:   region,
-			Tenant:   tenant,
-			Domain:   domain,
-			UserName: user,
-			ApiKey:   password,
-		},
-		containerprefix,
-		disableTempURL,
-	}
-
-	if err := s.Authenticate(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to authenticate")
-	}
-	return &s, nil
+	containerprefix    string
+	disableTempURL     bool
+	projectIntegration sdk.ProjectIntegration
 }
 
 // TemporaryURLSupported returns true is temporary URL are supported
 func (s *SwiftStore) TemporaryURLSupported() bool {
 	return !s.disableTempURL
+}
+
+// GetProjectIntegration returns current projet Integration, nil otherwise
+func (s *SwiftStore) GetProjectIntegration() sdk.ProjectIntegration {
+	return s.projectIntegration
 }
 
 // Status returns the status of swift account

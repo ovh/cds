@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"mime"
 	"net/http"
 	"strconv"
@@ -12,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -86,16 +84,12 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			}
 		}
 
-		projectKey := vars["projectKey"]
-		integrationName := vars["integrationName"]
-
-		if integrationName != sdk.DefaultStorageIntegrationName {
-			projectIntegration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, false)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
-			}
-			staticFile.ProjectIntegrationID = &projectIntegration.ID
+		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		if err != nil {
+			return err
 		}
+		id := storageDriver.GetProjectIntegration().ID
+		staticFile.ProjectIntegrationID = &id
 
 		files := m.File[fileName]
 		if len(files) == 1 {
@@ -105,9 +99,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			}
 			defer file.Close()
 
-			// TODO YESNAULT
-
-			publicURL, err := api.SharedStorage.ServeStaticFiles(&staticFile, staticFile.EntryPoint, file)
+			publicURL, err := storageDriver.ServeStaticFiles(&staticFile, staticFile.EntryPoint, file)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot serve static files in store")
 			}
@@ -115,7 +107,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 		}
 
 		if err := workflow.InsertStaticFiles(api.mustDB(), &staticFile); err != nil {
-			_ = api.SharedStorage.Delete(&staticFile)
+			_ = storageDriver.Delete(&staticFile)
 			return sdk.WrapError(err, "Cannot insert static files in database")
 		}
 		return service.WriteJSON(w, staticFile, http.StatusOK)
@@ -213,16 +205,12 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			Created:           time.Now(),
 		}
 
-		projectKey := vars["projectKey"]
-		integrationName := vars["integrationName"]
-
-		if integrationName != sdk.DefaultStorageIntegrationName {
-			projectIntegration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, false)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
-			}
-			art.ProjectIntegrationID = &projectIntegration.ID
+		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		if err != nil {
+			return err
 		}
+		id := storageDriver.GetProjectIntegration().ID
+		art.ProjectIntegrationID = &id
 
 		files := m.File[fileName]
 		if len(files) == 1 {
@@ -232,9 +220,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 				return sdk.WrapError(err, "cannot open file")
 			}
 
-			// TODO YESNAULT
-
-			objectPath, err := api.SharedStorage.Store(&art, file)
+			objectPath, err := storageDriver.Store(&art, file)
 			if err != nil {
 				file.Close()
 				return sdk.WrapError(err, "Cannot store artifact")
@@ -246,8 +232,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			// TODO YESNAULT
-			_ = api.SharedStorage.Delete(&art)
+			_ = storageDriver.Delete(&art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 		return nil
@@ -256,9 +241,14 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
 
-		// TODO YESNAULT
-		if !api.SharedStorage.TemporaryURLSupported() {
+		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
+		if !storageDriver.TemporaryURLSupported() {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler")
 		}
 
@@ -284,8 +274,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			// TODO YESNAULT
-			_ = api.SharedStorage.Delete(&art)
+			_ = storageDriver.Delete(&art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 
@@ -295,32 +284,23 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO YESNAULT
-		if !api.SharedStorage.TemporaryURLSupported() {
+		vars := mux.Vars(r)
+		ref := vars["ref"]
+
+		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
+		if !storageDriver.TemporaryURLSupported() {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler")
 		}
 
-		vars := mux.Vars(r)
-		ref := vars["ref"]
-		projectKey := vars["projectKey"]
-		integrationName := vars["integrationName"]
 		var store objectstore.DriverWithRedirect
-
-		if integrationName != sdk.DefaultStorageIntegrationName {
-			projectIntegration, err := integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName, false)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
-			}
-			log.Debug("TODO projectIntegration: %v", projectIntegration)
-			// TODO YESNAULT
-			// init store with integrationName
-			return fmt.Errorf("NOT YET IMPLEMENTED")
-		} else {
-			var ok bool
-			store, ok = api.SharedStorage.(objectstore.DriverWithRedirect)
-			if !ok {
-				return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler > cast error")
-			}
+		var ok bool
+		store, ok = storageDriver.(objectstore.DriverWithRedirect)
+		if !ok {
+			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler > cast error")
 		}
 
 		hash, errG := sdk.GenerateHash()
@@ -375,6 +355,8 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 		art.TempURL = url
 		art.TempURLSecretKey = key
+		id := storageDriver.GetProjectIntegration().ID
+		art.ProjectIntegrationID = &id
 
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour

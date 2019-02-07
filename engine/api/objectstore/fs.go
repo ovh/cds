@@ -12,23 +12,29 @@ import (
 
 // FilesystemStore implements ObjectStore interface with filesystem driver
 type FilesystemStore struct {
-	basedir string
+	projectIntegration sdk.ProjectIntegration
+	basedir            string
 }
 
 // newFilesystemStore creates a new ObjectStore with filesystem driver
-func newFilesystemStore(basedir string) (*FilesystemStore, error) {
+func newFilesystemStore(projectIntegration sdk.ProjectIntegration, basedir string) (*FilesystemStore, error) {
 	log.Info("Objectstore> Initialize Filesystem driver on directory: %s", basedir)
 	if basedir == "" {
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
 	}
 
-	fss := &FilesystemStore{basedir: basedir}
+	fss := &FilesystemStore{projectIntegration: projectIntegration, basedir: basedir}
 	return fss, nil
 }
 
 // TemporaryURLSupported returns true is temporary URL are supported
 func (fss *FilesystemStore) TemporaryURLSupported() bool {
 	return false
+}
+
+// GetProjectIntegration returns current projet Integration, nil otherwise
+func (fss *FilesystemStore) GetProjectIntegration() sdk.ProjectIntegration {
+	return fss.projectIntegration
 }
 
 //Status return filesystem storage status
