@@ -101,7 +101,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 
 			// GET LAST BUILD
 			tagFilter := make(map[string]string, 1)
-			tagFilter["git.branch"] = defaultBranch
+			tagFilter["git.branch"] = defaultBranch.DisplayID
 			for _, w := range app.Usage.Workflows {
 				runs, _, _, _, errR := workflow.LoadRuns(db, key, w.Name, 0, 5, tagFilter)
 				if errR != nil {

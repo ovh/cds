@@ -300,17 +300,17 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 }
 
 // DefaultBranch get default branch from given repository
-func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (string, error) {
+func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (sdk.VCSBranch, error) {
 	branches, err := c.Branches(ctx, fullname)
 	if err != nil {
-		return "", sdk.WrapError(err, "Unable to list branches on repository %s", fullname)
+		return sdk.VCSBranch{}, sdk.WrapError(err, "Unable to list branches on repository %s", fullname)
 	}
 	for _, b := range branches {
 		if b.Default {
-			return b.DisplayID, nil
+			return b, nil
 		}
 	}
-	return "", sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find default branch on repository %s (among %d branches)", fullname, len(branches))
+	return sdk.VCSBranch{}, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find default branch on repository %s (among %d branches)", fullname, len(branches))
 }
 
 func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until string) ([]sdk.VCSCommit, error) {

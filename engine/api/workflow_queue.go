@@ -985,7 +985,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 				return nil
 			}
 
-			if defaultBranch == nr.VCSBranch {
+			if defaultBranch.DisplayID == nr.VCSBranch {
 				// Push metrics
 				metrics.PushUnitTests(p.Key, nr.ApplicationID, nr.WorkflowID, nr.Number, *nr.Tests)
 			}

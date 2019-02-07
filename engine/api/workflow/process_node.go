@@ -1,14 +1,12 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -82,7 +80,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	switch n.Type {
 	case sdk.NodeTypeFork, sdk.NodeTypePipeline, sdk.NodeTypeJoin:
-		r1, conditionOK, errT := processNode(ctx, db, store, proj, wr, mapNodes, n, subNumber, parentNodeRuns, hookEvent, manual)
+		r1, conditionOK, errT := ProcessNode(ctx, db, store, proj, wr, mapNodes, n, subNumber, parentNodeRuns, hookEvent, manual)
 		if errT != nil {
 			return nil, false, sdk.WrapError(errT, "Unable to processNode")
 		}
@@ -99,7 +97,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return nil, false, nil
 }
 
-func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func ProcessNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 
 	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
@@ -107,195 +105,35 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		n.Context = &sdk.NodeContext{}
 	}
 
+	// CHECK NODE
 	if n.Context.PipelineID == 0 && n.Type == sdk.NodeTypePipeline {
 		return nil, false, sdk.ErrPipelineNotFound
 	}
 
-	var runPayload map[string]string
-	var errPayload error
-	runPayload, errPayload = n.Context.DefaultPayloadToMap()
-	if errPayload != nil {
-		return nil, false, sdk.WrapError(errPayload, "Default payload is malformatted")
-	}
-	isDefaultPayload := true
+	run := createWorkflowNodeRun(wr, n, parents, subNumber, hookEvent, manual)
 
-	// For node with pipeline
-	var stages []sdk.Stage
-	var pip sdk.Pipeline
-	if n.Context.PipelineID > 0 {
-		var has bool
-		pip, has = wr.Workflow.Pipelines[n.Context.PipelineID]
-		if !has {
-			return nil, false, fmt.Errorf("pipeline %d not found in workflow", n.Context.PipelineID)
-		}
-		stages = make([]sdk.Stage, len(pip.Stages))
-		copy(stages, pip.Stages)
-
-		//If the pipeline has parameter but none are defined on context, use the defaults
-		if len(pip.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
-			n.Context.DefaultPipelineParameters = pip.Parameter
-		}
+	// PIPELINE PARAMETER
+	if n.Type == sdk.NodeTypePipeline {
+		run.PipelineParameters = computePipelineParameters(wr, n, manual)
 	}
 
-	// Create run
-	run := &sdk.WorkflowNodeRun{
-		WorkflowID:       wr.WorkflowID,
-		LastModified:     time.Now(),
-		Start:            time.Now(),
-		Number:           wr.Number,
-		SubNumber:        int64(subNumber),
-		WorkflowRunID:    wr.ID,
-		WorkflowNodeID:   n.ID,
-		WorkflowNodeName: n.Name,
-		Status:           string(sdk.StatusWaiting),
-		Stages:           stages,
-		Header:           wr.Header,
+	// PAYLOAD
+	var errorPayload error
+	run.Payload, errorPayload = computePayload(n, hookEvent, manual)
+	if errorPayload != nil {
+		return nil, false, errorPayload
 	}
 
-	if run.SubNumber >= wr.LastSubNumber {
-		wr.LastSubNumber = run.SubNumber
-	}
-	if n.Context.ApplicationID != 0 {
-		run.ApplicationID = n.Context.ApplicationID
-	}
-
-	parentsIDs := make([]int64, len(parents))
-	for i := range parents {
-		parentsIDs[i] = parents[i].ID
+	// WORKFLOW RUN BUILD PARAMETER
+	var errBP error
+	run.BuildParameters, errBP = computeBuildParameters(wr, run, parents, manual)
+	if errBP != nil {
+		return nil, false, errBP
 	}
 
-	parentStatus := sdk.StatusSuccess.String()
-	run.SourceNodeRuns = parentsIDs
-	if parents != nil {
-		for _, p := range parents {
-			for _, v := range wr.WorkflowNodeRuns {
-				for _, run := range v {
-					if p.ID == run.ID {
-						if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
-							parentStatus = run.Status
-						}
-					}
-				}
-			}
-		}
-
-		//Merge the payloads from all the sources
-		_, next := observability.Span(ctx, "workflow.processNode.mergePayload")
-		for _, r := range parents {
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
-			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-			e.ExtraFields.DetailedMap = false
-			e.ExtraFields.DetailedStruct = false
-			e.ExtraFields.Len = false
-			e.ExtraFields.Type = false
-			m1, errm1 := e.ToStringMap(r.Payload)
-			if errm1 != nil {
-				AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-					ID:   sdk.MsgWorkflowError.ID,
-					Args: []interface{}{errm1.Error()},
-				})
-				log.Error("processNode> Unable to compute hook payload: %v", errm1)
-			}
-			if isDefaultPayload {
-				// Check if we try to merge for the first time so try to merge the default payload with the first parent run found
-				// if it is the default payload then we have to take the previous git values
-				runPayload = sdk.ParametersMapMerge(runPayload, m1)
-				isDefaultPayload = false
-			} else {
-				runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
-			}
-		}
-		run.Payload = runPayload
-		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
-
-		// Take first value in pipeline parameter list if no default value is set
-		for i := range run.PipelineParameters {
-			if run.PipelineParameters[i].Type == sdk.ListParameter && strings.Contains(run.PipelineParameters[i].Value, ";") {
-				run.PipelineParameters[i].Value = strings.Split(run.PipelineParameters[i].Value, ";")[0]
-			}
-		}
-		next()
-	}
-
-	run.HookEvent = hookEvent
-	if hookEvent != nil {
-		runPayload = sdk.ParametersMapMerge(runPayload, hookEvent.Payload)
-		run.Payload = runPayload
-		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
-	}
-
-	run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
-		Name:  "cds.node",
-		Type:  sdk.StringParameter,
-		Value: run.WorkflowNodeName,
-	})
-
-	run.Manual = manual
-	if manual != nil {
-		payloadStr, err := json.Marshal(manual.Payload)
-		if err != nil {
-			log.Error("processNode> Unable to marshal payload: %v", err)
-		}
-		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
-			Name:  "payload",
-			Type:  sdk.TextParameter,
-			Value: string(payloadStr),
-		})
-
-		e := dump.NewDefaultEncoder(new(bytes.Buffer))
-		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-		e.ExtraFields.DetailedMap = false
-		e.ExtraFields.DetailedStruct = false
-		e.ExtraFields.Len = false
-		e.ExtraFields.Type = false
-		m1, errm1 := e.ToStringMap(manual.Payload)
-		if errm1 != nil {
-			return report, false, sdk.WrapError(errm1, "processNode> Unable to compute payload")
-		}
-		runPayload = sdk.ParametersMapMerge(runPayload, m1)
-		run.Payload = runPayload
-		run.PipelineParameters = sdk.ParametersMerge(n.Context.DefaultPipelineParameters, manual.PipelineParameters)
-		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
-			Name:  "cds.triggered_by.email",
-			Type:  sdk.StringParameter,
-			Value: manual.User.Email,
-		}, sdk.Parameter{
-			Name:  "cds.triggered_by.fullname",
-			Type:  sdk.StringParameter,
-			Value: manual.User.Fullname,
-		}, sdk.Parameter{
-			Name:  "cds.triggered_by.username",
-			Type:  sdk.StringParameter,
-			Value: manual.User.Username,
-		}, sdk.Parameter{
-			Name:  "cds.manual",
-			Type:  sdk.StringParameter,
-			Value: "true",
-		})
-	} else {
-		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
-			Name:  "cds.manual",
-			Type:  sdk.StringParameter,
-			Value: "false",
-		})
-	}
-
-	cdsStatusParam := sdk.Parameter{
-		Name:  "cds.status",
-		Type:  sdk.StringParameter,
-		Value: parentStatus,
-	}
-	run.BuildParameters = sdk.ParametersFromMap(
-		sdk.ParametersMapMerge(
-			sdk.ParametersToMap(run.BuildParameters),
-			sdk.ParametersToMap([]sdk.Parameter{cdsStatusParam}),
-			sdk.MapMergeOptions.ExcludeGitParams,
-		),
-	)
-
+	// BUILD RUN CONTEXT
 	// Process parameters for the jobs
 	runContext := nodeRunContext{}
-
 	if n.Context.PipelineID != 0 {
 		runContext.Pipeline = wr.Workflow.Pipelines[n.Context.PipelineID]
 	}
@@ -308,21 +146,14 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if n.Context.ProjectIntegrationID != 0 {
 		runContext.ProjectIntegration = wr.Workflow.ProjectIntegrations[n.Context.ProjectIntegrationID]
 	}
-	jobParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
-	if errParam != nil {
-		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errParam.Error()},
-		})
-		// if there an error -> display it in workflowRunInfo and not stop the launch
-		log.Error("processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, subNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
-	}
-	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
-	// Inherit parameter from parent job
-	if len(parentsIDs) > 0 {
+	// NODE CONTEXT BUILD PARAMETER
+	computeNodeContextBuildParameters(ctx, proj, wr, run, n, runContext)
+
+	// PARENT BUILD PARAMETER
+	if len(parents) > 0 {
 		_, next := observability.Span(ctx, "workflow.getParentParameters")
-		parentsParams, errPP := getParentParameters(wr, parents, runPayload)
+		parentsParams, errPP := getParentParameters(wr, parents)
 		next()
 		if errPP != nil {
 			return nil, false, sdk.WrapError(errPP, "processNode> getParentParameters failed")
@@ -330,68 +161,70 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		mapBuildParams := sdk.ParametersToMap(run.BuildParameters)
 		mapParentParams := sdk.ParametersToMap(parentsParams)
 
-		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams, sdk.MapMergeOptions.ExcludeGitParams))
+		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
 
-	//Parse job params to get the VCS infos
-	currentGitValues := map[string]string{}
-	for _, param := range jobParams {
-		switch param.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
-			currentGitValues[param.Name] = param.Value
-		}
-	}
+	currentApplicationParam := sdk.ParameterFind(&run.BuildParameters, "cds.application")
 
-	//Parse job params to get the VCS infos
-	previousGitValues := map[string]string{}
+	// GIT PARAMETER VALUE
+	currentJobGitValues := map[string]string{}
 	for _, param := range run.BuildParameters {
 		switch param.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
-			previousGitValues[param.Name] = param.Value
+			currentJobGitValues[param.Name] = param.Value
+		}
+	}
+
+	// Retrieve previous git information
+	if currentApplicationParam != nil && n.Context.ApplicationID > 0 && wr.Workflow.Applications[n.Context.ApplicationID].RepositoryFullname != "" {
+		for _, nr := range wr.WorkflowNodeRuns {
+			nrApplicationParam := sdk.ParameterFind(&nr[0].BuildParameters, "cds.application")
+			if nrApplicationParam == nil || nrApplicationParam.Value != currentApplicationParam.Value {
+				continue
+			}
+			// retrieve git information
+			for _, tag := range []string{tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL} {
+				p := sdk.ParameterFind(&nr[0].BuildParameters, tag)
+				if p != nil {
+					currentJobGitValues[tag] = p.Value
+				}
+			}
+		}
+	} else {
+		// GET GIT INFO
+		for _, pa := range parents {
+			// retrieve git information
+			for _, tag := range []string{tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL} {
+				p := sdk.ParameterFind(&pa.BuildParameters, tag)
+				if p != nil {
+					currentJobGitValues[tag] = p.Value
+				}
+			}
 		}
 	}
 
 	isRoot := n.ID == wr.Workflow.WorkflowData.Node.ID
-
-	gitValues := currentGitValues
-	if previousGitValues[tagGitURL] == currentGitValues[tagGitURL] || previousGitValues[tagGitHTTPURL] == currentGitValues[tagGitHTTPURL] {
-		gitValues = previousGitValues
-	}
-
-	var vcsInfos vcsInfos
+	var vcsInfos *vcsInfos
 	var app sdk.Application
 	if n.Context.ApplicationID != 0 {
 		app = wr.Workflow.Applications[n.Context.ApplicationID]
 	}
-
 	var errVcs error
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-	vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
+	vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 	if errVcs != nil {
-		if strings.Contains(errVcs.Error(), "branch has been deleted") {
-			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
-				Args: []interface{}{vcsInfos.Branch},
-			})
-		} else {
-			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{errVcs.Error()},
-			})
-		}
-		if isRoot {
-			return nil, false, sdk.WrapError(errVcs, "processNode> Cannot get VCSInfos")
-		}
-		return nil, true, nil
+		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowError.ID,
+			Args: []interface{}{errVcs.Error()},
+		})
+		return nil, false, sdk.WrapError(errVcs, "unable to get git informations")
 	}
 
-	// only if it's the root pipeline, we put the git... in the build parameters
-	// this allow user to write some run conditions with .git.var on the root pipeline
-	if isRoot {
-		setValuesGitInBuildParameters(run, vcsInfos)
+	if isRoot && vcsInfos != nil {
+		setValuesGitInBuildParameters(run, *vcsInfos)
 	}
 
-	// Check Run Conditions
+	// CONDITION
 	if hookEvent != nil {
 		hooks := wr.Workflow.WorkflowData.GetHooks()
 		hook, ok := hooks[hookEvent.WorkflowNodeHookUUID]
@@ -418,10 +251,11 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 
-	if !isRoot {
-		setValuesGitInBuildParameters(run, vcsInfos)
+	if !isRoot && vcsInfos != nil {
+		setValuesGitInBuildParameters(run, *vcsInfos)
 	}
 
+	// ADD TAG
 	// Tag VCS infos : add in tag only if it does not exist
 	if !wr.TagExists(tagGitRepository) {
 		wr.Tag(tagGitRepository, run.VCSRepository)
@@ -526,4 +360,172 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 	_, _ = report.Merge(r1, nil)
 	return report, true, nil
+}
+
+func getParentsStatus(wr *sdk.WorkflowRun, parents []*sdk.WorkflowNodeRun) string {
+	if parents != nil {
+		for _, p := range parents {
+			for _, v := range wr.WorkflowNodeRuns {
+				for _, run := range v {
+					if p.ID == run.ID {
+						if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
+							return run.Status
+						}
+					}
+				}
+			}
+		}
+	}
+	return sdk.StatusSuccess.String()
+}
+
+func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.WorkflowNodeRun, subNumber int, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) *sdk.WorkflowNodeRun {
+	/// GET PIPELINE STAGE + PIP PARAMETER IF NEED
+	var stages []sdk.Stage
+	var pip sdk.Pipeline
+	if n.Context.PipelineID > 0 {
+		pip, _ = wr.Workflow.Pipelines[n.Context.PipelineID]
+		stages = make([]sdk.Stage, len(pip.Stages))
+		copy(stages, pip.Stages)
+	}
+
+	// CREATE RUN
+	run := sdk.WorkflowNodeRun{
+		WorkflowID:       wr.WorkflowID,
+		LastModified:     time.Now(),
+		Start:            time.Now(),
+		Number:           wr.Number,
+		SubNumber:        int64(subNumber),
+		WorkflowRunID:    wr.ID,
+		WorkflowNodeID:   n.ID,
+		WorkflowNodeName: n.Name,
+		Status:           string(sdk.StatusWaiting),
+		Stages:           stages,
+		Header:           wr.Header,
+	}
+
+	if run.SubNumber >= wr.LastSubNumber {
+		wr.LastSubNumber = run.SubNumber
+	}
+	if n.Context.ApplicationID != 0 {
+		run.ApplicationID = n.Context.ApplicationID
+	}
+
+	parentsIDs := make([]int64, len(parents))
+	for i := range parents {
+		parentsIDs[i] = parents[i].ID
+	}
+	run.SourceNodeRuns = parentsIDs
+	run.HookEvent = hookEvent
+	run.Manual = manual
+	return &run
+}
+
+func computePipelineParameters(wr *sdk.WorkflowRun, n *sdk.Node, manual *sdk.WorkflowNodeRunManual) []sdk.Parameter {
+	pip, _ := wr.Workflow.Pipelines[n.Context.PipelineID]
+
+	pipParams := sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
+
+	if manual != nil && len(manual.PipelineParameters) > 0 {
+		pipParams = sdk.ParametersMerge(pipParams, manual.PipelineParameters)
+	}
+
+	// Take first value in pipeline parameter list if no default value is set
+	for i := range pipParams {
+		if pipParams[i].Type == sdk.ListParameter && strings.Contains(pipParams[i].Value, ";") {
+			pipParams[i].Value = strings.Split(pipParams[i].Value, ";")[0]
+		}
+	}
+	return pipParams
+}
+
+func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (interface{}, error) {
+	switch {
+	case hookEvent != nil && hookEvent.Payload != nil:
+		return hookEvent.Payload, nil
+	case manual != nil && manual.Payload != nil:
+		return manual.Payload, nil
+	default:
+		return n.Context.DefaultPayloadToMap()
+	}
+}
+
+func computeNodeContextBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
+	nodeRunParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
+	if errParam != nil {
+		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowError.ID,
+			Args: []interface{}{errParam.Error()},
+		})
+		// if there an error -> display it in workflowRunInfo and not stop the launch
+		log.Error("processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
+	}
+	run.BuildParameters = append(run.BuildParameters, nodeRunParams...)
+}
+
+func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, parents []*sdk.WorkflowNodeRun, manual *sdk.WorkflowNodeRunManual) ([]sdk.Parameter, error) {
+	params := make([]sdk.Parameter, 0, 1)
+
+	params = append(params, sdk.Parameter{
+		Name:  "cds.manual",
+		Type:  sdk.StringParameter,
+		Value: fmt.Sprintf("%v", manual != nil),
+	})
+
+	// ADD NODE NAME
+	params = append(params, sdk.Parameter{
+		Name:  "cds.node",
+		Type:  sdk.StringParameter,
+		Value: run.WorkflowNodeName,
+	})
+
+	// ADD PAYLOAD as STRING
+	if run.Payload != nil {
+		payloadStr, err := json.Marshal(run.Payload)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to marshal payload")
+		}
+		params = append(params, sdk.Parameter{
+			Name:  "payload",
+			Type:  sdk.TextParameter,
+			Value: string(payloadStr),
+		})
+
+	}
+
+	// ADD PARENT STATUS
+	cdsStatusParam := sdk.Parameter{
+		Name:  "cds.status",
+		Type:  sdk.StringParameter,
+		Value: getParentsStatus(wr, parents),
+	}
+	params = sdk.ParametersFromMap(
+		sdk.ParametersMapMerge(
+			sdk.ParametersToMap(params),
+			sdk.ParametersToMap([]sdk.Parameter{cdsStatusParam}),
+		),
+	)
+
+	// MANUAL BUILD PARAMETER
+	if manual != nil {
+		params = append(params, sdk.Parameter{
+			Name:  "cds.triggered_by.email",
+			Type:  sdk.StringParameter,
+			Value: manual.User.Email,
+		}, sdk.Parameter{
+			Name:  "cds.triggered_by.fullname",
+			Type:  sdk.StringParameter,
+			Value: manual.User.Fullname,
+		}, sdk.Parameter{
+			Name:  "cds.triggered_by.username",
+			Type:  sdk.StringParameter,
+			Value: manual.User.Username,
+		}, sdk.Parameter{
+			Name:  "cds.manual",
+			Type:  sdk.StringParameter,
+			Value: "true",
+		})
+	}
+
+	return params, nil
 }

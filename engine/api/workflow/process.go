@@ -10,16 +10,18 @@ import (
 )
 
 func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
-	run.VCSRepository = vcsInfos.Repository
-	run.VCSBranch = vcsInfos.Branch
-	run.VCSTag = vcsInfos.Tag
-	run.VCSHash = vcsInfos.Hash
-	run.VCSServer = vcsInfos.Server
+	if vcsInfos.Server != "" {
+		run.VCSRepository = vcsInfos.Repository
+		run.VCSBranch = vcsInfos.Branch
+		run.VCSTag = vcsInfos.Tag
+		run.VCSHash = vcsInfos.Hash
+		run.VCSServer = vcsInfos.Server
+	}
 
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitTag, sdk.StringParameter, run.VCSTag)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, vcsInfos.Repository)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, vcsInfos.Branch)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitTag, sdk.StringParameter, vcsInfos.Tag)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, vcsInfos.Hash)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.Author)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.Message)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.URL)
