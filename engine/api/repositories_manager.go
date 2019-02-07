@@ -196,17 +196,17 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		}
 
 		if username == "" || secret == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Cannot get token nor verifier from data")
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot get token nor verifier from data")
 		}
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "Cannot load project")
+			return sdk.WrapError(errP, "cannot load project %s", projectKey)
 		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "Cannot start transaction")
+			return sdk.WrapError(errT, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -220,21 +220,20 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		}
 
 		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
-			return sdk.WrapError(err, "Error with SaveDataForProject")
+			return sdk.WrapError(err, "unable to set repository manager data for project %s", projectKey)
 		}
 
 		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, vcsServerForProject)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "Cannot get client: %s project:%s", err, proj.Key)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client for project %s: %v", proj.Key, err)
 		}
 
-		_, err = client.Repos(ctx)
-		if err != nil {
-			return sdk.WrapError(err, "unable to connect %s to %s: %v", proj.Key, rmName, err)
+		if _, err = client.Repos(ctx); err != nil {
+			return sdk.WrapError(err, "unable to connect %s to %s", proj.Key, rmName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(errT, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishAddVCSServer(proj, vcsServerForProject.Name, deprecatedGetUser(ctx))
