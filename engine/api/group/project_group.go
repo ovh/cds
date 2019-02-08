@@ -118,8 +118,10 @@ func CheckGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (bool, e
 }
 
 // LoadRoleGroupInProject load role from group linked to the project
-func LoadRoleGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (int, error) {
-	query := `SELECT role FROM project_group WHERE project_id = $1 AND group_id = $2`
-	role, err := db.SelectInt(query, projectID, groupID)
-	return int(role), sdk.WrapError(err, "cannot load role group id %d from project id %d", groupID, projectID)
+func LoadRoleGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (int64, int, error) {
+	var role int
+	var id int64
+	query := `SELECT id, role FROM project_group WHERE project_id = $1 AND group_id = $2`
+	err := db.QueryRow(query, projectID, groupID).Scan(&id, &role)
+	return id, role, sdk.WrapError(err, "cannot load role group id %d from project id %d", groupID, projectID)
 }

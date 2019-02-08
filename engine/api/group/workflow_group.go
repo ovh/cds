@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
@@ -68,7 +69,7 @@ func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (in
 
 // AddWorkflowGroup Add permission on the given workflow for the given group
 func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
-	projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
+	projectGroupID, projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot add this group on workflow because there isn't in the project groups : %v", err)
@@ -81,11 +82,11 @@ func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermissi
 
 	query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role)
 	VALUES (
-		(SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2),
+		$2,
 		$3,
 		$4
 	)`
-	if _, err := db.Exec(query, w.ProjectID, gp.Group.ID, w.ID, gp.Permission); err != nil {
+	if _, err := db.Exec(query, w.ProjectID, projectGroupID, w.ID, gp.Permission); err != nil {
 		return err
 	}
 	w.Groups = append(w.Groups, gp)
@@ -94,7 +95,7 @@ func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermissi
 
 // UpdateWorkflowGroup  update group permission for the given group on the current workflow
 func UpdateWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
-	projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
+	_, projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot update this group on workflow because there isn't in the project groups : %v", err)
