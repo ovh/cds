@@ -33,7 +33,7 @@ func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
 		return
 	}
 	for _, id := range appIds {
-		migrateApplication(db, id, store)
+		_ = migrateApplication(db, id, store)
 	}
 
 	// Environment migration

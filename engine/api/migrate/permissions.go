@@ -183,7 +183,7 @@ func loadEnvironmentsPermission(db gorp.SqlExecutor, projectID int64) ([]sdk.Gro
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -237,7 +237,7 @@ func loadApplicationsPermission(db gorp.SqlExecutor, projectID int64) ([]sdk.Gro
 
 	rows, err := db.Query(query, projectID)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -317,7 +317,7 @@ func loadPreviousWorkflowGroups(db gorp.SqlExecutor, workflowID int64) ([]sdk.Gr
 		if errq == sql.ErrNoRows {
 			return wgs, nil
 		}
-		return nil, errq
+		return nil, sdk.WithStack(errq)
 	}
 	defer rows.Close()
 

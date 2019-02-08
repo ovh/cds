@@ -19,7 +19,7 @@ func LoadRoleGroupInWorkflow(db gorp.SqlExecutor, workflowID, groupID int64) (in
 
 	role, err := db.SelectInt(query, workflowID, groupID)
 	if err != nil {
-		return int(role), err
+		return int(role), sdk.WithStack(err)
 	}
 	return int(role), nil
 }
@@ -36,7 +36,7 @@ func ExistGroupInWorkflow(db gorp.SqlExecutor, workflowID, groupID int64) (bool,
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
-		return false, err
+		return false, sdk.WithStack(err)
 	}
 	return count > 0, nil
 }
@@ -51,7 +51,7 @@ func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (in
 
 	role, err := db.SelectInt(queryNode, nodeID, groupID)
 	if err != nil && err != sql.ErrNoRows {
-		return int(role), err
+		return int(role), sdk.WithStack(err)
 	}
 
 	query := `SELECT workflow_perm.role
@@ -61,7 +61,7 @@ func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (in
 
 	role, err = db.SelectInt(query, nodeID, groupID)
 	if err != nil {
-		return int(role), err
+		return int(role), sdk.WithStack(err)
 	}
 
 	return int(role), nil
@@ -111,7 +111,7 @@ func UpdateWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermi
 	FROM project_group
 	WHERE project_group.id = workflow_perm.project_group_id AND workflow_perm.workflow_id = $2 AND project_group.group_id = $3`
 	if _, err := db.Exec(query, gp.Permission, w.ID, gp.Group.ID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	for i := range w.Groups {
@@ -173,7 +173,7 @@ func DeleteWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, in
 		USING project_group
 	WHERE workflow_perm.project_group_id = project_group.id AND workflow_perm.workflow_id = $1 AND project_group.group_id = $2`
 	if _, err := db.Exec(query, w.ID, groupID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
@@ -191,7 +191,7 @@ func checkAtLeastOneGroupWithWriteRoleOnWorkflow(db gorp.SqlExecutor, wID int64)
 	query := `select count(project_group_id) from workflow_perm where workflow_id = $1 and role = $2`
 	nb, err := db.SelectInt(query, wID, 7)
 	if err != nil {
-		return false, sdk.WrapError(err, "CheckAtLeastOneGroupWithWriteRoleOnWorkflow")
+		return false, sdk.WithStack(err)
 	}
 	return nb > 0, err
 }
@@ -211,7 +211,7 @@ func LoadWorkflowGroups(db gorp.SqlExecutor, workflowID int64) ([]sdk.GroupPermi
 		if errq == sql.ErrNoRows {
 			return wgs, nil
 		}
-		return nil, errq
+		return nil, sdk.WithStack(errq)
 	}
 	defer rows.Close()
 
@@ -219,7 +219,7 @@ func LoadWorkflowGroups(db gorp.SqlExecutor, workflowID int64) ([]sdk.GroupPermi
 		var group sdk.Group
 		var perm int
 		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 		wgs = append(wgs, sdk.GroupPermission{
 			Group:      group,
