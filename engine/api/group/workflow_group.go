@@ -82,11 +82,11 @@ func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermissi
 
 	query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role)
 	VALUES (
+		$1,
 		$2,
-		$3,
-		$4
+		$3
 	)`
-	if _, err := db.Exec(query, w.ProjectID, projectGroupID, w.ID, gp.Permission); err != nil {
+	if _, err := db.Exec(query, projectGroupID, w.ID, gp.Permission); err != nil {
 		return err
 	}
 	w.Groups = append(w.Groups, gp)
