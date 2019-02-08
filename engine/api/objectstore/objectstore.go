@@ -87,7 +87,7 @@ func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
 	}
 
-	if projectIntegration.Model.Storage == false {
+	if !projectIntegration.Model.Storage {
 		return nil, fmt.Errorf("projectIntegration.Model %t is not a storage integration", projectIntegration.Model.Storage)
 	}
 
