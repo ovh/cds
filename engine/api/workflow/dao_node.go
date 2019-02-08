@@ -139,7 +139,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	}
 
 	if n.Context.Application == nil && n.Context.ApplicationID != 0 {
-		app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
+		app, errA := application.LoadByID(db, store, n.Context.ApplicationID)
 		if errA != nil {
 			return sdk.WrapError(errA, "InsertOrUpdateNode> Cannot load application %d", n.Context.ApplicationID)
 		}

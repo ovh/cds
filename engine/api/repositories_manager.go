@@ -364,7 +364,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		db := api.mustDB()
 		u := deprecatedGetUser(ctx)
 
-		app, err := application.LoadByName(db, api.Cache, projectKey, appName, u)
+		app, err := application.LoadByName(db, api.Cache, projectKey, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -436,7 +436,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					continue
 				}
 
-				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, u, &wf)
+				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, &wf)
 				if errPay != nil {
 					return sdk.WrapError(errPay, "attachRepositoriesManager> Cannot get defaultPayload")
 				}
@@ -461,7 +461,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		db := api.mustDB()
 		u := deprecatedGetUser(ctx)
 
-		app, errl := application.LoadByName(db, api.Cache, projectKey, appName, u)
+		app, errl := application.LoadByName(db, api.Cache, projectKey, appName)
 		if errl != nil {
 			return sdk.WrapError(errl, "detachRepositoriesManager> error on load project %s", projectKey)
 		}

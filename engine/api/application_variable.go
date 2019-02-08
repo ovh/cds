@@ -36,7 +36,7 @@ func (api *API) getVariableAuditInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
 		}
@@ -61,7 +61,7 @@ func (api *API) getVariableInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -97,7 +97,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
@@ -149,7 +149,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
@@ -200,7 +200,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s ", appName)
 		}

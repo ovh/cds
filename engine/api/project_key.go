@@ -46,7 +46,7 @@ func (api *API) getAllKeysProjectHandler() service.Handler {
 			}
 			allkeys.ApplicationKeys = appKeys
 		} else {
-			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName, deprecatedGetUser(ctx))
+			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName)
 			if errA != nil {
 				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application")
 			}

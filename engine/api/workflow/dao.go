@@ -1171,7 +1171,7 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		if err := checkPipeline(ctx, db, proj, w, n); err != nil {
 			return err
 		}
-		if err := checkApplication(store, db, proj, w, n, u); err != nil {
+		if err := checkApplication(store, db, proj, w, n); err != nil {
 			return err
 		}
 		if err := checkEnvironment(db, proj, w, n); err != nil {
@@ -1328,7 +1328,7 @@ func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n
 }
 
 // CheckApplication checks application data
-func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node, u *sdk.User) error {
+func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
@@ -1348,7 +1348,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 		return nil
 	}
 	if n.Context.ApplicationName != "" {
-		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, u, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
 		}
@@ -1616,7 +1616,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
 					UUID:              opts.HookUUID,
 				})
-				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, u, wf); err != nil {
+				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, wf); err != nil {
 					return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 				}
 				wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload

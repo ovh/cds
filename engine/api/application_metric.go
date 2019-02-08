@@ -19,7 +19,7 @@ func (api *API) getApplicationMetricHandler() service.Handler {
 		appName := vars["applicationName"]
 		metricName := vars["metricName"]
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if errA != nil {
 			return sdk.WrapError(errA, "getApplicationMetricHandler> unable to load application")
 		}

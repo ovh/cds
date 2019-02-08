@@ -50,7 +50,7 @@ func (api *API) getVariablesHandler() service.Handler {
 		appVar := []string{}
 		if appName != "" {
 			// Check permission on application
-			app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx), application.LoadOptions.WithVariables)
+			app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, application.LoadOptions.WithVariables)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot Load application")
 			}

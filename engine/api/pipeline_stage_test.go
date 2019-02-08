@@ -24,7 +24,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 		return errl
 	}
 
-	apps, errloadall := application.LoadAll(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
+	apps, errloadall := application.LoadAll(api.mustDB(), api.Cache, key)
 	if errloadall != nil {
 		t.Logf("Cannot list app: %s", errloadall)
 		return errloadall

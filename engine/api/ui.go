@@ -38,7 +38,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			return sdk.WrapError(errP, "getApplicationOverviewHandler> unable to load project")
 		}
 
-		app, errA := application.LoadByName(db, api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, errA := application.LoadByName(db, api.Cache, key, appName)
 		if errA != nil {
 			return sdk.WrapError(errA, "getApplicationOverviewHandler> unable to load application")
 		}

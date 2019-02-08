@@ -56,7 +56,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 		if withIcon {
 			loadOpts = append(loadOpts, application.LoadOptions.WithIcon)
 		}
-		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, u, loadOpts...)
+		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, loadOpts...)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load applications from db")
 		}
@@ -113,7 +113,7 @@ func (api *API) getApplicationHandler() service.Handler {
 			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)
 		}
 
-		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), loadOptions...)
+		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, loadOptions...)
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
@@ -157,7 +157,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
@@ -261,7 +261,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 			return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 				log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
@@ -314,7 +314,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 			return err
 		}
 
-		appToClone, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default)
+		appToClone, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, application.LoadOptions.Default)
 		if errApp != nil {
 			return sdk.WrapError(errApp, "cloneApplicationHandler> Cannot load application %s", applicationName)
 		}
@@ -389,7 +389,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WrapError(errload, "updateApplicationHandler> Cannot load project %s", projectKey)
 		}
 
-		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default)
+		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, application.LoadOptions.Default)
 		if errloadbyname != nil {
 			return sdk.WrapError(errloadbyname, "updateApplicationHandler> Cannot load application %s", applicationName)
 		}
@@ -453,7 +453,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName)
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationMetadataHandler")
 		}

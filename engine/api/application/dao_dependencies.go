@@ -10,14 +10,14 @@ import (
 )
 
 var (
-	loadDefaultDependencies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
-		if err := loadVariables(db, store, app, u); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+	loadDefaultDependencies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
+		if err := loadVariables(db, store, app); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadDefaultDependencies %s", app.Name)
 		}
 		return nil
 	}
 
-	loadVariables = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadVariables = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		variables, err := GetAllVariableByID(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load variables for application %d", app.ID)
@@ -26,7 +26,7 @@ var (
 		return nil
 	}
 
-	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		variables, err := GetAllVariableByID(db, app.ID, WithClearPassword())
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load variables for application %d", app.ID)
@@ -35,15 +35,15 @@ var (
 		return nil
 	}
 
-	loadKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		return LoadAllKeys(db, app)
 	}
 
-	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		return LoadAllDecryptedKeys(db, app)
 	}
 
-	loadDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		var err error
 		app.DeploymentStrategies, err = LoadDeploymentStrategies(db, app.ID, false)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
@@ -52,7 +52,7 @@ var (
 		return nil
 	}
 
-	loadIcon = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadIcon = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		var err error
 		app.Icon, err = LoadIcon(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
@@ -61,7 +61,7 @@ var (
 		return nil
 	}
 
-	loadVulnerabilities = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadVulnerabilities = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		var err error
 		app.Vulnerabilities, err = LoadVulnerabilities(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
@@ -70,7 +70,7 @@ var (
 		return nil
 	}
 
-	loadDeploymentStrategiesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	loadDeploymentStrategiesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error {
 		var err error
 		app.DeploymentStrategies, err = LoadDeploymentStrategies(db, app.ID, true)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {

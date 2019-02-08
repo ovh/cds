@@ -19,7 +19,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	}
 
 	if doUpdate {
-		oldApp, errlo := LoadByName(db, store, proj.Key, app.Name, u, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
+		oldApp, errlo := LoadByName(db, store, proj.Key, app.Name, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
 		if errlo != nil {
 			return sdk.WrapError(errlo, "application.Import> Unable to load application by name: %s", app.Name)
 		}

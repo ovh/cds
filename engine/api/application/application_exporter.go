@@ -12,9 +12,9 @@ import (
 )
 
 // Export an application
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, f exportentities.Format, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
+func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
-	app, errload := LoadByName(db, cache, key, appName, u,
+	app, errload := LoadByName(db, cache, key, appName,
 		LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearKeys, LoadOptions.WithClearDeploymentStrategies,
 	)
 	if errload != nil {

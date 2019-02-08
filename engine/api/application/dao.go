@@ -28,7 +28,7 @@ application.description
 `
 
 // LoadOptionFunc is a type for all options in LoadOptions
-type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Application, *sdk.User) error
+type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Application) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
@@ -63,7 +63,7 @@ func Exists(db gorp.SqlExecutor, projectKey, appName string) (bool, error) {
 }
 
 // LoadByName load an application from DB
-func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
+func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName string, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := fmt.Sprintf(`
                 SELECT %s
                 FROM application
@@ -72,29 +72,29 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
                 AND application.name = $2`, appRows)
 	args := []interface{}{projectKey, appName}
 
-	return load(db, store, projectKey, u, opts, query, args...)
+	return load(db, store, projectKey, opts, query, args...)
 }
 
 // LoadAndLockByID load and lock given application
-func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
+func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := fmt.Sprintf(`
 		SELECT %s
 		FROM application
 		WHERE application.id = $1 FOR UPDATE NOWAIT`, appRows)
 	args := []interface{}{id}
 
-	return load(db, store, "", u, opts, query, args...)
+	return load(db, store, "", opts, query, args...)
 }
 
 // LoadByID load an application from DB
-func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
+func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := fmt.Sprintf(`
                 SELECT %s
                 FROM application
                 WHERE application.id = $1`, appRows)
 	args := []interface{}{id}
 
-	return load(db, store, "", u, opts, query, args...)
+	return load(db, store, "", opts, query, args...)
 }
 
 // LoadByWorkflowID loads applications from database for a given workflow id
@@ -117,7 +117,7 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 	return apps, nil
 }
 
-func load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
+func load(db gorp.SqlExecutor, store cache.Store, key string, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
 	dbApp := dbApplication{}
 	if err := db.SelectOne(&dbApp, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -126,10 +126,10 @@ func load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts 
 		return nil, sdk.WrapError(err, "application.load")
 	}
 	dbApp.ProjectKey = key
-	return unwrap(db, store, u, opts, &dbApp)
+	return unwrap(db, store, opts, &dbApp)
 }
 
-func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
+func unwrap(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
 	app := sdk.Application(*dbApp)
 
 	if app.ProjectKey == "" {
@@ -141,7 +141,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 	}
 
 	for _, f := range opts {
-		if err := (*f)(db, store, &app, u); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		if err := (*f)(db, store, &app); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return nil, sdk.WrapError(err, "application.unwrap")
 		}
 	}
@@ -191,7 +191,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application) error 
 }
 
 // LoadAll returns all applications
-func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
+func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	query := fmt.Sprintf(`
 		SELECT %s
 		FROM application
@@ -200,7 +200,7 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 		ORDER BY application.name ASC`, appRows)
 	args := []interface{}{key}
 
-	return loadapplications(db, store, u, opts, query, args...)
+	return loadapplications(db, store, opts, query, args...)
 }
 
 // LoadAllNames returns all application names
@@ -222,7 +222,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) ([]sdk.IDName, error) {
 	return res, nil
 }
 
-func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {
+func loadapplications(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {
 	var res []dbApplication
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -237,7 +237,7 @@ func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts 
 		if err := a.PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "application.loadapplications")
 		}
-		app, err := unwrap(db, store, u, opts, a)
+		app, err := unwrap(db, store, opts, a)
 		if err != nil {
 			return nil, sdk.WrapError(err, "application.loadapplications")
 		}

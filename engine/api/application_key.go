@@ -23,7 +23,7 @@ func (api *API) getKeysInApplicationHandler() service.Handler {
 
 		log.Debug("%s %s", key, appName)
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if errA != nil {
 			return sdk.WrapError(errA, "getKeysInApplicationHandler> Cannot load application")
 		}
@@ -44,7 +44,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		keyName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, u, application.LoadOptions.WithKeys)
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, application.LoadOptions.WithKeys)
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteKeyInApplicationHandler> Cannot load application")
 		}
@@ -95,7 +95,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInApplicationHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if errA != nil {
 			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
 		}
