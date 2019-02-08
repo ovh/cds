@@ -88,7 +88,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 
 	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
-	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	_, _ = assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
 	actual, err := application.LoadByID(db, cache, app.ID)
 	assert.NoError(t, err)
@@ -147,7 +147,7 @@ func TestLoadAllAsUser(t *testing.T) {
 	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 	test.NoError(t, application.Insert(db, cache, proj, &app2, nil))
 
-	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	_, _ = assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
 	actual, err := application.LoadAll(db, cache, proj.Key)
 	test.NoError(t, err)
