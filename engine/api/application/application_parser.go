@@ -24,7 +24,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	}
 
 	//Check if app exist
-	oldApp, errl := LoadByName(db, cache, proj.Key, eapp.Name, nil,
+	oldApp, errl := LoadByName(db, cache, proj.Key, eapp.Name,
 		LoadOptions.WithVariablesWithClearPassword,
 		LoadOptions.WithClearKeys,
 		LoadOptions.WithClearDeploymentStrategies,

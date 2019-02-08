@@ -499,7 +499,7 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
-		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByID(db, store, ctx.ApplicationID, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load application %d", ctx.ApplicationID)
 		}
