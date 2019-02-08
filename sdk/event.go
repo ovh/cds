@@ -79,6 +79,17 @@ type EventRunWorkflowNode struct {
 	StagesSummary         []StageSummary            `json:"stages_summary"`
 	HookUUID              string                    `json:"hook_uuid"`
 	HookLog               string                    `json:"log,omitempty"`
+	GerritChange          *GerritChangeEvent        `json:"gerrit_change,omitempty"`
+}
+
+// GerritChangeEvent Gerrit information that are needed on event
+type GerritChangeEvent struct {
+	ID         string `json:"id,omitempty"`
+	Project    string `json:"project,omitempty"`
+	DestBranch string `json:"dest_branch,omitempty"`
+	Revision   string `json:"revision,omitempty"`
+	Report     string `json:"report,omitempty"`
+	URL        string `json:"url,omitempty"`
 }
 
 // EventRunWorkflowOutgoingHook contains event data for a workflow outgoing hook run
@@ -110,24 +121,6 @@ type EventRunWorkflow struct {
 	LastExecution int64            `json:"last_execution"`
 	LastModified  int64            `json:"last_modified"`
 	Tags          []WorkflowRunTag `json:"tags"`
-}
-
-// EventPipelineBuild contains event data for a pipeline build
-type EventPipelineBuild struct {
-	Version               int64  `json:"version,omitempty"`
-	BuildNumber           int64  `json:"buildNumber,omitempty"`
-	Status                Status `json:"status,omitempty"`
-	Start                 int64  `json:"start,omitempty"`
-	Done                  int64  `json:"done,omitempty"`
-	PipelineName          string `json:"pipelineName,omitempty"`
-	PipelineType          string `json:"type,omitempty"`
-	ProjectKey            string `json:"projectKey,omitempty"`
-	ApplicationName       string `json:"applicationName,omitempty"`
-	EnvironmentName       string `json:"environmentName,omitempty"`
-	BranchName            string `json:"branchName,omitempty"`
-	Hash                  string `json:"hash,omitempty"`
-	RepositoryManagerName string `json:"repositoryManagerName,omitempty"`
-	RepositoryFullname    string `json:"repositoryFullname,omitempty"`
 }
 
 // EventJob contains event data for a job
