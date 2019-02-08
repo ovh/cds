@@ -52,7 +52,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 		}
 		nodeJobRunID, errI := strconv.ParseInt(nodeJobRunIDStr, 10, 64)
 		if errI != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "postWorkflowJobArtifactHandler> Invalid node job run ID")
+			return sdk.WrapError(sdk.ErrInvalidID, "postWorkflowJobStaticFilesHandler> Invalid node job run ID: %v", nodeJobRunIDStr)
 		}
 
 		if fileName == "" {
@@ -131,7 +131,6 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		//parse the multipart form in the request
 		if err := r.ParseMultipartForm(100000); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobArtifactHandler: Error parsing multipart form")
-
 		}
 		//get a ref to the parsed multipart form
 		m := r.MultipartForm

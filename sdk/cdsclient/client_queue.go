@@ -549,6 +549,7 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 	_ = writer.WriteField("name", staticFile.Name)
 	_ = writer.WriteField("entrypoint", staticFile.EntryPoint)
 	_ = writer.WriteField("static_key", staticFile.StaticKey)
+	_ = writer.WriteField("nodeJobRunID", fmt.Sprintf("%d", staticFile.NodeJobRunID))
 
 	if errclose := writer.Close(); errclose != nil {
 		return "", errclose
