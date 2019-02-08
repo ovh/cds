@@ -276,6 +276,11 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
 
+		if storageDriver.GetProjectIntegration().ID > 0 {
+			id := storageDriver.GetProjectIntegration().ID
+			art.ProjectIntegrationID = &id
+		}
+
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
 			_ = storageDriver.Delete(&art)
@@ -319,7 +324,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
 		if errJ != nil {
-			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run")
+			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
 		}
 
 		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
@@ -337,6 +342,11 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		art.DownloadHash = hash
 		art.Tag = string(tag)
 		art.Ref = ref
+
+		id := storageDriver.GetProjectIntegration().ID
+		if id > 0 {
+			art.ProjectIntegrationID = &id
+		}
 
 		var retryURL = 10
 		var url, key string
@@ -359,10 +369,6 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 		art.TempURL = url
 		art.TempURLSecretKey = key
-		id := storageDriver.GetProjectIntegration().ID
-		if id > 0 {
-			art.ProjectIntegrationID = &id
-		}
 
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour

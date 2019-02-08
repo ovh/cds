@@ -82,7 +82,7 @@ type ConfigOptionsFilesystem struct {
 
 // InitDriver init a storage driver from a project integration
 func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
-	projectIntegration, err := integration.LoadProjectIntegrationByName(db, projectKey, integrationName, false)
+	projectIntegration, err := integration.LoadProjectIntegrationByName(db, projectKey, integrationName, true)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
 	}
@@ -102,7 +102,7 @@ func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 				ApiKey:   projectIntegration.Config["password"].Value,
 			},
 			containerprefix:    projectIntegration.Config["storage_container_prefix"].Value,
-			disableTempURL:     projectIntegration.Config["storage_temporary_url_supported"].Value == "true",
+			disableTempURL:     projectIntegration.Config["storage_temporary_url_supported"].Value == "false",
 			projectIntegration: projectIntegration,
 		}
 

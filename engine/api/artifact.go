@@ -21,7 +21,6 @@ func (api *API) getStorageDriver(projectKey, integrationName string) (objectstor
 	} else {
 		storageDriver = api.SharedStorage
 	}
-
 	return storageDriver, nil
 }
 
@@ -29,7 +28,7 @@ func (api *API) getArtifactsStoreHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		projectKey := vars["projectKey"]
+		projectKey := vars["permProjectKey"]
 		integrationName := vars["integrationName"]
 
 		if integrationName != sdk.DefaultStorageIntegrationName {

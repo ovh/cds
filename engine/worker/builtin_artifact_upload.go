@@ -65,7 +65,7 @@ func runArtifactUpload(wk *currentWorker) BuiltInAction {
 		for _, p := range filesPath {
 			filename := filepath.Base(p)
 			go func(path string) {
-				log.Debug("Uploading %s", path)
+				log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, wJobID)
 				defer wg.Done()
 				throughTempURL, duration, err := wk.client.QueueArtifactUpload(ctx, projectKey, integrationName, wJobID, tag.Value, path)
 				if err != nil {

@@ -377,15 +377,15 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, in
 
 	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
 	art := sdk.WorkflowNodeRunArtifact{
-		Name:              name,
-		Tag:               tag,
-		Ref:               ref,
-		Size:              stat.Size(),
-		Perm:              uint32(stat.Mode().Perm()),
-		MD5sum:            md5sum,
-		SHA512sum:         sha512sum,
-		Created:           time.Now(),
-		WorkflowNodeRunID: nodeJobRunID,
+		Name:                 name,
+		Tag:                  tag,
+		Ref:                  ref,
+		Size:                 stat.Size(),
+		Perm:                 uint32(stat.Mode().Perm()),
+		MD5sum:               md5sum,
+		SHA512sum:            sha512sum,
+		Created:              time.Now(),
+		WorkflowNodeJobRunID: nodeJobRunID,
 	}
 
 	if err := c.queueIndirectArtifactTempURL(ctx, projectKey, integrationName, &art); err != nil {
