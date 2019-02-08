@@ -89,7 +89,9 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			return err
 		}
 		id := storageDriver.GetProjectIntegration().ID
-		staticFile.ProjectIntegrationID = &id
+		if id > 0 {
+			staticFile.ProjectIntegrationID = &id
+		}
 
 		files := m.File[fileName]
 		if len(files) == 1 {
@@ -210,7 +212,9 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			return err
 		}
 		id := storageDriver.GetProjectIntegration().ID
-		art.ProjectIntegrationID = &id
+		if id > 0 {
+			art.ProjectIntegrationID = &id
+		}
 
 		files := m.File[fileName]
 		if len(files) == 1 {
@@ -356,7 +360,9 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		art.TempURL = url
 		art.TempURLSecretKey = key
 		id := storageDriver.GetProjectIntegration().ID
-		art.ProjectIntegrationID = &id
+		if id > 0 {
+			art.ProjectIntegrationID = &id
+		}
 
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
