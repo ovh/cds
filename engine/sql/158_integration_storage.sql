@@ -11,7 +11,8 @@ SELECT create_foreign_key('FK_W_NODE_RUN_ARTIFACTS_PRJ_INTEGRATION', 'workflow_n
 ALTER TABLE workflow_node_run_static_files ADD COLUMN project_integration_id BIGINT;
 SELECT create_foreign_key('FK_W_NODE_RUN_STATICF_PRJ_INTEGRATION', 'workflow_node_run_static_files', 'project_integration', 'project_integration_id', 'id');
 
--- TODO YESNAULT FK project_integration.integration_model_id -> integration_model.id
+SELECT create_foreign_key_idx_cascade('fk_project_integration_model_id', 'project_integration', 'integration_model', 'integration_model_id', 'id');
+
 
 -- +migrate Down
 
