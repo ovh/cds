@@ -28,7 +28,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 
 	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
-	actual, err := application.LoadByName(db, cache, key, "my-app", nil)
+	actual, err := application.LoadByName(db, cache, key, "my-app")
 	test.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
@@ -49,7 +49,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
-	actual, err := application.LoadByName(db, cache, key, "my-app", u)
+	actual, err := application.LoadByName(db, cache, key, "my-app")
 	assert.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
