@@ -47,7 +47,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
-	_, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	_, _ = assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
 	actual, err := application.LoadByName(db, cache, key, "my-app")
 	assert.NoError(t, err)
