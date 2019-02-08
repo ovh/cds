@@ -163,7 +163,7 @@ ingress:
 
 # hatchery kubernetes
 hatchery:
-  k8s_namespace: cds
+  k8s_namespace: default
 
 # Ui
 ui:
