@@ -25,7 +25,7 @@ This chart bootstraps a [CDS](https://github.com/ovh/cds) deployment on a [Kuber
 
 It starts a PostgreSQL server, a Redis server and an Elasticsearch server using the helm built-in dependency system. It also starts all µServices that CDS needed to use all CDS features :
 
-+ Hatchery over Kubernetes
++ Hatchery over Kubernetes (Only over the same kubernetes cluster and same namespace)
 + VCS service
 + Hooks service
 + Elasticsearch service

@@ -30,8 +30,6 @@ spec:
             secretKeyRef:
               name: {{ template "cds.fullname" . }}
               key: cds-k8s_config_file
-        - name: CDS_HATCHERY_KUBERNETES_KUBERNETESMASTERURL
-          value: https://donotuse
         - name: CDS_HATCHERY_KUBERNETES_NAMESPACE
           value: "{{ .Values.hatchery.k8s_namespace }}"
         - name: CDS_HATCHERY_KUBERNETES_KUBERNETESCONFIGFILE
