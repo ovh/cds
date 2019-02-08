@@ -11,24 +11,15 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // RegisterView begins collecting data for the given views
 func RegisterView(views ...*view.View) error {
-	if statsExporter == nil {
-		log.Info("observability> metrics are disabled")
-		return nil
-	}
 	return sdk.WithStack(view.Register(views...))
 }
 
 // FindAndRegisterViewLast begins collecting data for the given views
 func FindAndRegisterViewLast(nameInput string, tags []tag.Key) (*view.View, error) {
-	if statsExporter == nil {
-		log.Info("observability> metrics are disabled")
-		return nil, nil
-	}
 	name := strings.ToLower(nameInput)
 	viewFind := view.Find(name)
 	if viewFind != nil {
@@ -41,10 +32,6 @@ func FindAndRegisterViewLast(nameInput string, tags []tag.Key) (*view.View, erro
 
 // FindAndRegisterViewLastFloat64 begins collecting data for the given views
 func FindAndRegisterViewLastFloat64(nameInput string, tags []tag.Key) (*view.View, error) {
-	if statsExporter == nil {
-		log.Info("observability> metrics are disabled")
-		return nil, nil
-	}
 	name := strings.ToLower(nameInput)
 	viewFind := view.Find(name)
 	if viewFind != nil {

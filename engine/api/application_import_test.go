@@ -368,6 +368,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImportWithRegen(t *testing.T) {
+	// init project and application for test
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
@@ -380,22 +381,37 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	}
 	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
 
-	k := &sdk.ApplicationKey{
+	// create password, pgp and ssh keys
+	k1 := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: "app-mykey",
+			Name: "app-key-1",
 			Type: "pgp",
 		},
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k1.Name)
 	test.NoError(t, err)
-	k.Public = kpgp.Public
-	k.Private = kpgp.Private
-	k.KeyID = kpgp.KeyID
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
-		t.Fatal(err)
+	k1.Public = kpgp.Public
+	k1.Private = kpgp.Private
+	k1.KeyID = kpgp.KeyID
+	test.NoError(t, application.InsertKey(api.mustDB(), k1))
+
+	// create password, pgp and ssh keys
+	k2 := &sdk.ApplicationKey{
+		Key: sdk.Key{
+			Name: "app-key-2",
+			Type: "ssh",
+		},
+		ApplicationID: app.ID,
 	}
+
+	kssh, err := keys.GenerateSSHKey(k2.Name)
+	test.NoError(t, err)
+	k2.Public = kssh.Public
+	k2.Private = kssh.Private
+	k2.KeyID = kssh.KeyID
+	test.NoError(t, application.InsertKey(api.mustDB(), k2))
 
 	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
@@ -403,12 +419,23 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		Value: "MySecretValue",
 	}, u))
 
-	//Export all the things
-	vars := map[string]string{
+	// check that keys secrets are well stored
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil,
+		application.LoadOptions.WithClearKeys,
+		application.LoadOptions.WithVariablesWithClearPassword,
+	)
+	test.NoError(t, err)
+	test.Equal(t, 1, len(app.Variable))
+	test.Equal(t, "MySecretValue", app.Variable[0].Value)
+	test.Equal(t, 2, len(app.Keys))
+	test.Equal(t, kpgp.Private, app.Keys[0].Private)
+	test.Equal(t, kssh.Private, app.Keys[1].Private)
+
+	// export the app then import it with regen false
+	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, map[string]string{
 		"permProjectKey":  proj.Key,
 		"applicationName": app.Name,
-	}
-	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
+	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
@@ -423,44 +450,51 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	eapp := &exportentities.Application{}
 	test.NoError(t, yaml.Unmarshal([]byte(body), eapp))
+	test.Equal(t, 1, len(eapp.Variables))
+	test.Equal(t, 2, len(eapp.Keys))
 
 	False := false
-	ek := eapp.Keys[k.Name]
-	ek.Regen = &False
-	ek.Value = ""
-	eapp.Keys[k.Name] = ek
+	ek1 := eapp.Keys[k1.Name]
+	ek1.Regen = &False
+	ek1.Value = ""
+	eapp.Keys[k1.Name] = ek1
+
+	ek2 := eapp.Keys[k2.Name]
+	ek2.Regen = &False
+	ek2.Value = ""
+	eapp.Keys[k2.Name] = ek2
 
 	btes, err := yaml.Marshal(eapp)
 	body = string(btes)
 
 	t.Log(body)
 
-	//Import the new application
-	vars = map[string]string{
+	// import the new application then check secrets values.
+	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, map[string]string{
 		"permProjectKey": proj.Key,
-	}
-	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	})
 	test.NotEmpty(t, uri)
 	uri += "?force=true"
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
 	req.Body = ioutil.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
-	//Do the request
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil,
+		application.LoadOptions.WithClearKeys,
+		application.LoadOptions.WithVariablesWithClearPassword,
+	)
 	test.NoError(t, err)
-	//Check keys
-	for _, k := range app.Keys {
-		assert.NotEmpty(t, k.Private)
-		assert.NotEmpty(t, k.Public)
-	}
+	test.Equal(t, 1, len(app.Variable))
+	test.Equal(t, "MySecretValue", app.Variable[0].Value)
+	test.Equal(t, 2, len(app.Keys))
+	test.Equal(t, kpgp.Private, app.Keys[0].Private)
+	test.Equal(t, kssh.Private, app.Keys[1].Private)
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) {
@@ -793,7 +827,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	// check that the token is still present in the application
 
 	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, map[string]string{
-		"key":                 proj.Key,
+		"key": proj.Key,
 		"permApplicationName": app.Name,
 	})
 	test.NotEmpty(t, uri)
