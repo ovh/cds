@@ -10,7 +10,34 @@ SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_NODE_GROUP_W_NODE', 'workflow
 SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_NODE_GROUP_WORKFLOW_GROUP', 'workflow_node_group', 'workflow_perm', 'workflow_group_id', 'id');
 SELECT create_unique_index('workflow_node_group','IDX_WORKFLOW_NODE_GROUP_ID','id');
 
--- TODO drop constraint on old table _group
+ALTER TABLE environment_group DROP CONSTRAINT fk_environment_group_env;
+ALTER TABLE environment_group DROP CONSTRAINT fk_environment_group_group;
+
+ALTER TABLE pipeline_group DROP CONSTRAINT fk_pipeline_group;
+ALTER TABLE pipeline_group DROP CONSTRAINT fk_pipeline_group_pipeline;
+
+ALTER TABLE application_group DROP CONSTRAINT fk_application_group_group;
+ALTER TABLE application_group DROP CONSTRAINT fk_application_group_application;
+
+ALTER TABLE workflow_group DROP CONSTRAINT fk_workflow_group_group;
+ALTER TABLE workflow_group DROP CONSTRAINT fk_workflow_group_workflow;
+
 -- +migrate Down
 DROP TABLE "workflow_node_group";
 DROP TABLE "workflow_perm";
+
+-- PIPELINE GROUP
+select create_foreign_key('FK_PIPELINE_GROUP_PIPELINE', 'pipeline_group', 'pipeline', 'pipeline_id', 'id');
+select create_foreign_key('FK_PIPELINE_GROUP', 'pipeline_group', 'group', 'group_id', 'id');
+
+-- ENVIRONMENT_GROUP
+select create_foreign_key('FK_ENVIRONMENT_GROUP_ENV', 'environment_group', 'environment', 'environment_id', 'id');
+select create_foreign_key('FK_ENVIRONMENT_GROUP_GROUP', 'environment_group', 'group', 'group_id', 'id');
+
+-- APPLICATION GROUP
+select create_foreign_key('FK_APPLICATION_GROUP_APPLICATION', 'application_group', 'application', 'application_id', 'id');
+select create_foreign_key('FK_APPLICATION_GROUP_GROUP', 'application_group', 'group', 'group_id', 'id');
+
+-- PREVIOUS WORKFLOW GROUP
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_GROUP_WORKFLOW', 'workflow_group', 'workflow', 'workflow_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_GROUP_GROUP', 'workflow_group', 'group', 'group_id', 'id');
