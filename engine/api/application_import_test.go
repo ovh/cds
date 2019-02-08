@@ -827,8 +827,8 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	// check that the token is still present in the application
 
 	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	})
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
