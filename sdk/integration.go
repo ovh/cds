@@ -71,10 +71,10 @@ var (
 			"domain": IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			"tenant": IntegrationConfigValue{
+			"tenant_name": IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			"user": IntegrationConfigValue{
+			"username": IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 			"password": IntegrationConfigValue{

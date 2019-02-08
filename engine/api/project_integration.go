@@ -41,8 +41,8 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
-		var ppBody sdk.ProjectIntegration
-		if err := service.UnmarshalBody(r, &ppBody); err != nil {
+		var projectIntegration sdk.ProjectIntegration
+		if err := service.UnmarshalBody(r, &projectIntegration); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 
@@ -61,10 +61,10 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.ErrForbidden
 		}
 
-		ppBody.ID = ppDB.ID
+		projectIntegration.ID = ppDB.ID
 
-		for kkBody := range ppBody.Config {
-			c := ppBody.Config[kkBody]
+		for kkBody := range projectIntegration.Config {
+			c := projectIntegration.Config[kkBody]
 			// if we received a placeholder, replace with the right value
 			if c.Type == sdk.IntegrationConfigTypePassword && c.Value == sdk.PasswordPlaceholder {
 				for kkDB, ccDB := range ppDB.Config {
@@ -82,7 +82,25 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := integration.UpdateIntegration(tx, ppBody); err != nil {
+		projectIntegration.ProjectID = p.ID
+		if projectIntegration.IntegrationModelID == 0 {
+			projectIntegration.IntegrationModelID = projectIntegration.Model.ID
+		}
+		if projectIntegration.IntegrationModelID == 0 && projectIntegration.Model.Name != "" {
+			pfs, _ := integration.LoadModels(api.mustDB())
+			for _, pf := range pfs {
+				if pf.Name == projectIntegration.Model.Name {
+					projectIntegration.IntegrationModelID = pf.ID
+					break
+				}
+			}
+		}
+
+		if projectIntegration.IntegrationModelID == 0 {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postProjectIntegrationHandler> model not found")
+		}
+
+		if err := integration.UpdateIntegration(tx, projectIntegration); err != nil {
 			return sdk.WrapError(err, "Cannot update integration")
 		}
 
@@ -90,9 +108,9 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateProjectIntegration(p, ppBody, ppDB, deprecatedGetUser(ctx))
+		event.PublishUpdateProjectIntegration(p, projectIntegration, ppDB, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, ppBody, http.StatusOK)
+		return service.WriteJSON(w, projectIntegration, http.StatusOK)
 	}
 }
 

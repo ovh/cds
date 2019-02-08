@@ -96,9 +96,9 @@ func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 			Connection: swift.Connection{
 				AuthUrl:  projectIntegration.Config["address"].Value,
 				Region:   projectIntegration.Config["region"].Value,
-				Tenant:   projectIntegration.Config["tenant"].Value,
+				Tenant:   projectIntegration.Config["tenant_name"].Value,
 				Domain:   projectIntegration.Config["domain"].Value,
-				UserName: projectIntegration.Config["user"].Value,
+				UserName: projectIntegration.Config["username"].Value,
 				ApiKey:   projectIntegration.Config["password"].Value,
 			},
 			containerprefix:    projectIntegration.Config["storage_container_prefix"].Value,

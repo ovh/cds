@@ -1,16 +1,17 @@
 # How to import a openstack configuration
 
-This action can be done only by CDS Administrator.
+A Openstack Integration use the builtin integration model named **Openstack**.
+
+You can set an openstack configuration on a CDS Project.
+
+If you want to set a global openstack configuration, available on all CDS Projects, you 
+have just to set the attribute **public** to `true` in the openstack.yml file.
 
 ```bash
 
 # 1 - edit the openstack.yml file
 
 # 2 - run 
-$ cdsctl admin integration-model import openstack.yml
-
-# you can see the import with the command:
-$ cdsctl admin integration-model list
-$ cdsctl admin integration-model show Openstack
+$ cdsctl project integration import openstack.yml
 
 ```

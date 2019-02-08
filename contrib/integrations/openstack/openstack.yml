@@ -1,25 +1,29 @@
-name: Openstack
-author: CDS
-storage: true
-default_config:
-  "address": 
+name: MyOpenstackTenant
+model:
+  name: Openstack
+  public: false
+config:
+  address:
+    value: https://auth.cloud.ovh.net/v2.0/
     type: string
+  domain:
     value: ""
-  "region":
     type: string
-    value: ""
-  "domain":
-    type: string
-    value: ""
-  "tenant": 
-    type: string
-    value: ""
-  "user": 
-    type: string
-    value: ""
-  "password": 
+  password:
+    value: 'your-password-here'
     type: password
-    value: xxxxxxxx
-  "storage_temporary_url_supported":
+  region:
+    value: your-region
     type: string
-    value: true
+  storage_container_prefix:
+    value: cds-prefix-
+    type: string
+  storage_temporary_url_supported:
+    value: "true"
+    type: string
+  tenant_name:
+    value: "your-openstack-tenant"
+    type: string
+  username:
+    value: your-openstack-user
+    type: string
