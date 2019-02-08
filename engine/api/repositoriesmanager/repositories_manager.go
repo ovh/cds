@@ -22,6 +22,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.VCSConfiguration, error) {
+	var vcsServer sdk.VCSConfiguration
+	srvs, err := services.FindByType(db, services.TypeVCS)
+	if err != nil {
+		return vcsServer, sdk.WrapError(err, "Unable to load services")
+	}
+	if _, err := services.DoJSONRequest(ctx, srvs, "GET", fmt.Sprintf("/vcs/%s", vcsName), nil, &vcsServer); err != nil {
+		return vcsServer, sdk.WithStack(err)
+	}
+	return vcsServer, nil
+}
+
 //LoadAll Load all RepositoriesManager from the database
 func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string]sdk.VCSConfiguration, error) {
 	srvs, err := services.FindByType(db, services.TypeVCS)

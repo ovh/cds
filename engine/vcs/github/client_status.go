@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -38,8 +37,6 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var data statusData
 	var err error
 	switch event.EventType {
-	case fmt.Sprintf("%T", sdk.EventPipelineBuild{}):
-		data, err = processEventPipelineBuild(event, g.uiURL, g.DisableStatusDetail)
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.DisableStatusDetail)
 	default:
@@ -146,7 +143,7 @@ func processGithubState(s Status) string {
 	}
 }
 
-func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStatusDetail bool) (statusData, error) {
+func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatusDetail bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
@@ -175,7 +172,7 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 	data.pipName = eventNR.NodeName
 
 	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-		githubURL,
+		cdsUIURL,
 		event.ProjectKey,
 		event.WorkflowName,
 		eventNR.Number,
@@ -188,61 +185,5 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 
 	data.context = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
 	data.desc = eventNR.NodeName + ": " + eventNR.Status
-	return data, nil
-}
-
-func processEventPipelineBuild(event sdk.Event, githubURL string, disabledStatusDetail bool) (statusData, error) {
-	data := statusData{}
-	var eventpb sdk.EventPipelineBuild
-	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		return data, sdk.WrapError(err, "Error durring consumption")
-	}
-	//We only manage status Success and Failure
-	if eventpb.Status == sdk.StatusChecking ||
-		eventpb.Status == sdk.StatusDisabled ||
-		eventpb.Status == sdk.StatusNeverBuilt ||
-		eventpb.Status == sdk.StatusSkipped ||
-		eventpb.Status == sdk.StatusUnknown ||
-		eventpb.Status == sdk.StatusWaiting {
-		return data, nil
-	}
-
-	switch eventpb.Status {
-	case sdk.StatusFail:
-		data.status = "error"
-	case sdk.StatusSuccess:
-		data.status = "success"
-	default:
-		data.status = "pending"
-	}
-	data.urlPipeline = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-		githubURL,
-		eventpb.ProjectKey,
-		eventpb.ApplicationName,
-		eventpb.PipelineName,
-		eventpb.BuildNumber,
-		url.QueryEscape(eventpb.EnvironmentName),
-	)
-	data.hash = eventpb.Hash
-	data.repoFullName = eventpb.RepositoryFullname
-	//CDS can avoid sending github targer url in status, if it's disable
-	if disabledStatusDetail {
-		data.urlPipeline = ""
-	}
-
-	switch eventpb.PipelineType {
-	case sdk.BuildPipeline:
-		data.desc = fmt.Sprintf("Build pipeline %s: %s", eventpb.PipelineName, eventpb.Status.String())
-	case sdk.TestingPipeline:
-		data.desc = fmt.Sprintf("Testing pipeline %s: %s", eventpb.PipelineName, eventpb.Status.String())
-		if eventpb.Status == sdk.StatusFail {
-			data.status = "failure"
-		}
-	case sdk.DeploymentPipeline:
-		data.desc = fmt.Sprintf("Deployment pipeline %s: %s", eventpb.PipelineName, eventpb.Status.String())
-	default:
-		log.Warning("Unrecognized pipeline type : %v", eventpb.PipelineType)
-	}
-
 	return data, nil
 }

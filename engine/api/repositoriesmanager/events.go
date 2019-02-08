@@ -48,45 +48,26 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 	var c sdk.VCSAuthorizedClient
 	var errC error
 
-	if event.EventType == fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
-		var eventpb sdk.EventPipelineBuild
-		if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-			log.Error("Error during consumption: %s", err)
-			return err
-		}
-		if eventpb.RepositoryManagerName == "" {
-			return nil
-		}
-		vcsServer, err := LoadForProject(db, eventpb.ProjectKey, eventpb.RepositoryManagerName)
-		if err != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, err)
-		}
-
-		c, errC = AuthorizedClient(ctx, db, store, vcsServer)
-		if errC != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, errC)
-		}
-
-	} else if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
-		var eventWNR sdk.EventRunWorkflowNode
-
-		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> Error during consumption: %v", err)
-		}
-		if eventWNR.RepositoryManagerName == "" {
-			return nil
-		}
-		vcsServer, err := LoadForProject(db, event.ProjectKey, eventWNR.RepositoryManagerName)
-		if err != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
-		}
-
-		c, errC = AuthorizedClient(ctx, db, store, vcsServer)
-		if errC != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, errC)
-		}
-	} else {
+	if event.EventType != fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		return nil
+	}
+
+	var eventWNR sdk.EventRunWorkflowNode
+
+	if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
+		return fmt.Errorf("repositoriesmanager>processEvent> Error during consumption: %v", err)
+	}
+	if eventWNR.RepositoryManagerName == "" {
+		return nil
+	}
+	vcsServer, err := LoadForProject(db, event.ProjectKey, eventWNR.RepositoryManagerName)
+	if err != nil {
+		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
+	}
+
+	c, errC = AuthorizedClient(ctx, db, store, vcsServer)
+	if errC != nil {
+		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, errC)
 	}
 
 	if err := c.SetStatus(ctx, event); err != nil {

@@ -59,7 +59,19 @@ func (s *Service) getVCSServersHandler() service.Handler {
 		if !ok {
 			return sdk.ErrNotFound
 		}
-		return service.WriteJSON(w, cfg, http.StatusOK)
+		s := sdk.VCSConfiguration{
+			URL: cfg.URL,
+		}
+		if cfg.Gerrit != nil {
+			s.Type = "gerrit"
+		} else if cfg.Bitbucket != nil {
+			s.Type = "bitbucket"
+		} else if cfg.Github != nil {
+			s.Type = "github"
+		} else if cfg.Gitlab != nil {
+			s.Type = "gitlab"
+		}
+		return service.WriteJSON(w, s, http.StatusOK)
 	}
 }
 

@@ -80,7 +80,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	switch n.Type {
 	case sdk.NodeTypeFork, sdk.NodeTypePipeline, sdk.NodeTypeJoin:
-		r1, conditionOK, errT := ProcessNode(ctx, db, store, proj, wr, mapNodes, n, subNumber, parentNodeRuns, hookEvent, manual)
+		r1, conditionOK, errT := processNode(ctx, db, store, proj, wr, mapNodes, n, subNumber, parentNodeRuns, hookEvent, manual)
 		if errT != nil {
 			return nil, false, sdk.WrapError(errT, "Unable to processNode")
 		}
@@ -97,7 +97,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return nil, false, nil
 }
 
-func ProcessNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 
 	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
@@ -179,9 +179,14 @@ func ProcessNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if currentApplicationParam != nil && n.Context.ApplicationID > 0 && wr.Workflow.Applications[n.Context.ApplicationID].RepositoryFullname != "" {
 		for _, nr := range wr.WorkflowNodeRuns {
 			nrApplicationParam := sdk.ParameterFind(&nr[0].BuildParameters, "cds.application")
-			if nrApplicationParam == nil || nrApplicationParam.Value != currentApplicationParam.Value {
+			if nrApplicationParam == nil {
 				continue
 			}
+			p := sdk.ParameterFind(&nr[0].BuildParameters, tagGitRepository)
+			if p == nil || (currentApplicationParam.Value != nrApplicationParam.Value && p.Value != wr.Workflow.Applications[n.Context.ApplicationID].RepositoryFullname) {
+				continue
+			}
+
 			// retrieve git information
 			for _, tag := range []string{tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL} {
 				p := sdk.ParameterFind(&nr[0].BuildParameters, tag)
@@ -296,7 +301,7 @@ func ProcessNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	_, okID := buildParameters["cds.node.id"]
 	if !okUI || !okID {
 		if !okUI {
-			uiRunURL := fmt.Sprintf("%s/project/%s/workflow/%s/run/%s/node/%d?name=%s", baseUIURL, buildParameters["cds.project"], buildParameters["cds.workflow"], buildParameters["cds.run.number"], run.ID, buildParameters["cds.workflow"])
+			uiRunURL := fmt.Sprintf("%s/project/%s/workflow/%s/run/%s/node/%d?name=%s", baseUIURL, buildParameters["cds.project"], buildParameters["cds.workflow"], buildParameters["cds.run.number"], run.ID, n.Name)
 			sdk.AddParameter(&run.BuildParameters, "cds.ui.pipeline.run", sdk.StringParameter, uiRunURL)
 		}
 		if !okID {

@@ -174,6 +174,10 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 			if strings.HasPrefix(param.Name, "git.") && len(repos) == 1 {
 				continue
 			}
+			if strings.HasPrefix(param.Name, "gerrit.") {
+				parentParams = append(parentParams, param)
+				continue
+			}
 
 			prefix := "workflow." + nodeName + "."
 
