@@ -338,7 +338,15 @@ func (api *API) computeMetrics(ctx context.Context) {
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
 	n, err := api.mustDB().SelectInt(query)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		// Example: Errors while fetching count SELECT MAX(id) FROM workflow_run: sql: Scan error on column index 0: converting driver.Value type <nil> ("<nil>") to a int64: invalid syntax
+		// this error is displayed when there is no data in the current table
+		// so that, record 0
+		// this will avoid unuseful warn logs on a fresh CDS Installation
+		if strings.Contains(query, "SELECT MAX") && strings.Contains(err.Error(), "converting driver.Value type <nil>") {
+			n = 0
+		} else {
+			log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		}
 	}
 	observability.Record(ctx, v, n)
 }
@@ -346,7 +354,7 @@ func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query st
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {
 	n, err := api.mustDB().SelectInt(query, args...)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		log.Warning("metrics>Errors while fetching count range %s: %v", query, err)
 	}
 	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
 	observability.Record(ctx, v, n)
