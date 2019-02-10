@@ -21,8 +21,8 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 ## How to run
 
 ```bash
-$ git clone https://github.com/ovh/cds.git
-$ cd cds
+$ mkdir /tmp/cdstest && cd /tmp/cdstest
+$ wget https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -O docker-compose.yml
 $ export HOSTNAME=$(hostname)
 
 # Get the latest version
@@ -99,11 +99,40 @@ Template successfully pushed !
 
 ```bash
 $ ./cdsctl project create DEMO FirstProject
-$ /cdsctl workflow applyTemplate
-TODO
+$ ./cdsctl workflow applyTemplate
+? Found one CDS project DEMO - FirstProject. Is it correct? Yes
+? Choose the CDS template to apply: Demo workflow hello world (shared.infra/demo-workflow-hello-world)
+? Give a valid name for the new generated workflow MyFirstWorkflow
+? Push the generated workflow to the DEMO project Yes
+Application MyFirstWorkflow successfully created
+Application variables for MyFirstWorkflow are successfully created
+Permission applied to group FirstProject to application MyFirstWorkflow
+Environment MyFirstWorkflow-prod successfully created
+Environment MyFirstWorkflow-dev successfully created
+Environment MyFirstWorkflow-preprod successfully created
+Pipeline build-1 successfully created
+Pipeline deploy-1 successfully created
+Pipeline it-1 successfully created
+Workflow MyFirstWorkflow has been created
+Workflow successfully pushed !
+.cds/MyFirstWorkflow.yml
+.cds/build-1.pip.yml
+.cds/deploy-1.pip.yml
+.cds/it-1.pip.yml
+.cds/MyFirstWorkflow.app.yml
+.cds/MyFirstWorkflow-dev.env.yml
+.cds/MyFirstWorkflow-preprod.env.yml
+.cds/MyFirstWorkflow-prod.env.yml
 ```
 
-Before running your new Workflow, we have to start a Hatchery for spawning workers.
+Before running your new Workflow, we have to create a worker model and start a Hatchery for spawning workers.
+
+- Create our first worker model
+
+```bash
+$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
+Worker model go-official-1.11.4-stretch imported with success
+```
 
 - Hatchery Docker Swarm
 
@@ -117,18 +146,11 @@ Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:23
 $ export HOSTNAME=$(hostname)
 $ # For osX user run this container. This will allow hatchery:swarm to communicate with your docker daemon
 $ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
-$ docker-compose up cds-hatchery-swarm
+$ docker-compose up -d cds-hatchery-swarm
 ```
 
 A `swarm hatchery` spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.
-
-- Create our first worker model
-
-```bash
-$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
-Worker model go-official-1.11.4-stretch imported with success
-```
 
 - Run CDS Workflow!
 
@@ -137,6 +159,21 @@ $ ./cdsctl workflow run DEMO MyFirstWorkflow
 Workflow MyFirstWorkflow #1 has been launched
 http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1
 ```
+
+- Check on UI
+
+on http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1 you will have
+
+![Workflow Generated](/images/ready_to_run_docker_compose_ui.png)
+
+You see that the pipeline deploy in production was not launched automatically. 
+There is a Run Condition on it `cds.manual = true`: 
+
+![Run Condition](/images/ready_to_run_docker_compose_run_condition.png)
+
+The build pipeline contains two stages, with only one job in each stage
+
+![Build Pipeline](/images/ready_to_run_docker_compose_build_pipeline.png)
 
 ## Next with Actions, Plugins
 
