@@ -1,5 +1,0 @@
-name: [[.name]]-preprod
-values:
-  url:
-    type: string
-    value: http://preprod.[[.name]]
