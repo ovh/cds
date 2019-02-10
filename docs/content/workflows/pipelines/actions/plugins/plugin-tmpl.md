@@ -10,9 +10,9 @@ Check documentation on text/template for more information https://golang.org/pkg
 
 ## Parameters
 
+* **params**: Parameters to pass on the template file (key=value newline separated list)
 * **file**: Template file to use
 * **output**: Output path for generated file (default to <file>.out or just trimming .tpl extension)
-* **params**: Parameters to pass on the template file (key=value newline separated list)
 
 
 

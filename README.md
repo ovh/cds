@@ -266,12 +266,12 @@ A [hatchery](https://ovh.github.io/cds/hatchery/) is like an incubator, it gives
 
 Several types of hatchery are available: 
 
- - **[hatchery kubernetes](https://ovh.github.io/cds/hatchery/kubernetes/)** (start workers in pods)
- - **[hatchery openstack](https://ovh.github.io/cds/hatchery/openstack/)** (start virtual machines)
- - **[hatchery swarm](https://ovh.github.io/cds/hatchery/swarm/)** (start docker containers)
- - **[hatchery marathon](https://ovh.github.io/cds/hatchery/marathon/)** (starts docker containers)
- - **[hatchery VSphere](https://ovh.github.io/cds/hatchery/vsphere/)** (start virtual machines)
- - **[hatchery local](https://ovh.github.io/cds/hatchery/local/)** ( starts processes on a host). 
+ - **[hatchery kubernetes](https://ovh.github.io/cds/hatchery/kubernetes/)** starts workers in pods
+ - **[hatchery openstack](https://ovh.github.io/cds/hatchery/openstack/)** starts virtual machines
+ - **[hatchery swarm](https://ovh.github.io/cds/hatchery/swarm/)** starts docker containers
+ - **[hatchery marathon](https://ovh.github.io/cds/hatchery/marathon/)** starts docker containers
+ - **[hatchery VSphere](https://ovh.github.io/cds/hatchery/vsphere/)** starts virtual machines
+ - **[hatchery local](https://ovh.github.io/cds/hatchery/local/)** starts processes on a host
  
  So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 

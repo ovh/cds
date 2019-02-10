@@ -78,6 +78,7 @@ Login successful
 ```
 
 - Test cdsctl
+
 ```bash
 $ ./cdsctl user me
 CDS API:http://localhost:8081
@@ -89,8 +90,8 @@ fullname    Administrator
 - Import a workflow template
 
 ```bash
-$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-usage-service-postgresql/demo-usage-service-postgresql.yml
-Workflow template shared.infra/demo-usage-service-postgresql has been created
+$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+Workflow template shared.infra/demo-workflow-hello-world has been created
 Template successfully pushed !
 ```
 
@@ -99,13 +100,7 @@ Template successfully pushed !
 ```bash
 $ ./cdsctl project create DEMO FirstProject
 $ /cdsctl workflow applyTemplate
-? Found one CDS project DEMO - FirstProject. Is it correct? Yes
-? Choose the CDS template to apply: Demo Usage Service PostgreSQL (shared.infra/demo-usage-service-postgresql)
-? Give a valid name for the new generated workflow MyFirstWorkflow
-? Push the generated workflow to the DEMO project Yes
-Pipeline demo-service-postgresql successfully created
-Workflow MyFirstWorkflow has been created
-Workflow successfully pushed !
+TODO
 ```
 
 Before running your new Workflow, we have to start a Hatchery for spawning workers.
@@ -146,6 +141,7 @@ http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1
 ## Next with Actions, Plugins
 
 - Import actions, example:
+
 ```bash
 $ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
 ```
