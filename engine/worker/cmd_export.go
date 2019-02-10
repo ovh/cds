@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,11 +10,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -101,13 +102,13 @@ func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Reque
 	}
 	v.Name = "cds.build." + v.Name
 
-	errstatus, err := wk.addVariableInPipelineBuild(v, nil)
+	errstatus, err := wk.addVariableInPipelineBuild(r.Context(), v, nil)
 	if err != nil {
 		w.WriteHeader(errstatus)
 	}
 }
 
-func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sdk.Parameter) (int, error) {
+func (wk *currentWorker) addVariableInPipelineBuild(ctx context.Context, v sdk.Variable, params *[]sdk.Parameter) (int, error) {
 	// OK, so now we got our new variable. We need to:
 	// - add it as a build var in API
 	if strings.HasPrefix(v.Name, "cds.build") {
@@ -120,26 +121,11 @@ func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sd
 		})
 	}
 
-	// - add it in current building Action
-	data, errm := json.Marshal(v)
-	if errm != nil {
-		log.Error("addBuildVarHandler> Cannot Marshal err: %s", errm)
-		return http.StatusBadRequest, fmt.Errorf("addBuildVarHandler> Cannot Marshal err: %s", errm)
-	}
-
 	uri := fmt.Sprintf("/queue/workflows/%d/variable", wk.currentJob.wJob.ID)
-
-	var lasterr error
-	var code int
-	for try := 1; try <= 10; try++ {
-		log.Info("addBuildVarHandler> Sending export variable...")
-		_, code, lasterr = sdk.Request("POST", uri, data)
-		if lasterr == nil && code < 300 {
-			log.Info("addBuildVarHandler> Send step export variable OK")
-			return http.StatusOK, nil
-		}
-		log.Warning("addBuildVarHandler> Cannot send export variable result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
-		time.Sleep(5 * time.Second)
+	code, lasterr := wk.client.(cdsclient.Raw).PostJSON(ctx, uri, v, nil)
+	if lasterr == nil && code < 300 {
+		log.Info("addBuildVarHandler> Send step export variable OK")
+		return http.StatusOK, nil
 	}
 	return http.StatusServiceUnavailable, fmt.Errorf("addBuildVarHandler> Cannot export variable: %s code: %d", lasterr, code)
 }

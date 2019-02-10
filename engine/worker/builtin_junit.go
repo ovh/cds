@@ -2,21 +2,20 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"path/filepath"
 	"strings"
-	"time"
+
+	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/venom"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
 		res.Status = sdk.StatusFail.String()
 
@@ -65,39 +64,25 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 			sendLog(r)
 		}
 
-		data, err := json.Marshal(tests)
-		if err != nil {
-			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
-			res.Status = sdk.StatusFail.String()
-			sendLog(res.Reason)
-			return res
-		}
-
-		// replace secrets in the content of the xml files analyzed
-		dataS := string(data)
-		for i := range logsecrets {
-			if len(logsecrets[i].Value) >= sdk.SecretMinLength {
-				dataS = strings.Replace(dataS, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
+		for i := range tests.TestSuites {
+			for j := range tests.TestSuites[i].TestCases {
+				for _, s := range *w.secrets {
+					if len(s.Value) >= sdk.SecretMinLength {
+						tests.TestSuites[i].TestCases[j].Systemout.Value = strings.Replace(tests.TestSuites[i].TestCases[j].Systemout.Value, s.Value, "**"+s.Name+"**", -1)
+						tests.TestSuites[i].TestCases[j].Systemerr.Value = strings.Replace(tests.TestSuites[i].TestCases[j].Systemerr.Value, s.Value, "**"+s.Name+"**", -1)
+					}
+				}
 			}
 		}
 
 		uri := fmt.Sprintf("/queue/workflows/%d/test", w.currentJob.wJob.ID)
-
-		var statusCode int
-		var errPost error
-		for retry := 0; retry < 10; retry++ {
-			_, statusCode, errPost = sdk.Request("POST", uri, []byte(dataS))
-			if statusCode != http.StatusConflict {
-				break
-			}
-			time.Sleep(500 * time.Millisecond)
-		}
-		if errPost == nil && statusCode > 300 {
-			errPost = fmt.Errorf("HTTP %d", statusCode)
+		statusCode, err := w.client.(cdsclient.Raw).PostJSON(ctx, uri, tests, nil)
+		if err == nil && statusCode > 300 {
+			err = fmt.Errorf("HTTP %d", statusCode)
 		}
 
-		if errPost != nil {
-			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", errPost)
+		if err != nil {
+			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %v", err)
 			res.Status = sdk.StatusFail.String()
 			sendLog(res.Reason)
 			return res

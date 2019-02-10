@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // Workers need to register to main api so they can run actions
 func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	log.Info("Registering %s on %s", form.Name, w.apiEndpoint)
-	sdk.InitEndpoint(w.apiEndpoint)
-	sdk.Authorization("")
 
 	requirements, errR := w.client.Requirements()
 	if errR != nil {
@@ -36,7 +35,6 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	if worker.Model != nil {
 		w.model = *worker.Model
 	}
-	sdk.Authorization(worker.ID)
 	w.initGRPCConn()
 
 	if !uptodate {
@@ -53,7 +51,8 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 func (w *currentWorker) unregister() error {
 	log.Info("Unregistering worker")
 	w.id = ""
-	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
+
+	code, err := w.client.(cdsclient.Raw).PostJSON(context.TODO(), "/worker/unregister", nil, nil)
 	if err != nil {
 		return err
 	}

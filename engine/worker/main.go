@@ -21,6 +21,7 @@ type currentWorker struct {
 	nbActionsDone int
 	basedir       string
 	manualExit    bool
+	secrets       *[]sdk.Variable
 	logger        struct {
 		logChan chan sdk.Log
 		llist   *list.List
@@ -52,8 +53,6 @@ type currentWorker struct {
 }
 
 func main() {
-	sdk.SetAgent(sdk.WorkerAgent)
-
 	w := &currentWorker{}
 	cmd := cmdMain(w)
 	cmd.AddCommand(cmdExport)

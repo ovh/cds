@@ -17,7 +17,7 @@ import (
 )
 
 func runGitClone(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		url := sdk.ParameterFind(&a.Parameters, "url")
 		privateKey := sdk.ParameterFind(&a.Parameters, "privateKey")
 		user := sdk.ParameterFind(&a.Parameters, "user")
@@ -39,7 +39,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		var errK error
 		var privateKeyVar *sdk.Variable
 		if privateKey != nil {
-			privateKeyVar = sdk.VariableFind(secrets, "cds.key."+privateKey.Value+".priv")
+			privateKeyVar = sdk.VariableFind(*w.secrets, "cds.key."+privateKey.Value+".priv")
 			if deprecatedKey {
 				//Setup the key
 				if err := vcs.SetupSSHKeyDEPRECATED(nil, keysDirectory, privateKey); err != nil {
@@ -83,7 +83,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				}
 			} else {
 				//Get the key
-				key, errK = vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
+				key, errK = vcs.GetSSHKey(*w.secrets, keysDirectory, privateKeyVar)
 				if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
 					res := sdk.Result{
 						Status: sdk.StatusFail.String(),
@@ -124,7 +124,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if gitURL == "" && (auth == nil || (auth.Username == "" && auth.Password == "" && len(auth.PrivateKey.Content) == 0)) {
 			sendLog("no url and auth parameters, trying to use VCS Strategy from application")
 			var errExtract error
-			gitURL, auth, errExtract = extractVCSInformations(*params, secrets)
+			gitURL, auth, errExtract = extractVCSInformations(*params, *w.secrets)
 			if errExtract != nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
@@ -200,11 +200,11 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if directory != nil {
 			dir = directory.Value
 		}
-		return gitClone(w, params, gitURL, dir, auth, opts, sendLog)
+		return gitClone(ctx, w, params, gitURL, dir, auth, opts, sendLog)
 	}
 }
 
-func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string, auth *git.AuthOpts, clone *git.CloneOpts, sendLog LoggerFunc) sdk.Result {
+func gitClone(ctx context.Context, w *currentWorker, params *[]sdk.Parameter, url string, dir string, auth *git.AuthOpts, clone *git.CloneOpts, sendLog LoggerFunc) sdk.Result {
 	//Prepare all options - logs
 	stdErr := new(bytes.Buffer)
 	stdOut := new(bytes.Buffer)
@@ -241,7 +241,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	gitURLSSH := sdk.ParameterValue(*params, "git.url")
 	gitURLHTTP := sdk.ParameterValue(*params, "git.http_url")
 	if gitURLSSH == url || gitURLHTTP == url {
-		_ = extractInfo(w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, sendLog)
+		_ = extractInfo(ctx, w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, sendLog)
 	}
 
 	stdTaglistErr := new(bytes.Buffer)
@@ -269,7 +269,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	return sdk.Result{Status: sdk.StatusSuccess.String()}
 }
 
-func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, branch, commit string, sendLog LoggerFunc) error {
+func extractInfo(ctx context.Context, w *currentWorker, dir string, params *[]sdk.Parameter, tag, branch, commit string, sendLog LoggerFunc) error {
 	author := sdk.ParameterValue(*params, "git.author")
 	authorEmail := sdk.ParameterValue(*params, "git.author.email")
 	message := sdk.ParameterValue(*params, "git.message")
@@ -289,7 +289,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 			Value: info.GitDescribe,
 		}
 
-		if _, err := w.addVariableInPipelineBuild(gitDescribe, params); err != nil {
+		if _, err := w.addVariableInPipelineBuild(ctx, gitDescribe, params); err != nil {
 			return fmt.Errorf("Error on addVariableInPipelineBuild (describe): %s", err)
 		}
 		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
@@ -343,7 +343,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 			Value: cdsSemver,
 		}
 
-		if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
+		if _, err := w.addVariableInPipelineBuild(ctx, semverVar, params); err != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
@@ -364,7 +364,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 					Value: info.Branch,
 				}
 
-				if _, err := w.addVariableInPipelineBuild(gitBranch, params); err != nil {
+				if _, err := w.addVariableInPipelineBuild(ctx, gitBranch, params); err != nil {
 					return fmt.Errorf("Error on addVariableInPipelineBuild (branch): %s", err)
 				}
 				sendLog(fmt.Sprintf("git.branch: %s", info.Branch))
@@ -383,7 +383,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 					Value: info.Hash,
 				}
 
-				if _, err := w.addVariableInPipelineBuild(gitHash, params); err != nil {
+				if _, err := w.addVariableInPipelineBuild(ctx, gitHash, params); err != nil {
 					return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
 				}
 				sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
@@ -403,7 +403,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 				Value: info.Message,
 			}
 
-			if _, err := w.addVariableInPipelineBuild(gitMessage, params); err != nil {
+			if _, err := w.addVariableInPipelineBuild(ctx, gitMessage, params); err != nil {
 				return fmt.Errorf("Error on addVariableInPipelineBuild (message): %s", err)
 			}
 			sendLog(fmt.Sprintf("git.message: %s", info.Message))
@@ -422,7 +422,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 				Value: info.Author,
 			}
 
-			if _, err := w.addVariableInPipelineBuild(gitAuthor, params); err != nil {
+			if _, err := w.addVariableInPipelineBuild(ctx, gitAuthor, params); err != nil {
 				return fmt.Errorf("Error on addVariableInPipelineBuild (author): %s", err)
 			}
 			sendLog(fmt.Sprintf("git.author: %s", info.Author))
@@ -441,7 +441,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 				Value: info.AuthorEmail,
 			}
 
-			if _, err := w.addVariableInPipelineBuild(gitAuthorEmail, params); err != nil {
+			if _, err := w.addVariableInPipelineBuild(ctx, gitAuthorEmail, params); err != nil {
 				return fmt.Errorf("Error on addVariableInPipelineBuild (authorEmail): %s", err)
 			}
 			sendLog(fmt.Sprintf("git.author.email: %s", info.AuthorEmail))

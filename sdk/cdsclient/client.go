@@ -80,7 +80,7 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	conf := Config{
 		Host:  endpoint,
-		Retry: 10,
+		Retry: 30,
 	}
 	cli := new(client)
 	cli.config = conf

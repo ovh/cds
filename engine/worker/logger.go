@@ -3,7 +3,6 @@ package main
 import (
 	"container/list"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -12,15 +11,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
-var logsecrets []sdk.Variable
-
 func (wk *currentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
-	for i := range logsecrets {
-		if len(logsecrets[i].Value) >= sdk.SecretMinLength {
-			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
+	for _, s := range *wk.secrets {
+		if len(s.Value) >= sdk.SecretMinLength {
+			value = strings.Replace(value, s.Value, "**"+s.Name+"**", -1)
 		}
 	}
 
@@ -116,16 +114,8 @@ func (wk *currentWorker) sendHTTPLog() {
 
 	for _, l := range logs {
 		log.Debug("LOG: %v", l.Val)
-		// Buffer log list is empty, sending batch to API
-		data, err := json.Marshal(l)
-		if err != nil {
-			log.Error("Error: cannot marshal logs: %s", err)
-			continue
-		}
-
 		path := fmt.Sprintf("/queue/workflows/%d/log", wk.currentJob.wJob.ID)
-
-		if _, _, err := sdk.Request("POST", path, data); err != nil {
+		if _, err := wk.client.(cdsclient.Raw).PostJSON(context.TODO(), path, l, nil); err != nil {
 			log.Error("error: cannot send logs: %s", err)
 			continue
 		}

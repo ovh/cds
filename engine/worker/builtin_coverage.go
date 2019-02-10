@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
 		res.Status = sdk.StatusFail.String()
 
@@ -63,17 +63,8 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		data, errM := json.Marshal(report)
-		if errM != nil {
-			res.Reason = fmt.Sprintf("Coverage parser: failed to marshal report for cds api: %v", errM)
-			res.Status = sdk.StatusFail.String()
-			sendLog(res.Reason)
-			return res
-		}
-
 		uri := fmt.Sprintf("/queue/workflows/%d/coverage", w.currentJob.wJob.ID)
-
-		_, code, err := sdk.Request("POST", uri, data)
+		code, err := w.client.(cdsclient.Raw).PostJSON(ctx, uri, report, nil)
 		if err == nil && code > 300 {
 			err = fmt.Errorf("HTTP %d", code)
 		}

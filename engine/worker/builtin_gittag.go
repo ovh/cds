@@ -16,7 +16,7 @@ import (
 )
 
 func runGitTag(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		tagPrerelease := sdk.ParameterFind(&a.Parameters, "tagPrerelease")
 		tagMetadata := sdk.ParameterFind(&a.Parameters, "tagMetadata")
 		tagLevel := sdk.ParameterFind(&a.Parameters, "tagLevel")
@@ -40,7 +40,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		gitURL, auth, errR := extractVCSInformations(*params, secrets)
+		gitURL, auth, errR := extractVCSInformations(*params, *w.secrets)
 		if errR != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -211,8 +211,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			Type:  sdk.StringVariable,
 			Value: tagOpts.Name,
 		}
-		_, errV := w.addVariableInPipelineBuild(semverVar, params)
-		if errV != nil {
+		if _, errV := w.addVariableInPipelineBuild(ctx, semverVar, params); errV != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Unable to save semver variable: %s", errV),

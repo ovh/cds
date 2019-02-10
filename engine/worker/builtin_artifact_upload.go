@@ -13,7 +13,7 @@ import (
 )
 
 func runArtifactUpload(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
 		path := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))

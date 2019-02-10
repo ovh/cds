@@ -174,6 +174,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		if err != nil {
 			return nil, nil, 0, err
 		}
+		if closer, ok := body.(io.ReadCloser); ok {
+			defer closer.Close() // nolint
+		}
 	}
 
 	url := c.config.Host + path
