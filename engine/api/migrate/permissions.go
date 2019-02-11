@@ -52,15 +52,18 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		// load all environments/pipelines/applications permission
 		envsGr, errEnv := loadEnvironmentsPermission(db, proj.ID)
 		if errEnv != nil {
-			return sdk.WrapError(errEnv, "cannot load environment permissions")
+			log.Error("%v", sdk.WrapError(errEnv, "cannot load environment permissions"))
+			continue
 		}
 		appGr, errApp := loadApplicationsPermission(db, proj.ID)
 		if errApp != nil {
-			return sdk.WrapError(errApp, "cannot load application permissions")
+			log.Error("%v", sdk.WrapError(errApp, "cannot load application permissions"))
+			continue
 		}
 		pipGr, errPip := loadPipelinesPermission(db, proj.ID)
 		if errPip != nil {
-			return sdk.WrapError(errPip, "cannot load pipeline permissions")
+			log.Error("%v", sdk.WrapError(errPip, "cannot load pipeline permissions"))
+			continue
 		}
 
 		permissions := mergePermissions(envsGr, appGr)
@@ -71,7 +74,7 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		for _, perm := range permToAdd {
 			queryInsert := `INSERT INTO project_group (project_id, group_id, role) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`
 			if _, err := db.Exec(queryInsert, proj.ID, perm.Group.ID, perm.Permission); err != nil {
-				return sdk.WrapError(err, "cannot insert group %s with id %d in project %s with id %d", perm.Group.Name, perm.Group.ID, proj.Key, proj.ID)
+				log.Error("%v", sdk.WrapError(err, "cannot insert group %s with id %d in project %s with id %d", perm.Group.Name, perm.Group.ID, proj.Key, proj.ID))
 			}
 		}
 
@@ -86,7 +89,11 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		WHERE workflow.project_id = $1 AND environment_group.role > $2`
 		var nodePerms []nodePerm
 		if _, err := db.Select(&nodePerms, querySelect, proj.ID, permission.PermissionRead); err != nil {
-			return sdk.WrapError(err, "cannot load node permissions for project %s with id %d", proj.Key, proj.ID)
+			if err == sql.ErrNoRows {
+				continue
+			}
+			log.Error("%v", sdk.WrapError(err, "cannot load node permissions for project %s with id %d", proj.Key, proj.ID))
+			continue
 		}
 
 		gpsByWorkflow := map[int64][]customGroupPermission{}
@@ -103,12 +110,14 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		for workflowID, gps := range gpsByWorkflow {
 			projLoaded, errP := project.LoadByID(db, store, proj.ID, &sdk.User{Admin: true})
 			if errP != nil {
-				return sdk.WrapError(errP, "cannot load project %s", proj.Key)
+				log.Error("%v", sdk.WrapError(errP, "cannot load project %s", proj.Key))
+				continue
 			}
 
 			oldWf, err := workflow.LoadByID(db, store, projLoaded, workflowID, &sdk.User{Admin: true}, workflow.LoadOptions{})
 			if err != nil {
-				return sdk.WrapError(err, "cannot load workflow id %d in project %s", workflowID, projLoaded.Key)
+				log.Error("%v", sdk.WrapError(err, "cannot load workflow id %d in project %s", workflowID, projLoaded.Key))
+				continue
 			}
 
 			if oldWf.ToDelete {
@@ -150,7 +159,8 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 			}
 			tx, errTx := db.Begin()
 			if errTx != nil {
-				return sdk.WrapError(errTx, "cannot begin transaction")
+				log.Error("%v", sdk.WrapError(errTx, "cannot begin transaction"))
+				continue
 			}
 
 			if err := workflow.Update(ctx, tx, store, &newWf, oldWf, projLoaded, &sdk.User{Admin: true}); err != nil {
@@ -163,7 +173,7 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 				log.Warning("migrate.Permissions> cannot update workflow %s/%s : %v", projLoaded.Key, newWf.Name, err)
 			} else {
 				if err := tx.Commit(); err != nil {
-					return sdk.WrapError(err, "cannot commit transaction")
+					log.Error("%v", sdk.WrapError(err, "cannot commit transaction"))
 				}
 			}
 		}
