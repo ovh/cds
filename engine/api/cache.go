@@ -15,10 +15,6 @@ import (
 func (api *API) postPushCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-<<<<<<< HEAD
-		projectKey := vars[permProjectKey]
-=======
->>>>>>> wip
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -34,11 +30,11 @@ func (api *API) postPushCacheHandler() service.Handler {
 
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar",
-			Project: vars["permProjectKey"],
+			Project: vars[permProjectKey],
 			Tag:     tag,
 		}
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := api.getStorageDriver(vars[permProjectKey], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -54,10 +50,6 @@ func (api *API) postPushCacheHandler() service.Handler {
 func (api *API) getPullCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-<<<<<<< HEAD
-		projectKey := vars[permProjectKey]
-=======
->>>>>>> wip
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -67,12 +59,12 @@ func (api *API) getPullCacheHandler() service.Handler {
 		}
 
 		cacheObject := sdk.Cache{
-			Project: vars["permProjectKey"],
+			Project: vars[permProjectKey],
 			Name:    "cache.tar",
 			Tag:     tag,
 		}
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := api.getStorageDriver(vars[permProjectKey], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -108,10 +100,6 @@ func (api *API) getPullCacheHandler() service.Handler {
 func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-<<<<<<< HEAD
-		projectKey := vars[permProjectKey]
-=======
->>>>>>> wip
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -120,7 +108,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 			return sdk.ErrInvalidName
 		}
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := api.getStorageDriver(vars[permProjectKey], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -132,7 +120,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar",
-			Project: vars["permProjectKey"],
+			Project: vars[permProjectKey],
 			Tag:     tag,
 		}
 
@@ -170,7 +158,7 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar",
-			Project: vars["permProjectKey"],
+			Project: vars[permProjectKey],
 			Tag:     tag,
 		}
 
