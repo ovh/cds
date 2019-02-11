@@ -22,7 +22,7 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 
 ```bash
 $ mkdir /tmp/cdstest && cd /tmp/cdstest
-$ wget https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -O docker-compose.yml
+$ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
 
 # Get the latest version
@@ -66,8 +66,8 @@ See: [cdsctl documentation]({{< relref "cli/cdsctl/_index.md" >}})
 You can download cdsctl CLI from http://localhost:2015/settings/downloads
 ```bash
 # on a Linux workstation:
-$ wget http://localhost:8081/download/cdsctl/linux/amd64 -O cdsctl
-# on a osX workstation, it's wget http://localhost:8081/download/cdsctl/darwin/amd64 -O cdsctl
+$ curl http://localhost:8081/download/cdsctl/linux/amd64 -o cdsctl
+# on a osX workstation, it's curl http://localhost:8081/download/cdsctl/darwin/amd64 -o cdsctl
 $ chmod +x cdsctl
 $ ./cdsctl login --api-url http://localhost:8081 -u admin
 CDS API URL: http://localhost:8081
