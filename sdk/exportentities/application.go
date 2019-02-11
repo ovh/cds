@@ -11,7 +11,6 @@ type Application struct {
 	Description          string                              `json:"description,omitempty" yaml:"description,omitempty"`
 	VCSServer            string                              `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
 	RepositoryName       string                              `json:"repo,omitempty" yaml:"repo,omitempty"`
-	Permissions          map[string]int                      `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 	Variables            map[string]VariableValue            `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Keys                 map[string]KeyValue                 `json:"keys,omitempty" yaml:"keys,omitempty"`
 	VCSConnectionType    string                              `json:"vcs_connection_type,omitempty" yaml:"vcs_connection_type,omitempty"`
@@ -38,7 +37,7 @@ type EncryptedKey struct {
 }
 
 // NewApplication instanciance an exportable application from an sdk.Application
-func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedKey) (a Application, err error) {
+func NewApplication(app sdk.Application, keys []EncryptedKey) (a Application, err error) {
 	a.Version = ApplicationVersion1
 	a.Name = app.Name
 	a.Description = app.Description
@@ -57,13 +56,6 @@ func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedK
 		a.Variables[v.Name] = VariableValue{
 			Type:  at,
 			Value: v.Value,
-		}
-	}
-
-	if withPermissions {
-		a.Permissions = make(map[string]int, len(app.ApplicationGroups))
-		for _, p := range app.ApplicationGroups {
-			a.Permissions[p.Group.Name] = p.Permission
 		}
 	}
 

@@ -15,7 +15,6 @@ import { AuthentificationStore } from '../../../service/auth/authentification.st
 import { ProjectStore } from '../../../service/project/project.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
-import { PermissionEvent } from '../../../shared/permission/permission.event.model';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { VariableEvent } from '../../../shared/variable/variable.event.model';
 import { CDSWebWorker } from '../../../shared/worker/web.worker';
@@ -33,7 +32,6 @@ export class ApplicationShowComponent implements OnInit {
     public varFormLoading = false;
     public permFormLoading = false;
     public notifFormLoading = false;
-
 
     // Project & Application data
     project: Project;
@@ -53,8 +51,6 @@ export class ApplicationShowComponent implements OnInit {
 
     @ViewChild('varWarning')
     private varWarningModal: WarningModalComponent;
-    @ViewChild('permWarning')
-    private permWarningModal: WarningModalComponent;
 
     // queryparam for breadcrum
     workflowName: string;
@@ -67,8 +63,6 @@ export class ApplicationShowComponent implements OnInit {
     environments: Array<Environment> = new Array<Environment>();
     currentUser: User;
     usageCount = 0;
-
-
     perm = PermissionValue;
 
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
@@ -174,39 +168,6 @@ export class ApplicationShowComponent implements OnInit {
                         event.variable.updating = false;
                     })).subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_deleted'));
-                    });
-                    break;
-            }
-        }
-    }
-
-    /**
-     * Event on permission
-     * @param event
-     */
-    groupEvent(event: PermissionEvent, skip?: boolean): void {
-        if (!skip && this.application.externalChange) {
-            this.permWarningModal.show(event);
-        } else {
-            event.gp.permission = Number(event.gp.permission);
-            switch (event.type) {
-                case 'add':
-                    this.permFormLoading = true;
-                    this._applicationStore.addPermission(this.project.key, this.application.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_added'));
-                        this.permFormLoading = false;
-                    }, () => {
-                        this.permFormLoading = false;
-                    });
-                    break;
-                case 'update':
-                    this._applicationStore.updatePermission(this.project.key, this.application.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_updated'));
-                    });
-                    break;
-                case 'delete':
-                    this._applicationStore.removePermission(this.project.key, this.application.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_deleted'));
                     });
                     break;
             }

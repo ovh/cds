@@ -25,7 +25,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		//Load project
 		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
@@ -90,7 +90,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
 		//Load project
@@ -263,7 +263,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		// Get project name in URL
 		db := api.mustDB()
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		if r.Body == nil {
 			return sdk.ErrWrongRequest

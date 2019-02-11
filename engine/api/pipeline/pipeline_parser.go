@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -37,16 +36,6 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	exist, errE := ExistPipeline(db, proj.ID, pip.Name)
 	if errE != nil {
 		return pip, nil, sdk.WrapError(errE, "ParseAndImport> Unable to check if pipeline %v exists", pip.Name)
-	}
-
-	// Load group in permission
-	for i := range pip.GroupPermission {
-		eg := &pip.GroupPermission[i]
-		g, errg := group.LoadGroup(db, eg.Group.Name)
-		if errg != nil {
-			return pip, nil, sdk.WrapError(errg, "ParseAndImport> Error loading groups for permission")
-		}
-		eg.Group = *g
 	}
 
 	done := new(sync.WaitGroup)

@@ -20,7 +20,6 @@ type Application struct {
 	Icon                 string                       `json:"icon"  db:"icon"`
 	ProjectID            int64                        `json:"-" db:"project_id"`
 	ProjectKey           string                       `json:"project_key" db:"-" cli:"project_key"`
-	ApplicationGroups    []GroupPermission            `json:"groups,omitempty" db:"-"`
 	Variable             []Variable                   `json:"variables,omitempty" db:"-"`
 	Permission           int                          `json:"permission" db:"-"`
 	Notifications        []UserNotification           `json:"notifications,omitempty" db:"-"`

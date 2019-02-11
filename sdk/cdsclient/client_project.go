@@ -33,6 +33,20 @@ func (c *client) ProjectDelete(key string) error {
 	return err
 }
 
+func (c *client) ProjectGroupAdd(key, groupName string, permission int, onlyProject bool) error {
+	gp := sdk.GroupPermission{
+		Group:      sdk.Group{Name: groupName},
+		Permission: permission,
+	}
+	_, err := c.PostJSON(context.Background(), fmt.Sprintf("/project/%s/group?onlyProject=%v", key, onlyProject), gp, nil)
+	return err
+}
+
+func (c *client) ProjectGroupDelete(key, groupName string) error {
+	_, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/project/%s/group/%s", key, groupName), nil, nil)
+	return err
+}
+
 func (c *client) ProjectGet(key string, mods ...RequestModifier) (*sdk.Project, error) {
 	p := &sdk.Project{}
 	if _, err := c.GetJSON(context.Background(), "/project/"+key, p, mods...); err != nil {

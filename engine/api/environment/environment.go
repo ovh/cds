@@ -17,30 +17,14 @@ import (
 
 // LoadEnvironments load all environment from the given project
 func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *sdk.User) ([]sdk.Environment, error) {
-	envs := []sdk.Environment{}
+	var envs []sdk.Environment
 
-	var rows *sql.Rows
-	var err error
-	if u == nil || u.Admin {
-		query := `SELECT environment.id, environment.name, environment.last_modified, 7 as "perm"
+	query := `SELECT environment.id, environment.name, environment.last_modified, 7 as "perm"
 		  FROM environment
 		  JOIN project ON project.id = environment.project_id
 		  WHERE project.projectKey = $1
 		  ORDER by environment.name`
-		rows, err = db.Query(query, projectKey)
-	} else {
-		query := `SELECT environment.id, environment.name, environment.last_modified, max(environment_group.role) as "perm"
-			  FROM environment
-			  JOIN environment_group ON environment.id = environment_group.environment_id
-			  JOIN group_user ON environment_group.group_id = group_user.group_id
-			  JOIN project ON project.id = environment.project_id
-			  WHERE group_user.user_id = $1
-			  AND project.projectKey = $2
-			  GROUP BY environment.id, environment.name, environment.last_modified
-			  ORDER by environment.name`
-		rows, err = db.Query(query, u.ID, projectKey)
-	}
-
+	rows, err := db.Query(query, projectKey)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return envs, sdk.ErrNoEnvironment
@@ -54,6 +38,8 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *
 		var lastModified time.Time
 		err = rows.Scan(&env.ID, &env.Name, &lastModified, &env.Permission)
 		env.LastModified = lastModified.Unix()
+		env.ProjectKey = projectKey
+		env.Permission = permission.ProjectPermission(projectKey, u)
 		if err != nil {
 			return envs, err
 		}
@@ -205,7 +191,7 @@ func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 		return sdk.WrapError(errK, "loadDependencies> Cannot load environment dependencies")
 	}
 
-	return loadGroupByEnvironment(db, env)
+	return nil
 }
 
 // InsertEnvironment Insert new environment
@@ -253,14 +239,7 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 		return sdk.WrapError(err, "Cannot delete environment variable")
 	}
 
-	// Delete groups
-	query := `DELETE FROM environment_group WHERE environment_id = $1`
-	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "Cannot delete environment gorup")
-	}
-
-	// FINALLY delete environment
-	query = `DELETE FROM environment WHERE id=$1`
+	query := `DELETE FROM environment WHERE id=$1`
 	if _, err := db.Exec(query, environmentID); err != nil {
 		if err, ok := err.(*pq.Error); ok {
 			if err.Code.Name() == "foreign_key_violation" {
@@ -280,89 +259,11 @@ func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 		return sdk.WrapError(err, "Cannot delete environment variable")
 	}
 
-	// Delete groups
-	query = `DELETE FROM environment_group WHERE environment_id IN (SELECT id FROM environment WHERE project_id = $1)`
-	if _, err := db.Exec(query, projectID); err != nil {
-		return sdk.WrapError(err, "Cannot delete environment group")
-	}
-
 	query = `DELETE FROM environment WHERE project_id=$1`
 	if _, err := db.Exec(query, projectID); err != nil {
 		return sdk.WrapError(err, "Cannot delete environment")
 	}
 	return nil
-}
-
-func loadGroupByEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
-	query := `SELECT "group".id, "group".name, environment_group.role FROM "group"
-	 		  JOIN environment_group ON environment_group.group_id = "group".id
-	 		  WHERE environment_group.environment_id = $1 ORDER BY "group".name ASC`
-
-	rows, err := db.Query(query, environment.ID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var group sdk.Group
-		var perm int
-		err = rows.Scan(&group.ID, &group.Name, &perm)
-		if err != nil {
-			return err
-		}
-		environment.EnvironmentGroups = append(environment.EnvironmentGroups, sdk.GroupPermission{
-			Group:      group,
-			Permission: perm,
-		})
-	}
-	return nil
-}
-
-// LoadEnvironmentByGroup loads all environments where group has access
-func LoadEnvironmentByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.EnvironmentGroup, error) {
-	res := []sdk.EnvironmentGroup{}
-	query := `SELECT project.projectKey,
-			 	environment.id,
-	        	environment.name,
-	    		environment_group.role
-	          FROM environment
-	          JOIN environment_group ON environment_group.environment_id = environment.id
-	 	  JOIN project ON environment.project_id = project.id
-	 	  WHERE environment_group.group_id = $1
-	 	  ORDER BY environment.name ASC`
-	rows, err := db.Query(query, groupID)
-	if err != nil {
-		return res, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var environment sdk.Environment
-		var perm int
-		err = rows.Scan(&environment.ProjectKey, &environment.ID, &environment.Name, &perm)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, sdk.EnvironmentGroup{
-			Environment: environment,
-			Permission:  perm,
-		})
-	}
-	return res, nil
-}
-
-// Permission Get the permission for the given environment and user
-func Permission(key string, envName string, u *sdk.User) int {
-	if u == nil {
-		return 0
-	}
-
-	if u.Admin {
-		return permission.PermissionReadWriteExecute
-	}
-
-	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, envName)]
 }
 
 // CountEnvironmentByVarValue counts how many time a pattern is in variable value for the given project

@@ -17,8 +17,8 @@ func (api *API) addStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineKey := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineKey := vars["pipelineKey"]
 
 		var stageData = &sdk.Stage{}
 		if err := service.UnmarshalBody(r, stageData); err != nil {
@@ -71,8 +71,8 @@ func (api *API) getStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineKey := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineKey := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 
 		stageID, err := strconv.ParseInt(stageIDString, 10, 60)
@@ -99,8 +99,8 @@ func (api *API) moveStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineKey := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineKey := vars["pipelineKey"]
 
 		var stageData = &sdk.Stage{}
 		if err := service.UnmarshalBody(r, stageData); err != nil {
@@ -168,8 +168,8 @@ func (api *API) updateStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineKey := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineKey := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 
 		var stageData = &sdk.Stage{}
@@ -234,8 +234,8 @@ func (api *API) deleteStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineKey := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineKey := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 
 		// Check if pipeline exist

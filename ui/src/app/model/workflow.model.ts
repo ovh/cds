@@ -414,6 +414,7 @@ export class WNode {
     outgoing_hook: WNodeOutgoingHook;
     parents: Array<WNodeJoin>;
     hooks: Array<WNodeHook>;
+    groups: Array<GroupPermission>;
 
     static getMapNodes(nodes: Map<number, WNode>, node: WNode): Map<number, WNode> {
         nodes.set(node.id, node);

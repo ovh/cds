@@ -60,9 +60,9 @@ func TestAddJobHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key":             proj.Key,
-		"permPipelineKey": pip.Name,
-		"stageID":         strconv.FormatInt(stage.ID, 10),
+		"permProjectKey": proj.Key,
+		"pipelineKey":    pip.Name,
+		"stageID":        strconv.FormatInt(stage.ID, 10),
 	}
 
 	uri := router.GetRoute("POST", api.addJobToStageHandler, vars)
@@ -141,10 +141,10 @@ func TestUpdateJobHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key":             proj.Key,
-		"permPipelineKey": pip.Name,
-		"stageID":         strconv.FormatInt(stage.ID, 10),
-		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
+		"permProjectKey": proj.Key,
+		"pipelineKey":    pip.Name,
+		"stageID":        strconv.FormatInt(stage.ID, 10),
+		"jobID":          strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
 	uri := router.GetRoute("PUT", api.updateJobHandler, vars)
@@ -210,10 +210,10 @@ func TestDeleteJobHandler(t *testing.T) {
 	assert.NotZero(t, job.Action.ID)
 
 	vars := map[string]string{
-		"key":             proj.Key,
-		"permPipelineKey": pip.Name,
-		"stageID":         strconv.FormatInt(stage.ID, 10),
-		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
+		"permProjectKey": proj.Key,
+		"pipelineKey":    pip.Name,
+		"stageID":        strconv.FormatInt(stage.ID, 10),
+		"jobID":          strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
 	uri := router.GetRoute("DELETE", api.deleteJobHandler, vars)

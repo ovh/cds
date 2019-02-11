@@ -24,8 +24,8 @@ func (api *API) updatePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		name := vars["pipelineKey"]
 
 		var p sdk.Pipeline
 		if err := service.UnmarshalBody(r, &p); err != nil {
@@ -76,8 +76,8 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		name := vars["pipelineKey"]
 		auditID, errConv := strconv.ParseInt(vars["auditID"], 10, 64)
 		if errConv != nil {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelineRollbackHandler> cannot convert auditID to int")
@@ -94,10 +94,6 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		audit, errA := pipeline.LoadAuditByID(db, auditID)
 		if errA != nil {
 			return sdk.WrapError(errA, "postPipelineRollbackHandler> Cannot load audit %d", auditID)
-		}
-
-		if err := pipeline.LoadGroupByPipeline(ctx, db, audit.Pipeline); err != nil {
-			return sdk.WrapError(err, "cannot load group by pipeline")
 		}
 
 		tx, errTx := db.Begin()
@@ -140,7 +136,7 @@ func (api *API) addPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errl != nil {
@@ -181,14 +177,6 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load groupfrom project")
 		}
 
-		for _, g := range proj.ProjectGroups {
-			p.GroupPermission = append(p.GroupPermission, g)
-		}
-
-		if err := group.InsertGroupsInPipeline(tx, proj.ProjectGroups, p.ID); err != nil {
-			return sdk.WrapError(err, "Cannot add groups on pipeline")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -204,8 +192,8 @@ func (api *API) addPipelineHandler() service.Handler {
 func (api *API) getPipelineAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 
 		audits, err := pipeline.LoadAudit(api.mustDB(), projectKey, pipelineName)
 		if err != nil {
@@ -219,8 +207,8 @@ func (api *API) getPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 		withApp := FormBool(r, "withApplications")
 		withWorkflows := FormBool(r, "withWorkflows")
 		withEnvironments := FormBool(r, "withEnvironments")
@@ -230,7 +218,7 @@ func (api *API) getPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
-		p.Permission = permission.PipelinePermission(projectKey, p.Name, deprecatedGetUser(ctx))
+		p.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
@@ -258,7 +246,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		project, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if err != nil {
@@ -268,7 +256,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 			return err
 		}
 
-		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true, deprecatedGetUser(ctx))
+		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warning("getPipelinesHandler>Cannot load pipelines: %s\n", err)
@@ -284,8 +272,8 @@ func (api *API) deletePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {

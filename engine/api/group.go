@@ -6,11 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -68,21 +65,6 @@ func (api *API) deleteGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load projects for group")
 		}
 
-		appPerms, err := application.LoadPermissions(api.mustDB(), g.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load application for group")
-		}
-
-		pipPerms, err := pipeline.LoadPipelineByGroup(api.mustDB(), g.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load pipeline for group")
-		}
-
-		envPerms, err := environment.LoadEnvironmentByGroup(api.mustDB(), g.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load environment for group")
-		}
-
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "Cannot start transaction")
@@ -100,18 +82,6 @@ func (api *API) deleteGroupHandler() service.Handler {
 		groupPerm := sdk.GroupPermission{Group: *g}
 		for _, pg := range projPerms {
 			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
-		}
-
-		for _, pg := range appPerms {
-			event.PublishApplicationPermissionDelete(pg.Application.ProjectKey, pg.Application, groupPerm, u)
-		}
-
-		for _, pg := range pipPerms {
-			event.PublishPipelinePermissionDelete(pg.Pipeline.ProjectKey, pg.Pipeline.Name, groupPerm, u)
-		}
-
-		for _, pg := range envPerms {
-			event.PublishEnvironmentPermissionDelete(pg.Environment.ProjectKey, pg.Environment, groupPerm, u)
 		}
 
 		return nil

@@ -58,7 +58,7 @@ func (api *API) postPipelinePreviewHandler() service.Handler {
 func (api *API) importPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
@@ -153,8 +153,8 @@ func (api *API) importPipelineHandler() service.Handler {
 func (api *API) putImportPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 		format := r.FormValue("format")
 
 		// Load project

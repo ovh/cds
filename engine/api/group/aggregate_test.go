@@ -3,10 +3,11 @@ package group_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAggregateOnWorkflowTemplate(t *testing.T) {

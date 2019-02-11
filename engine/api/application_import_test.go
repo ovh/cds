@@ -60,22 +60,11 @@ variables:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithVariables, application.LoadOptions.WithGroups)
+	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithVariables)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app)
 	assert.Equal(t, "myNewApp", app.Name)
-
-	//Check default permission which should be set to the project ones
-	for _, perm := range proj.ProjectGroups {
-		var found bool
-		for _, aperm := range app.ApplicationGroups {
-			if aperm.Group.Name == perm.Group.Name && aperm.Permission == perm.Permission {
-				found = true
-			}
-		}
-		assert.True(t, found, "Group %s - %d not found", perm.Group.Name, perm.Permission)
-	}
 
 	//Check variables
 	for _, v := range app.Variable {
@@ -140,8 +129,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 
 	//Export all the things
 	vars := map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -177,11 +166,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	//Reload the application to check the keys
-	app1, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app1, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app1)
@@ -251,8 +240,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	//Export all the things
 	vars := map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -288,11 +277,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	//Reload the application to check the keys
-	app1, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app1, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app1)
@@ -342,11 +331,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	//Reload the application to check the keys
-	app1, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	app1, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app1)
@@ -431,7 +420,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	}, u))
 
 	// check that keys secrets are well stored
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil,
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp",
 		application.LoadOptions.WithClearKeys,
 		application.LoadOptions.WithVariablesWithClearPassword,
 	)
@@ -444,8 +433,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	// export the app then import it with regen false
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
@@ -496,7 +485,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil,
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp",
 		application.LoadOptions.WithClearKeys,
 		application.LoadOptions.WithVariablesWithClearPassword,
 	)
@@ -543,7 +532,7 @@ keys:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys)
+	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", application.LoadOptions.WithKeys)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app)
@@ -693,8 +682,8 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	}))
 
 	vars := map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -732,8 +721,8 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 
 	//Prepare request
 	vars = map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -747,7 +736,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
+	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
 	test.NoError(t, err)
 	assert.Equal(t, "my-secret-token-2", actualApp.DeploymentStrategies[pfname]["token"].Value)
 	assert.Equal(t, "my-url-3", actualApp.DeploymentStrategies[pfname]["url"].Value)
@@ -838,8 +827,8 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	// check that the token is still present in the application
 
 	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	})
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
@@ -850,7 +839,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 
 	t.Logf(">>%s", rec.Body.String())
 
-	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
+	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
 	test.NoError(t, err)
 	assert.Equal(t, "my-secret-token-2", actualApp.DeploymentStrategies[pfname]["token"].Value)
 	assert.Equal(t, "my-url-2", actualApp.DeploymentStrategies[pfname]["url"].Value)

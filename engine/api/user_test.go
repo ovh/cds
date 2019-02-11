@@ -248,10 +248,6 @@ func TestLoadUserWithGroup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cannot insert project1 in group: %s", err)
 	}
-	err = group.InsertGroupInPipeline(api.mustDB(), pipelinePip1.ID, groupInsert.ID, 7)
-	if err != nil {
-		t.Fatalf("cannot insert pipeline1 in group: %s", err)
-	}
 
 	err = group.InsertUserInGroup(api.mustDB(), groupInsert.ID, u.ID, false)
 	if err != nil {
@@ -264,9 +260,6 @@ func TestLoadUserWithGroup(t *testing.T) {
 
 	if len(u.Permissions.ProjectsPerm) != 2 {
 		t.Fatalf("Missing/TooMuch project on u.Permissions.ProjectsPerm 2, got %d", len(u.Permissions.ProjectsPerm))
-	}
-	if len(u.Permissions.PipelinesPerm) != 1 {
-		t.Fatalf("Missing/TooMuch pipeline on u.Permissions.PipelinesPerm 1, got %d", len(u.Permissions.PipelinesPerm))
 	}
 }
 

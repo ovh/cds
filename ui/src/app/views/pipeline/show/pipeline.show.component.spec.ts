@@ -7,7 +7,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import { Group, GroupPermission } from '../../../model/group.model';
 import { Parameter } from '../../../model/parameter.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
@@ -20,7 +19,6 @@ import { PipelineStore } from '../../../service/pipeline/pipeline.store';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
 import { ParameterEvent } from '../../../shared/parameter/parameter.event.model';
-import { PermissionEvent } from '../../../shared/permission/permission.event.model';
 import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
@@ -79,54 +77,6 @@ describe('CDS: Pipeline Show', () => {
         expect(fixture.componentInstance.pipeline.name).toBe('pip1');
         expect(fixture.componentInstance.project.key).toBe('key1');
 
-    }));
-
-    it('should run add/update/delete permission', fakeAsync(() => {
-
-        // Create component
-        let fixture = TestBed.createComponent(PipelineShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        // Init data
-        fixture.componentInstance.pipeline = new Pipeline();
-        fixture.componentInstance.pipeline.name = 'pip1';
-
-        fixture.componentInstance.project = new Project();
-        fixture.componentInstance.project.key = 'key1';
-
-        let gp: GroupPermission = new GroupPermission();
-        gp.permission = 7;
-        gp.group = new Group();
-        gp.group.name = 'grp1';
-
-        let pipStore: PipelineStore = TestBed.get(PipelineStore);
-        spyOn(pipStore, 'addPermission').and.callFake(() => {
-            return of(new Pipeline());
-        });
-
-        // ADD
-
-        let groupEvent: PermissionEvent = new PermissionEvent('add', gp);
-        fixture.componentInstance.groupEvent(groupEvent, true);
-        expect(pipStore.addPermission).toHaveBeenCalledWith('key1', 'pip1', gp);
-
-        // Update
-
-        groupEvent.type = 'update';
-        spyOn(pipStore, 'updatePermission').and.callFake(() => {
-            return of(new Pipeline());
-        });
-        fixture.componentInstance.groupEvent(groupEvent, true);
-        expect(pipStore.updatePermission).toHaveBeenCalledWith('key1', 'pip1', gp);
-
-        // Delete
-        groupEvent.type = 'delete';
-        spyOn(pipStore, 'removePermission').and.callFake(() => {
-            return of(new Pipeline());
-        });
-        fixture.componentInstance.groupEvent(groupEvent, true);
-        expect(pipStore.removePermission).toHaveBeenCalledWith('key1', 'pip1', gp);
     }));
 
     it('should run add/update/delete parameters', fakeAsync(() => {

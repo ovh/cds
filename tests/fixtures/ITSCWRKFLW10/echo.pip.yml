@@ -1,0 +1,8 @@
+version: v1.0
+name: echo
+jobs:
+- job: New Job
+  steps:
+  - name: "echo"
+    script:
+    - echo hello

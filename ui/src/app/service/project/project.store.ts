@@ -1,20 +1,18 @@
 
-import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
-
-import {Injectable} from '@angular/core';
-import {List, Map} from 'immutable';
-import {map} from 'rxjs/operators';
-import {Environment} from '../../model/environment.model';
-import {GroupPermission} from '../../model/group.model';
-import {Label, LoadOpts, Project} from '../../model/project.model';
-import {Variable} from '../../model/variable.model';
-import {EnvironmentService} from '../environment/environment.service';
-import {NavbarService} from '../navbar/navbar.service';
-import {VariableService} from '../variable/variable.service';
-import {ProjectService} from './project.service';
-
-import {ProjectIntegration} from '../../model/integration.model';
-import {Key} from '../../model/keys.model';
+import { Injectable } from '@angular/core';
+import { List, Map } from 'immutable';
+import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Environment } from '../../model/environment.model';
+import { GroupPermission } from '../../model/group.model';
+import { ProjectIntegration } from '../../model/integration.model';
+import { Key } from '../../model/keys.model';
+import { Label, LoadOpts, Project } from '../../model/project.model';
+import { Variable } from '../../model/variable.model';
+import { EnvironmentService } from '../environment/environment.service';
+import { NavbarService } from '../navbar/navbar.service';
+import { VariableService } from '../variable/variable.service';
+import { ProjectService } from './project.service';
 
 
 @Injectable()
@@ -31,11 +29,11 @@ export class ProjectStore {
         private _environmentService: EnvironmentService,
         private _variableService: VariableService,
         private _navbarService: NavbarService
-      ) {
+    ) {
 
     }
 
-    getWorkflowViewMode(key: string): 'blocs'|'labels'|'lines' {
+    getWorkflowViewMode(key: string): 'blocs' | 'labels' | 'lines' {
         let o = localStorage.getItem(this.WORKFLOW_VIEW_MODE);
         if (o) {
             let j = JSON.parse(o);
@@ -46,7 +44,7 @@ export class ProjectStore {
         return 'blocs';
     }
 
-    setWorkflowViewMode(key: string, viewMode: 'blocs'|'labels'|'lines') {
+    setWorkflowViewMode(key: string, viewMode: 'blocs' | 'labels' | 'lines') {
         let ls = localStorage.getItem(this.WORKFLOW_VIEW_MODE);
         let j = {};
         if (ls) {
@@ -107,43 +105,43 @@ export class ProjectStore {
                 proj = Object.assign({}, proj, res);
                 if (opts) {
                     opts.forEach(o => {
-                       switch (o.fieldName) {
-                           case 'workflow_names':
-                               if (!res.workflow_names) {
-                                   proj.workflow_names = [];
-                               }
-                               break;
-                           case 'pipeline_names':
-                               if (!res.pipeline_names) {
-                                   proj.pipeline_names = [];
-                               }
-                               break;
-                           case 'application_names':
-                               if (!res.application_names) {
-                                   proj.application_names = [];
-                               }
-                               break;
-                           case 'environments':
-                               if (!res.environments) {
-                                   proj.environments = [];
-                               }
-                               break;
-                           case 'integrations':
-                               if (!res.integrations) {
-                                   proj.integrations = [];
-                               }
-                               break;
-                           case 'keys':
-                               if (!res.keys) {
-                                   proj.keys = [];
-                               }
-                               break;
-                           case 'labels':
-                               if (!res.labels) {
-                                   proj.labels = [];
-                               }
-                               break;
-                       }
+                        switch (o.fieldName) {
+                            case 'workflow_names':
+                                if (!res.workflow_names) {
+                                    proj.workflow_names = [];
+                                }
+                                break;
+                            case 'pipeline_names':
+                                if (!res.pipeline_names) {
+                                    proj.pipeline_names = [];
+                                }
+                                break;
+                            case 'application_names':
+                                if (!res.application_names) {
+                                    proj.application_names = [];
+                                }
+                                break;
+                            case 'environments':
+                                if (!res.environments) {
+                                    proj.environments = [];
+                                }
+                                break;
+                            case 'integrations':
+                                if (!res.integrations) {
+                                    proj.integrations = [];
+                                }
+                                break;
+                            case 'keys':
+                                if (!res.keys) {
+                                    proj.keys = [];
+                                }
+                                break;
+                            case 'labels':
+                                if (!res.labels) {
+                                    proj.labels = [];
+                                }
+                                break;
+                        }
                     });
                 }
             } else {
@@ -177,13 +175,13 @@ export class ProjectStore {
      */
     resyncEnvironments(key: string): Observable<Project> {
         return this._environmentService.get(key).pipe(
-          map((res) => {
-              let store = this._projectCache.getValue();
-              let proj = store.get(key);
-              proj.environments = res;
-              this._projectCache.next(store.set(key, proj));
-              return proj;
-          }));
+            map((res) => {
+                let store = this._projectCache.getValue();
+                let proj = store.get(key);
+                proj.environments = res;
+                this._projectCache.next(store.set(key, proj));
+                return proj;
+            }));
     }
 
     /**
@@ -209,13 +207,13 @@ export class ProjectStore {
      */
     resyncApplications(key: string): Observable<Project> {
         return this._projectService.getApplications(key).pipe(
-          map((res) => {
-              let store = this._projectCache.getValue();
-              let proj = store.get(key);
-              proj.applications = res;
-              this._projectCache.next(store.set(key, proj));
-              return proj;
-          }));
+            map((res) => {
+                let store = this._projectCache.getValue();
+                let proj = store.get(key);
+                proj.applications = res;
+                this._projectCache.next(store.set(key, proj));
+                return proj;
+            }));
     }
 
     getProjectKeysResolver(key: string): Observable<Project> {
@@ -262,13 +260,13 @@ export class ProjectStore {
      */
     resyncVariables(key: string): Observable<Project> {
         return this._variableService.get(key).pipe(
-          map((res) => {
-              let store = this._projectCache.getValue();
-              let proj = store.get(key);
-              proj.variables = res;
-              this._projectCache.next(store.set(key, proj));
-              return proj;
-          }));
+            map((res) => {
+                let store = this._projectCache.getValue();
+                let proj = store.get(key);
+                proj.variables = res;
+                this._projectCache.next(store.set(key, proj));
+                return proj;
+            }));
     }
 
     /**
@@ -382,7 +380,7 @@ export class ProjectStore {
      * @returns {Observable<any>}
      */
     connectRepoManager(key: string, repoName: string): Observable<any> {
-        return this._projectService.connectRepoManager(key, repoName).pipe(map( res => {
+        return this._projectService.connectRepoManager(key, repoName).pipe(map(res => {
             let cache = this._projectCache.getValue();
             if (cache.get(key)) {
                 let pToUpdate = cache.get(key);
@@ -402,7 +400,7 @@ export class ProjectStore {
      * @returns {Observable<Project>}
      */
     verificationCallBackRepoManager(key: string, repoName: string, token: string, verifier: string): Observable<Project> {
-        return this._projectService.callback(key, repoName, token, verifier).pipe(map( res => {
+        return this._projectService.callback(key, repoName, token, verifier).pipe(map(res => {
             let cache = this._projectCache.getValue();
             let projectToUpdate = cache.get(key);
             if (projectToUpdate) {
@@ -421,7 +419,7 @@ export class ProjectStore {
      * @returns {Observable<Project>}
      */
     disconnectRepoManager(key: string, repoName: string): Observable<Project> {
-        return this._projectService.disconnectRepoManager(key, repoName).pipe(map( res => {
+        return this._projectService.disconnectRepoManager(key, repoName).pipe(map(res => {
             let cache = this._projectCache.getValue();
             let pToUpdate = cache.get(key);
             if (pToUpdate) {
@@ -537,8 +535,8 @@ export class ProjectStore {
      * @param gp Permission to add
      * @returns {Observable<Project>}
      */
-    addProjectPermission(key: string, gp: GroupPermission): Observable<Array<GroupPermission>> {
-        return this._projectService.addPermission(key, gp).pipe(map(res => {
+    addProjectPermission(key: string, gp: GroupPermission, onlyForProject?: boolean): Observable<Array<GroupPermission>> {
+        return this._projectService.addPermission(key, gp, onlyForProject).pipe(map(res => {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {
@@ -561,7 +559,7 @@ export class ProjectStore {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {
-                let permissionIndex = projectUpdate.groups.findIndex( p => p.group.id === res.group.id);
+                let permissionIndex = projectUpdate.groups.findIndex(p => p.group.id === res.group.id);
                 if (permissionIndex > -1) {
                     delete gp.hasChanged;
                     delete gp.updating;
@@ -584,7 +582,7 @@ export class ProjectStore {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {
-                projectUpdate.groups = projectUpdate.groups.filter( p => p.group.id !== gp.group.id);
+                projectUpdate.groups = projectUpdate.groups.filter(p => p.group.id !== gp.group.id);
                 this._projectCache.next(cache.set(key, projectUpdate));
             }
             return true;
@@ -645,7 +643,7 @@ export class ProjectStore {
      */
     addEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
         return this._projectService.addEnvironmentVariable(key, envName, v).pipe(map(res => {
-           return this.refreshProjectEnvironmentCache(key, res);
+            return this.refreshProjectEnvironmentCache(key, res);
         }));
     }
 
@@ -693,65 +691,6 @@ export class ProjectStore {
         return project;
     }
 
-    /**
-     * Add environment permission
-     * @param key project unique key
-     * @param envName Environment name
-     * @param gps Group permission to add
-     * @returns {Observable<Environment>}
-     */
-    addEnvironmentPermission(key: string, envName: string, gps: Array<GroupPermission>): Observable<Project> {
-        return this._projectService.addEnvironmentPermission(key, envName, gps).pipe(map(res => {
-            let cache = this._projectCache.getValue();
-            let projectUpdate = cache.get(key);
-            if (projectUpdate) {
-                let index = projectUpdate.environments.findIndex(env => env.id === res.id);
-                projectUpdate.environments[index] = res;
-                this._projectCache.next(cache.set(key, projectUpdate));
-            }
-            return projectUpdate;
-        }));
-    }
-
-    /**
-     * Update environment permission
-     * @param key Project unique key
-     * @param envName Environment Name
-     * @param gp Group permission to update
-     * @returns {Observable<Environmenet>}
-     */
-    updateEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<Environment> {
-        return this._projectService.updateEnvironmentPermission(key, envName, gp).pipe(map(res => {
-            let cache = this._projectCache.getValue();
-            let projectUpdate = cache.get(key);
-            if (projectUpdate) {
-                let index = projectUpdate.environments.findIndex(env => env.id === res.id);
-                projectUpdate.environments[index] = res;
-                this._projectCache.next(cache.set(key, projectUpdate));
-            }
-            return res;
-        }));
-    }
-
-    /**
-     * Remove a permission from an environment
-     * @param key Project unique key
-     * @param envName Environment name
-     * @param gp Permission to remove
-     * @returns {Observable<boolean>}
-     */
-    removeEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<boolean> {
-        return this._projectService.removeEnvironmentPermission(key, envName, gp).pipe(map(res => {
-            let cache = this._projectCache.getValue();
-            let projectUpdate = cache.get(key);
-            if (projectUpdate) {
-                let e = projectUpdate.environments.find(env => env.name === envName);
-                e.groups = e.groups.filter(groupPermission => groupPermission.group.id !== gp.group.id);
-                this._projectCache.next(cache.set(key, projectUpdate));
-            }
-            return res;
-        }));
-    }
 
     /**
      * Ad a key on the project
@@ -894,18 +833,18 @@ export class ProjectStore {
 
     updateLabels(key: string, labels: Label[]): Observable<Project> {
         return this._projectService.updateLabels(key, labels)
-          .pipe(
-            map((proj) => {
-              let cache = this._projectCache.getValue();
-              let projectUpdate = cache.get(key);
-              if (projectUpdate) {
-                  projectUpdate.labels = proj.labels;
-                  projectUpdate.workflow_names = proj.workflow_names;
-                  this._projectCache.next(cache.set(key, projectUpdate));
-              }
-              return projectUpdate;
-            })
-          );
+            .pipe(
+                map((proj) => {
+                    let cache = this._projectCache.getValue();
+                    let projectUpdate = cache.get(key);
+                    if (projectUpdate) {
+                        projectUpdate.labels = proj.labels;
+                        projectUpdate.workflow_names = proj.workflow_names;
+                        this._projectCache.next(cache.set(key, projectUpdate));
+                    }
+                    return projectUpdate;
+                })
+            );
     }
 
 }

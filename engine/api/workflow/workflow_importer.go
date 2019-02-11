@@ -40,7 +40,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	// TODO compute on WD.Node
-	if w.Root.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, u, w); err != nil {
+	if w.Root.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
 		log.Warning("workflow.Import> Cannot set default payload : %v", err)
 	}
 	w.WorkflowData.Node.Context.DefaultPayload = w.Root.Context.DefaultPayload
@@ -64,7 +64,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 			return err
 		}
 
-		return importWorkflowGroups(db, w)
+		return nil
 	}
 
 	if !force {
@@ -168,7 +168,7 @@ func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			}
 			w.Groups[i].Group = *g
 		}
-		if err := upsertAllGroups(db, w, w.Groups); err != nil {
+		if err := group.UpsertAllWorkflowGroups(db, w, w.Groups); err != nil {
 			return sdk.WrapError(err, "Unable to update workflow")
 		}
 	}

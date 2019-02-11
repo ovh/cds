@@ -15,7 +15,7 @@ import (
 func (api *API) getWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		al := r.Header.Get("Accept-Language")
 
@@ -35,7 +35,7 @@ func (api *API) getWarningsHandler() service.Handler {
 func (api *API) putWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		warningHash := vars["hash"]
 
 		warn, errW := warning.GetByProjectAndHash(api.mustDB(), key, warningHash)

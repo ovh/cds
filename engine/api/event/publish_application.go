@@ -82,28 +82,6 @@ func PublishDeleteVariableApplication(projKey string, app sdk.Application, v sdk
 	publishApplicationEvent(e, projKey, app.Name, u)
 }
 
-func PublishApplicationPermissionAdd(projKey string, app sdk.Application, gp sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventApplicationPermissionAdd{
-		Permission: gp,
-	}
-	publishApplicationEvent(e, projKey, app.Name, u)
-}
-
-func PublishApplicationPermissionUpdate(projKey string, app sdk.Application, gp sdk.GroupPermission, gpOld sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventApplicationPermissionUpdate{
-		NewPermission: gp,
-		OldPermission: gpOld,
-	}
-	publishApplicationEvent(e, projKey, app.Name, u)
-}
-
-func PublishApplicationPermissionDelete(projKey string, app sdk.Application, gp sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventApplicationPermissionDelete{
-		Permission: gp,
-	}
-	publishApplicationEvent(e, projKey, app.Name, u)
-}
-
 func PublishApplicationKeyAdd(projKey string, app sdk.Application, k sdk.ApplicationKey, u *sdk.User) {
 	e := sdk.EventApplicationKeyAdd{
 		Key: k,

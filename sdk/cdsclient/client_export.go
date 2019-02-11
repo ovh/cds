@@ -11,18 +11,13 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func (c *client) PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error) {
+func (c *client) PipelineExport(projectKey, name string, exportFormat string) ([]byte, error) {
 	pip, err := c.PipelineGet(projectKey, name)
 	if err != nil {
 		return nil, err
 	}
 
-	p := exportentities.NewPipelineV1(*pip, exportWithPermissions)
-
-	if !exportWithPermissions {
-		p.Permissions = nil
-	}
-
+	p := exportentities.NewPipelineV1(*pip)
 	f, err := exportentities.GetFormat(exportFormat)
 	if err != nil {
 		return nil, err
@@ -35,11 +30,8 @@ func (c *client) PipelineExport(projectKey, name string, exportWithPermissions b
 	return btes, nil
 }
 
-func (c *client) ApplicationExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error) {
+func (c *client) ApplicationExport(projectKey, name string, exportFormat string) ([]byte, error) {
 	path := fmt.Sprintf("/project/%s/export/application/%s?format=%s", projectKey, name, exportFormat)
-	if exportWithPermissions {
-		path += "&withPermissions=true"
-	}
 	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -47,11 +39,8 @@ func (c *client) ApplicationExport(projectKey, name string, exportWithPermission
 	return body, nil
 }
 
-func (c *client) EnvironmentExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error) {
+func (c *client) EnvironmentExport(projectKey, name string, exportFormat string) ([]byte, error) {
 	path := fmt.Sprintf("/project/%s/export/environment/%s?format=%s", projectKey, name, exportFormat)
-	if exportWithPermissions {
-		path += "&withPermissions=true"
-	}
 	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err

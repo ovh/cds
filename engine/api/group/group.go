@@ -17,18 +17,6 @@ func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
 		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group user %s", group.Name)
 	}
 
-	if err := deleteGroupEnvironmentByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group env %s", group.Name)
-	}
-
-	if err := deleteGroupPipelineByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group pipeline %s", group.Name)
-	}
-
-	if err := deleteGroupApplicationByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group application %s", group.Name)
-	}
-
 	if err := deleteGroupProjectByGroup(db, group); err != nil {
 		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group project %s", group.Name)
 	}

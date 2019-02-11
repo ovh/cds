@@ -28,8 +28,8 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
 	vars := map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 
 	uri := router.GetRoute("GET", api.getApplicationDeploymentStrategiesConfigHandler, vars)
@@ -80,9 +80,9 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	test.NoError(t, integration.InsertIntegration(db, &pp))
 
 	vars := map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
-		"integration":         pf.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
+		"integration":     pf.Name,
 	}
 
 	uri := router.GetRoute("POST", api.postApplicationDeploymentStrategyConfigHandler, vars)
@@ -221,9 +221,9 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 	test.NoError(t, integration.InsertIntegration(db, &pp2))
 
 	vars := map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
-		"integration":         pf.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
+		"integration":     pf.Name,
 	}
 
 	uri := router.GetRoute("POST", api.postApplicationDeploymentStrategyConfigHandler, vars)
@@ -245,9 +245,9 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 
 	//Now add a new
 	vars = map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
-		"integration":         pp2.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
+		"integration":     pp2.Name,
 	}
 
 	uri = router.GetRoute("POST", api.postApplicationDeploymentStrategyConfigHandler, vars)
@@ -268,8 +268,8 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 	assert.Equal(t, 200, w.Code)
 
 	vars = map[string]string{
-		"key":                 proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategiesConfigHandler, vars)
 	//Then we try to update

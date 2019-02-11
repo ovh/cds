@@ -164,14 +164,6 @@ var (
 		arg: sdk.Pipeline{
 			Name: "MyPipeline t1_2",
 			Type: sdk.BuildPipeline,
-			GroupPermission: []sdk.GroupPermission{
-				sdk.GroupPermission{
-					Group: sdk.Group{
-						Name: "group1",
-					},
-					Permission: 4,
-				},
-			},
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -261,14 +253,6 @@ var (
 		arg: sdk.Pipeline{
 			Name: "MyPipeline t2_2",
 			Type: sdk.BuildPipeline,
-			GroupPermission: []sdk.GroupPermission{
-				sdk.GroupPermission{
-					Group: sdk.Group{
-						Name: "group1",
-					},
-					Permission: 4,
-				},
-			},
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -440,7 +424,7 @@ var (
 
 func TestExportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(tc.arg, false)
+		p := NewPipeline(tc.arg)
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -454,7 +438,7 @@ func TestExportPipeline_YAML(t *testing.T) {
 
 func TestExportPipeline_JSON(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(tc.arg, false)
+		p := NewPipeline(tc.arg)
 		b, err := Marshal(p, FormatJSON)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -469,7 +453,7 @@ func TestExportPipeline_JSON(t *testing.T) {
 func TestExportAndImportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		t.Log(tc.name)
-		p := NewPipeline(tc.arg, true)
+		p := NewPipeline(tc.arg)
 
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
@@ -486,7 +470,6 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
 		assert.Equal(t, tc.arg.Description, transformedP.Description)
 		assert.Equal(t, tc.arg.Type, transformedP.Type)
-		test.EqualValuesWithoutOrder(t, tc.arg.GroupPermission, transformedP.GroupPermission)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool
@@ -670,7 +653,7 @@ func Test_IsFlagged(t *testing.T) {
 
 func TestExportPipelineV1_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipelineV1(tc.arg, false)
+		p := NewPipelineV1(tc.arg)
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -684,7 +667,7 @@ func TestExportPipelineV1_YAML(t *testing.T) {
 
 func TestExportPipelineV1_JSON(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipelineV1(tc.arg, false)
+		p := NewPipelineV1(tc.arg)
 		b, err := Marshal(p, FormatJSON)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -699,7 +682,7 @@ func TestExportPipelineV1_JSON(t *testing.T) {
 func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		t.Log(tc.name)
-		p := NewPipelineV1(tc.arg, true)
+		p := NewPipelineV1(tc.arg)
 
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
@@ -715,7 +698,6 @@ func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
 		assert.Equal(t, tc.arg.Type, transformedP.Type)
-		test.EqualValuesWithoutOrder(t, tc.arg.GroupPermission, transformedP.GroupPermission)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool

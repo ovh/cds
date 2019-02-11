@@ -21,14 +21,11 @@ type PermCheckFunc func(ctx context.Context, key string, permission int, routeVa
 
 func permissionFunc(api *API) map[string]PermCheckFunc {
 	return map[string]PermCheckFunc{
-		"permProjectKey":      api.checkProjectPermissions,
-		"permPipelineKey":     api.checkPipelinePermissions,
-		"permApplicationName": api.checkApplicationPermissions,
-		"permWorkflowName":    api.checkWorkflowPermissions,
-		"permGroupName":       api.checkGroupPermissions,
-		"permActionName":      api.checkActionPermissions,
-		"permEnvironmentName": api.checkEnvironmentPermissions,
-		"permModelID":         api.checkWorkerModelPermissions,
+		"permProjectKey":   api.checkProjectPermissions,
+		"permWorkflowName": api.checkWorkflowPermissions,
+		"permGroupName":    api.checkGroupPermissions,
+		"permActionName":   api.checkActionPermissions,
+		"permModelID":      api.checkWorkerModelPermissions,
 	}
 }
 
@@ -122,36 +119,6 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= perm
 }
 
-func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName string, perm int, routeVar map[string]string) bool {
-	// Check if param key exist
-	if projectKey, ok := routeVar["key"]; ok {
-		switch perm {
-		case permission.PermissionRead:
-			return checkProjectReadPermission(ctx, projectKey)
-		default:
-			return deprecatedGetUser(ctx).Permissions.PipelinesPerm[sdk.UserPermissionKey(projectKey, pipelineName)] >= perm
-		}
-	} else {
-		log.Warning("Wrong route configuration. need key parameter")
-	}
-	return false
-}
-
-func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string, perm int, routeVar map[string]string) bool {
-	// Check if param key exist
-	if projectKey, ok := routeVar["key"]; ok {
-		switch perm {
-		case permission.PermissionRead:
-			return checkProjectReadPermission(ctx, projectKey)
-		default:
-			return deprecatedGetUser(ctx).Permissions.EnvironmentsPerm[sdk.UserPermissionKey(projectKey, envName)] >= perm
-		}
-	} else {
-		log.Warning("Wrong route configuration. need key parameter")
-	}
-	return false
-}
-
 func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVar map[string]string) bool {
 	if projectKey, ok := routeVar["key"]; ok {
 		// If need read permission, just check project read permission
@@ -169,21 +136,6 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 
 func checkProjectReadPermission(ctx context.Context, projectKey string) bool {
 	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
-}
-
-func (api *API) checkApplicationPermissions(ctx context.Context, applicationName string, perm int, routeVar map[string]string) bool {
-	// Check if param key exist
-	if projectKey, ok := routeVar["key"]; ok {
-		switch perm {
-		case permission.PermissionRead:
-			return checkProjectReadPermission(ctx, projectKey)
-		default:
-			return deprecatedGetUser(ctx).Permissions.ApplicationsPerm[sdk.UserPermissionKey(projectKey, applicationName)] >= perm
-		}
-	} else {
-		log.Warning("Wrong route configuration. need key parameter")
-	}
-	return false
 }
 
 func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVar map[string]string) bool {

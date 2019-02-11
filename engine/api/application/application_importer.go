@@ -7,10 +7,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Import is able to create a new application and all its components
@@ -21,7 +19,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	}
 
 	if doUpdate {
-		oldApp, errlo := LoadByName(db, store, proj.Key, app.Name, u, LoadOptions.WithGroups, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
+		oldApp, errlo := LoadByName(db, store, proj.Key, app.Name, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
 		if errlo != nil {
 			return sdk.WrapError(errlo, "application.Import> Unable to load application by name: %s", app.Name)
 		}
@@ -35,16 +33,11 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 			return sdk.WrapError(err, "application.Import")
 		}
 
-		//Delete groups
-		if err := group.DeleteAllGroupFromApplication(db, oldApp.ID); err != nil {
-			return sdk.WrapError(err, "Unable to delete group")
-		}
-
 		app.ProjectID = oldApp.ProjectID
 		app.ID = oldApp.ID
 
 		//Save app in database
-		if err := Update(db, store, app, u); err != nil {
+		if err := Update(db, store, app); err != nil {
 			return sdk.WrapError(err, "Unable to update application")
 		}
 
@@ -63,32 +56,8 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		}
 	}
 
-	//Inherit project groups if not provided
-	if app.ApplicationGroups == nil {
-		if msgChan != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgAppGroupInheritPermission, app.Name)
-		}
-		app.ApplicationGroups = proj.ProjectGroups
-	}
-
 	if err := importVariables(db, store, proj, app, u, msgChan); err != nil {
 		return err
-	}
-
-	//Insert group permission on application
-	for i := range app.ApplicationGroups {
-		//Load the group by name
-		g, err := group.LoadGroup(db, app.ApplicationGroups[i].Group.Name)
-		if err != nil {
-			return err
-		}
-		log.Debug("application.Import> Insert group %d in application", g.ID)
-		if err := AddGroup(db, store, proj, app, u, app.ApplicationGroups[i]); err != nil {
-			return err
-		}
-		if msgChan != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgAppGroupSetPermission, g.Name, app.Name)
-		}
 	}
 
 	//Set repositories manager

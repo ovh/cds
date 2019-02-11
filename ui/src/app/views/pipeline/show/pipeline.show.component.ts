@@ -1,24 +1,23 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Params, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Subscription} from 'rxjs';
-import {finalize, first} from 'rxjs/operators';
-import {Application} from '../../../model/application.model';
-import {Environment} from '../../../model/environment.model';
-import {AllKeys} from '../../../model/keys.model';
-import {Pipeline} from '../../../model/pipeline.model';
-import {Project} from '../../../model/project.model';
-import {User} from '../../../model/user.model';
-import {Workflow} from '../../../model/workflow.model';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {KeyService} from '../../../service/keys/keys.service';
-import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {ToastService} from '../../../shared/toast/ToastService';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
+import { Application } from '../../../model/application.model';
+import { Environment } from '../../../model/environment.model';
+import { AllKeys } from '../../../model/keys.model';
+import { Pipeline } from '../../../model/pipeline.model';
+import { Project } from '../../../model/project.model';
+import { User } from '../../../model/user.model';
+import { Workflow } from '../../../model/workflow.model';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { KeyService } from '../../../service/keys/keys.service';
+import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
+import { PipelineStore } from '../../../service/pipeline/pipeline.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
+import { ParameterEvent } from '../../../shared/parameter/parameter.event.model';
+import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -52,9 +51,6 @@ export class PipelineShowComponent implements OnInit {
     remote: string;
 
     queryParams: Params;
-
-    @ViewChild('permWarning')
-        permissionModalWarning: WarningModalComponent;
     @ViewChild('paramWarning')
     parameterModalWarning: WarningModalComponent;
 
@@ -176,39 +172,6 @@ export class PipelineShowComponent implements OnInit {
                 case 'delete':
                     this._pipStore.removeParameter(this.project.key, this.pipeline.name, event.parameter).subscribe(() => {
                         this._toast.success('', this._translate.instant('parameter_deleted'));
-                    });
-                    break;
-            }
-        }
-    }
-
-    /**
-     * Event on permission
-     * @param event
-     */
-    groupEvent(event: PermissionEvent, skip?: boolean): void {
-        if (!skip && this.pipeline.externalChange) {
-            this.permissionModalWarning.show(event);
-        } else {
-            event.gp.permission = Number(event.gp.permission);
-            switch (event.type) {
-                case 'add':
-                    this.permFormLoading = true;
-                    this._pipStore.addPermission(this.project.key, this.pipeline.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_added'));
-                        this.permFormLoading = false;
-                    }, () => {
-                        this.permFormLoading = false;
-                    });
-                    break;
-                case 'update':
-                    this._pipStore.updatePermission(this.project.key, this.pipeline.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_updated'));
-                    });
-                    break;
-                case 'delete':
-                    this._pipStore.removePermission(this.project.key, this.pipeline.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_deleted'));
                     });
                     break;
             }

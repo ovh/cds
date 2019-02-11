@@ -61,17 +61,6 @@ variables:
 	assert.NotNil(t, env)
 	assert.Equal(t, "myNewEnv", env.Name)
 
-	//Check default permission which should be set to the project ones
-	for _, perm := range proj.ProjectGroups {
-		var found bool
-		for _, aperm := range env.EnvironmentGroups {
-			if aperm.Group.Name == perm.Group.Name && aperm.Permission == perm.Permission {
-				found = true
-			}
-		}
-		assert.True(t, found, "Group %s - %d not found", perm.Group.Name, perm.Permission)
-	}
-
 	//Check variables
 	for _, v := range env.Variable {
 		switch v.Name {
@@ -136,8 +125,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getEnvironmentExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -258,8 +247,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getEnvironmentExportHandler, vars)
 	test.NotEmpty(t, uri)

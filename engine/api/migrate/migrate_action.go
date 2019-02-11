@@ -154,7 +154,7 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 
 	//Load the application
 	log.Debug("load application %s", appName)
-	app, err := application.LoadByName(db, store, pkey, appName, nil, application.LoadOptions.WithVariables)
+	app, err := application.LoadByName(db, store, pkey, appName, application.LoadOptions.WithVariables)
 	if err != nil {
 		log.Warning("MigrateActionDEPRECATEDGitCloneJob> application.LoadByName> %v", err)
 	}

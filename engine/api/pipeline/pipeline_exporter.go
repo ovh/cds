@@ -11,18 +11,18 @@ import (
 )
 
 // Export a pipeline
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
+func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, w io.Writer) (int, error) {
 	p, err := LoadPipeline(db, key, name, true)
 	if err != nil {
 		return 0, sdk.WrapError(err, "Cannot load workflow %s", name)
 	}
 
-	return ExportPipeline(*p, f, withPermissions, w)
+	return ExportPipeline(*p, f, w)
 }
 
 // ExportPipeline a pipeline
-func ExportPipeline(p sdk.Pipeline, f exportentities.Format, withPermissions bool, w io.Writer) (int, error) {
-	e := exportentities.NewPipelineV1(p, withPermissions)
+func ExportPipeline(p sdk.Pipeline, f exportentities.Format, w io.Writer) (int, error) {
+	e := exportentities.NewPipelineV1(p)
 
 	// Marshal to the desired format
 	b, err := exportentities.Marshal(e, f)

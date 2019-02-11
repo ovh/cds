@@ -14,10 +14,11 @@ import (
 )
 
 type nodeRunContext struct {
-	Application     sdk.Application
-	Pipeline        sdk.Pipeline
-	Environment     sdk.Environment
+	Application        sdk.Application
+	Pipeline           sdk.Pipeline
+	Environment        sdk.Environment
 	ProjectIntegration sdk.ProjectIntegration
+	NodeGroups         []sdk.GroupPermission
 }
 
 func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {

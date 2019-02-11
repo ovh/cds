@@ -1,0 +1,13 @@
+<ng-template let-context let-modal="modal" #permissionsModal>
+    <div class="header">{{ 'workflow_node_permissions_title' | translate: { node: node.name} }}</div>
+    <div class="content">
+        <app-permission-list [permissions]="node.groups" (event)="groupManagement($event)" [edit]="(workflow.from_repository && workflow.from_repository.length > 0)?false:workflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+        <ng-container *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE && !(workflow.from_repository && workflow.from_repository.length > 0)">
+            <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>
+            <app-permission-form (createGroupPermissionEvent)="groupManagement($event)" [loading]="loading"></app-permission-form>
+        </ng-container>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+    </div>
+</ng-template>

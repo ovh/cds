@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -26,66 +25,6 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 	}
 
 	pip.ID = oldPipeline.ID
-
-	if len(pip.GroupPermission) > 0 {
-		//Browse all new persmission to know if we had to insert of update
-		for _, gp := range pip.GroupPermission {
-			var gpFound bool
-			for _, ogp := range oldPipeline.GroupPermission {
-				if gp.Group.Name == ogp.Group.Name {
-					gpFound = true
-					if gp.Permission != ogp.Permission {
-						//Update group permission
-						g, err := group.LoadGroup(db, gp.Group.Name)
-						if err != nil {
-							return sdk.WrapError(err, "Unable to load group %s", gp.Group.Name)
-						}
-						if err := group.UpdateGroupRoleInPipeline(db, pip.ID, g.ID, gp.Permission); err != nil {
-							return sdk.WrapError(err, "Unable to udapte group %s in %s", gp.Group.Name, pip.Name)
-						}
-						if msgChan != nil {
-							msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupUpdated, gp.Group.Name, pip.Name)
-						}
-					}
-					break
-				}
-			}
-			if !gpFound {
-				//Insert group permission
-				g, err := group.LoadGroup(db, gp.Group.Name)
-				if err != nil {
-					return sdk.WrapError(err, "Unable to load group %s", gp.Group.Name)
-				}
-				if err := group.InsertGroupInPipeline(db, pip.ID, g.ID, gp.Permission); err != nil {
-					return sdk.WrapError(err, "Unable to insert group %s in %s", gp.Group.Name, pip.Name)
-				}
-				if msgChan != nil {
-					msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupAdded, gp.Group.Name, pip.Name)
-				}
-			}
-		}
-
-		//Browse all old persmission to know if we had to remove some of then
-		for _, ogp := range oldPipeline.GroupPermission {
-			var ogpFound bool
-			for _, gp := range pip.GroupPermission {
-				if gp.Group.Name == ogp.Group.Name {
-					ogpFound = true
-					break
-				}
-			}
-			if !ogpFound {
-				//Delete group permission
-				if err := group.DeleteGroupFromPipeline(db, pip.ID, ogp.Group.ID); err != nil {
-					return sdk.WrapError(err, "Unable to delete group %s in %s", ogp.Group.Name, pip.Name)
-				}
-				if msgChan != nil {
-					msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupDeleted, ogp.Group.Name, pip.Name)
-				}
-			}
-		}
-	}
-
 	for i := range pip.Stages {
 		s := &pip.Stages[i]
 		var stageFound bool
@@ -271,16 +210,6 @@ func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *s
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
 	if err := InsertPipeline(db, store, proj, pip, u); err != nil {
-		return err
-	}
-
-	//If no GroupPermission provided, inherit from project
-	if pip.GroupPermission == nil || len(pip.GroupPermission) == 0 {
-		pip.GroupPermission = proj.ProjectGroups
-	}
-
-	//Insert group permission
-	if err := group.InsertGroupsInPipeline(db, pip.GroupPermission, pip.ID); err != nil {
 		return err
 	}
 

@@ -33,6 +33,7 @@ import { GroupFormComponent } from './group/form/group.form.component';
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
+import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
 import { WarningModalComponent } from './modal/warning/warning.component';
 import { ParameterDescriptionComponent } from './parameter/description-popup/description.popup.component';
@@ -89,6 +90,7 @@ import { WorkflowNodeContextComponent } from './workflow/modal/context/workflow.
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
+import { WorkflowNodePermissionsComponent } from './workflow/modal/permissions/node.permissions.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
@@ -162,6 +164,7 @@ import { ZoneComponent } from './zone/zone.component';
         VulnerabilitiesListComponent,
         WarningModalComponent,
         DeleteModalComponent,
+        ConfirmModalComponent,
         LabelsEditComponent,
         WarningTabComponent,
         WarningMarkComponent,
@@ -194,6 +197,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
+        WorkflowNodePermissionsComponent,
         WorkflowTriggerComponent,
         WorkflowNodeConditionFormComponent,
         WorkflowNodeConditionListComponent,
@@ -285,6 +289,7 @@ import { ZoneComponent } from './zone/zone.component';
         WarningMarkListComponent,
         WarningModalComponent,
         DeleteModalComponent,
+        ConfirmModalComponent,
         LabelsEditComponent,
 
         WorkflowWNodeComponent,
@@ -304,6 +309,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
+        WorkflowNodePermissionsComponent,
         WorkflowTriggerComponent,
         ZoneComponent,
         ZoneContentComponent,

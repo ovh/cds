@@ -1,0 +1,12 @@
+<ng-template let-context let-modal="modal" #myConfirmModal>
+    <div class="header">
+        {{title}}
+    </div>
+    <div class="content">
+        {{msg}}
+    </div>
+    <div class="actions">
+        <div class="ui blue button" (click)="eventAndClose(false)">{{'common_no' | translate}}</div>
+        <div class="ui green button" (click)="eventAndClose(true)">{{'common_yes' | translate}}</div>
+    </div>
+</ng-template>

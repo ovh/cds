@@ -241,8 +241,9 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 		}
 	}
 
+	projectPermission := permission.ProjectPermission(event.ProjectKey, client.User)
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if client.User.Admin || isSharedInfra || permission.ProjectPermission(event.ProjectKey, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false
@@ -254,19 +255,19 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if client.User.Admin || isSharedInfra || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if client.User.Admin || isSharedInfra || permission.PipelinePermission(event.ProjectKey, event.PipelineName, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if client.User.Admin || isSharedInfra || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false

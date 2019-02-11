@@ -1,19 +1,19 @@
 /* tslint:disable:no-unused-variable */
 
-import {APP_BASE_HREF} from '@angular/common';
-import {async, TestBed} from '@angular/core/testing';
-import {RouterModule} from '@angular/router';
-import {Observable} from 'rxjs/Observable';
-import {first} from 'rxjs/operators';
-import {AppModule} from '../../app.module';
-import {Application} from '../../model/application.model';
-import {Environment} from '../../model/environment.model';
-import {Group, GroupPermission} from '../../model/group.model';
-import {LoadOpts, Project} from '../../model/project.model';
-import {RepositoriesManager} from '../../model/repositories.model';
-import {Variable} from '../../model/variable.model';
-import {ProjectService} from './project.service';
-import {ProjectStore} from './project.store';
+import { APP_BASE_HREF } from '@angular/common';
+import { async, TestBed } from '@angular/core/testing';
+import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs/Observable';
+import { first } from 'rxjs/operators';
+import { AppModule } from '../../app.module';
+import { Application } from '../../model/application.model';
+import { Environment } from '../../model/environment.model';
+import { Group, GroupPermission } from '../../model/group.model';
+import { LoadOpts, Project } from '../../model/project.model';
+import { RepositoriesManager } from '../../model/repositories.model';
+import { Variable } from '../../model/variable.model';
+import { ProjectService } from './project.service';
+import { ProjectStore } from './project.store';
 
 describe('CDS: project Store', () => {
 
@@ -483,54 +483,6 @@ describe('CDS: project Store', () => {
         expect(deleteVarCheck).toBeTruthy('Must check project delete var');
     }));
 
-    it('should add/update/delete an environment permission', async(() => {
-        const projectStore = TestBed.get(ProjectStore);
-
-        let envAdd = new Environment();
-        envAdd.name = 'prod';
-
-        // Get project in cache
-        projectStore.getProjects('key1').subscribe(() => {
-        });
-
-        projectStore.addProjectEnvironment('key1', envAdd).subscribe(() => {});
-
-        // Add env permission
-        let gpA: Array<GroupPermission> = new Array<GroupPermission>();
-        let gp = new GroupPermission();
-        gp.permission = 7;
-        gp.group = new Group();
-        gp.group.id = 1;
-        gp.group.name = 'grp1';
-        gpA.push(gp);
-        projectStore.addEnvironmentPermission('key1', envAdd.name, gpA).subscribe(() => {});
-
-        let addEnvCheck = false;
-        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
-            addEnvCheck = true;
-            expect(projs.get('key1').environments.length).toBe(1, 'Project must have 1 env');
-            expect(projs.get('key1').environments[0].groups.length).toBe(1);
-            expect(projs.get('key1').environments[0].groups[0].permission).toBe(7);
-            expect(projs.get('key1').environments[0].groups[0].group.name).toBe('grp1');
-        });
-        expect(addEnvCheck).toBeTruthy('Must check env update');
-
-        // update gp
-        gp.permission = 4;
-        projectStore.updateEnvironmentPermission('key1', envAdd.name, gp).subscribe(() => {
-        });
-
-        let renameVarEnvCheck = false;
-        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
-            renameVarEnvCheck = true;
-            expect(projs.get('key1').environments.length).toBe(1);
-            expect(projs.get('key1').environments[0].groups.length).toBe(1);
-            expect(projs.get('key1').environments[0].groups[0].permission).toBe(4);
-        });
-        expect(renameVarEnvCheck).toBeTruthy('Must check env update');
-    }));
-
-
     function createProject(key: string, name: string): Project {
         let project: Project = new Project();
         project.name = name;
@@ -679,23 +631,6 @@ describe('CDS: project Store', () => {
             p.environments.push(e);
             e.variables = new Array<Variable>();
             return Observable.of(p);
-        }
-
-        addEnvironmentPermission(key: string, envName: string, gps: Array<GroupPermission>): Observable<Environment> {
-            let e = new Environment();
-            e.groups = gps
-            return Observable.of(e);
-        }
-
-        updateEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<Environment> {
-            let e = new Environment();
-            e.groups = new Array<GroupPermission>();
-            e.groups.push(gp);
-            return Observable.of(e);
-        }
-
-        removeEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<boolean> {
-            return Observable.of(true);
         }
 
         deleteProject(key: string): Observable<boolean> {

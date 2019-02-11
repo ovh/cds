@@ -140,7 +140,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 func (api *API) getWorkflowAllRunsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		name := r.FormValue("workflow")
 		route := api.Router.GetRoute("GET", api.getWorkflowAllRunsHandler, map[string]string{
 			"permProjectKey": key,
@@ -928,12 +928,6 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		opts.Manual = &sdk.WorkflowNodeRunManual{}
 	}
 	opts.Manual.User = *u
-	//Copy the user but empty groups and permissions
-	opts.Manual.User.Groups = nil
-	//Clean all permissions except for environments
-	opts.Manual.User.Permissions = sdk.UserPermissions{
-		EnvironmentsPerm: opts.Manual.User.Permissions.EnvironmentsPerm,
-	}
 
 	if len(opts.FromNodeIDs) > 0 && lastRun != nil {
 		fromNode := wf.WorkflowData.NodeByID(opts.FromNodeIDs[0])
@@ -941,11 +935,8 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
 		}
 
-		// Check Env Permission
-		if fromNode.Context.EnvironmentID != 0 {
-			if !permission.AccessToEnvironment(p.Key, lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name, u, permission.PermissionReadExecute) {
-				return nil, sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNode> Not enough right to run on environment %s", lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name)
-			}
+		if !permission.AccessToWorkflowNode(wf, fromNode, u, permission.PermissionReadExecute) {
+			return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wf.Root.ID)
 		}
 
 		// Continue  the current workflow run
@@ -956,6 +947,10 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		_, _ = report.Merge(r1, nil)
 
 	} else {
+		if !permission.AccessToWorkflowNode(wf, &wf.WorkflowData.Node, u, permission.PermissionReadExecute) {
+			return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wf.WorkflowData.Node.ID)
+		}
+
 		// Start new workflow
 		_, r1, errmr := workflow.ManualRun(ctx, tx, store, p, wf, opts.Manual, asCodeInfos)
 		if errmr != nil {

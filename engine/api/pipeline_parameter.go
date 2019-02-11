@@ -15,8 +15,8 @@ import (
 func (api *API) getParametersInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
@@ -35,8 +35,8 @@ func (api *API) getParametersInPipelineHandler() service.Handler {
 func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 		paramName := vars["name"]
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
@@ -71,8 +71,8 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 func (api *API) updateParameterInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 		paramName := vars["name"]
 
 		var newParam sdk.Parameter
@@ -118,8 +118,8 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 func (api *API) addParameterInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 		paramName := vars["name"]
 
 		var newParam sdk.Parameter

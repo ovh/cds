@@ -1,0 +1,44 @@
+name: Create a simple workflow (ITSCWRKFLW10) and try to run it
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW10/echo.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW10/ITSCWRKFLW10.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW10"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW10"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW10-ro"
+  - script: "{{.cds.build.cdsctl}} group add ITSCWRKFLW10-ro"
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW10 ITSCWRKFLW10"
+
+- name: push workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW10 ./tests/fixtures/ITSCWRKFLW10/*.yml --skip-update-files
+
+- name: grant new group in workflow
+  steps:
+  - script: {{.cds.build.cdsctl}} group user add ITSCWRKFLW10-ro cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 4 --only-project
+  - script: {{.cds.build.cdsctl}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 7 --workflow ITSCWRKFLW10-WORKFLOW
+
+- name: run workflow should fail
+  steps:
+  - script:  {{.cds.build.cdsctlro}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
+    assertions:
+    - result.code ShouldNotEqual 0
+    - "result.systemout ShouldContainSubstring you don't have execution right"
+
+- name: add user in right group
+  steps:
+  - script: {{.cds.build.cdsctl}} group user add ITSCWRKFLW10 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctlro}} group create TESTITSCWRKFLW10
+  - script: {{.cds.build.cdsctlro}} group delete TESTITSCWRKFLW10 --force
+
+- name: run workflow should success
+  steps:
+  - script:  {{.cds.build.cdsctlro}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+

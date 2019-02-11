@@ -62,7 +62,7 @@ func TestLoadAllByRepo(t *testing.T) {
 	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
-	app, _ := application.LoadByName(db, cache, "TestLoadAllByRepo", "TestLoadAllByRepo", nil)
+	app, _ := application.LoadByName(db, cache, "TestLoadAllByRepo", "TestLoadAllByRepo")
 	if app != nil {
 		application.DeleteApplication(db, app.ID)
 	}
