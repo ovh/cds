@@ -53,7 +53,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithoutPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	//This is a mock for the vcs service
@@ -199,7 +199,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithHashOnlyProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	//This is a mock for the vcs service
@@ -334,7 +334,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	//This is a mock for the vcs service
@@ -1430,7 +1430,7 @@ func writeError(w *http.Response, err error) (*http.Response, error) {
 	enc := json.NewEncoder(body)
 	w.Body = ioutil.NopCloser(body)
 	sdkErr := sdk.ExtractHTTPError(err, "")
-	enc.Encode(sdkErr)
+	_ = enc.Encode(sdkErr) // nolint
 	w.StatusCode = sdkErr.Status
 	return w, sdkErr
 }

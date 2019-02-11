@@ -20,7 +20,7 @@ import (
 )
 
 type mockHTTPClient struct {
-	f func(r *http.Request) (*http.Response, error)
+	f func(r *http.Request) (*http.Response, error) // nolint
 }
 
 func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {

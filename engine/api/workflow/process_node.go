@@ -368,14 +368,12 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 }
 
 func getParentsStatus(wr *sdk.WorkflowRun, parents []*sdk.WorkflowNodeRun) string {
-	if parents != nil {
-		for _, p := range parents {
-			for _, v := range wr.WorkflowNodeRuns {
-				for _, run := range v {
-					if p.ID == run.ID {
-						if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
-							return run.Status
-						}
+	for _, p := range parents {
+		for _, v := range wr.WorkflowNodeRuns {
+			for _, run := range v {
+				if p.ID == run.ID {
+					if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
+						return run.Status
 					}
 				}
 			}
@@ -389,7 +387,7 @@ func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.Work
 	var stages []sdk.Stage
 	var pip sdk.Pipeline
 	if n.Context.PipelineID > 0 {
-		pip, _ = wr.Workflow.Pipelines[n.Context.PipelineID]
+		pip = wr.Workflow.Pipelines[n.Context.PipelineID]
 		stages = make([]sdk.Stage, len(pip.Stages))
 		copy(stages, pip.Stages)
 	}
@@ -427,7 +425,7 @@ func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.Work
 }
 
 func computePipelineParameters(wr *sdk.WorkflowRun, n *sdk.Node, manual *sdk.WorkflowNodeRunManual) []sdk.Parameter {
-	pip, _ := wr.Workflow.Pipelines[n.Context.PipelineID]
+	pip := wr.Workflow.Pipelines[n.Context.PipelineID]
 
 	pipParams := sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
 

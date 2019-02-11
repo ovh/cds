@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	url2 "net/url"
+	"net/url"
 	"strings"
 	"time"
 
@@ -215,10 +215,10 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	url, _ := url2.Parse(v.URL)
+	URL, _ := url.Parse(v.URL)
 
 	// Dial TCP
-	conn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", url.Hostname(), v.SSHPort), config)
+	conn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", URL.Hostname(), v.SSHPort), config)
 	if err != nil {
 		log.Error("ListenGerritStreamEvent> unable to open ssh connection to gerrit: %v", err)
 		return
