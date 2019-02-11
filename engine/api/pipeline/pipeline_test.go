@@ -181,7 +181,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 	test.NoError(t, workflow.RenameNode(db, &w))
 	(&w).RetroMigrate()
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 

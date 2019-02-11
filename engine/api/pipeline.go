@@ -256,7 +256,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 			return err
 		}
 
-		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true, deprecatedGetUser(ctx))
+		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warning("getPipelinesHandler>Cannot load pipelines: %s\n", err)

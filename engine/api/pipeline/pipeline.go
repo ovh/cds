@@ -212,7 +212,7 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 }
 
 // LoadPipelines loads all pipelines in a project
-func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, user *sdk.User) ([]sdk.Pipeline, error) {
+func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) ([]sdk.Pipeline, error) {
 	var pip []sdk.Pipeline
 	query := `SELECT id, name, description, project_id, type, last_modified
 			  FROM pipeline
@@ -257,7 +257,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 }
 
 // LoadAllNames returns all pipeline names
-func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.User) ([]sdk.IDName, error) {
+func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64) ([]sdk.IDName, error) {
 	query := `SELECT pipeline.id, pipeline.name, pipeline.description
 			  FROM pipeline
 			  WHERE project_id = $1

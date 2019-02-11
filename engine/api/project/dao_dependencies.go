@@ -176,7 +176,7 @@ var (
 	}
 
 	loadPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pipelines, errPip := pipeline.LoadPipelines(db, proj.ID, false, u)
+		pipelines, errPip := pipeline.LoadPipelines(db, proj.ID, false)
 		if errPip != nil && sdk.Cause(errPip) != sql.ErrNoRows && !sdk.ErrorIs(errPip, sdk.ErrPipelineNotFound) && !sdk.ErrorIs(errPip, sdk.ErrPipelineNotAttached) {
 			return sdk.WrapError(errPip, "application.loadPipelines")
 		}
@@ -188,7 +188,7 @@ var (
 		var err error
 		var pips []sdk.IDName
 
-		if pips, err = pipeline.LoadAllNames(db, store, proj.ID, u); err != nil {
+		if pips, err = pipeline.LoadAllNames(db, store, proj.ID); err != nil {
 			return sdk.WrapError(err, "pipeline.loadpipelinenames")
 		}
 		proj.PipelineNames = pips
