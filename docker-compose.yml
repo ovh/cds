@@ -31,10 +31,10 @@ services:
       - /tmp:/app/artifacts
     environment:
       CDS_API_DATABASE_HOST: cds-db
-      CDS_API_URL_API: ${HOSTNAME}:8081
-      CDS_API_URL_UI: ${HOSTNAME}:8080
+      CDS_API_URL_API: http://${HOSTNAME}:8081
+      CDS_API_URL_UI: http://${HOSTNAME}:2015
       CDS_API_AUTH_DEFAULTGROUP: cdsdemo
-      CDS_LOG_LEVEL: debug
+      CDS_LOG_LEVEL: info
       CDS_API_CACHE_MODE: redis
       CDS_API_CACHE_REDIS_HOST: cds-cache:6379
       CDS_API_CACHE_REDIS_PASSWORD: cds
@@ -79,7 +79,6 @@ services:
     environment:
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_NAME: hatchery-swarm
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
-      # if you launch docker-compose on osx with socat, set 2376 insteand of 2375 below
       DOCKER_HOST: tcp://${HOSTNAME}:2375
       # CDS_LOG_LEVEL: debug
       # DOCKER_HOST: unix://var/run/docker.sock
