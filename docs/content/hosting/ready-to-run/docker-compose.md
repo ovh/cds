@@ -21,8 +21,8 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 ## How to run
 
 ```bash
-$ git clone https://github.com/ovh/cds.git
-$ cd cds
+$ mkdir /tmp/cdstest && cd /tmp/cdstest
+$ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
 
 # Get the latest version
@@ -40,83 +40,34 @@ $ docker-compose up --no-recreate cds-migrate
 # You should have this log: "cds_cds-migrate_1 exited with code 0"
 
 # run API and UI
-$ docker-compose up cds-api cds-ui
-
+$ docker-compose up -d cds-api cds-ui
 ```
 
-Open a browser on http://localhost:2015, then register a new user `admin`,
+- Create the first user with WebUI
+
+Open a browser on http://localhost:2015/account/signup, then register a new user `admin`,
 with an email `admin@localhost.local` for example.
 As there is no SMTP server configured in docker-compose.yml file,
 run `docker-compose logs` to get URL for validate the registration.
 
-After registration on UI, keep the password displayed, we will use it after.
-
-## Prepare Project, Pipeline and Application
-
-On UI http://localhost:2015:
-
-- Create a project
-- Create a workflow
-- On the first Pipeline, add a stage and a job
-- Inside job, add a step of type "[script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}})"
-- In script content, add theses lines:
-
 ```bash
-#!/bin/bash
-set -ex
-echo "foo"
-sleep 10
-echo "bar"
+$ docker-compose logs|grep 'verify/admin'
 ```
 
-## Run Pipeline
+After registration on UI, keep the password displayed, we will use it in next step.
 
-Run pipeline. As you can see now, your pipeline is in "waiting status". You have
-to run a CDS Worker or a CDS Hatchery which aims to create workers.
+- Login with cdsctl
 
-Let's run a hatchery with docker-compose.
+Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
+If you don't want to use the keychain, you can select the version i386.
 
-We will spawn a container with a hatchery in `local` mode. Workers will be spawn inside this container.
+See: [cdsctl documentation]({{< relref "cli/cdsctl/_index.md" >}})
 
-```bash
-$ docker-compose up cds-hatchery-local
-```
-
-*Running a hatchery "local" in a container is not recommended. Use this way only for testing purpose*.
-
-After running this Hatchery, a worker will be spawned. Your pipeline will be in "Building", then "Success" status.
-
-## Hatchery Docker Swarm
-
-The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) runs hatchery belonging to the `shared.infra` groups.
-
-A `local hatchery` spawns workers on the same host as the hatchery. This is usually useful for specific cases, as
-running job on specific hardware.
-But this hatchery does not make it possible to respect the isolation of workspaces
-of workers as they share the same workspace.
-
-There is another hatchery configured in [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) file: a 'swarm hatchery'
-
-Please check that your Docker installation allows Docker API calls on `tcp://${HOSTNAME}:2375`
-Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:2375` in
-[docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml)
-
-```bash
-$ export HOSTNAME=$(hostname)
-$ docker-compose up cds-hatchery-swarm
-```
-
-A `swarm hatchery` spawns CDS Workers inside dedicated containers.
-This ensures isolation of the workspaces and resources.
-
-Now, you have to create worker model of type `docker`, please follow [how to create a worker model Docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}}).
-
-## Next with Actions, Plugins
-
-- You can download CDS CLI from https://github.com/ovh/cds/releases or from http://localhost:2015/settings/downloads
+You can download cdsctl CLI from http://localhost:2015/settings/downloads
 ```bash
 # on a Linux workstation:
-$ wget http://localhost:2015/cdsapi/download/engine/linux/amd64 -O cdsctl
+$ curl http://localhost:8081/download/cdsctl/linux/amd64 -o cdsctl
+# on a osX workstation, it's curl http://localhost:8081/download/cdsctl/darwin/amd64 -o cdsctl
 $ chmod +x cdsctl
 $ ./cdsctl login --api-url http://localhost:8081 -u admin
 CDS API URL: http://localhost:8081
@@ -126,30 +77,116 @@ Password:
 Login successful
 ```
 
-Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
-If you don't want to use the keychain, you can select the version i386.
-
-See: [cdsctl documentation]({{< relref "cli/cdsctl/_index.md" >}})
-
 - Test cdsctl
+
 ```bash
-$ cdsctl user me
+$ ./cdsctl user me
 CDS API:http://localhost:8081
-fullname  admin
-email     admin@localhost.local
-username  admin
+email       admin@localhost.local
+username    admin
+fullname    Administrator
 ```
 
-- Import actions, example:
+- Import a workflow template
+
 ```bash
-# get cds-docker-package.yml from https://github.com/ovh/cds/blob/master/contrib/actions/
-$ cdsctl action import cds-docker-package.yml
+$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+Workflow template shared.infra/demo-workflow-hello-world has been created
+Template successfully pushed !
+```
+
+- Create a project, then create your first workflow
+
+```bash
+$ ./cdsctl project create DEMO FirstProject
+$ ./cdsctl workflow applyTemplate
+? Found one CDS project DEMO - FirstProject. Is it correct? Yes
+? Choose the CDS template to apply: Demo workflow hello world (shared.infra/demo-workflow-hello-world)
+? Give a valid name for the new generated workflow MyFirstWorkflow
+? Push the generated workflow to the DEMO project Yes
+Application MyFirstWorkflow successfully created
+Application variables for MyFirstWorkflow are successfully created
+Permission applied to group FirstProject to application MyFirstWorkflow
+Environment MyFirstWorkflow-prod successfully created
+Environment MyFirstWorkflow-dev successfully created
+Environment MyFirstWorkflow-preprod successfully created
+Pipeline build-1 successfully created
+Pipeline deploy-1 successfully created
+Pipeline it-1 successfully created
+Workflow MyFirstWorkflow has been created
+Workflow successfully pushed !
+.cds/MyFirstWorkflow.yml
+.cds/build-1.pip.yml
+.cds/deploy-1.pip.yml
+.cds/it-1.pip.yml
+.cds/MyFirstWorkflow.app.yml
+.cds/MyFirstWorkflow-dev.env.yml
+.cds/MyFirstWorkflow-preprod.env.yml
+.cds/MyFirstWorkflow-prod.env.yml
+```
+
+Before running your new Workflow, we have to create a worker model and start a Hatchery for spawning workers.
+
+- Create our first worker model
+
+```bash
+$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
+Worker model go-official-1.11.4-stretch imported with success
+```
+
+- Hatchery Docker Swarm
+
+The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) runs hatchery belonging to the `shared.infra` groups.
+
+Please check that your Docker installation allows Docker API calls on `tcp://${HOSTNAME}:2375`
+Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:2375` in
+[docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml)
+
+```bash
+$ export HOSTNAME=$(hostname)
+$ # For osX user run this container. This will allow hatchery:swarm to communicate with your docker daemon
+$ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+$ docker-compose up -d cds-hatchery-swarm
+```
+
+A `swarm hatchery` spawns CDS Workers inside dedicated containers.
+This ensures isolation of the workspaces and resources.
+
+- Run CDS Workflow!
+
+```bash
+$ ./cdsctl workflow run DEMO MyFirstWorkflow
+Workflow MyFirstWorkflow #1 has been launched
+http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1
+```
+
+- Check on UI
+
+on http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1 you will have
+
+![Workflow Generated](/images/ready_to_run_docker_compose_ui.png)
+
+You see that the pipeline deploy in production was not launched automatically. 
+There is a Run Condition on it `cds.manual = true`: 
+
+![Run Condition](/images/ready_to_run_docker_compose_run_condition.png)
+
+The build pipeline contains two stages, with only one job in each stage
+
+![Build Pipeline](/images/ready_to_run_docker_compose_build_pipeline.png)
+
+## Next with Actions, Plugins
+
+- Import actions, example:
+
+```bash
+$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
 ```
 
 - Import plugins: Please read [Plugins]({{< relref "workflows/pipelines/actions/plugins/_index.md" >}})
 
 # Go further
 
-- How to use OpenStack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
+- How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "hatchery/openstack.md" >}})
 - Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
 - Learn more about CDS variables [read more]({{< relref "workflows/pipelines/variables.md" >}})

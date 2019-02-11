@@ -1,0 +1,10 @@
+version: v1.0
+name: it-[[.id]]
+stages:
+- it
+jobs:
+- job: it
+  stage: it
+  steps:
+  - script:
+    - echo "Testing my application at {{.cds.env.url}}"
