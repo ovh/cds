@@ -25,13 +25,14 @@ func Test_doWebHookExecution(t *testing.T) {
 			RequestURL:  "uid=42413e87905b813a375c7043ce9d4047b7e265ae3730b60180cad02ae81cc62385e5b05b9e7c758b15bb3872498a5e88963f3deac308f636baf345ed9cf1b259&project=IRTM&name=rtm-packaging&branch=master&hash=123456789&message=monmessage&author=sguiheux",
 		},
 	}
-	h, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(task)
 	test.NoError(t, err)
 
-	assert.Equal(t, "master", h.Payload["branch"])
-	assert.Equal(t, "sguiheux", h.Payload["author"])
-	assert.Equal(t, "monmessage", h.Payload["message"])
-	assert.Equal(t, "123456789", h.Payload["hash"])
+	assert.Equal(t, 1, len(hs))
+	assert.Equal(t, "master", hs[0].Payload["branch"])
+	assert.Equal(t, "sguiheux", hs[0].Payload["author"])
+	assert.Equal(t, "monmessage", hs[0].Payload["message"])
+	assert.Equal(t, "123456789", hs[0].Payload["hash"])
 }
 func Test_doWebHookExecutionGithub(t *testing.T) {
 	log.SetLogger(t)
@@ -47,13 +48,14 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 			RequestURL: "",
 		},
 	}
-	h, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(task)
 	test.NoError(t, err)
 
-	assert.Equal(t, "my-branch", h.Payload["git.branch"])
-	assert.Equal(t, "baxterthehacker", h.Payload["git.author"])
-	assert.Equal(t, "Update README.md", h.Payload["git.message"])
-	assert.Equal(t, "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c", h.Payload["git.hash"])
+	assert.Equal(t, 1, len(hs))
+	assert.Equal(t, "my-branch", hs[0].Payload["git.branch"])
+	assert.Equal(t, "baxterthehacker", hs[0].Payload["git.author"])
+	assert.Equal(t, "Update README.md", hs[0].Payload["git.message"])
+	assert.Equal(t, "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c", hs[0].Payload["git.hash"])
 }
 
 func Test_doWebHookExecutionTagGithub(t *testing.T) {
@@ -70,14 +72,15 @@ func Test_doWebHookExecutionTagGithub(t *testing.T) {
 			RequestURL: "",
 		},
 	}
-	h, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(task)
 	test.NoError(t, err)
 
-	assert.Equal(t, "", h.Payload["git.branch"])
-	assert.Equal(t, "my-branch", h.Payload["git.tag"])
-	assert.Equal(t, "baxterthehacker", h.Payload["git.author"])
-	assert.Equal(t, "Update README.md", h.Payload["git.message"])
-	assert.Equal(t, "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c", h.Payload["git.hash"])
+	assert.Equal(t, 1, len(hs))
+	assert.Equal(t, "", hs[0].Payload["git.branch"])
+	assert.Equal(t, "my-branch", hs[0].Payload["git.tag"])
+	assert.Equal(t, "baxterthehacker", hs[0].Payload["git.author"])
+	assert.Equal(t, "Update README.md", hs[0].Payload["git.message"])
+	assert.Equal(t, "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c", hs[0].Payload["git.hash"])
 }
 
 func Test_doWebHookExecutionGitlab(t *testing.T) {
@@ -94,13 +97,14 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 			RequestURL: "",
 		},
 	}
-	h, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(task)
 	test.NoError(t, err)
 
-	assert.Equal(t, "master", h.Payload["git.branch"])
-	assert.Equal(t, "jsmith", h.Payload["git.author"])
-	assert.Equal(t, "Update Catalan translation to e38cb41.", h.Payload["git.message"])
-	assert.Equal(t, "da1560886d4f094c3e6c9ef40349f7d38b5d27d7", h.Payload["git.hash"])
+	assert.Equal(t, 1, len(hs))
+	assert.Equal(t, "master", hs[0].Payload["git.branch"])
+	assert.Equal(t, "jsmith", hs[0].Payload["git.author"])
+	assert.Equal(t, "Update Catalan translation to e38cb41.", hs[0].Payload["git.message"])
+	assert.Equal(t, "da1560886d4f094c3e6c9ef40349f7d38b5d27d7", hs[0].Payload["git.hash"])
 }
 
 func Test_doWebHookExecutionBitbucket(t *testing.T) {
@@ -117,12 +121,39 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 			RequestURL: "",
 		},
 	}
-	h, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(task)
 	test.NoError(t, err)
 
-	assert.Equal(t, "name-of-branch", h.Payload["git.branch"])
-	assert.Equal(t, "steven.guiheux", h.Payload["git.author"])
-	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", h.Payload["git.hash"])
+	assert.Equal(t, 1, len(hs))
+	assert.Equal(t, "name-of-branch", hs[0].Payload["git.branch"])
+	assert.Equal(t, "steven.guiheux", hs[0].Payload["git.author"])
+	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
+}
+
+func Test_doWebHookExecutionBitbucketMultiple(t *testing.T) {
+	log.SetLogger(t)
+	s := Service{}
+	task := &sdk.TaskExecution{
+		UUID: sdk.RandomString(10),
+		Type: TypeRepoManagerWebHook,
+		WebHook: &sdk.WebHookExecution{
+			RequestBody: []byte(bitbucketMultiplePushEvent),
+			RequestHeader: map[string][]string{
+				BitbucketHeader: {"repo:refs_changed"},
+			},
+			RequestURL: "",
+		},
+	}
+	hs, err := s.doWebHookExecution(task)
+	test.NoError(t, err)
+
+	assert.Equal(t, 2, len(hs))
+	assert.Equal(t, "name-of-branch", hs[0].Payload["git.branch"])
+	assert.Equal(t, "steven.guiheux", hs[0].Payload["git.author"])
+	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
+	assert.Equal(t, "name-of-branch-bis", hs[1].Payload["git.branch"])
+	assert.Equal(t, "steven.guiheux", hs[1].Payload["git.author"])
+	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 }
 
 var bitbucketPushEvent = `
@@ -171,6 +202,71 @@ var bitbucketPushEvent = `
                 "type": "BRANCH"
             },
             "refId": "refs/heads/name-of-branch",
+            "fromHash": "0000000000000000000000000000000000000000",
+            "toHash": "9f4fac7ec5642099982a86f584f2c4a362adb670",
+            "type": "ADD"
+        }
+    ]
+}
+`
+
+var bitbucketMultiplePushEvent = `
+	{
+    "eventKey": "repo:refs_changed",
+    "date": "2017-11-30T15:24:01+0100",
+    "actor": {
+        "name": "steven.guiheux",
+        "emailAddress": "steven.guiheux@corp.ovh.com",
+        "id": 1363,
+        "displayName": "Steven Guiheux",
+        "active": true,
+        "slug": "steven.guiheux",
+        "type": "NORMAL"
+    },
+    "repository": {
+        "slug": "sseclient",
+        "id": 6096,
+        "name": "sseclient",
+        "scmId": "git",
+        "state": "AVAILABLE",
+        "statusMessage": "Available",
+        "forkable": true,
+        "project": {
+            "key": "~STEVEN.GUIHEUX",
+            "id": 112,
+            "name": "Steven Guiheux",
+            "type": "PERSONAL",
+            "owner": {
+                "name": "steven.guiheux",
+                "emailAddress": "steven.guiheux@corp.ovh.com",
+                "id": 1363,
+                "displayName": "Steven Guiheux",
+                "active": true,
+                "slug": "steven.guiheux",
+                "type": "NORMAL"
+            }
+        },
+        "public": true
+    },
+    "changes": [
+        {
+            "ref": {
+                "id": "refs/heads/name-of-branch",
+                "displayId": "name-of-branch",
+                "type": "BRANCH"
+            },
+            "refId": "refs/heads/name-of-branch",
+            "fromHash": "0000000000000000000000000000000000000000",
+            "toHash": "9f4fac7ec5642099982a86f584f2c4a362adb670",
+            "type": "ADD"
+        },
+        {
+            "ref": {
+                "id": "refs/heads/name-of-branch-bis",
+                "displayId": "name-of-branch-bis",
+                "type": "BRANCH"
+            },
+            "refId": "refs/heads/name-of-branch-bis",
             "fromHash": "0000000000000000000000000000000000000000",
             "toHash": "9f4fac7ec5642099982a86f584f2c4a362adb670",
             "type": "ADD"

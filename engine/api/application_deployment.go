@@ -18,10 +18,10 @@ import (
 func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars[permProjectKey]
+		appName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategiesConfigHandler")
 		}
@@ -33,8 +33,8 @@ func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handle
 func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars[permProjectKey]
+		appName := vars["applicationName"]
 		pfName := vars["integration"]
 
 		var pfConfig sdk.IntegrationConfig
@@ -69,26 +69,26 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return sdk.WrapError(sdk.ErrForbidden, "postApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithClearDeploymentStrategies)
+		app, err := application.LoadByName(tx, api.Cache, key, appName, application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
 
 		oldPfConfig, has := app.DeploymentStrategies[pfName]
 		if !has {
-			oldPfConfig = pf.Model.DeploymentDefaultConfig
-		}
-		if oldPfConfig == nil {
-			oldPfConfig = sdk.IntegrationConfig{}
+			if pf.Model.DeploymentDefaultConfig != nil {
+				oldPfConfig = pf.Model.DeploymentDefaultConfig
+			} else {
+				oldPfConfig = sdk.IntegrationConfig{}
+			}
 		}
 		oldPfConfig.MergeWith(pfConfig)
-		pfConfig = oldPfConfig
 
-		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, pfConfig); err != nil {
+		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, oldPfConfig); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
 		}
 
-		app, err = application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		app, err = application.LoadByName(tx, api.Cache, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -109,8 +109,8 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars[permProjectKey]
+		appName := vars["applicationName"]
 		pfName := vars["integration"]
 
 		tx, errtx := api.mustDB().Begin()
@@ -140,7 +140,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 			return sdk.WrapError(sdk.ErrForbidden, "deleteApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(tx, api.Cache, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -174,8 +174,8 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars[permProjectKey]
+		appName := vars["applicationName"]
 		pfName := vars["integration"]
 		withClearPassword := FormBool(r, "withClearPassword")
 
@@ -186,7 +186,7 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler 
 			opts = []application.LoadOptionFunc{application.LoadOptions.WithClearDeploymentStrategies}
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx), opts...)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategyConfigHandler")
 		}

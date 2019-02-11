@@ -1,15 +1,15 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {finalize, first} from 'rxjs/operators';
-import {AllKeys} from '../../model/keys.model';
-import {Project} from '../../model/project.model';
-import {VCSConnections, VCSStrategy} from '../../model/vcs.model';
-import {KeyService} from '../../service/keys/keys.service';
-import {ProjectStore} from '../../service/project/project.store';
-import {KeyEvent} from '../keys/key.event';
-import {ToastService} from '../toast/ToastService';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { finalize, first } from 'rxjs/operators';
+import { AllKeys } from '../../model/keys.model';
+import { Project } from '../../model/project.model';
+import { VCSConnections, VCSStrategy } from '../../model/vcs.model';
+import { KeyService } from '../../service/keys/keys.service';
+import { ProjectStore } from '../../service/project/project.store';
+import { KeyEvent } from '../keys/key.event';
+import { ToastService } from '../toast/ToastService';
 
 @Component({
     selector: 'app-vcs-strategy',
@@ -17,7 +17,6 @@ import {ToastService} from '../toast/ToastService';
     styleUrls: ['./vcs.strategy.scss']
 })
 export class VCSStrategyComponent implements OnInit {
-
     @Input() project: Project;
     @Input() appName: string;
     @Input() loading: boolean;
@@ -51,9 +50,13 @@ export class VCSStrategyComponent implements OnInit {
     sshModalTemplate: ModalTemplate<boolean, boolean, void>;
     sshModal: ActiveModal<boolean, boolean, void>;
 
-    constructor(private _keyService: KeyService, private _modalService: SuiModalService, private _toast: ToastService,
-                private _translate: TranslateService, private _projectStore: ProjectStore) {
-    }
+    constructor(
+        private _keyService: KeyService,
+        private _modalService: SuiModalService,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _projectStore: ProjectStore
+    ) { }
 
     ngOnInit() {
         if (!this.strategy) {
@@ -95,12 +98,16 @@ export class VCSStrategyComponent implements OnInit {
         })).subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
     }
 
-    updatePublicKey(keyName): void {
-        if (this.project && Array.isArray(this.project.keys)) {
-            let key = this.project.keys.find((k) => k.name === keyName);
+    updatePublicKey(keyName: string): void {
+        if (this.keys) {
+            let key = this.keys.ssh.find(k => k.name === keyName);
             if (key) {
                 this.selectedPublicKey = key.public;
             }
         }
+    }
+
+    clickCopyKey() {
+        this._toast.success('', this._translate.instant('key_copied'))
     }
 }

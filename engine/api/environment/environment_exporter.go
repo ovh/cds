@@ -5,14 +5,14 @@ import (
 	"io"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
 // Export an environment
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, f exportentities.Format, withPermissions bool, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
+func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, f exportentities.Format, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
 	env, errload := LoadEnvironmentByName(db, key, envName)
 	if errload != nil {
@@ -31,20 +31,11 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, 
 		return 0, sdk.WrapError(errE, "environment.Export> Cannot load env %s keys", envName)
 	}
 
-	// Load permissions
-	if withPermissions {
-		perms, err := group.LoadGroupsByEnvironment(db, env.ID)
-		if err != nil {
-			return 0, sdk.WrapError(err, "Cannot load %s permissions", envName)
-		}
-		env.EnvironmentGroups = perms
-	}
-
-	return ExportEnvironment(db, *env, f, withPermissions, encryptFunc, w)
+	return ExportEnvironment(db, *env, f, encryptFunc, w)
 }
 
 // ExportEnvironment encrypt and export
-func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
+func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Parse variables
 	envvars := []sdk.Variable{}
 	for _, v := range env.Variable {
@@ -81,7 +72,7 @@ func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, f exportentitie
 		keys = append(keys, ek)
 	}
 
-	e := exportentities.NewEnvironment(env, withPermissions, keys)
+	e := exportentities.NewEnvironment(env, keys)
 	btes, errMarshal := exportentities.Marshal(e, f)
 	if errMarshal != nil {
 		return 0, sdk.WrapError(errMarshal, "environment.Export")

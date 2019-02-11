@@ -11,7 +11,6 @@ import { Map } from 'immutable';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
-import { GroupPermission } from '../../../model/group.model';
 import { Project } from '../../../model/project.model';
 import { Usage } from '../../../model/usage.model';
 import { Variable } from '../../../model/variable.model';
@@ -27,7 +26,6 @@ import { ProjectStore } from '../../../service/project/project.store';
 import { ServicesModule, WorkflowStore } from '../../../service/services.module';
 import { VariableService } from '../../../service/variable/variable.service';
 import { WorkflowService } from '../../../service/workflow/workflow.service';
-import { PermissionEvent } from '../../../shared/permission/permission.event.model';
 import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { VariableEvent } from '../../../shared/variable/variable.event.model';
@@ -223,97 +221,6 @@ describe('CDS: Application', () => {
         fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
         tick(250);
         expect(appStore.removeVariable).toHaveBeenCalledWith('key1', 'app1', v);
-    }));
-
-    it('should run add permission', fakeAsync( () => {
-
-        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
-
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
-            let app: Application = new Application();
-            app.name = 'app1';
-            app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
-        });
-
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.ngOnInit();
-
-        spyOn(appStore, 'addPermission').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
-
-        let gp: GroupPermission = new GroupPermission();
-        gp.permission = 7;
-        fixture.componentInstance.groupEvent(new PermissionEvent('add', gp));
-        expect(appStore.addPermission).toHaveBeenCalledWith('key1', 'app1', gp);
-    }));
-
-    it('should run update permission', fakeAsync( () => {
-
-        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
-
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
-            let app: Application = new Application();
-            app.name = 'app1';
-            app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
-        });
-
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.ngOnInit();
-
-        spyOn(appStore, 'updatePermission').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
-
-        let gp: GroupPermission = new GroupPermission();
-        gp.permission = 7;
-        fixture.componentInstance.groupEvent(new PermissionEvent('update', gp));
-        expect(appStore.updatePermission).toHaveBeenCalledWith('key1', 'app1', gp);
-    }));
-
-    it('should run remove permission', fakeAsync( () => {
-
-        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
-
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
-            let app: Application = new Application();
-            app.name = 'app1';
-            app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
-        });
-
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.ngOnInit();
-
-        spyOn(appStore, 'removePermission').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
-
-        let gp: GroupPermission = new GroupPermission();
-        gp.permission = 7;
-        fixture.componentInstance.groupEvent(new PermissionEvent('delete', gp));
-        tick(250);
-        expect(appStore.removePermission).toHaveBeenCalledWith('key1', 'app1', gp);
     }));
 });
 

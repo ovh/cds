@@ -424,7 +424,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
 
 			if workflowRuns[0].Status == sdk.StatusFail.String() {
-				observability.Record(ctx, api.Metrics.WorkflowRunFailed, 1)
+				observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}
 
@@ -605,16 +605,16 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 			}
 
 			if group.SharedInfraGroup != nil && u.Groups[0].ID != group.SharedInfraGroup.ID {
-				role, errG := group.LoadRoleGroupInPipeline(db, pip.ID, u.Groups[0].ID)
+				role, errG := group.LoadRoleGroupInWorkflowNode(db, n.ID, u.Groups[0].ID)
 				if errG != nil {
 					errorOccured = true
-					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get group in pipeline id %d : %v", pip.ID, errG))
+					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get group in workflow node id %d : %v", n.ID, errG))
 					continue
 				}
 
 				if role < permission.PermissionReadExecute {
 					errorOccured = true
-					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Forbidden, you have no execution rights on pipeline %s : current right %d", pip.Name, role))
+					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Forbidden, you have no execution rights on workflow node %d : current right %d", n.ID, role))
 					continue
 				}
 			}

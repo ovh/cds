@@ -14,7 +14,7 @@ import (
 )
 
 func (h *HatcheryKubernetes) getServicesLogs() error {
-	pods, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_SERVICE_JOB_ID})
+	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_SERVICE_JOB_ID})
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (h *HatcheryKubernetes) getServicesLogs() error {
 				continue
 			}
 			logsOpts := apiv1.PodLogOptions{SinceSeconds: &sinceSeconds, Container: container.Name, Timestamps: true}
-			logs, errLogs := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).GetLogs(podName, &logsOpts).DoRaw()
+			logs, errLogs := h.k8sClient.CoreV1().Pods(h.Config.Namespace).GetLogs(podName, &logsOpts).DoRaw()
 			if errLogs != nil {
 				log.Error("getServicesLogs> cannot get logs for container %s in pod %s, err : %v", container.Name, podName, errLogs)
 				continue

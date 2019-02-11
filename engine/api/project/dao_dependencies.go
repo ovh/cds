@@ -9,9 +9,9 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -32,7 +32,7 @@ var (
 	}
 
 	loadApplications = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		if err := loadApplicationsWithOpts(db, store, proj, nil); err != nil {
+		if err := loadApplicationsWithOpts(db, store, proj); err != nil {
 			return sdk.WrapError(err, "application.loadApplications")
 		}
 		return nil
@@ -42,7 +42,7 @@ var (
 		var err error
 		var apps []sdk.IDName
 
-		if apps, err = application.LoadAllNames(db, proj.ID, nil); err != nil {
+		if apps, err = application.LoadAllNames(db, proj.ID); err != nil {
 			return sdk.WrapError(err, "application.loadApplications")
 		}
 		proj.ApplicationNames = apps
@@ -52,13 +52,13 @@ var (
 
 	loadApplicationWithDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		if proj.Applications == nil {
-			if err := loadApplications(db, store, proj, nil); err != nil {
+			if err := loadApplications(db, store, proj, u); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationWithDeploymentStrategies")
 			}
 		}
 		for i := range proj.Applications {
 			a := &proj.Applications[i]
-			if err := (*application.LoadOptions.WithDeploymentStrategies)(db, store, a, nil); err != nil {
+			if err := (*application.LoadOptions.WithDeploymentStrategies)(db, store, a); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationWithDeploymentStrategies")
 			}
 		}
@@ -75,13 +75,13 @@ var (
 
 	loadApplicationVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		if proj.Applications == nil {
-			if err := loadApplications(db, store, proj, nil); err != nil {
+			if err := loadApplications(db, store, proj, u); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationVariables")
 			}
 		}
 
 		for _, a := range proj.Applications {
-			if err := (*application.LoadOptions.WithVariables)(db, store, &a, u); err != nil {
+			if err := (*application.LoadOptions.WithVariables)(db, store, &a); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationVariables")
 			}
 		}
@@ -157,9 +157,9 @@ var (
 		return nil
 	}
 
-	loadApplicationsWithOpts = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User, opts ...application.LoadOptionFunc) error {
+	loadApplicationsWithOpts = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts ...application.LoadOptionFunc) error {
 		var err error
-		proj.Applications, err = application.LoadAll(db, store, proj.Key, u, opts...)
+		proj.Applications, err = application.LoadAll(db, store, proj.Key, opts...)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 			return sdk.WrapError(err, "application.loadApplicationsWithOpts")
 		}
@@ -176,7 +176,7 @@ var (
 	}
 
 	loadPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pipelines, errPip := pipeline.LoadPipelines(db, proj.ID, false, nil)
+		pipelines, errPip := pipeline.LoadPipelines(db, proj.ID, false)
 		if errPip != nil && sdk.Cause(errPip) != sql.ErrNoRows && !sdk.ErrorIs(errPip, sdk.ErrPipelineNotFound) && !sdk.ErrorIs(errPip, sdk.ErrPipelineNotAttached) {
 			return sdk.WrapError(errPip, "application.loadPipelines")
 		}
@@ -188,7 +188,7 @@ var (
 		var err error
 		var pips []sdk.IDName
 
-		if pips, err = pipeline.LoadAllNames(db, store, proj.ID, nil); err != nil {
+		if pips, err = pipeline.LoadAllNames(db, store, proj.ID); err != nil {
 			return sdk.WrapError(err, "pipeline.loadpipelinenames")
 		}
 		proj.PipelineNames = pips
@@ -197,7 +197,7 @@ var (
 	}
 
 	loadEnvironments = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		envs, errEnv := environment.LoadEnvironments(db, proj.Key, true, nil)
+		envs, errEnv := environment.LoadEnvironments(db, proj.Key, true, u)
 		if errEnv != nil && sdk.Cause(errEnv) != sql.ErrNoRows && !sdk.ErrorIs(errEnv, sdk.ErrNoEnvironment) {
 			return sdk.WrapError(errEnv, "application.loadEnvironments")
 		}

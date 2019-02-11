@@ -47,9 +47,9 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Prod",
-		"name":                addVarRequest.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": "Prod",
+		"name":            addVarRequest.Name,
 	}
 
 	uri := router.GetRoute("POST", api.addVariableInEnvironmentHandler, vars)
@@ -118,9 +118,9 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Prod",
-		"name":                v.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": "Prod",
+		"name":            v.Name,
 	}
 
 	uri := router.GetRoute("PUT", api.updateVariableInEnvironmentHandler, vars)
@@ -183,9 +183,9 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Prod",
-		"name":                v.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": "Prod",
+		"name":            v.Name,
 	}
 
 	uri := router.GetRoute("DELETE", api.deleteVariableFromEnvironmentHandler, vars)
@@ -247,9 +247,9 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Prod",
-		"name":                v.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": "Prod",
+		"name":            v.Name,
 	}
 
 	uri := router.GetRoute("GET", api.getVariablesInEnvironmentHandler, vars)
@@ -301,9 +301,9 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": e.Name,
-		"name":                "foo",
+		"permProjectKey":  proj.Key,
+		"environmentName": e.Name,
+		"name":            "foo",
 	}
 
 	uri := router.GetRoute("GET", api.getVariableAuditInEnvironmentHandler, vars)

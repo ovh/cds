@@ -24,7 +24,6 @@ func pipeline() *cobra.Command {
 		cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
-		pipelineGroup(),
 	})
 }
 
@@ -65,22 +64,11 @@ var pipelineExportCmd = cli.Command{
 			},
 			Default: "yml",
 		},
-		{
-			Name:  "with-permission",
-			Usage: "true or false",
-			IsValid: func(s string) bool {
-				if s != "true" && s != "false" {
-					return false
-				}
-				return true
-			},
-			Type: cli.FlagBool,
-		},
 	},
 }
 
 func pipelineExportRun(v cli.Values) error {
-	btes, err := client.PipelineExport(v.GetString(_ProjectKey), v.GetString("pipeline-name"), v.GetBool("with-permission"), v.GetString("format"))
+	btes, err := client.PipelineExport(v.GetString(_ProjectKey), v.GetString("pipeline-name"), v.GetString("format"))
 	if err != nil {
 		return err
 	}

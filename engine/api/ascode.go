@@ -24,7 +24,7 @@ import (
 func (api *API) postImportAsCodeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		var ope = new(sdk.Operation)
 		if err := service.UnmarshalBody(r, ope); err != nil {
@@ -105,7 +105,7 @@ func (api *API) getImportAsCodeHandler() service.Handler {
 func (api *API) postPerformImportAsCodeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		uuid := vars["uuid"]
 
 		//Load project

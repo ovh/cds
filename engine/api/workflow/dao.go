@@ -488,7 +488,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 	// Load groups
 	_, next = observability.Span(ctx, "workflow.load.loadWorkflowGroups")
-	gps, err := loadWorkflowGroups(db, res)
+	gps, err := group.LoadWorkflowGroups(db, res.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow groups")
 	}
@@ -513,8 +513,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		// Load joins
 		if !opts.OnlyRootNode {
 			_, next = observability.Span(ctx, "workflow.load.loadJoins")
-			joins, errJ :=
-				loadJoins(ctx, db, store, proj, &res, u, opts)
+			joins, errJ := loadJoins(ctx, db, store, proj, &res, u, opts)
 			next()
 
 			if errJ != nil {
@@ -618,6 +617,28 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	dbw := Workflow(*w)
 	if err := dbw.PostInsert(db); err != nil {
 		return sdk.WrapError(err, "Cannot post insert hook")
+	}
+
+	if len(w.Groups) > 0 {
+		for i := range w.Groups {
+			if w.Groups[i].Group.ID != 0 {
+				continue
+			}
+			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "Unable to load group %s", w.Groups[i].Group.Name)
+			}
+			w.Groups[i].Group = *g
+		}
+		if err := group.UpsertAllWorkflowGroups(db, w, w.Groups); err != nil {
+			return sdk.WrapError(err, "Unable to update workflow")
+		}
+	} else {
+		for _, gp := range p.ProjectGroups {
+			if err := group.AddWorkflowGroup(db, w, gp); err != nil {
+				return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
+			}
+		}
 	}
 
 	if w.Root == nil {
@@ -1150,7 +1171,7 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		if err := checkPipeline(ctx, db, proj, w, n); err != nil {
 			return err
 		}
-		if err := checkApplication(store, db, proj, w, n, u); err != nil {
+		if err := checkApplication(store, db, proj, w, n); err != nil {
 			return err
 		}
 		if err := checkEnvironment(db, proj, w, n); err != nil {
@@ -1307,7 +1328,7 @@ func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n
 }
 
 // CheckApplication checks application data
-func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node, u *sdk.User) error {
+func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
@@ -1327,7 +1348,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 		return nil
 	}
 	if n.Context.ApplicationName != "" {
-		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, u, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
 		}
@@ -1595,14 +1616,14 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
 					UUID:              opts.HookUUID,
 				})
-				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, u, wf); err != nil {
+				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, wf); err != nil {
 					return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 				}
 				wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
 			}
 
 			if wf.Root.Context.Application != nil {
-				if err := application.Update(tx, store, wf.Root.Context.Application, u); err != nil {
+				if err := application.Update(tx, store, wf.Root.Context.Application); err != nil {
 					return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 				}
 			}

@@ -37,7 +37,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 
 	// ADD integration
 	vars := map[string]string{}
-	vars["permProjectKey"] = proj.Key
+	vars[permProjectKey] = proj.Key
 	uri := router.GetRoute("POST", api.postProjectIntegrationHandler, vars)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, pp)
 	w := httptest.NewRecorder()
@@ -49,7 +49,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 	pp.ProjectID = proj.ID
 
 	vars = map[string]string{}
-	vars["permProjectKey"] = proj.Key
+	vars[permProjectKey] = proj.Key
 	vars["integrationName"] = "kafkaTest"
 	uri = router.GetRoute("PUT", api.putProjectIntegrationHandler, vars)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, pp)
@@ -60,7 +60,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 
 	// GET integration
 	vars = map[string]string{}
-	vars["permProjectKey"] = proj.Key
+	vars[permProjectKey] = proj.Key
 	vars["integrationName"] = pp.Name
 	uri = router.GetRoute("GET", api.getProjectIntegrationHandler, vars)
 
@@ -72,7 +72,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 
 	// DELETE integration
 	vars = map[string]string{}
-	vars["permProjectKey"] = proj.Key
+	vars[permProjectKey] = proj.Key
 	vars["integrationName"] = pp.Name
 	uri = router.GetRoute("DELETE", api.deleteProjectIntegrationHandler, vars)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)

@@ -6,10 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -26,48 +23,6 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 	for _, p := range permProj {
 		if u.Permissions.ProjectsPerm[p.Project.Key] < p.Permission {
 			u.Permissions.ProjectsPerm[p.Project.Key] = p.Permission
-		}
-	}
-
-	permPip, err := pipeline.LoadPipelineByGroup(db, groupID)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to load pipeline permissions for %s", u.Username)
-	}
-	if u.Permissions.PipelinesPerm == nil {
-		u.Permissions.PipelinesPerm = make(map[string]int, len(permPip))
-	}
-	for _, p := range permPip {
-		k := sdk.UserPermissionKey(p.Pipeline.ProjectKey, p.Pipeline.Name)
-		if u.Permissions.PipelinesPerm[k] < p.Permission {
-			u.Permissions.PipelinesPerm[k] = p.Permission
-		}
-	}
-
-	permApp, err := application.LoadPermissions(db, groupID)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to load application permissions for  %s", u.Username)
-	}
-	if u.Permissions.ApplicationsPerm == nil {
-		u.Permissions.ApplicationsPerm = make(map[string]int, len(permApp))
-	}
-	for _, p := range permApp {
-		k := sdk.UserPermissionKey(p.Application.ProjectKey, p.Application.Name)
-		if u.Permissions.ApplicationsPerm[k] < p.Permission {
-			u.Permissions.ApplicationsPerm[k] = p.Permission
-		}
-	}
-
-	permEnv, err := environment.LoadEnvironmentByGroup(db, groupID)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to load environment permissions for  %s", u.Username)
-	}
-	if u.Permissions.EnvironmentsPerm == nil {
-		u.Permissions.EnvironmentsPerm = make(map[string]int, len(permEnv))
-	}
-	for _, p := range permEnv {
-		k := sdk.UserPermissionKey(p.Environment.ProjectKey, p.Environment.Name)
-		if u.Permissions.EnvironmentsPerm[k] < p.Permission {
-			u.Permissions.EnvironmentsPerm[k] = p.Permission
 		}
 	}
 

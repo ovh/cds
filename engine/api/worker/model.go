@@ -79,6 +79,8 @@ const (
 // InsertWorkerModel insert a new worker model in database
 func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	dbmodel := WorkerModel(*model)
+	dbmodel.NeedRegistration = true
+	model.UserLastModified = time.Now()
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}

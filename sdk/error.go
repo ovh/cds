@@ -67,7 +67,7 @@ var (
 	ErrCommitsFetchFailed                     = Error{ID: 49, Status: http.StatusNotFound}
 	ErrInvalidSecretFormat                    = Error{ID: 50, Status: http.StatusInternalServerError}
 	ErrNoPreviousSuccess                      = Error{ID: 52, Status: http.StatusNotFound}
-	ErrNoEnvExecution                         = Error{ID: 53, Status: http.StatusForbidden}
+	ErrNoPermExecution                        = Error{ID: 53, Status: http.StatusForbidden}
 	ErrSessionNotFound                        = Error{ID: 54, Status: http.StatusUnauthorized}
 	ErrInvalidSecretValue                     = Error{ID: 55, Status: http.StatusBadRequest}
 	ErrPipelineHasApplication                 = Error{ID: 56, Status: http.StatusBadRequest}
@@ -174,6 +174,9 @@ var (
 	ErrWorkflowAlreadyAsCode                  = Error{ID: 157, Status: http.StatusBadRequest}
 	ErrNoDBMigrationID                        = Error{ID: 158, Status: http.StatusNotFound}
 	ErrCannotParseTemplate                    = Error{ID: 159, Status: http.StatusBadRequest}
+	ErrGroupNotFoundInProject                 = Error{ID: 160, Status: http.StatusBadRequest}
+	ErrGroupNotFoundInWorkflow                = Error{ID: 161, Status: http.StatusBadRequest}
+	ErrWorkflowPermInsufficient               = Error{ID: 162, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -229,7 +232,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidSecretFormat.ID:                    "cannot decrypt secret, invalid format",
 	ErrSessionNotFound.ID:                        "invalid session",
 	ErrNoPreviousSuccess.ID:                      "there is no previous success version for this pipeline",
-	ErrNoEnvExecution.ID:                         "you don't have execution right on this environment",
+	ErrNoPermExecution.ID:                        "you don't have execution right",
 	ErrInvalidSecretValue.ID:                     "secret value not specified",
 	ErrPipelineHasApplication.ID:                 "pipeline still used by an application",
 	ErrNoDirectSecretUse.ID:                      "usage of 'password' parameter is not allowed",
@@ -330,6 +333,9 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowAlreadyAsCode.ID:                  "Workflow is already as-code or there is already a pull-request to transform it",
 	ErrNoDBMigrationID.ID:                        "ID does not exist in table gorp_migration",
 	ErrCannotParseTemplate.ID:                    "Cannot parse workflow template",
+	ErrGroupNotFoundInProject.ID:                 "Cannot add this permission group on your workflow because this group is not already in the project's permissions",
+	ErrGroupNotFoundInWorkflow.ID:                "Cannot add this permission group on your workflow node because this group is not already your workflow's permissions",
+	ErrWorkflowPermInsufficient.ID:               "Cannot add this permission group on your workflow because you can't have less rights than rights in your project when you are in RWX",
 }
 
 var errorsFrench = map[int]string{
@@ -385,7 +391,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidSecretFormat.ID:                    "impossibe de dechiffrer le secret, format invalide",
 	ErrSessionNotFound.ID:                        "session invalide",
 	ErrNoPreviousSuccess.ID:                      "il n'y a aucune précédente version en succès pour ce pipeline",
-	ErrNoEnvExecution.ID:                         "vous n'avez pas les droits d'éxécution sur cet environnement",
+	ErrNoPermExecution.ID:                        "vous n'avez pas les droits d'éxécution",
 	ErrInvalidSecretValue.ID:                     "valeur du secret non specifiée",
 	ErrPipelineHasApplication.ID:                 "le pipeline est utilisé par une application",
 	ErrNoDirectSecretUse.ID:                      "l'utilisation du type de paramêtre 'password' est impossible",
@@ -486,6 +492,9 @@ var errorsFrench = map[int]string{
 	ErrWorkflowAlreadyAsCode.ID:                  "Le workflow est déjà as-code ou il y a déjà une pull-request pour le transformer",
 	ErrNoDBMigrationID.ID:                        "Cet id n'existe pas dans la table gorp_migrations",
 	ErrCannotParseTemplate.ID:                    "Impossible de parser le modèle de workflow",
+	ErrGroupNotFoundInProject.ID:                 "Impossible d'ajouter ce groupe dans vos permissions de workflow car ce groupe n'est pas présent dans les permissions de votre projet",
+	ErrGroupNotFoundInWorkflow.ID:                "Impossible d'ajouter ce groupe dans vos permissions de noeud du workflow car ce groupe n'est pas présent dans les permissions de votre workflow",
+	ErrWorkflowPermInsufficient.ID:               "Impossible d'ajouter ce groupe dans vos permissions du workflow car ce groupe a des droits inférieurs (< RWX) à celui du workflow",
 }
 
 var errorsLanguages = []map[int]string{

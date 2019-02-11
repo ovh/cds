@@ -1,0 +1,16 @@
+version: v1.0
+name: build-[[.id]]
+stages:
+- build
+- package
+jobs:
+- job: build
+  stage: build
+  steps:
+  - script:
+    - echo "Building my application"
+- job: package
+  stage: package
+  steps:
+  - script:
+    - echo "Packaging my application"

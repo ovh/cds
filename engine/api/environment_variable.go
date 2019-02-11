@@ -17,8 +17,8 @@ func (api *API) getVariableAuditInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars[permProjectKey]
+		envName := vars["environmentName"]
 		varName := vars["name"]
 
 		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
@@ -42,8 +42,8 @@ func (api *API) getVariableAuditInEnvironmentHandler() service.Handler {
 func (api *API) getVariableInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars[permProjectKey]
+		envName := vars["environmentName"]
 		name := vars["name"]
 
 		v, errVar := environment.GetVariable(api.mustDB(), key, envName, name)
@@ -58,8 +58,8 @@ func (api *API) getVariableInEnvironmentHandler() service.Handler {
 func (api *API) getVariablesInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars[permProjectKey]
+		envName := vars["environmentName"]
 
 		variables, errVar := environment.GetAllVariable(api.mustDB(), key, envName)
 		if errVar != nil {
@@ -73,8 +73,8 @@ func (api *API) getVariablesInEnvironmentHandler() service.Handler {
 func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars[permProjectKey]
+		envName := vars["environmentName"]
 		varName := vars["name"]
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
@@ -122,8 +122,8 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars[permProjectKey]
+		envName := vars["environmentName"]
 		varName := vars["name"]
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
@@ -178,8 +178,8 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 func (api *API) addVariableInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars[permProjectKey]
+		envName := vars["environmentName"]
 		varName := vars["name"]
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)

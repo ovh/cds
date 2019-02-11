@@ -19,14 +19,13 @@ import { WorkflowNodeHookFormComponent } from '../../node/hook/form/hook.form.co
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarRunHookComponent implements OnInit {
-
-    @Input() project: Project;
-
     @ViewChild('workflowConfigHook')
     workflowConfigHook: WorkflowNodeHookFormComponent;
 
     @ViewChild('workflowDetailsHook')
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
+
+    @Input() project: Project;
 
     loading = false;
     hookStatus = HookStatus;
@@ -39,8 +38,10 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     _hookSelectedSub: Subscription;
     _runSelectedSub: Subscription;
 
-    constructor(private _hookService: HookService, private _workflowEventStore: WorkflowEventStore) {
-    }
+    constructor(
+        private _hookService: HookService,
+        private _workflowEventStore: WorkflowEventStore
+    ) { }
 
     ngOnInit(): void {
         this._hookSelectedSub = this._workflowEventStore.selectedHook().subscribe(h => {

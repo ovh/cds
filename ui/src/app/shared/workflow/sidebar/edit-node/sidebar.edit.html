@@ -9,8 +9,7 @@
                 <ng-container *ngIf="!displayInputName">
                     <div class="line">
                         <span class="name" title="{{node.name}}">{{node.name}}</span>
-                        <a class="toto inline pointing ml5" (click)="openRenameArea()"
-                           *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+                        <a class="toto inline pointing ml5" (click)="openRenameArea()" *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
                             <i class="pencil icon float"></i>
                         </a>
                     </div>
@@ -19,15 +18,17 @@
                     <div class="ui fluid mini action input">
                         <input type="text" [(ngModel)]="node.name">
                         <div class="ui icon buttons">
-                            <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="rename()"><i class="check icon"></i></button>
+                            <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="rename()"><i
+                                    class="check icon"></i></button>
                             <button class="ui blue button" [disabled]="loading" [class.loading]="loading"><i class="close icon"
-                                                              (click)="displayInputName = false; node.name = previousNodeName"></i>
+                                    (click)="displayInputName = false; node.name = previousNodeName"></i>
                             </button>
                         </div>
                     </div>
                 </ng-container>
                 <div class="sub header" *ngIf="node.type === 'pipeline'">
-                    <span>{{ 'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}</span>
+                    <span *ngIf="node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">{{
+                        'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}</span>
                     <div class="inline pointing ml5" (click)="openWarningModal()" *ngIf="displayInputName && nameWarning &&
                   nameWarning.nodes?.length > 0">
                         <i class="orange warning sign icon  animated infinite tada"></i>
@@ -61,8 +62,17 @@
         <!-- ALL NODE -->
         <ng-container *ngIf="node.type === 'pipeline' || project.features['cds:wnode']">
             <a class="item noborder" (click)="openEditRunConditions()">
-                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_condition_edit' | translate }}</span>
-                <span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_condition_show' | translate }}</span>
+                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{
+                    'workflow_node_condition_edit' | translate }}</span>
+                <span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_condition_show'
+                    | translate }}</span>
+                <i class="angle right icon"></i>
+            </a>
+            <a class="item noborder" (click)="openNodePermissions()">
+                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{
+                    'workflow_node_permissions_edit' | translate }}</span>
+                <span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{
+                    'workflow_node_permissions_show' | translate }}</span>
                 <i class="angle right icon"></i>
             </a>
         </ng-container>
@@ -70,40 +80,33 @@
         <!-- Pipeline ONLY -->
         <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
-               [queryParams]="{workflow: workflow.name }"
-                *ngIf="node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
-                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'pipeline_label_edit' | translate }}</span><span
-                    *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'pipeline_label_show' | translate }}</span>
+                [queryParams]="{workflow: workflow.name }" *ngIf="node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
+                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'pipeline_label_edit' |
+                    translate }}</span><span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{
+                    'pipeline_label_show' | translate }}</span>
                 <i class="angle right icon"></i>
             </a>
-            <a class="item noborder"
-               (click)="openAddHookModal()"
-               *ngIf="workflow && workflow.workflow_data && workflow.workflow_data.node.id === node.id && !(workflow.from_repository && workflow.from_repository.length > 0)"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            <a class="item noborder" (click)="openAddHookModal()" *ngIf="workflow && workflow.workflow_data && workflow.workflow_data.node.id === node.id && !(workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
             </a>
-            <a class="item noborder" (click)="openTriggerModal('pipeline', true)"
-               *ngIf="workflow && workflow.workflow_data.node.id === node.id && !(workflow.from_repository && workflow.from_repository.length > 0)"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            <a class="item noborder" (click)="openTriggerModal('pipeline', true)" *ngIf="workflow && workflow.workflow_data.node.id === node.id && !(workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_parent' | translate }} <i class="angle right icon"></i>
             </a>
-            <a class="item noborder" (click)="createFork()"
-               *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            <a class="item noborder" (click)="createFork()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_fork_add' | translate }} <i class="angle right icon"></i>
             </a>
-            <a class="item noborder" (click)="createJoin()"
-               *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            <a class="item noborder" (click)="createJoin()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
             </a>
-            <a class="item noborder" (click)="openTriggerModal('outgoinghook', false)"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            <a class="item noborder" (click)="openTriggerModal('outgoinghook', false)" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_outgoing_hook' | translate }} <i class="angle right icon"></i>
             </a>
-            <a class="item noborder" (click)="linkJoin()"
-               *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            <a class="item noborder" (click)="linkJoin()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
@@ -111,19 +114,18 @@
         <!-- OutGoing HOOK -->
         <ng-container *ngIf="node.type === 'outgoinghook'">
             <a class="item noborder" (click)="openEditOutgoingHookModal('outgoinghook')">
-                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{'btn_edit' | translate}}</span><span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">Configuration</span> <i class="angle right icon"></i>
+                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{'btn_edit' | translate}}</span><span
+                    *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">Configuration</span> <i class="angle right icon"></i>
             </a>
         </ng-container>
 
         <!-- Common -->
-        <a class="item noborder" (click)="openTriggerModal('pipeline', false)"
-           *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
-           [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+        <a class="item noborder" (click)="openTriggerModal('pipeline', false)" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
+            [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
         </a>
-        <a class="item noborder" (click)="openDeleteNodeModal()"
-           *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
-           [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+        <a class="item noborder" (click)="openDeleteNodeModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
+            [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             {{ 'workflow_node_delete_btn' | translate }} <i class="angle right icon"></i>
         </a>
     </div>
@@ -137,33 +139,30 @@
     <!-- Context -->
     <ng-container *ngIf="node.type === 'pipeline'">
         <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow"
-                                   (contextEvent)="updateWorkflow($event, workflowContext.modal)" #workflowContext></app-workflow-node-context>
+            (contextEvent)="updateWorkflow($event, workflowContext.modal)" #workflowContext></app-workflow-node-context>
     </ng-container>
 
     <!-- Conditions -->
-        <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                      (conditionsEvent)="updateWorkflow($event, workflowConditions.modal)"
-                                      #workflowConditions></app-workflow-node-conditions>
+    <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
+        (conditionsEvent)="updateWorkflow($event, workflowConditions.modal)" #workflowConditions></app-workflow-node-conditions>
 
     <!-- Delete Node -->
-    <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)" #workflowDeleteNode></app-workflow-node-delete>
+    <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)"
+        #workflowDeleteNode></app-workflow-node-delete>
 
     <!-- Add trigger -->
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
-                          (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)"
-                          #workflowTrigger></app-workflow-trigger>
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)"
+        #workflowTrigger></app-workflow-trigger>
     <!-- Add outgoing hook -->
     <app-workflow-node-outgoinghook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                 (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)"
-                                 #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
+        (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)" #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
 
     <!-- Add hook -->
-    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                 (hookEvent)="updateWorkflow($event, workflowAddHook.modal)"
-                                 #workflowAddHook></app-hook-modal>
+    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateWorkflow($event, workflowAddHook.modal)"
+        #workflowAddHook></app-hook-modal>
+    <!-- Add node permissions -->
+    <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node" #workflowNodePermissions></app-workflow-node-permissions>
 </ng-container>
-
-
 
 <ng-template let-context let-modal="modal" #nodeNameWarningModal>
     <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>
@@ -175,7 +174,8 @@
         </ul>
     </div>
     <div class="actions">
-        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate
+            }}
         </button>
     </div>
 </ng-template>

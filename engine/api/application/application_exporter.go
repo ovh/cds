@@ -7,15 +7,14 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
 // Export an application
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, f exportentities.Format, withPermissions bool, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
+func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
-	app, errload := LoadByName(db, cache, key, appName, u,
+	app, errload := LoadByName(db, cache, key, appName,
 		LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearKeys, LoadOptions.WithClearDeploymentStrategies,
 	)
 	if errload != nil {
@@ -26,19 +25,11 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, 
 		return 0, sdk.WrapError(errD, "application.Export> Cannot decrypt vcs password")
 	}
 
-	// Load permissions
-	if withPermissions {
-		perms, err := group.LoadGroupsByApplication(db, app.ID)
-		if err != nil {
-			return 0, sdk.WrapError(err, "Cannot load application %s permissions", appName)
-		}
-		app.ApplicationGroups = perms
-	}
-	return ExportApplication(db, *app, f, withPermissions, encryptFunc, w)
+	return ExportApplication(db, *app, f, encryptFunc, w)
 }
 
 // ExportApplication encrypt and export
-func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
+func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Parse variables
 	appvars := []sdk.Variable{}
 	for _, v := range app.Variable {
@@ -95,7 +86,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 		}
 	}
 
-	eapp, err := exportentities.NewApplication(app, withPermissions, keys)
+	eapp, err := exportentities.NewApplication(app, keys)
 	if err != nil {
 		return 0, sdk.WrapError(err, "Unable to export application")
 	}

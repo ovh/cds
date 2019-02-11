@@ -201,7 +201,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 				regx := regexp.MustCompile(`{{\.cds\.app\.(.+)}}`)
 				subMatch := regx.FindAllStringSubmatch(privateKey.Value, -1)
 				if len(subMatch) > 0 && len(subMatch[0]) > 1 && appName != "" {
-					app, err := application.LoadByName(db, store, pkey, appName, nil, application.LoadOptions.WithKeys)
+					app, err := application.LoadByName(db, store, pkey, appName, application.LoadOptions.WithKeys)
 					if err != nil {
 						return err
 					}

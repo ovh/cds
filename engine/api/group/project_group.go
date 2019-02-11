@@ -62,8 +62,11 @@ func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, rol
 
 // InsertGroupInProject Attach a group to a project
 func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
-	query := `INSERT INTO project_group (project_id, group_id, role) VALUES($1,$2,$3)`
+	query := `INSERT INTO project_group (project_id, group_id, role) VALUES($1,$2,$3) `
 	_, err := db.Exec(query, projectID, groupID, role)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
 	return err
 }
 
@@ -112,4 +115,13 @@ func CheckGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (bool, e
 		return true, nil
 	}
 	return false, nil
+}
+
+// LoadRoleGroupInProject load role from group linked to the project
+func LoadRoleGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (int64, int, error) {
+	var role int
+	var id int64
+	query := `SELECT id, role FROM project_group WHERE project_id = $1 AND group_id = $2`
+	err := db.QueryRow(query, projectID, groupID).Scan(&id, &role)
+	return id, role, sdk.WrapError(err, "cannot load role group id %d from project id %d", groupID, projectID)
 }

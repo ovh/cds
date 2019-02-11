@@ -91,10 +91,10 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 			}
 
 			switch e.EventType {
-			case "sdk.EventPipelineBuild", "sdk.EventJob":
+			case "sdk.EventJob":
 				continue
 			}
-			observability.Record(c, b.router.Stats.SSEEvents, 1)
+			observability.Record(b.router.Background, b.router.Stats.SSEEvents, 1)
 			cacheMsgChan <- e
 		}
 	}
@@ -119,7 +119,6 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 					delete(b.clients, uuid)
 				}
 				observability.Record(b.router.Background, b.router.Stats.SSEClients, 0)
-
 			}
 			if ctx.Err() != nil {
 				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
@@ -242,8 +241,9 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 		}
 	}
 
+	projectPermission := permission.ProjectPermission(event.ProjectKey, client.User)
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if client.User.Admin || isSharedInfra || permission.ProjectPermission(event.ProjectKey, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false
@@ -255,19 +255,19 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if client.User.Admin || isSharedInfra || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if client.User.Admin || isSharedInfra || permission.PipelinePermission(event.ProjectKey, event.PipelineName, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if client.User.Admin || isSharedInfra || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, client.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
 			return true
 		}
 		return false

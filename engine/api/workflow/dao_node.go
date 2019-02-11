@@ -12,7 +12,9 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -137,7 +139,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	}
 
 	if n.Context.Application == nil && n.Context.ApplicationID != 0 {
-		app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
+		app, errA := application.LoadByID(db, store, n.Context.ApplicationID)
 		if errA != nil {
 			return sdk.WrapError(errA, "InsertOrUpdateNode> Cannot load application %d", n.Context.ApplicationID)
 		}
@@ -497,7 +499,7 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
-		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByID(db, store, ctx.ApplicationID, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load application %d", ctx.ApplicationID)
 		}
@@ -508,12 +510,6 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 		} else {
 			if err := application.LoadAllKeys(db, app); err != nil {
 				return sdk.WrapError(err, "Unable to load application %d keys", ctx.ApplicationID)
-			}
-		}
-
-		if u != nil {
-			if err := application.LoadPermission(db, store, app, u); err != nil {
-				return sdk.WrapError(err, "Unable to load application permission %d", ctx.ApplicationID)
 			}
 		}
 
@@ -534,11 +530,18 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 			}
 		}
 
-		ctx.Environment.Permission = environment.Permission(env.ProjectKey, env.Name, u)
+		ctx.Environment.Permission = permission.ProjectPermission(env.ProjectKey, u)
 	}
 
 	//Load the integration in the context
 	if ctx.ProjectIntegrationID != 0 {
+		if len(proj.Integrations) == 0 {
+			integrations, err := integration.LoadIntegrationsByProjectID(db, proj.ID, false)
+			if err != nil {
+				return sdk.WrapError(err, "Unable to load integrations for this project %d", proj.ID)
+			}
+			proj.Integrations = integrations
+		}
 		for _, pf := range proj.Integrations {
 			if pf.ID == ctx.ProjectIntegrationID {
 				ctx.ProjectIntegration = &pf

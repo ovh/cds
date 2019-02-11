@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // deleteWorkflowGroupHandler delete permission for a group on the workflow
@@ -46,24 +47,26 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 
 		if oldGp.Permission == 0 {
-			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteWorkflowGroupHandler")
+			return sdk.ErrGroupNotFound
 		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "deleteWorkflowGroupHandler> Cannot start transaction")
+			return sdk.WrapError(errT, "cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := workflow.DeleteGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
-			return sdk.WrapError(err, "Cannot add group")
+		if err := group.DeleteWorkflowGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
+			return sdk.WrapError(err, "cannot delete group")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishWorkflowPermissionDelete(key, *wf, oldGp, deprecatedGetUser(ctx))
+
+		log.Warning("workflow %+v\n", wf)
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
@@ -117,7 +120,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.UpdateGroup(tx, wf, gp); err != nil {
+		if err := group.UpdateWorkflowGroup(tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "Cannot add group")
 		}
 
@@ -176,7 +179,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.AddGroup(tx, wf, gp); err != nil {
+		if err := group.AddWorkflowGroup(tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "Cannot add group")
 		}
 

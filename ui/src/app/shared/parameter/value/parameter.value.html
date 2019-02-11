@@ -17,7 +17,7 @@
                        (modelChange)="valueChanged();sendValueChanged()"
                        (keydown)="sendValueChanged()"
                        name="value">
-                    <option *ngFor="let v of keys.ssh" [value]="v">{{v}}</option>
+                    <option *ngFor="let v of keys.ssh" [value]="v.name">{{v.name}}</option>
             </sm-select>
         </ng-container>
     </div>
@@ -29,7 +29,7 @@
                        (modelChange)="valueChanged();sendValueChanged()"
                        (keydown)="sendValueChanged()"
                        name="value">
-                <option *ngFor="let v of keys.pgp" [value]="v">{{v}}</option>
+                <option *ngFor="let v of keys.pgp" [value]="v.name">{{v.name}}</option>
             </sm-select>
         </ng-container>
     </div>

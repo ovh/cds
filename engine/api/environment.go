@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -21,7 +20,7 @@ import (
 func (api *API) getEnvironmentsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		withUsage := FormBool(r, "withUsage")
 
 		tx, errTx := api.mustDB().Begin()
@@ -57,8 +56,8 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 func (api *API) getEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars[permProjectKey]
+		environmentName := vars["environmentName"]
 		withUsage := FormBool(r, "withUsage")
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
@@ -75,7 +74,7 @@ func (api *API) getEnvironmentHandler() service.Handler {
 			env.Usage.Workflows = wf
 		}
 
-		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, deprecatedGetUser(ctx))
+		env.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, env, http.StatusOK)
 	}
@@ -84,8 +83,8 @@ func (api *API) getEnvironmentHandler() service.Handler {
 func (api *API) getEnvironmentUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars[permProjectKey]
+		environmentName := vars["environmentName"]
 		usage, err := loadEnvironmentUsage(api.mustDB(), projectKey, environmentName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load usage for environment %s in project %s", environmentName, projectKey)
@@ -113,7 +112,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
@@ -136,14 +135,6 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		if err := environment.InsertEnvironment(tx, &env); err != nil {
 			return sdk.WrapError(err, "Cannot insert environment")
 		}
-		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "Cannot load group from project")
-		}
-		for _, g := range proj.ProjectGroups {
-			if err := group.InsertGroupInEnvironment(tx, env.ID, g.Group.ID, g.Permission); err != nil {
-				return sdk.WrapError(err, "Cannot add group on environment")
-			}
-		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
@@ -165,8 +156,8 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars[permProjectKey]
+		environmentName := vars["environmentName"]
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
@@ -210,8 +201,8 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars[permProjectKey]
+		environmentName := vars["environmentName"]
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {
@@ -260,8 +251,8 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 func (api *API) cloneEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars[permProjectKey]
+		environmentName := vars["environmentName"]
 		cloneName := vars["cloneName"]
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
@@ -288,12 +279,11 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//Set all the data of the environment we want to clone
 		envPost := sdk.Environment{
-			Name:              cloneName,
-			ProjectID:         p.ID,
-			ProjectKey:        p.Key,
-			Variable:          env.Variable,
-			EnvironmentGroups: env.EnvironmentGroups,
-			Permission:        env.Permission,
+			Name:       cloneName,
+			ProjectID:  p.ID,
+			ProjectKey: p.Key,
+			Variable:   env.Variable,
+			Permission: env.Permission,
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -312,13 +302,6 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 		for _, v := range envPost.Variable {
 			if err := environment.InsertVariable(tx, envPost.ID, &v, deprecatedGetUser(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
-			}
-		}
-
-		//Insert environment
-		for _, e := range envPost.EnvironmentGroups {
-			if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
-				return sdk.WrapError(err, "Unable to insert group in environment")
 			}
 		}
 

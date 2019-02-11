@@ -94,12 +94,12 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	}
 	h.k8sClient = clientset
 
-	if h.Config.KubernetesNamespace != apiv1.NamespaceDefault {
-		if _, err := clientset.CoreV1().Namespaces().Get(h.Config.KubernetesNamespace, metav1.GetOptions{}); err != nil {
+	if h.Config.Namespace != apiv1.NamespaceDefault {
+		if _, err := clientset.CoreV1().Namespaces().Get(h.Config.Namespace, metav1.GetOptions{}); err != nil {
 			ns := apiv1.Namespace{}
-			ns.SetName(h.Config.KubernetesNamespace)
+			ns.SetName(h.Config.Namespace)
 			if _, errC := clientset.CoreV1().Namespaces().Create(&ns); errC != nil {
-				return sdk.WrapError(errC, "Cannot create namespace %s in kubernetes", h.Config.KubernetesNamespace)
+				return sdk.WrapError(errC, "Cannot create namespace %s in kubernetes", h.Config.Namespace)
 			}
 		}
 	}
@@ -168,7 +168,7 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("please enter a name in your kubernetes hatchery configuration")
 	}
 
-	if hconfig.KubernetesNamespace == "" {
+	if hconfig.Namespace == "" {
 		return fmt.Errorf("please enter a valid kubernetes namespace")
 	}
 
@@ -326,6 +326,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:                       name,
+			Namespace:                  h.Config.Namespace,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
 				LABEL_WORKER:        label,
@@ -400,7 +401,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
 
-	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&podSchema)
+	pod, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).Create(&podSchema)
 
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", name)
 
@@ -410,9 +411,9 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStarted() []string {
-	list, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
+	list, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
-		log.Warning("WorkersStarted> unable to list pods on namespace %s", h.Config.KubernetesNamespace)
+		log.Warning("WorkersStarted> unable to list pods on namespace %s", h.Config.Namespace)
 		return nil
 	}
 	workerNames := make([]string, 0, list.Size())
@@ -428,7 +429,7 @@ func (h *HatcheryKubernetes) WorkersStarted() []string {
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStartedByModel(model *sdk.Model) int {
-	list, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER_MODEL})
+	list, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER_MODEL})
 	if err != nil {
 		log.Error("WorkersStartedByModel> Cannot get list of workers started (%s)", err)
 		return 0

@@ -261,7 +261,6 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
-	test.NoError(t, application.AddGroup(api.mustDB(), api.Cache, proj, app, u, proj.ProjectGroups...))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,

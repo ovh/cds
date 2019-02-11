@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -43,21 +43,22 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 			return sdk.WrapError(err, "Unable to get payload from ToEventProjectPermissionDelete")
 		}
 		// Check in ENV
-		envs, err := group.EnvironmentsByGroupID(db, e.ProjectKey, payload.Permission.Group.ID)
+		envs, err := environment.LoadEnvironments(db, e.ProjectKey, false, nil)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to list environments")
 		}
+
 		for _, env := range envs {
 			w := sdk.Warning{
 				Key:     e.ProjectKey,
-				EnvName: env,
+				EnvName: env.Name,
 				Element: payload.Permission.Group.Name,
 				Created: time.Now(),
 				Type:    warn.name(),
 				MessageParams: map[string]string{
 					"GroupName":       payload.Permission.Group.Name,
 					"ProjectKey":      e.ProjectKey,
-					"EnvironmentName": env,
+					"EnvironmentName": env.Name,
 				},
 			}
 			if err := Insert(db, w); err != nil {

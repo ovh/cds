@@ -24,13 +24,10 @@ type Favorite struct {
 // UserPermissions is the set of permissions for a user
 //easyjson:json
 type UserPermissions struct {
-	Groups           []string           `json:"Groups,omitempty"` // json key are capitalized to ensure exising data in cache are still valid
-	GroupsAdmin      []string           `json:"GroupsAdmin,omitempty"`
-	ProjectsPerm     map[string]int     `json:"ProjectsPerm,omitempty"`
-	ApplicationsPerm UserPermissionsMap `json:"ApplicationsPerm,omitempty"`
-	WorkflowsPerm    UserPermissionsMap `json:"WorkflowsPerm,omitempty"`
-	PipelinesPerm    UserPermissionsMap `json:"PipelinesPerm,omitempty"`
-	EnvironmentsPerm UserPermissionsMap `json:"EnvironmentsPerm,omitempty"`
+	Groups        []string           `json:"Groups,omitempty"` // json key are capitalized to ensure exising data in cache are still valid
+	GroupsAdmin   []string           `json:"GroupsAdmin,omitempty"`
+	ProjectsPerm  map[string]int     `json:"ProjectsPerm,omitempty"`
+	WorkflowsPerm UserPermissionsMap `json:"WorkflowsPerm,omitempty"`
 }
 
 // UserPermissionsMap is a type of map. The in key the key and name of the object and value is the level of permissions

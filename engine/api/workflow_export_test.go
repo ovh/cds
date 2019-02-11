@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -182,11 +183,19 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 
 	pip.Stages = append(pip.Stages, *s)
 
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, group2.ID, permission.PermissionReadWriteExecute))
+
 	w := sdk.Workflow{
 		Name:          "test_1",
 		ProjectID:     proj.ID,
 		ProjectKey:    proj.Key,
 		HistoryLength: 25,
+		Groups: []sdk.GroupPermission{
+			sdk.GroupPermission{
+				Group:      *group2,
+				Permission: 7,
+			},
+		},
 		WorkflowData: &sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
@@ -213,11 +222,6 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-
-	workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{
-		Group:      *group2,
-		Permission: 7,
-	})
 
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)

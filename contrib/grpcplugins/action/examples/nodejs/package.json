@@ -16,7 +16,8 @@
     "get-port": "^4.0.0",
     "google-protobuf": "^3.6.1",
     "grpc": "^1.15.1",
-    "atob": "^2.1.2"
+    "atob": "^2.1.2",
+    "lodash": ">=4.17.11"
   },
   "devDependencies": {
     "webpack": "^4.12.0",

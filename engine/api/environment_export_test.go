@@ -74,8 +74,8 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getEnvironmentExportHandler, vars)
 	test.NotEmpty(t, uri)

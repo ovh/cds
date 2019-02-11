@@ -18,8 +18,8 @@ import (
 func (api *API) addJobToStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		projectKey := vars[permProjectKey]
+		pipelineName := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 
 		stageID, errp := strconv.ParseInt(stageIDString, 10, 64)
@@ -101,8 +101,8 @@ func (api *API) addJobToStageHandler() service.Handler {
 func (api *API) updateJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipName := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 		jobIDString := vars["jobID"]
 
@@ -197,8 +197,8 @@ func (api *API) updateJobHandler() service.Handler {
 func (api *API) deleteJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipName := vars["permPipelineKey"]
+		key := vars[permProjectKey]
+		pipName := vars["pipelineKey"]
 		jobIDString := vars["jobID"]
 
 		jobID, errp := strconv.ParseInt(jobIDString, 10, 64)

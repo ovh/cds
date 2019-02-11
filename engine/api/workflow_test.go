@@ -830,22 +830,17 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 
 	// Init pipeline
 	pip := sdk.Pipeline{
-		Name:            "pipeline1",
-		ProjectID:       proj.ID,
-		Type:            sdk.BuildPipeline,
-		GroupPermission: proj.ProjectGroups,
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+		Type:      sdk.BuildPipeline,
 	}
-
 	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
-
-	test.NoError(t, group.InsertGroupsInPipeline(db, proj.ProjectGroups, pip.ID))
 
 	app := sdk.Application{
 		Name: sdk.RandomString(10),
 	}
 
 	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
-	test.NoError(t, application.AddGroup(db, api.Cache, proj, &app, u, proj.ProjectGroups...))
 
 	prj, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
 	assert.NoError(t, err)

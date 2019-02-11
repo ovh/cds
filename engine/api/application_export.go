@@ -17,21 +17,20 @@ func (api *API) getApplicationExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars[permProjectKey]
+		appName := vars["applicationName"]
 
 		format := FormString(r, "format")
 		if format == "" {
 			format = "yaml"
 		}
-		withPermissions := FormBool(r, "withPermissions")
 
 		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
 			return sdk.WrapError(err, "Format invalid")
 		}
-		if _, err := application.Export(api.mustDB(), api.Cache, key, appName, f, withPermissions, deprecatedGetUser(ctx), project.EncryptWithBuiltinKey, w); err != nil {
+		if _, err := application.Export(api.mustDB(), api.Cache, key, appName, f, project.EncryptWithBuiltinKey, w); err != nil {
 			return sdk.WrapError(err, "getApplicationExportHandler")
 		}
 

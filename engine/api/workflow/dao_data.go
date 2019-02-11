@@ -3,6 +3,7 @@ package workflow
 import (
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -73,6 +74,7 @@ func insertNodeData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node, skipDepen
 	if !nodeNamePattern.MatchString(n.Name) {
 		return sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNodeData> node has a wrong name %s", n.Name)
 	}
+
 	n.ID = 0
 	n.WorkflowID = w.ID
 
@@ -108,4 +110,34 @@ func insertNodeData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node, skipDepen
 	}
 
 	return nil
+}
+
+func (node *dbNodeData) PostDelete(db gorp.SqlExecutor) error {
+	return group.DeleteAllGroupFromNode(db, node.ID)
+}
+
+func (node *dbNodeData) PostInsert(db gorp.SqlExecutor) error {
+	if len(node.Groups) == 0 {
+		return nil
+	}
+
+	for i, grp := range node.Groups {
+		var grDB *sdk.Group
+		var err error
+
+		switch {
+		case grp.Group.ID == 0:
+			grDB, err = group.LoadGroup(db, grp.Group.Name)
+		case grp.Group.Name == "":
+			grDB, err = group.LoadGroupByID(db, grp.Group.ID)
+		default:
+			grDB = &grp.Group
+		}
+		if err != nil {
+			return sdk.WrapError(err, "cannot load group %s for node %d : %s", grp.Group.Name, node.ID, node.Name)
+		}
+		node.Groups[i].Group = *grDB
+	}
+
+	return group.InsertGroupsInNode(db, node.Groups, node.ID)
 }

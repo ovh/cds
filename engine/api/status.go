@@ -302,7 +302,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")
 				api.countMetric(ctx, api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline")
 				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
-				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM artifact")
+				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
 				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
 				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT MAX(id) FROM workflow_run")
 				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT MAX(id) FROM workflow_node_run")
@@ -338,7 +338,15 @@ func (api *API) computeMetrics(ctx context.Context) {
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
 	n, err := api.mustDB().SelectInt(query)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		// Example: Errors while fetching count SELECT MAX(id) FROM workflow_run: sql: Scan error on column index 0: converting driver.Value type <nil> ("<nil>") to a int64: invalid syntax
+		// this error is displayed when there is no data in the current table
+		// so that, record 0
+		// this will avoid unuseful warn logs on a fresh CDS Installation
+		if strings.Contains(query, "SELECT MAX") && strings.Contains(err.Error(), "converting driver.Value type <nil>") {
+			n = 0
+		} else {
+			log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		}
 	}
 	observability.Record(ctx, v, n)
 }
@@ -346,7 +354,7 @@ func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query st
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {
 	n, err := api.mustDB().SelectInt(query, args...)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		log.Warning("metrics>Errors while fetching count range %s: %v", query, err)
 	}
 	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
 	observability.Record(ctx, v, n)

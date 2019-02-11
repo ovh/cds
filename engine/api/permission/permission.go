@@ -21,15 +21,6 @@ var (
 	DefaultGroupID int64
 )
 
-// ApplicationPermission  Get the permission for the given application
-func ApplicationPermission(key string, appName string, u *sdk.User) int {
-	if u.Admin {
-		return PermissionReadWriteExecute
-	}
-
-	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey(key, appName)]
-}
-
 // ProjectPermission  Get the permission for the given project
 func ProjectPermission(projectKey string, u *sdk.User) int {
 	if u.Admin || u == nil {
@@ -53,60 +44,12 @@ func WorkflowPermission(key string, name string, u *sdk.User) int {
 	return PermissionRead
 }
 
-// PipelinePermission  Get the permission for the given pipeline
-func PipelinePermission(key string, name string, u *sdk.User) int {
-	if u.Admin {
-		return PermissionReadWriteExecute
-	}
-
-	return u.Permissions.PipelinesPerm[sdk.UserPermissionKey(key, name)]
-}
-
-// EnvironmentPermission  Get the permission for the given environment
-func EnvironmentPermission(key string, name string, u *sdk.User) int {
-	if u.Admin {
-		return PermissionReadWriteExecute
-	}
-	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, name)]
-}
-
 // AccessToProject check if we can access to the given project
 func AccessToProject(key string, u *sdk.User, access int) bool {
 	if u.Admin {
 		return true
 	}
 	return u.Permissions.ProjectsPerm[key] >= access
-}
-
-// AccessToApplication check if we can modify the given application
-func AccessToApplication(key string, name string, u *sdk.User, access int) bool {
-	if u.Admin {
-		return true
-	}
-
-	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey(key, name)] >= access
-}
-
-// AccessToPipeline check if we can modify the given pipeline
-func AccessToPipeline(key string, env, pip string, u *sdk.User, access int) bool {
-	if u.Admin {
-		return true
-	}
-
-	for _, g := range u.Groups {
-		if g.ID == SharedInfraGroupID {
-			return true
-		}
-	}
-
-	if u.Permissions.PipelinesPerm[sdk.UserPermissionKey(key, pip)] >= access {
-		if env != sdk.DefaultEnv.Name {
-			return AccessToEnvironment(key, env, u, access)
-		}
-		return true
-	}
-
-	return false
 }
 
 // AccessToWorkflow check access to a workflow
@@ -127,21 +70,29 @@ func AccessToWorkflow(key, name string, u *sdk.User, access int) bool {
 	return false
 }
 
-// AccessToEnvironment check if we can modify the given environment
-func AccessToEnvironment(key, env string, u *sdk.User, access int) bool {
-	if env == "" || env == sdk.DefaultEnv.Name {
-		return true
+// AccessToWorkflowNode check rights on the given workflow node
+func AccessToWorkflowNode(wf *sdk.Workflow, wn *sdk.Node, u *sdk.User, access int) bool {
+	if wn == nil {
+		return false
 	}
 
 	if u.Admin {
 		return true
 	}
 
-	for _, g := range u.Groups {
-		if g.ID == SharedInfraGroupID {
-			return true
+	if len(wn.Groups) > 0 {
+		for _, g := range u.Groups {
+			if g.ID == SharedInfraGroupID {
+				return true
+			}
+			for _, grp := range wn.Groups {
+				if g.ID == grp.Group.ID && grp.Permission >= access {
+					return true
+				}
+			}
 		}
+		return false
 	}
 
-	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, env)] >= access
+	return AccessToWorkflow(wf.ProjectKey, wf.Name, u, PermissionReadExecute)
 }

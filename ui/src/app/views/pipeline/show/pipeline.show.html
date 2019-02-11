@@ -20,9 +20,6 @@
                 <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')">
                     <i class="font icon"></i>{{ 'common_parameters' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
-                    <i class="users icon"></i>{{ 'common_permissions' | translate }}
-                </a>
                 <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0" (click)="usageCount > 0 && showTab('usage')">
                     <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
@@ -50,15 +47,6 @@
                         </ng-container>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)" #paramWarning></app-warning-modal>
 
-                    </div>
-                    <div *ngSwitchCase="'permissions'">
-                        <h3>{{ 'pipeline_permission_list_title' | translate }}</h3>
-                        <app-permission-list [permissions]="pipeline.groups" [edit]="pipeline.permission === 7" (event)="groupEvent($event)"></app-permission-list>
-                        <ng-container *ngIf="pipeline.permission === 7">
-                            <h3>{{ 'pipeline_permission_form_title' | translate }}</h3>
-                            <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
-                        </ng-container>
-                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     </div>
                     <div *ngSwitchCase="'usage'">
                         <app-usage [project]="project" [applications]="applications" [workflows]="workflows" [environments]="environments"></app-usage>

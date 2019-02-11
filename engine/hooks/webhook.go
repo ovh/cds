@@ -14,13 +14,17 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) doWebHookExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) doWebHookExecution(e *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
 	log.Debug("Hooks> Processing webhook %s %s", e.UUID, e.Type)
 
 	if e.Type == TypeRepoManagerWebHook {
 		return executeRepositoryWebHook(e)
 	}
-	return executeWebHook(e)
+	event, err := executeWebHook(e)
+	if err != nil {
+		return nil, err
+	}
+	return []sdk.WorkflowNodeRunHookEvent{*event}, nil
 }
 
 func getRepositoryHeader(whe *sdk.WebHookExecution) string {
@@ -34,15 +38,13 @@ func getRepositoryHeader(whe *sdk.WebHookExecution) string {
 	return ""
 }
 
-func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
-	h := sdk.WorkflowNodeRunHookEvent{
-		WorkflowNodeHookUUID: t.UUID,
-	}
+	payloads := []map[string]interface{}{}
 
-	payload := make(map[string]interface{})
 	switch getRepositoryHeader(t.WebHook) {
 	case GithubHeader:
+		payload := make(map[string]interface{})
 		var pushEvent GithubPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "unable ro read github request: %s", string(t.WebHook.RequestBody))
@@ -73,7 +75,9 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 			log.Error("Unable to marshal payload: %v", err)
 		}
 		payload["payload"] = string(payloadStr)
+		payloads = append(payloads, payload)
 	case GitlabHeader:
+		payload := make(map[string]interface{})
 		var pushEvent GitlabPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
@@ -105,52 +109,69 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 			log.Error("Unable to marshal payload: %v", err)
 		}
 		payload["payload"] = string(payloadStr)
+		payloads = append(payloads, payload)
 	case BitbucketHeader:
 		var pushEvent BitbucketPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 		}
-		payload["git.author"] = pushEvent.Actor.Name
-		payload["git.author.email"] = pushEvent.Actor.EmailAddress
-
-		if len(pushEvent.Changes) == 0 || pushEvent.Changes[0].Type == "DELETE" {
+		if len(pushEvent.Changes) == 0 {
 			return nil, nil
 		}
 
-		if !strings.HasPrefix(pushEvent.Changes[0].RefID, "refs/tags/") {
-			payload["git.branch"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/")
-		} else {
-			payload["git.tag"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/tags/")
-		}
-		payload["git.hash.before"] = pushEvent.Changes[0].FromHash
-		payload["git.hash"] = pushEvent.Changes[0].ToHash
-		payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Slug)
+		for _, pushChange := range pushEvent.Changes {
+			if pushChange.Type == "DELETE" {
+				// TODO: delelete all runs for this branch
+				continue
+			}
+			payload := make(map[string]interface{})
+			payload["git.author"] = pushEvent.Actor.Name
+			payload["git.author.email"] = pushEvent.Actor.EmailAddress
 
-		payload["cds.triggered_by.username"] = pushEvent.Actor.Name
-		payload["cds.triggered_by.fullname"] = pushEvent.Actor.DisplayName
-		payload["cds.triggered_by.email"] = pushEvent.Actor.EmailAddress
-		payloadStr, err := json.Marshal(pushEvent)
-		if err != nil {
-			log.Error("Unable to marshal payload: %v", err)
+			if !strings.HasPrefix(pushChange.RefID, "refs/tags/") {
+				payload["git.branch"] = strings.TrimPrefix(pushChange.RefID, "refs/heads/")
+			} else {
+				payload["git.tag"] = strings.TrimPrefix(pushChange.RefID, "refs/tags/")
+			}
+			payload["git.hash.before"] = pushChange.FromHash
+			payload["git.hash"] = pushChange.ToHash
+			payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Slug)
+
+			payload["cds.triggered_by.username"] = pushEvent.Actor.Name
+			payload["cds.triggered_by.fullname"] = pushEvent.Actor.DisplayName
+			payload["cds.triggered_by.email"] = pushEvent.Actor.EmailAddress
+			payloadStr, err := json.Marshal(pushEvent)
+			if err != nil {
+				log.Error("Unable to marshal payload: %v", err)
+			}
+			payload["payload"] = string(payloadStr)
+			payloads = append(payloads, payload)
 		}
-		payload["payload"] = string(payloadStr)
 	default:
 		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
 		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")
 	}
 
-	d := dump.NewDefaultEncoder(&bytes.Buffer{})
-	d.ExtraFields.Type = false
-	d.ExtraFields.Len = false
-	d.ExtraFields.DetailedMap = false
-	d.ExtraFields.DetailedStruct = false
-	d.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-	payloadValues, errDump := d.ToStringMap(payload)
-	if errDump != nil {
-		return nil, sdk.WrapError(errDump, "executeRepositoryWebHook> Cannot dump payload %+v ", payload)
+	hs := make([]sdk.WorkflowNodeRunHookEvent, 0, len(payloads))
+	for _, payload := range payloads {
+		h := sdk.WorkflowNodeRunHookEvent{
+			WorkflowNodeHookUUID: t.UUID,
+		}
+		d := dump.NewDefaultEncoder(&bytes.Buffer{})
+		d.ExtraFields.Type = false
+		d.ExtraFields.Len = false
+		d.ExtraFields.DetailedMap = false
+		d.ExtraFields.DetailedStruct = false
+		d.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		payloadValues, errDump := d.ToStringMap(payload)
+		if errDump != nil {
+			return nil, sdk.WrapError(errDump, "executeRepositoryWebHook> Cannot dump payload %+v ", payload)
+		}
+		h.Payload = payloadValues
+		hs = append(hs, h)
 	}
-	h.Payload = payloadValues
-	return &h, nil
+
+	return hs, nil
 }
 
 func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {

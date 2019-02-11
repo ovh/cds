@@ -91,8 +91,8 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Preproduction",
+		"permProjectKey":  proj.Key,
+		"environmentName": "Preproduction",
 	}
 
 	uri := router.GetRoute("PUT", api.updateEnvironmentHandler, vars)
@@ -143,8 +143,8 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Preproduction",
+		"permProjectKey":  proj.Key,
+		"environmentName": "Preproduction",
 	}
 
 	uri := router.GetRoute("DELETE", api.deleteEnvironmentHandler, vars)
@@ -235,8 +235,8 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
 	}
 
 	uri := router.GetRoute("GET", api.getEnvironmentHandler, vars)
@@ -282,9 +282,9 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	test.NoError(t, environment.InsertVariable(api.mustDB(), env.ID, v, u))
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
-		"cloneName":           "Production2",
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
+		"cloneName":       "Production2",
 	}
 
 	envPost := sdk.Environment{

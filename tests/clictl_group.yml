@@ -2,8 +2,14 @@ name: Group Command TestSuite
 testcases:
 - name: prepare test
   steps:
+  - script: '[ -f ./tests/fixtures/ITSCWCS/check-secret.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWCS/ITSCWCS.yml ]'
+  - script: {{.cds.build.cdsctl}} project delete ITPROJTESTGROUP --force
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWCS"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITPROJTESTGROUP"
   - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST --force
   - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2 --force
+  - script: {{.cds.build.cdsctl}} group delete ITPROJTESTGROUPGRP --force
 
 - name: group add
   steps:
@@ -42,6 +48,24 @@ testcases:
 - name: group show
   steps:
   - script: {{.cds.build.cdsctl}} group show ITCLIGRP_TEST_2
+
+- name: grant group on project and workflow
+  steps:
+  - script: {{.cds.build.cdsctl}} project create ITPROJTESTGROUP ITPROJTESTGROUPGRP
+  - script: {{.cds.build.cdsctl}} workflow push ITPROJTESTGROUP ./tests/fixtures/ITSCWCS/*.yml --skip-update-files 
+  - script: {{.cds.build.cdsctl}} group grant ITPROJTESTGROUP ITCLIGRP_TEST_2 7
+  - script: {{.cds.build.cdsctl}} workflow export ITPROJTESTGROUP ITSCWCS --with-permissions
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring ITCLIGRP_TEST_2
+
+- name: revoke group on workflow
+  steps:
+  - script: {{.cds.build.cdsctl}} group revoke ITPROJTESTGROUP ITCLIGRP_TEST_2
+  - script: {{.cds.build.cdsctl}} workflow export ITPROJTESTGROUP ITSCWCS --with-permissions
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldNotContainSubstring ITCLIGRP_TEST_2
 
 - name: clean
   steps:

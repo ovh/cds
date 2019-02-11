@@ -26,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -67,7 +66,6 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
-	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionReadExecute))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -109,7 +107,6 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	test.NoError(t, workflow.AddGroup(api.mustDB(), &w, proj.ProjectGroups[0]))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 

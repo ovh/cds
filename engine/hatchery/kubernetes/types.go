@@ -31,8 +31,8 @@ type HatcheryConfiguration struct {
 	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"10" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
-	// KubernetesNamespace is the kubernetes namespace in which workers are spawned"
-	KubernetesNamespace string `mapstructure:"namespace" toml:"namespace" default:"default" commented:"false" comment:"Kubernetes namespace in which workers are spawned" json:"namespace"`
+	// Namespace is the kubernetes namespace in which workers are spawned"
+	Namespace string `mapstructure:"namespace" toml:"namespace" default:"cds" commented:"false" comment:"Kubernetes namespace in which workers are spawned" json:"namespace"`
 	// KubernetesMasterURL Address of kubernetes master
 	KubernetesMasterURL string `mapstructure:"kubernetesMasterURL" toml:"kubernetesMasterURL" default:"https://1.1.1.1:8443" commented:"false" comment:"Address of kubernetes master" json:"kubernetesMasterURL"`
 	// KubernetesConfigFile Kubernetes config file in yaml
