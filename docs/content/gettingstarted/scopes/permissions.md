@@ -32,7 +32,7 @@ Example usage: Enforce a strict separation of duties by allowing a group of peop
 
 A more common scenario consists in giving `Read / Execute` permissions on the node `deploy-to-staging` to everyone in your development team while restricting the `deploy-to-production` node and the project edition to a smaller group of users.
 
-**Warning:** when you add a new group permission on a workflow node, **only the groups linked on the node will be take in account**.
+**Warning:** when you add a new group permission on a workflow node, **only the groups linked on the node will be taken in account**.
 
 # Tokens
 
