@@ -117,6 +117,7 @@ func (api *API) getApplicationHandler() service.Handler {
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
+		app.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		if withUsage {
 			usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applicationName)
