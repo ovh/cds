@@ -428,8 +428,16 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	test.Equal(t, 1, len(app.Variable))
 	test.Equal(t, "MySecretValue", app.Variable[0].Value)
 	test.Equal(t, 2, len(app.Keys))
-	test.Equal(t, kpgp.Private, app.Keys[0].Private)
-	test.Equal(t, kssh.Private, app.Keys[1].Private)
+
+	mKeys := make(map[string]sdk.ApplicationKey, 2)
+	mKeys[app.Keys[0].Type] = app.Keys[0]
+	mKeys[app.Keys[1].Type] = app.Keys[1]
+	rssh, ok := mKeys["ssh"]
+	assert.True(t, ok)
+	rpgp, ok := mKeys["pgp"]
+	assert.True(t, ok)
+	test.Equal(t, kpgp.Private, rpgp.Private)
+	test.Equal(t, kssh.Private, rssh.Private)
 
 	// export the app then import it with regen false
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, map[string]string{
@@ -493,8 +501,15 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	test.Equal(t, 1, len(app.Variable))
 	test.Equal(t, "MySecretValue", app.Variable[0].Value)
 	test.Equal(t, 2, len(app.Keys))
-	test.Equal(t, kpgp.Private, app.Keys[0].Private)
-	test.Equal(t, kssh.Private, app.Keys[1].Private)
+	mKeys = make(map[string]sdk.ApplicationKey, 2)
+	mKeys[app.Keys[0].Type] = app.Keys[0]
+	mKeys[app.Keys[1].Type] = app.Keys[1]
+	rssh, ok = mKeys["ssh"]
+	assert.True(t, ok)
+	rpgp, ok = mKeys["pgp"]
+	assert.True(t, ok)
+	test.Equal(t, kpgp.Private, rpgp.Private)
+	test.Equal(t, kssh.Private, rssh.Private)
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) {
