@@ -6,8 +6,8 @@ Documentation is available at https://ovh.github.io/cds/
 ## TL;DR;
 
 ```console
-$ cd contrib/helm/cds;
-helm dependency update;
+cd contrib/helm/cds
+helm dependency update
 helm install .
 ```
 
@@ -42,7 +42,9 @@ It starts a PostgreSQL server, a Redis server and an Elasticsearch server using 
 To install the chart with the release name `my-release`:
 
 ```console
-$ helm install --name my-release stable/cds
+# Inside of cds/contrib/helm/cds
+helm dependency update
+helm install --name my-release . 
 ```
 
 The command deploys CDS on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -54,7 +56,7 @@ The command deploys CDS on the Kubernetes cluster in the default configuration. 
 To uninstall/delete the `my-release` deployment:
 
 ```console
-$ helm delete my-release
+$ helm delete my-release --purge
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -65,7 +67,9 @@ Please refer to default values.yaml and source code
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```console
-$ helm install --name my-release .
+# Inside of cds/contrib/helm/cds
+helm dependency update
+helm install .
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
@@ -82,7 +86,7 @@ $ helm install --name my-release -f values.yaml .
 
 + If you use a Kubernetes as GKE, EKS or if your cloud provider provide you an available LoadBalancer you just have to set `ui.serviceType` to `LoadBalancer`.
 
-+ If your `kubeconfig.yaml` is not located in this directory you can set path in `values.yaml` or launch with `--set kubernetesConfigFile=myPathTo/kubeconfig.yaml`.
++ Your `kubeconfig.yaml` must be located in this directory.
 
 ## Image
 
@@ -91,6 +95,7 @@ The `image` parameter allows specifying which image will be pulled for the chart
 ## Persistence
 
 By default, cds api artifact directory is created as default PersistentVolumeClaim
+
 ### Existing PersistentVolumeClaim
 
 1. Create the PersistentVolume
