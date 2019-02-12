@@ -31,7 +31,7 @@ spec:
               name: {{ template "cds.fullname" . }}
               key: cds-k8s_config_file
         - name: CDS_HATCHERY_KUBERNETES_NAMESPACE
-          value: "{{ .Values.hatchery.k8s_namespace }}"
+          value: "{{ .Release.Namespace }}"
         - name: CDS_HATCHERY_KUBERNETES_KUBERNETESCONFIGFILE
           value: kubeconfig.yml
         - name: CDS_HATCHERY_KUBERNETES_COMMONCONFIGURATION_NAME
