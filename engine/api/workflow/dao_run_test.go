@@ -1,18 +1,28 @@
 package workflow_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"testing"
-
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"net/http"
+	"testing"
+	"time"
 )
 
 func TestCanBeRun(t *testing.T) {
@@ -71,9 +81,76 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
+	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
+	test.NoError(t, services.Insert(db, mockVCSSservice))
+	defer func() {
+		services.Delete(db, mockVCSSservice)
+	}()
+
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo":
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
+			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "test",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "mylastcommit",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -89,6 +166,18 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
+	// Add application
+	appS := `version: v1.0
+name: blabla
+vcs_server: github
+repo: sguiheux/demo
+vcs_ssh_key: proj-blabla
+`
+	var eapp = new(exportentities.Application)
+	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
+	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, true, nil, u)
+	assert.NoError(t, globalError)
+
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
@@ -101,7 +190,8 @@ func TestPurgeWorkflowRun(t *testing.T) {
 				Ref:  "node1",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
@@ -117,7 +207,6 @@ func TestPurgeWorkflowRun(t *testing.T) {
 				},
 			},
 		},
-
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
 	}
@@ -259,9 +348,76 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
+	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
+	test.NoError(t, services.Insert(db, mockVCSSservice))
+	defer func() {
+		services.Delete(db, mockVCSSservice)
+	}()
+
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo":
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
+			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "test",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "mylastcommit",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -277,6 +433,18 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
+	// Add application
+	appS := `version: v1.0
+name: blabla
+vcs_server: github
+repo: sguiheux/demo
+vcs_ssh_key: proj-blabla
+`
+	var eapp = new(exportentities.Application)
+	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
+	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, true, nil, u)
+	assert.NoError(t, globalError)
+
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
@@ -289,7 +457,8 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 				Ref:  "node1",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
@@ -367,9 +536,76 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
+	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
+	test.NoError(t, services.Insert(db, mockVCSSservice))
+	defer func() {
+		services.Delete(db, mockVCSSservice)
+	}()
+
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo":
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
+			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "test",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "mylastcommit",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -385,6 +621,18 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
+	// Add application
+	appS := `version: v1.0
+name: blabla
+vcs_server: github
+repo: sguiheux/demo
+vcs_ssh_key: proj-blabla
+`
+	var eapp = new(exportentities.Application)
+	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
+	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, true, nil, u)
+	assert.NoError(t, globalError)
+
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
@@ -397,7 +645,8 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 				Ref:  "node1",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
