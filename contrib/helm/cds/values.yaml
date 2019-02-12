@@ -108,9 +108,6 @@ readinessProbe:
     port: 8081
   initialDelaySeconds: 30
 
-
-kubernetesConfigFile: kubeconfig.yaml
-
 ##
 ## External database configuration
 ##
@@ -159,11 +156,6 @@ ingress:
   #     hosts:
   #       - cds.local
 
-
-
-# hatchery kubernetes
-hatchery:
-  k8s_namespace: default
 
 # Ui
 ui:
