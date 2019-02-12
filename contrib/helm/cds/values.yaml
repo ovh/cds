@@ -170,7 +170,7 @@ ui:
   image:
     registry: docker.io
     repository: ovhcom/cds-ui
-    tag: latest
+    tag: 0.38.1
   logLevel: info
   baseUrl: /
   api.livenessProbe:
