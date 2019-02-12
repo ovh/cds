@@ -1,10 +1,10 @@
-# How to import a openstack configuration
+# How to import a OpenStack configuration
 
-A Openstack Integration use the builtin integration model named **Openstack**.
+An OpenStack Integration use the builtin integration model named **Openstack**.
 
-You can set an openstack configuration on a CDS Project.
+You can set an OpenStack configuration on a CDS Project.
 
-If you want to set a global openstack configuration, available on all CDS Projects, you 
+If you want to set a global OpenStack configuration, available on all CDS Projects, you 
 have just to set the attribute **public** to `true` in the openstack.yml file.
 
 ```bash

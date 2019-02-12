@@ -83,7 +83,7 @@ You can use you storage integration:
 		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload",
 		Run:     cachePushCmd(w),
 	}
-	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. You Storage Integration name")
+	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. Your storage integration name")
 	return c
 }
 
@@ -252,7 +252,7 @@ If you want to push a cache into a storage integration:
 		`,
 		Run: cachePullCmd(w),
 	}
-	c.Flags().StringVar(&cmdStorageIntegrationName, "from", "", "optional. You Storage Integration name")
+	c.Flags().StringVar(&cmdStorageIntegrationName, "from", "", "optional. Your storage integration name")
 	return c
 }
 

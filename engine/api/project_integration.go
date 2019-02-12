@@ -87,7 +87,10 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			projectIntegration.IntegrationModelID = projectIntegration.Model.ID
 		}
 		if projectIntegration.IntegrationModelID == 0 && projectIntegration.Model.Name != "" {
-			pfs, _ := integration.LoadModels(api.mustDB())
+			pfs, err := integration.LoadModels(api.mustDB())
+			if err != nil {
+				return err
+			}
 			for _, pf := range pfs {
 				if pf.Name == projectIntegration.Model.Name {
 					projectIntegration.IntegrationModelID = pf.ID
@@ -188,7 +191,10 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 			pp.IntegrationModelID = pp.Model.ID
 		}
 		if pp.IntegrationModelID == 0 && pp.Model.Name != "" {
-			pfs, _ := integration.LoadModels(api.mustDB())
+			pfs, err := integration.LoadModels(api.mustDB())
+			if err != nil {
+				return err
+			}
 			for _, pf := range pfs {
 				if pf.Name == pp.Model.Name {
 					pp.IntegrationModelID = pf.ID

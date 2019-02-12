@@ -37,7 +37,7 @@ You can use you storage integration:
 		Run: uploadCmd(w),
 	}
 	c.Flags().StringVar(&cmdUploadTag, "tag", "", "Tag for artifact Upload - Tag is mandatory")
-	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. You Storage Integration name")
+	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. Your storage integration name")
 	return c
 }
 
