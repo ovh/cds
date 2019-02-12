@@ -67,10 +67,10 @@ spec:
         ports:
         - name: http
           containerPort: 8084
-          volumeMounts:
-          - name: cds-repos-data
-      mountPath: {{ .Values.repositories.persistence.mountPath }}
-  volumes:
-  - name: cds-repos-data
-    persistentVolumeClaim:
-      claimName: {{ (printf "%s-repositories" (include "cds.fullname" .)) }}
+        volumeMounts:
+        - name: cds-repos-data
+          mountPath: {{ .Values.repositories.persistence.mountPath }}
+      volumes:
+      - name: cds-repos-data
+        persistentVolumeClaim:
+          claimName: {{ (printf "%s-repositories" (include "cds.fullname" .)) }}
