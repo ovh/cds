@@ -168,8 +168,7 @@ kubectl logs -f --namespace default $CDS_API_POD_NAME
 
 After registration on UI, keep the password displayed, we will use it in next step.
 
-In order to have all that you need to run your first job you need to add a first [worker model](https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/). It's the perfect use case to use the [CDS cli](https://ovh.github.io/cds/cli/cdsctl/) named `cdsctl`. To download this CLI and log in (please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
-If you don't want to use the keychain, you can select the version i386.):
+In order to have all that you need to run your first job you need to add a first [worker model](https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/). It's the perfect use case to use the [CDS cli](https://ovh.github.io/cds/cli/cdsctl/) named `cdsctl`. To download this CLI and log in (please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password, if you don't want to use the keychain, you can select the version i386.):
 
 ```console
 # on a Linux workstation:
