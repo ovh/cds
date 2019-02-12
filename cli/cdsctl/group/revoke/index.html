@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>import :: CDS - Continuous Delivery Service</title>
+    <title>revoke :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -32,7 +32,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/application/group/import/">
+  <body class="" data-url="/cli/cdsctl/group/revoke/">
     <nav id="sidebar" class="">
 
 
@@ -1115,10 +1115,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/application/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/application/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/application/">
-        <span>application</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>application</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/application/create/" class="dd-item">
@@ -1135,19 +1134,6 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/application/export/">
           <span>export</span>
         </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/application/group/" class="dd-item parent">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/">
-        <span>group</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/application/group/import/" class="dd-item active">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/application/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/application/import/">
@@ -1245,18 +1231,6 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/environment/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/cdsctl/environment/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/environment/import/">
           <span>import</span>
@@ -1323,9 +1297,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/group/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/group/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>group</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/group/create/" class="dd-item">
@@ -1338,6 +1313,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/group/grant/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/grant/">
+          <span>grant</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/group/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/list/">
           <span>list</span>
@@ -1346,6 +1326,11 @@
       <li data-nav-id="/cli/cdsctl/group/rename/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/rename/">
           <span>rename</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/revoke/" class="dd-item active">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/revoke/">
+          <span>revoke</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/group/show/" class="dd-item">
@@ -1428,18 +1413,6 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/export/">
           <span>export</span>
         </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/pipeline/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/pipeline/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/import/">
@@ -2225,7 +2198,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/application/group/import.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/group/revoke.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2251,12 +2224,7 @@
 
 
 
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/application/'>application</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/application/group/'>group</a> > import
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/group/'>group</a> > revoke
 
  
 
@@ -2275,7 +2243,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-application-group-import">cdsctl application group import</a>
+<li><a href="#cdsctl-group-revoke">cdsctl group revoke</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
@@ -2294,7 +2262,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>import</h1>
+                <h1>revoke</h1>
                 <p></p>
             </div>
           
@@ -2304,21 +2272,21 @@
 
 
 
-<h2 id="cdsctl-application-group-import">cdsctl application group import</h2>
+<h2 id="cdsctl-group-revoke">cdsctl group revoke</h2>
 
-<p><code>Import group linked to a CDS application</code></p>
+<p><code>Revoke a CDS group in a project or workflow</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p><code>Import group linked to a CDS application</code></p>
+<p><code>Revoke a CDS group in a project or workflow</code></p>
 
-<pre><code>cdsctl application group import [ PROJECT-KEY APPLICATION-NAME ] PATH [flags]
+<pre><code>cdsctl group revoke [ PROJECT-KEY ] GROUP-NAME [flags]
 </code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --force   Use force flag to replace groups in your application
-  -h, --help    help for import
+<pre><code>  -h, --help              help for revoke
+  -n, --workflow string   Workflow name
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -2332,7 +2300,7 @@
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/application/group/">cdsctl application group</a>     - <code>Manage CDS group linked to an application</code></li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/group/">cdsctl group</a>     - <code>Manage CDS group</code></li>
 </ul>
 
 
@@ -2353,8 +2321,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/application/group/" title="group"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/application/import/" title="import" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/group/rename/" title="rename"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/group/show/" title="show" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

@@ -1135,18 +1135,6 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/application/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/application/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/cdsctl/application/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/application/import/">
           <span>import</span>
@@ -1243,18 +1231,6 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/environment/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/cdsctl/environment/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/environment/import/">
           <span>import</span>
@@ -1336,6 +1312,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/group/grant/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/grant/">
+          <span>grant</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/group/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/list/">
           <span>list</span>
@@ -1344,6 +1325,11 @@
       <li data-nav-id="/cli/cdsctl/group/rename/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/rename/">
           <span>rename</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/revoke/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/revoke/">
+          <span>revoke</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/group/show/" class="dd-item">
@@ -1426,18 +1412,6 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/export/">
           <span>export</span>
         </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/pipeline/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/pipeline/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/import/">
@@ -2270,8 +2244,8 @@
 <li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></a></li>
-<li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
 <li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
+<li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
 <li><a href="#delete-group-group-name-token-tokenid">DELETE <code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></a></li>
 <li><a href="#post-group-group-name-user">POST <code>/group/&lt;group-name&gt;/user</code></a></li>
 <li><a href="#delete-group-group-name-user-user-name">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></a></li>
@@ -2441,34 +2415,6 @@
 </tbody>
 </table>
 
-<h3 id="get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupTokenListHandler%22">getGroupTokenListHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</h3>
 
 <table>
@@ -2493,6 +2439,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+generateTokenHandler%22">generateTokenHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupTokenListHandler%22">getGroupTokenListHandler</a></td>
 </tr>
 </tbody>
 </table>

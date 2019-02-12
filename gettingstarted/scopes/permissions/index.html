@@ -1135,18 +1135,6 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/application/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/application/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/cdsctl/application/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/application/import/">
           <span>import</span>
@@ -1243,18 +1231,6 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/environment/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/cdsctl/environment/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/environment/import/">
           <span>import</span>
@@ -1336,6 +1312,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/group/grant/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/grant/">
+          <span>grant</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/group/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/list/">
           <span>list</span>
@@ -1344,6 +1325,11 @@
       <li data-nav-id="/cli/cdsctl/group/rename/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/rename/">
           <span>rename</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/revoke/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/revoke/">
+          <span>revoke</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/group/show/" class="dd-item">
@@ -1426,18 +1412,6 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/export/">
           <span>export</span>
         </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/pipeline/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/pipeline/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/import/">
@@ -2295,19 +2269,72 @@
 
 <ul>
 <li>On project</li>
-<li>On application</li>
-<li>On environment</li>
-<li>On pipeline</li>
 <li>On workflow</li>
+<li>On workflow node</li>
 </ul>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Project</th>
+<th>Workflow</th>
+<th>Workflow node</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Create a workflow</td>
+<td>RWX</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Edit a workflow  (change run conditions, add nodes, edit payload, notifications, &hellip;)</td>
+<td>RO</td>
+<td>RWX</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Create/edit an environment/pipeline/application</td>
+<td>RWX</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Manage permissions on project</td>
+<td>RWX</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Manage permissions on a workflow</td>
+<td>RO</td>
+<td>RWX</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Run a workflow</td>
+<td>RO</td>
+<td>RX</td>
+<td>/ - OR RX (if there is some groups on node)</td>
+</tr>
+</tbody>
+</table>
 
 <p>Permissions cannot be attached directly to users, they need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.</p>
 
-<p>Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a <code>staging</code> environment and a third group will be allowed to push it to a <code>production</code> environment. You can have a fourth group responsible of editing the workflow if needed.</p>
+<p>Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a <code>deploy-to-staging</code> node and a third group will be allowed to push it to a <code>deploy-to-production</code> node. You can have a fourth group responsible of editing the workflow if needed.</p>
 
-<p>A more common scenario consists in giving <code>Read / Execute</code> permissions on the <code>staging</code> environment to everyone in your development team while restricting the <code>production</code> deployments and the pipeline edition to a smaller group of users.</p>
+<p>A more common scenario consists in giving <code>Read / Execute</code> permissions on the node <code>deploy-to-staging</code> to everyone in your development team while restricting the <code>deploy-to-production</code> node and the project edition to a smaller group of users.</p>
 
-<p><strong>Warning:</strong> when you add a new group permission on a workflow scope, make sure to give the permission on all linked scopes (project, environments, applications, pipelines).</p>
+<p><strong>Warning:</strong> when you add a new group permission on a workflow node, <strong>only the groups linked on the node will be taken in account</strong>.</p>
 
 <h1 id="tokens">Tokens</h1>
 

@@ -1135,18 +1135,6 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/application/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/application/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/cdsctl/application/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/application/import/">
           <span>import</span>
@@ -1243,18 +1231,6 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/environment/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/cdsctl/environment/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/environment/import/">
           <span>import</span>
@@ -1336,6 +1312,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/group/grant/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/grant/">
+          <span>grant</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/group/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/list/">
           <span>list</span>
@@ -1344,6 +1325,11 @@
       <li data-nav-id="/cli/cdsctl/group/rename/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/rename/">
           <span>rename</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/revoke/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/revoke/">
+          <span>revoke</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/group/show/" class="dd-item">
@@ -1426,18 +1412,6 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/export/">
           <span>export</span>
         </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/pipeline/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/pipeline/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/import/">
@@ -2269,8 +2243,8 @@
 <li><a href="#get-worker">GET <code>/worker</code></a></li>
 <li><a href="#post-worker-id-disable">POST <code>/worker/&lt;id&gt;/disable</code></a></li>
 <li><a href="#post-worker-checking">POST <code>/worker/checking</code></a></li>
-<li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
 <li><a href="#get-worker-model">GET <code>/worker/model</code></a></li>
+<li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
 <li><a href="#get-worker-model-modelid-usage">GET <code>/worker/model/&lt;modelID&gt;/usage</code></a></li>
 <li><a href="#put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></a></li>
 <li><a href="#delete-worker-model-permmodelid">DELETE <code>/worker/model/&lt;permModelID&gt;</code></a></li>
@@ -2286,8 +2260,8 @@
 </ul></li>
 <li><a href="#post-worker-model-pattern">POST <code>/worker/model/pattern</code></a></li>
 <li><a href="#get-worker-model-pattern">GET <code>/worker/model/pattern</code></a></li>
-<li><a href="#put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
 <li><a href="#get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
+<li><a href="#put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
 <li><a href="#delete-worker-model-pattern-type-name">DELETE <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
 <li><a href="#get-worker-model-type">GET <code>/worker/model/type</code></a></li>
 <li><a href="#post-worker-refresh">POST <code>/worker/refresh</code></a></li>
@@ -2428,34 +2402,6 @@
 </tbody>
 </table>
 
-<h3 id="post-worker-model">POST <code>/worker/model</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22">addWorkerModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-worker-model">GET <code>/worker/model</code></h3>
 
 <table>
@@ -2480,6 +2426,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsHandler%22">getWorkerModelsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-worker-model">POST <code>/worker/model</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/worker/model</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22">addWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2829,34 +2803,6 @@
 </tbody>
 </table>
 
-<h3 id="put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelPatternHandler%22">putWorkerModelPatternHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h3>
 
 <table>
@@ -2881,6 +2827,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22">getWorkerModelPatternHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelPatternHandler%22">putWorkerModelPatternHandler</a></td>
 </tr>
 </tbody>
 </table>
