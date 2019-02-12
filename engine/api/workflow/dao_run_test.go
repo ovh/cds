@@ -589,7 +589,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 			default:
-				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+
 			}
 
 			return w, nil
