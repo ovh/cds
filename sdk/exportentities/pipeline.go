@@ -32,7 +32,6 @@ const (
 type Pipeline struct {
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
-	Type         string                    `json:"type,omitempty" yaml:"type,omitempty"`
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Stages       map[string]Stage          `json:"stages,omitempty" yaml:"stages,omitempty"`
 	Jobs         map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
@@ -170,17 +169,12 @@ func NewPipeline(pip sdk.Pipeline) (p *Pipeline) {
 	p = &Pipeline{}
 
 	// Default name is like the type
-	if strings.ToLower(pip.Name) != pip.Type {
+	if strings.ToLower(pip.Name) != "" {
 		p.Name = pip.Name
 	}
 
 	if pip.Description != "" {
 		p.Description = pip.Description
-	}
-
-	// We consider build pipeline are default
-	if pip.Type != sdk.BuildPipeline {
-		p.Type = pip.Type
 	}
 
 	if len(pip.Parameter) > 0 {
@@ -298,17 +292,12 @@ func newJobs(jobs []sdk.Job) map[string]Job {
 func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 	pip := new(sdk.Pipeline)
 
-	if p.Type == "" {
-		p.Type = sdk.BuildPipeline
-	}
-
 	if p.Name == "" {
-		p.Name = strings.Title(p.Type)
+		p.Name = strings.Title("build")
 	}
 
 	pip.Name = p.Name
 	pip.Description = p.Description
-	pip.Type = p.Type
 
 	//Compute parameters
 	for p, v := range p.Parameters {
@@ -569,7 +558,6 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	pip = new(sdk.Pipeline)
 	pip.Name = p.Name
 	pip.Description = p.Description
-	pip.Type = sdk.BuildPipeline
 
 	pip.Parameter = make([]sdk.Parameter, 0, len(p.Parameters))
 	//Compute parameters

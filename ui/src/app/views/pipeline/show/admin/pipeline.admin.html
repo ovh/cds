@@ -3,27 +3,18 @@
         <app-zone-content>
             <form class="ui form" (ngSubmit)="updatePipeline()" #projectUpdateFrom="ngForm">
                 <div class="eight wide field">
-                  <label>{{ 'pipeline_name' | translate}}</label>
-                  <input type="text" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">
+                    <label>{{ 'pipeline_name' | translate}}</label>
+                    <input type="text" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">
                 </div>
                 <div class="sixteen wide field">
-                  <label>{{ 'pipeline_description' | translate}}</label>
-                  <textarea type="text" [(ngModel)]="editablePipeline.description" name="pipdesc" [disabled]="loading">
+                    <label>{{ 'pipeline_description' | translate}}</label>
+                    <textarea type="text" [(ngModel)]="editablePipeline.description" name="pipdesc" [disabled]="loading">
                   </textarea>
                 </div>
                 <div class="fields">
-                    <div class="eight wide field">
-                        <label>{{ 'pipeline_type' | translate }}</label>
-                        <sm-select class="search fluid"
-                            *ngIf="pipelineTypes.length > 0"
-                            [options]="{'fullTextSearch': true}"
-                            [disabled]="loading"
-                            [(model)]="editablePipeline.type">
-                            <option *ngFor="let t of pipelineTypes" value="{{t}}">{{t}}</option>
-                        </sm-select>
-                    </div>
-                    <div class="eight wide bottom aligned field">
-                        <button class="ui button green button" [class.disabled]="loading" type="submit">{{ 'btn_save' | translate }}</button>
+                    <div class="sixteen wide bottom right aligned field">
+                        <button class="ui button green button" [class.disabled]="loading" type="submit">{{ 'btn_save' |
+                            translate }}</button>
                     </div>
                 </div>
             </form>

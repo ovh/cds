@@ -24,7 +24,6 @@ var (
 		arg: sdk.Pipeline{
 			Name:        "MyPipeline t1_1",
 			Description: "my description",
-			Type:        sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -155,7 +154,6 @@ var (
 		expected: Pipeline{
 			Name:        "MyPipeline",
 			Description: "my description",
-			Type:        "build",
 		},
 	}
 
@@ -163,7 +161,6 @@ var (
 		name: "Pipeline with 1 stage and 2 jobs",
 		arg: sdk.Pipeline{
 			Name: "MyPipeline t1_2",
-			Type: sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -244,7 +241,6 @@ var (
 		},
 		expected: Pipeline{
 			Name: "MyPipeline",
-			Type: "build",
 		},
 	}
 
@@ -252,7 +248,6 @@ var (
 		name: "Pipeline with 2 stages and 2 jobs",
 		arg: sdk.Pipeline{
 			Name: "MyPipeline t2_2",
-			Type: sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -415,7 +410,6 @@ var (
 		},
 		expected: Pipeline{
 			Name: "MyPipeline",
-			Type: "build",
 		},
 	}
 
