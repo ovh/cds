@@ -41,6 +41,9 @@ export class WorkflowNodePermissionsComponent {
         this.loading = true;
         switch (event.type) {
             case 'add':
+                if (!this.node.groups) {
+                    this.node.groups = [];
+                }
                 this.node.groups.push(event.gp);
                 break;
             case 'update':

@@ -71,10 +71,7 @@ func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (in
 func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
 	projectGroupID, projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot add this group on workflow because there isn't in the project groups : %v", err)
-		}
-		return sdk.WrapError(err, "Cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
+		return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "Cannot load role for group %d in project %d : %v", gp.Group.ID, w.ProjectID, err)
 	}
 	if projectRole == permission.PermissionReadWriteExecute && gp.Permission < projectRole {
 		return sdk.ErrWorkflowPermInsufficient
