@@ -91,7 +91,6 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
@@ -150,7 +149,6 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
@@ -228,7 +226,6 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
@@ -294,7 +291,6 @@ func Test_putWorkflowHandler(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
@@ -393,7 +389,6 @@ func Test_putWorkflowHandler(t *testing.T) {
 // 	pip := sdk.Pipeline{
 // 		Name:      "pipeline1",
 // 		ProjectID: proj.ID,
-// 		Type:      sdk.BuildPipeline,
 // 	}
 // 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
@@ -451,7 +446,6 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
@@ -611,7 +605,6 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
@@ -706,7 +699,6 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
@@ -768,7 +760,6 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 
 	assert.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, nil))
@@ -834,7 +825,6 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
 
