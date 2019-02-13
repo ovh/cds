@@ -34,7 +34,6 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
-		Type:      "build",
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
@@ -142,7 +141,6 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
-		Type:      "build",
 	}
 	pipParam := sdk.Parameter{
 		Name:  sdk.RandomString(10),
@@ -316,7 +314,6 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
-		Type:      "build",
 	}
 	pipParam := sdk.Parameter{
 		Name:  sdk.RandomString(10),

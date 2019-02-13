@@ -463,7 +463,6 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
 		assert.Equal(t, tc.arg.Description, transformedP.Description)
-		assert.Equal(t, tc.arg.Type, transformedP.Type)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool
@@ -691,7 +690,6 @@ func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 		t.Log(string(b))
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
-		assert.Equal(t, tc.arg.Type, transformedP.Type)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool
