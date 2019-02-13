@@ -3,6 +3,8 @@ version: 0.1.0
 appVersion: 0.38.1
 description: Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform.
 keywords:
+- continuous-integration
+- continuous-delivery
 - cds
 - devops
 - scale

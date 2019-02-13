@@ -45,4 +45,4 @@
 And check in the log of your api server to get registration URL :
 
   export CDS_API_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cds.fullname" . }}-api" -o jsonpath="{.items[0].metadata.name}")
-  kubectl logs -f --namespace {{ .Release.Namespace }} $CDS_API_POD_NAME
+  kubectl logs -f --namespace {{ .Release.Namespace }} $CDS_API_POD_NAME | grep 'account/verify'

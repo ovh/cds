@@ -1,6 +1,7 @@
 # CDS
 
-[CDS](https://github.com/ovh/cds) is a pipeline based Continuous Delivery Service written in Go(lang).
+[CDS](https://github.com/ovh/cds) is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform.
+
 Documentation is available at https://ovh.github.io/cds/
 
 ## TL;DR;
@@ -151,30 +152,44 @@ NOTES:
 And check in the log of your api server to get registration URL :
 
   export CDS_API_POD_NAME=$(kubectl get pods --namespace default -l "app=my-cds-cds-api" -o jsonpath="{.items[0].metadata.name}")
-  kubectl logs -f --namespace default $CDS_API_POD_NAME
+  kubectl logs -f --namespace default $CDS_API_POD_NAME | grep 'account/verify'
 
 ```
 
-And putting the URL in your browser will take you to your fresh and new CDS:
++ Create the first CDS User
 
-As explained in the help answer, in order to get started you have to create the first account on the browser (which will be an administrator).
+This log asks you to open `http://$SERVICE_IP/` in your browser to create the first user. 
 
-And just check the logs of your CDS API to get activation URL for your account. In my case:
+After create the first account and as there is no SMTP configured, you have to check the CDS Logs to retrieve the URL to validate.
+
+With the previous example log, the command to run is:
 
 ```console
 export CDS_API_POD_NAME=$(kubectl get pods --namespace default -l "app=my-cds-cds-api" -o jsonpath="{.items[0].metadata.name}")
-kubectl logs -f --namespace default $CDS_API_POD_NAME
+kubectl logs -f --namespace default $CDS_API_POD_NAME | grep 'account/verify'
 ```
 
-After registration on UI, keep the password displayed, we will use it in next step.
+After registration on UI, keep the password displayed, we will use it in next step. 
 
-In order to have all that you need to run your first job you need to add a first [worker model](https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/). It's the perfect use case to use the [CDS cli](https://ovh.github.io/cds/cli/cdsctl/) named `cdsctl`. To download this CLI and log in (please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password, if you don't want to use the keychain, you can select the version i386.):
+The first user created on CDS is a CDS Administrator.
+
+In order to have all that you need to run your first job you need to add a first [worker model](https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/). It's the perfect use case to use the [CDS Command Line](https://ovh.github.io/cds/cli/cdsctl/) named `cdsctl`.
+
++ Dowload cdsctl
 
 ```console
 # on a Linux workstation:
 $ curl http://$SERVICE_IP/cdsapi/download/cdsctl/linux/amd64 -o cdsctl
 # on a osX workstation, it's curl http://$SERVICE_IP/cdsapi/download/cdsctl/darwin/amd64 -o cdsctl
 $ chmod +x cdsctl
+```
+
+*please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
+If you don't want to use the keychain, you can select the version i386*
+
+
++ Login with cdsctl
+```console
 $ ./cdsctl login --api-url http://$SERVICE_IP/cdsapi -u yourusername
 CDS API URL: http://$SERVICE_IP/cdsapi
 Username: yourusername
@@ -183,13 +198,15 @@ Password:
 Login successful
 ```
 
-After you are logged you just have to add a worker model with this command:
++ Create a worker model
 
 ```console
 ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
 ```
 
-In this case it's a worker model based on the official golang docker image coming from docker hub.
+In this case, it's a worker model based on the official golang docker image coming from docker hub. 
+The hatchery will register the worker model before it can be used. You can check the 
+registration information on the ui: Settings -> Worker models -> go-official-1.11.4-stretch -> flag "Need registration".
 
 + Import a workflow template
 
@@ -231,7 +248,7 @@ Workflow successfully pushed !
 
 + On CDS all actions could be done with UI, CLI or API. So you can go on your CDS UI to check your new workflow and run it.
 
-For any further informations about CDS please check their [official documentation](https://ovh.github.io/cds/).
+For any further informations about CDS please check [official documentation](https://ovh.github.io/cds/).
 
 ## Uninstalling the Chart
 
