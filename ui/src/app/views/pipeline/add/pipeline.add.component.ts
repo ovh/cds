@@ -15,6 +15,7 @@ import { ToastService } from '../../../shared/toast/ToastService';
 export class PipelineAddComponent {
     loadingCreate = false;
     newPipeline = new Pipeline();
+    asCode = false;
 
     codeMirrorConfig: any;
     pipToImport = `# Pipeline example
