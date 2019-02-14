@@ -61,9 +61,9 @@ func (api *API) getApplicationsHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load applications from db")
 		}
 
-		projectPerm := permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
-		for _, app := range applications {
-			app.Permission = projectPerm
+		projectPerm := permission.ProjectPermission(projectKey, u)
+		for i := range applications {
+			applications[i].Permission = projectPerm
 		}
 
 		if strings.ToUpper(withPermissions) == "W" {
