@@ -51,4 +51,7 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 	assert.Equal(t, "a1", app.Metadata["a1"])
 	assert.Equal(t, "b1", app.Metadata["b1"])
 
+	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username), cdsclient.FilterByWritablePermission())
+	test.NoError(t, err)
+	assert.Equal(t, 1, len(apps))
 }
