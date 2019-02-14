@@ -50,5 +50,4 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 	test.NoError(t, err)
 	assert.Equal(t, "a1", app.Metadata["a1"])
 	assert.Equal(t, "b1", app.Metadata["b1"])
-
 }
