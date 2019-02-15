@@ -26,6 +26,8 @@ export class Application {
     vulnerabilities: Array<Vulnerability>;
     project_key: string; // project unique key
 
+    overview: Overview;
+
     // true if someone has updated the application ( used for warnings )
     externalChange: boolean;
 
@@ -34,14 +36,14 @@ export class Application {
 
     // Return true if pattern is good
     public static checkName(name: string): boolean {
-      if (!name) {
-          return false;
-      }
+        if (!name) {
+            return false;
+        }
 
-      if (!applicationNamePattern.test(name)) {
-          return false;
-      }
-      return true;
+        if (!applicationNamePattern.test(name)) {
+            return false;
+        }
+        return true;
     }
 }
 
@@ -105,7 +107,7 @@ export class Severity {
 export class Overview {
     graphs: Array<OverviewGraph>;
     git_url: string;
-    history: {[key: string]: Array<WorkflowRun>; };
+    history: { [key: string]: Array<WorkflowRun>; };
 }
 
 export class OverviewGraph {

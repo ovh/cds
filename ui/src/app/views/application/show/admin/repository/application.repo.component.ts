@@ -1,13 +1,18 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {Application} from '../../../../../model/application.model';
-import {Project} from '../../../../../model/project.model';
-import {Repository} from '../../../../../model/repositories.model';
-import {ApplicationStore} from '../../../../../service/application/application.store';
-import {RepoManagerService} from '../../../../../service/repomanager/project.repomanager.service';
-import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import {
+    ConnectVcsRepoOnApplication,
+    DeleteVcsRepoOnApplication,
+    UpdateApplication
+} from 'app/store/project/applications/applications.action';
+import { finalize, first } from 'rxjs/operators';
+import { Application } from '../../../../../model/application.model';
+import { Project } from '../../../../../model/project.model';
+import { Repository } from '../../../../../model/repositories.model';
+import { RepoManagerService } from '../../../../../service/repomanager/project.repomanager.service';
+import { WarningModalComponent } from '../../../../../shared/modal/warning/warning.component';
+import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-repo',
@@ -32,8 +37,13 @@ export class ApplicationRepositoryComponent implements OnInit {
     @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
     @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
 
-    constructor(private _appStore: ApplicationStore, private _repoManagerService: RepoManagerService,
-                private _toast: ToastService, public _translate: TranslateService) {
+    constructor(
+        private _repoManagerService: RepoManagerService,
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private store: Store
+    ) {
+
     }
 
     ngOnInit() {
@@ -49,15 +59,12 @@ export class ApplicationRepositoryComponent implements OnInit {
             this.removeWarningModal.show();
         } else {
             this.loadingBtn = true;
-            this._appStore.removeRepository(this.project.key, this.application.name, this.application.vcs_server)
-                .subscribe( () => {
-                    delete this.application.vcs_server;
-                    delete this.application.repository_fullname;
-                    this.loadingBtn = false;
-                    this._toast.success('', this._translate.instant('application_repo_detach_ok'));
-                }, () => {
-                    this.loadingBtn = false;
-                });
+            this.store.dispatch(new DeleteVcsRepoOnApplication({
+                projectKey: this.project.key,
+                applicationName: this.application.name,
+                repoManager: this.application.vcs_server
+            })).pipe(finalize(() => this.loadingBtn = false))
+                .subscribe(() => this._toast.success('', this._translate.instant('application_repo_detach_ok')));
         }
     }
 
@@ -82,9 +89,9 @@ export class ApplicationRepositoryComponent implements OnInit {
                     this.repos = repos;
                     this.reposFiltered = repos.slice(0, 50);
                 },
-                null,
-                () => this.loadingRepos = false
-            );
+                    null,
+                    () => this.loadingRepos = false
+                );
         }
     }
 
@@ -93,23 +100,26 @@ export class ApplicationRepositoryComponent implements OnInit {
             this.linkWarningModal.show();
         } else {
             this.loadingBtn = true;
-            this._appStore.connectRepository(this.project.key, this.application.name, this.selectedRepoManager, this.selectedRepo)
+            this.store.dispatch(new ConnectVcsRepoOnApplication({
+                projectKey: this.project.key,
+                applicationName: this.application.name,
+                repoManager: this.selectedRepoManager,
+                repoFullName: this.selectedRepo
+            })).pipe(finalize(() => this.loadingBtn = false))
                 .subscribe(() => {
                     this.displayVCSStrategy = !this.application.vcs_strategy || !this.application.vcs_strategy.connection_type;
-                    this.loadingBtn = false;
                     this._toast.success('', this._translate.instant('application_repo_attach_ok'));
-                }, () => {
-                    this.loadingBtn = false;
                 });
         }
     }
 
     saveVCSConfiguration(): void {
         this.loadingBtn = true;
-        this._appStore.updateApplication(this.project.key, this.application.name, this.application).pipe(first(), finalize(() => {
-            this.loadingBtn = false;
-        })).subscribe(() => {
-            this._toast.success('', this._translate.instant('application_update_ok'));
-        });
+        this.store.dispatch(new UpdateApplication({
+            projectKey: this.project.key,
+            applicationName: this.application.name,
+            changes: this.application
+        })).pipe(finalize(() => this.loadingBtn = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('application_update_ok')));
     }
 }
