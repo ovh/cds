@@ -59,25 +59,4 @@ export class ProjectState {
             .get<Project>('/project/' + action.payload.projectKey, { params })
             .pipe(tap((project) => ctx.dispatch(new LoadProject(project))));
     }
-
-    // @Action(SetFilter)
-    // setFilter(ctx: StateContext<TodoItemsStateModel>, action: SetFilter) {
-    //     const state = ctx.getState();
-    //     ctx.setState({
-    //         ...state,
-    //         filter: action.payload,
-    //     });
-    // }
-
-    // @Action(SetSort)
-    // setSortField(ctx: StateContext<TodoItemsStateModel>, action: SetSort) {
-    //     const state = ctx.getState();
-    //     ctx.setState({
-    //         ...state,
-    //         sort: {
-    //             field: action.payload,
-    //             ascending: state.sort.field === action.payload ? !state.sort.ascending : true,
-    //         }
-    //     });
-    // }
 }

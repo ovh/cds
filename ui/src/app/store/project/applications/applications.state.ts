@@ -5,9 +5,11 @@ import { IntegrationModel, ProjectIntegration } from 'app/model/integration.mode
 import { Key } from 'app/model/keys.model';
 import { tap } from 'rxjs/operators';
 import {
+    AddApplication,
     AddApplicationDeployment,
     AddApplicationKey,
     AddApplicationVariable,
+    CloneApplication,
     ConnectVcsRepoOnApplication,
     DeleteApplication,
     DeleteApplicationDeployment,
@@ -19,7 +21,7 @@ import {
     LoadApplication,
     UpdateApplication,
     UpdateApplicationDeployment,
-    UpdateApplicationVariable
+    UpdateApplicationVariable,
 } from './applications.action';
 
 export class ApplicationsStateModel {
@@ -50,6 +52,56 @@ export class ApplicationsState {
     }
 
     constructor(private _http: HttpClient) { }
+
+    @Action(AddApplication)
+    add(ctx: StateContext<ApplicationsStateModel>, action: AddApplication) {
+        const state = ctx.getState();
+        let appKey = `${action.payload.projectKey}/${action.payload.application.name}`;
+        let applications = state.applications;
+
+        // Refresh when change project
+        if (state.currentProjectKey !== action.payload.projectKey) {
+            applications = {};
+        }
+
+        return this._http.post<Application>(
+            `/project/${action.payload.projectKey}/applications`,
+            action.payload.application
+        ).pipe(tap((app) => {
+            ctx.setState({
+                ...state,
+                currentProjectKey: action.payload.projectKey,
+                applications: Object.assign({}, applications, { [appKey]: app }),
+                loading: false,
+            });
+        }));
+
+    }
+
+    @Action(CloneApplication)
+    clone(ctx: StateContext<ApplicationsStateModel>, action: CloneApplication) {
+        const state = ctx.getState();
+        let appKey = `${action.payload.projectKey}/${action.payload.newApplication.name}`;
+        let applications = state.applications;
+
+        // Refresh when change project
+        if (state.currentProjectKey !== action.payload.projectKey) {
+            applications = {};
+        }
+
+        return this._http.post<Application>(
+            `/project/${action.payload.projectKey}/application/${action.payload.clonedAppName}/clone`,
+            action.payload.newApplication
+        ).pipe(tap((app) => {
+            ctx.setState({
+                ...state,
+                currentProjectKey: action.payload.projectKey,
+                applications: Object.assign({}, applications, { [appKey]: app }),
+                loading: false,
+            });
+        }));
+
+    }
 
     @Action(LoadApplication)
     load(ctx: StateContext<ApplicationsStateModel>, action: LoadApplication) {

@@ -1,15 +1,17 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {first} from 'rxjs/operators';
-import {Application} from '../../../model/application.model';
-import {Project} from '../../../model/project.model';
-import {Variable} from '../../../model/variable.model';
-import {ApplicationStore} from '../../../service/application/application.store';
-import {ProjectStore} from '../../../service/project/project.store';
-import {VariableService} from '../../../service/variable/variable.service';
-import {ToastService} from '../../../shared/toast/ToastService';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddApplication, CloneApplication } from 'app/store/project/applications/applications.action';
+import { cloneDeep } from 'lodash';
+import { finalize, first } from 'rxjs/operators';
+import { Application } from '../../../model/application.model';
+import { Project } from '../../../model/project.model';
+import { Variable } from '../../../model/variable.model';
+import { ApplicationStore } from '../../../service/application/application.store';
+import { ProjectStore } from '../../../service/project/project.store';
+import { VariableService } from '../../../service/variable/variable.service';
+import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-add',
@@ -37,16 +39,23 @@ export class ApplicationAddComponent implements OnInit {
     img: string;
     fileTooLarge = false;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _projectStore: ProjectStore,
-                private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
-                private _router: Router, private _varService: VariableService) {
-        this._activatedRoute.data.subscribe( datas => {
+    constructor(
+        private _activatedRoute: ActivatedRoute,
+        private _projectStore: ProjectStore,
+        private _appStore: ApplicationStore,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _router: Router,
+        private _varService: VariableService,
+        private store: Store
+    ) {
+        this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
     }
 
     ngOnInit(): void {
-        this._varService.getContextVariable(this.project.key).pipe(first()).subscribe( s => {
+        this._varService.getContextVariable(this.project.key).pipe(first()).subscribe(s => {
             this.suggestion = s;
         });
         if (!this.project.applications) {
@@ -75,7 +84,7 @@ export class ApplicationAddComponent implements OnInit {
             this.selectedApplication = app;
             this.variables = cloneDeep(app.variables);
             if (this.variables) {
-                this.variables.forEach( v => {
+                this.variables.forEach(v => {
                     if (v.type === 'password') {
                         v.value = '';
                     }
@@ -107,30 +116,31 @@ export class ApplicationAddComponent implements OnInit {
         switch (this.typeofCreation) {
             case 'clone':
                 newApplication.variables = this.variables;
-                this._appStore.cloneApplication(this.project.key, this.selectedApplication.name, newApplication).subscribe(() => {
-                    this.loadingCreate = false;
-                    this._toast.success('', this._translate.instant('application_created'));
-                    this._router.navigate(['/project', this.project.key, 'application', newApplication.name]);
-                }, () => {
-                    this.loadingCreate = false;
-                });
+                this.store.dispatch(new CloneApplication({
+                    projectKey: this.project.key,
+                    newApplication,
+                    clonedAppName: this.selectedApplication.name
+                })).pipe(finalize(() => this.loadingCreate = false))
+                    .subscribe(() => {
+                        this._toast.success('', this._translate.instant('application_created'));
+                        this._router.navigate(['/project', this.project.key, 'application', newApplication.name]);
+                    });
                 break;
 
             default:
-                this._appStore.createApplication(this.project.key, newApplication).subscribe(() => {
-                    this.loadingCreate = false;
-                    this._toast.success('', this._translate.instant('application_created'));
-                    this._router.navigate(['/project', this.project.key, 'application', newApplication.name]);
-                }, () => {
-                    this.loadingCreate = false;
-                });
+                this.store.dispatch(new AddApplication({ projectKey: this.project.key, application: newApplication }))
+                    .pipe(finalize(() => this.loadingCreate = false))
+                    .subscribe(() => {
+                        this._toast.success('', this._translate.instant('application_created'));
+                        this._router.navigate(['/project', this.project.key, 'application', newApplication.name]);
+                    });
         }
     }
 
-    fileEvent(event: {content: string, file: File}) {
+    fileEvent(event: { content: string, file: File }) {
         this.fileTooLarge = event.file.size > 100000
         if (this.fileTooLarge) {
-          return;
+            return;
         }
         this.img = event.content;
     }

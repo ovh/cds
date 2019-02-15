@@ -17,8 +17,8 @@ export class FetchApplication {
 }
 
 export class AddApplication {
-    static readonly type = '[Application] Add TodoItem';
-    constructor(public payload: Application) { }
+    static readonly type = '[Application] Add Application';
+    constructor(public payload: { projectKey: string, application: Application }) { }
 }
 
 export class UpdateApplication {
@@ -34,6 +34,11 @@ export class DeleteApplication {
 export class FetchApplicationOverview {
     static readonly type = '[Application] Load Application Overview';
     constructor(public payload: { projectKey: string, applicationName: string }) { }
+}
+
+export class CloneApplication {
+    static readonly type = '[Application] Clone Application';
+    constructor(public payload: { projectKey: string, newApplication: Application, clonedAppName: string }) { }
 }
 
 //  ------- Variables ---------
