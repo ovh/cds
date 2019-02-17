@@ -22,12 +22,12 @@
                     <tbody>
                         <tr *ngFor="let v of getDataForCurrentPage()">
                             <td class="border">
-                                <a class="ui" [routerLink]="[v.name]">
+                                <a class="ui" [routerLink]="[v.group.name, v.name]">
                                     <div class="ui">{{v.name}}</div>
                                 </a>
                             </td>
                             <td class="border">
-                                <a class="ui" [routerLink]="[v.name]">
+                                <a class="ui" [routerLink]="[v.group.name, v.name]">
                                     <div class="ui">{{v.type}}</div>
                                 </a>
                             </td>

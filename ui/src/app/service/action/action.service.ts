@@ -1,66 +1,45 @@
-import {HttpClient} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {Action, PipelineUsingAction} from '../../model/action.model';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Action, Usage } from '../../model/action.model';
+import { AuditAction } from '../../model/audit.model';
 
-/**
- * Service to access Public Action
- */
 @Injectable()
 export class ActionService {
+    constructor(private _http: HttpClient) { }
 
-    constructor(private _http: HttpClient) {
-    }
-
-    /**
-     * Get all types of parameters
-     * @returns {Observable<string[]>}
-     */
-    getActions(): Observable<Action[]> {
+    getAll(): Observable<Action[]> {
         return this._http.get<Action[]>('/action');
     }
 
-    /**
-     * Get a action by his name
-     * @param name name of the action to get
-     * @returns {Observable<Action>}
-     */
-    getAction(name: string): Observable<Action> {
-        return this._http.get<Action>('/action/' + name);
+    getAllForProject(projectKey: string): Observable<Action[]> {
+        return this._http.get<Action[]>(`/project/${projectKey}/action`);
     }
 
-    /**
-     * Get pipelines using specified action
-     * @param name name of the action to get
-     * @returns {Observable<PipelineUsingAction>}
-     */
-    getPipelinesUsingAction(name: string): Observable<PipelineUsingAction[]> {
-        return this._http.get<PipelineUsingAction[]>('/action/' + name + '/using');
+    get(groupName: string, name: string): Observable<Action> {
+        return this._http.get<Action>(`/action/${groupName}/${name}`);
     }
 
-    /**
-     * Create an action
-     * @param action to create
-     * @returns {Observable<Action>}
-     */
-    createAction(action: Action): Observable<Action> {
-        return this._http.post<Action>('/action/' + action.name, action);
+    getUsage(groupName: string, name: string): Observable<Usage> {
+        return this._http.get<Usage>(`/action/${groupName}/${name}/usage`);
     }
 
-    /**
-     * Update an action
-     * @param action to update
-     * @returns {Observable<Action>}
-     */
+    getAudits(groupName: string, name: string): Observable<Array<AuditAction>> {
+        return this._http.get<Array<AuditAction>>(`/action/${groupName}/${name}/audit`);
+    }
+
+    add(action: Action): Observable<Action> {
+        return this._http.post<Action>('/action', action);
+    }
+
     updateAction(name: string, action: Action): Observable<Action> {
         return this._http.put<Action>('/action/' + name, action);
     }
 
-    /**
-     * Delete a action from CDS
-     * @param name Actionname of the action to delete
-     * @returns {Observable<Response>}
-     */
+    update(old: Action, a: Action): Observable<Action> {
+        return this._http.put<Action>(`/action/${old.group.name}/${old.name}`, a);
+    }
+
     deleteAction(name: string): Observable<Response> {
         return this._http.delete<Response>('/action/' + name);
     }

@@ -21,3 +21,7 @@ export class AuditWorkflowTemplate extends Audit {
 export class AuditWorkflowTemplateInstance extends Audit {
     workflow_template_instance_id: string;
 }
+
+export class AuditAction extends Audit {
+    action_id: string;
+}

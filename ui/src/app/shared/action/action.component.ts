@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs/Subscription';
 import { Action } from '../../model/action.model';
+import { Group } from '../../model/group.model';
 import { AllKeys } from '../../model/keys.model';
 import { Parameter } from '../../model/parameter.model';
 import { Pipeline } from '../../model/pipeline.model';
@@ -32,6 +33,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     @Input() pipeline: Pipeline;
     @Input() edit = false;
     @Input() suggest: Array<string>;
+    @Input() groups: Array<Group>;
 
     @Input('action')
     set action(data: Action) {
@@ -84,9 +86,20 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this.actionSub = this._actionStore.getActions().subscribe(mapActions => {
-            this.publicActions = mapActions.valueSeq().toArray().filter((action) => action.name !== this.editableAction.name);
-        });
+        if (this.project) {
+            this.actionSub = this._actionStore.getProjectActions(this.project.key).subscribe(mapActions => {
+                this.publicActions = mapActions.valueSeq().toArray().filter((action) => {
+                    return action.name !== this.editableAction.name;
+                });
+            });
+        } else if (this.editableAction.group_id) {
+            this.actionSub = this._actionStore.getall().subscribe(mapActions => {
+                this.publicActions = mapActions.valueSeq().toArray().filter((action) => {
+                    return action.name !== this.editableAction.name &&
+                        (!action.group_id || action.group.name === 'shared.infra' || action.group_id === this.editableAction.group_id);
+                });
+            });
+        }
     }
 
     ngOnDestroy() {

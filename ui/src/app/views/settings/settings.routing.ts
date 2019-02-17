@@ -41,7 +41,11 @@ const routes: Routes = [
             { path: 'user/:username', component: UserEditComponent, data: { title: '{username} • User' } },
             { path: 'action', component: ActionListComponent, data: { title: 'Actions' } },
             { path: 'action/add', component: ActionAddComponent, data: { title: 'Add • Action' } },
-            { path: 'action/:name', component: ActionEditComponent, data: { title: '{name} • Action' } },
+            {
+                path: 'action/:groupName/:actionName',
+                component: ActionEditComponent,
+                data: { title: 'Edit • Action' }
+            },
             { path: 'queue', component: QueueComponent, data: { title: 'Queue' } },
             { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } },
             { path: 'workflow-template', component: WorkflowTemplateListComponent, data: { title: 'Workflow template' } },

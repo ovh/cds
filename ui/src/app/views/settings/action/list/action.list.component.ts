@@ -29,8 +29,8 @@ export class ActionListComponent extends Table<Action> {
         super();
 
         this.currentUser = this._authentificationStore.getUser();
-        this._actionService.getActions().subscribe(actions => {
-            this.actions = actions;
+        this._actionService.getAll().subscribe(as => {
+            this.actions = as;
         });
 
         this.path = [<PathItem>{
