@@ -117,7 +117,7 @@
     <div class="ui bottomBtnsWrapper segment" *ngIf="edit && (!pipeline || !pipeline.previewMode)">
         <div class="ui grid">
             <div class="sixteen wide column" *ngIf="publicActions.length > 0">
-                <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>
+                <app-action-step-form [actions]="publicActions" (onEvent)="stepManagement($event)"></app-action-step-form>
             </div>
 
             <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">

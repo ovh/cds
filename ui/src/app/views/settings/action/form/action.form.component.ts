@@ -6,7 +6,6 @@ import { Action } from '../../../../model/action.model';
 import { Group } from '../../../../model/group.model';
 import { AllKeys } from '../../../../model/keys.model';
 import { Parameter } from '../../../../model/parameter.model';
-import { Pipeline } from '../../../../model/pipeline.model';
 import { Requirement } from '../../../../model/requirement.model';
 import { ActionStore } from '../../../../service/action/action.store';
 import { StepEvent } from '../../../../shared/action/step/step.event';
@@ -23,8 +22,6 @@ import { SharedService } from '../../../../shared/shared.service';
 @AutoUnsubscribe()
 export class ActionFormComponent implements OnDestroy {
     @Input() keys: AllKeys;
-    @Input() pipeline: Pipeline;
-    @Input() edit = false;
     @Input() suggest: Array<string>;
     @Input() groups: Array<Group>;
 
@@ -36,7 +33,6 @@ export class ActionFormComponent implements OnDestroy {
             this._action = <Action>{ editable: true };
         }
 
-        this._action.showAddStep = false;
         if (!this._action.requirements) {
             this._action.requirements = new Array<Requirement>();
         } else {
@@ -55,12 +51,11 @@ export class ActionFormComponent implements OnDestroy {
     @Output() delete = new EventEmitter();
 
     steps: Array<Action> = new Array<Action>();
-    actions: Array<Action>;
-
+    actions: Array<Action> = new Array<Action>();
     collapsed = true;
     configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
-
     actionSub: Subscription;
+    stepFormExpended: boolean;
 
     constructor(
         private sharedService: SharedService,
@@ -93,9 +88,7 @@ export class ActionFormComponent implements OnDestroy {
     refreshActions(): void {
         if (this.action.group_id) {
             this.actionSub = this._actionStore.getGroupActions(this.action.group_id).subscribe(mapActions => {
-                this.actions = mapActions.valueSeq().toArray().filter((a) => {
-                    return this.action.id !== a.id;
-                });
+                this.actions = mapActions.valueSeq().toArray().filter(a => this.action.id !== a.id);
             });
         }
     }
@@ -214,16 +207,18 @@ export class ActionFormComponent implements OnDestroy {
 
     stepManagement(event: StepEvent): void {
         this.action.hasChanged = true;
-        this.action.showAddStep = false;
+        this.stepFormExpended = false;
         switch (event.type) {
-            case 'displayChoice':
-                this.action.showAddStep = true;
+            case 'expend':
+                this.stepFormExpended = true;
                 break;
             case 'cancel':
                 // nothing to do
                 break;
             case 'add':
                 let newStep = cloneDeep(event.step);
+                newStep.enabled = true;
+                newStep.always_executed = true;
                 this.steps.push(newStep);
                 break;
             case 'delete':
@@ -238,14 +233,12 @@ export class ActionFormComponent implements OnDestroy {
     saveAction(): void {
         // rebuild step
         this.parseRequirements();
-        this.action.actions = new Array<Action>();
-        if (this.steps) {
-            this.steps.forEach(s => {
-                this.action.actions.push(s);
-            });
-        }
 
-        this.save.emit(this.action);
+        this.save.emit({
+            ...this.action,
+            group_id: Number(this.action.group_id),
+            actions: this.steps ? this.steps : []
+        });
     }
 
     deleteAction(): void {

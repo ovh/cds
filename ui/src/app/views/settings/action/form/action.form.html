@@ -33,12 +33,7 @@
                                 <div class="field">
                                     <app-requirements-list [suggest]="suggest" [requirements]="action.requirements"
                                         [edit]="action.editable" (onChange)="action.hasChanged = true" (event)="requirementEvent($event)"></app-requirements-list>
-                                    <div class="requirementForm" *ngIf="action.editable && pipeline">
-                                        <h3>{{ 'requirement_add' | translate }}</h3>
-                                        <app-requirements-form [groupsPermission]="pipeline.groups" [config]="configRequirements"
-                                            [suggest]="suggest" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
-                                    </div>
-                                    <div class="requirementForm" *ngIf="action.editable && !pipeline">
+                                    <div class="requirementForm" *ngIf="action.editable">
                                         <app-requirements-form [suggest]="suggest" [config]="configRequirements"
                                             [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
@@ -89,7 +84,7 @@
             </button>
         </div>
     </div>
-    <div class="ui segment" *ngIf="steps.length > 0 && actions" [class.off]="!action.enabled">
+    <div class="ui segment" *ngIf="steps.length > 0 && actions">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [(dragulaModel)]="steps" *ngIf="steps">
             <div *ngFor="let step of steps; let idxStep = index" class="step" [class.off]="!step.enabled">
                 <app-action-step [action]="action" [step]="step" [edit]="action.editable" [suggest]="suggest"
@@ -104,29 +99,29 @@
         {{ 'step_nonfinal_no' | translate }}
     </div>
 
-    <div class="ui bottomBtnsWrapper segment" *ngIf="action.editable && (!pipeline || !pipeline.previewMode)">
+    <div class="ui bottomBtnsWrapper segment" *ngIf="action.editable">
         <div class="ui grid">
             <div class="sixteen wide column" *ngIf="actions && actions.length > 0">
-                <app-action-step-form [publicActions]="actions" (create)="stepManagement($event)"></app-action-step-form>
+                <app-action-step-form [actions]="actions" (onEvent)="stepManagement($event)"></app-action-step-form>
             </div>
-
-            <div class="eight wide column" *ngIf="action.id && !action.showAddStep">
-                <button class="ui fluid green button" name="updatebtn" (click)="saveAction()" [disabled]="!action.hasChanged || action.loading"
-                    [class.loading]="action.loading">
-                    <i class="save icon"></i>{{ 'save' | translate }}
-                </button>
-            </div>
-            <div class="eight wide column" *ngIf="action.id && !action.showAddStep">
-                <app-delete-button [disabled]="action.hasChanged" (event)="deleteAction()" [loading]="action.loading"
-                    [class]="'fluid'"></app-delete-button>
-            </div>
-
-            <div class="sixteen wide column" *ngIf="!action.id && !action.showAddStep">
-                <button class="ui green button" name="addbtn" (click)="saveAction()" [disabled]="action.loading"
-                    [class.loading]="action.loading">
-                    <i class="save icon"></i>{{ 'btn_create' | translate }}
-                </button>
-            </div>
+            <ng-container *ngIf="!stepFormExpended">
+                <div class="eight wide column" *ngIf="action.id">
+                    <button class="ui fluid green button" name="updatebtn" (click)="saveAction()" [disabled]="!action.hasChanged || action.loading"
+                        [class.loading]="action.loading">
+                        <i class="save icon"></i>{{ 'save' | translate }}
+                    </button>
+                </div>
+                <div class="eight wide column" *ngIf="action.id">
+                    <app-delete-button [disabled]="action.hasChanged" (event)="deleteAction()" [loading]="action.loading"
+                        [class]="'fluid'"></app-delete-button>
+                </div>
+                <div class="sixteen wide column" *ngIf="!action.id">
+                    <button class="ui green button" name="addbtn" (click)="saveAction()" [disabled]="action.loading"
+                        [class.loading]="action.loading">
+                        <i class="save icon"></i>{{ 'btn_create' | translate }}
+                    </button>
+                </div>
+            </ng-container>
         </div>
     </div>
 </form>

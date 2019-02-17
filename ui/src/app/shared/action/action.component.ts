@@ -205,7 +205,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         this.editableAction.hasChanged = true;
         this.editableAction.showAddStep = false;
         switch (event.type) {
-            case 'displayChoice':
+            case 'expend':
                 this.editableAction.showAddStep = true;
                 break;
             case 'cancel':
@@ -213,6 +213,8 @@ export class ActionComponent implements OnDestroy, OnInit {
                 break;
             case 'add':
                 let newStep = cloneDeep(event.step);
+                newStep.enabled = true;
+                newStep.always_executed = true;
                 this.steps.push(newStep);
                 break;
             case 'delete':

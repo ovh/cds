@@ -6,26 +6,27 @@ import { ActionService } from './action.service';
 
 @Injectable()
 export class ActionStore {
-    actions: BehaviorSubject<OrderedMap<string, Action>> = new BehaviorSubject(OrderedMap<string, Action>());
+    projectActions: BehaviorSubject<OrderedMap<string, Action>> = new BehaviorSubject(OrderedMap<string, Action>());
+    groupActions: BehaviorSubject<OrderedMap<string, Action>> = new BehaviorSubject(OrderedMap<string, Action>());
     projectKey: string;
     groupID: number;
 
     constructor(private _actionService: ActionService) { }
 
     getProjectActions(projectKey: string): Observable<OrderedMap<string, Action>> {
-        if (this.actions.getValue().size === 0 || this.projectKey !== projectKey) {
+        if (this.projectActions.getValue().size === 0 || this.projectKey !== projectKey) {
             this.projectKey = projectKey;
             this.resyncForProject();
         }
-        return new Observable<OrderedMap<string, Action>>(fn => this.actions.subscribe(fn));
+        return new Observable<OrderedMap<string, Action>>(fn => this.projectActions.subscribe(fn));
     }
 
     getGroupActions(groupID: number): Observable<OrderedMap<string, Action>> {
-        if (this.actions.getValue().size === 0) {
+        if (this.groupActions.getValue().size === 0 || this.groupID !== groupID) {
             this.groupID = groupID;
             this.resyncForGroup();
         }
-        return new Observable<OrderedMap<string, Action>>(fn => this.actions.subscribe(fn));
+        return new Observable<OrderedMap<string, Action>>(fn => this.groupActions.subscribe(fn));
     }
 
     resyncForProject(): void {
@@ -36,7 +37,7 @@ export class ActionStore {
                     map = map.set(a.name, a);
                 });
             }
-            this.actions.next(map);
+            this.projectActions.next(map);
         });
     }
 
@@ -48,7 +49,7 @@ export class ActionStore {
                     map = map.set(a.name, a);
                 });
             }
-            this.actions.next(map);
+            this.groupActions.next(map);
         });
     }
 }

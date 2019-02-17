@@ -236,6 +236,7 @@ import { ZoneComponent } from './zone/zone.component';
     exports: [
         ActionComponent,
         AuditListComponent,
+        ActionStepFormComponent,
         BreadcrumbComponent,
         ProjectBreadcrumbComponent,
         ChartComponentComponent,
