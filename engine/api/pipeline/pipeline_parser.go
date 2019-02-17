@@ -25,17 +25,17 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	//Transform payload to a sdk.Pipeline
 	pip, errP := epip.Pipeline()
 	if errP != nil {
-		return pip, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, errP), "ParseAndImport> Unable to parse pipeline")
+		return pip, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, errP), "unable to parse pipeline")
 	}
 
 	if opts.PipelineName != "" && pip.Name != opts.PipelineName {
-		return nil, nil, sdk.ErrPipelineNameImport
+		return nil, nil, sdk.WithStack(sdk.ErrPipelineNameImport)
 	}
 
 	// Check if pipeline exists
 	exist, errE := ExistPipeline(db, proj.ID, pip.Name)
 	if errE != nil {
-		return pip, nil, sdk.WrapError(errE, "ParseAndImport> Unable to check if pipeline %v exists", pip.Name)
+		return pip, nil, sdk.WrapError(errE, "unable to check if pipeline %v exists", pip.Name)
 	}
 
 	done := new(sync.WaitGroup)
@@ -64,7 +64,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	if globalError == nil {
 		if err := CreateAudit(db, pip, AuditUpdatePipeline, u); err != nil {
-			log.Error("%v", sdk.WrapError(err, "Cannot create audit"))
+			log.Error("%v", sdk.WrapError(err, "cannot create audit"))
 		}
 	}
 

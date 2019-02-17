@@ -125,7 +125,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 
 	rows, err := db.Query(query, p.ID)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -150,7 +150,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 			&stagePrerequisiteExpectedValue, &pipelineActionID, &actionID, &actionLastModified,
 			&actionArgs, &actionEnabled)
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 
 		//Stage
@@ -218,15 +218,15 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 			job := mapActionsStages[id][index]
 
 			var a *sdk.Action
-			a, err = action.LoadActionByID(db, mapActionsStages[id][index].Action.ID)
+			a, err = action.LoadByID(db, mapActionsStages[id][index].Action.ID)
 			if err != nil {
-				return fmt.Errorf("loadPipelineStage> cannot action.LoadActionByID %d > %s", mapActionsStages[id][index].Action.ID, err)
+				return sdk.WrapError(err, "cannot action.LoadActionByID %d", mapActionsStages[id][index].Action.ID)
 			}
 			var pipelineActionParameter []sdk.Parameter
 			var isUpdated bool
 			err = json.Unmarshal([]byte(mapArgs[id][index]), &pipelineActionParameter)
 			if err != nil {
-				return err
+				return sdk.WithStack(err)
 			}
 
 			for i := range a.Parameters {
@@ -253,21 +253,19 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 func updateStageOrder(db gorp.SqlExecutor, id int64, order int) error {
 	query := `UPDATE pipeline_stage SET build_order=$1 WHERE id=$2`
 	_, err := db.Exec(query, order, id)
-
 	return sdk.WithStack(err)
 }
 
 // UpdateStage update Stage and all its prequisites
 func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	query := `UPDATE pipeline_stage SET name=$1, build_order=$2, enabled=$3 WHERE id=$4`
-	_, err := db.Exec(query, s.Name, s.BuildOrder, s.Enabled, s.ID)
-	if err != nil {
+	if _, err := db.Exec(query, s.Name, s.BuildOrder, s.Enabled, s.ID); err != nil {
 		return err
 	}
 
 	//Remove all prequisites
 	if err := deleteStagePrerequisites(db, s.ID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	//Insert all prequisites
@@ -276,19 +274,16 @@ func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 
 // DeleteStageByID Delete stage with associated pipeline action
 func DeleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage, userID int64) error {
-
 	nbOfStages, err := CountStageByPipelineID(tx, s.PipelineID)
 	if err != nil {
 		return err
 	}
 
-	err = DeletePipelineActionByStage(tx, s.ID, userID)
-	if err != nil {
+	if err := DeletePipelineActionByStage(tx, s.ID); err != nil {
 		return err
 	}
 
-	err = deleteStageByID(tx, s)
-	if err != nil {
+	if err := deleteStageByID(tx, s); err != nil {
 		return err
 	}
 
@@ -304,11 +299,7 @@ func deleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage) error {
 	//Delete stage
 	query := `DELETE FROM pipeline_stage WHERE id = $1`
 	_, err := tx.Exec(query, s.ID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return sdk.WithStack(err)
 }
 
 // CountStageByPipelineID Count the number of stages for the given pipeline
@@ -317,7 +308,7 @@ func CountStageByPipelineID(db gorp.SqlExecutor, pipelineID int64) (int, error) 
 	query := `SELECT count(id) FROM "pipeline_stage"
 	 		  WHERE pipeline_id = $1`
 	err := db.QueryRow(query, pipelineID).Scan(&countStages)
-	return countStages, err
+	return countStages, sdk.WithStack(err)
 }
 
 func seleteAllStageID(db gorp.SqlExecutor, pipelineID int64) ([]int64, error) {
@@ -327,7 +318,7 @@ func seleteAllStageID(db gorp.SqlExecutor, pipelineID int64) ([]int64, error) {
 
 	rows, err := db.Query(query, pipelineID)
 	if err != nil {
-		return stageIDs, err
+		return stageIDs, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -335,7 +326,7 @@ func seleteAllStageID(db gorp.SqlExecutor, pipelineID int64) ([]int64, error) {
 		var stageID int64
 		err = rows.Scan(&stageID)
 		if err != nil {
-			return stageIDs, err
+			return stageIDs, sdk.WithStack(err)
 		}
 		stageIDs = append(stageIDs, stageID)
 	}
@@ -347,7 +338,7 @@ func deleteStagePrerequisites(db gorp.SqlExecutor, stageID int64) error {
 	//Delete stage prequisites
 	queryDelete := `DELETE FROM pipeline_stage_prerequisite WHERE pipeline_stage_id = $1`
 	_, err := db.Exec(queryDelete, strconv.Itoa(int(stageID)))
-	return err
+	return sdk.WithStack(err)
 }
 
 // DeleteAllStage  Delete all stages from pipeline ID
@@ -358,11 +349,10 @@ func DeleteAllStage(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 	}
 
 	for _, id := range stageIDs {
-		err = DeletePipelineActionByStage(db, id, userID)
-		if err != nil {
+		if err := DeletePipelineActionByStage(db, id); err != nil {
 			return err
 		}
-		//Delete stage prequisites
+		// delete stage prequisites
 		if err := deleteStagePrerequisites(db, id); err != nil {
 			return err
 		}
@@ -370,12 +360,11 @@ func DeleteAllStage(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 
 	queryDelete := `DELETE FROM pipeline_stage WHERE pipeline_id = $1`
 	_, err = db.Exec(queryDelete, pipelineID)
-	return err
+	return sdk.WithStack(err)
 }
 
 // MoveStage Move a stage
 func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
-
 	if stageToMove.BuildOrder > newBuildOrder {
 		if err := moveUpStages(db, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
@@ -385,7 +374,6 @@ func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int, p
 			return err
 		}
 	}
-
 	stageToMove.BuildOrder = newBuildOrder
 	return UpdateStage(db, stageToMove)
 }
@@ -397,7 +385,7 @@ func moveUpStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPositio
 		  AND build_order >= $2
 		  AND pipeline_id = $3`
 	_, err := db.Exec(query, oldPosition, newPosition, pipelineID)
-	return err
+	return sdk.WithStack(err)
 }
 
 func moveDownStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosition int) error {
@@ -407,5 +395,5 @@ func moveDownStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosit
 		  AND build_order > $2
 		  AND pipeline_id = $3`
 	_, err := db.Exec(query, newPosition, oldPosition, pipelineID)
-	return err
+	return sdk.WithStack(err)
 }

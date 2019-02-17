@@ -22,7 +22,8 @@ func Test_getActionExportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permActionName": "GitClone",
+		"groupName":  "shared.infra",
+		"actionName": "GitClone",
 	}
 	uri := api.Router.GetRoute("GET", api.getActionExportHandler, vars)
 	test.NotEmpty(t, uri)

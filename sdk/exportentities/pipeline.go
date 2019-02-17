@@ -436,64 +436,52 @@ func computeSteps(steps []Step) ([]sdk.Action, error) {
 	return res, nil
 }
 
-func computeStep(s Step) (a *sdk.Action, e error) {
+func computeStep(s Step) (*sdk.Action, error) {
 	if !s.IsValid() {
-		e = fmt.Errorf("computeStep> Malformatted step")
-		return
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "malformatted step")
 	}
 
-	var ok bool
-	a, ok, e = s.AsArtifactDownload()
-	if ok {
-		return
+	if a, ok, err := s.AsArtifactDownload(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsArtifactUpload()
-	if ok {
-		return
+	if a, ok, err := s.AsArtifactUpload(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsServeStaticFiles()
-	if ok {
-		return
+	if a, ok, err := s.AsServeStaticFiles(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsJUnitReport()
-	if ok {
-		return
+	if a, ok, err := s.AsJUnitReport(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsGitClone()
-	if ok {
-		return
+	if a, ok, err := s.AsGitClone(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsCheckoutApplication()
-	if ok {
-		return
+	if a, ok, err := s.AsCheckoutApplication(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsDeployApplication()
-	if ok {
-		return
+	if a, ok, err := s.AsDeployApplication(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsCoverageAction()
-	if ok {
-		return
+	if a, ok, err := s.AsCoverageAction(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsScript()
-	if ok {
-		return
+	if a, ok, err := s.AsScript(); ok {
+		return a, err
 	}
 
-	a, ok, e = s.AsAction()
-	if ok {
-		return
+	if a, ok, err := s.AsAction(); ok {
+		return a, err
 	}
 
-	return
+	return nil, nil
 }
 
 func computeJobRequirements(req []Requirement) []sdk.Requirement {

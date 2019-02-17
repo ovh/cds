@@ -665,6 +665,9 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Error("error while initializing workers routine: %s", err)
 		}
 	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
+		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
@@ -679,9 +682,6 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
-		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)

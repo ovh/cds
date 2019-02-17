@@ -48,3 +48,9 @@ type AuditWorkflowTemplateInstance struct {
 	AuditCommon
 	WorkflowTemplateInstanceID int64 `json:"workflow_template_instance_id" db:"workflow_template_instance_id"`
 }
+
+// AuditAction represents an audit data on a action.
+type AuditAction struct {
+	AuditCommon
+	ActionID int64 `json:"action_id" db:"action_id"`
+}

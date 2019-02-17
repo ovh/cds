@@ -4,6 +4,7 @@ package sdk
 
 import (
 	json "encoding/json"
+
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -2478,8 +2479,6 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk14(in *jlexer.Lexer, out *Action) {
 			out.Optional = bool(in.Bool())
 		case "always_executed":
 			out.AlwaysExecuted = bool(in.Bool())
-		case "last_modified":
-			out.LastModified = int64(in.Int64())
 		default:
 			in.SkipRecursive()
 		}
@@ -2655,7 +2654,6 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Action) 
 		} else {
 			out.RawString(prefix)
 		}
-		out.Int64(int64(in.LastModified))
 	}
 	out.RawByte('}')
 }

@@ -38,14 +38,14 @@ func (api *API) InitRouter() {
 	r.Handle("/accesstoken/group/{id}", r.GET(api.getAccessTokenByGroupHandler))
 
 	// Action
-	r.Handle("/action", r.GET(api.getActionsHandler))
-	r.Handle("/action/import", r.POST(api.importActionHandler, NeedAdmin(true)))
-
-	r.Handle("/action/requirement", r.GET(api.getActionsRequirements, Auth(false)))
-	r.Handle("/action/{permActionName}", r.GET(api.getActionHandler), r.POST(api.addActionHandler), r.PUT(api.updateActionHandler), r.DELETE(api.deleteActionHandler))
-	r.Handle("/action/{actionName}/using", r.GET(api.getPipelinesUsingActionHandler, NeedAdmin(true)))
-	r.Handle("/action/{permActionName}/export", r.GET(api.getActionExportHandler))
-	r.Handle("/action/{actionID}/audit", r.GET(api.getActionAuditHandler, NeedAdmin(true)))
+	r.Handle("/action", r.GET(api.getActionsHandler), r.POST(api.postActionHandler))
+	r.Handle("/action/import", r.POST(api.importActionHandler))
+	r.Handle("/action/{groupName}/{actionName}", r.GET(api.getActionHandler), r.PUT(api.putActionHandler), r.DELETE(api.deleteActionHandler))
+	r.Handle("/action/{groupName}/{actionName}/usage", r.GET(api.getActionUsageHandler))
+	r.Handle("/action/{groupName}/{actionName}/export", r.GET(api.getActionExportHandler))
+	r.Handle("/action/{groupName}/{actionName}/audit", r.GET(api.getActionAuditHandler))
+	r.Handle("/action/requirement", r.GET(api.getActionsRequirements, Auth(false))) // FIXME add auth used by hatcheries
+	r.Handle("/project/{permProjectKey}/action", r.GET(api.getActionsForProjectHandler))
 
 	// Admin
 	r.Handle("/admin/maintenance", r.POST(api.postMaintenanceHandler, NeedAdmin(true)))

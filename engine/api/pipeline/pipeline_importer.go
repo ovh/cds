@@ -78,8 +78,8 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			}
 			// Delete all existing jobs in existing stage
 			for _, oj := range oldStage.Jobs {
-				if err := DeleteJob(db, oj, u.ID); err != nil {
-					return sdk.WrapError(err, "Unable to delete job %s in %s", oj.Action.Name, pip.Name)
+				if err := DeleteJob(db, oj); err != nil {
+					return sdk.WrapError(err, "unable to delete job %s in %s", oj.Action.Name, pip.Name)
 				}
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, oj.Action.Name, s.Name)
 			}
@@ -125,15 +125,15 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		if !stageFound {
 			for x := range os.Jobs {
 				j := os.Jobs[x]
-				if err := DeleteJob(db, j, u.ID); err != nil {
-					return sdk.WrapError(err, "Unable to delete job %s in %s", j.Action.Name, pip.Name)
+				if err := DeleteJob(db, j); err != nil {
+					return sdk.WrapError(err, "unable to delete job %s in %s", j.Action.Name, pip.Name)
 				}
 				if msgChan != nil {
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, j.Action.Name, os.Name)
 				}
 			}
 			if err := DeleteStageByID(db, &os, u.ID); err != nil {
-				return sdk.WrapError(err, "Unable to delete stage %d", os.ID)
+				return sdk.WrapError(err, "unable to delete stage %d", os.ID)
 			}
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeleted, os.Name)

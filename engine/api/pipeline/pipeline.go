@@ -34,9 +34,9 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 	err := db.QueryRow(query, name, projectKey).Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &p.Type, &lastModified)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrPipelineNotFound
+			return nil, sdk.WithStack(sdk.ErrPipelineNotFound)
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	p.LastModified = lastModified.Unix()
 	p.ProjectKey = projectKey
@@ -101,7 +101,7 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string, u *sdk.User) ([]sdk.Pipeline, error) {
 	var pips []sdk.Pipeline
 	query := `
-	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
 		FROM action_requirement
 			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
 			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
@@ -112,7 +112,7 @@ func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string, u *sdk.U
 
 	if !u.Admin {
 		query = `
-	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
 		FROM action_requirement
 			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
 			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id

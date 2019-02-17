@@ -24,7 +24,7 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 	log.Info("MigrateActionDEPRECATEDGitClone> Begin")
 	defer log.Info("MigrateActionDEPRECATEDGitClone> End")
 
-	pipelines, err := action.GetPipelineUsingAction(DBFunc(), DEPRECATEDGitClone)
+	pipelines, err := getPipelineUsingAction(DBFunc(), DEPRECATEDGitClone)
 
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 }
 
 // MigrateActionDEPRECATEDGitClonePipeline is the unitary function
-func MigrateActionDEPRECATEDGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p action.PipelineUsingAction) error {
+func MigrateActionDEPRECATEDGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p pipelineUsingAction) error {
 	//Override the appname with the application in workflow node context if needed
 	if p.AppName == "" && p.WorkflowName != "" {
 		proj, err := project.Load(db, store, p.ProjKey, nil, project.LoadOptions.WithIntegrations)
@@ -120,7 +120,7 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 	var err error
 	//Load the builtin gitclone action is needed
 	if originalGitClone == nil {
-		originalGitClone, err = action.LoadPublicAction(db, sdk.GitCloneAction)
+		originalGitClone, err = action.LoadTypeBuiltInOrDefaultByName(db, sdk.GitCloneAction)
 		if err != nil {
 			return err
 		}
@@ -216,6 +216,6 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 		j.Action.Actions[i] = a
 	}
 
-	//Updte in database
-	return action.UpdateActionDB(db, &j.Action, anAdminID)
+	// update in database
+	return action.Update(db, &j.Action)
 }

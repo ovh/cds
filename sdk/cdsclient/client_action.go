@@ -18,17 +18,21 @@ func (c *client) Requirements() ([]sdk.Requirement, error) {
 	return req, nil
 }
 
-func (c *client) ActionDelete(actionName string) error {
-	_, err := c.DeleteJSON(context.Background(), "/action/"+actionName, nil)
+func (c *client) ActionDelete(groupName, name string) error {
+	path := fmt.Sprintf("/action/%s/%s", groupName, name)
+	_, err := c.DeleteJSON(context.Background(), path, nil)
 	return err
 }
 
-func (c *client) ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error) {
-	action := &sdk.Action{}
-	if _, err := c.GetJSON(context.Background(), "/action/"+actionName, action, mods...); err != nil {
+func (c *client) ActionGet(groupName, name string, mods ...RequestModifier) (*sdk.Action, error) {
+	var a sdk.Action
+
+	path := fmt.Sprintf("/action/%s/%s", groupName, name)
+	if _, err := c.GetJSON(context.Background(), path, &a, mods...); err != nil {
 		return nil, err
 	}
-	return action, nil
+
+	return &a, nil
 }
 
 func (c *client) ActionList() ([]sdk.Action, error) {
@@ -71,8 +75,8 @@ func (c *client) ActionImport(content io.Reader, format string) error {
 	return nil
 }
 
-func (c *client) ActionExport(name string, format string) ([]byte, error) {
-	path := fmt.Sprintf("/action/%s/export?format=%s", name, format)
+func (c *client) ActionExport(groupName, name string, format string) ([]byte, error) {
+	path := fmt.Sprintf("/action/%s/%s/export?format=%s", groupName, name, format)
 	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err

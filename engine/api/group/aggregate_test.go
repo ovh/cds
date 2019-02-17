@@ -35,3 +35,29 @@ func TestAggregateOnWorkflowTemplate(t *testing.T) {
 	assert.NotNil(t, wts[1].Group)
 	assert.Equal(t, "grp-2", wts[1].Group.Name)
 }
+
+func TestAggregateOnAction(t *testing.T) {
+	db := &test.SqlExecutorMock{}
+	db.OnSelect = func(i interface{}) {
+		gs := i.(*[]sdk.Group)
+		*gs = append(*gs, sdk.Group{
+			ID:   1,
+			Name: "grp-1",
+		}, sdk.Group{
+			ID:   2,
+			Name: "grp-2",
+		})
+	}
+
+	as := []*sdk.Action{
+		{GroupID: 1},
+		{GroupID: 2},
+	}
+
+	assert.Nil(t, group.AggregateOnAction(db, as...))
+
+	assert.NotNil(t, as[0].Group)
+	assert.Equal(t, "grp-1", as[0].Group.Name)
+	assert.NotNil(t, as[1].Group)
+	assert.Equal(t, "grp-2", as[1].Group.Name)
+}

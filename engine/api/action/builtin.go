@@ -293,12 +293,12 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	var name string
 	err := db.QueryRow(`SELECT action.name FROM action WHERE action.name = $1 and action.type = $2`, a.Name, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err != sql.ErrNoRows {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if err != nil && err == sql.ErrNoRows {
-		if errcreate := createBuiltinAction(db, a); errcreate != nil {
-			return errcreate
+		if err := createBuiltinAction(db, a); err != nil {
+			return err
 		}
 	}
 
@@ -306,18 +306,18 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 }
 
 func createBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
-	tx, errb := db.Begin()
-	if errb != nil {
-		return errb
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
 	}
 	defer tx.Rollback()
 
 	log.Info("createBuiltinAction> create builtin action %s", a.Name)
-	if err := InsertAction(tx, a, true); err != nil {
+	if err := Insert(tx, a); err != nil {
 		return err
 	}
 
-	return tx.Commit()
+	return sdk.WithStack(tx.Commit())
 }
 
 // CreateBuiltinArtifactActions  Create Action BuiltinArtifact
@@ -366,16 +366,16 @@ func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	defer tx.Rollback()
 
 	log.Info("createBuiltinArtifactUploadAction> create builtin action %s", upload.Name)
-	if err := InsertAction(tx, upload, true); err != nil {
-		return sdk.WrapError(err, "createBuiltinArtifactUploadAction err")
+	if err := Insert(tx, upload); err != nil {
+		return err
 	}
 
-	return tx.Commit()
+	return sdk.WithStack(tx.Commit())
 }
 
 func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
@@ -410,14 +410,14 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	defer tx.Rollback()
 
 	log.Info("createBuiltinArtifactDownloadAction> create builtin action %s", dl.Name)
-	if err := InsertAction(tx, dl, true); err != nil {
-		return sdk.WrapError(err, "createBuiltinArtifactDownloadAction err")
+	if err := Insert(tx, dl); err != nil {
+		return err
 	}
 
-	return tx.Commit()
+	return sdk.WithStack(tx.Commit())
 }
