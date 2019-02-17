@@ -46,6 +46,7 @@ func (api *API) InitRouter() {
 	r.Handle("/action/{groupName}/{actionName}/audit", r.GET(api.getActionAuditHandler))
 	r.Handle("/action/requirement", r.GET(api.getActionsRequirements, Auth(false))) // FIXME add auth used by hatcheries
 	r.Handle("/project/{permProjectKey}/action", r.GET(api.getActionsForProjectHandler))
+	r.Handle("/group/{groupID}/action", r.GET(api.getActionsForGroupHandler))
 
 	// Admin
 	r.Handle("/admin/maintenance", r.POST(api.postMaintenanceHandler, NeedAdmin(true)))

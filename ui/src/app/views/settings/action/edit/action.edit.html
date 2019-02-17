@@ -4,8 +4,8 @@
     <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
         <div *ngSwitchCase="'action'" class="ui grid">
             <div class="thirteen wide column">
-                <app-action *ngIf="action" [edit]="isAdmin && action.type !== 'Builtin' && action.type !== 'Plugin'"
-                    [action]="action" (actionEvent)="actionEvent($event)"></app-action>
+                <app-action-form *ngIf="action" [groups]="groups" [action]="action" (save)="actionSave($event)"
+                    (delete)="actionDelete()"></app-action-form>
             </div>
             <div class="three wide column">
                 <app-action-help></app-action-help>

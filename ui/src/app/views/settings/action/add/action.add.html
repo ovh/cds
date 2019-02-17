@@ -3,7 +3,7 @@
     <app-scrollview class="scrollview">
         <div class="ui grid">
             <div class="thirteen wide column">
-                <app-action [edit]="isAdmin" [action]="action" (actionEvent)="actionEvent($event)"></app-action>
+                <app-action-form [groups]="groups" [action]="action" (save)="actionSave($event)"></app-action-form>
             </div>
             <div class="three wide column">
                 <app-action-help></app-action-help>

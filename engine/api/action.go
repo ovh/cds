@@ -121,6 +121,35 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 	}
 }
 
+func (api *API) getActionsForGroupHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		groupID, err := requestVarInt(r, "groupID")
+		if err != nil {
+			return err
+		}
+
+		// check that the group exists and user is part of the group
+		g, err := group.LoadGroupByID(api.mustDB(), groupID)
+		if err != nil {
+			return err
+		}
+
+		u := deprecatedGetUser(ctx)
+
+		if err := group.CheckUserIsGroupMember(g, u); err != nil {
+			return err
+		}
+
+		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(api.mustDB(),
+			[]int64{g.ID, group.SharedInfraGroup.ID})
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, as, http.StatusOK)
+	}
+}
+
 func (api *API) postActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var data sdk.Action

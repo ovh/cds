@@ -7,9 +7,7 @@ import { Action, Usage } from '../../../../model/action.model';
 import { AuditAction } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
 import { ActionService } from '../../../../service/action/action.service';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { GroupService } from '../../../../service/group/group.service';
-import { ActionEvent } from '../../../../shared/action/action.event.model';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { Item } from '../../../../shared/diff/list/diff.list.component';
@@ -26,7 +24,6 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 export class ActionEditComponent implements OnInit {
     action: Action;
     actionDoc: string;
-    isAdmin: boolean;
     loadingUsage: boolean;
     usage: Usage;
     path: Array<PathItem>;
@@ -45,13 +42,8 @@ export class ActionEditComponent implements OnInit {
         private _actionService: ActionService,
         private _toast: ToastService, private _translate: TranslateService,
         private _route: ActivatedRoute, private _router: Router,
-        private _authentificationStore: AuthentificationStore,
         private _groupService: GroupService
-    ) {
-        if (this._authentificationStore.isConnected()) {
-            this.isAdmin = this._authentificationStore.isAdmin();
-        }
-    }
+    ) { }
 
     ngOnInit() {
         this.tabs = [<Tab>{
@@ -143,11 +135,11 @@ export class ActionEditComponent implements OnInit {
         }]
     }
 
-    actionEvent(event: ActionEvent): void {
-        event.action.loading = true;
+    actionSave(action: Action): void {
+        action.loading = true;
 
-        if (event.action.actions) {
-            event.action.actions.forEach(a => {
+        if (action.actions) {
+            action.actions.forEach(a => {
                 if (a.parameters) {
                     a.parameters.forEach(p => {
                         if (p.type === 'boolean' && !p.value) {
@@ -158,8 +150,9 @@ export class ActionEditComponent implements OnInit {
                 }
             });
         }
-        if (event.action.parameters) {
-            event.action.parameters.forEach(p => {
+
+        if (action.parameters) {
+            action.parameters.forEach(p => {
                 if (p.type === 'boolean' && !p.value) {
                     p.value = 'false';
                 }
@@ -167,24 +160,21 @@ export class ActionEditComponent implements OnInit {
             });
         }
 
-        switch (event.type) {
-            case 'update':
-                this._actionService.update(this.action, event.action).subscribe(action => {
-                    this._toast.success('', this._translate.instant('action_saved'));
-                    this.action = action;
-                }, () => {
-                    this.action.loading = false;
-                });
-                break;
-            case 'delete':
-                this._actionService.deleteAction(event.action.name).subscribe(() => {
-                    this._toast.success('', this._translate.instant('action_deleted'));
-                    this._router.navigate(['settings', 'action']);
-                }, () => {
-                    this.action.loading = false;
-                });
-                break;
-        }
+        this._actionService.update(this.action, action).subscribe(a => {
+            this._toast.success('', this._translate.instant('action_saved'));
+            this.action = a;
+        }, () => {
+            this.action.loading = false;
+        });
+    }
+
+    actionDelete(): void {
+        this._actionService.delete(this.action.group.name, this.action.name).subscribe(() => {
+            this._toast.success('', this._translate.instant('action_deleted'));
+            this._router.navigate(['settings', 'action']);
+        }, () => {
+            this.action.loading = false;
+        });
     }
 
     updatePath() {

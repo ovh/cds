@@ -16,6 +16,10 @@ export class ActionService {
         return this._http.get<Action[]>(`/project/${projectKey}/action`);
     }
 
+    getAllForGroup(groupID: number): Observable<Action[]> {
+        return this._http.get<Action[]>(`/group/${groupID}/action`);
+    }
+
     get(groupName: string, name: string): Observable<Action> {
         return this._http.get<Action>(`/action/${groupName}/${name}`);
     }
@@ -32,15 +36,11 @@ export class ActionService {
         return this._http.post<Action>('/action', action);
     }
 
-    updateAction(name: string, action: Action): Observable<Action> {
-        return this._http.put<Action>('/action/' + name, action);
-    }
-
     update(old: Action, a: Action): Observable<Action> {
         return this._http.put<Action>(`/action/${old.group.name}/${old.name}`, a);
     }
 
-    deleteAction(name: string): Observable<Response> {
-        return this._http.delete<Response>('/action/' + name);
+    delete(groupName: string, name: string): Observable<Response> {
+        return this._http.delete<Response>(`/action/${groupName}/${name}`);
     }
 }

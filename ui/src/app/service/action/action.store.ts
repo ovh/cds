@@ -8,6 +8,7 @@ import { ActionService } from './action.service';
 export class ActionStore {
     actions: BehaviorSubject<OrderedMap<string, Action>> = new BehaviorSubject(OrderedMap<string, Action>());
     projectKey: string;
+    groupID: number;
 
     constructor(private _actionService: ActionService) { }
 
@@ -19,9 +20,10 @@ export class ActionStore {
         return new Observable<OrderedMap<string, Action>>(fn => this.actions.subscribe(fn));
     }
 
-    getall(): Observable<OrderedMap<string, Action>> {
+    getGroupActions(groupID: number): Observable<OrderedMap<string, Action>> {
         if (this.actions.getValue().size === 0) {
-            this.resync();
+            this.groupID = groupID;
+            this.resyncForGroup();
         }
         return new Observable<OrderedMap<string, Action>>(fn => this.actions.subscribe(fn));
     }
@@ -38,8 +40,8 @@ export class ActionStore {
         });
     }
 
-    resync(): void {
-        this._actionService.getAll().subscribe(res => {
+    resyncForGroup(): void {
+        this._actionService.getAllForGroup(this.groupID).subscribe(res => {
             let map = OrderedMap<string, Action>();
             if (res && res.length > 0) {
                 res.forEach(a => {

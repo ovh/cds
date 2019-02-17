@@ -1,54 +1,61 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs/Subscription';
-import { Action } from '../../model/action.model';
-import { AllKeys } from '../../model/keys.model';
-import { Parameter } from '../../model/parameter.model';
-import { Pipeline } from '../../model/pipeline.model';
-import { Project } from '../../model/project.model';
-import { Requirement } from '../../model/requirement.model';
-import { ActionStore } from '../../service/action/action.store';
-import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
-import { ParameterEvent } from '../parameter/parameter.event.model';
-import { RequirementEvent } from '../requirements/requirement.event.model';
-import { SharedService } from '../shared.service';
-import { ActionEvent } from './action.event.model';
-import { StepEvent } from './step/step.event';
+import { Action } from '../../../../model/action.model';
+import { Group } from '../../../../model/group.model';
+import { AllKeys } from '../../../../model/keys.model';
+import { Parameter } from '../../../../model/parameter.model';
+import { Pipeline } from '../../../../model/pipeline.model';
+import { Requirement } from '../../../../model/requirement.model';
+import { ActionStore } from '../../../../service/action/action.store';
+import { StepEvent } from '../../../../shared/action/step/step.event';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
+import { ParameterEvent } from '../../../../shared/parameter/parameter.event.model';
+import { RequirementEvent } from '../../../../shared/requirements/requirement.event.model';
+import { SharedService } from '../../../../shared/shared.service';
 
 @Component({
-    selector: 'app-action',
-    templateUrl: './action.html',
-    styleUrls: ['./action.scss']
+    selector: 'app-action-form',
+    templateUrl: './action.form.html',
+    styleUrls: ['./action.form.scss']
 })
 @AutoUnsubscribe()
-export class ActionComponent implements OnDestroy, OnInit {
-    editableAction: Action;
-    steps: Array<Action> = new Array<Action>();
-    publicActions: Array<Action>;
-
-    @Input() project: Project;
+export class ActionFormComponent implements OnDestroy {
     @Input() keys: AllKeys;
     @Input() pipeline: Pipeline;
     @Input() edit = false;
     @Input() suggest: Array<string>;
+    @Input() groups: Array<Group>;
 
-    @Input('action')
-    set action(data: Action) {
-        this.editableAction = cloneDeep(data);
-        this.editableAction.showAddStep = false;
-        if (!this.editableAction.requirements) {
-            this.editableAction.requirements = new Array<Requirement>();
+    _action: Action;
+    @Input() set action(a: Action) {
+        this._action = { ...a }
+
+        if (!this._action) {
+            this._action = <Action>{ editable: true };
+        }
+
+        this._action.showAddStep = false;
+        if (!this._action.requirements) {
+            this._action.requirements = new Array<Requirement>();
         } else {
             this.prepareEditRequirements();
         }
         this.steps = new Array<Action>();
-        if (this.editableAction.actions) {
-            this.steps = cloneDeep(this.editableAction.actions);
+        if (this._action.actions) {
+            this.steps = cloneDeep(this._action.actions);
         }
-    }
 
-    @Output() actionEvent = new EventEmitter<ActionEvent>();
+        this.refreshActions();
+    }
+    get action(): Action { return this._action; }
+
+    @Output() save = new EventEmitter<Action>();
+    @Output() delete = new EventEmitter();
+
+    steps: Array<Action> = new Array<Action>();
+    actions: Array<Action>;
 
     collapsed = true;
     configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
@@ -61,32 +68,36 @@ export class ActionComponent implements OnDestroy, OnInit {
         private dragulaService: DragulaService
     ) {
         dragulaService.createGroup('bag-nonfinal', {
-            moves: function (el, source, handle) {
+            moves: (el, source, handle) => {
                 return handle.classList.contains('move');
             },
         });
         dragulaService.createGroup('bag-final', {
-            moves: function (el, source, handle) {
+            moves: (el, source, handle) => {
                 return handle.classList.contains('move');
             },
             direction: 'vertical'
         });
         this.dragulaService.drop().subscribe(() => {
-            this.editableAction.hasChanged = true;
+            this.action.hasChanged = true;
         });
     }
 
     keyEvent(event: KeyboardEvent) {
         if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
             event.preventDefault();
-            setTimeout(() => this.sendActionEvent('update'));
+            setTimeout(() => this.saveAction());
         }
     }
 
-    ngOnInit() {
-        this.actionSub = this._actionStore.getProjectActions(this.project.key).subscribe(mapActions => {
-            this.publicActions = mapActions.valueSeq().toArray().filter((action) => action.name !== this.editableAction.name);
-        });
+    refreshActions(): void {
+        if (this.action.group_id) {
+            this.actionSub = this._actionStore.getGroupActions(this.action.group_id).subscribe(mapActions => {
+                this.actions = mapActions.valueSeq().toArray().filter((a) => {
+                    return this.action.id !== a.id;
+                });
+            });
+        }
     }
 
     ngOnDestroy() {
@@ -95,7 +106,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     getDescriptionHeight(): number {
-        return this.sharedService.getTextAreaheight(this.editableAction.description);
+        return this.sharedService.getTextAreaheight(this.action.description);
     }
 
     /**
@@ -103,15 +114,15 @@ export class ActionComponent implements OnDestroy, OnInit {
      * @param r event
      */
     requirementEvent(r: RequirementEvent): void {
-        this.editableAction.hasChanged = true;
+        this.action.hasChanged = true;
         switch (r.type) {
             case 'add':
-                if (!this.editableAction.requirements) {
-                    this.editableAction.requirements = new Array<Requirement>();
+                if (!this.action.requirements) {
+                    this.action.requirements = new Array<Requirement>();
                 }
-                let indexAdd = this.editableAction.requirements.findIndex(req => r.requirement.value === req.value);
+                let indexAdd = this.action.requirements.findIndex(req => r.requirement.value === req.value);
                 if (indexAdd === -1) {
-                    this.editableAction.requirements.push(r.requirement);
+                    this.action.requirements.push(r.requirement);
                 }
                 if (r.requirement.type === 'model') {
                     this.configRequirements.disableModel = true;
@@ -121,9 +132,9 @@ export class ActionComponent implements OnDestroy, OnInit {
                 }
                 break;
             case 'delete':
-                let indexDelete = this.editableAction.requirements.indexOf(r.requirement);
+                let indexDelete = this.action.requirements.indexOf(r.requirement);
                 if (indexDelete >= 0) {
-                    this.editableAction.requirements.splice(indexDelete, 1);
+                    this.action.requirements.splice(indexDelete, 1);
                 }
                 if (r.requirement.type === 'model') {
                     this.configRequirements.disableModel = false;
@@ -137,7 +148,7 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     prepareEditRequirements(): void {
         this.configRequirements = {};
-        this.editableAction.requirements.forEach(req => {
+        this.action.requirements.forEach(req => {
             if (req.type === 'model' || req.type === 'service') {
                 let spaceIdx = req.value.indexOf(' ');
                 if (spaceIdx > 1) {
@@ -159,7 +170,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     parseRequirements(): void {
         // for each type 'model' and 'service', concat value with opts
         // and replace \n with space
-        this.editableAction.requirements.forEach(req => {
+        this.action.requirements.forEach(req => {
             if ((req.type === 'model' || req.type === 'service') && req.opts) {
                 let spaceIdx = req.value.indexOf(' ');
                 let newValue = req.value;
@@ -180,33 +191,33 @@ export class ActionComponent implements OnDestroy, OnInit {
      * @param p event
      */
     parameterEvent(p: ParameterEvent): void {
-        this.editableAction.hasChanged = true;
+        this.action.hasChanged = true;
         switch (p.type) {
             case 'add':
-                if (!this.editableAction.parameters) {
-                    this.editableAction.parameters = new Array<Parameter>();
+                if (!this.action.parameters) {
+                    this.action.parameters = new Array<Parameter>();
                 }
-                let indexAdd = this.editableAction.parameters.findIndex(param => p.parameter.name === param.name);
+                let indexAdd = this.action.parameters.findIndex(param => p.parameter.name === param.name);
                 if (indexAdd === -1) {
-                    this.editableAction.parameters = this.editableAction.parameters.concat([p.parameter]);
+                    this.action.parameters = this.action.parameters.concat([p.parameter]);
                 }
                 break;
             case 'delete':
-                let indexDelete = this.editableAction.parameters.indexOf(p.parameter);
+                let indexDelete = this.action.parameters.indexOf(p.parameter);
                 if (indexDelete >= 0) {
-                    this.editableAction.parameters.splice(indexDelete, 1);
-                    this.editableAction.parameters = this.editableAction.parameters.concat([]);
+                    this.action.parameters.splice(indexDelete, 1);
+                    this.action.parameters = this.action.parameters.concat([]);
                 }
                 break;
         }
     }
 
     stepManagement(event: StepEvent): void {
-        this.editableAction.hasChanged = true;
-        this.editableAction.showAddStep = false;
+        this.action.hasChanged = true;
+        this.action.showAddStep = false;
         switch (event.type) {
             case 'displayChoice':
-                this.editableAction.showAddStep = true;
+                this.action.showAddStep = true;
                 break;
             case 'cancel':
                 // nothing to do
@@ -224,20 +235,20 @@ export class ActionComponent implements OnDestroy, OnInit {
         }
     }
 
-    /**
-     * Send action event
-     * @param type type of event (update/delete)
-     */
-    sendActionEvent(type: string): void {
-        // Rebuild step
+    saveAction(): void {
+        // rebuild step
         this.parseRequirements();
-        this.editableAction.actions = new Array<Action>();
+        this.action.actions = new Array<Action>();
         if (this.steps) {
             this.steps.forEach(s => {
-                this.editableAction.actions.push(s);
+                this.action.actions.push(s);
             });
         }
 
-        this.actionEvent.emit(new ActionEvent(type, this.editableAction));
+        this.save.emit(this.action);
+    }
+
+    deleteAction(): void {
+        this.delete.emit();
     }
 }

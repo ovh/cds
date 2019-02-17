@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { SharedModule } from '../../shared/shared.module';
 import { ActionAddComponent } from './action/add/action.add.component';
 import { ActionEditComponent } from './action/edit/action.edit.component';
+import { ActionFormComponent } from './action/form/action.form.component';
 import { ActionHelpComponent } from './action/help/action.help.component';
 import { ActionListComponent } from './action/list/action.list.component';
 import { ActionUsageComponent } from './action/usage/action.usage.component';
@@ -32,6 +33,7 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         ActionEditComponent,
         ActionListComponent,
         ActionUsageComponent,
+        ActionFormComponent,
         ActionHelpComponent,
         CdsctlComponent,
         DownloadComponent,

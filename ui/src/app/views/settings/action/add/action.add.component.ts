@@ -5,9 +5,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 import { Action } from '../../../../model/action.model';
 import { Group } from '../../../../model/group.model';
 import { ActionService } from '../../../../service/action/action.service';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { GroupService } from '../../../../service/group/group.service';
-import { ActionEvent } from '../../../../shared/action/action.event.model';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -18,7 +16,6 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 })
 export class ActionAddComponent {
     action: Action;
-    isAdmin: boolean;
     groups: Array<Group>;
     loading: boolean;
     path: Array<PathItem>;
@@ -27,13 +24,9 @@ export class ActionAddComponent {
         private _actionService: ActionService,
         private _toast: ToastService, private _translate: TranslateService,
         private _router: Router,
-        private _authentificationStore: AuthentificationStore,
         private _groupService: GroupService
     ) {
         this.action = <Action>{ editable: true };
-        if (this._authentificationStore.isConnected()) {
-            this.isAdmin = this._authentificationStore.isAdmin();
-        }
         this.getGroups();
 
         this.path = [<PathItem>{
@@ -55,16 +48,14 @@ export class ActionAddComponent {
             });
     }
 
-    actionEvent(event: ActionEvent): void {
+    actionSave(action: Action): void {
         this.action.loading = true;
-        this._actionService.add(event.action).subscribe(action => {
+        this._actionService.add(action).subscribe(a => {
             this._toast.success('', this._translate.instant('action_saved'));
             // navigate to have action name in url
-            this._router.navigate(['settings', 'action', event.action.name]);
+            this._router.navigate(['settings', 'action', a.group.name, a.name]);
         }, () => {
             this.action.loading = false;
         });
     }
-
-    // TODO check name pattern before submit
 }

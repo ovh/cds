@@ -1,102 +1,109 @@
 <form class="ui form" id="ActionEdit">
-    <div class="field">
-        <div class="fields">
-            <div class="wide inline field" [class.three]="editableAction.type !== 'Joined'" [class.six]="editableAction.type === 'Joined'">
-                <label>{{'common_name' | translate}}</label>
-                <input *ngIf="edit;" type="text" name="actionName" [(ngModel)]="editableAction.name" (keydown)="editableAction.hasChanged = true; keyEvent($event)">
-                <span *ngIf="!edit;" class="inline">{{editableAction.name}}</span>
-            </div>
-            <div class="three wide field" *ngIf="editableAction.type !== 'Joined'">
-                <label>{{'common_group' | translate}} *</label>
-                <sm-select class="fluid search" name="group" *ngIf="groups && edit" [[(model)]="editableAction.group_id"
-                    [options]="{'fullTextSearch': true}">
-                    <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
-                </sm-select>
-                <input *ngIf="!edit" class="ui input" type="text" name="group" [ngModel]="editableAction.group?.name"
-                    [readonly]="true">
-            </div>
-            <div class="one wide inline field">
-                <div class="ui checkbox" *ngIf="editableAction.type === 'Joined'">
-                    <input type="checkbox" id="enabled_action_{{editableAction.id}}" name="enabled" [(ngModel)]="editableAction.enabled"
-                        (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                    <label for="enabled_action_{{editableAction.id}}">{{ 'common_enable' | translate }}</label>
+    <div class="ui segment">
+        <div class="field">
+            <div class="fields">
+                <div class="six wide inline field">
+                    <label>{{'common_name' | translate}}</label>
+                    <input *ngIf="edit;" type="text" name="actionName" [(ngModel)]="editableAction.name"
+                           (keydown)="editableAction.hasChanged = true; keyEvent($event)">
+                    <span *ngIf="!edit;" class="inline">{{editableAction.name}}</span>
                 </div>
-                <div class="ui checkbox mt10" *ngIf="editableAction.type !== 'Joined'">
-                    <input type="checkbox" id="deprecated_{{editableAction.id}}" name="deprecated" [(ngModel)]="editableAction.deprecated"
-                        (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                    <label for="deprecated_{{editableAction.id}}">{{ 'common_deprecated' | translate }}</label>
+                <div class="seven wide inline field">
+                    <label class="labelPadding">{{'common_description' | translate}}</label>
+                    <textarea *ngIf="edit;" [disabled]="!edit" name="actionDescription" [(ngModel)]="editableAction.description"
+                              rows="{{getDescriptionHeight()}}"
+                              (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
+                    <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
                 </div>
-            </div>
-            <div class="two wide right aligned field labelPadding">
-                <a class="pointing" (click)="prepareEditRequirements(); requirementModal.show({inverted: false, closable: false, autofocus: false})">
-                    {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
-                </a>
-                <sm-modal class="large" title="{{ 'common_requirements' | translate }}" #requirementModal>
-                    <modal-content>
-                        <div class="ui form">
-                            <div class="field">
-                                <app-requirements-list [suggest]="suggest" [requirements]="editableAction.requirements"
-                                    [edit]="edit" (onChange)="editableAction.hasChanged = true" (event)="requirementEvent($event)"></app-requirements-list>
-                                <div class="requirementForm" *ngIf="edit && pipeline">
-                                    <h3>{{ 'requirement_add' | translate }}</h3>
-                                    <app-requirements-form [groupsPermission]="pipeline.groups" [config]="configRequirements"
-                                        [suggest]="suggest" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
-                                </div>
-                                <div class="requirementForm" *ngIf="edit && !pipeline">
-                                    <app-requirements-form [suggest]="suggest" [config]="configRequirements" [modal]="requirementModal"
-                                        (event)="requirementEvent($event)"></app-requirements-form>
+                <div class="one wide inline field">
+                    <div class="ui checkbox">
+                        <input type="checkbox" id="enabled_action_{{editableAction.id}}" name="enabled" [(ngModel)]="editableAction.enabled"
+                               (change)="editableAction.hasChanged = true" [disabled]="!edit">
+                        <label for="enabled_action_{{editableAction.id}}">{{ 'common_enable' | translate }}</label>
+                    </div>
+                    <div class="ui checkbox mt10" *ngIf="editableAction.type !== 'Joined'">
+                        <input type="checkbox" id="deprecated_{{editableAction.id}}" name="deprecated" [(ngModel)]="editableAction.deprecated"
+                               (change)="editableAction.hasChanged = true" [disabled]="!edit">
+                        <label for="deprecated_{{editableAction.id}}">{{ 'common_deprecated' | translate }}</label>
+                    </div>
+                </div>
+                <div class="two wide right aligned field labelPadding">
+                    <a class="pointing" (click)="prepareEditRequirements(); requirementModal.show({inverted: false, closable: false, autofocus: false})">
+                        {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
+                    </a>
+                    <sm-modal class="large" title="{{ 'common_requirements' | translate }}" #requirementModal>
+                        <modal-content>
+                            <div class="ui form">
+                                <div class="field">
+                                    <app-requirements-list
+                                        [suggest]="suggest"
+                                        [requirements]="editableAction.requirements" [edit]="edit"
+                                        (onChange)="editableAction.hasChanged = true"
+                                        (event)="requirementEvent($event)"></app-requirements-list>
+                                    <div class="requirementForm" *ngIf="edit && pipeline">
+                                        <h3>{{ 'requirement_add' | translate }}</h3>
+                                        <app-requirements-form [groupsPermission]="pipeline.groups" [config]="configRequirements" [suggest]="suggest" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
+                                    </div>
+                                    <div class="requirementForm" *ngIf="edit && !pipeline">
+                                        <app-requirements-form [suggest]="suggest" [config]="configRequirements" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </modal-content>
-                    <modal-actions>
-                        <button class="ui grey button" (click)="requirementModal.hide();parseRequirements();">{{
-                            'common_close' | translate }}</button>
-                    </modal-actions>
-                </sm-modal>
+                        </modal-content>
+                        <modal-actions>
+                            <button class="ui grey button" (click)="requirementModal.hide();parseRequirements();">{{ 'common_close' | translate }}</button>
+                        </modal-actions>
+                    </sm-modal>
+                </div>
             </div>
         </div>
     </div>
-    <div class="field">
-        <label class="labelPadding">{{'common_description' | translate}}</label>
-        <textarea *ngIf="edit;" [disabled]="!edit" name="actionDescription" [(ngModel)]="editableAction.description"
-            rows="{{getDescriptionHeight()}}" (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
-        <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
-    </div>
-    <ng-container *ngIf="editableAction.type !== 'Joined'">
+    <div class="ui segment" *ngIf="editableAction.type !== 'Joined'">
         <div class="field">
             <label>{{ 'common_parameters' | translate }}</label>
             <div>
-                <app-parameter-list [project]="project" [parameters]="editableAction.parameters" [mode]="edit? 'edit': 'ro'"
-                    [hideSave]="true" (event)="parameterEvent($event)">
+                <app-parameter-list
+                  [project]="project"
+                  [parameters]="editableAction.parameters"
+                  [mode]="edit? 'edit': 'ro'"
+                  [hideSave]="true"
+                  (event)="parameterEvent($event)">
                 </app-parameter-list>
             </div>
             <div>
                 <app-parameter-form *ngIf="edit" [project]="project" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
             </div>
         </div>
-    </ng-container>
+    </div>
 
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
         <div class="right floated" *ngIf="steps && steps.length > 0">
-            <button class="ui blue button" (click)="collapsed = !collapsed">
-                <ng-container *ngIf="collapsed">
-                    <i class="hide icon"></i>
-                    {{'common_hide_all' | translate}}
-                </ng-container>
-                <ng-container *ngIf="!collapsed">
-                    <i class="eye icon"></i>
-                    {{'common_show_all' | translate}}
-                </ng-container>
-            </button>
+          <button class="ui blue button" (click)="collapsed = !collapsed">
+              <ng-container *ngIf="collapsed">
+                  <i class="hide icon"></i>
+                  {{'common_hide_all' | translate}}
+              </ng-container>
+              <ng-container *ngIf="!collapsed">
+                  <i class="eye icon"></i>
+                  {{'common_show_all' | translate}}
+              </ng-container>
+          </button>
         </div>
     </div>
     <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [(dragulaModel)]="steps" *ngIf="steps">
             <div *ngFor="let step of steps; let idxStep = index" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest"
-                    [publicActions]="publicActions" [collapsed]="collapsed" [order]="idxStep" [keys]="keys" (keydown)="keyEvent($event)"
+                <app-action-step
+                    [action]="editableAction"
+                    [step]="step"
+                    [edit]="edit"
+                    [suggest]="suggest"
+                    [publicActions]="publicActions"
+                    [collapsed]="collapsed"
+                    [order]="idxStep"
+                    [keys]="keys"
+                    (keydown)="keyEvent($event)"
                     (removeEvent)="stepManagement($event)">
                 </app-action-step>
                 <hr>
@@ -109,24 +116,21 @@
 
     <div class="ui bottomBtnsWrapper segment" *ngIf="edit && (!pipeline || !pipeline.previewMode)">
         <div class="ui grid">
-            <div class="sixteen wide column" *ngIf="publicActions && publicActions.length > 0">
+            <div class="sixteen wide column" *ngIf="publicActions.length > 0">
                 <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>
             </div>
 
             <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
-                <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading"
-                    [class.loading]="editableAction.loading">
+                <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading" [class.loading]="editableAction.loading">
                     <i class="save icon"></i>{{ 'save' | translate }}
                 </button>
             </div>
             <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
-                <app-delete-button [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading"
-                    [class]="'fluid'"></app-delete-button>
+                <app-delete-button [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading" [class]="'fluid'"></app-delete-button>
             </div>
 
             <div class="sixteen wide column" *ngIf="!editableAction.id && !editableAction.showAddStep">
-                <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading"
-                    [class.loading]="editableAction.loading">
+                <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
                     <i class="save icon"></i>{{ 'btn_create' | translate }}
                 </button>
             </div>
