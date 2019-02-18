@@ -536,6 +536,8 @@ func (a *API) Serve(ctx context.Context) error {
 		},
 	}
 
+	// DEPRECATED
+	// API Storage will be a public integration
 	var errStorage error
 	a.SharedStorage, errStorage = objectstore.Init(ctx, cfg)
 	if errStorage != nil {
