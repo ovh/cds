@@ -22,6 +22,8 @@ cover.html
 npm-debug.log
 debug.test
 openstack*.yml
+test_results.yml
+*.dump
 .tmp
 contrib/**/dist
 
