@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -85,4 +86,42 @@ func Update(db gorp.SqlExecutor, a *sdk.Action) error {
 	}
 
 	return nil
+}
+
+// RetrieveForGroupAndName try to find an action for given group and name.
+func RetrieveForGroupAndName(db gorp.SqlExecutor, g *sdk.Group, name string) (*sdk.Action, error) {
+	if g != nil {
+		grp, err := group.LoadGroupByName(db, g.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		a, err := LoadTypeDefaultByNameAndGroupID(db, name, grp.ID)
+		if err != nil {
+			return nil, err
+		}
+		if a == nil {
+			return nil, sdk.NewErrorFrom(sdk.ErrNoAction, "invalid given action %s for group %s", name, grp.Name)
+		}
+
+		return a, nil
+	}
+
+	a, err := LoadTypeDefaultByNameAndGroupID(db, name, group.SharedInfraGroup.ID)
+	if err != nil {
+		return nil, err
+	}
+	if a != nil {
+		return a, nil
+	}
+
+	a, err = LoadTypeBuiltInOrPluginByName(db, name)
+	if err != nil {
+		return nil, err
+	}
+	if a == nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrNoAction, "invalid given action %s", name)
+	}
+
+	return a, nil
 }

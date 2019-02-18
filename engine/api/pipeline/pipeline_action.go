@@ -113,14 +113,16 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 	for i := range job.Action.Actions {
 		step := &job.Action.Actions[i]
 		log.Debug("CheckJob> Checking step %s", step.Name)
-		a, err := action.LoadTypeBuiltInOrDefaultByName(db, step.Name)
+
+		a, err := action.RetrieveForGroupAndName(db, step.Group, step.Name)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNoAction) {
 				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
 				continue
 			}
-			return sdk.WrapError(err, "Unable to load action %s", step.Name)
+			return err
 		}
+		job.Action.Actions[i].ID = a.ID
 
 		for x := range step.Parameters {
 			sp := &step.Parameters[x]

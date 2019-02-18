@@ -120,7 +120,7 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 	var err error
 	//Load the builtin gitclone action is needed
 	if originalGitClone == nil {
-		originalGitClone, err = action.LoadTypeBuiltInOrDefaultByName(db, sdk.GitCloneAction)
+		originalGitClone, err = action.LoadTypeBuiltInByName(db, sdk.GitCloneAction)
 		if err != nil {
 			return err
 		}

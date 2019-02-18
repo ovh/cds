@@ -23,12 +23,19 @@ func (v view) Exec(db gorp.SqlExecutor, as ...*sdk.Action) error {
 
 type aggregator func(gorp.SqlExecutor, ...*sdk.Action) error
 
-// DefaultView for action of type default.
-var DefaultView = view{
+// FullView for action of type default.
+var FullView = view{
 	aggregateRequirements,
 	aggregateParameters,
 	aggregateChildren,
 	aggregateAudits,
+	group.AggregateOnAction,
+}
+
+// LiteView for action of type default.
+var LiteView = view{
+	aggregateRequirements,
+	aggregateParameters,
 	group.AggregateOnAction,
 }
 

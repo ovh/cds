@@ -225,7 +225,7 @@ func (api *API) getActionHandler() service.Handler {
 
 		a := getAction(ctx)
 
-		if err := action.DefaultView.Exec(api.mustDB(), a); err != nil {
+		if err := action.FullView.Exec(api.mustDB(), a); err != nil {
 			return err
 		}
 
@@ -407,7 +407,7 @@ func (api *API) getActionExportHandler() service.Handler {
 			return err
 		}
 
-		if err := action.DefaultView.Exec(api.mustDB(), a); err != nil {
+		if err := action.FullView.Exec(api.mustDB(), a); err != nil {
 			return err
 		}
 
@@ -482,41 +482,11 @@ func (api *API) importActionHandler() service.Handler {
 		// if no group name given for child, first search an action for shared.infra for backward compatibility
 		// else search a builtin or plugin action
 		for i := range data.Actions {
-			if data.Actions[i].Group != nil {
-				g, err := group.LoadGroupByName(tx, data.Actions[i].Group.Name)
-				if err != nil {
-					return err
-				}
-
-				a, err := action.GetTypeDefaultByNameAndGroupID(tx, data.Actions[i].Name, g.ID)
-				if err != nil {
-					return err
-				}
-				if a == nil {
-					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given action %s", data.Actions[i].Name)
-				}
-
-				data.Actions[i].ID = a.ID
-			} else {
-				a, err := action.GetTypeDefaultByNameAndGroupID(tx, data.Actions[i].Name, group.SharedInfraGroup.ID)
-				if err != nil {
-					return err
-				}
-				if a != nil {
-					data.Actions[i].ID = a.ID
-					continue
-				}
-
-				a, err = action.GetTypeBuiltInOrPluginByName(tx, data.Actions[i].Name)
-				if err != nil {
-					return err
-				}
-				if a == nil {
-					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given action %s", data.Actions[i].Name)
-				}
-
-				data.Actions[i].ID = a.ID
+			a, err := action.RetrieveForGroupAndName(tx, data.Actions[i].Group, data.Actions[i].Name)
+			if err != nil {
+				return err
 			}
+			data.Actions[i].ID = a.ID
 		}
 
 		// check data validity

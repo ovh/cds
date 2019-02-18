@@ -553,6 +553,13 @@ func (e Error) Translate(al string) string {
 	return msg
 }
 
+// NewErrorWithStack returns an error with stack.
+func NewErrorWithStack(root error, err error) error {
+	errWithStack := WithStack(root).(errorWithStack)
+	errWithStack.httpError = ExtractHTTPError(err, "")
+	return errWithStack
+}
+
 type errorWithStack struct {
 	root      error  // root error should be wrapped with stack
 	stack     *stack // used to generate inline call stack

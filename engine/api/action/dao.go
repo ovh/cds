@@ -53,14 +53,6 @@ func GetTypeDefaultByNameAndGroupID(db gorp.SqlExecutor, name string, groupID in
 	return get(db, query, nil)
 }
 
-// GetTypeBuiltInOrPluginByName returns an action from database with given name.
-func GetTypeBuiltInOrPluginByName(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
-	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE (type = $1 OR type = $2) AND lower(name) = lower($3)",
-	).Args(sdk.BuiltinAction, sdk.PluginAction, name)
-	return get(db, query, nil)
-}
-
 // insert action in database.
 func insert(db gorp.SqlExecutor, a *sdk.Action) error {
 	return sdk.WrapError(gorpmapping.Insert(db, a), "unable to insert action %s", a.Name)
