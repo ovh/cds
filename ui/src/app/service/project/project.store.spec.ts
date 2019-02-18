@@ -3,6 +3,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { async, TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { Observable } from 'rxjs/Observable';
 import { first } from 'rxjs/operators';
 import { AppModule } from '../../app.module';
@@ -21,11 +22,12 @@ describe('CDS: project Store', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                {provide: APP_BASE_HREF, useValue: '/'},
-                {provide: ProjectService, useClass: MockProjectService}
+                { provide: APP_BASE_HREF, useValue: '/' },
+                { provide: ProjectService, useClass: MockProjectService }
             ],
             imports: [
                 AppModule,
+                NgxsStoreModule,
                 RouterModule
             ]
         });

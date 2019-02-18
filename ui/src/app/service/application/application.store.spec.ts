@@ -4,6 +4,7 @@ import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { async, fakeAsync, TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { Observable } from 'rxjs/Observable';
 import { AppModule } from '../../app.module';
 import { Application } from '../../model/application.model';
@@ -18,12 +19,13 @@ describe('CDS: application Store', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                {provide: APP_BASE_HREF, useValue: '/'},
-                {provide: ApplicationService, useClass: MockApplicationService}
+                { provide: APP_BASE_HREF, useValue: '/' },
+                { provide: ApplicationService, useClass: MockApplicationService }
             ],
             imports: [
                 AppModule,
                 RouterModule,
+                NgxsStoreModule,
                 HttpClientTestingModule
             ]
         });
@@ -241,7 +243,7 @@ describe('CDS: application Store', () => {
 
     class MockApplicationService {
 
-        getApplication(key: string, appName: string, filter?: {branch: string, remote: string}): Observable<Application> {
+        getApplication(key: string, appName: string, filter?: { branch: string, remote: string }): Observable<Application> {
             let app = new Application();
             app.name = appName;
             return Observable.of(app);

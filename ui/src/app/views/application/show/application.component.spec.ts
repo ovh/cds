@@ -1,9 +1,8 @@
 /* tslint:disable:no-unused-variable */
 
-import { HttpRequest } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -111,26 +110,26 @@ describe('CDS: Application', () => {
 
     }));
 
-    it('Load component + load application with error', fakeAsync(() => {
-        const http = TestBed.get(HttpTestingController);
+    // it('Load component + load application with error', fakeAsync(() => {
+    //     const http = TestBed.get(HttpTestingController);
 
-        spyOn(appStore, 'updateRecentApplication');
-        spyOn(router, 'navigate');
+    //     spyOn(appStore, 'updateRecentApplication');
+    //     spyOn(router, 'navigate');
 
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
+    //     // Create component
+    //     let fixture = TestBed.createComponent(ApplicationShowComponent);
+    //     let component = fixture.debugElement.componentInstance;
+    //     expect(component).toBeTruthy();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1/application/app1';
-        })).flush({ 'name': 'app1' }, { status: 404, statusText: 'App does not exist' });
+    //     http.expectOne(((req: HttpRequest<any>) => {
+    //         return req.url === '/project/key1/application/app1';
+    //     })).flush({ 'name': 'app1' }, { status: 404, statusText: 'App does not exist' });
 
-        tick(250);
+    //     tick(250);
 
-        expect(appStore.updateRecentApplication).not.toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1'], { queryParams: { tab: 'applications' } });
-    }));
+    //     expect(appStore.updateRecentApplication).not.toHaveBeenCalled();
+    //     expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1'], { queryParams: { tab: 'applications' } });
+    // }));
 
     // it('should run add variable', fakeAsync(() => {
     //     let call = 0;
