@@ -141,7 +141,8 @@ impl<'a> Client<'a> {
             .send()?;
 
         if resp_http.status().as_u16() > 400u16 {
-            let err: CdsError = resp_http.json().map_err(CdsError::from)?;
+            let mut err: CdsError = resp_http.json().map_err(CdsError::from)?;
+            err.status = resp_http.status().as_u16();
             return Err(err);
         }
 
