@@ -132,8 +132,16 @@ describe('CDS: Application Repo Component', () => {
         tick(50);
 
         spyOn(toast, 'success');
+
         let compiled = fixture.debugElement.nativeElement;
         compiled.querySelector('button[name="addrepobtn"]').click();
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key1/repositories_manager/RepoManager/application/app/attach';
+        })).flush({
+            name: 'app',
+            vcs_server: 'RepoManager',
+            repository_fullname: 'frepo3'
+        });
         fixture.detectChanges();
         tick(100);
 
@@ -150,6 +158,11 @@ describe('CDS: Application Repo Component', () => {
         fixture.detectChanges();
         tick(50);
         compiled.querySelector('.ui.red.button.active').click();
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key1/repositories_manager/RepoManager/application/app/detach';
+        })).flush({
+            name: 'app',
+        });
         tick(100);
         expect(toast.success).toHaveBeenCalledTimes(2);
     }));
