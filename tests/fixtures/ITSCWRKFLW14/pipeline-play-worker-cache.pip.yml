@@ -1,0 +1,20 @@
+version: v1.0
+name: pipeline-play-worker-cache
+jobs:
+- job: workerCache
+  steps:
+  - script:
+    - '#!/bin/bash'
+    - ""
+    - tag="foo"
+    - ""
+    - if worker cache pull --from=myGRA3 $tag; then
+    - '    echo "getted from cache";'
+    - '    ls -lart .m2'
+    - fi
+    - ""
+    - mkdir -p .m2
+    - echo "foo"> .m2/bar
+    - ""
+    - worker cache push --destination=myGRA3 $tag .m2/
+    - ""

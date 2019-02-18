@@ -1,0 +1,12 @@
+version: v1.0
+name: pipeline-play-staticfiles
+jobs:
+- job: New Job
+  steps:
+  - script:
+    - mkdir -p website/sub
+    - echo "<html>coucou</html>" > website/sub/index.html
+    - ""
+  - serveStaticFiles:
+      name: my website
+      path: website/*
