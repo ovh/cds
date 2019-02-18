@@ -3,6 +3,7 @@ import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
+import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import {
     AddApplication,
@@ -15,13 +16,16 @@ import {
     DeleteApplicationDeployment,
     DeleteApplicationKey,
     DeleteApplicationVariable,
+    DeleteFromCacheApplication,
     DeleteVcsRepoOnApplication,
+    ExternalChangeApplication,
     FetchApplication,
     FetchApplicationOverview,
     LoadApplication,
+    ResyncApplication,
     UpdateApplication,
     UpdateApplicationDeployment,
-    UpdateApplicationVariable,
+    UpdateApplicationVariable
 } from './applications.action';
 
 export class ApplicationsStateModel {
@@ -124,21 +128,14 @@ export class ApplicationsState {
 
     @Action(FetchApplication)
     fetch(ctx: StateContext<ApplicationsStateModel>, action: FetchApplication) {
-        let params = new HttpParams();
-        params = params.append('withNotifs', 'true');
-        params = params.append('withUsage', 'true');
-        params = params.append('withIcon', 'true');
-        params = params.append('withKeys', 'true');
-        params = params.append('withDeploymentStrategies', 'true');
-        params = params.append('withVulnerabilities', 'true');
+        const state = ctx.getState();
+        const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
 
-        return this._http.get<Application>(
-            `/project/${action.payload.projectKey}/application/${action.payload.applicationName}`,
-            { params }
-        ).pipe(tap((app) => {
-            app.vcs_strategy.password = '**********';
-            ctx.dispatch(new LoadApplication(app));
-        }));
+        if (state.applications[appKey]) {
+            return ctx.dispatch(new LoadApplication(state.applications[appKey]));
+        }
+
+        return ctx.dispatch(new ResyncApplication({ ...action.payload }));
     }
 
     @Action(UpdateApplication)
@@ -193,11 +190,16 @@ export class ApplicationsState {
 
     @Action(FetchApplicationOverview)
     fetchOverview(ctx: StateContext<ApplicationsStateModel>, action: FetchApplicationOverview) {
+        const state = ctx.getState();
+        const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
+
+        if (state.applications[appKey] && state.applications[appKey].overview) {
+            return Observable.empty();
+        }
+
         return this._http.get<Overview>(
             `/ui/project/${action.payload.projectKey}/application/${action.payload.applicationName}/overview`
         ).pipe(tap((overview) => {
-            const state = ctx.getState();
-            let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
             let applicationUpdated = Object.assign({}, state.applications[appKey], { overview });
 
             ctx.setState({
@@ -402,5 +404,48 @@ export class ApplicationsState {
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
                 });
             }));
+    }
+
+    //  ------- Misc --------- //
+    @Action(ExternalChangeApplication)
+    externalChange(ctx: StateContext<ApplicationsStateModel>, action: ExternalChangeApplication) {
+        const state = ctx.getState();
+        const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
+        const applicationUpdated = Object.assign({}, state.applications[appKey], { externalChange: true });
+
+        ctx.setState({
+            ...state,
+            applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
+        });
+    }
+
+    @Action(DeleteFromCacheApplication)
+    deleteFromCache(ctx: StateContext<ApplicationsStateModel>, action: DeleteFromCacheApplication) {
+        const state = ctx.getState();
+        const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
+
+        ctx.setState({
+            ...state,
+            applications: Object.assign({}, state.applications, { [appKey]: null }),
+        });
+    }
+
+    @Action(ResyncApplication)
+    resync(ctx: StateContext<ApplicationsStateModel>, action: ResyncApplication) {
+        let params = new HttpParams();
+        params = params.append('withNotifs', 'true');
+        params = params.append('withUsage', 'true');
+        params = params.append('withIcon', 'true');
+        params = params.append('withKeys', 'true');
+        params = params.append('withDeploymentStrategies', 'true');
+        params = params.append('withVulnerabilities', 'true');
+
+        return this._http.get<Application>(
+            `/project/${action.payload.projectKey}/application/${action.payload.applicationName}`,
+            { params }
+        ).pipe(tap((app) => {
+            app.vcs_strategy.password = '**********';
+            ctx.dispatch(new LoadApplication(app));
+        }));
     }
 }

@@ -102,3 +102,15 @@ export class ExternalChangeApplication {
     static readonly type = '[Application] External Change Application';
     constructor(public payload: { projectKey: string, applicationName: string }) { }
 }
+
+export class ResyncApplication {
+    static readonly type = '[Application] Resync Application';
+    constructor(public payload: { projectKey: string, applicationName: string }) { }
+}
+
+export class DeleteFromCacheApplication {
+    static readonly type = '[Application] Delete from cache Application';
+    constructor(public payload: { projectKey: string, applicationName: string }) { }
+}
+
+

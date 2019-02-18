@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { cloneDeep } from 'lodash';
 import { first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -10,7 +11,6 @@ import { PipelineStatus } from './model/pipeline.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
 import { WorkflowNodeRun, WorkflowRun } from './model/workflow.run.model';
-import { ApplicationStore } from './service/application/application.store';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { BroadcastStore } from './service/broadcast/broadcast.store';
 import { PipelineStore } from './service/pipeline/pipeline.store';
@@ -20,6 +20,8 @@ import { WorkflowRunService } from './service/workflow/run/workflow.run.service'
 import { WorkflowEventStore } from './service/workflow/workflow.event.store';
 import { WorkflowStore } from './service/workflow/workflow.store';
 import { ToastService } from './shared/toast/ToastService';
+import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/project/applications/applications.action';
+import { ApplicationsState, ApplicationsStateModel } from './store/project/applications/applications.state';
 
 @Injectable()
 export class AppService {
@@ -30,11 +32,22 @@ export class AppService {
     filterSub: Subscription;
     filter: TimelineFilter;
 
-    constructor(private _projStore: ProjectStore, private _routerService: RouterService, private _routeActivated: ActivatedRoute,
-                private _appStore: ApplicationStore, private _authStore: AuthentificationStore, private _actionStore: ActionStore,
-                private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
-                private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore,
-                private _toast: ToastService, private _workflowRunService: WorkflowRunService) {
+    constructor(
+        private _projStore: ProjectStore,
+        private _routerService: RouterService,
+        private _routeActivated: ActivatedRoute,
+        private _authStore: AuthentificationStore,
+        private _actionStore: ActionStore,
+        private _translate: TranslateService,
+        private _pipStore: PipelineStore,
+        private _workflowEventStore: WorkflowEventStore,
+        private _wfStore: WorkflowStore,
+        private _broadcastStore: BroadcastStore,
+        private _timelineStore: TimelineStore,
+        private _toast: ToastService,
+        private _workflowRunService: WorkflowRunService,
+        private store: Store
+    ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
 
@@ -119,7 +132,7 @@ export class AppService {
                 // if modification from another user, display a notification
                 if (event.username !== this._authStore.getUser().username) {
                     this._projStore.externalModification(projectInCache.key);
-                    this._toast.info('', this._translate.instant('warning_project', {username: event.username}));
+                    this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
                     return;
                 }
             } else {
@@ -160,18 +173,19 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        let appKey = event.project_key + '-' + event.application_name;
+        const payload = { projectKey: event.project_key, applicationName: event.application_name };
+        const appKey = event.project_key + '/' + event.application_name;
         if (event.type_event === EventType.APPLICATION_DELETE) {
-            this._appStore.removeFromStore(appKey);
+            this.store.dispatch(new DeleteFromCacheApplication(payload))
             return;
         }
 
-        this._appStore.getApplications(event.project_key, null).pipe(first()).subscribe(apps => {
-            if (!apps) {
+        this.store.selectOnce(ApplicationsState).subscribe((appState: ApplicationsStateModel) => {
+            if (!appState.applications || !Object.keys(appState.applications).length) {
                 return;
             }
 
-            if (!apps.get(appKey)) {
+            if (!appState.applications[appKey]) {
                 return;
             }
 
@@ -180,17 +194,16 @@ export class AppService {
                 && this.routeParams['appName'] === event.application_name) {
                 // modification by another user
                 if (event.username !== this._authStore.getUser().username) {
-                    this._appStore.externalModification(appKey);
-                    this._toast.info('', this._translate.instant('warning_application', {username: event.username}));
+                    this.store.dispatch(new ExternalChangeApplication(payload));
+                    this._toast.info('', this._translate.instant('warning_application', { username: event.username }));
                     return;
                 }
             } else {
-                this._appStore.removeFromStore(appKey);
+                this.store.dispatch(new DeleteFromCacheApplication(payload))
                 return;
             }
 
-            this._appStore.resync(event.project_key, event.application_name);
-
+            this.store.dispatch(new ResyncApplication(payload));
         });
 
     }
@@ -201,7 +214,7 @@ export class AppService {
         }
         let pipKey = event.project_key + '-' + event.pipeline_name;
         if (event.type_event === EventType.PIPELINE_DELETE) {
-            this._appStore.removeFromStore(pipKey);
+            this._pipStore.removeFromStore(pipKey);
             return;
         }
 
@@ -219,7 +232,7 @@ export class AppService {
                 && this.routeParams['pipName'] === event.pipeline_name) {
                 if (event.username !== this._authStore.getUser().username) {
                     this._pipStore.externalModification(pipKey);
-                    this._toast.info('', this._translate.instant('warning_pipeline', {username: event.username}));
+                    this._toast.info('', this._translate.instant('warning_pipeline', { username: event.username }));
                     return;
                 }
             } else {
@@ -237,7 +250,7 @@ export class AppService {
         }
         let wfKey = event.project_key + '-' + event.workflow_name;
         if (event.type_event === EventType.WORKFLOW_DELETE) {
-            this._appStore.removeFromStore(wfKey);
+            this._wfStore.removeFromStore(wfKey);
             return;
         }
         this._wfStore.getWorkflows(event.project_key).pipe(first()).subscribe(wfs => {
@@ -254,7 +267,7 @@ export class AppService {
                 && this.routeParams['workflowName'] === event.workflow_name) {
                 if (event.username !== this._authStore.getUser().username) {
                     this._wfStore.externalModification(wfKey);
-                    this._toast.info('', this._translate.instant('warning_workflow', {username: event.username}));
+                    this._toast.info('', this._translate.instant('warning_workflow', { username: event.username }));
                     return
                 }
             } else {
