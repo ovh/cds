@@ -21,14 +21,14 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW12 ITSCWRKFLW12
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW12 test-action-staticfiles
     assertions:
     - result.code ShouldEqual 0
-    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW12 #1 has been launched"
+    - "result.systemout ShouldContainSubstring Workflow test-action-staticfiles #1 has been launched"
 
 - name: the workflow should be successful
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW12 ITSCWRKFLW12 1 --format json
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW12 test-action-staticfiles 1 --format json
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success
