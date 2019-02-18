@@ -8,6 +8,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { Map } from 'immutable';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
@@ -67,6 +68,7 @@ describe('CDS: Application', () => {
             ],
             imports: [
                 ApplicationModule,
+                NgxsStoreModule,
                 ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,

@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { Application } from '../../../../model/application.model';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
@@ -71,6 +72,7 @@ describe('CDS: Application Admin Component', () => {
                     { path: 'project/:key', component: DummyComponent },
                     { path: 'project/:key/application/:appName', component: DummyComponent }
                 ]),
+                NgxsStoreModule,
                 ApplicationModule,
                 ServicesModule,
                 SharedModule,

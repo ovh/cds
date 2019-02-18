@@ -8,6 +8,7 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Application } from '../../../../../model/application.model';
@@ -62,19 +63,20 @@ describe('CDS: Application Repo Component', () => {
                 TranslateParser,
                 RepoManagerService,
                 Store,
-                { provide: APP_BASE_HREF, useValue : '/' }
+                { provide: APP_BASE_HREF, useValue: '/' }
             ],
-            imports : [
+            imports: [
                 RouterTestingModule.withRoutes([
                     { path: 'project/:key', component: DummyComponent }
                 ]),
                 ProjectModule,
                 ApplicationModule,
                 SharedModule,
+                NgxsStoreModule,
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ],
-            schemas: [ NO_ERRORS_SCHEMA ]
+            schemas: [NO_ERRORS_SCHEMA]
         });
 
 
@@ -90,11 +92,11 @@ describe('CDS: Application Repo Component', () => {
     it('Load component + select repository', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
         let mockResponse = [
-            { 'name' : 'repo1', 'fullname': 'frepo1' },
-            { 'name' : 'repo2', 'fullname': 'frepo2' },
-            { 'name' : 'repo3', 'fullname': 'frepo3' },
-            { 'name' : 'repo4', 'fullname': 'frepo4' },
-            { 'name' : 'repo5', 'fullname': 'frepo5' }
+            { 'name': 'repo1', 'fullname': 'frepo1' },
+            { 'name': 'repo2', 'fullname': 'frepo2' },
+            { 'name': 'repo3', 'fullname': 'frepo3' },
+            { 'name': 'repo4', 'fullname': 'frepo4' },
+            { 'name': 'repo5', 'fullname': 'frepo5' }
         ];
 
         let fixture = TestBed.createComponent(ApplicationRepositoryComponent);
@@ -108,7 +110,7 @@ describe('CDS: Application Repo Component', () => {
         p.key = 'key1';
         p.name = 'proj1';
 
-        let repoMan: RepositoriesManager = {name: 'RepoManager'};
+        let repoMan: RepositoriesManager = { name: 'RepoManager' };
         p.vcs_servers = new Array<RepositoriesManager>();
         p.vcs_servers.push(repoMan);
 
@@ -159,10 +161,10 @@ class MockStore {
     }
 
     connectRepository(key: string, currentName: string, repoManName: string, repoFullname: string) {
-        return  of({ name: 'app'});
+        return of({ name: 'app' });
     }
     removeRepository(key: string, currentName: string, repoManName: string, repoFullname: string) {
-        return  of({ name: 'app'});
+        return of({ name: 'app' });
     }
 }
 
