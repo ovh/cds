@@ -101,7 +101,7 @@
 
     <div class="ui bottomBtnsWrapper segment" *ngIf="action.editable">
         <div class="ui grid">
-            <div class="sixteen wide column" *ngIf="actions && actions.length > 0">
+            <div class="sixteen wide column" *ngIf="actions.length > 0">
                 <app-action-step-form [actions]="actions" (onEvent)="stepManagement($event)"></app-action-step-form>
             </div>
             <ng-container *ngIf="!stepFormExpended">

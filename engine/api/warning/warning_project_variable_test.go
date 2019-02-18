@@ -25,6 +25,9 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
+	// get git clone action
+	gitClone := assets.GetBuiltinOrPluginActionByName(t, db, "GitClone")
+
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
 		Type:  "string",
@@ -50,7 +53,7 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 			Name: sdk.RandomString(10),
 			Actions: []sdk.Action{
 				{
-					Name: "GitClone",
+					ID: gitClone.ID,
 					Parameters: []sdk.Parameter{
 						{
 							Name:  "git.branch",

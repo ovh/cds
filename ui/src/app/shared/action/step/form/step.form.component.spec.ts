@@ -1,20 +1,18 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {Injector} from '@angular/core';
-import {ActionStepFormComponent} from './step.form.component';
-import {SharedService} from '../../../shared.service';
-import {ParameterService} from '../../../../service/parameter/parameter.service';
-import {SharedModule} from '../../../shared.module';
-import {Action} from '../../../../model/action.model';
-import {StepEvent} from '../step.event';
-import {APP_BASE_HREF} from '@angular/common';
-
+import { APP_BASE_HREF } from '@angular/common';
+import { Injector } from '@angular/core';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Action } from '../../../../model/action.model';
+import { ParameterService } from '../../../../service/parameter/parameter.service';
+import { SharedModule } from '../../../shared.module';
+import { SharedService } from '../../../shared.service';
+import { StepEvent } from '../step.event';
+import { ActionStepFormComponent } from './step.form.component';
 
 describe('CDS: Step Form Component', () => {
-
     let injector: Injector;
 
     beforeEach(() => {
@@ -27,9 +25,9 @@ describe('CDS: Step Form Component', () => {
                 ParameterService,
                 TranslateLoader,
                 TranslateParser,
-                { provide: APP_BASE_HREF , useValue : '/' }
+                { provide: APP_BASE_HREF, useValue: '/' }
             ],
-            imports : [
+            imports: [
                 RouterTestingModule.withRoutes([]),
                 TranslateModule.forRoot(),
                 SharedModule
@@ -44,7 +42,7 @@ describe('CDS: Step Form Component', () => {
     });
 
 
-    it('should send add step event', fakeAsync( () => {
+    it('should send add step event', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionStepFormComponent);
         let component = fixture.debugElement.componentInstance;
@@ -53,16 +51,16 @@ describe('CDS: Step Form Component', () => {
 
         let step = new Action();
         step.always_executed = true;
-        fixture.componentInstance.step = step;
-        fixture.componentInstance.publicActions = new Array<Action>();
+        fixture.componentInstance.selected = step;
+        fixture.componentInstance.actions = new Array<Action>();
         let a = new Action();
         a.name = 'Script';
-        fixture.componentInstance.publicActions.push(a);
+        fixture.componentInstance.actions.push(a);
 
         fixture.detectChanges();
         tick(50);
 
-        spyOn(fixture.componentInstance.create, 'emit');
+        spyOn(fixture.componentInstance.onEvent, 'emit');
 
 
         let compiled = fixture.debugElement.nativeElement;
@@ -72,8 +70,8 @@ describe('CDS: Step Form Component', () => {
         fixture.detectChanges();
         tick(50);
 
-        expect(fixture.componentInstance.create.emit).toHaveBeenCalledWith(
-            new StepEvent('displayChoice', null)
+        expect(fixture.componentInstance.onEvent.emit).toHaveBeenCalledWith(
+            new StepEvent('expend', null)
         );
 
         expect(compiled.querySelector('.ui.green.button')).toBeTruthy('Add green button must be displayed');
@@ -82,8 +80,8 @@ describe('CDS: Step Form Component', () => {
         fixture.detectChanges();
         tick(50);
 
-        expect(fixture.componentInstance.create.emit).toHaveBeenCalledWith(
-            new StepEvent('add', fixture.componentInstance.step)
+        expect(fixture.componentInstance.onEvent.emit).toHaveBeenCalledWith(
+            new StepEvent('add', fixture.componentInstance.selected)
         );
     }));
 });

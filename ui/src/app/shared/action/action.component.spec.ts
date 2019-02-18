@@ -1,30 +1,31 @@
 /* tslint:disable:no-unused-variable */
 
-import {fakeAsync, TestBed, tick} from '@angular/core/testing';
-import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {ActionComponent} from './action.component';
-import {SharedService} from '../shared.service';
-import {SharedModule} from '../shared.module';
-import {ParameterService} from '../../service/parameter/parameter.service';
-import {Action} from '../../model/action.model';
-import {RequirementEvent} from '../requirements/requirement.event.model';
-import {Requirement} from '../../model/requirement.model';
-import {Parameter} from '../../model/parameter.model';
-import {ParameterEvent} from '../parameter/parameter.event.model';
-import {ActionEvent} from './action.event.model';
-import {ActionStore} from '../../service/action/action.store';
-import {ActionService} from '../../service/action/action.service';
-import {RepoManagerService} from '../../service/repomanager/project.repomanager.service';
-import {StepEvent} from './step/step.event';
-import {WorkerModelService} from '../../service/worker-model/worker-model.service';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
-import {RequirementStore} from '../../service/requirement/requirement.store';
-import {RequirementService} from '../../service/requirement/requirement.service';
-import {APP_BASE_HREF} from '@angular/common';
+import { APP_BASE_HREF } from '@angular/common';
+import { HttpRequest } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Action } from '../../model/action.model';
+import { Parameter } from '../../model/parameter.model';
+import { Project } from '../../model/project.model';
+import { Requirement } from '../../model/requirement.model';
+import { ActionService } from '../../service/action/action.service';
+import { ActionStore } from '../../service/action/action.store';
+import { ParameterService } from '../../service/parameter/parameter.service';
+import { RepoManagerService } from '../../service/repomanager/project.repomanager.service';
+import { RequirementService } from '../../service/requirement/requirement.service';
+import { RequirementStore } from '../../service/requirement/requirement.store';
+import { WorkerModelService } from '../../service/worker-model/worker-model.service';
+import { ParameterEvent } from '../parameter/parameter.event.model';
+import { RequirementEvent } from '../requirements/requirement.event.model';
+import { SharedModule } from '../shared.module';
+import { SharedService } from '../shared.service';
+import { ActionComponent } from './action.component';
+import { ActionEvent } from './action.event.model';
+import { StepEvent } from './step/step.event';
 
 describe('CDS: Action Component', () => {
 
@@ -41,10 +42,10 @@ describe('CDS: Action Component', () => {
                 ActionStore,
                 ActionService,
                 WorkerModelService,
-                {provide: XHRBackend, useClass: MockBackend},
+                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
-                { provide: APP_BASE_HREF, useValue : '/' }
+                { provide: APP_BASE_HREF, useValue: '/' }
             ],
             imports: [
                 RouterTestingModule.withRoutes([]),
@@ -67,6 +68,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -103,6 +105,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -135,6 +138,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         action.id = 1;
         fixture.componentInstance.editableAction = action;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -171,6 +175,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -194,53 +199,54 @@ describe('CDS: Action Component', () => {
     }));
 
     it('should add and then remove a step', fakeAsync(() => {
-            const http = TestBed.get(HttpTestingController);
+        const http = TestBed.get(HttpTestingController);
 
-            let actionMock = new Action();
-            actionMock.name = 'action1';
-
-
-            // Create component
-            let fixture = TestBed.createComponent(ActionComponent);
-            let component = fixture.debugElement.componentInstance;
-            expect(component).toBeTruthy();
+        let actionMock = new Action();
+        actionMock.name = 'action1';
 
 
-            http.expectOne(((req: HttpRequest<any>) => {
-                return req.url === '/requirement/types';
-            })).flush(actionMock);
-
-            fixture.componentInstance.ngOnInit();
-            http.expectOne(((req: HttpRequest<any>) => {
-                return req.url === '/action';
-            })).flush(actionMock);
-
-            let action: Action = new Action();
-            action.name = 'FooAction';
-            action.requirements = new Array<Requirement>();
-            fixture.componentInstance.editableAction = action;
-            fixture.componentInstance.edit = true;
-
-            fixture.detectChanges();
-            tick(50);
+        // Create component
+        let fixture = TestBed.createComponent(ActionComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
 
 
-            let step = new Action();
-            step.always_executed = false;
-            step.name = 'action1';
-            let event = new StepEvent('add', step);
-            fixture.componentInstance.stepManagement(event);
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/requirement/types';
+        })).flush(actionMock);
 
-            expect(fixture.componentInstance.steps.length).toBe(1, 'Action must have 1 step');
-            expect(fixture.componentInstance.steps[0].name).toBe('action1');
+        fixture.componentInstance.project = <Project>{ key: 'key' }
+        fixture.componentInstance.ngOnInit();
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key/action';
+        })).flush(actionMock);
 
-            event.type = 'add';
-            step.always_executed = true;
-            step.name = 'action2';
-            fixture.componentInstance.stepManagement(event);
-            expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
-            expect(fixture.componentInstance.steps[1].name).toBe('action2');
-        })
+        let action: Action = new Action();
+        action.name = 'FooAction';
+        action.requirements = new Array<Requirement>();
+        fixture.componentInstance.editableAction = action;
+        fixture.componentInstance.edit = true;
+
+        fixture.detectChanges();
+        tick(50);
+
+
+        let step = new Action();
+        step.always_executed = false;
+        step.name = 'action1';
+        let event = new StepEvent('add', step);
+        fixture.componentInstance.stepManagement(event);
+
+        expect(fixture.componentInstance.steps.length).toBe(1, 'Action must have 1 step');
+        expect(fixture.componentInstance.steps[0].name).toBe('action1');
+
+        event.type = 'add';
+        step.always_executed = true;
+        step.name = 'action2';
+        fixture.componentInstance.stepManagement(event);
+        expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
+        expect(fixture.componentInstance.steps[1].name).toBe('action2');
+    })
     );
 
     it('should init step not always executed and step always executed', fakeAsync(() => {
@@ -267,4 +273,4 @@ describe('CDS: Action Component', () => {
 
     }));
 })
-;
+    ;

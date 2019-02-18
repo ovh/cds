@@ -215,7 +215,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 	// Save the node run in database
 	if err := updateNodeRunStatusAndStage(db, nr); err != nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", nr.ID, nr.Status, err), "workflow.execute> Unable to execute node")
+		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", nr.ID, nr.Status)
 	}
 
 	//Reload the workflow
