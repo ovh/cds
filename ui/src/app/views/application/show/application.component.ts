@@ -100,7 +100,11 @@ export class ApplicationShowComponent implements OnInit {
             let key = params['key'];
             let appName = params['appName'];
             if (key && appName) {
-                this.store.dispatch(new FetchApplication({ projectKey: key, applicationName: appName }));
+                this.store.dispatch(new FetchApplication({ projectKey: key, applicationName: appName }))
+                    .subscribe(
+                        null,
+                        () => this._router.navigate(['/project', key], { queryParams: { tab: 'applications' } })
+                    );
 
                 if (this.application && this.application.name !== appName) {
                     this.application = null;

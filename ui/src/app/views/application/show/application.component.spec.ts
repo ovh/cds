@@ -14,7 +14,6 @@ import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
 import { Project } from '../../../model/project.model';
 import { Usage } from '../../../model/usage.model';
-import { Variable } from '../../../model/variable.model';
 import { ApplicationService } from '../../../service/application/application.service';
 import { ApplicationStore } from '../../../service/application/application.store';
 import { ApplicationWorkflowService } from '../../../service/application/application.workflow.service';
@@ -29,7 +28,6 @@ import { VariableService } from '../../../service/variable/variable.service';
 import { WorkflowService } from '../../../service/workflow/workflow.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
-import { VariableEvent } from '../../../shared/variable/variable.event.model';
 import { ApplicationModule } from '../application.module';
 import { ApplicationShowComponent } from './application.component';
 
@@ -134,90 +132,90 @@ describe('CDS: Application', () => {
         expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1'], { queryParams: { tab: 'applications' } });
     }));
 
-    it('should run add variable', fakeAsync(() => {
-        let call = 0;
+    // it('should run add variable', fakeAsync(() => {
+    //     let call = 0;
 
-        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
+    //     prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(store, 'select').and.callFake(() => {
-            let app: Application = new Application();
-            app.name = 'app1';
-            app.usage = new Usage();
-            return of(app);
-        });
+    //     spyOn(store, 'select').and.callFake(() => {
+    //         let app: Application = new Application();
+    //         app.name = 'app1';
+    //         app.usage = new Usage();
+    //         return of(app);
+    //     });
 
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
+    //     // Create component
+    //     let fixture = TestBed.createComponent(ApplicationShowComponent);
+    //     let component = fixture.debugElement.componentInstance;
+    //     expect(component).toBeTruthy();
 
-        fixture.componentInstance.ngOnInit();
+    //     fixture.componentInstance.ngOnInit();
 
-        spyOn(appStore, 'addVariable').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
+    //     spyOn(appStore, 'addVariable').and.callFake(() => {
+    //         let app: Application = new Application();
+    //         return of(app);
+    //     });
 
-        let v: Variable = new Variable();
-        v.name = 'foo';
-        fixture.componentInstance.variableEvent(new VariableEvent('add', v));
-        tick(250);
-        expect(appStore.addVariable).toHaveBeenCalledWith('key1', 'app1', v);
-    }));
+    //     let v: Variable = new Variable();
+    //     v.name = 'foo';
+    //     fixture.componentInstance.variableEvent(new VariableEvent('add', v));
+    //     tick(250);
+    //     expect(appStore.addVariable).toHaveBeenCalledWith('key1', 'app1', v);
+    // }));
 
-    it('should run update variable', fakeAsync(() => {
+    // it('should run update variable', fakeAsync(() => {
 
-        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
+    //     prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(store, 'select').and.callFake(() => {
-            let app: Application = new Application();
-            app.name = 'app1';
-            app.usage = new Usage();
-            return of(app);
-        });
+    //     spyOn(store, 'select').and.callFake(() => {
+    //         let app: Application = new Application();
+    //         app.name = 'app1';
+    //         app.usage = new Usage();
+    //         return of(app);
+    //     });
 
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
+    //     // Create component
+    //     let fixture = TestBed.createComponent(ApplicationShowComponent);
+    //     let component = fixture.debugElement.componentInstance;
+    //     expect(component).toBeTruthy();
 
-        fixture.componentInstance.ngOnInit();
+    //     fixture.componentInstance.ngOnInit();
 
-        spyOn(appStore, 'updateVariable').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
+    //     spyOn(appStore, 'updateVariable').and.callFake(() => {
+    //         let app: Application = new Application();
+    //         return of(app);
+    //     });
 
-        let v: Variable = new Variable();
-        v.name = 'foo';
-        fixture.componentInstance.variableEvent(new VariableEvent('update', v));
-        tick(250);
-        expect(store.dispatch).toHaveBeenCalled();
-    }));
+    //     let v: Variable = new Variable();
+    //     v.name = 'foo';
+    //     fixture.componentInstance.variableEvent(new VariableEvent('update', v));
+    //     tick(250);
+    //     expect(store.dispatch).toHaveBeenCalled();
+    // }));
 
-    it('should run remove variable', fakeAsync(() => {
+    // it('should run remove variable', fakeAsync(() => {
 
-        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
+    //     prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(store, 'select').and.callFake(() => {
-            let app: Application = new Application();
-            app.name = 'app1';
-            app.usage = new Usage();
-            return of(app);
-        });
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
+    //     spyOn(store, 'select').and.callFake(() => {
+    //         let app: Application = new Application();
+    //         app.name = 'app1';
+    //         app.usage = new Usage();
+    //         return of(app);
+    //     });
+    //     // Create component
+    //     let fixture = TestBed.createComponent(ApplicationShowComponent);
+    //     let component = fixture.debugElement.componentInstance;
+    //     expect(component).toBeTruthy();
 
-        fixture.componentInstance.ngOnInit();
+    //     fixture.componentInstance.ngOnInit();
 
-        let v: Variable = new Variable();
-        v.name = 'foo';
-        fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
-        tick(250);
-        expect(store.dispatch).toHaveBeenCalled();
-    }));
+    //     let v: Variable = new Variable();
+    //     v.name = 'foo';
+    //     fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
+    //     tick(250);
+    //     expect(store.dispatch).toHaveBeenCalled();
+    // }));
 });
 
 class MockToast {
