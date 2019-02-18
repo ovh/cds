@@ -44,10 +44,10 @@ ALTER TABLE action_audit ADD COLUMN created TIMESTAMP WITH TIME ZONE;
 UPDATE action_audit SET created = versionned;
 ALTER TABLE action_audit ADD COLUMN triggered_by VARCHAR(100);
 UPDATE action_audit SET triggered_by = u.username FROM "user" as u WHERE action_audit.user_id = u.id;
-ALTER TABLE action_audit ADD COLUMN data_before JSONB;
-UPDATE action_audit SET data_before = action_json;
-ALTER TABLE action_audit ADD COLUMN data_after JSONB;
-UPDATE action_audit SET data_after = action_json;
+ALTER TABLE action_audit ADD COLUMN data_before TEXT;
+UPDATE action_audit SET data_before = action_json::TEXT;
+ALTER TABLE action_audit ADD COLUMN data_after TEXT;
+UPDATE action_audit SET data_after = action_json::TEXT;
 ALTER TABLE action_audit ADD COLUMN data_type VARCHAR(20);
 UPDATE action_audit SET data_type = 'json';
 

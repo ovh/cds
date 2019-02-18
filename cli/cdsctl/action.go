@@ -38,13 +38,18 @@ func newActionDisplay(a sdk.Action) actionDisplay {
 		name = fmt.Sprintf("%s/%s", a.Group.Name, a.Name)
 	}
 
-	return actionDisplay{
-		ID: a.ID,
-		Created: fmt.Sprintf("On %s by %s", a.FirstAudit.Created.Format(time.RFC3339),
-			a.FirstAudit.AuditCommon.TriggeredBy),
+	ad := actionDisplay{
+		ID:   a.ID,
 		Name: name,
 		Type: a.Type,
 	}
+
+	if a.FirstAudit != nil {
+		ad.Created = fmt.Sprintf("On %s by %s", a.FirstAudit.Created.Format(time.RFC3339),
+			a.FirstAudit.AuditCommon.TriggeredBy)
+	}
+
+	return ad
 }
 
 type actionDisplay struct {
