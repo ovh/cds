@@ -193,7 +193,6 @@ func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.P
 
 // DeletePipeline remove given pipeline and all history from database
 func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
-
 	if err := DeleteAllStage(db, pipelineID, userID); err != nil {
 		return err
 	}
@@ -205,7 +204,7 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 	// Delete pipeline
 	query := `DELETE FROM pipeline WHERE id = $1`
 	if _, err := db.Exec(query, pipelineID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil

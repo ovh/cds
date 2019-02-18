@@ -14,7 +14,7 @@ type pipelineAction struct {
 	ID              int64     `db:"id"`
 	PipelineStageID int64     `db:"pipeline_stage_id"`
 	ActionID        int64     `db:"action_id"`
-	Args            string    `db:"args"`
+	Args            *string   `db:"args"`
 	Enabled         bool      `db:"enabled"`
 	LastModified    time.Time `db:"last_modified"`
 }
@@ -22,7 +22,7 @@ type pipelineAction struct {
 func pipelineActionsToIDs(pas []pipelineAction) []int64 {
 	ids := make([]int64, 0, len(pas))
 	for i := range pas {
-		ids[i] = pas[i].ID
+		ids = append(ids, pas[i].ID)
 	}
 	return ids
 }
@@ -30,7 +30,7 @@ func pipelineActionsToIDs(pas []pipelineAction) []int64 {
 func pipelineActionsToActionIDs(pas []pipelineAction) []int64 {
 	ids := make([]int64, 0, len(pas))
 	for i := range pas {
-		ids[i] = pas[i].ActionID
+		ids = append(ids, pas[i].ActionID)
 	}
 	return ids
 }

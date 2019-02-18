@@ -49,9 +49,10 @@ func TestAggregateOnAction(t *testing.T) {
 		})
 	}
 
+	id1, id2 := int64(1), int64(2)
 	as := []*sdk.Action{
-		{GroupID: 1},
-		{GroupID: 2},
+		{GroupID: &id1},
+		{GroupID: &id2},
 	}
 
 	assert.Nil(t, group.AggregateOnAction(db, as...))
