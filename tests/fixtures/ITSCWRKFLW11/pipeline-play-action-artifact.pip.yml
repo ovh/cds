@@ -10,6 +10,7 @@ jobs:
   - script:
     - echo "foo"> bar
   - artifactUpload:
+      destination: myOpenstackIntegration
       path: bar
       tag: '{{.cds.version}}'
 - job: DownloadJob

@@ -21,7 +21,7 @@ cover.html
 .bash_aliases
 npm-debug.log
 debug.test
-openstack*.yml
+myOpenstackIntegration.yml
 test_results.yml
 *.dump
 .tmp

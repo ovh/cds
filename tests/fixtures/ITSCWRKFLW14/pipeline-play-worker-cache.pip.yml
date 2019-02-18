@@ -5,16 +5,11 @@ jobs:
   steps:
   - script:
     - '#!/bin/bash'
-    - ""
     - tag="foo"
-    - ""
-    - if worker cache pull --from=myGRA3 $tag; then
+    - if worker cache pull --from=myOpenstackIntegration $tag; then
     - '    echo "getted from cache";'
     - '    ls -lart .m2'
     - fi
-    - ""
     - mkdir -p .m2
     - echo "foo"> .m2/bar
-    - ""
-    - worker cache push --destination=myGRA3 $tag .m2/
-    - ""
+    - worker cache push --destination=myOpenstackIntegration $tag .m2/

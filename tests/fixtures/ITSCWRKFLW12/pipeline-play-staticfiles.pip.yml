@@ -8,5 +8,6 @@ jobs:
     - echo "<html>coucou</html>" > website/sub/index.html
     - ""
   - serveStaticFiles:
+      destination: myOpenstackIntegration
       name: my website
       path: website/*

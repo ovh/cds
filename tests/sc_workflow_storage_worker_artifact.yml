@@ -13,7 +13,7 @@ testcases:
 
 - name: import integration
   steps:
-  - script:  {{.cds.build.cdsctl}} project integration import ITSCWRKFLW13 ./openstackGRA3.yml
+  - script:  {{.cds.build.cdsctl}} project integration import ITSCWRKFLW13 ./myOpenstackIntegration.yml
 
 - name: import workflow
   steps:
