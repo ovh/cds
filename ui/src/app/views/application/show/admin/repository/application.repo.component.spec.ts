@@ -134,9 +134,12 @@ describe('CDS: Application Repo Component', () => {
         spyOn(toast, 'success');
         let compiled = fixture.debugElement.nativeElement;
         compiled.querySelector('button[name="addrepobtn"]').click();
+        fixture.detectChanges();
+        tick(100);
 
         expect(toast.success).toHaveBeenCalledTimes(1);
 
+        tick(100);
         fixture.componentInstance.application.vcs_server = repoMan.name;
         fixture.componentInstance.application.repository_fullname = 'frepo3';
 
@@ -147,6 +150,7 @@ describe('CDS: Application Repo Component', () => {
         fixture.detectChanges();
         tick(50);
         compiled.querySelector('.ui.red.button.active').click();
+        tick(100);
         expect(toast.success).toHaveBeenCalledTimes(2);
     }));
 });

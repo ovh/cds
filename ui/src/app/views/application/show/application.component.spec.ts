@@ -9,7 +9,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { NgxsStoreModule } from 'app/store/store.module';
-import { Map } from 'immutable';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
@@ -38,6 +37,7 @@ describe('CDS: Application', () => {
 
     let injector: Injector;
     let appStore: ApplicationStore;
+    let store: Store;
     let router: Router;
     let prjStore: ProjectStore;
 
@@ -79,6 +79,7 @@ describe('CDS: Application', () => {
 
         injector = getTestBed();
         appStore = injector.get(ApplicationStore);
+        store = injector.get(Store);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);
     });
@@ -86,6 +87,7 @@ describe('CDS: Application', () => {
     afterEach(() => {
         injector = undefined;
         appStore = undefined;
+        store = undefined;
         router = undefined;
         prjStore = undefined;
     });
@@ -94,12 +96,11 @@ describe('CDS: Application', () => {
 
         spyOn(appStore, 'updateRecentApplication');
 
-        spyOn(appStore, 'getApplications').and.callFake(() => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
 
         // Create component
@@ -138,12 +139,11 @@ describe('CDS: Application', () => {
 
         prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(appStore, 'getApplications').and.callFake(() => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
 
         // Create component
@@ -169,12 +169,11 @@ describe('CDS: Application', () => {
 
         prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(appStore, 'getApplications').and.callFake(() => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
 
         // Create component
@@ -193,21 +192,19 @@ describe('CDS: Application', () => {
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('update', v));
         tick(250);
-        expect(appStore.updateVariable).toHaveBeenCalledWith('key1', 'app1', v);
+        expect(store.dispatch).toHaveBeenCalled();
     }));
 
     it('should run remove variable', fakeAsync(() => {
 
         prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(appStore, 'getApplications').and.callFake(() => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
-
         // Create component
         let fixture = TestBed.createComponent(ApplicationShowComponent);
         let component = fixture.debugElement.componentInstance;
@@ -215,16 +212,11 @@ describe('CDS: Application', () => {
 
         fixture.componentInstance.ngOnInit();
 
-        spyOn(appStore, 'removeVariable').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
-
         let v: Variable = new Variable();
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
         tick(250);
-        expect(appStore.removeVariable).toHaveBeenCalledWith('key1', 'app1', v);
+        expect(store.dispatch).toHaveBeenCalled();
     }));
 });
 
