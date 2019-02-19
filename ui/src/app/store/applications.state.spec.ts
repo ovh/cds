@@ -5,45 +5,64 @@ import { NgxsModule, Store } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
+import { Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
 import * as ActionApplication from './applications.action';
 import { ApplicationsState } from './applications.state';
+import { AddProject } from './project.action';
+import { ProjectState, ProjectStateModel } from './project.state';
 
 describe('Applications', () => {
     let store: Store;
+    let testProjectKey = 'test1';
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [
-                NgxsModule.forRoot([ApplicationsState]),
+                NgxsModule.forRoot([ApplicationsState, ProjectState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();
 
         store = TestBed.get(Store);
+        let project = new Project();
+        project.key = testProjectKey;
+        project.name = testProjectKey;
+        store.dispatch(new AddProject(project));
+        const http = TestBed.get(HttpTestingController);
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: testProjectKey,
+            key: testProjectKey,
+        });
+        store.selectOnce(ProjectState).subscribe((projState) => {
+            expect(projState.project).toBeTruthy();
+            expect(projState.project.key).toBeTruthy();
+        });
         // store.reset(getInitialApplicationsState());
     }));
 
     it('fetch application', async(() => {
         const http = TestBed.get(HttpTestingController);
         store.dispatch(new ActionApplication.FetchApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1'
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
     }));
 
@@ -51,38 +70,45 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
 
         store.dispatch(new ActionApplication.FetchApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1'
         }));
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
+        });
+
+        store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
+            expect(projState.project).toBeTruthy();
+            expect(projState.project.application_names).toBeTruthy();
+            expect(projState.project.application_names.length).toEqual(1);
+            expect(projState.project.application_names[0].name).toEqual('app1');
         });
     }));
 
@@ -90,30 +116,30 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
 
         application.name = 'app1bis';
         store.dispatch(new ActionApplication.UpdateApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             changes: application
         }));
@@ -121,16 +147,23 @@ describe('Applications', () => {
             return req.url === '/project/test1/application/app1';
         })).flush({
             name: 'app1bis',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1bis')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1bis')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1bis');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
+        });
+
+        store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
+            expect(projState.project).toBeTruthy();
+            expect(projState.project.application_names).toBeTruthy();
+            expect(projState.project.application_names.length).toEqual(1);
+            expect(projState.project.application_names[0].name).toEqual('app1bis');
         });
     }));
 
@@ -138,30 +171,30 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
 
         application.name = 'app1cloned';
         store.dispatch(new ActionApplication.CloneApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             clonedAppName: 'app1',
             newApplication: application
         }));
@@ -169,21 +202,27 @@ describe('Applications', () => {
             return req.url === '/project/test1/application/app1/clone';
         })).flush({
             name: 'app1cloned',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(2);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1cloned')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1cloned')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1cloned');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
+        });
+
+        store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
+            expect(projState.project).toBeTruthy();
+            expect(projState.project.application_names).toBeTruthy();
+            expect(projState.project.application_names.length).toEqual(2);
         });
     }));
 
@@ -191,29 +230,29 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
 
         store.dispatch(new ActionApplication.DeleteApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1'
         }));
         http.expectOne(((req: HttpRequest<any>) => {
@@ -222,36 +261,42 @@ describe('Applications', () => {
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(0);
         });
+
+        store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
+            expect(projState.project).toBeTruthy();
+            expect(projState.project.application_names).toBeTruthy();
+            expect(projState.project.application_names.length).toEqual(0);
+        });
     }));
 
     it('fetch an overview application', async(() => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.overview).toBeFalsy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
 
         store.dispatch(new ActionApplication.FetchApplicationOverview({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1'
         }));
         let overview = new Overview();
@@ -262,11 +307,11 @@ describe('Applications', () => {
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.overview).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.overview.git_url).toEqual('git+ssh://thisisatest');
         });
     }));
@@ -276,26 +321,26 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe(app => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
             expect(app).toBeTruthy();
             expect(app.overview).toBeFalsy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
 
         let variable = new Variable();
@@ -304,7 +349,7 @@ describe('Applications', () => {
         variable.value = 'myvalue';
 
         store.dispatch(new ActionApplication.AddApplicationVariable({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             variable
         }));
@@ -312,16 +357,16 @@ describe('Applications', () => {
             return req.url === '/project/test1/application/app1/variable/testvar';
         })).flush(<Application>{
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             variables: [variable],
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.variables).toBeTruthy();
             expect(app.variables.length).toEqual(1);
             expect(app.variables[0].name).toEqual('testvar');
@@ -332,16 +377,16 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
@@ -351,7 +396,7 @@ describe('Applications', () => {
         variable.value = 'myvalue';
 
         store.dispatch(new ActionApplication.AddApplicationVariable({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             variable
         }));
@@ -359,13 +404,13 @@ describe('Applications', () => {
             return req.url === '/project/test1/application/app1/variable/testvar';
         })).flush(<Application>{
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             variables: [variable],
         });
 
         variable.name = 'testvarrenamed';
         store.dispatch(new ActionApplication.UpdateApplicationVariable({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             variableName: 'testvar',
             variable
@@ -373,10 +418,10 @@ describe('Applications', () => {
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.variables).toBeTruthy();
             expect(app.variables.length).toEqual(1);
             expect(app.variables[0].name).toEqual('testvarrenamed');
@@ -387,16 +432,16 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
@@ -406,7 +451,7 @@ describe('Applications', () => {
         variable.value = 'myvalue';
 
         store.dispatch(new ActionApplication.AddApplicationVariable({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             variable
         }));
@@ -414,12 +459,12 @@ describe('Applications', () => {
             return req.url === '/project/test1/application/app1/variable/testvar';
         })).flush(<Application>{
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             variables: [variable],
         });
 
         store.dispatch(new ActionApplication.DeleteApplicationVariable({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             variable
         }));
@@ -427,16 +472,16 @@ describe('Applications', () => {
             return req.url === '/project/test1/application/app1/variable/testvar';
         })).flush(<Application>{
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             variables: [],
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.variables).toBeTruthy();
             expect(app.variables.length).toEqual(0);
         });
@@ -447,16 +492,16 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
@@ -465,7 +510,7 @@ describe('Applications', () => {
         key.type = 'ssh';
 
         store.dispatch(new ActionApplication.AddApplicationKey({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             key
         }));
@@ -475,10 +520,10 @@ describe('Applications', () => {
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.keys).toBeTruthy();
             expect(app.keys.length).toEqual(1);
             expect(app.keys[0].name).toEqual('app-mykey');
@@ -489,16 +534,16 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
@@ -507,7 +552,7 @@ describe('Applications', () => {
         key.type = 'ssh';
 
         store.dispatch(new ActionApplication.AddApplicationKey({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             key
         }));
@@ -517,17 +562,17 @@ describe('Applications', () => {
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.keys).toBeTruthy();
             expect(app.keys.length).toEqual(1);
             expect(app.keys[0].name).toEqual('app-mykey');
         });
 
         store.dispatch(new ActionApplication.DeleteApplicationKey({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             key
         }));
@@ -537,10 +582,10 @@ describe('Applications', () => {
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.keys).toBeTruthy();
             expect(app.keys.length).toEqual(0);
         });
@@ -551,16 +596,16 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
@@ -576,7 +621,7 @@ describe('Applications', () => {
         };
 
         store.dispatch(new ActionApplication.AddApplicationDeployment({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             integration
         }));
@@ -584,16 +629,16 @@ describe('Applications', () => {
             return req.url === '/project/test1/application/app1/deployment/config/testintegration';
         })).flush(<Application>{
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             deployment_strategies: {},
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.deployment_strategies).toBeTruthy();
         });
     }));
@@ -603,21 +648,21 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
         store.dispatch(new ActionApplication.ConnectVcsRepoOnApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             repoManager: 'github',
             repoFullName: 'cds'
@@ -626,17 +671,17 @@ describe('Applications', () => {
             return req.url === '/project/test1/repositories_manager/github/application/app1/attach';
         })).flush(<Application>{
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_server: 'github',
             repository_fullname: 'cds'
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.vcs_server).toEqual('github');
             expect(app.repository_fullname).toEqual('cds');
         });
@@ -646,21 +691,21 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
         store.dispatch(new ActionApplication.DeleteVcsRepoOnApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1',
             repoManager: 'github'
         }));
@@ -668,15 +713,15 @@ describe('Applications', () => {
             return req.url === '/project/test1/repositories_manager/github/application/app1/detach';
         })).flush(<Application>{
             name: 'app1',
-            project_key: 'test1'
+            project_key: testProjectKey
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.vcs_server).toBeFalsy();
             expect(app.repository_fullname).toBeFalsy();
         });
@@ -687,30 +732,30 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
 
         store.dispatch(new ActionApplication.ExternalChangeApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1'
         }));
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.externalChange).toEqual(true);
         });
     }));
@@ -719,29 +764,29 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
         });
 
         store.dispatch(new ActionApplication.DeleteFromCacheApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1'
         }));
         store.selectOnce(ApplicationsState).subscribe(state => {
@@ -753,46 +798,46 @@ describe('Applications', () => {
         const http = TestBed.get(HttpTestingController);
         let application = new Application();
         application.name = 'app1';
-        application.project_key = 'test1';
+        application.project_key = testProjectKey;
         store.dispatch(new ActionApplication.AddApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             application
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/applications';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_strategy: {}
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.vcs_server).toBeFalsy();
         });
 
         store.dispatch(new ActionApplication.ResyncApplication({
-            projectKey: 'test1',
+            projectKey: testProjectKey,
             applicationName: 'app1'
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1';
         })).flush({
             name: 'app1',
-            project_key: 'test1',
+            project_key: testProjectKey,
             vcs_server: 'github'
         });
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication('test1', 'app1')).subscribe((app: Application) => {
+        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe((app: Application) => {
             expect(app).toBeTruthy();
             expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual('test1');
+            expect(app.project_key).toEqual(testProjectKey);
             expect(app.vcs_server).toEqual('github');
         });
     }));

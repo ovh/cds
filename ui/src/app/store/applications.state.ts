@@ -6,6 +6,7 @@ import { Key } from 'app/model/keys.model';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as ActionApplication from './applications.action';
+import * as ActionProject from './project.action';
 
 export class ApplicationsStateModel {
     public applications: { [key: string]: Application };
@@ -57,7 +58,7 @@ export class ApplicationsState {
                 applications: Object.assign({}, applications, { [appKey]: app }),
                 loading: false,
             });
-            // todo dispatch action on project state to add in application_names
+            ctx.dispatch(new ActionProject.AddApplicationInProject(app));
         }));
 
     }
@@ -83,6 +84,7 @@ export class ApplicationsState {
                 applications: Object.assign({}, applications, { [appKey]: app }),
                 loading: false,
             });
+            ctx.dispatch(new ActionProject.AddApplicationInProject(app));
         }));
 
     }
@@ -141,6 +143,10 @@ export class ApplicationsState {
                     applications,
                 });
                 // todo dispatch action on project state to update from application_names
+                ctx.dispatch(new ActionProject.RenameApplicationInProject({
+                    previousAppName: action.payload.applicationName,
+                    newAppName: app.name
+                }));
             } else {
                 let applicationUpdated = {
                     ...state.applications[appKey],
@@ -170,7 +176,7 @@ export class ApplicationsState {
                 applications
             });
 
-            // todo dispatch action on project state to delete from application_names
+            ctx.dispatch(new ActionProject.DeleteApplicationInProject({ applicationName: action.payload.applicationName }));
         }));
     }
 
