@@ -7,6 +7,7 @@ import * as ProjectAction from './project.action';
 export class ProjectStateModel {
     public project: Project;
     public loading: boolean;
+    public currentProjectKey: string;
 }
 
 @State<ProjectStateModel>({
@@ -14,6 +15,7 @@ export class ProjectStateModel {
     defaults: {
         project: null,
         loading: true,
+        currentProjectKey: null
     }
 })
 export class ProjectState {
@@ -39,12 +41,19 @@ export class ProjectState {
     fetch(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchProject) {
         const state = ctx.getState();
 
-        if (state.project && state.project.key) {
+        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey && state.project && state.project.key) {
             let funcs = action.payload.opts.filter((opt) => state.project[opt.fieldName] == null);
 
             if (!funcs.length) {
                 return ctx.dispatch(new ProjectAction.LoadProject(state.project));
             }
+        }
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.setState(<ProjectStateModel>{
+                project: null,
+                loading: true,
+                currentProjectKey: action.payload.projectKey
+            });
         }
 
         return ctx.dispatch(new ProjectAction.ResyncProject(action.payload));
@@ -86,37 +95,37 @@ export class ProjectState {
                         switch (o.fieldName) {
                             case 'workflow_names':
                                 if (!res.workflow_names) {
-                                    proj.workflow_names = [];
+                                    projectUpdated.workflow_names = [];
                                 }
                                 break;
                             case 'pipeline_names':
                                 if (!res.pipeline_names) {
-                                    proj.pipeline_names = [];
+                                    projectUpdated.pipeline_names = [];
                                 }
                                 break;
                             case 'application_names':
                                 if (!res.application_names) {
-                                    proj.application_names = [];
+                                    projectUpdated.application_names = [];
                                 }
                                 break;
                             case 'environments':
                                 if (!res.environments) {
-                                    proj.environments = [];
+                                    projectUpdated.environments = [];
                                 }
                                 break;
                             case 'integrations':
                                 if (!res.integrations) {
-                                    proj.integrations = [];
+                                    projectUpdated.integrations = [];
                                 }
                                 break;
                             case 'keys':
                                 if (!res.keys) {
-                                    proj.keys = [];
+                                    projectUpdated.keys = [];
                                 }
                                 break;
                             case 'labels':
                                 if (!res.labels) {
-                                    proj.labels = [];
+                                    projectUpdated.labels = [];
                                 }
                                 break;
                         }
@@ -127,6 +136,26 @@ export class ProjectState {
 
                 ctx.dispatch(new ProjectAction.LoadProject(projectUpdated));
             }));
+    }
+
+    @Action(ProjectAction.ExternalChangeProject)
+    externalChange(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ExternalChangeProject) {
+        const state = ctx.getState();
+        return ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ externalChange: true }),
+            loading: false,
+        });
+    }
+
+    @Action(ProjectAction.DeleteProjectFromCache)
+    deleteFromCache(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteProjectFromCache) {
+        const state = ctx.getState();
+        return ctx.setState({
+            ...state,
+            project: null,
+            loading: false,
+        });
     }
 
     @Action(ProjectAction.AddProject)
@@ -158,7 +187,7 @@ export class ProjectState {
             ...state,
             loading: true,
         });
-        return this._http.post<Project>(
+        return this._http.put<Project>(
             '/project/' + action.payload.key,
             action.payload
         ).pipe(tap((project: Project) => {
@@ -192,29 +221,40 @@ export class ProjectState {
     }
 
 
+    //  ------- Misc --------- //
+    @Action(ProjectAction.UpdateFavoriteProject)
+    updateFavorite(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateFavoriteProject) {
+        const state = ctx.getState();
+
+        return this._http.post(
+            '/user/favorite', {
+                type: 'project',
+                project_key: action.payload.projectKey
+            }
+        ).pipe(tap(() => {
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
+                loading: false,
+            });
+            // TODO: dispatch action on global state to update project in list and user state
+            // TODO: move this one on user state and just update state here, not XHR
+        }));
+    }
+
     //  ------- Application --------- //
     @Action(ProjectAction.AddApplicationInProject)
     addApplication(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddApplicationInProject) {
         const state = ctx.getState();
-        let applications = state.project.applications;
-        let application_names = state.project.application_names;
-
-        if (!applications) {
-            applications = [action.payload];
-        } else {
-            applications.push(action.payload);
-        }
+        let applications = state.project.applications ? state.project.applications.concat([action.payload]) : [action.payload];
+        let application_names = state.project.application_names ? state.project.application_names.concat([]) : [];
 
         let idName = new IdName();
         idName.id = action.payload.id;
         idName.name = action.payload.name;
         idName.description = action.payload.description;
         idName.icon = action.payload.icon;
-        if (!application_names) {
-            application_names = [idName]
-        } else {
-            application_names.push(idName);
-        }
+        application_names.push(idName);
 
         return ctx.setState({
             ...state,
@@ -226,9 +266,9 @@ export class ProjectState {
     @Action(ProjectAction.RenameApplicationInProject)
     renameApplication(ctx: StateContext<ProjectStateModel>, action: ProjectAction.RenameApplicationInProject) {
         const state = ctx.getState();
-        let application_names = state.project.application_names;
+        let application_names = state.project.application_names ? state.project.application_names.concat([]) : [];
 
-        if (!application_names) {
+        if (!application_names.length) {
             let idName = new IdName();
             idName.name = action.payload.newAppName;
             application_names = [idName]
@@ -251,20 +291,11 @@ export class ProjectState {
     @Action(ProjectAction.DeleteApplicationInProject)
     deleteApplication(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteApplicationInProject) {
         const state = ctx.getState();
-        let applications = state.project.applications;
-        let application_names = state.project.application_names;
+        let applications = state.project.applications ? state.project.applications.concat([]) : [];
+        let application_names = state.project.application_names ? state.project.application_names.concat([]) : [];
 
-        if (!applications) {
-            applications = [];
-        } else {
-            applications = applications.filter((app) => app.name !== action.payload.applicationName);
-        }
-
-        if (!application_names) {
-            application_names = []
-        } else {
-            application_names = application_names.filter((app) => app.name !== action.payload.applicationName);
-        }
+        applications = applications.filter((app) => app.name !== action.payload.applicationName);
+        application_names = application_names.filter((app) => app.name !== action.payload.applicationName);
 
         return ctx.setState({
             ...state,
@@ -277,14 +308,8 @@ export class ProjectState {
     @Action(ProjectAction.AddWorkflowInProject)
     addWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddWorkflowInProject) {
         const state = ctx.getState();
-        let workflows = state.project.workflows;
-        let workflow_names = state.project.workflow_names;
-
-        if (!workflows) {
-            workflows = [action.payload];
-        } else {
-            workflows.push(action.payload);
-        }
+        let workflows = state.project.workflows ? state.project.workflows.concat([action.payload]) : [action.payload];
+        let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
 
         let idName = new IdName();
         idName.id = action.payload.id;
@@ -307,20 +332,11 @@ export class ProjectState {
     @Action(ProjectAction.DeleteWorkflowInProject)
     deleteWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteWorkflowInProject) {
         const state = ctx.getState();
-        let workflows = state.project.workflows;
-        let workflow_names = state.project.workflow_names;
+        let workflows = state.project.workflows ? state.project.workflows.concat([]) : [];
+        let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
 
-        if (!workflows) {
-            workflows = [];
-        } else {
-            workflows = workflows.filter((workflow) => workflow.name !== action.payload.workflowName);
-        }
-
-        if (!workflow_names) {
-            workflow_names = []
-        } else {
-            workflow_names = workflow_names.filter((workflow) => workflow.name !== action.payload.workflowName);
-        }
+        workflows = workflows.filter((workflow) => workflow.name !== action.payload.workflowName);
+        workflow_names = workflow_names.filter((workflow) => workflow.name !== action.payload.workflowName);
 
         return ctx.setState({
             ...state,
@@ -333,25 +349,15 @@ export class ProjectState {
     @Action(ProjectAction.AddPipelineInProject)
     addPipeline(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddPipelineInProject) {
         const state = ctx.getState();
-        let pipelines = state.project.pipelines;
-        let pipeline_names = state.project.pipeline_names;
-
-        if (!pipelines) {
-            pipelines = [action.payload];
-        } else {
-            pipelines.push(action.payload);
-        }
+        let pipelines = state.project.pipelines ? state.project.pipelines.concat([action.payload]) : [action.payload];
+        let pipeline_names = state.project.pipeline_names ? state.project.pipeline_names.concat([]) : [];
 
         let idName = new IdName();
         idName.id = action.payload.id;
         idName.name = action.payload.name;
         idName.description = action.payload.description;
         idName.icon = action.payload.icon;
-        if (!pipeline_names) {
-            pipeline_names = [idName]
-        } else {
-            pipeline_names.push(idName);
-        }
+        pipeline_names.push(idName);
 
         return ctx.setState({
             ...state,
@@ -363,20 +369,11 @@ export class ProjectState {
     @Action(ProjectAction.DeletePipelineInProject)
     deletePipeline(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeletePipelineInProject) {
         const state = ctx.getState();
-        let pipelines = state.project.pipelines;
-        let pipeline_names = state.project.pipeline_names;
+        let pipelines = state.project.pipelines ? state.project.pipelines.concat([]) : [];
+        let pipeline_names = state.project.pipeline_names ? state.project.pipeline_names.concat([]) : [];
 
-        if (!pipelines) {
-            pipelines = [];
-        } else {
-            pipelines = pipelines.filter((workflow) => workflow.name !== action.payload.pipelineName);
-        }
-
-        if (!pipeline_names) {
-            pipeline_names = []
-        } else {
-            pipeline_names = pipeline_names.filter((workflow) => workflow.name !== action.payload.pipelineName);
-        }
+        pipelines = pipelines.filter((workflow) => workflow.name !== action.payload.pipelineName);
+        pipeline_names = pipeline_names.filter((workflow) => workflow.name !== action.payload.pipelineName);
 
         return ctx.setState({
             ...state,

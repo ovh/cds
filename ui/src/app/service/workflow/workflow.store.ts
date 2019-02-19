@@ -1,16 +1,18 @@
-import {Injectable} from '@angular/core';
-import {List, Map} from 'immutable';
-import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
-import {GroupPermission} from '../../model/group.model';
-import {NavbarRecentData} from '../../model/navbar.model';
-import {Label, LoadOpts} from '../../model/project.model';
-import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
-import {NavbarService} from '../navbar/navbar.service';
-import {ProjectStore} from '../project/project.store';
-import {WorkflowService} from './workflow.service';
+import { Injectable } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { AddWorkflowInProject } from 'app/store/project.action';
+import { List, Map } from 'immutable';
+import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
+import { map, mergeMap, tap } from 'rxjs/operators';
+import { GroupPermission } from '../../model/group.model';
+import { NavbarRecentData } from '../../model/navbar.model';
+import { Operation } from '../../model/operation.model';
+import { Label, LoadOpts } from '../../model/project.model';
+import { Workflow, WorkflowTriggerConditionCache } from '../../model/workflow.model';
+import { NavbarService } from '../navbar/navbar.service';
+import { ProjectStore } from '../project/project.store';
+import { WorkflowService } from './workflow.service';
 
-import {map, mergeMap} from 'rxjs/operators';
-import {Operation} from '../../model/operation.model';
 
 @Injectable()
 export class WorkflowStore {
@@ -27,7 +29,8 @@ export class WorkflowStore {
     constructor(
         private _workflowService: WorkflowService,
         private _navbarService: NavbarService,
-        private _projectStore: ProjectStore
+        private _projectStore: ProjectStore,
+        private store: Store
     ) {
         this.loadRecentWorkflows();
     }
@@ -102,7 +105,10 @@ export class WorkflowStore {
      * @param workflow Workflow to add
      */
     addWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
-        return this._workflowService.addWorkflow(key, workflow);
+        return this._workflowService.addWorkflow(key, workflow)
+            .pipe(tap((wf) => {
+                this.store.dispatch(new AddWorkflowInProject(wf));
+            }));
     }
 
     renameWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
@@ -141,8 +147,8 @@ export class WorkflowStore {
             let wf = store.get(workflowKey);
 
             if (wf) {
-              wf.favorite = !wf.favorite;
-              this._workflows.next(store.set(workflowKey, wf));
+                wf.favorite = !wf.favorite;
+                this._workflows.next(store.set(workflowKey, wf));
             }
             this._navbarService.getData();
             return wf;
@@ -158,16 +164,16 @@ export class WorkflowStore {
         return this._workflowService.importWorkflow(key, workflowName, workflowCode)
             .pipe(
                 mergeMap(() => {
-                  if (workflowName) {
-                    return this._workflowService.getWorkflow(key, workflowName);
-                  }
-                  return observableOf(null);
+                    if (workflowName) {
+                        return this._workflowService.getWorkflow(key, workflowName);
+                    }
+                    return observableOf(null);
                 }),
                 map((wf) => {
                     if (wf) {
-                      let workflowKey = key + '-' + wf.name;
-                      let store = this._workflows.getValue();
-                      this._workflows.next(store.set(workflowKey, wf));
+                        let workflowKey = key + '-' + wf.name;
+                        let store = this._workflows.getValue();
+                        this._workflows.next(store.set(workflowKey, wf));
                     }
                     return wf;
                 })
@@ -185,9 +191,9 @@ export class WorkflowStore {
             .pipe(
                 map((wf) => {
                     if (wf) {
-                      let workflowKey = key + '-' + wf.name;
-                      let store = this._workflows.getValue();
-                      this._workflows.next(store.set(workflowKey, wf));
+                        let workflowKey = key + '-' + wf.name;
+                        let store = this._workflows.getValue();
+                        this._workflows.next(store.set(workflowKey, wf));
                     }
                     return wf;
                 })
@@ -274,57 +280,57 @@ export class WorkflowStore {
     }
 
     linkLabel(key: string, workflowName: string, label: Label): Observable<Workflow> {
-      return this._workflowService.linkLabel(key, workflowName, label)
-        .pipe(
-          map((lbl) => {
-            this._projectStore.resync(key, [
-                new LoadOpts('withLabels', 'labels'),
-                new LoadOpts('withWorkflowNames', 'workflow_names')
-            ]).subscribe();
-            let workflowKey = key + '-' + workflowName;
-            let store = this._workflows.getValue();
-            let workflowToUpdate = store.get(workflowKey);
-            if (!workflowToUpdate) {
-                return null;
-            }
+        return this._workflowService.linkLabel(key, workflowName, label)
+            .pipe(
+                map((lbl) => {
+                    this._projectStore.resync(key, [
+                        new LoadOpts('withLabels', 'labels'),
+                        new LoadOpts('withWorkflowNames', 'workflow_names')
+                    ]).subscribe();
+                    let workflowKey = key + '-' + workflowName;
+                    let store = this._workflows.getValue();
+                    let workflowToUpdate = store.get(workflowKey);
+                    if (!workflowToUpdate) {
+                        return null;
+                    }
 
-            if (Array.isArray(workflowToUpdate.labels)) {
-              workflowToUpdate.labels.push(lbl);
-            } else {
-              workflowToUpdate.labels = [lbl];
-            }
+                    if (Array.isArray(workflowToUpdate.labels)) {
+                        workflowToUpdate.labels.push(lbl);
+                    } else {
+                        workflowToUpdate.labels = [lbl];
+                    }
 
-            this._workflows.next(store.set(workflowKey, workflowToUpdate));
-            return workflowToUpdate;
-          })
-        )
+                    this._workflows.next(store.set(workflowKey, workflowToUpdate));
+                    return workflowToUpdate;
+                })
+            )
     }
 
     unlinkLabel(key: string, workflowName: string, labelId: number): Observable<Workflow> {
-      return this._workflowService.unlinkLabel(key, workflowName, labelId)
-        .pipe(
-          map((lbl) => {
-            this._projectStore.resync(key, [
-                new LoadOpts('withLabels', 'labels'),
-                new LoadOpts('withWorkflowNames', 'workflow_names')
-            ]).subscribe();
-            let workflowKey = key + '-' + workflowName;
-            let store = this._workflows.getValue();
-            let workflowToUpdate = store.get(workflowKey);
-            if (!workflowToUpdate) {
-                return null;
-            }
+        return this._workflowService.unlinkLabel(key, workflowName, labelId)
+            .pipe(
+                map((lbl) => {
+                    this._projectStore.resync(key, [
+                        new LoadOpts('withLabels', 'labels'),
+                        new LoadOpts('withWorkflowNames', 'workflow_names')
+                    ]).subscribe();
+                    let workflowKey = key + '-' + workflowName;
+                    let store = this._workflows.getValue();
+                    let workflowToUpdate = store.get(workflowKey);
+                    if (!workflowToUpdate) {
+                        return null;
+                    }
 
-            if (Array.isArray(workflowToUpdate.labels)) {
-              workflowToUpdate.labels = workflowToUpdate.labels.filter((label) => label.id !== labelId);
-            } else {
-              workflowToUpdate.labels = [];
-            }
+                    if (Array.isArray(workflowToUpdate.labels)) {
+                        workflowToUpdate.labels = workflowToUpdate.labels.filter((label) => label.id !== labelId);
+                    } else {
+                        workflowToUpdate.labels = [];
+                    }
 
-            this._workflows.next(store.set(workflowKey, workflowToUpdate));
-            return workflowToUpdate;
-          })
-        )
+                    this._workflows.next(store.set(workflowKey, workflowToUpdate));
+                    return workflowToUpdate;
+                })
+            )
     }
 
     externalModification(wfKey: string) {

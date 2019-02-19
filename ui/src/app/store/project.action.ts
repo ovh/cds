@@ -25,7 +25,7 @@ export class ResyncProject {
 }
 
 export class AddProject {
-    static readonly type = '[Project] Add TodoItem';
+    static readonly type = '[Project] Add Project';
     constructor(public payload: Project) { }
 }
 
@@ -41,6 +41,17 @@ export class DeleteProject {
 
 export class ExternalChangeProject {
     static readonly type = '[Project] External Change Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+
+export class DeleteProjectFromCache {
+    static readonly type = '[Project] Delete Project From cache';
+    constructor(public payload: { projectKey: string }) { }
+}
+
+//  ------- Misc --------- //
+export class UpdateFavoriteProject {
+    static readonly type = '[Project] Update Project Favorite';
     constructor(public payload: { projectKey: string }) { }
 }
 
@@ -63,6 +74,10 @@ export class AddWorkflowInProject {
     static readonly type = '[Project] Add Workflow in Project';
     constructor(public payload: Workflow) { }
 }
+export class RenameWorkflowInProject {
+    static readonly type = '[Project] Rename workflow in Project';
+    constructor(public payload: { previousWorkflowName: string, newWorkflowName: string }) { }
+}
 export class DeleteWorkflowInProject {
     static readonly type = '[Project] Delete Workflow in Project';
     constructor(public payload: { workflowName: string }) { }
@@ -72,6 +87,10 @@ export class DeleteWorkflowInProject {
 export class AddPipelineInProject {
     static readonly type = '[Project] Add Pipeline in Project';
     constructor(public payload: Pipeline) { }
+}
+export class RenamePipelineInProject {
+    static readonly type = '[Project] Rename pipeline in Project';
+    constructor(public payload: { previousPipName: string, newPipName: string }) { }
 }
 export class DeletePipelineInProject {
     static readonly type = '[Project] Delete Pipeline in Project';

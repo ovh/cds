@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { cloneDeep } from 'lodash';
-import { first } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Broadcast, BroadcastEvent } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
@@ -22,6 +22,8 @@ import { WorkflowStore } from './service/workflow/workflow.store';
 import { ToastService } from './shared/toast/ToastService';
 import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
 import { ApplicationsState, ApplicationsStateModel } from './store/applications.state';
+import { DeleteProjectFromCache, ExternalChangeProject, ResyncProject } from './store/project.action';
+import { ProjectState, ProjectStateModel } from './store/project.state';
 
 @Injectable()
 export class AppService {
@@ -51,8 +53,8 @@ export class AppService {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
 
-    initFilter(filter: TimelineFilter) {
-        this.filter = cloneDeep(filter);
+    initFilter(filterTimeline: TimelineFilter) {
+        this.filter = cloneDeep(filterTimeline);
     }
 
     updateRoute(params: {}) {
@@ -120,53 +122,54 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        this._projStore.getProjects('').pipe(first()).subscribe(projects => {
-            // Project not in cache
-            let projectInCache = projects.get(event.project_key);
-            if (!projectInCache) {
-                return;
-            }
-
-            // If working on project or sub resources
-            if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
-                // if modification from another user, display a notification
-                if (event.username !== this._authStore.getUser().username) {
-                    this._projStore.externalModification(projectInCache.key);
-                    this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
+        this.store.selectOnce(ProjectState)
+            .pipe(
+                filter((projState: ProjectStateModel) => {
+                    return projState && projState.project && projState.project.key === event.project_key;
+                })
+            )
+            .subscribe((projectState: ProjectStateModel) => {
+                let projectInCache = projectState.project;
+                // If working on project or sub resources
+                if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
+                    // if modification from another user, display a notification
+                    if (event.username !== this._authStore.getUser().username) {
+                        this.store.dispatch(new ExternalChangeProject({ projectKey: projectInCache.key }));
+                        this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
+                        return;
+                    }
+                } else {
+                    // If no working on current project, remove from cache
+                    this.store.dispatch(new DeleteProjectFromCache({ projectKey: projectInCache.key }));
                     return;
                 }
-            } else {
-                // If no working on current project, remove from cache
-                this._projStore.removeFromStore(projectInCache.key);
-                return;
-            }
 
-            if (event.type_event === EventType.PROJECT_DELETE) {
-                this._projStore.removeFromStore(projectInCache.key);
-                return
-            }
+                if (event.type_event === EventType.PROJECT_DELETE) {
+                    this.store.dispatch(new DeleteProjectFromCache({ projectKey: projectInCache.key }));
+                    return;
+                }
 
-            let opts = [];
-            if (event.type_event.indexOf(EventType.PROJECT_VARIABLE_PREFIX) === 0) {
-                opts.push(new LoadOpts('withVariables', 'variables'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_PERMISSION_PREFIX) === 0) {
-                opts.push(new LoadOpts('withGroups', 'groups'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
-                opts.push(new LoadOpts('withKeys', 'keys'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
-                opts.push(new LoadOpts('withIntegrations', 'integrations'));
-            } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
-                opts.push(new LoadOpts('withApplicationNames', 'application_names'));
-            } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
-                opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
-            } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
-                opts.push(new LoadOpts('withEnvironments', 'environments'));
-            } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
-                opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
-                opts.push(new LoadOpts('withLabels', 'labels'));
-            }
-            this._projStore.resync(projectInCache.key, opts).pipe(first()).subscribe();
-        });
+                let opts = [];
+                if (event.type_event.indexOf(EventType.PROJECT_VARIABLE_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withVariables', 'variables'));
+                } else if (event.type_event.indexOf(EventType.PROJECT_PERMISSION_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withGroups', 'groups'));
+                } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withKeys', 'keys'));
+                } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withIntegrations', 'integrations'));
+                } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withApplicationNames', 'application_names'));
+                } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
+                } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withEnvironments', 'environments'));
+                } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
+                    opts.push(new LoadOpts('withLabels', 'labels'));
+                }
+                this.store.dispatch(new ResyncProject({ projectKey: projectInCache.key, opts }));
+            });
     }
 
     updateApplicationCache(event: Event): void {

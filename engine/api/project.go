@@ -14,9 +14,9 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -506,6 +506,7 @@ func (api *API) addProjectHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+		p.Permission = permission.PermissionReadWriteExecute
 
 		event.PublishAddProject(p, deprecatedGetUser(ctx))
 

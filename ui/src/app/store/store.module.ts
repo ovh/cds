@@ -5,6 +5,7 @@ import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
 import { NgxsModule } from '@ngxs/store';
 import { ApplicationsState } from 'app/store/applications.state';
 import { environment as env } from '../../environments/environment';
+import { ProjectState } from './project.state';
 
 
 @NgModule({
@@ -12,7 +13,7 @@ import { environment as env } from '../../environments/environment';
         CommonModule,
         NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false }),
         NgxsReduxDevtoolsPluginModule.forRoot({ disabled: env.production }),
-        NgxsModule.forRoot([ApplicationsState], { developmentMode: !env.production })
+        NgxsModule.forRoot([ProjectState, ApplicationsState], { developmentMode: !env.production })
     ],
     exports: [
         NgxsLoggerPluginModule,
