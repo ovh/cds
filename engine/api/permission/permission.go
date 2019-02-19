@@ -23,7 +23,7 @@ var (
 
 // ProjectPermission  Get the permission for the given project
 func ProjectPermission(projectKey string, u *sdk.User) int {
-	if u.Admin || u == nil {
+	if u == nil || u.Admin {
 		return PermissionReadWriteExecute
 	}
 
