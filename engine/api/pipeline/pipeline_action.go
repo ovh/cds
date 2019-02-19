@@ -124,6 +124,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		}
 		job.Action.Actions[i].ID = a.ID
 
+		// FIXME better check for params
 		for x := range step.Parameters {
 			sp := &step.Parameters[x]
 			log.Debug("CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
@@ -143,27 +144,6 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		if len(errs) > 0 {
 			return sdk.MessagesToError(errs)
 		}
-
-		//Set default values
-		for y := range a.Parameters {
-			ap := a.Parameters[y]
-			var found bool
-			for x := range step.Parameters {
-				sp := &step.Parameters[x]
-				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
-					found = true
-					break
-				}
-			}
-			if !found {
-				step.Parameters = append(step.Parameters, sdk.Parameter{
-					Name:  ap.Name,
-					Type:  ap.Type,
-					Value: ap.Value,
-				})
-			}
-		}
-
 	}
 
 	return nil

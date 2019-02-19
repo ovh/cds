@@ -7,12 +7,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
-
-type pipeliner interface {
-	Pipeline() (*sdk.Pipeline, error)
-}
 
 // ImportOptions are options to import pipeline
 type ImportOptions struct {
@@ -21,7 +18,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.pipeline and insert or update the pipeline in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, epip pipeliner, u *sdk.User, opts ImportOptions) (*sdk.Pipeline, []sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, epip exportentities.Pipeliner, u *sdk.User, opts ImportOptions) (*sdk.Pipeline, []sdk.Message, error) {
 	//Transform payload to a sdk.Pipeline
 	pip, errP := epip.Pipeline()
 	if errP != nil {

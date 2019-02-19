@@ -69,6 +69,8 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(errlb, "cannot load all binary requirements")
 		}
 
+		// FIXME check usage of actions
+
 		//Default value is job enabled
 		job.Action.Enabled = true
 		job.Enabled = true
@@ -163,6 +165,8 @@ func (api *API) updateJobHandler() service.Handler {
 		if errlb != nil {
 			return sdk.WrapError(errlb, "cannot load all binary requirements")
 		}
+
+		// FIXME check usage of actions
 
 		if err := pipeline.UpdateJob(tx, &job, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "cannot update pipeline job in database")

@@ -74,53 +74,9 @@ func (api *API) importPipelineHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
 		}
 
-		// Compute format
-		f, errF := exportentities.GetFormat(format)
-		if errF != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errF)
-		}
-
-		rawPayload := map[string]interface{}{}
-		var errorParse error
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, &rawPayload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, &rawPayload)
-		default:
-			errorParse = sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Given data format not supported")
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
-		}
-
-		// parse the data once to retrieve the version
-		var pipelineV1Format bool
-		if v, ok := rawPayload["version"]; ok {
-			pipelineV1Format = v.(string) == exportentities.PipelineVersion1
-		}
-
-		// depending on the version, we will use different struct
-		type pipeliner interface {
-			Pipeline() (*sdk.Pipeline, error)
-		}
-
-		var payload pipeliner
-		if pipelineV1Format {
-			payload = &exportentities.PipelineV1{}
-		} else {
-			payload = &exportentities.Pipeline{}
-		}
-
-		// parse the pipeline
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, payload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, payload)
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
+		payload, err := exportentities.ParsePipeline(format, data)
+		if err != nil {
+			return err
 		}
 
 		tx, errBegin := api.mustDB().Begin()
@@ -173,53 +129,9 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
 		}
 
-		// Compute format
-		f, errF := exportentities.GetFormat(format)
-		if errF != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errF)
-		}
-
-		rawPayload := map[string]interface{}{}
-		var errorParse error
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, &rawPayload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, &rawPayload)
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
-		}
-
-		//Parse the data once to retrieve the version
-		var pipelineV1Format bool
-		if v, ok := rawPayload["version"]; ok {
-			if v.(string) == exportentities.PipelineVersion1 {
-				pipelineV1Format = true
-			}
-		}
-
-		//Depending on the version, we will use different struct
-		type pipeliner interface {
-			Pipeline() (*sdk.Pipeline, error)
-		}
-
-		var payload pipeliner
-		// Parse the pipeline
-		if pipelineV1Format {
-			payload = &exportentities.PipelineV1{}
-		} else {
-			payload = &exportentities.Pipeline{}
-		}
-
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, payload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, payload)
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
+		payload, err := exportentities.ParsePipeline(format, data)
+		if err != nil {
+			return err
 		}
 
 		tx, errBegin := api.mustDB().Begin()

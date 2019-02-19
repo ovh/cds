@@ -1,13 +1,19 @@
 package exportentities
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
-	"strings"
+
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
 )
+
+// Pipeliner interface, depending on the version we will use different struct.
+type Pipeliner interface {
+	Pipeline() (*sdk.Pipeline, error)
+}
 
 // PipelineV1 represents exported sdk.Pipeline
 type PipelineV1 struct {
@@ -27,18 +33,6 @@ type PipelineVersion string
 const (
 	PipelineVersion1 = "v1.0"
 )
-
-// Pipeline represents exported sdk.Pipeline
-type Pipeline struct {
-	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
-	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
-	Type         string                    `json:"type,omitempty" yaml:"type,omitempty"`
-	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Stages       map[string]Stage          `json:"stages,omitempty" yaml:"stages,omitempty"`
-	Jobs         map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Requirements []Requirement             `json:"requirements,omitempty" yaml:"requirements,omitempty"`
-	Steps        []Step                    `json:"steps,omitempty" yaml:"steps,omitempty"`
-}
 
 // Stage represents exported sdk.Stage
 type Stage struct {
@@ -164,86 +158,6 @@ func newStagesForPipelineV1(stages []sdk.Stage) ([]string, map[string]Stage) {
 	return res, opts
 }
 
-//NewPipeline creates an exportable pipeline from a sdk.Pipeline
-//DEPRECATED
-func NewPipeline(pip sdk.Pipeline) (p *Pipeline) {
-	p = &Pipeline{}
-
-	// Default name is like the type
-	if strings.ToLower(pip.Name) != pip.Type {
-		p.Name = pip.Name
-	}
-
-	if pip.Description != "" {
-		p.Description = pip.Description
-	}
-
-	// We consider build pipeline are default
-	if pip.Type != sdk.BuildPipeline {
-		p.Type = pip.Type
-	}
-
-	if len(pip.Parameter) > 0 {
-		p.Parameters = make(map[string]ParameterValue, len(pip.Parameter))
-		for _, v := range pip.Parameter {
-			p.Parameters[v.Name] = ParameterValue{
-				Type:         string(v.Type),
-				DefaultValue: v.Value,
-				Description:  v.Description,
-			}
-		}
-	}
-
-	switch len(pip.Stages) {
-	case 0:
-		return
-	case 1:
-		if len(pip.Stages[0].Prerequisites) == 0 {
-			switch len(pip.Stages[0].Jobs) {
-			case 0:
-				return
-			case 1:
-				p.Steps = newSteps(pip.Stages[0].Jobs[0].Action)
-				p.Requirements = newRequirements(pip.Stages[0].Jobs[0].Action.Requirements)
-				return
-			default:
-				p.Jobs = newJobs(pip.Stages[0].Jobs)
-			}
-			return
-		}
-		p.Stages = newStages(pip.Stages, true)
-	default:
-		p.Stages = newStages(pip.Stages, true)
-	}
-
-	return
-}
-
-func newStages(stages []sdk.Stage, withJobs bool) map[string]Stage {
-	res := map[string]Stage{}
-	var order int
-	for i := range stages {
-		s := &stages[i]
-		if len(s.Jobs) == 0 {
-			continue
-		}
-		order++
-		st := Stage{}
-		if !s.Enabled {
-			st.Enabled = &s.Enabled
-		}
-		if len(s.Prerequisites) > 0 {
-			st.Conditions = make(map[string]string)
-		}
-		for _, r := range s.Prerequisites {
-			st.Conditions[r.Parameter] = r.ExpectedValue
-		}
-		st.Jobs = newJobs(s.Jobs)
-		res[fmt.Sprintf("%d|%s", order, s.Name)] = st
-	}
-	return res
-}
-
 func newRequirements(req []sdk.Requirement) []Requirement {
 	if req == nil {
 		return nil
@@ -292,136 +206,6 @@ func newJobs(jobs []sdk.Job) map[string]Job {
 		res[j.Action.Name] = jo
 	}
 	return res
-}
-
-//Pipeline returns a sdk.Pipeline entity
-func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
-	pip := new(sdk.Pipeline)
-
-	if p.Type == "" {
-		p.Type = sdk.BuildPipeline
-	}
-
-	if p.Name == "" {
-		p.Name = strings.Title(p.Type)
-	}
-
-	pip.Name = p.Name
-	pip.Description = p.Description
-	pip.Type = p.Type
-
-	//Compute parameters
-	for p, v := range p.Parameters {
-		param := sdk.Parameter{
-			Name:        p,
-			Type:        v.Type,
-			Value:       v.DefaultValue,
-			Description: v.Description,
-		}
-		pip.Parameter = append(pip.Parameter, param)
-	}
-
-	if p.Steps != nil {
-		//There one stage, with one job
-		actions, err := computeSteps(p.Steps)
-		if err != nil {
-			return nil, err
-		}
-		pip.Stages = []sdk.Stage{
-			sdk.Stage{
-				Name:       p.Name,
-				BuildOrder: 1,
-				Enabled:    true,
-				Jobs: []sdk.Job{
-					sdk.Job{
-						Enabled: true,
-						Action: sdk.Action{
-							Enabled:      true,
-							Name:         p.Name,
-							Actions:      actions,
-							Type:         sdk.JoinedAction,
-							Requirements: computeJobRequirements(p.Requirements),
-						},
-					},
-				},
-			},
-		}
-	} else if p.Jobs != nil {
-		//There is one stage with several jobs
-		stage := sdk.Stage{
-			Name:       p.Name,
-			BuildOrder: 1,
-			Enabled:    true,
-			Jobs:       make([]sdk.Job, 0, len(p.Jobs)),
-		}
-		for s, j := range p.Jobs {
-			job, err := computeJob(s, j)
-			if err != nil {
-				return nil, err
-			}
-			stage.Jobs = append(stage.Jobs, *job)
-		}
-		pip.Stages = []sdk.Stage{stage}
-	} else {
-		//There is more than one stage
-		stageKeys := make([]string, len(p.Stages))
-		iS := 0
-		for k := range p.Stages {
-			stageKeys[iS] = k
-			iS++
-		}
-		sort.Strings(stageKeys)
-
-		//Compute stages
-		pip.Stages = make([]sdk.Stage, 0, len(stageKeys))
-		for i, stageName := range stageKeys {
-			buildOrder := i
-			name := stageName
-			//Try to find buildOrder and name
-			if strings.Contains(stageName, "|") {
-				t := strings.SplitN(stageName, "|", 2)
-				var err error
-				buildOrder, err = strconv.Atoi(t[0])
-				if err != nil {
-					return nil, fmt.Errorf("malformatted stage name : %s", stageName)
-				}
-				name = t[1]
-			}
-
-			s := sdk.Stage{
-				BuildOrder: buildOrder,
-				Name:       name,
-			}
-			if p.Stages[stageName].Enabled != nil {
-				s.Enabled = *p.Stages[stageName].Enabled
-			} else {
-				s.Enabled = true
-			}
-
-			//Compute stage Prerequisites
-			s.Prerequisites = make([]sdk.Prerequisite, 0, len(p.Stages[stageName].Conditions))
-			for n, c := range p.Stages[stageName].Conditions {
-				s.Prerequisites = append(s.Prerequisites, sdk.Prerequisite{
-					Parameter:     n,
-					ExpectedValue: c,
-				})
-			}
-
-			//Compute jobs
-			s.Jobs = make([]sdk.Job, 0, len(p.Stages[stageName].Jobs))
-			for n, j := range p.Stages[stageName].Jobs {
-				job, err := computeJob(n, j)
-				if err != nil {
-					return nil, err
-				}
-				s.Jobs = append(s.Jobs, *job)
-			}
-
-			pip.Stages = append(pip.Stages, s)
-		}
-	}
-
-	return pip, nil
 }
 
 func computeSteps(steps []Step) ([]sdk.Action, error) {
@@ -634,4 +418,51 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	})
 
 	return pip, nil
+}
+
+// ParsePipeline returns a pipeliner from given data.
+func ParsePipeline(format string, data []byte) (Pipeliner, error) {
+	f, err := GetFormat(format)
+	if err != nil {
+		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+
+	rawPayload := make(map[string]interface{})
+	switch f {
+	case FormatJSON:
+		err = json.Unmarshal(data, &rawPayload)
+	case FormatYAML:
+		err = yaml.Unmarshal(data, &rawPayload)
+	}
+	if err != nil {
+		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+
+	var version PipelineVersion
+	if v, ok := rawPayload["version"]; ok {
+		switch v.(string) {
+		case PipelineVersion1:
+			version = PipelineVersion1
+		default:
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid pipeline version")
+		}
+	}
+
+	var payload Pipeliner
+	switch version {
+	case PipelineVersion1:
+		payload = &PipelineV1{}
+	}
+
+	switch f {
+	case FormatJSON:
+		err = json.Unmarshal(data, payload)
+	case FormatYAML:
+		err = yaml.Unmarshal(data, payload)
+	}
+	if err != nil {
+		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+
+	return payload, nil
 }
