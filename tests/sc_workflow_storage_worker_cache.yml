@@ -41,5 +41,11 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-worker-cache #2 has been launched"
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW14 test-worker-cache 2 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 30
+    delay: 10
   - script:  {{.cds.build.cdsctl}} workflow logs download ITSCWRKFLW14 test-worker-cache 2
   - script: grep 'getted from cache' test-worker-cache-2.0-pipeline.pipeline-play-worker-cache-stage.-job.workerCache-status.Success-step.0.log
