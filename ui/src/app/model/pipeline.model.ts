@@ -17,27 +17,15 @@ export class PipelineStatus {
     static STOPPED = 'Stopped';
 
     static neverRun(status: string) {
-        if (status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED) {
-            return true;
-        }
-
-        return false;
+        return status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED;
     }
 
     static isActive(status: string) {
-        if (status === this.WAITING || status === this.BUILDING) {
-            return true;
-        }
-
-        return false;
+        return status === this.WAITING || status === this.BUILDING;
     }
 
     static isDone(status: string) {
-        if (status === this.SUCCESS || status === this.STOPPED || status === this.FAIL) {
-            return true;
-        }
-
-        return false;
+        return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL;
     }
 }
 
@@ -81,10 +69,7 @@ export class Pipeline {
             return false;
         }
 
-        if (!pipelineNamePattern.test(name)) {
-            return false;
-        }
-        return true;
+        return pipelineNamePattern.test(name);
     }
 
     public static hasParameterWithoutValue(pipeline: Pipeline) {
