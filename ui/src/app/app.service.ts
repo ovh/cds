@@ -20,8 +20,8 @@ import { WorkflowRunService } from './service/workflow/run/workflow.run.service'
 import { WorkflowEventStore } from './service/workflow/workflow.event.store';
 import { WorkflowStore } from './service/workflow/workflow.store';
 import { ToastService } from './shared/toast/ToastService';
-import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/project/applications/applications.action';
-import { ApplicationsState, ApplicationsStateModel } from './store/project/applications/applications.state';
+import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
+import { ApplicationsState, ApplicationsStateModel } from './store/applications.state';
 
 @Injectable()
 export class AppService {

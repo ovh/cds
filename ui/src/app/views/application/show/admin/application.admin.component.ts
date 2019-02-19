@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { DeleteApplication, UpdateApplication } from 'app/store/project/applications/applications.action';
+import { DeleteApplication, UpdateApplication } from 'app/store/applications.action';
 import { cloneDeep } from 'lodash';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../model/application.model';

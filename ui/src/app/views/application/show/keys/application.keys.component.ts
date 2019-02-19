@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AddApplicationKey, DeleteApplicationKey } from 'app/store/project/applications/applications.action';
+import { AddApplicationKey, DeleteApplicationKey } from 'app/store/applications.action';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../model/application.model';
 import { Project } from '../../../../model/project.model';

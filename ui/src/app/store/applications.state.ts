@@ -5,28 +5,7 @@ import { IntegrationModel, ProjectIntegration } from 'app/model/integration.mode
 import { Key } from 'app/model/keys.model';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import {
-    AddApplication,
-    AddApplicationDeployment,
-    AddApplicationKey,
-    AddApplicationVariable,
-    CloneApplication,
-    ConnectVcsRepoOnApplication,
-    DeleteApplication,
-    DeleteApplicationDeployment,
-    DeleteApplicationKey,
-    DeleteApplicationVariable,
-    DeleteFromCacheApplication,
-    DeleteVcsRepoOnApplication,
-    ExternalChangeApplication,
-    FetchApplication,
-    FetchApplicationOverview,
-    LoadApplication,
-    ResyncApplication,
-    UpdateApplication,
-    UpdateApplicationDeployment,
-    UpdateApplicationVariable
-} from './applications.action';
+import * as ActionApplication from './applications.action';
 
 export class ApplicationsStateModel {
     public applications: { [key: string]: Application };
@@ -57,8 +36,8 @@ export class ApplicationsState {
 
     constructor(private _http: HttpClient) { }
 
-    @Action(AddApplication)
-    add(ctx: StateContext<ApplicationsStateModel>, action: AddApplication) {
+    @Action(ActionApplication.AddApplication)
+    add(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.AddApplication) {
         const state = ctx.getState();
         let appKey = `${action.payload.projectKey}/${action.payload.application.name}`;
         let applications = state.applications;
@@ -78,12 +57,13 @@ export class ApplicationsState {
                 applications: Object.assign({}, applications, { [appKey]: app }),
                 loading: false,
             });
+            // todo dispatch action on project state to add in application_names
         }));
 
     }
 
-    @Action(CloneApplication)
-    clone(ctx: StateContext<ApplicationsStateModel>, action: CloneApplication) {
+    @Action(ActionApplication.CloneApplication)
+    clone(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.CloneApplication) {
         const state = ctx.getState();
         let appKey = `${action.payload.projectKey}/${action.payload.newApplication.name}`;
         let applications = state.applications;
@@ -107,8 +87,8 @@ export class ApplicationsState {
 
     }
 
-    @Action(LoadApplication)
-    load(ctx: StateContext<ApplicationsStateModel>, action: LoadApplication) {
+    @Action(ActionApplication.LoadApplication)
+    load(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.LoadApplication) {
         const state = ctx.getState();
         let appKey = `${action.payload.project_key}/${action.payload.name}`;
         let applications = state.applications;
@@ -126,20 +106,20 @@ export class ApplicationsState {
         });
     }
 
-    @Action(FetchApplication)
-    fetch(ctx: StateContext<ApplicationsStateModel>, action: FetchApplication) {
+    @Action(ActionApplication.FetchApplication)
+    fetch(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.FetchApplication) {
         const state = ctx.getState();
         const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
 
         if (state.applications[appKey]) {
-            return ctx.dispatch(new LoadApplication(state.applications[appKey]));
+            return ctx.dispatch(new ActionApplication.LoadApplication(state.applications[appKey]));
         }
 
-        return ctx.dispatch(new ResyncApplication({ ...action.payload }));
+        return ctx.dispatch(new ActionApplication.ResyncApplication({ ...action.payload }));
     }
 
-    @Action(UpdateApplication)
-    update(ctx: StateContext<ApplicationsStateModel>, action: UpdateApplication) {
+    @Action(ActionApplication.UpdateApplication)
+    update(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.UpdateApplication) {
         return this._http.put<Application>(
             `/project/${action.payload.projectKey}/application/${action.payload.applicationName}`,
             action.payload.changes
@@ -151,13 +131,16 @@ export class ApplicationsState {
 
             let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
             if (app.name !== action.payload.applicationName) {
+                let applications = Object.assign({}, state.applications, {
+                    [action.payload.projectKey + '/' + app.name]: app,
+                });
+                delete applications[appKey];
+
                 ctx.setState({
                     ...state,
-                    applications: Object.assign({}, state.applications, {
-                        [appKey]: null,
-                        [action.payload.projectKey + '/' + app.name]: app,
-                    }),
+                    applications,
                 });
+                // todo dispatch action on project state to update from application_names
             } else {
                 let applicationUpdated = {
                     ...state.applications[appKey],
@@ -172,24 +155,27 @@ export class ApplicationsState {
         }));
     }
 
-    @Action(DeleteApplication)
-    delete(ctx: StateContext<ApplicationsStateModel>, action: DeleteApplication) {
+    @Action(ActionApplication.DeleteApplication)
+    delete(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.DeleteApplication) {
         return this._http.delete(
             `/project/${action.payload.projectKey}/application/${action.payload.applicationName}`
         ).pipe(tap(() => {
             const state = ctx.getState();
             let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
+            let applications = Object.assign({}, state.applications);
+            delete applications[appKey];
+
             ctx.setState({
                 ...state,
-                applications: Object.assign({}, state.applications, { [appKey]: null }),
+                applications
             });
 
             // todo dispatch action on project state to delete from application_names
         }));
     }
 
-    @Action(FetchApplicationOverview)
-    fetchOverview(ctx: StateContext<ApplicationsStateModel>, action: FetchApplicationOverview) {
+    @Action(ActionApplication.FetchApplicationOverview)
+    fetchOverview(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.FetchApplicationOverview) {
         const state = ctx.getState();
         const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
 
@@ -210,8 +196,8 @@ export class ApplicationsState {
     }
 
     //  ------- Variables --------- //
-    @Action(AddApplicationVariable)
-    addVariable(ctx: StateContext<ApplicationsStateModel>, action: AddApplicationVariable) {
+    @Action(ActionApplication.AddApplicationVariable)
+    addVariable(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.AddApplicationVariable) {
         let variable = action.payload.variable;
         let url = '/project/' + action.payload.projectKey + '/application/' + action.payload.applicationName + '/variable/' + variable.name;
         return this._http.post<Application>(url, variable)
@@ -227,8 +213,8 @@ export class ApplicationsState {
             }));
     }
 
-    @Action(UpdateApplicationVariable)
-    updateVariable(ctx: StateContext<ApplicationsStateModel>, action: UpdateApplicationVariable) {
+    @Action(ActionApplication.UpdateApplicationVariable)
+    updateVariable(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.UpdateApplicationVariable) {
         let variable = action.payload.variable;
         let url = '/project/' + action.payload.projectKey +
             '/application/' + action.payload.applicationName +
@@ -247,8 +233,8 @@ export class ApplicationsState {
             }));
     }
 
-    @Action(DeleteApplicationVariable)
-    deleteVariable(ctx: StateContext<ApplicationsStateModel>, action: DeleteApplicationVariable) {
+    @Action(ActionApplication.DeleteApplicationVariable)
+    deleteVariable(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.DeleteApplicationVariable) {
         let variable = action.payload.variable;
         let url = `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/variable/${variable.name}`;
         return this._http.delete<Application>(url)
@@ -265,8 +251,8 @@ export class ApplicationsState {
     }
 
     //  ------- Keys --------- //
-    @Action(AddApplicationKey)
-    addKey(ctx: StateContext<ApplicationsStateModel>, action: AddApplicationKey) {
+    @Action(ActionApplication.AddApplicationKey)
+    addKey(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.AddApplicationKey) {
         let key = action.payload.key;
         let url = '/project/' + action.payload.projectKey + '/application/' + action.payload.applicationName + '/keys';
         return this._http.post<Key>(url, key)
@@ -283,8 +269,8 @@ export class ApplicationsState {
             }));
     }
 
-    @Action(DeleteApplicationKey)
-    deleteKey(ctx: StateContext<ApplicationsStateModel>, action: DeleteApplicationKey) {
+    @Action(ActionApplication.DeleteApplicationKey)
+    deleteKey(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.DeleteApplicationKey) {
         let key = action.payload.key;
         let url = `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/keys/${key.name}`;
         return this._http.delete(url)
@@ -302,8 +288,8 @@ export class ApplicationsState {
     }
 
     //  ------- Deployment strategies --------- //
-    @Action(AddApplicationDeployment)
-    addDeployment(ctx: StateContext<ApplicationsStateModel>, action: AddApplicationDeployment) {
+    @Action(ActionApplication.AddApplicationDeployment)
+    addDeployment(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.AddApplicationDeployment) {
         let integration = action.payload.integration;
         let url = '/project/' + action.payload.projectKey +
             '/application/' + action.payload.applicationName + '/deployment/config/' + integration.name;
@@ -322,22 +308,22 @@ export class ApplicationsState {
             }));
     }
 
-    @Action(UpdateApplicationDeployment)
-    updateDeployment(ctx: StateContext<ApplicationsStateModel>, action: UpdateApplicationDeployment) {
+    @Action(ActionApplication.UpdateApplicationDeployment)
+    updateDeployment(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.UpdateApplicationDeployment) {
         let integration = new ProjectIntegration();
         integration.name = action.payload.deploymentName;
         integration.model = new IntegrationModel();
         integration.model.deployment_default_config = action.payload.config;
 
-        return ctx.dispatch(new AddApplicationDeployment({
+        return ctx.dispatch(new ActionApplication.AddApplicationDeployment({
             projectKey: action.payload.projectKey,
             applicationName: action.payload.applicationName,
             integration
         }));
     }
 
-    @Action(DeleteApplicationDeployment)
-    deleteDeployment(ctx: StateContext<ApplicationsStateModel>, action: DeleteApplicationDeployment) {
+    @Action(ActionApplication.DeleteApplicationDeployment)
+    deleteDeployment(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.DeleteApplicationDeployment) {
         let url = '/project/' + action.payload.projectKey +
             '/application/' + action.payload.applicationName + '/deployment/config/' + action.payload.integrationName;
         return this._http.delete<Application>(url)
@@ -356,8 +342,8 @@ export class ApplicationsState {
     }
 
     //  ------- VCS strategies --------- //
-    @Action(ConnectVcsRepoOnApplication)
-    connectRepo(ctx: StateContext<ApplicationsStateModel>, action: ConnectVcsRepoOnApplication) {
+    @Action(ActionApplication.ConnectVcsRepoOnApplication)
+    connectRepo(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.ConnectVcsRepoOnApplication) {
         let repoManager = action.payload.repoManager;
         let repoFullname = action.payload.repoFullName;
         let url = '/project/' + action.payload.projectKey + '/repositories_manager/' +
@@ -374,7 +360,8 @@ export class ApplicationsState {
                 let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
                 let applicationUpdated = Object.assign({}, state.applications[appKey], {
                     vcs_server: app.vcs_server,
-                    repository_fullname: app.repository_fullname
+                    repository_fullname: app.repository_fullname,
+                    vcs_strategy: app.vcs_strategy
                 });
 
                 ctx.setState({
@@ -384,8 +371,8 @@ export class ApplicationsState {
             }));
     }
 
-    @Action(DeleteVcsRepoOnApplication)
-    deleteRepo(ctx: StateContext<ApplicationsStateModel>, action: DeleteVcsRepoOnApplication) {
+    @Action(ActionApplication.DeleteVcsRepoOnApplication)
+    deleteRepo(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.DeleteVcsRepoOnApplication) {
         let repoManager = action.payload.repoManager;
         let url = '/project/' + action.payload.projectKey + '/repositories_manager/' +
             repoManager + '/application/' + action.payload.applicationName + '/detach';
@@ -394,9 +381,10 @@ export class ApplicationsState {
             .pipe(tap((app) => {
                 const state = ctx.getState();
                 let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
-                let applicationUpdated = Object.assign({}, state.applications[appKey], {
+                let applicationUpdated = Object.assign({}, state.applications[appKey], <Application>{
                     vcs_server: app.vcs_server,
-                    repository_fullname: app.repository_fullname
+                    repository_fullname: app.repository_fullname,
+                    vcs_strategy: app.vcs_strategy
                 });
 
                 ctx.setState({
@@ -407,8 +395,8 @@ export class ApplicationsState {
     }
 
     //  ------- Misc --------- //
-    @Action(ExternalChangeApplication)
-    externalChange(ctx: StateContext<ApplicationsStateModel>, action: ExternalChangeApplication) {
+    @Action(ActionApplication.ExternalChangeApplication)
+    externalChange(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.ExternalChangeApplication) {
         const state = ctx.getState();
         const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
         const applicationUpdated = Object.assign({}, state.applications[appKey], { externalChange: true });
@@ -419,19 +407,21 @@ export class ApplicationsState {
         });
     }
 
-    @Action(DeleteFromCacheApplication)
-    deleteFromCache(ctx: StateContext<ApplicationsStateModel>, action: DeleteFromCacheApplication) {
+    @Action(ActionApplication.DeleteFromCacheApplication)
+    deleteFromCache(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.DeleteFromCacheApplication) {
         const state = ctx.getState();
         const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
+        let applications = Object.assign({}, state.applications);
+        delete applications[appKey];
 
         ctx.setState({
             ...state,
-            applications: Object.assign({}, state.applications, { [appKey]: null }),
+            applications,
         });
     }
 
-    @Action(ResyncApplication)
-    resync(ctx: StateContext<ApplicationsStateModel>, action: ResyncApplication) {
+    @Action(ActionApplication.ResyncApplication)
+    resync(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.ResyncApplication) {
         let params = new HttpParams();
         params = params.append('withNotifs', 'true');
         params = params.append('withUsage', 'true');
@@ -444,8 +434,10 @@ export class ApplicationsState {
             `/project/${action.payload.projectKey}/application/${action.payload.applicationName}`,
             { params }
         ).pipe(tap((app) => {
-            app.vcs_strategy.password = '**********';
-            ctx.dispatch(new LoadApplication(app));
+            if (app.vcs_strategy) {
+                app.vcs_strategy.password = '**********';
+            }
+            ctx.dispatch(new ActionApplication.LoadApplication(app));
         }));
     }
 }

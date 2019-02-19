@@ -1,11 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import {
-    AddApplicationDeployment,
-    DeleteApplicationDeployment,
-    UpdateApplicationDeployment
-} from 'app/store/project/applications/applications.action';
+import { AddApplicationDeployment, DeleteApplicationDeployment, UpdateApplicationDeployment } from 'app/store/applications.action';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../../model/application.model';
 import { ProjectIntegration } from '../../../../../model/integration.model';

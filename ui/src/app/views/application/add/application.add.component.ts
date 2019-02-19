@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AddApplication, CloneApplication } from 'app/store/project/applications/applications.action';
+import { AddApplication, CloneApplication } from 'app/store/applications.action';
 import { cloneDeep } from 'lodash';
 import { finalize, first } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';

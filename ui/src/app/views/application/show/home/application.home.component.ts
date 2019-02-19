@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { FetchApplicationOverview } from 'app/store/project/applications/applications.action';
+import { FetchApplicationOverview } from 'app/store/applications.action';
 import { Application, Overview, Severity } from '../../../../model/application.model';
 import { ChartData, ChartSeries, GraphConfiguration, GraphType } from '../../../../model/graph.model';
 import { Metric } from '../../../../model/metric.model';

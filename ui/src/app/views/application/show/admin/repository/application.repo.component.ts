@@ -1,11 +1,7 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import {
-    ConnectVcsRepoOnApplication,
-    DeleteVcsRepoOnApplication,
-    UpdateApplication
-} from 'app/store/project/applications/applications.action';
+import { ConnectVcsRepoOnApplication, DeleteVcsRepoOnApplication, UpdateApplication } from 'app/store/applications.action';
 import { finalize, first } from 'rxjs/operators';
 import { Application } from '../../../../../model/application.model';
 import { Project } from '../../../../../model/project.model';

@@ -10,11 +10,7 @@ import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } f
 import { Store } from '@ngxs/store';
 import { Variable } from 'app/model/variable.model';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import {
-    AddApplicationVariable,
-    DeleteApplicationVariable,
-    UpdateApplicationVariable
-} from 'app/store/project/applications/applications.action';
+import { AddApplicationVariable, DeleteApplicationVariable, UpdateApplicationVariable } from 'app/store/applications.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';

@@ -7,8 +7,8 @@ import {
     DeleteApplicationVariable,
     FetchApplication,
     UpdateApplicationVariable
-} from 'app/store/project/applications/applications.action';
-import { ApplicationsState } from 'app/store/project/applications/applications.state';
+} from 'app/store/applications.action';
+import { ApplicationsState } from 'app/store/applications.state';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';

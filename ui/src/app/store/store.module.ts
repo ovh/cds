@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { NgxsReduxDevtoolsPluginModule } from '@ngxs/devtools-plugin';
 import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
 import { NgxsModule } from '@ngxs/store';
-import { ApplicationsState } from 'app/store/project/applications/applications.state';
+import { ApplicationsState } from 'app/store/applications.state';
 import { environment as env } from '../../environments/environment';
 
 
