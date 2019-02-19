@@ -212,6 +212,8 @@ func (api *API) postActionHandler() service.Handler {
 
 		event.PublishActionAdd(*new, u)
 
+		new.Editable = true
+
 		return service.WriteJSON(w, new, http.StatusCreated)
 	}
 }
@@ -227,6 +229,9 @@ func (api *API) getActionHandler() service.Handler {
 
 		if err := action.FullView.Exec(api.mustDB(), a); err != nil {
 			return err
+		}
+		if err := group.CheckUserIsGroupAdmin(a.Group, deprecatedGetUser(ctx)); err == nil {
+			a.Editable = true
 		}
 
 		return service.WriteJSON(w, a, http.StatusOK)
@@ -303,6 +308,8 @@ func (api *API) putActionHandler() service.Handler {
 		}
 
 		event.PublishActionUpdate(*old, *new, u)
+
+		new.Editable = true
 
 		return service.WriteJSON(w, new, http.StatusOK)
 	}

@@ -1,37 +1,55 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
+import { finalize } from 'rxjs/internal/operators/finalize';
 import { Action } from '../../../../model/action.model';
-import { User } from '../../../../model/user.model';
 import { ActionService } from '../../../../service/action/action.service';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Table } from '../../../../shared/table/table';
+import { Column, ColumnType, Filter } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-action-list',
     templateUrl: './action.list.html',
     styleUrls: ['./action.list.scss']
 })
-export class ActionListComponent extends Table<Action> {
-    @Input('maxPerPage')
-    set maxPerPage(data: number) {
-        this.nbElementsByPage = data;
-    };
-
-    filter: string;
+export class ActionListComponent {
+    loading: boolean;
+    columns: Array<Column<Action>>;
     actions: Array<Action>;
-    currentUser: User;
     path: Array<PathItem>;
+    filter: Filter<Action>;
 
     constructor(
-        private _actionService: ActionService,
-        private _authentificationStore: AuthentificationStore
+        private _actionService: ActionService
     ) {
-        super();
+        this.filter = f => {
+            const lowerFilter = f.toLowerCase();
+            return d => {
+                let s = `${d.group.name}/${d.name}`.toLowerCase();
+                return s.indexOf(lowerFilter) !== -1;
+            }
+        };
 
-        this.currentUser = this._authentificationStore.getUser();
-        this._actionService.getAll().subscribe(as => {
-            this.actions = as;
-        });
+        this.columns = [
+            <Column<Action>>{
+                type: ColumnType.ROUTER_LINK,
+                name: 'common_name',
+                selector: (a: Action) => {
+                    return {
+                        link: '/settings/action/' + a.group.name + '/' + a.name,
+                        value: a.name
+                    };
+                }
+            },
+            <Column<Action>>{
+                name: 'common_group',
+                selector: (a: Action) => a.group.name
+            },
+            <Column<Action>>{
+                type: ColumnType.MARKDOWN,
+                name: 'common_description',
+                selector: (a: Action) => a.description
+            }
+        ];
+        this.getActions();
 
         this.path = [<PathItem>{
             translate: 'common_settings'
@@ -41,10 +59,10 @@ export class ActionListComponent extends Table<Action> {
         }];
     }
 
-    getData(): Array<Action> {
-        if (!this.filter) {
-            return this.actions;
-        }
-        return this.actions.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
+    getActions() {
+        this.loading = true;
+        this._actionService.getAll()
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(as => { this.actions = as; });
     }
 }

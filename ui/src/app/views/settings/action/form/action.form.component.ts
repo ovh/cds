@@ -24,6 +24,7 @@ export class ActionFormComponent implements OnDestroy {
     @Input() keys: AllKeys;
     @Input() suggest: Array<string>;
     @Input() groups: Array<Group>;
+    @Input() loading: boolean;
 
     _action: Action;
     @Input() set action(a: Action) {

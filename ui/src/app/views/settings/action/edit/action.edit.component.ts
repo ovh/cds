@@ -163,6 +163,7 @@ export class ActionEditComponent implements OnInit {
         this._actionService.update(this.action, action).subscribe(a => {
             this._toast.success('', this._translate.instant('action_saved'));
             this.action = a;
+            this._router.navigate(['settings', 'action', this.action.group.name, this.action.name]);
         }, () => {
             this.action.loading = false;
         });

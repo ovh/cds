@@ -4,6 +4,7 @@
             }}</a>
     </app-breadcrumb>
     <app-scrollview class="scrollview">
-        <app-data-table [withPagination]="25" [columns]="columns" [data]="workflowTemplates" [loading]="loading"></app-data-table>
+        <app-data-table [withFilter]="filter" [withPagination]="25" [columns]="columns" [data]="workflowTemplates"
+            [loading]="loading"></app-data-table>
     </app-scrollview>
 </div>

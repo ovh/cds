@@ -106,18 +106,15 @@
             </div>
             <ng-container *ngIf="!stepFormExpended">
                 <div class="eight wide column" *ngIf="action.id">
-                    <button class="ui fluid green button" name="updatebtn" (click)="saveAction()" [disabled]="!action.hasChanged || action.loading"
-                        [class.loading]="action.loading">
+                    <button class="ui fluid green button" name="updatebtn" (click)="saveAction()" [class.loading]="loading">
                         <i class="save icon"></i>{{ 'save' | translate }}
                     </button>
                 </div>
                 <div class="eight wide column" *ngIf="action.id">
-                    <app-delete-button [disabled]="action.hasChanged" (event)="deleteAction()" [loading]="action.loading"
-                        [class]="'fluid'"></app-delete-button>
+                    <app-delete-button (event)="deleteAction()" [loading]="loading" [class]="'fluid'"></app-delete-button>
                 </div>
                 <div class="sixteen wide column" *ngIf="!action.id">
-                    <button class="ui green button" name="addbtn" (click)="saveAction()" [disabled]="action.loading"
-                        [class.loading]="action.loading">
+                    <button class="ui green button" name="addbtn" (click)="saveAction()" [class.loading]="loading">
                         <i class="save icon"></i>{{ 'btn_create' | translate }}
                     </button>
                 </div>

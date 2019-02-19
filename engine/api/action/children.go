@@ -129,7 +129,7 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 		return err
 	}
 	if len(children) != len(childrenIDs) {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given child can not be found")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given child actions were not be found")
 	}
 
 	for i := range children {
