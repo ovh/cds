@@ -37,18 +37,6 @@ func NewAction(name string) *Action {
 	}
 }
 
-// NewScriptAction setup a new Action object with all attribute ok for script action
-func NewScriptAction(content string) Action {
-	return Action{
-		Name:    ScriptAction,
-		Type:    BuiltinAction,
-		Enabled: true,
-		Parameters: []Parameter{
-			{Name: "script", Value: content},
-		},
-	}
-}
-
 // Action is the base element of CDS pipeline
 type Action struct {
 	ID          int64  `json:"id" yaml:"-" db:"id"`

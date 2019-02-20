@@ -372,3 +372,12 @@ func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name stri
 	}
 	return a
 }
+
+// NewAction returns an enabled action.
+func NewAction(id int64, ps ...sdk.Parameter) sdk.Action {
+	return sdk.Action{
+		ID:         id,
+		Enabled:    true,
+		Parameters: ps,
+	}
+}

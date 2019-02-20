@@ -152,7 +152,7 @@ workflow:
 }
 
 func Test_getWorkflowPushHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
@@ -169,6 +169,8 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
@@ -178,7 +180,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Action: sdk.Action{
 			Enabled: true,
 			Actions: []sdk.Action{
-				sdk.NewScriptAction("echo lol"),
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}

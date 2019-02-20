@@ -161,7 +161,7 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 	}
 
 	// get git clone action
-	gitClone := assets.GetBuiltinOrPluginActionByName(t, db, "GitClone")
+	gitClone := assets.GetBuiltinOrPluginActionByName(t, db, sdk.GitCloneAction)
 
 	// Create pipeline
 	pip := sdk.Pipeline{
