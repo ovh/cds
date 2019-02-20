@@ -131,7 +131,11 @@ func (a *Action) FlattenRequirements() RequirementList {
 
 	// copy requirements from childs
 	for i := range a.Actions {
-		rsChild := a.Actions[i].FlattenRequirements()
+		if !a.Actions[i].Enabled {
+			continue
+		}
+
+		rsChild := a.Actions[i].Requirements
 
 		// now filter child requirements, not already in parent
 		// do not add a model or hostname requirement if parent already contains one

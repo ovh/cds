@@ -247,6 +247,10 @@ func (api *API) putActionHandler() service.Handler {
 
 		old := getAction(ctx)
 
+		if err := action.FullView.Exec(api.mustDB(), old); err != nil {
+			return err
+		}
+
 		var data sdk.Action
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
@@ -363,6 +367,40 @@ func (api *API) getActionAuditHandler() service.Handler {
 			[]int64{a.ID}, []string{"ActionAdd", "ActionUpdate"})
 		if err != nil {
 			return err
+		}
+
+		// convert all audits to export entities yaml
+		for i := range as {
+			as[i].DataType = "yaml"
+			if as[i].DataBefore != "" {
+				var before sdk.Action
+				if err := json.Unmarshal([]byte(as[i].DataBefore), &before); err != nil {
+					return sdk.WrapError(err, "cannot parse action audit")
+				}
+
+				ea := exportentities.NewAction(before)
+				buf, err := yaml.Marshal(ea)
+				if err != nil {
+					return sdk.WrapError(err, "cannot parse action audit")
+				}
+
+				as[i].DataBefore = string(buf)
+			}
+
+			if as[i].DataAfter != "" {
+				var after sdk.Action
+				if err := json.Unmarshal([]byte(as[i].DataAfter), &after); err != nil {
+					return sdk.WrapError(err, "cannot parse action audit")
+				}
+
+				ea := exportentities.NewAction(after)
+				buf, err := yaml.Marshal(ea)
+				if err != nil {
+					return sdk.WrapError(err, "cannot parse action audit")
+				}
+
+				as[i].DataAfter = string(buf)
+			}
 		}
 
 		return service.WriteJSON(w, as, http.StatusOK)
@@ -502,7 +540,7 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		// check if action exists in database
-		old, err := action.GetTypeDefaultByNameAndGroupID(api.mustDB(), data.Name, grp.ID)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), data.Name, grp.ID)
 		if err != nil {
 			return err
 		}

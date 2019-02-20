@@ -176,30 +176,7 @@ func aggregateChildren(db gorp.SqlExecutor, as ...*sdk.Action) error {
 
 	// for all actions update its requirements from its children
 	for i := range actionsNotBuiltIn {
-		// copy requirements from child to action if enabled else ignore all its requirements
-		if actionsNotBuiltIn[i].Enabled {
-			for _, child := range actionsNotBuiltIn[i].Actions {
-				if !child.Enabled { // if child is not enabled, ignore its requirements
-					continue
-				}
-
-				// for each requirement of child, add it to parent if don't exists
-				for _, cr := range child.Requirements {
-					var found bool
-					for _, pr := range actionsNotBuiltIn[i].Requirements {
-						if pr.Type == cr.Type && pr.Value == cr.Value {
-							found = true
-							break
-						}
-					}
-					if !found {
-						actionsNotBuiltIn[i].Requirements = append(actionsNotBuiltIn[i].Requirements, cr)
-					}
-				}
-			}
-		} else {
-			actionsNotBuiltIn[i].Requirements = make([]sdk.Requirement, 0)
-		}
+		actionsNotBuiltIn[i].Requirements = actionsNotBuiltIn[i].FlattenRequirements()
 	}
 
 	return nil

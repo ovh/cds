@@ -18,15 +18,8 @@ func TestWorkflowRunTag(t *testing.T) {
 			Enabled: true,
 			Requirements: sdk.RequirementList{
 				{Type: sdk.HostnameRequirement, Value: "hostname1"},
+				{Type: sdk.ServiceRequirement, Value: "service2"},
 			},
-			Actions: []sdk.Action{{
-				Enabled: true,
-				Requirements: sdk.RequirementList{
-					{Type: sdk.ModelRequirement, Value: "model2"},
-					{Type: sdk.HostnameRequirement, Value: "hostname2"},
-					{Type: sdk.ServiceRequirement, Value: "service2"},
-				},
-			}},
 		}, {
 			Enabled: false,
 			Requirements: sdk.RequirementList{
