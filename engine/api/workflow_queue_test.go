@@ -848,21 +848,17 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	assert.NoError(t, pipeline.InsertStage(db, &s))
 
+	// get script action
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+	assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"})
+
 	j := sdk.Job{
 		Enabled:         true,
 		PipelineStageID: s.ID,
 		Action: sdk.Action{
 			Name: "script",
 			Actions: []sdk.Action{
-				{
-					Name: "Script",
-					Parameters: []sdk.Parameter{
-						{
-							Name:  "script",
-							Value: "echo lol",
-						},
-					},
-				},
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}
