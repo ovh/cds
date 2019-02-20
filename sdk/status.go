@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -17,6 +19,24 @@ const (
 type MonitoringStatus struct {
 	Now   time.Time              `json:"now"`
 	Lines []MonitoringStatusLine `json:"lines"`
+}
+
+// Value returns driver.Value from workflow template request.
+func (s MonitoringStatus) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal MonitoringStatus")
+}
+
+// Scan workflow template request.
+func (s *MonitoringStatus) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, s), "cannot unmarshal MonitoringStatus")
 }
 
 // MonitoringStatusLine represents a CDS Component Status

@@ -2,8 +2,6 @@ package services
 
 import (
 	"database/sql"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -84,13 +82,6 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 	}
 	ss := make([]sdk.Service, 0, len(sdbs))
 	for i := 0; i < len(sdbs); i++ {
-		s := &sdbs[i]
-		if err := s.PostGet(db); err != nil {
-			if err == sql.ErrNoRows {
-				continue
-			}
-			return nil, sdk.WrapError(err, "postGet on srv id:%d name:%s type:%s lastHeartbeat:%v", s.ID, s.Name, s.Type, s.LastHeartbeat)
-		}
 		ss = append(ss, sdk.Service(sdbs[i]))
 	}
 	return ss, nil
@@ -120,56 +111,6 @@ func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service(*s)
 	if _, err := db.Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "unable to delete service %s", s.Name)
-	}
-	return nil
-}
-
-// PostGet is a dbHook on Select to get json column
-func (s *service) PostGet(db gorp.SqlExecutor) error {
-	query := "SELECT monitoring_status, config FROM services WHERE name = $1"
-	var monitoringStatus, config []byte
-	if err := db.QueryRow(query, s.Name).Scan(&monitoringStatus, &config); err != nil {
-		return sdk.WrapError(err, "error on queryRow where name:%s id:%d type:%s", s.Name, s.ID, s.Type)
-	}
-
-	if len(monitoringStatus) > 0 {
-		m := sdk.MonitoringStatus{}
-		if err := json.Unmarshal(monitoringStatus, &m); err != nil {
-			return sdk.WrapError(err, "error on unmarshal monitoringStatus service")
-		}
-		for i := range m.Lines {
-			m.Lines[i].Component = fmt.Sprintf("%s/%s", s.Name, m.Lines[i].Component)
-			m.Lines[i].Type = s.Type
-		}
-		s.MonitoringStatus = m
-	}
-	if len(config) > 0 {
-		if err := json.Unmarshal(config, &s.Config); err != nil {
-			return sdk.WrapError(err, "error on unmarshal config service")
-		}
-	}
-	return nil
-}
-
-// PostInsert is a DB Hook
-func (s *service) PostInsert(db gorp.SqlExecutor) error {
-	return s.PostUpdate(db)
-}
-
-// PostUpdate is a DB Hook on PostUpdate to store monitoring_status JSON in DB
-func (s *service) PostUpdate(db gorp.SqlExecutor) error {
-	content, err := json.Marshal(s.MonitoringStatus)
-	if err != nil {
-		return err
-	}
-	config, errc := json.Marshal(s.Config)
-	if errc != nil {
-		return errc
-	}
-
-	query := "update services set monitoring_status = $1, config = $2 where name = $3"
-	if _, err := db.Exec(query, content, config, s.Name); err != nil {
-		return sdk.WrapError(err, "err on update sql service")
 	}
 	return nil
 }

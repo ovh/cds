@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -73,6 +74,15 @@ func (c *Common) Register(status func() sdk.MonitoringStatus, cfg interface{}) e
 		return nil
 	}
 
+	var srvConfig sdk.ServiceConfig
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, &srvConfig); err != nil {
+		return err
+	}
+
 	hash, err := c.Client.ServiceRegister(sdk.Service{
 		Name:             c.Name,
 		HTTPURL:          c.HTTPURL,
@@ -80,7 +90,7 @@ func (c *Common) Register(status func() sdk.MonitoringStatus, cfg interface{}) e
 		Token:            c.Token,
 		Type:             c.Type,
 		MonitoringStatus: status(),
-		Config:           cfg,
+		Config:           srvConfig,
 		Version:          sdk.VERSION,
 	})
 	if err != nil {
