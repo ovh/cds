@@ -9,7 +9,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -32,11 +34,15 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return err
 		}
 
+		// check that actions used by job are valid
+		if err := job.IsValid(); err != nil {
+			return err
+		}
+
 		pip, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
-
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pip); err != nil {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
@@ -49,7 +55,6 @@ func (api *API) addJobToStageHandler() service.Handler {
 				break
 			}
 		}
-
 		if stage.ID == 0 {
 			return sdk.WrapError(sdk.ErrNotFound, "addJobToStageHandler>Stage not found")
 		}
@@ -60,6 +65,20 @@ func (api *API) addJobToStageHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
+		// check that action used by job can be used by pipeline's project
+		project, err := project.Load(tx, api.Cache, pip.ProjectKey, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		groupIDs := make([]int64, 0, len(project.ProjectGroups)+1)
+		groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
+		for i := range project.ProjectGroups {
+			groupIDs = append(groupIDs, project.ProjectGroups[i].Group.ID)
+		}
+		if err := action.CheckChildrenForGroupIDs(tx, &job.Action, groupIDs); err != nil {
+			return err
+		}
+
 		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
@@ -68,8 +87,6 @@ func (api *API) addJobToStageHandler() service.Handler {
 		if errlb != nil {
 			return sdk.WrapError(errlb, "cannot load all binary requirements")
 		}
-
-		// FIXME check usage of actions
 
 		//Default value is job enabled
 		job.Action.Enabled = true
@@ -121,10 +138,16 @@ func (api *API) updateJobHandler() service.Handler {
 			return err
 		}
 
+		// check that actions used by job are valid
+		if err := job.IsValid(); err != nil {
+			return err
+		}
+
 		if jobID != job.PipelineActionID {
 			return sdk.WrapError(sdk.ErrInvalidID, "pipeline action does not match")
 		}
 
+		// load old pipeline
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipName)
@@ -133,7 +156,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load pipeline stages")
 		}
 
-		// check if job is in the current pipeline
+		// check that given job/stage exists in pipeline.
 		var stage sdk.Stage
 		var oldJob sdk.Job
 		for _, s := range pipelineData.Stages {
@@ -157,6 +180,20 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
+		// check that action used by job can be used by pipeline's project
+		project, err := project.Load(tx, api.Cache, pipelineData.ProjectKey, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		groupIDs := make([]int64, 0, len(project.ProjectGroups)+1)
+		groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
+		for i := range project.ProjectGroups {
+			groupIDs = append(groupIDs, project.ProjectGroups[i].Group.ID)
+		}
+		if err := action.CheckChildrenForGroupIDs(tx, &job.Action, groupIDs); err != nil {
+			return err
+		}
+
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
@@ -165,8 +202,6 @@ func (api *API) updateJobHandler() service.Handler {
 		if errlb != nil {
 			return sdk.WrapError(errlb, "cannot load all binary requirements")
 		}
-
-		// FIXME check usage of actions
 
 		if err := pipeline.UpdateJob(tx, &job, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "cannot update pipeline job in database")

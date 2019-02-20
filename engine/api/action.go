@@ -157,7 +157,7 @@ func (api *API) postActionHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
-		if err := data.IsValid(); err != nil {
+		if err := data.IsValidDefault(); err != nil {
 			return err
 		}
 
@@ -256,7 +256,7 @@ func (api *API) putActionHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
-		if err := data.IsValid(); err != nil {
+		if err := data.IsValidDefault(); err != nil {
 			return err
 		}
 
@@ -581,7 +581,7 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		// check data validity
-		if err := data.IsValid(); err != nil {
+		if err := data.IsValidDefault(); err != nil {
 			return err
 		}
 

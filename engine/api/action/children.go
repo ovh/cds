@@ -81,7 +81,7 @@ func CheckChildrenForGroupIDs(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int
 		return err
 	}
 	if len(children) != len(childrenIDs) {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given children can not be found")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given step actions are not usable")
 	}
 
 	return nil
@@ -102,7 +102,7 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 	// children ids should not contains root action id
 	for i := range childrenIDs {
 		if childrenIDs[i] == root.ID {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "action loop usage detected for given children")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "action loop usage detected for given steps")
 		}
 	}
 
@@ -129,7 +129,7 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 		return err
 	}
 	if len(children) != len(childrenIDs) {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given child actions were not be found")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given step actions are not usable")
 	}
 
 	for i := range children {

@@ -76,11 +76,17 @@ func (a *Action) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, a), "cannot unmarshal Action")
 }
 
-// IsValid returns action validity.
-func (a Action) IsValid() error {
+// IsValidDefault returns default action validity.
+func (a Action) IsValidDefault() error {
 	if a.GroupID == nil || *a.GroupID == 0 {
 		return NewErrorFrom(ErrWrongRequest, "invalid group id for action")
 	}
+
+	return a.IsValid()
+}
+
+// IsValid returns action validity.
+func (a Action) IsValid() error {
 	if a.Name == "" {
 		return NewErrorFrom(ErrWrongRequest, "invalid name for action")
 	}

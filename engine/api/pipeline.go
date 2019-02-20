@@ -86,7 +86,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		db := api.mustDB()
 		u := deprecatedGetUser(ctx)
 
-		proj, errP := project.Load(db, api.Cache, key, u)
+		proj, errP := project.Load(db, api.Cache, key, u, project.LoadOptions.WithGroups)
 		if errP != nil {
 			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
 		}

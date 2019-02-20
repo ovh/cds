@@ -37,6 +37,8 @@
   "action_usage_pipelines_using": "This action is used by following pipelines:",
   "action_usage_actions_using": "This action is used by following actions:",
   "action_usage_not_used": "This action is not used by your pipelines or actions.",
+  "action_usage_warning_pipeline": "The pipeline will not be able to run this action because of missing group permission.",
+  "action_usage_warning_action": "The parent action will not be able to run this action because they are not in the same group.",
 
   "admin_migration_not_started": "Not started",
   "admin_migration_started": "Started",

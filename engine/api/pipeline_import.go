@@ -63,7 +63,10 @@ func (api *API) importPipelineHandler() service.Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+			project.LoadOptions.Default,
+			project.LoadOptions.WithGroups,
+		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
@@ -114,7 +117,10 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		format := r.FormValue("format")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+			project.LoadOptions.Default,
+			project.LoadOptions.WithGroups,
+		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
