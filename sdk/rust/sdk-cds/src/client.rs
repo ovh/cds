@@ -46,6 +46,11 @@ impl<'a> Client<'a> {
         self.stream_json("GET".to_string(), format!("/user/{}", self.username), body)
     }
 
+    pub fn broadcasts(&self) -> Result<Vec<models::Broadcast>, CdsError> {
+        let body: Vec<u8> = vec![];
+        self.stream_json("GET".to_string(), "/broadcast".to_string(), body)
+    }
+
     pub fn projects(&self) -> Result<Vec<models::Project>, CdsError> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), "/project".to_string(), body)
