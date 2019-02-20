@@ -73,6 +73,16 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 		w, err := workflow.LoadByID(db, store, &proj, r.ID, nil, workflow.LoadOptions{})
 		if err != nil {
 			log.Warning("unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
+			n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(db, r.ID)
+			if err != nil {
+				log.Error("unable to mark workflow runs to delete with workflow_id %d: %v", r.ID, err)
+				continue
+			}
+			if n > 0 {
+				// If there is workflow runs to delete, wait for it...
+				continue
+			}
+
 			if _, err := db.Exec("delete from workflow_node where workflow_id = $1", r.ID); err != nil {
 				log.Error("Unable to delete from workflow_node with workflow_id %d: %v", r.ID, err)
 			} else {

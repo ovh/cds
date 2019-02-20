@@ -604,6 +604,18 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	return int64(i), nil
 }
 
+// PurgeAllWorkflowRunsByWorkflowID marks all workflow to delete given a workflow
+func PurgeAllWorkflowRunsByWorkflowID(db gorp.SqlExecutor, id int64) (int, error) {
+	query := "UPDATE workflow_run SET to_delete = true WHERE workflow_id = $1"
+	res, err := db.Exec(query, id)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	n, _ := res.RowsAffected() // nolint
+	log.Info("PurgeAllWorkflowRunsByWorkflowID> will delete %d workflow runs for workflow %d", n, id)
+	return int(n), nil
+}
+
 // PurgeWorkflowRun mark all workflow run to delete
 func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	ids := []struct {
