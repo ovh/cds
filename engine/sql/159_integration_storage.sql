@@ -11,7 +11,7 @@ SELECT create_foreign_key('FK_W_NODE_RUN_ARTIFACTS_PRJ_INTEGRATION', 'workflow_n
 ALTER TABLE workflow_node_run_static_files ADD COLUMN project_integration_id BIGINT;
 SELECT create_foreign_key('FK_W_NODE_RUN_STATICF_PRJ_INTEGRATION', 'workflow_node_run_static_files', 'project_integration', 'project_integration_id', 'id');
 
-SELECT create_foreign_key_idx_cascade('fk_project_integration_model_id', 'project_integration', 'integration_model', 'integration_model_id', 'id');
+SELECT create_foreign_key('FK_PROJECT_INTEGRATION_MODEL_ID', 'project_integration', 'integration_model', 'integration_model_id', 'id');
 
 
 -- +migrate Down
@@ -23,3 +23,4 @@ ALTER TABLE integration_model RENAME COLUMN storage TO file_storage;
 ALTER TABLE integration_model ADD COLUMN block_storage BOOLEAN default false;
 ALTER TABLE workflow_node_run_static_files DROP COLUMN project_integration_id;
 ALTER TABLE workflow_node_run_artifacts DROP COLUMN project_integration_id;
+ALTER TABLE project_integration DROP CONSTRAINT "FK_PROJECT_INTEGRATION_MODEL_ID";

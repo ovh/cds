@@ -20,11 +20,15 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "arsenal-dev"
       - result.systemout ShouldContainSubstring "arsenal-prod"
+    retry: 10
+    delay: 10
   - script: {{.cds.build.cdsctl}} project add ITCLIPFARSENAL2 ITCLIPFARSENAL2
   - script: {{.cds.build.cdsctl}} project integration list ITCLIPFARSENAL2
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "arsenal-dev"
       - result.systemout ShouldContainSubstring "arsenal-prod"
+    retry: 10
+    delay: 10
   -- script: {{.cds.build.cdsctl}} project integration delete ITCLIPFARSENAL2 arsenal-dev
   -- script: {{.cds.build.cdsctl}} project integration delete ITCLIPFARSENAL2 arsenal-prod
