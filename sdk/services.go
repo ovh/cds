@@ -1,6 +1,9 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -15,11 +18,31 @@ type Service struct {
 	Token            string           `json:"token" db:"-"`
 	GroupID          *int64           `json:"group_id" db:"group_id"`
 	Group            *Group           `json:"group" db:"-"`
-	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-"`
-	Config           interface{}      `json:"config" db:"-" cli:"-"`
+	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
+	Config           ServiceConfig    `json:"config" db:"config" cli:"-"`
 	IsSharedInfra    bool             `json:"is_shared_infra" db:"-"`
 	Version          string           `json:"version" db:"-"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
+}
+
+type ServiceConfig map[string]interface{}
+
+// Value returns driver.Value from workflow template request.
+func (c ServiceConfig) Value() (driver.Value, error) {
+	j, err := json.Marshal(c)
+	return j, WrapError(err, "cannot marshal ServiceConfig")
+}
+
+// Scan workflow template request.
+func (c *ServiceConfig) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, c), "cannot unmarshal ServiceConfig")
 }
 
 // ExternalService represents an external service
@@ -31,4 +54,11 @@ type ExternalService struct {
 	Port       string `json:"port"`
 	URL        string `json:"url"`
 	Path       string `json:"path"`
+}
+
+func (e ExternalService) ServiceConfig() ServiceConfig {
+	b, _ := json.Marshal(e)
+	var cfg ServiceConfig
+	json.Unmarshal(b, cfg) // nolint
+	return cfg
 }
