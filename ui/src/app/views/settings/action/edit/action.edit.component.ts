@@ -82,9 +82,19 @@ export class ActionEditComponent implements OnInit {
         ];
 
         this.paramsSub = this._route.params.subscribe(params => {
-            this.groupName = params['groupName'];
-            this.actionName = params['actionName'];
-            this.getAction();
+            let groupName = params['groupName'];
+            let actionName = params['actionName'];
+
+            if (groupName !== this.groupName || actionName !== this.actionName) {
+                this.groupName = params['groupName'];
+                this.actionName = params['actionName'];
+
+                this.getAction();
+
+                if (this.selectedTab) {
+                    this.selectTab(this.selectedTab);
+                }
+            }
         });
 
         this.getGroups();
@@ -193,7 +203,7 @@ export class ActionEditComponent implements OnInit {
 
         if (this.action && this.action.id) {
             this.path.push(<PathItem>{
-                text: this.action.name + ' - ' + this.action.type,
+                text: this.action.name,
                 routerLink: ['/', 'settings', 'action', this.action.name]
             });
         }

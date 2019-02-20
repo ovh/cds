@@ -34,6 +34,9 @@
   "action_always_executed": "Toujours executée",
   "action_always_executed_details": "Cochée, cela signifie que cette étape sera toujours executée même si les étapes précédentes tombent en erreur",
   "action_help_line_1": "Qu'est-ce qu'une action ?",
+  "action_usage_pipelines_using": "Cette action est utilisée dans les pipelines suivants :",
+  "action_usage_actions_using": "Cette action est utilisée dans les actions suivantes :",
+  "action_usage_not_used": "Cette action n'est pas utilisée par vos pipelines ou actions.",
 
   "admin_migration_not_started": "Non commencé",
   "admin_migration_started": "En cours",
@@ -584,7 +587,6 @@
   "pipeline_triggered": "Pipelines déclenchés",
   "pipeline_updated": "Pipeline mis à jour",
   "pipeline_administration": "Administration générale du pipeline",
-  "pipelines_using_action": "Cette action est utilisée dans les pipelines suivants : ",
 
   "pipeline_run_test_filter_empty": "Il n'y a aucun test correspondant au filter {{criteria}}",
   "pipeline_run_test_no_error": "Tous les tests sont en succès",

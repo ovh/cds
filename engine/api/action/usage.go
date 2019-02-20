@@ -32,12 +32,12 @@ type UsagePipeline struct {
 func GetPipelineUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) ([]UsagePipeline, error) {
 	rows, err := db.Query(`
     SELECT
-      project.id as projectId, project.projectKey as projectKey, project.name as projectName,
-      pipeline.id as pipelineId, pipeline.name as pipelineName,
-      pipeline_stage.id as stageId, pipeline_stage.name as stageName,
-      parent.id as jobId, parent.name as jobName,
-      action.id as actionId, action.name as actionName,
-      CAST((CASE WHEN project_group.role IS NOT NULL OR action.group_id = $1 THEN 0 ELSE 1 END) AS BIT) as warning
+      project.id, project.projectKey, project.name,
+      pipeline.id, pipeline.name,
+      pipeline_stage.id, pipeline_stage.name,
+      parent.id, parent.name,
+      action.id, action.name,
+      CAST((CASE WHEN project_group.role IS NOT NULL OR action.group_id = $1 THEN 0 ELSE 1 END) AS BIT)
 		FROM action
     INNER JOIN action_edge ON action_edge.child_id = action.id
     LEFT JOIN action as parent ON parent.id = action_edge.parent_id
@@ -47,7 +47,7 @@ func GetPipelineUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) 
     LEFT JOIN project ON pipeline.project_id = project.id
     LEFT JOIN project_group ON project_group.project_id = project.id AND project_group.group_id = action.group_id
 		WHERE action.id = $2
-		ORDER BY projectkey, pipelineName, actionName;
+		ORDER BY project.projectKey, pipeline.name, action.name;
 	`, sharedInfraGroupID, actionID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot load pipeline usages for action with id %d", actionID)
@@ -75,27 +75,29 @@ func GetPipelineUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) 
 
 // UsageAction represent a action using an action.
 type UsageAction struct {
-	ParentActionID        int64  `json:"parent_action_id"`
-	ParentActionGroupName string `json:"parent_action_group_name"`
-	ParentActionName      string `json:"parent_action_name"`
-	ActionID              int64  `json:"action_id"`
-	ActionName            string `json:"action_name"`
-	Warning               bool   `json:"warning"`
+	GroupID          int64  `json:"group_id"`
+	GroupName        string `json:"group_name"`
+	ParentActionID   int64  `json:"parent_action_id"`
+	ParentActionName string `json:"parent_action_name"`
+	ActionID         int64  `json:"action_id"`
+	ActionName       string `json:"action_name"`
+	Warning          bool   `json:"warning"`
 }
 
 // GetActionUsages returns the list of actions using an action
 func GetActionUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) ([]UsageAction, error) {
 	rows, err := db.Query(`
     SELECT
-      parent.id as parentActionId, "group".name as parentActionGroupName, parent.name as parentActionName,
-      action.id as actionId, action.name as actionName,
-      CAST((CASE WHEN action.group_id = parent.group_id OR action.group_id = $1 THEN 0 ELSE 1 END) AS BIT) as warning
+			"group".id, "group".name,
+			parent.id, parent.name,
+      action.id, action.name,
+      CAST((CASE WHEN action.group_id = parent.group_id OR action.group_id = $1 THEN 0 ELSE 1 END) AS BIT)
 		FROM action
 		INNER JOIN action_edge ON action_edge.child_id = action.id
 		LEFT JOIN action as parent ON parent.id = action_edge.parent_id
 		LEFT JOIN "group" ON "group".id = parent.group_id
 		WHERE action.id = $2 AND parent.group_id IS NOT NULL
-		ORDER BY parentActionName, actionName;
+		ORDER BY parent.name, action.name;
 	`, sharedInfraGroupID, actionID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot load pipeline usages for action with id %d", actionID)
@@ -106,7 +108,8 @@ func GetActionUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) ([
 	for rows.Next() {
 		var u UsageAction
 		if err := rows.Scan(
-			&u.ParentActionID, &u.ParentActionGroupName, &u.ParentActionName,
+			&u.GroupID, &u.GroupName,
+			&u.ParentActionID, &u.ParentActionName,
 			&u.ActionID, &u.ActionName,
 			&u.Warning,
 		); err != nil {

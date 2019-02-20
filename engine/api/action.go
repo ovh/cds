@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -369,40 +370,49 @@ func (api *API) getActionAuditHandler() service.Handler {
 		}
 
 		// convert all audits to export entities yaml
+		converted := make([]sdk.AuditAction, 0, len(as))
 		for i := range as {
-			as[i].DataType = "yaml"
-			if as[i].DataBefore != "" {
+			clone := as[i]
+			clone.DataType = "yaml"
+
+			if clone.DataBefore != "" {
 				var before sdk.Action
-				if err := json.Unmarshal([]byte(as[i].DataBefore), &before); err != nil {
-					return sdk.WrapError(err, "cannot parse action audit")
+				if err := json.Unmarshal([]byte(clone.DataBefore), &before); err != nil {
+					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					continue
 				}
 
 				ea := exportentities.NewAction(before)
 				buf, err := yaml.Marshal(ea)
 				if err != nil {
-					return sdk.WrapError(err, "cannot parse action audit")
+					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					continue
 				}
 
-				as[i].DataBefore = string(buf)
+				clone.DataBefore = string(buf)
 			}
 
-			if as[i].DataAfter != "" {
+			if clone.DataAfter != "" {
 				var after sdk.Action
-				if err := json.Unmarshal([]byte(as[i].DataAfter), &after); err != nil {
-					return sdk.WrapError(err, "cannot parse action audit")
+				if err := json.Unmarshal([]byte(clone.DataAfter), &after); err != nil {
+					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					continue
 				}
 
 				ea := exportentities.NewAction(after)
 				buf, err := yaml.Marshal(ea)
 				if err != nil {
-					return sdk.WrapError(err, "cannot parse action audit")
+					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					continue
 				}
 
-				as[i].DataAfter = string(buf)
+				clone.DataAfter = string(buf)
 			}
+
+			converted = append(converted, clone)
 		}
 
-		return service.WriteJSON(w, as, http.StatusOK)
+		return service.WriteJSON(w, converted, http.StatusOK)
 	}
 }
 

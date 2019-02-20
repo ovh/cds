@@ -85,7 +85,7 @@ ALTER TABLE "action" DROP COLUMN group_id;
 -- restore action audits
 UPDATE action_audit SET user_id = u.id FROM "user" as u WHERE action_audit.triggered_by = u.username;
 UPDATE action_audit SET versionned = created;
-UPDATE action_audit SET action_json = data_after;
+UPDATE action_audit SET action_json = data_after::JSONB;
 UPDATE action_audit SET change = 'Action create' WHERE event_type = 'ActionAdd';
 UPDATE action_audit SET change = 'Action update' WHERE event_type = 'ActionUpdate';
 

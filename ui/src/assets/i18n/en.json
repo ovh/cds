@@ -34,6 +34,9 @@
   "action_always_executed": "Always executed",
   "action_always_executed_details": "If checked, this step will be executed even if previous steps fail",
   "action_help_line_1": "What's an action?",
+  "action_usage_pipelines_using": "This action is used by following pipelines:",
+  "action_usage_actions_using": "This action is used by following actions:",
+  "action_usage_not_used": "This action is not used by your pipelines or actions.",
 
   "admin_migration_not_started": "Not started",
   "admin_migration_started": "Started",
@@ -584,7 +587,6 @@
   "pipeline_type": "Type of pipeline",
   "pipeline_updated": "Pipeline updated",
   "pipeline_administration": "General administration of the pipeline",
-  "pipelines_using_action": "This action is used by following pipelines:",
 
   "pipeline_run_test_filter_empty": "There is no test matching '{{criteria}}'",
   "pipeline_run_test_no_error": "All tests are successfull",

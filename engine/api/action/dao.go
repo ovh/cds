@@ -210,12 +210,8 @@ func GetAuditsByActionID(db gorp.SqlExecutor, actionID int64) ([]sdk.AuditAction
 func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
 	var aa sdk.AuditAction
 
-	if _, err := db.Select(&aa,
-		`SELECT * FROM action_audit
-     WHERE action_id = $1
-     ORDER BY created DESC LIMIT 1`,
-		actionID,
-	); err != nil {
+	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created DESC LIMIT 1`).Args(actionID)
+	if _, err := gorpmapping.Get(db, query, &aa); err != nil {
 		return nil, sdk.WrapError(err, "cannot get action latest audit")
 	}
 
@@ -226,12 +222,8 @@ func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAc
 func GetAuditOldestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
 	var aa sdk.AuditAction
 
-	if _, err := db.Select(&aa,
-		`SELECT * FROM action_audit
-     WHERE action_id = $1
-     ORDER BY created ASC LIMIT 1`,
-		actionID,
-	); err != nil {
+	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created ASC LIMIT 1`).Args(actionID)
+	if _, err := gorpmapping.Get(db, query, &aa); err != nil {
 		return nil, sdk.WrapError(err, "cannot get action oldtest audit")
 	}
 
