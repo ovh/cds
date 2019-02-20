@@ -219,7 +219,6 @@ export class ActionFormComponent implements OnDestroy {
             case 'add':
                 let newStep = cloneDeep(event.step);
                 newStep.enabled = true;
-                newStep.always_executed = true;
                 this.steps.push(newStep);
                 break;
             case 'delete':

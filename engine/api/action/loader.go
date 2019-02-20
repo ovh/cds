@@ -12,7 +12,7 @@ func LoadAllTypeDefault(db gorp.SqlExecutor) ([]sdk.Action, error) {
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action WHERE type = $1 ORDER BY name",
 	).Args(sdk.DefaultAction)
-	return getAll(db, query, FullView)
+	return getAll(db, query, LiteView)
 }
 
 // LoadAllTypeDefaultByGroupIDs actions from database.
@@ -23,7 +23,7 @@ func LoadAllTypeDefaultByGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.
     WHERE type = $1 AND group_id = ANY(string_to_array($2, ',')::int[])
     ORDER BY name
   `).Args(sdk.DefaultAction, gorpmapping.IDsToQueryString(groupIDs))
-	return getAll(db, query, FullView)
+	return getAll(db, query, LiteView)
 }
 
 // LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs actions from database.

@@ -363,8 +363,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 
 		a := getAction(ctx)
 
-		as, err := action.GetAuditsByActionIDsAndEventTypes(api.mustDB(),
-			[]int64{a.ID}, []string{"ActionAdd", "ActionUpdate"})
+		as, err := action.GetAuditsByActionID(api.mustDB(), a.ID)
 		if err != nil {
 			return err
 		}

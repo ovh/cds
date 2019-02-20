@@ -29,6 +29,7 @@ export class ActionEditComponent implements OnInit {
     path: Array<PathItem>;
     paramsSub: Subscription;
     loading: boolean;
+    loadingAudits: boolean;
     groups: Array<Group>;
     tabs: Array<Tab>;
     selectedTab: Tab;
@@ -120,23 +121,26 @@ export class ActionEditComponent implements OnInit {
     }
 
     getAudits(): void {
-        this._actionService.getAudits(this.groupName, this.actionName).pipe(first()).subscribe(as => {
-            this.audits = as;
-        });
+        this.loadingAudits = true;
+        this._actionService.getAudits(this.groupName, this.actionName)
+            .pipe(finalize(() => this.loadingAudits = false))
+            .pipe(first()).subscribe(as => {
+                this.audits = as;
+            });
     }
 
     clickAudit(a: AuditAction) {
         let before = a.data_before ? a.data_before : null;
         let after = a.data_after ? a.data_after : null;
         this.diffItems = [<Item>{
-            before: before ? JSON.stringify(before) : null,
-            after: after ? JSON.stringify(after) : null,
-            type: 'application/json'
+            before: before ? before : null,
+            after: after ? after : null,
+            type: 'application/yaml'
         }]
     }
 
     actionSave(action: Action): void {
-        action.loading = true;
+        this.loading = true;
 
         if (action.actions) {
             action.actions.forEach(a => {
@@ -160,22 +164,23 @@ export class ActionEditComponent implements OnInit {
             });
         }
 
-        this._actionService.update(this.action, action).subscribe(a => {
-            this._toast.success('', this._translate.instant('action_saved'));
-            this.action = a;
-            this._router.navigate(['settings', 'action', this.action.group.name, this.action.name]);
-        }, () => {
-            this.action.loading = false;
-        });
+        this._actionService.update(this.action, action)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(a => {
+                this._toast.success('', this._translate.instant('action_saved'));
+                this.action = a;
+                this._router.navigate(['settings', 'action', this.action.group.name, this.action.name]);
+            });
     }
 
     actionDelete(): void {
-        this._actionService.delete(this.action.group.name, this.action.name).subscribe(() => {
-            this._toast.success('', this._translate.instant('action_deleted'));
-            this._router.navigate(['settings', 'action']);
-        }, () => {
-            this.action.loading = false;
-        });
+        this.loading = true;
+        this._actionService.delete(this.action.group.name, this.action.name)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('action_deleted'));
+                this._router.navigate(['settings', 'action']);
+            });
     }
 
     updatePath() {

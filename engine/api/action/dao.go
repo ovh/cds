@@ -1,8 +1,6 @@
 package action
 
 import (
-	"strings"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -192,19 +190,50 @@ func insertAudit(db gorp.SqlExecutor, aa *sdk.AuditAction) error {
 	return sdk.WrapError(gorpmapping.Insert(db, aa), "unable to insert audit for action %d", aa.ActionID)
 }
 
-// GetAuditsByActionIDsAndEventTypes returns all action audits by action ids and event types.
-func GetAuditsByActionIDsAndEventTypes(db gorp.SqlExecutor, actionIDs []int64, eventTypes []string) ([]sdk.AuditAction, error) {
+// GetAuditsByActionID returns all action audits by action ids.
+func GetAuditsByActionID(db gorp.SqlExecutor, actionID int64) ([]sdk.AuditAction, error) {
 	aas := []sdk.AuditAction{}
 
 	if _, err := db.Select(&aas,
 		`SELECT * FROM action_audit
-     WHERE action_id = ANY(string_to_array($1, ',')::int[])
-     AND event_type = ANY(string_to_array($2, ',')::text[])
+     WHERE action_id = $1
      ORDER BY created DESC`,
-		gorpmapping.IDsToQueryString(actionIDs), strings.Join(eventTypes, ","),
+		actionID,
 	); err != nil {
 		return nil, sdk.WrapError(err, "cannot get action audits")
 	}
 
 	return aas, nil
+}
+
+// GetAuditLatestByActionID returns action latest audit by action id.
+func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
+	var aa sdk.AuditAction
+
+	if _, err := db.Select(&aa,
+		`SELECT * FROM action_audit
+     WHERE action_id = $1
+     ORDER BY created DESC LIMIT 1`,
+		actionID,
+	); err != nil {
+		return nil, sdk.WrapError(err, "cannot get action latest audit")
+	}
+
+	return &aa, nil
+}
+
+// GetAuditOldestByActionID returns action oldtest audit by action id.
+func GetAuditOldestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
+	var aa sdk.AuditAction
+
+	if _, err := db.Select(&aa,
+		`SELECT * FROM action_audit
+     WHERE action_id = $1
+     ORDER BY created ASC LIMIT 1`,
+		actionID,
+	); err != nil {
+		return nil, sdk.WrapError(err, "cannot get action oldtest audit")
+	}
+
+	return &aa, nil
 }

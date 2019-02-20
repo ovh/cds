@@ -276,6 +276,8 @@ import { ZoneComponent } from './zone/zone.component';
         PrerequisitesFormComponent,
         ReactiveFormsModule,
         RepoManagerFormComponent,
+        RequirementsFormComponent,
+        RequirementsListComponent,
         StatusIconComponent,
         SuiModule,
         TranslateModule,

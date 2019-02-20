@@ -94,26 +94,19 @@ func aggregateParameters(db gorp.SqlExecutor, as ...*sdk.Action) error {
 }
 
 func aggregateAudits(db gorp.SqlExecutor, as ...*sdk.Action) error {
-	aus, err := GetAuditsByActionIDsAndEventTypes(db, sdk.ActionsToIDs(as),
-		[]string{"ActionAdd", "ActionUpdate"})
-	if err != nil {
-		return err
-	}
-
-	m := make(map[int64][]sdk.AuditAction, len(aus))
-	for i := range aus {
-		if _, ok := m[aus[i].ActionID]; !ok {
-			m[aus[i].ActionID] = []sdk.AuditAction{}
+	for i := range as {
+		latestAudit, err := GetAuditLatestByActionID(db, as[i].ID)
+		if err != nil {
+			return err
 		}
-		m[aus[i].ActionID] = append(m[aus[i].ActionID], aus[i])
-	}
 
-	// assume that audits are sorted by creation date desc by GetAudits
-	for _, a := range as {
-		if aus, ok := m[a.ID]; ok {
-			a.FirstAudit = &aus[len(aus)-1]
-			a.LastAudit = &aus[0]
+		oldestAudit, err := GetAuditOldestByActionID(db, as[i].ID)
+		if err != nil {
+			return err
 		}
+
+		as[i].FirstAudit = oldestAudit
+		as[i].LastAudit = latestAudit
 	}
 
 	return nil
