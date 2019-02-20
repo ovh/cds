@@ -76,57 +76,6 @@ export class ServiceListComponent {
                     });
                     this.loading = false;
                 }
-
-                this._monitoringService.getMetrics().subscribe(metrics => {
-                    metrics.forEach(l => {
-                        if (l.name !== 'queue') {
-                            return
-                        }
-                        l.metric.forEach(m => {
-                            m.label.forEach(lb => {
-                                if (lb.name === 'range') {
-                                    let global = new Global();
-                                    if (lb.value === 'all') {
-                                        return;
-                                    }
-                                    global.name = lb.value;
-                                    switch (lb.value) {
-                                        case '10_less_10s':
-                                            global.name = '< 10s';
-                                            break;
-                                        case '20_more_10s_less_30s':
-                                            global.name = '< 30s';
-                                            break;
-                                        case '30_more_30s_less_1min':
-                                            global.name = '< 1min';
-                                            break;
-                                        case '40_more_1min_less_2min':
-                                            global.name = '< 2min';
-                                            break;
-                                        case '50_more_2min_less_5min':
-                                            global.name = '< 5 min';
-                                            break;
-                                        case '60_more_5min_less_10min':
-                                            global.name = '<10min';
-                                            break;
-                                        case '70_more_10min':
-                                            global.name = '> 10min';
-                                            break;
-                                        default:
-                                            global.name = lb.value;
-                                            break;
-                                    }
-                                    global.value = String(m.gauge.value);
-                                    global.status = 'OK';
-                                    if (lb.value !== '10_less_10s' && m.gauge.value > 0) {
-                                        global.status = 'WARN';
-                                    }
-                                    this.globalQueue.push(global);
-                                }
-                            })
-                        });
-                    })
-                });
             });
         });
 
