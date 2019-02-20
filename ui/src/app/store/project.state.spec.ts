@@ -4,6 +4,7 @@ import { async, TestBed } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Group, GroupPermission } from 'app/model/group.model';
+import { Key } from 'app/model/keys.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
@@ -689,6 +690,71 @@ describe('Project', () => {
             expect(state.project.groups.length).toEqual(1);
             expect(state.project.groups[0].group.name).toEqual('admin');
             expect(state.project.groups[0].permission).toEqual(4);
+        });
+    }));
+
+    //  ------- Key --------- //
+    it('add key in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+        });
+
+        let key = new Key();
+        key.type = 'ssh';
+        key.name = 'proj-test';
+        store.dispatch(new ProjectAction.AddKeyInProject({ projectKey: project.key, key }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/keys';
+        })).flush(key);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.keys).toBeTruthy();
+            expect(state.project.keys.length).toEqual(1);
+            expect(state.project.keys[0].name).toEqual('proj-test');
+            expect(state.project.keys[0].type).toEqual('ssh');
+        });
+    }));
+
+    it('delete key in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        let key = new Key();
+        key.type = 'ssh';
+        key.name = 'proj-test';
+
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            keys: [key]
+        });
+
+        store.dispatch(new ProjectAction.DeleteKeyInProject({ projectKey: project.key, key }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/keys/proj-test';
+        })).flush(null);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.keys).toBeTruthy();
+            expect(state.project.keys.length).toEqual(0);
         });
     }));
 });

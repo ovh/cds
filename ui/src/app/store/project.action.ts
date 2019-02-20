@@ -2,6 +2,7 @@
 import { Application } from 'app/model/application.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
+import { Key } from 'app/model/keys.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
@@ -157,11 +158,49 @@ export class DeleteLabelWorkflowInProject {
 }
 
 //  ------- Integration --------- //
+export class ResyncIntegrationsInProject {
+    static readonly type = '[Project] Resync Integrations in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class FetchIntegrationsInProject {
+    static readonly type = '[Project] Fetch Integrations in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class LoadIntegrationsInProject {
+    static readonly type = '[Project] Load Integrations in Project';
+    constructor(public payload: ProjectIntegration[]) { }
+}
 export class AddIntegrationInProject {
     static readonly type = '[Project] Add Integration in Project';
     constructor(public payload: { projectKey: string, integration: ProjectIntegration }) { }
 }
-export class DeleteIntegrationProject {
+export class UpdateIntegrationInProject {
+    static readonly type = '[Project] Update integration in Project';
+    constructor(public payload: { projectKey: string, integrationName: string, changes: ProjectIntegration }) { }
+}
+export class DeleteIntegrationInProject {
     static readonly type = '[Project] Delete Integration in Project';
     constructor(public payload: { projectKey: string, integration: ProjectIntegration }) { }
+}
+
+//  ------- Key --------- //
+export class ResyncKeysInProject {
+    static readonly type = '[Project] Resync Keys in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class FetchKeysInProject {
+    static readonly type = '[Project] Fetch Keys in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class LoadKeysInProject {
+    static readonly type = '[Project] Load Keys in Project';
+    constructor(public payload: Key[]) { }
+}
+export class AddKeyInProject {
+    static readonly type = '[Project] Add Key in Project';
+    constructor(public payload: { projectKey: string, key: Key }) { }
+}
+export class DeleteKeyInProject {
+    static readonly type = '[Project] Delete Key in Project';
+    constructor(public payload: { projectKey: string, key: Key }) { }
 }

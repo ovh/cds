@@ -54,7 +54,6 @@ export class ProjectVariablesComponent implements OnInit {
     }
 
     ngOnInit() {
-        console.log('iciii');
         this.store.dispatch(new FetchVariablesInProject({ projectKey: this.project.key }))
             .pipe(finalize(() => this.loading = false))
             .subscribe();
