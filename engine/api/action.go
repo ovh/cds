@@ -425,7 +425,6 @@ func (api *API) getActionUsageHandler() service.Handler {
 
 		a := getAction(ctx)
 
-		// TODO filter pipelines and action for current user's groups
 		pus, err := action.GetPipelineUsages(api.mustDB(), group.SharedInfraGroup.ID, a.ID)
 		if err != nil {
 			return err
@@ -435,10 +434,48 @@ func (api *API) getActionUsageHandler() service.Handler {
 			return err
 		}
 
-		return service.WriteJSON(w, action.Usage{
+		usage := action.Usage{
 			Pipelines: pus,
 			Actions:   aus,
-		}, http.StatusOK)
+		}
+
+		u := deprecatedGetUser(ctx)
+		if !u.Admin {
+			// filter usage in pipeline by user's projects
+			ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
+			if err != nil {
+				return err
+			}
+			mProjectIDs := make(map[int64]struct{}, len(ps))
+			for i := range ps {
+				mProjectIDs[ps[i].ID] = struct{}{}
+			}
+
+			filteredPipelines := make([]action.UsagePipeline, 0, len(usage.Pipelines))
+			for i := range usage.Pipelines {
+				if _, ok := mProjectIDs[usage.Pipelines[i].PipelineID]; ok {
+					filteredPipelines = append(filteredPipelines, usage.Pipelines[i])
+				}
+			}
+			usage.Pipelines = filteredPipelines
+
+			// filter usage in action by user's groups
+			groupIDs := append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID)
+			mGroupIDs := make(map[int64]struct{}, len(groupIDs))
+			for i := range groupIDs {
+				mGroupIDs[groupIDs[i]] = struct{}{}
+			}
+
+			filteredActions := make([]action.UsageAction, 0, len(usage.Actions))
+			for i := range usage.Actions {
+				if _, ok := mGroupIDs[usage.Actions[i].GroupID]; ok {
+					filteredActions = append(filteredActions, usage.Actions[i])
+				}
+			}
+			usage.Actions = filteredActions
+		}
+
+		return service.WriteJSON(w, usage, http.StatusOK)
 	}
 }
 
