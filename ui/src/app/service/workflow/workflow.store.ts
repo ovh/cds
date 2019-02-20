@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { AddWorkflowInProject } from 'app/store/project.action';
+import { AddLabelWorkflowInProject, AddWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
 import { List, Map } from 'immutable';
 import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
@@ -282,6 +282,9 @@ export class WorkflowStore {
     linkLabel(key: string, workflowName: string, label: Label): Observable<Workflow> {
         return this._workflowService.linkLabel(key, workflowName, label)
             .pipe(
+                tap((lbl) => {
+                    this.store.dispatch(new AddLabelWorkflowInProject({ workflowName, label }));
+                }),
                 map((lbl) => {
                     this._projectStore.resync(key, [
                         new LoadOpts('withLabels', 'labels'),
@@ -309,6 +312,9 @@ export class WorkflowStore {
     unlinkLabel(key: string, workflowName: string, labelId: number): Observable<Workflow> {
         return this._workflowService.unlinkLabel(key, workflowName, labelId)
             .pipe(
+                tap((lbl) => {
+                    this.store.dispatch(new DeleteLabelWorkflowInProject({ workflowName, labelId }));
+                }),
                 map((lbl) => {
                     this._projectStore.resync(key, [
                         new LoadOpts('withLabels', 'labels'),

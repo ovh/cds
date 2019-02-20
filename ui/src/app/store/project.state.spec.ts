@@ -3,8 +3,10 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { async, TestBed } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
+import { Group, GroupPermission } from 'app/model/group.model';
 import { Pipeline } from 'app/model/pipeline.model';
-import { LoadOpts, Project } from 'app/model/project.model';
+import { Label, LoadOpts, Project } from 'app/model/project.model';
+import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
 import * as ProjectAction from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
@@ -367,6 +369,326 @@ describe('Project', () => {
             expect(state.project.key).toEqual('test1');
             expect(state.project.pipeline_names).toBeTruthy();
             expect(state.project.pipeline_names.length).toEqual(0);
+        });
+    }));
+
+    //  ------- Label --------- //
+    it('add label to workflow in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+        });
+
+        let workflow = new Workflow();
+        workflow.name = 'myWorkflow';
+        workflow.project_key = 'test1';
+        store.dispatch(new ProjectAction.AddWorkflowInProject(workflow));
+
+        let label = new Label();
+        label.name = 'testLabel';
+        label.color = 'red';
+        store.dispatch(new ProjectAction.AddLabelWorkflowInProject({ workflowName: 'myWorkflow', label }));
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.workflow_names).toBeTruthy();
+            expect(state.project.workflow_names.length).toEqual(1);
+            expect(state.project.workflow_names[0].name).toEqual('myWorkflow');
+            expect(state.project.workflow_names[0].labels).toBeTruthy();
+            expect(state.project.workflow_names[0].labels.length).toEqual(1);
+            expect(state.project.workflow_names[0].labels[0].name).toEqual('testLabel');
+        });
+    }));
+
+    it('delete label to workflow in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+        });
+
+        let label = new Label();
+        label.name = 'testLabel';
+        label.color = 'red';
+        label.id = 25;
+        let workflow = new Workflow();
+        workflow.name = 'myWorkflow';
+        workflow.project_key = 'test1';
+        workflow.labels = [label];
+        store.dispatch(new ProjectAction.AddWorkflowInProject(workflow));
+
+        store.dispatch(new ProjectAction.DeleteLabelWorkflowInProject({ workflowName: 'myWorkflow', labelId: label.id }));
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.workflow_names).toBeTruthy();
+            expect(state.project.workflow_names.length).toEqual(1);
+            expect(state.project.workflow_names[0].name).toEqual('myWorkflow');
+            expect(state.project.workflow_names[0].labels.length).toEqual(0);
+        });
+    }));
+
+    //  ------- Variable --------- //
+    it('add variable in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+        });
+
+        let variable = new Variable();
+        variable.name = 'myVar';
+        variable.value = 'myValue';
+        store.dispatch(new ProjectAction.AddVariableInProject(variable));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/variable/myVar';
+        })).flush({
+            ...project,
+            variables: [variable]
+        });
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.variables).toBeTruthy();
+            expect(state.project.variables.length).toEqual(1);
+            expect(state.project.variables[0].name).toEqual('myVar');
+            expect(state.project.variables[0].value).toEqual('myValue');
+        });
+    }));
+
+    it('update variable in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        let variable = new Variable();
+        variable.name = 'myVar';
+        variable.value = 'myValue';
+
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            variables: [variable]
+        });
+
+        variable.name = 'myTestVar';
+        variable.value = 'myTestValue';
+        store.dispatch(new ProjectAction.UpdateVariableInProject({
+            variableName: 'myVar',
+            changes: variable
+        }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/variable/myVar';
+        })).flush(variable);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.variables).toBeTruthy();
+            expect(state.project.variables.length).toEqual(1);
+            expect(state.project.variables[0].name).toEqual('myTestVar');
+            expect(state.project.variables[0].value).toEqual('myTestValue');
+        });
+    }));
+
+    it('delete variable in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+
+        let variable = new Variable();
+        variable.name = 'myVar';
+        variable.value = 'myValue';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            variables: [variable]
+        });
+
+        store.dispatch(new ProjectAction.DeleteVariableInProject(variable));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/variable/myVar';
+        })).flush(null);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.variables).toBeTruthy();
+            expect(state.project.variables.length).toEqual(0);
+        });
+    }));
+
+    it('fetch variable in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+
+        let variable = new Variable();
+        variable.name = 'myVar';
+        variable.value = 'myValue';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1'
+        });
+
+        store.dispatch(new ProjectAction.FetchVariablesInProject({ projectKey: project.key }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/variable';
+        })).flush([variable]);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.variables).toBeTruthy();
+            expect(state.project.variables.length).toEqual(1);
+            expect(state.project.variables[0].name).toEqual('myVar');
+            expect(state.project.variables[0].value).toEqual('myValue');
+        });
+    }));
+
+    //  ------- Group --------- //
+    it('add group permission in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+        });
+
+        let group = new GroupPermission();
+        group.group = new Group();
+        group.group.id = 1;
+        group.group.name = 'admin';
+        group.permission = 7;
+        store.dispatch(new ProjectAction.AddGroupInProject({ projectKey: project.key, group }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/group';
+        })).flush([group]);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.groups).toBeTruthy();
+            expect(state.project.groups.length).toEqual(1);
+            expect(state.project.groups[0].permission).toEqual(7);
+            expect(state.project.groups[0].group.id).toEqual(1);
+            expect(state.project.groups[0].group.name).toEqual('admin');
+        });
+    }));
+
+    it('delete group permission in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        let group = new GroupPermission();
+        group.group = new Group();
+        group.group.id = 1;
+        group.group.name = 'admin';
+        group.permission = 7;
+
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            groups: [group]
+        });
+
+        store.dispatch(new ProjectAction.DeleteGroupInProject({ projectKey: project.key, group }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/group/admin';
+        })).flush(null);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.groups).toBeTruthy();
+            expect(state.project.groups.length).toEqual(0);
+        });
+    }));
+
+    it('update group permission in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        let group = new GroupPermission();
+        group.group = new Group();
+        group.group.id = 1;
+        group.group.name = 'admin';
+        group.permission = 7;
+
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            groups: [group]
+        });
+
+        group.permission = 4;
+        store.dispatch(new ProjectAction.UpdateGroupInProject({ projectKey: project.key, group }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/group/admin';
+        })).flush(group);
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.groups).toBeTruthy();
+            expect(state.project.groups.length).toEqual(1);
+            expect(state.project.groups[0].group.name).toEqual('admin');
+            expect(state.project.groups[0].permission).toEqual(4);
         });
     }));
 });

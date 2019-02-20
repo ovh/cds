@@ -1,6 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Action, State, StateContext } from '@ngxs/store';
+import { GroupPermission } from 'app/model/group.model';
 import { IdName, LoadOpts, Project } from 'app/model/project.model';
+import { Variable } from 'app/model/variable.model';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
 
@@ -32,6 +34,7 @@ export class ProjectState {
                 ...state.project,
                 ...action.payload
             },
+            currentProjectKey: action.payload.key,
             loading: false,
         });
     }
@@ -144,7 +147,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, <Project>{ externalChange: true }),
-            loading: false,
         });
     }
 
@@ -154,7 +156,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: null,
-            loading: false,
         });
     }
 
@@ -220,6 +221,135 @@ export class ProjectState {
         }));
     }
 
+    //  ------- Variable --------- //
+    @Action(ProjectAction.FetchVariablesInProject)
+    fetchVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchVariablesInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
+            state.project && state.project.key && state.project.variables) {
+            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
+        }
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+
+        return ctx.dispatch(new ProjectAction.ResyncVariablesInProject(action.payload));
+    }
+
+    @Action(ProjectAction.LoadVariablesInProject)
+    loadVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadVariablesInProject) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ variables: action.payload }),
+        });
+    }
+
+    @Action(ProjectAction.ResyncVariablesInProject)
+    resyncVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncVariablesInProject) {
+        return this._http
+            .get<Variable[]>(`/project/${action.payload.projectKey}/variable`)
+            .pipe(tap((variables: Variable[]) => {
+                ctx.dispatch(new ProjectAction.LoadVariablesInProject(variables));
+            }));
+    }
+
+    @Action(ProjectAction.AddVariableInProject)
+    addVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddVariableInProject) {
+        const state = ctx.getState();
+        return this._http.post<Project>('/project/' + state.project.key + '/variable/' + action.payload.name, action.payload)
+            .pipe(tap((project) => ctx.dispatch(new ProjectAction.LoadVariablesInProject(project.variables))));
+    }
+
+    @Action(ProjectAction.UpdateVariableInProject)
+    updateVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateVariableInProject) {
+        const state = ctx.getState();
+
+        return this._http
+            .put<Variable>('/project/' + state.project.key + '/variable/' + action.payload.variableName, action.payload.changes)
+            .pipe(tap((variableRes: Variable) => {
+                let variables = state.project.variables ? state.project.variables.concat([]) : [];
+                variables = variables.map((variable) => {
+                    if (variable.id === action.payload.changes.id) {
+                        variable = variableRes;
+                    }
+                    return variable;
+                });
+
+                ctx.setState({
+                    ...state,
+                    project: Object.assign({}, state.project, <Project>{ variables }),
+                });
+            }));
+    }
+
+    @Action(ProjectAction.DeleteVariableInProject)
+    deleteVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteVariableInProject) {
+        const state = ctx.getState();
+        return this._http
+            .delete('/project/' + state.project.key + '/variable/' + action.payload.name)
+            .pipe(tap(() => {
+                let variables = state.project.variables ? state.project.variables.concat([]) : [];
+                variables = variables.filter((variable) => variable.name !== action.payload.name);
+
+                ctx.setState({
+                    ...state,
+                    project: Object.assign({}, state.project, <Project>{ variables }),
+                });
+            }));
+    }
+
+
+    //  ------- Label --------- //
+    @Action(ProjectAction.AddLabelWorkflowInProject)
+    addLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddLabelWorkflowInProject) {
+        const state = ctx.getState();
+        let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
+        workflow_names = workflow_names.map((wf) => {
+            if (action.payload.workflowName === wf.name) {
+                let workflow: IdName;
+                if (wf.labels) {
+                    workflow = Object.assign({}, wf, { labels: wf.labels.concat(action.payload.label) });
+                } else {
+                    workflow = Object.assign({}, wf, {
+                        labels: [action.payload.label]
+                    });
+                }
+                return workflow;
+            }
+            return wf;
+        });
+
+        ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ workflow_names }),
+        });
+    }
+
+    @Action(ProjectAction.DeleteLabelWorkflowInProject)
+    deleteLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteLabelWorkflowInProject) {
+        const state = ctx.getState();
+        let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
+        workflow_names = workflow_names.map((wf) => {
+            if (action.payload.workflowName === wf.name) {
+                let workflow: IdName;
+                if (wf.labels) {
+                    workflow = Object.assign({}, wf, { labels: wf.labels.filter((label) => label.id !== action.payload.labelId) });
+                } else {
+                    workflow = Object.assign({}, wf, { labels: [] });
+                }
+                return workflow;
+            }
+            return wf;
+        });
+
+        ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ workflow_names }),
+        });
+    }
+
 
     //  ------- Misc --------- //
     @Action(ProjectAction.UpdateFavoriteProject)
@@ -235,7 +365,6 @@ export class ProjectState {
             ctx.setState({
                 ...state,
                 project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
-                loading: false,
             });
             // TODO: dispatch action on global state to update project in list and user state
             // TODO: move this one on user state and just update state here, not XHR
@@ -259,7 +388,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, { applications, application_names }),
-            loading: false,
         });
     }
 
@@ -284,7 +412,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, { application_names }),
-            loading: false,
         });
     }
 
@@ -300,7 +427,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, { applications, application_names }),
-            loading: false,
         });
     }
 
@@ -316,6 +442,7 @@ export class ProjectState {
         idName.name = action.payload.name;
         idName.description = action.payload.description;
         idName.icon = action.payload.icon;
+        idName.labels = action.payload.labels;
         if (!workflow_names) {
             workflow_names = [idName]
         } else {
@@ -325,7 +452,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, { workflows, workflow_names }),
-            loading: false,
         });
     }
 
@@ -341,7 +467,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, <Project>{ workflows, workflow_names }),
-            loading: false,
         });
     }
 
@@ -362,7 +487,6 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, <Project>{ pipelines, pipeline_names }),
-            loading: false,
         });
     }
 
@@ -378,8 +502,56 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, <Project>{ pipelines, pipeline_names }),
-            loading: false,
         });
     }
 
+    //  ------- Group Permission --------- //
+    @Action(ProjectAction.AddGroupInProject)
+    addGroup(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddGroupInProject) {
+        const state = ctx.getState();
+        return this._http.post<GroupPermission[]>('/project/' + action.payload.projectKey + '/group', action.payload.group)
+            .pipe(tap((groups: GroupPermission[]) => {
+                ctx.setState({
+                    ...state,
+                    project: Object.assign({}, state.project, <Project>{ groups }),
+                });
+            }));
+    }
+
+    @Action(ProjectAction.DeleteGroupInProject)
+    deleteGroup(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteGroupInProject) {
+        const state = ctx.getState();
+        return this._http.delete('/project/' + action.payload.projectKey + '/group/' + action.payload.group.group.name)
+            .pipe(tap(() => {
+                let groups = state.project.groups ? state.project.groups.concat([]) : [];
+                groups = groups.filter((group) => group.group.name !== action.payload.group.group.name);
+
+                ctx.setState({
+                    ...state,
+                    project: Object.assign({}, state.project, <Project>{ groups }),
+                });
+            }));
+    }
+
+    @Action(ProjectAction.UpdateGroupInProject)
+    updateGroup(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateGroupInProject) {
+        const state = ctx.getState();
+        return this._http.put<GroupPermission>(
+            '/project/' + action.payload.projectKey + '/group/' + action.payload.group.group.name,
+            action.payload.group
+        ).pipe(tap((group) => {
+            let groups = state.project.groups ? state.project.groups.concat([]) : [];
+            groups = groups.map((gr) => {
+                if (gr.group.name === group.group.name) {
+                    return group;
+                }
+                return gr;
+            });
+
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ groups }),
+            });
+        }));
+    }
 }

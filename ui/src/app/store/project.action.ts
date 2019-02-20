@@ -4,6 +4,7 @@ import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Label, LoadOpts, Project } from 'app/model/project.model';
+import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
 
 // Use to load fetched Project in our app
@@ -55,6 +56,32 @@ export class UpdateFavoriteProject {
     constructor(public payload: { projectKey: string }) { }
 }
 
+//  ------- Variable --------- //
+export class ResyncVariablesInProject {
+    static readonly type = '[Project] Resync Variables in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class FetchVariablesInProject {
+    static readonly type = '[Project] Fetch Variables in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class LoadVariablesInProject {
+    static readonly type = '[Project] Load Variables in Project';
+    constructor(public payload: Variable[]) { }
+}
+export class AddVariableInProject {
+    static readonly type = '[Project] Add Variable in Project';
+    constructor(public payload: Variable) { }
+}
+export class UpdateVariableInProject {
+    static readonly type = '[Project] Update Variable in Project';
+    constructor(public payload: { variableName: string, changes: Variable }) { }
+}
+export class DeleteVariableInProject {
+    static readonly type = '[Project] Delete Variable in Project';
+    constructor(public payload: Variable) { }
+}
+
 //  ------- Application --------- //
 export class AddApplicationInProject {
     static readonly type = '[Project] Add application in Project';
@@ -97,9 +124,13 @@ export class DeletePipelineInProject {
     constructor(public payload: { pipelineName: string }) { }
 }
 
-//  ------- Group --------- //
+//  ------- Group Permission --------- //
 export class AddGroupInProject {
     static readonly type = '[Project] Add Group in Project';
+    constructor(public payload: { projectKey: string, group: GroupPermission }) { }
+}
+export class UpdateGroupInProject {
+    static readonly type = '[Project] Update Group in Project';
     constructor(public payload: { projectKey: string, group: GroupPermission }) { }
 }
 export class DeleteGroupInProject {
@@ -108,7 +139,6 @@ export class DeleteGroupInProject {
 }
 
 //  ------- Label --------- //
-// TODO: add label on workflow in project
 export class AddLabelInProject {
     static readonly type = '[Project] Add Label in Project';
     constructor(public payload: { projectKey: string, label: Label }) { }
@@ -116,6 +146,14 @@ export class AddLabelInProject {
 export class DeleteLabelProject {
     static readonly type = '[Project] Delete Label in Project';
     constructor(public payload: { projectKey: string, label: Label }) { }
+}
+export class AddLabelWorkflowInProject {
+    static readonly type = '[Project] Add Label on Workflow in Project';
+    constructor(public payload: { workflowName: string, label: Label }) { }
+}
+export class DeleteLabelWorkflowInProject {
+    static readonly type = '[Project] Delete Label on Workflow in Project';
+    constructor(public payload: { workflowName: string, labelId: number }) { }
 }
 
 //  ------- Integration --------- //

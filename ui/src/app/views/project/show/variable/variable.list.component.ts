@@ -1,14 +1,15 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Project} from '../../../../model/project.model';
-import {Warning} from '../../../../model/warning.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
-import {ToastService} from '../../../../shared/toast/ToastService';
-import {VariableEvent} from '../../../../shared/variable/variable.event.model';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddVariableInProject, DeleteVariableInProject, FetchVariablesInProject, UpdateVariableInProject } from 'app/store/project.action';
+import { cloneDeep } from 'lodash';
+import { finalize } from 'rxjs/operators';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Project } from '../../../../model/project.model';
+import { Warning } from '../../../../model/warning.model';
+import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
+import { ToastService } from '../../../../shared/toast/ToastService';
+import { VariableEvent } from '../../../../shared/variable/variable.event.model';
 
 @Component({
     selector: 'app-project-variables',
@@ -44,22 +45,19 @@ export class ProjectVariablesComponent implements OnInit {
     loading = true;
     varFormLoading = false;
 
-    constructor(private _projectStore: ProjectStore,
-                private _translate: TranslateService,
-                private _toast: ToastService) {
+    constructor(
+        private _translate: TranslateService,
+        private _toast: ToastService,
+        private store: Store
+    ) {
 
     }
 
     ngOnInit() {
-        if (this.project.variables) {
-            this.loading = false;
-            return;
-        }
-        this._projectStore.getProjectVariablesResolver(this.project.key)
-            .pipe(first(), finalize(() => this.loading = false))
-            .subscribe((proj) => {
-                this.project = proj;
-            });
+        console.log('iciii');
+        this.store.dispatch(new FetchVariablesInProject({ projectKey: this.project.key }))
+            .pipe(finalize(() => this.loading = false))
+            .subscribe();
     }
 
     variableEvent(event: VariableEvent, skip?: boolean): void {
@@ -70,22 +68,17 @@ export class ProjectVariablesComponent implements OnInit {
             switch (event.type) {
                 case 'add':
                     this.varFormLoading = true;
-                    this._projectStore.addProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_added'));
-                        this.varFormLoading = false;
-                    }, () => {
-                        this.varFormLoading = false;
-                    });
+                    this.store.dispatch(new AddVariableInProject(event.variable))
+                        .pipe(finalize(() => this.varFormLoading = false))
+                        .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                     break;
                 case 'update':
-                    this._projectStore.updateProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_updated'));
-                    });
+                    this.store.dispatch(new UpdateVariableInProject({ variableName: event.variable.name, changes: event.variable }))
+                        .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
                     break;
                 case 'delete':
-                    this._projectStore.deleteProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_deleted'));
-                    });
+                    this.store.dispatch(new DeleteVariableInProject(event.variable))
+                        .subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
                     break;
             }
         }

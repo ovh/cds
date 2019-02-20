@@ -14,7 +14,6 @@ import { WorkflowNodeRun, WorkflowRun } from './model/workflow.run.model';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { BroadcastStore } from './service/broadcast/broadcast.store';
 import { PipelineStore } from './service/pipeline/pipeline.store';
-import { ProjectStore } from './service/project/project.store';
 import { ActionStore, RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { WorkflowEventStore } from './service/workflow/workflow.event.store';
@@ -35,7 +34,6 @@ export class AppService {
     filter: TimelineFilter;
 
     constructor(
-        private _projStore: ProjectStore,
         private _routerService: RouterService,
         private _routeActivated: ActivatedRoute,
         private _authStore: AuthentificationStore,
