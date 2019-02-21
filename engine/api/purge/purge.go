@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -15,25 +17,25 @@ import (
 )
 
 //Initialize starts goroutines for workflows
-func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
+func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap, workflowRunsMarkToDelete, workflowRunsDeleted *stats.Int64Measure) {
 	tickPurge := time.NewTicker(30 * time.Minute)
 	defer tickPurge.Stop()
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting purge: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("Exiting purge: %v", ctx.Err())
 				return
 			}
 		case <-tickPurge.C:
 			log.Debug("purge> Deleting all workflow run marked to delete...")
-			if err := deleteWorkflowRunsHistory(DBFunc()); err != nil {
+			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), workflowRunsDeleted); err != nil {
 				log.Warning("purge> Error on deleteWorkflowRunsHistory : %v", err)
 			}
 
 			log.Debug("purge> Deleting all workflow marked to delete....")
-			if err := workflows(c, DBFunc(), store); err != nil {
+			if err := workflows(ctx, DBFunc(), store, workflowRunsMarkToDelete); err != nil {
 				log.Warning("purge> Error on workflows : %v", err)
 			}
 		}
@@ -41,7 +43,7 @@ func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap)
 }
 
 // workflows purges all marked workflows
-func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
+func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowRunsMarkToDelete *stats.Int64Measure) error {
 	query := "SELECT id, project_id FROM workflow WHERE to_delete = true ORDER BY id ASC"
 	res := []struct {
 		ID        int64 `db:"id"`
@@ -80,6 +82,9 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 			}
 			if n > 0 {
 				// If there is workflow runs to delete, wait for it...
+				if workflowRunsMarkToDelete != nil {
+					observability.Record(ctx, workflowRunsMarkToDelete, int64(n))
+				}
 				continue
 			}
 
@@ -126,12 +131,19 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 }
 
 // deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
+func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, workflowRunsDeleted *stats.Int64Measure) error {
 	query := `DELETE FROM workflow_run WHERE workflow_run.id IN (SELECT id FROM workflow_run WHERE to_delete = true LIMIT 30)`
 
-	if _, err := db.Exec(query); err != nil {
+	res, err := db.Exec(query)
+	if err != nil {
 		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
 		return err
 	}
+
+	n, _ := res.RowsAffected()
+	if workflowRunsDeleted != nil {
+		observability.Record(ctx, workflowRunsDeleted, n)
+	}
+
 	return nil
 }

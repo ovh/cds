@@ -254,6 +254,11 @@ func (api *API) initMetrics(ctx context.Context) error {
 
 	api.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
 
+	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_mark_to_delete", api.Name)
+	api.Metrics.WorkflowRunsMarkToDelete = stats.Int64(label, "number of workflow runs mark to delete", stats.UnitDimensionless)
+	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_deleted", api.Name)
+	api.Metrics.WorkflowRunsDeleted = stats.Int64(label, "number of workflow runs deleted", stats.UnitDimensionless)
+
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
 	tagServiceName, _ = tag.NewKey("name")
@@ -280,6 +285,8 @@ func (api *API) initMetrics(ctx context.Context) error {
 		observability.NewViewLast("queue", api.Metrics.queue, tagsRange),
 		observability.NewViewCount("workflow_runs_started", api.Metrics.WorkflowRunStarted, tags),
 		observability.NewViewCount("workflow_runs_failed", api.Metrics.WorkflowRunFailed, tags),
+		observability.NewViewCount("workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tags),
+		observability.NewViewCount("workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tags),
 	)
 
 	return err

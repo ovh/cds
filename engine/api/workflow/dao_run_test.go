@@ -142,7 +142,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		test.NoError(t, errWr)
 	}
 
-	errP := workflow.PurgeWorkflowRun(db, *w1)
+	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
@@ -237,7 +237,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
-	errP := workflow.PurgeWorkflowRun(db, *w1)
+	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
@@ -341,7 +341,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
-	errP := workflow.PurgeWorkflowRun(db, *w1)
+	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
@@ -440,7 +440,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
-	errP := workflow.PurgeWorkflowRun(db, *w1)
+	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
@@ -530,7 +530,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		test.NoError(t, errWr)
 	}
 
-	errP := workflow.PurgeWorkflowRun(db, *w1)
+	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
@@ -620,7 +620,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		test.NoError(t, errWr)
 	}
 
-	errP := workflow.PurgeWorkflowRun(db, *w1)
+	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
