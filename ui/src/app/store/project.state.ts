@@ -13,6 +13,7 @@ export class ProjectStateModel {
     public project: Project;
     public loading: boolean;
     public currentProjectKey: string;
+    public repoManager: { request_token?: string, url?: string };
 }
 
 @State<ProjectStateModel>({
@@ -20,6 +21,7 @@ export class ProjectStateModel {
     defaults: {
         project: null,
         loading: true,
+        repoManager: {},
         currentProjectKey: null
     }
 })
@@ -793,5 +795,57 @@ export class ProjectState {
             action.payload.environmentName + '/variable/' + action.payload.variableName,
             action.payload.changes
         ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    //  ------- Repository Manager --------- //
+    @Action(ProjectAction.ConnectRepositoryManagerInProject)
+    connectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ConnectRepositoryManagerInProject) {
+        const state = ctx.getState();
+        return this._http.post<{ request_token: string , url: string }>(
+            '/project/' + action.payload.projectKey + '/repositories_manager/' +
+            action.payload.repoManager + '/authorize',
+            null
+        ).pipe(tap(({ request_token, url }) => {
+            ctx.setState({
+                ...state,
+                repoManager: {
+                    request_token,
+                    url
+                },
+            });
+        }));
+    }
+
+    @Action(ProjectAction.CallbackRepositoryManagerInProject)
+    callbackRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.CallbackRepositoryManagerInProject) {
+        const state = ctx.getState();
+        let data = {
+            'request_token': action.payload.requestToken,
+            'verifier': action.payload.code
+        };
+        return this._http.post<Project>(
+            '/project/' + action.payload.projectKey + '/repositories_manager/' +
+            action.payload.repoManager + '/authorize/callback',
+            data
+        ).pipe(tap((project: Project) => {
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ vcs_servers: project.vcs_servers }),
+            });
+        }));
+    }
+
+    @Action(ProjectAction.DisconnectRepositoryManagerInProject)
+    disconnectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DisconnectRepositoryManagerInProject) {
+        const state = ctx.getState();
+        return this._http.delete<Project>(
+            '/project/' + action.payload.projectKey + '/repositories_manager/' +
+            action.payload.repoManager + '/authorize'
+        ).pipe(tap((project: Project) => {
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ vcs_servers: project.vcs_servers }),
+            });
+        }));
     }
 }
