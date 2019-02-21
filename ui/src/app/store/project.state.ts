@@ -801,7 +801,7 @@ export class ProjectState {
     @Action(ProjectAction.ConnectRepositoryManagerInProject)
     connectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ConnectRepositoryManagerInProject) {
         const state = ctx.getState();
-        return this._http.post<{ request_token: string , url: string }>(
+        return this._http.post<{ request_token: string, url: string }>(
             '/project/' + action.payload.projectKey + '/repositories_manager/' +
             action.payload.repoManager + '/authorize',
             null
@@ -840,7 +840,7 @@ export class ProjectState {
         const state = ctx.getState();
         return this._http.delete<Project>(
             '/project/' + action.payload.projectKey + '/repositories_manager/' +
-            action.payload.repoManager + '/authorize'
+            action.payload.repoManager
         ).pipe(tap((project: Project) => {
             ctx.setState({
                 ...state,
