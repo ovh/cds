@@ -882,7 +882,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 		// Purge workflow run
 		sdk.GoRoutine(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
-			if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
+			if err := workflow.PurgeWorkflowRun(ctx, api.mustDB(), *wf, api.Metrics.WorkflowRunsMarkToDelete); err != nil {
 				log.Error("workflow.PurgeWorkflowRun> error %v", err)
 			}
 		}, api.PanicDump())
