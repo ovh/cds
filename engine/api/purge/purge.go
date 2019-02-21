@@ -145,18 +145,19 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 // deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
 func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, workflowRunsDeleted *stats.Int64Measure) error {
-	query := `DELETE FROM workflow_run WHERE workflow_run.id IN (SELECT id FROM workflow_run WHERE to_delete = true LIMIT 30)`
-
-	res, err := db.Exec(query)
-	if err != nil {
-		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
+	var ids []int64
+	if _, err := db.Select(&ids, "SELECT id FROM workflow_run WHERE to_delete = true ORDER BY id ASC LIMIT 1000"); err != nil {
 		return err
 	}
 
-	n, _ := res.RowsAffected()
-	if workflowRunsDeleted != nil {
-		observability.Record(ctx, workflowRunsDeleted, n)
+	for _, id := range ids {
+		if _, err := db.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", id); err != nil {
+			log.Error("deleteWorkflowRunsHistory> unable to delete workflow run %d: %v", id, err)
+			continue
+		}
+		if workflowRunsDeleted != nil {
+			observability.Record(ctx, workflowRunsDeleted, 1)
+		}
 	}
-
 	return nil
 }
