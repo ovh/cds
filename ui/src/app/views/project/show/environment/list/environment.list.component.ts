@@ -1,19 +1,20 @@
 
-import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs';
-import {flatMap, map} from 'rxjs/operators';
-import {Environment} from '../../../../../model/environment.model';
-import {Project} from '../../../../../model/project.model';
-import {Warning} from '../../../../../model/warning.model';
-import {ProjectStore} from '../../../../../service/project/project.store';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Store } from '@ngxs/store';
+import { FetchEnvironmentsInProject } from 'app/store/project.action';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { Environment } from '../../../../../model/environment.model';
+import { Project } from '../../../../../model/project.model';
+import { Warning } from '../../../../../model/warning.model';
 
 @Component({
     selector: 'app-environment-list',
     templateUrl: './environment.list.html',
     styleUrls: ['./environment.list.scss']
 })
-export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestroy {
+export class ProjectEnvironmentListComponent implements OnInit, OnDestroy {
 
     warnMap: Map<string, Array<Warning>>;
     @Input('warnings')
@@ -34,12 +35,17 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     @Input() project: Project;
     oldLastModifiedDate: number;
     selectedEnv: Environment;
+    selectedEnvIndex = 0;
     envInRoute: string;
     loading: boolean;
 
     routerSubscription: Subscription;
 
-    constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router, private _projectStore: ProjectStore) {
+    constructor(
+        private _routerActivatedRoute: ActivatedRoute,
+        private _router: Router,
+        private store: Store
+    ) {
         this.loading = true;
     }
 
@@ -51,77 +57,50 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
 
     ngOnInit(): void {
         let currentTab;
-        this.routerSubscription = this._routerActivatedRoute.queryParams.pipe(
-          map((q) => {
+
+        this.routerSubscription = this._routerActivatedRoute.queryParams.subscribe((q) => {
             if (q['envName']) {
                 this.envInRoute = q['envName'];
             }
             currentTab = q['tab'];
-            return q;
-          }))
-          .pipe(
-              flatMap((q) => this._projectStore.getProjectEnvironmentsResolver(this.project.key))
-          )
-          .subscribe((proj) => {
-            if (currentTab !== 'environments') {
-              return;
-            }
-            this.project = proj;
-            if (this.project.environments && this.project.environments.length > 0) {
-                if (this.envInRoute) {
-                    this.selectNewEnv(this.envInRoute);
-                } else {
-                    this.selectNewEnv(this.project.environments[0].name);
+            this.selectNewEnv(this.envInRoute, false);
+        });
+
+        this.store.dispatch(new FetchEnvironmentsInProject({ projectKey: this.project.key }))
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                if (currentTab !== 'environments') {
+                    return;
                 }
-            }
-            this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
-            this.loading = false
-          }, () => this.loading = false);
+                if (this.project.environments && this.project.environments.length > 0) {
+                    if (this.envInRoute) {
+                        this.selectNewEnv(this.envInRoute);
+                    } else {
+                        this.selectNewEnv(this.project.environments[0].name);
+                    }
+                }
+                this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
+            });
     }
 
-    /**
-     * Update selected Stage On pipeline update.
-     * Do not work with ngOnChange.
-     */
-    ngDoCheck() {
-        if (new Date(this.project.last_modified).getTime() !== this.oldLastModifiedDate) {
-            this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
-            // If environment changed - update selected env
-            if (this.selectedEnv && this.project.environments) {
-                let index = this.project.environments.findIndex(e => e.id === this.selectedEnv.id);
-                if (index >= -1) {
-                    this.selectedEnv = this.project.environments[index];
-                } else {
-                    this.selectedEnv = null;
-                }
-            } else if (this.project.environments && this.project.environments.length > 0) {
-                if (this.envInRoute) {
-                    this.selectedEnv = this.project.environments.find(e => {
-                        return e.name === this.envInRoute;
-                    });
-                }
-                if (!this.selectedEnv) {
-                    this.selectedEnv = this.project.environments[0];
-                }
+    selectNewEnv(envName: string, updateUrl = true): void {
+        if (this.project.environments) {
+            let envIndex = this.project.environments.findIndex(e => e.name === this.envInRoute);
+            if (envIndex === -1) {
+                this.selectedEnvIndex = 0;
             } else {
-                this.selectedEnv = null;
+                this.selectedEnvIndex = envIndex;
             }
         }
-    }
 
-    selectNewEnv(envName): void {
-        if (this.project.environments && this.project.environments.length > 0) {
-            this.selectedEnv = this.project.environments.find(e => e.name === envName);
-            if (!this.selectedEnv) {
-                this.selectedEnv = this.project.environments[0];
-            }
-            this._router.navigate(['/project/', this.project.key], {queryParams: { tab: 'environments', envName: this.selectedEnv.name}});
+        if (updateUrl) {
+            this._router.navigate(['/project/', this.project.key], {
+                queryParams: { tab: 'environments', envName }
+            });
         }
     }
 
     deleteEnv(): void {
-        if (this.project.environments && this.project.environments.length > 0) {
-            this.selectedEnv = this.project.environments[0];
-        }
+        this.selectedEnvIndex = 0;
     }
 }

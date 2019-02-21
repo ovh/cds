@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Action, State, StateContext } from '@ngxs/store';
+import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
@@ -701,5 +702,96 @@ export class ProjectState {
                 project: Object.assign({}, state.project, <Project>{ integrations }),
             });
         }));
+    }
+
+    //  ------- Environment --------- //
+    @Action(ProjectAction.FetchEnvironmentsInProject)
+    fetchEnvironments(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchEnvironmentsInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey === action.payload.projectKey &&
+            state.project && state.project.key && state.project.environments) {
+            return ctx.dispatch(new ProjectAction.LoadProject(state.project));
+        }
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+
+        return ctx.dispatch(new ProjectAction.ResyncEnvironmentsInProject(action.payload));
+    }
+
+    @Action(ProjectAction.LoadEnvironmentsInProject)
+    loadEnvironments(ctx: StateContext<ProjectStateModel>, action: ProjectAction.LoadEnvironmentsInProject) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ environments: action.payload }),
+        });
+    }
+
+    @Action(ProjectAction.ResyncEnvironmentsInProject)
+    resyncEnvironments(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncEnvironmentsInProject) {
+        let params = new HttpParams();
+        params = params.append('withUsage', 'true');
+        return this._http
+            .get<Environment[]>(`/project/${action.payload.projectKey}/environment`, { params })
+            .pipe(tap((environments: Environment[]) => {
+                ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(environments));
+            }));
+    }
+
+    @Action(ProjectAction.AddEnvironmentInProject)
+    addEnvironment(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddEnvironmentInProject) {
+        return this._http.post<Project>('/project/' + action.payload.projectKey + '/environment', action.payload.environment)
+            .pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    @Action(ProjectAction.CloneEnvironmentInProject)
+    cloneEnvironment(ctx: StateContext<ProjectStateModel>, action: ProjectAction.CloneEnvironmentInProject) {
+        return this._http.post<Project>(
+            '/project/' + action.payload.projectKey + '/environment/' +
+            action.payload.environment.name + '/clone/' + action.payload.cloneName,
+            null
+        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    @Action(ProjectAction.DeleteEnvironmentInProject)
+    deleteEnvironment(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteEnvironmentInProject) {
+        return this._http.delete<Project>('/project/' + action.payload.projectKey + '/environment/' + action.payload.environment.name)
+            .pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    @Action(ProjectAction.UpdateEnvironmentInProject)
+    updateEnvironment(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateEnvironmentInProject) {
+        return this._http.put<Project>(
+            '/project/' + action.payload.projectKey + '/environment/' + action.payload.environmentName,
+            action.payload.changes
+        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    @Action(ProjectAction.AddEnvironmentVariableInProject)
+    addEnvironmentVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddEnvironmentVariableInProject) {
+        return this._http.post<Project>(
+            '/project/' + action.payload.projectKey + '/environment/' +
+            action.payload.environmentName + '/variable/' + action.payload.variable.name,
+            action.payload.variable
+        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    @Action(ProjectAction.DeleteEnvironmentVariableInProject)
+    deleteEnvironmentVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteEnvironmentVariableInProject) {
+        return this._http.delete<Project>(
+            '/project/' + action.payload.projectKey + '/environment/' +
+            action.payload.environmentName + '/variable/' + action.payload.variable.name
+        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    @Action(ProjectAction.UpdateEnvironmentVariableInProject)
+    updateEnvironmentVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateEnvironmentVariableInProject) {
+        return this._http.put<Project>(
+            '/project/' + action.payload.projectKey + '/environment/' +
+            action.payload.environmentName + '/variable/' + action.payload.variableName,
+            action.payload.changes
+        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
     }
 }

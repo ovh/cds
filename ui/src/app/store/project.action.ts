@@ -1,5 +1,6 @@
 
 import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
@@ -203,4 +204,46 @@ export class AddKeyInProject {
 export class DeleteKeyInProject {
     static readonly type = '[Project] Delete Key in Project';
     constructor(public payload: { projectKey: string, key: Key }) { }
+}
+
+//  ------- Environment --------- //
+export class ResyncEnvironmentsInProject {
+    static readonly type = '[Project] Resync Environments in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class FetchEnvironmentsInProject {
+    static readonly type = '[Project] Fetch Environments in Project';
+    constructor(public payload: { projectKey: string }) { }
+}
+export class LoadEnvironmentsInProject {
+    static readonly type = '[Project] Load Environments in Project';
+    constructor(public payload: Environment[]) { }
+}
+export class AddEnvironmentInProject {
+    static readonly type = '[Project] Add Environment in Project';
+    constructor(public payload: { projectKey: string, environment: Environment }) { }
+}
+export class CloneEnvironmentInProject {
+    static readonly type = '[Project] Clone Environment in Project';
+    constructor(public payload: { projectKey: string, cloneName: string, environment: Environment }) { }
+}
+export class UpdateEnvironmentInProject {
+    static readonly type = '[Project] Update environment in Project';
+    constructor(public payload: { projectKey: string, environmentName: string, changes: Environment }) { }
+}
+export class DeleteEnvironmentInProject {
+    static readonly type = '[Project] Delete Environment in Project';
+    constructor(public payload: { projectKey: string, environment: Environment }) { }
+}
+export class AddEnvironmentVariableInProject {
+    static readonly type = '[Project] Add Environment Variable in Project';
+    constructor(public payload: { projectKey: string, environmentName: string, variable: Variable }) { }
+}
+export class UpdateEnvironmentVariableInProject {
+    static readonly type = '[Project] Update environment variable in Project';
+    constructor(public payload: { projectKey: string, environmentName: string, variableName: string, changes: Variable }) { }
+}
+export class DeleteEnvironmentVariableInProject {
+    static readonly type = '[Project] Delete Environment Variable in Project';
+    constructor(public payload: { projectKey: string, environmentName: string, variable: Variable }) { }
 }
