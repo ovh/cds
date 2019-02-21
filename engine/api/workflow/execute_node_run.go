@@ -11,6 +11,7 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
@@ -133,6 +134,14 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				if err != nil {
 					return report, err
 				}
+				log.Debug("workflow.execute> stage %s status after call to addJobsToQueue %s", stage.Name, stage.Status)
+			}
+
+			// check for failure caused by action not usable or requirements problem
+			if sdk.StatusStopped == stage.Status {
+				newStatus = sdk.StatusStopped.String()
+				stagesTerminated++
+				break
 			}
 
 			if sdk.StatusIsTerminated(stage.Status.String()) {
@@ -233,7 +242,6 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
 			}
 			report, _ = report.Merge(r1, nil)
-
 		}
 
 		//Delete the line in workflow_node_run_job
@@ -322,7 +330,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
 	next()
 	if err != nil {
-		return report, sdk.WrapError(err, "Cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
+		return report, sdk.WrapError(err, "cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
 	}
 
 	if !conditionsOK {
@@ -340,42 +348,45 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	next()
 
 	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
-	groups, errGroups := getJobExecutablesGroups(wr, runContext)
-	if errGroups != nil {
-		return report, sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
+	groups, err := getJobExecutablesGroups(wr, runContext)
+	if err != nil {
+		return report, sdk.WrapError(err, "error getting job executables groups")
 	}
 	next()
 
 	skippedOrDisabledJobs := 0
+	failedJobs := 0
 	//Browse the jobs
 	for j := range stage.Jobs {
 		job := &stage.Jobs[j]
-		errs := sdk.MultiError{}
+
+		// errors generated in the loop will be added to job run spawn info
+		spawnErrs := sdk.MultiError{}
+
 		//Process variables for the jobs
 		_, next = observability.Span(ctx, "workflow..getNodeJobRunParameters")
-		jobParams, errParam := getNodeJobRunParameters(db, *job, run, stage)
+		jobParams, err := getNodeJobRunParameters(db, *job, run, stage)
 		next()
-
-		if errParam != nil {
-			errs.Join(*errParam)
+		if err != nil {
+			spawnErrs.Join(*err)
 		}
 
 		_, next = observability.Span(ctx, "workflow.getNodeJobRunRequirements")
-		jobRequirements, containsService, modelType, errReq := getNodeJobRunRequirements(db, *job, run)
+		jobRequirements, containsService, modelType, err := getNodeJobRunRequirements(db, *job, run)
 		next()
+		if err != nil {
+			spawnErrs.Join(*err)
+		}
 
-		if errReq != nil {
-			errs.Join(*errReq)
+		// check that children actions used by job can be used by the project
+		if err := action.CheckChildrenForGroupIDsWithLoop(db, &job.Action, sdk.GroupsToIDs(groups)); err != nil {
+			spawnErrs.Append(err)
 		}
 
 		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
 		_, next = observability.Span(ctx, "workflow.prepareRequirementsToNodeJobRunParameters")
 		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
 		next()
-
-		if errGroups != nil {
-			return report, sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
-		}
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
@@ -404,14 +415,15 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			skippedOrDisabledJobs++
 		}
 
-		if errParam != nil {
+		if !spawnErrs.IsEmpty() {
+			failedJobs++
 			wjob.Status = sdk.StatusFail.String()
 			spawnInfos := sdk.SpawnMsg{
 				ID: sdk.MsgSpawnInfoJobError.ID,
 			}
 
-			for _, e := range *errParam {
-				spawnInfos.Args = append(spawnInfos.Args, e.Error())
+			for _, e := range spawnErrs {
+				spawnInfos.Args = append(spawnInfos.Args, sdk.Cause(e).Error())
 			}
 
 			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
@@ -427,16 +439,16 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			}}
 		}
 
-		//Insert in database
+		// insert in database
 		_, next = observability.Span(ctx, "workflow.insertWorkflowNodeJobRun")
 		if err := insertWorkflowNodeJobRun(db, &wjob); err != nil {
 			next()
-			return report, sdk.WrapError(err, "Unable to insert in table workflow_node_run_job")
+			return report, sdk.WrapError(err, "unable to insert in table workflow_node_run_job")
 		}
 		next()
 
 		if err := AddSpawnInfosNodeJobRun(db, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
-			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", wjob.ID)
+			return nil, sdk.WrapError(err, "cannot save spawn info job %d", wjob.ID)
 		}
 
 		//Put the job run in database
@@ -447,6 +459,10 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 	if skippedOrDisabledJobs == len(stage.Jobs) {
 		stage.Status = sdk.StatusSkipped
+	}
+
+	if failedJobs > 0 {
+		stage.Status = sdk.StatusStopped
 	}
 
 	return report, nil

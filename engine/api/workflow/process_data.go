@@ -63,9 +63,16 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if startingFromNode != nil {
 		r1, conditionOK, err := processStartFromNode(ctx, db, store, proj, wr, mapNodes, startingFromNode, maxsn, hookEvent, manual)
 		if err != nil {
-			return nil, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromNode")
+			return nil, false, sdk.WrapError(err, "unable to processStartFromNode")
 		}
 		report, _ = report.Merge(r1, nil)
+
+		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
+		if err != nil {
+			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
+		}
+		report.Merge(r2, nil) // nolint
+
 		return report, conditionOK, nil
 	}
 
@@ -73,9 +80,16 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if len(wr.WorkflowNodeRuns) == 0 {
 		r1, conditionOK, err := processStartFromRootNode(ctx, db, store, proj, wr, mapNodes, hookEvent, manual)
 		if err != nil {
-			return nil, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromRootNode")
+			return nil, false, sdk.WrapError(err, "unable to processStartFromRootNode")
 		}
 		report, _ = report.Merge(r1, nil)
+
+		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
+		if err != nil {
+			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
+		}
+		report.Merge(r2, nil) // nolint
+
 		return report, conditionOK, nil
 	}
 
@@ -93,7 +107,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 	if err != nil {
-		return nil, false, sdk.WrapError(err, "processWorkflowDataRun> unable to compute workflow run status")
+		return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 	}
 	report.Merge(r1, nil) // nolint
 
@@ -109,7 +123,7 @@ func computeAndUpdateWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor,
 	_, next := observability.Span(ctx, "workflow.computeAndUpdateWorkflowRunStatus")
 	if err := syncNodeRuns(db, wr, LoadRunOptions{}); err != nil {
 		next()
-		return report, sdk.WrapError(err, "computeAndUpdateWorkflowRunStatus> Unable to sync workflow node runs")
+		return report, sdk.WrapError(err, "unable to sync workflow node runs")
 	}
 	next()
 
@@ -132,7 +146,7 @@ func computeAndUpdateWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor,
 	}
 	wr.Status = newStatus
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
-		return report, sdk.WrapError(err, "computeAndUpdateWorkflowRunStatus>")
+		return report, sdk.WithStack(err)
 	}
 	return report, nil
 }
