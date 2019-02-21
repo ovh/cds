@@ -61,6 +61,31 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 	var projects = map[int64]sdk.Project{}
 
 	for i, r := range res {
+		// Force delete workflow runs if any
+		n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(db, r.ID)
+		if err != nil {
+			log.Error("unable to mark workflow runs to delete with workflow_id %d: %v", r.ID, err)
+			continue
+		}
+		if n > 0 {
+			// If there is workflow runs to delete, wait for it...
+			if workflowRunsMarkToDelete != nil {
+				observability.Record(ctx, workflowRunsMarkToDelete, int64(n))
+			}
+			continue
+		}
+
+		// Checks if there is any workflow_runs
+		nbWorkflowRuns, err := db.SelectInt("select count(1) from workflow_run where workflow_id = $1", r.ID)
+		if err != nil {
+			log.Error("unable to count workflow runs for workflow_id %d: %v", r.ID, err)
+			continue
+		}
+		if nbWorkflowRuns > 0 {
+			log.Info("skip workflow %d deletion because there are still %d workflow_runs to delete", r.ID, nbWorkflowRuns)
+			continue
+		}
+
 		proj, has := projects[r.ProjectID]
 		if !has {
 			p, err := project.LoadByID(db, store, r.ProjectID, nil)
@@ -75,18 +100,6 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 		w, err := workflow.LoadByID(db, store, &proj, r.ID, nil, workflow.LoadOptions{})
 		if err != nil {
 			log.Warning("unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
-			n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(db, r.ID)
-			if err != nil {
-				log.Error("unable to mark workflow runs to delete with workflow_id %d: %v", r.ID, err)
-				continue
-			}
-			if n > 0 {
-				// If there is workflow runs to delete, wait for it...
-				if workflowRunsMarkToDelete != nil {
-					observability.Record(ctx, workflowRunsMarkToDelete, int64(n))
-				}
-				continue
-			}
 
 			if _, err := db.Exec("delete from workflow_node where workflow_id = $1", r.ID); err != nil {
 				log.Error("Unable to delete from workflow_node with workflow_id %d: %v", r.ID, err)
