@@ -18,7 +18,7 @@ import (
 
 //Initialize starts goroutines for workflows
 func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap, workflowRunsMarkToDelete, workflowRunsDeleted *stats.Int64Measure) {
-	tickPurge := time.NewTicker(30 * time.Minute)
+	tickPurge := time.NewTicker(15 * time.Minute)
 	defer tickPurge.Stop()
 
 	for {
@@ -146,18 +146,21 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 // deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
 func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, workflowRunsDeleted *stats.Int64Measure) error {
 	var ids []int64
-	if _, err := db.Select(&ids, "SELECT id FROM workflow_run WHERE to_delete = true ORDER BY id ASC LIMIT 1000"); err != nil {
+	if _, err := db.Select(&ids, "SELECT id FROM workflow_run WHERE to_delete = true ORDER BY id ASC LIMIT 2000"); err != nil {
 		return err
 	}
 
 	for _, id := range ids {
-		if _, err := db.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", id); err != nil {
+		res, err := db.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", id)
+		if err != nil {
 			log.Error("deleteWorkflowRunsHistory> unable to delete workflow run %d: %v", id, err)
 			continue
 		}
+		n, _ := res.RowsAffected()
 		if workflowRunsDeleted != nil {
-			observability.Record(ctx, workflowRunsDeleted, 1)
+			observability.Record(ctx, workflowRunsDeleted, n)
 		}
+		time.Sleep(10 * time.Millisecond) // avoid DDOS the database
 	}
 	return nil
 }
