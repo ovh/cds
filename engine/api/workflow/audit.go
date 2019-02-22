@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
@@ -31,6 +32,8 @@ var (
 func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
 	chanEvent := make(chan sdk.Event)
 	event.Subscribe(chanEvent)
+	deleteTicker := time.NewTicker(15 * time.Minute)
+	defer deleteTicker.Stop()
 
 	db := DBFunc()
 	for {
@@ -39,6 +42,10 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
 			if c.Err() != nil {
 				log.Error("ComputeWorkflowAudit> Exiting: %v", c.Err())
 				return
+			}
+		case <-deleteTicker.C:
+			if err := purgeAudits(DBFunc()); err != nil {
+				log.Error("ComputeWorkflowAudit> Purge error: %v", c)
 			}
 		case e := <-chanEvent:
 			if !strings.HasPrefix(e.EventType, "sdk.EventWorkflow") {
@@ -220,4 +227,39 @@ func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 		ProjectKey: e.ProjectKey,
 		WorkflowID: wEvent.WorkflowID,
 	})
+}
+
+const keepAudits = 50
+
+func purgeAudits(db gorp.SqlExecutor) error {
+	var nbAuditsPerWorkflowID = []struct {
+		WorkflowID int64 `db:"workflow_id"`
+		NbAudits   int64 `db:"nb_audits"`
+	}{}
+
+	query := `select workflow_id, count(id) "nb_audits" from workflow_audit group by workflow_id having count(id)  > $1`
+	if _, err := db.Select(&nbAuditsPerWorkflowID, query, keepAudits); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	for _, r := range nbAuditsPerWorkflowID {
+		log.Debug("purgeAudits> deleting audits for workflow %d (%d audits)", r.WorkflowID, r.NbAudits)
+		var ids []int64
+		query = `select id from workflow_audit where workflow_id = $1 order by created asc offset $2`
+		if _, err := db.Select(&ids, query, r.WorkflowID, keepAudits); err != nil {
+			return sdk.WithStack(err)
+		}
+		for _, id := range ids {
+			if err := deleteAudit(db, id); err != nil {
+				log.Error("purgeAudits> unable to delete audit %d: %v", id, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func deleteAudit(db gorp.SqlExecutor, id int64) error {
+	_, err := db.Exec(`delete from workflow_audit where id = $1`, id)
+	return sdk.WithStack(err)
 }

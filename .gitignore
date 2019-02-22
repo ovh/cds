@@ -22,6 +22,7 @@ cover.html
 npm-debug.log
 debug.test
 .tmp
+contrib/**/dist
 
 # UI
 ui/node_modules
