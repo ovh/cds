@@ -24,7 +24,6 @@ var (
 		arg: sdk.Pipeline{
 			Name:        "MyPipeline t1_1",
 			Description: "my description",
-			Type:        sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -155,7 +154,6 @@ var (
 		expected: Pipeline{
 			Name:        "MyPipeline",
 			Description: "my description",
-			Type:        "build",
 		},
 	}
 
@@ -163,7 +161,6 @@ var (
 		name: "Pipeline with 1 stage and 2 jobs",
 		arg: sdk.Pipeline{
 			Name: "MyPipeline t1_2",
-			Type: sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -244,7 +241,6 @@ var (
 		},
 		expected: Pipeline{
 			Name: "MyPipeline",
-			Type: "build",
 		},
 	}
 
@@ -252,7 +248,6 @@ var (
 		name: "Pipeline with 2 stages and 2 jobs",
 		arg: sdk.Pipeline{
 			Name: "MyPipeline t2_2",
-			Type: sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -415,7 +410,6 @@ var (
 		},
 		expected: Pipeline{
 			Name: "MyPipeline",
-			Type: "build",
 		},
 	}
 
@@ -469,7 +463,6 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
 		assert.Equal(t, tc.arg.Description, transformedP.Description)
-		assert.Equal(t, tc.arg.Type, transformedP.Type)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool
@@ -697,7 +690,6 @@ func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 		t.Log(string(b))
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
-		assert.Equal(t, tc.arg.Type, transformedP.Type)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool

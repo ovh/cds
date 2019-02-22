@@ -26,7 +26,6 @@ func Test_ProjectPerms(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -86,7 +85,6 @@ func Test_ProjectPerms(t *testing.T) {
 
 	newPip := sdk.Pipeline{
 		Name: "pip-" + sdk.RandomString(5),
-		Type: sdk.BuildPipeline,
 	}
 	uri = router.GetRoute("POST", api.addPipelineHandler, vars)
 	test.NotEmpty(t, uri)

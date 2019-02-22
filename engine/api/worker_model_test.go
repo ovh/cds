@@ -153,7 +153,6 @@ func Test_WorkerModelUsage(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))

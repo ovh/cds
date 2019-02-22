@@ -33,7 +33,6 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       sdk.RandomString(10),
-		Type:       sdk.BuildPipeline,
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
@@ -95,7 +94,6 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       sdk.RandomString(10),
-		Type:       sdk.BuildPipeline,
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, admin))
