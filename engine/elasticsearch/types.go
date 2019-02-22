@@ -26,6 +26,6 @@ type Configuration struct {
 		Password     string `toml:"password" json:"-"`
 		IndexEvents  string `toml:"indexEvents" commented:"true" comment:"index to store CDS events" json:"indexEvents"`
 		IndexMetrics string `toml:"indexMetrics" commented:"true" comment:"index to store CDS metrics" json:"indexMetrics"`
-	} `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n######################" json:"elasticsearch"`
-	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
+	} `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \nSupport for elasticsearch 5.6\n######################" json:"elasticsearch"`
+	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS Indexes Settings \n######################" json:"api"`
 }

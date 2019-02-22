@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
@@ -604,8 +605,20 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	return int64(i), nil
 }
 
+// PurgeAllWorkflowRunsByWorkflowID marks all workflow to delete given a workflow
+func PurgeAllWorkflowRunsByWorkflowID(db gorp.SqlExecutor, id int64) (int, error) {
+	query := "UPDATE workflow_run SET to_delete = true WHERE workflow_id = $1"
+	res, err := db.Exec(query, id)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	n, _ := res.RowsAffected() // nolint
+	log.Info("PurgeAllWorkflowRunsByWorkflowID> will delete %d workflow runs for workflow %d", n, id)
+	return int(n), nil
+}
+
 // PurgeWorkflowRun mark all workflow run to delete
-func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
+func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow, workflowRunsMarkToDelete *stats.Int64Measure) error {
 	ids := []struct {
 		Ids string `json:"ids" db:"ids"`
 	}{}
@@ -654,9 +667,15 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 				LIMIT 100
 			)
 		`
-		if _, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String()); err != nil {
+		res, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String())
+		if err != nil {
 			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
+		}
+
+		n, _ := res.RowsAffected()
+		if workflowRunsMarkToDelete != nil {
+			observability.Record(ctx, workflowRunsMarkToDelete, n)
 		}
 
 		return nil
@@ -751,9 +770,15 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	}
 
 	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`
-	if _, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ",")); err != nil {
+	res, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ","))
+	if err != nil {
 		log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 		return err
+	}
+
+	n, _ := res.RowsAffected()
+	if workflowRunsMarkToDelete != nil {
+		observability.Record(ctx, workflowRunsMarkToDelete, n)
 	}
 	return nil
 }

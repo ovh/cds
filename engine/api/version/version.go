@@ -30,7 +30,7 @@ func Upsert(db gorp.SqlExecutor) error {
 
 // IsFreshInstall return true if it's a fresh installation of CDS and not an upgrade
 func IsFreshInstall(db gorp.SqlExecutor) (bool, error) {
-	count, err := db.SelectInt(`SELECT COUNT(id) FROM "user"`)
+	count, err := db.SelectInt(`SELECT COUNT(id) FROM "cds_migration"`)
 	if err != nil {
 		return false, sdk.WithStack(err)
 	}

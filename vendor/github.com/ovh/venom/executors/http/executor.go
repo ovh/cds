@@ -2,12 +2,14 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -47,6 +49,7 @@ type Executor struct {
 	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
 	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
+	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -104,6 +107,16 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: e.IgnoreVerifySSL},
 	}
+
+	if len(e.UnixSock) > 0 {
+		tr.DialContext = func(_ context.Context, _, _ string) (net.Conn, error) {
+			return net.DialUnix("unix", nil, &net.UnixAddr{
+				Name: e.UnixSock,
+				Net:  "unix",
+			})
+		}
+	}
+
 	if len(e.Proxy) > 0 {
 		proxyURL, err := url.Parse(e.Proxy)
 		if err != nil {
