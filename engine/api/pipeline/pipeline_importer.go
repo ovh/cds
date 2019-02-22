@@ -174,7 +174,6 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		}
 	}
 
-	pip.Type = oldPipeline.Type
 	errU := UpdatePipeline(db, pip)
 
 	if oldPipeline.Name != pip.Name {

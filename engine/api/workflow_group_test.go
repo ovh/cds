@@ -31,7 +31,6 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -99,7 +98,6 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -161,7 +159,6 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -257,7 +254,6 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -336,7 +332,6 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -424,7 +419,6 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -576,7 +570,6 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 

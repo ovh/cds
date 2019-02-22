@@ -91,9 +91,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
@@ -130,9 +128,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
@@ -186,9 +182,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
@@ -230,9 +224,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
@@ -273,9 +265,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
@@ -358,9 +348,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
@@ -447,9 +435,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
@@ -526,9 +512,7 @@ func TestImportUpdate(t *testing.T) {
 		args: args{
 			u:    u,
 			pkey: sdk.RandomString(7),
-			pip: &sdk.Pipeline{
-				Type: sdk.BuildPipeline,
-			},
+			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
 			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)

@@ -37,7 +37,7 @@ export class PipelineService {
         params = params.append('withApplications', 'true');
         params = params.append('withWorkflows', 'true');
         params = params.append('withEnvironments', 'true');
-        return this._http.get<Pipeline>('/project/' + key + '/pipeline/' + pipName, {params: params});
+        return this._http.get<Pipeline>('/project/' + key + '/pipeline/' + pipName, { params: params });
     }
 
     /**
@@ -62,10 +62,10 @@ export class PipelineService {
         params = params.append('format', 'yaml');
 
         if (!pipName) {
-          return this._http.post<Array<string>>(`/project/${key}/import/pipeline`, pipelineCode, {headers, params});
+            return this._http.post<Array<string>>(`/project/${key}/import/pipeline`, pipelineCode, { headers, params });
         }
 
-        return this._http.put<Array<string>>(`/project/${key}/import/pipeline/${pipName}`, pipelineCode, {headers, params});
+        return this._http.put<Array<string>>(`/project/${key}/import/pipeline/${pipName}`, pipelineCode, { headers, params });
     }
 
     /**
@@ -106,16 +106,8 @@ export class PipelineService {
      * @param pipName Pipeline name
      * @returns {Observable<Application[]>}
      */
-    getApplications(key: string,  pipName: string): Observable<Application[]> {
+    getApplications(key: string, pipName: string): Observable<Application[]> {
         return this._http.get<Application[]>('/project/' + key + '/pipeline/' + pipName + '/application');
-    }
-
-    /**
-     * Get the list of pipeline type
-     * @returns {Observable<Array<string>>}
-     */
-    getPipelineTypes(): Observable<Array<string>> {
-        return this._http.get<Array<string>>('/pipeline/type');
     }
 
     /**
@@ -243,7 +235,7 @@ export class PipelineService {
         params = params.append('format', 'yaml');
         params = params.append('withPermissions', 'true');
 
-        return this._http.get<string>('/project/' + key + '/export/pipeline/' + pipName, {params, responseType: <any>'text'});
+        return this._http.get<string>('/project/' + key + '/export/pipeline/' + pipName, { params, responseType: <any>'text' });
     }
 
     /**
@@ -257,6 +249,6 @@ export class PipelineService {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
 
-        return this._http.post<Pipeline>('/project/' + key + '/preview/pipeline', pipImportCode, {headers, params});
+        return this._http.post<Pipeline>('/project/' + key + '/preview/pipeline', pipImportCode, { headers, params });
     }
 }

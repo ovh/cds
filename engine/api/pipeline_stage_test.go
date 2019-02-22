@@ -80,7 +80,6 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       "TEST_PIPELINE",
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
@@ -135,7 +134,6 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       "TEST_PIPELINE",
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
@@ -207,7 +205,6 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       "TEST_PIPELINE",
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
@@ -314,7 +311,6 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       "TEST_PIPELINE",
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
@@ -448,7 +444,6 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       "TEST_PIPELINE",
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
@@ -507,7 +502,6 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       "TEST_PIPELINE",
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}

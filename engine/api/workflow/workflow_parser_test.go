@@ -30,7 +30,6 @@ func TestParseAndImport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pipeline",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 

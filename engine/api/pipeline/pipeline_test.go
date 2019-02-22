@@ -48,7 +48,6 @@ func TestInsertPipeline(t *testing.T) {
 			name: "InsertPipeline should fail with sdk.ErrInvalidProject",
 			p: &sdk.Pipeline{
 				Name: "Name",
-				Type: sdk.DeploymentPipeline,
 			},
 			wantErr: true,
 		},
@@ -56,7 +55,6 @@ func TestInsertPipeline(t *testing.T) {
 			name: "InsertPipeline should not fail",
 			p: &sdk.Pipeline{
 				Name:      "Name",
-				Type:      sdk.DeploymentPipeline,
 				ProjectID: p.ID,
 			},
 			wantErr: false,
@@ -84,7 +82,6 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 
 	pip := &sdk.Pipeline{
 		Name:      "Name",
-		Type:      sdk.DeploymentPipeline,
 		ProjectID: p.ID,
 		Parameter: []sdk.Parameter{
 			{
@@ -123,7 +120,6 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 
 	pip := &sdk.Pipeline{
 		Name:      "Name",
-		Type:      sdk.DeploymentPipeline,
 		ProjectID: p.ID,
 		Parameter: []sdk.Parameter{
 			{
@@ -158,7 +154,6 @@ func TestLoadByWorkflowID(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))

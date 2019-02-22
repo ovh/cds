@@ -1,91 +1,82 @@
-<div *ngIf="ready;else loadingArea" class="scrollable">
+<div class="scrollable">
     <div id="AddPipeline">
         <div class="ui form">
             <h2>{{ 'pipeline_create' | translate }}</h2>
 
             <div class="ui grid">
-              <div class="ui row">
-                <div class="one wide column"></div>
-                <div class="fourteen wide column">
-                  <div class="two ui buttons">
-                    <button class="ui button"
-                      type="button"
-                      [class.active]="!asCode" [class.blue]="!asCode"
-                      (click)="asCode = false">
-                      {{'common_create' | translate}}
-                    </button>
-                    <button class="ui button" type="button" [class.blue]="asCode" [class.active]="asCode" (click)="asCode = true">
-                      {{'common_import' | translate}}
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <ng-container *ngIf="asCode">
-                  <div class="ui row">
-                    <div class="sixteen wide column centered">
-                        <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
-                        </app-upload-button>
-                    </div>
-                  </div>
-                  <div class="ui row">
+                <div class="ui row">
                     <div class="one wide column"></div>
                     <div class="fourteen wide column">
-                        <div class="ui horizontal divider">
-                          {{'common_or' | translate}}
+                        <div class="two ui buttons">
+                            <button class="ui button" type="button" [class.active]="!asCode" [class.blue]="!asCode"
+                                (click)="asCode = false">
+                                {{'common_create' | translate}}
+                            </button>
+                            <button class="ui button" type="button" [class.blue]="asCode" [class.active]="asCode"
+                                (click)="asCode = true">
+                                {{'common_import' | translate}}
+                            </button>
                         </div>
                     </div>
-                  </div>
-              </ng-container>
+                </div>
+                <ng-container *ngIf="asCode">
+                    <div class="ui row">
+                        <div class="sixteen wide column centered">
+                            <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
+                            </app-upload-button>
+                        </div>
+                    </div>
+                    <div class="ui row">
+                        <div class="one wide column"></div>
+                        <div class="fourteen wide column">
+                            <div class="ui horizontal divider">
+                                {{'common_or' | translate}}
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
 
-              <div class="ui row">
-                <div class="one wide column">
-                </div>
-                <div class="fourteen wide column" *ngIf="!asCode">
-                    <div class="field">
-                        <label>{{'pipeline_name' | translate}}</label>
-                        <input type="text" name="pipname" [(ngModel)]="newPipeline.name">
-                        <div class="ui error message" *ngIf="pipPatternError">
-                            {{ 'pipeline_name_error' | translate }}
+                <div class="ui row">
+                    <div class="one wide column">
+                    </div>
+                    <div class="fourteen wide column" *ngIf="!asCode">
+                        <div class="field">
+                            <label>{{'pipeline_name' | translate}}</label>
+                            <input type="text" name="pipname" [(ngModel)]="newPipeline.name">
+                            <div class="ui error message" *ngIf="pipPatternError">
+                                {{ 'pipeline_name_error' | translate }}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>{{'pipeline_description' | translate}}</label>
+                            <textarea type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
+                        </div>
+                        <div class="field">
+                            <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">{{
+                                'btn_cancel' | translate }}</a>
+                            <button class="ui green right floated button" [class.loading]="loadingCreate"
+                                [class.disabled]="!newPipeline.name || newPipeline.name === ''" (click)="createPipeline()">{{
+                                'btn_create' | translate }}
+                            </button>
                         </div>
                     </div>
-                    <div class="field">
-                        <label>{{'pipeline_description' | translate}}</label>
-                        <textarea type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
-                    </div>
-                    <div class="field">
-                        <label>{{'pipeline_type' | translate}}</label>
-                        <sm-select [(model)]="newPipeline.type">
-                            <option *ngFor="let t of pipelineType" value="{{t}}">{{t}}</option>
-                        </sm-select>
-                    </div>
-                    <div class="field">
-                        <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">{{ 'btn_cancel' | translate }}</a>
-                        <button class="ui green right floated button" [class.loading]="loadingCreate" [class.disabled]="!newPipeline.name || newPipeline.name === ''"
-                                (click)="createPipeline()">{{ 'btn_create' | translate }}
-                        </button>
-                    </div>
-                </div>
-                <div class="fourteen wide column" *ngIf="asCode">
-                    <div class="field">
-                        <codemirror
-                            name="pipToImport"
-                            [(ngModel)]="pipToImport"
-                            (keydown)="updated = true"
-                            [config]="codeMirrorConfig" #codeMirror>
-                        </codemirror>
-                    </div>
-                    <div class="field">
-                        <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
-                        <button class="ui right floated green button" type="button" (click)="importPipeline()" *ngIf="asCode"
-                                [disabled]="!pipToImport" [class.loading]="loadingCreate">{{ 'btn_create' | translate }}
-                        </button>
+                    <div class="fourteen wide column" *ngIf="asCode">
+                        <div class="field">
+                            <codemirror name="pipToImport" [(ngModel)]="pipToImport" (keydown)="updated = true"
+                                [config]="codeMirrorConfig" #codeMirror>
+                            </codemirror>
+                        </div>
+                        <div class="field">
+                            <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate
+                                }}</button>
+                            <button class="ui right floated green button" type="button" (click)="importPipeline()"
+                                *ngIf="asCode" [disabled]="!pipToImport" [class.loading]="loadingCreate">{{
+                                'btn_create' | translate }}
+                            </button>
+                        </div>
                     </div>
                 </div>
-              </div>
             </div>
         </div>
     </div>
 </div>
-<ng-template #loadingArea>
-    <div class="ui text active loader">{{'common_loading' | translate}}...</div>
-</ng-template>

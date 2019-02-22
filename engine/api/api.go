@@ -233,21 +233,23 @@ type API struct {
 	warnChan            chan sdk.Event
 	Cache               cache.Store
 	Metrics             struct {
-		WorkflowRunFailed    *stats.Int64Measure
-		WorkflowRunStarted   *stats.Int64Measure
-		Sessions             *stats.Int64Measure
-		nbUsers              *stats.Int64Measure
-		nbApplications       *stats.Int64Measure
-		nbProjects           *stats.Int64Measure
-		nbGroups             *stats.Int64Measure
-		nbPipelines          *stats.Int64Measure
-		nbWorkflows          *stats.Int64Measure
-		nbArtifacts          *stats.Int64Measure
-		nbWorkerModels       *stats.Int64Measure
-		nbWorkflowRuns       *stats.Int64Measure
-		nbWorkflowNodeRuns   *stats.Int64Measure
-		nbMaxWorkersBuilding *stats.Int64Measure
-		queue                *stats.Int64Measure
+		WorkflowRunFailed        *stats.Int64Measure
+		WorkflowRunStarted       *stats.Int64Measure
+		Sessions                 *stats.Int64Measure
+		nbUsers                  *stats.Int64Measure
+		nbApplications           *stats.Int64Measure
+		nbProjects               *stats.Int64Measure
+		nbGroups                 *stats.Int64Measure
+		nbPipelines              *stats.Int64Measure
+		nbWorkflows              *stats.Int64Measure
+		nbArtifacts              *stats.Int64Measure
+		nbWorkerModels           *stats.Int64Measure
+		nbWorkflowRuns           *stats.Int64Measure
+		nbWorkflowNodeRuns       *stats.Int64Measure
+		nbMaxWorkersBuilding     *stats.Int64Measure
+		queue                    *stats.Int64Measure
+		WorkflowRunsMarkToDelete *stats.Int64Measure
+		WorkflowRunsDeleted      *stats.Int64Measure
 	}
 }
 
@@ -783,9 +785,18 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
 		}, a.PanicDump())
-	sdk.GoRoutine(ctx, "PushInElasticSearch", func(ctx context.Context) { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) }, a.PanicDump())
-	sdk.GoRoutine(ctx, "Metrics.pushInElasticSearch", func(ctx context.Context) { metrics.Init(ctx, a.DBConnectionFactory.GetDBMap) }, a.PanicDump())
-	sdk.GoRoutine(ctx, "Purge", func(ctx context.Context) { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) }, a.PanicDump())
+	sdk.GoRoutine(ctx, "PushInElasticSearch",
+		func(ctx context.Context) {
+			event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
+		}, a.PanicDump())
+	sdk.GoRoutine(ctx, "Metrics.pushInElasticSearch",
+		func(ctx context.Context) {
+			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
+		}, a.PanicDump())
+	sdk.GoRoutine(ctx, "Purge",
+		func(ctx context.Context) {
+			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+		}, a.PanicDump())
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),

@@ -341,7 +341,6 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	pip = new(sdk.Pipeline)
 	pip.Name = p.Name
 	pip.Description = p.Description
-	pip.Type = sdk.BuildPipeline
 
 	pip.Parameter = make([]sdk.Parameter, 0, len(p.Parameters))
 	//Compute parameters

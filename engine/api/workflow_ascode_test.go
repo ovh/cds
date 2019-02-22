@@ -128,7 +128,6 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
 	}
 	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
 

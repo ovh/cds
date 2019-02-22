@@ -295,7 +295,6 @@ func (api *API) InitRouter() {
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))
-	r.Handle("/pipeline/type", r.GET(api.getPipelineTypeHandler))
 	r.Handle("/notification/type", r.GET(api.getUserNotificationTypeHandler))
 	r.Handle("/notification/state", r.GET(api.getUserNotificationStateValueHandler))
 

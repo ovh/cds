@@ -223,7 +223,6 @@ func TestLoadUserWithGroup(t *testing.T) {
 	pipelinePip1 := &sdk.Pipeline{
 		Name:      "PIP1",
 		ProjectID: project1.ID,
-		Type:      sdk.BuildPipeline,
 	}
 
 	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, project1, pipelinePip1, nil)
@@ -476,7 +475,6 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, nil))

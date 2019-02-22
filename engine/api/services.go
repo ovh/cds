@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -143,13 +144,17 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 	}
 	defer tx.Rollback() // nolint
 
+	var srvConfig sdk.ServiceConfig
+	b, _ := json.Marshal(api.Config)
+	json.Unmarshal(b, &srvConfig) // nolint
+
 	srv := &sdk.Service{
 		Name:             event.GetCDSName(),
 		MonitoringStatus: api.Status(),
 		Hash:             string(hash),
 		LastHeartbeat:    time.Now(),
 		Type:             services.TypeAPI,
-		Config:           api.Config,
+		Config:           srvConfig,
 	}
 	if group.SharedInfraGroup != nil {
 		srv.GroupID = &group.SharedInfraGroup.ID

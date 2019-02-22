@@ -63,7 +63,6 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -836,7 +835,6 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	pip := &sdk.Pipeline{
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
-		Type:      "build",
 	}
 	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
 
@@ -971,7 +969,6 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	pip := &sdk.Pipeline{
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
-		Type:      "build",
 	}
 	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
 
