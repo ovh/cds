@@ -204,7 +204,7 @@ describe('Project', () => {
         });
     }));
 
-    it('rename application in project', async(() => {
+    it('update application in project', async(() => {
         const http = TestBed.get(HttpTestingController);
         let project = new Project();
         project.name = 'proj1';
@@ -231,7 +231,9 @@ describe('Project', () => {
             expect(state.project.application_names[0].name).toEqual('myApp');
         });
 
-        store.dispatch(new ProjectAction.RenameApplicationInProject({ previousAppName: 'myApp', newAppName: 'myAppRenamed' }));
+        application.name = 'myAppRenamed';
+        application.description = 'my desc';
+        store.dispatch(new ProjectAction.UpdateApplicationInProject({ previousAppName: 'myApp', changes: application }));
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
             expect(state.project.name).toEqual('proj1');
@@ -239,6 +241,7 @@ describe('Project', () => {
             expect(state.project.application_names).toBeTruthy();
             expect(state.project.application_names.length).toEqual(1);
             expect(state.project.application_names[0].name).toEqual('myAppRenamed');
+            expect(state.project.application_names[0].description).toEqual('my desc');
         });
     }));
 
@@ -294,6 +297,40 @@ describe('Project', () => {
             expect(state.project.workflow_names).toBeTruthy();
             expect(state.project.workflow_names.length).toEqual(1);
             expect(state.project.workflow_names[0].name).toEqual('myWorkflow');
+        });
+    }));
+
+    it('update workflow in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        let workflow = new Workflow();
+        workflow.name = 'myWorkflow';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            workflow_names: [{ id: 1, name: workflow.name }]
+        });
+
+        workflow.name = 'myNewName';
+        workflow.description = 'myDesc';
+        store.dispatch(new ProjectAction.UpdateWorkflowInProject({
+            previousWorkflowName: 'myWorkflow',
+            changes: workflow
+        }));
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.workflow_names).toBeTruthy();
+            expect(state.project.workflow_names.length).toEqual(1);
+            expect(state.project.workflow_names[0].name).toEqual('myNewName');
+            expect(state.project.workflow_names[0].description).toEqual('myDesc');
         });
     }));
 

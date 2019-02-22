@@ -142,10 +142,9 @@ export class ApplicationsState {
                     ...state,
                     applications,
                 });
-                // todo dispatch action on project state to update from application_names
-                ctx.dispatch(new ActionProject.RenameApplicationInProject({
+                ctx.dispatch(new ActionProject.UpdateApplicationInProject({
                     previousAppName: action.payload.applicationName,
-                    newAppName: app.name
+                    changes: app
                 }));
             } else {
                 let applicationUpdated = {

@@ -89,9 +89,9 @@ export class AddApplicationInProject {
     static readonly type = '[Project] Add application in Project';
     constructor(public payload: Application) { }
 }
-export class RenameApplicationInProject {
-    static readonly type = '[Project] Rename application in Project';
-    constructor(public payload: { previousAppName: string, newAppName: string }) { }
+export class UpdateApplicationInProject {
+    static readonly type = '[Project] Update application in Project';
+    constructor(public payload: { previousAppName: string, changes: Application }) { }
 }
 export class DeleteApplicationInProject {
     static readonly type = '[Project] Delete application in Project';
@@ -103,9 +103,9 @@ export class AddWorkflowInProject {
     static readonly type = '[Project] Add Workflow in Project';
     constructor(public payload: Workflow) { }
 }
-export class RenameWorkflowInProject {
-    static readonly type = '[Project] Rename workflow in Project';
-    constructor(public payload: { previousWorkflowName: string, newWorkflowName: string }) { }
+export class UpdateWorkflowInProject {
+    static readonly type = '[Project] Update workflow in Project';
+    constructor(public payload: { previousWorkflowName: string, changes: Workflow }) { }
 }
 export class DeleteWorkflowInProject {
     static readonly type = '[Project] Delete Workflow in Project';

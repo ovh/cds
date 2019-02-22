@@ -396,19 +396,23 @@ export class ProjectState {
         });
     }
 
-    @Action(ProjectAction.RenameApplicationInProject)
-    renameApplication(ctx: StateContext<ProjectStateModel>, action: ProjectAction.RenameApplicationInProject) {
+    @Action(ProjectAction.UpdateApplicationInProject)
+    updateApplication(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateApplicationInProject) {
         const state = ctx.getState();
         let application_names = state.project.application_names ? state.project.application_names.concat([]) : [];
 
         if (!application_names.length) {
             let idName = new IdName();
-            idName.name = action.payload.newAppName;
+            idName.name = action.payload.changes.name;
+            idName.description = action.payload.changes.description;
+            idName.icon = action.payload.changes.icon;
             application_names = [idName]
         } else {
             application_names = application_names.map((app) => {
                 if (app.name === action.payload.previousAppName) {
-                    app.name = action.payload.newAppName;
+                    app.name = action.payload.changes.name;
+                    app.description = action.payload.changes.description;
+                    app.icon = action.payload.changes.icon;
                 }
                 return app;
             })
@@ -457,6 +461,35 @@ export class ProjectState {
         return ctx.setState({
             ...state,
             project: Object.assign({}, state.project, { workflows, workflow_names }),
+        });
+    }
+
+    @Action(ProjectAction.UpdateWorkflowInProject)
+    updateWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateWorkflowInProject) {
+        const state = ctx.getState();
+        let workflows = state.project.workflows ? state.project.workflows.concat([]) : [];
+        let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
+
+        workflows = workflows.map((workflow) => {
+            if (workflow.name === action.payload.previousWorkflowName) {
+                return action.payload.changes;
+            }
+            return workflow;
+        });
+        workflow_names = workflow_names.map((workflow) => {
+            if (workflow.name === action.payload.previousWorkflowName) {
+                return Object.assign({}, workflow, <IdName>{
+                    name: action.payload.changes.name,
+                    description: action.payload.changes.description,
+                    icon: action.payload.changes.icon
+                });
+            }
+            return workflow;
+        });
+
+        return ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ workflows, workflow_names }),
         });
     }
 

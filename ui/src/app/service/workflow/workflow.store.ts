@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { AddLabelWorkflowInProject, AddWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
+import * as projectActions from 'app/store/project.action';
 import { List, Map } from 'immutable';
 import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
@@ -12,7 +12,6 @@ import { Workflow, WorkflowTriggerConditionCache } from '../../model/workflow.mo
 import { NavbarService } from '../navbar/navbar.service';
 import { ProjectStore } from '../project/project.store';
 import { WorkflowService } from './workflow.service';
-
 
 @Injectable()
 export class WorkflowStore {
@@ -107,7 +106,7 @@ export class WorkflowStore {
     addWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
         return this._workflowService.addWorkflow(key, workflow)
             .pipe(tap((wf) => {
-                this.store.dispatch(new AddWorkflowInProject(wf));
+                this.store.dispatch(new projectActions.AddWorkflowInProject(wf));
             }));
     }
 
@@ -117,6 +116,10 @@ export class WorkflowStore {
             let store = this._workflows.getValue();
             w.permission = workflow.permission;
             this._workflows.next(store.set(workflowKey, w));
+            this.store.dispatch(new projectActions.UpdateWorkflowInProject({
+                previousWorkflowName: name,
+                changes: workflow
+            }));
             return w;
         }));
     }
@@ -131,6 +134,10 @@ export class WorkflowStore {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
             this._workflows.next(store.set(workflowKey, w));
+            this.store.dispatch(new projectActions.UpdateWorkflowInProject({
+                previousWorkflowName: workflow.name,
+                changes: workflow
+            }));
             return w;
         }));
     }
@@ -175,6 +182,7 @@ export class WorkflowStore {
                         let store = this._workflows.getValue();
                         this._workflows.next(store.set(workflowKey, wf));
                     }
+                    this.store.dispatch(new projectActions.AddWorkflowInProject(wf));
                     return wf;
                 })
             );
@@ -210,6 +218,7 @@ export class WorkflowStore {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
             this._workflows.next(store.delete(workflowKey));
+            this.store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: workflow.name }));
             return w;
         }));
     }
@@ -283,7 +292,7 @@ export class WorkflowStore {
         return this._workflowService.linkLabel(key, workflowName, label)
             .pipe(
                 tap((lbl) => {
-                    this.store.dispatch(new AddLabelWorkflowInProject({ workflowName, label }));
+                    this.store.dispatch(new projectActions.AddLabelWorkflowInProject({ workflowName, label }));
                 }),
                 map((lbl) => {
                     this._projectStore.resync(key, [
@@ -313,7 +322,7 @@ export class WorkflowStore {
         return this._workflowService.unlinkLabel(key, workflowName, labelId)
             .pipe(
                 tap((lbl) => {
-                    this.store.dispatch(new DeleteLabelWorkflowInProject({ workflowName, labelId }));
+                    this.store.dispatch(new projectActions.DeleteLabelWorkflowInProject({ workflowName, labelId }));
                 }),
                 map((lbl) => {
                     this._projectStore.resync(key, [
