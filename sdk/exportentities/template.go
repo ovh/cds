@@ -84,7 +84,7 @@ func (w Template) GetTemplate(wkf []byte, pips, apps, envs [][]byte) sdk.Workflo
 			Name: w.Group,
 		},
 		Description:  w.Description,
-		Value:        base64.StdEncoding.EncodeToString(wkf),
+		Workflow:     base64.StdEncoding.EncodeToString(wkf),
 		Pipelines:    make([]sdk.PipelineTemplate, len(pips)),
 		Applications: make([]sdk.ApplicationTemplate, len(apps)),
 		Environments: make([]sdk.EnvironmentTemplate, len(envs)),

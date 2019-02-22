@@ -57,7 +57,7 @@ func Pull(wt *sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) error 
 		return sdk.WrapError(err, "Unable to copy tmpl buffer")
 	}
 
-	data, err := base64.StdEncoding.DecodeString(wt.Value)
+	data, err := base64.StdEncoding.DecodeString(wt.Workflow)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to decode workflow value")
 	}

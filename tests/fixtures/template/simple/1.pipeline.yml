@@ -7,5 +7,5 @@ jobs:
   stage: Stage-1
   steps:
   - script:
-    - echo "Hello World!"
+    - echo "Hello World 👍!"
     - echo "[[range .params.data]][[.]][[end]]"
