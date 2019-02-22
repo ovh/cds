@@ -121,7 +121,13 @@ export class ProjectShowComponent implements OnInit {
             key: 'advanced'
         }];
 
-        this._route.queryParams.subscribe((params) => {
+        this._route.queryParams.subscribe((queryParams) => {
+            if (queryParams['tab']) {
+                let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
+            }
             this._route.params.subscribe(routeParams => {
                 const key = routeParams['key'];
                 if (key) {

@@ -1,10 +1,10 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash';
+import { Pipeline } from '../../../../model/pipeline.model';
+import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-admin',
@@ -16,7 +16,6 @@ export class PipelineAdminComponent implements OnInit {
     public loading = false;
 
     editablePipeline: Pipeline;
-    pipelineTypes: Array<string>;
     oldName: string;
 
     @Input() project;
@@ -28,15 +27,17 @@ export class PipelineAdminComponent implements OnInit {
     }
 
     constructor(private _pipStore: PipelineStore, private _toast: ToastService, private _translate: TranslateService,
-                private _router: Router) {
-        this._pipStore.getPipelineType().subscribe( types => {
-            this.pipelineTypes = types.toArray();
-        });
+        private _router: Router) {
     }
 
     ngOnInit(): void {
         if (this.editablePipeline.permission !== 7) {
-            this._router.navigate(['/project', this.project.key, 'pipeline', this.editablePipeline.name], {queryParams: {tab: 'pipeline'}});
+            this._router.navigate([
+                '/project',
+                this.project.key,
+                'pipeline',
+                this.editablePipeline.name
+            ], { queryParams: { tab: 'pipeline' } });
         }
     }
 
@@ -47,7 +48,7 @@ export class PipelineAdminComponent implements OnInit {
             this._toast.success('', this._translate.instant('pipeline_updated'));
             this._router.navigate(
                 ['project', this.project.key, 'pipeline', this.editablePipeline.name],
-                { queryParams: { 'tab' : 'advanced' }}
+                { queryParams: { 'tab': 'advanced' } }
             );
         }, () => {
             this.loading = false;
@@ -61,7 +62,7 @@ export class PipelineAdminComponent implements OnInit {
             this._toast.success('', this._translate.instant('pipeline_deleted'));
             this._router.navigate(
                 ['project', this.project.key],
-                { queryParams: { 'tab' : 'pipelines' }}
+                { queryParams: { 'tab': 'pipelines' } }
             );
         }, () => {
             this.loading = false;

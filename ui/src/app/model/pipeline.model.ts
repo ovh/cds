@@ -17,27 +17,15 @@ export class PipelineStatus {
     static STOPPED = 'Stopped';
 
     static neverRun(status: string) {
-      if (status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED) {
-        return true;
-      }
-
-      return false;
+        return status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED;
     }
 
     static isActive(status: string) {
-      if (status === this.WAITING || status === this.BUILDING) {
-        return true;
-      }
-
-      return false;
+        return status === this.WAITING || status === this.BUILDING;
     }
 
     static isDone(status: string) {
-      if (status === this.SUCCESS || status === this.STOPPED || status === this.FAIL) {
-        return true;
-      }
-
-      return false;
+        return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL;
     }
 }
 
@@ -61,7 +49,6 @@ export class Pipeline {
     name: string;
     description: string;
     icon: string;
-    type: string;
     stages: Array<Stage>;
     parameters: Array<Parameter>;
     permission: number;
@@ -78,14 +65,11 @@ export class Pipeline {
 
     // Return true if pattern is good
     public static checkName(name: string): boolean {
-      if (!name) {
-          return false;
-      }
+        if (!name) {
+            return false;
+        }
 
-      if (!pipelineNamePattern.test(name)) {
-          return false;
-      }
-      return true;
+        return pipelineNamePattern.test(name);
     }
 
     public static hasParameterWithoutValue(pipeline: Pipeline) {
@@ -110,7 +94,7 @@ export class Pipeline {
             m[o.name] = o;
             return m;
         }, {});
-        ref.forEach( a => {
+        ref.forEach(a => {
             if (!mapParam[a.name]) {
                 current.push(a)
             }
@@ -197,12 +181,6 @@ export interface ServiceLog {
 
 export class LogDate {
     seconds: number;
-}
-
-export enum PipelineType {
-    build,
-    testing,
-    deployment
 }
 
 export class Tests {

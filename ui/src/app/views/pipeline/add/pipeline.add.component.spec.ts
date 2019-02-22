@@ -32,7 +32,6 @@ describe('CDS: Pipeline Add Component', () => {
     let pipStore: PipelineStore;
     let backend: MockBackend;
     let router: Router;
-    let prjStore: ProjectStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -70,7 +69,6 @@ describe('CDS: Pipeline Add Component', () => {
         backend = injector.get(MockBackend);
         pipStore = injector.get(PipelineStore);
         router = injector.get(Router);
-        prjStore = injector.get(ProjectStore);
     });
 
     afterEach(() => {
@@ -78,7 +76,6 @@ describe('CDS: Pipeline Add Component', () => {
         pipStore = undefined;
         backend = undefined;
         router = undefined;
-        prjStore = undefined;
     });
 
     it('should create an empty pipeline', fakeAsync(() => {
@@ -100,7 +97,6 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.project = project;
         fixture.componentInstance.newPipeline = new Pipeline();
         fixture.componentInstance.newPipeline.name = 'myPip';
-        fixture.componentInstance.newPipeline.type = 'build';
 
         spyOn(pipStore, 'createPipeline').and.callFake(() => {
             return of(fixture.componentInstance.newPipeline);

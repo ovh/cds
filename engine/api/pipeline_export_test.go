@@ -22,7 +22,6 @@ func Test_getPipelineExportHandler(t *testing.T) {
 	pip := &sdk.Pipeline{
 		ProjectID: proj.ID,
 		Name:      pipName,
-		Type:      sdk.BuildPipeline,
 	}
 
 	if err := pipeline.InsertPipeline(db, api.Cache, proj, pip, u); err != nil {

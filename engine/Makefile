@@ -14,7 +14,6 @@ TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 GO_BUILD = go build -v
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
-GO_GOVERALLS = ${GOPATH}/bin/goveralls
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 
@@ -39,9 +38,6 @@ $(GO_LINT):
 
 $(GO_COV_MERGE):
 	go get -u github.com/wadey/gocovmerge
-
-$(GO_GOVERALLS):
-	go get -u github.com/mattn/goveralls
 
 $(GO_GOJUNIT):
 	go get -u github.com/jstemmer/go-junit-report
@@ -94,7 +90,7 @@ test: test-config clean
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
-test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
+test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@echo "Generating unit tests coverage..."
 	@$(GO_COV_MERGE) `find ../ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
@@ -102,8 +98,6 @@ test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@if [ ! -z "${CDS_VERSION}" ]; then \
 		echo "Sending coverage report to CDS"; \
 		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
-		echo "Pushing results to coveralls"; \
-		$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}; \
 	fi;
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">

@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { AddPipelineInProject, DeletePipelineInProject, UpdatePipelineInProject } from 'app/store/project.action';
-import { List, Map } from 'immutable';
+import { Map } from 'immutable';
 import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { Application } from '../../model/application.model';
@@ -19,9 +19,6 @@ export class PipelineStore {
 
     // List of all pipelines.
     private _pipeline: BehaviorSubject<Map<string, Pipeline>> = new BehaviorSubject(Map<string, Pipeline>());
-
-    // List of all pipeline types.
-    private _pipelineType: BehaviorSubject<List<string>> = new BehaviorSubject(List([]));
 
     constructor(private _pipelineService: PipelineService, private store: Store) {
 
@@ -44,22 +41,6 @@ export class PipelineStore {
         } else {
             return observableOf(store.get(pipKey));
         }
-    }
-
-    /**
-    /**
-     * Get the list of all pipeline type.
-     * @returns {Observable<List<string>>}
-     */
-    getPipelineType(): Observable<List<string>> {
-        let store = this._pipelineType.getValue();
-        // If the store is empty, fill it
-        if (store.size === 0) {
-            this._pipelineService.getPipelineTypes().subscribe(res => {
-                this._pipelineType.next(store.push(...res));
-            });
-        }
-        return new Observable<List<string>>(fn => this._pipelineType.subscribe(fn));
     }
 
     getPipelines(key: string, pipName?: string): Observable<Map<string, Pipeline>> {

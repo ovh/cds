@@ -33,7 +33,6 @@ func Test_postWorkflowImportHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
@@ -98,7 +97,6 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
@@ -165,7 +163,6 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 

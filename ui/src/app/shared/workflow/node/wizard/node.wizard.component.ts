@@ -5,6 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
+import { AddEnvironmentInProject } from 'app/store/project.action';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash';
 import { Observable, of as observableOf } from 'rxjs';
 import { finalize, first, flatMap, map } from 'rxjs/operators';
@@ -15,7 +17,6 @@ import { IdName, Project } from '../../../../model/project.model';
 import { WNode, WNodeType } from '../../../../model/workflow.model';
 import { ApplicationStore } from '../../../../service/application/application.store';
 import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
-import { ProjectStore } from '../../../../service/project/project.store';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -106,7 +107,6 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     private _toast: ToastService,
     private _pipStore: PipelineStore,
     private _appStore: ApplicationStore,
-    private _projectStore: ProjectStore,
     private store: Store
   ) {
 
@@ -165,7 +165,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
 
     this.loadingCreatePipeline = true;
-    this.newPipeline.type = 'deployment';
+    // TODO: to update with store
     return this._pipStore.createPipeline(this.project.key, this.newPipeline)
       .pipe(
         first(),
@@ -233,6 +233,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       return;
     }
 
+    // TODO: to update with store
     this._appStore.getDeploymentStrategies(this.project.key, app.name).pipe(
       first(),
       finalize(() => this.loadingIntegrations = false)
@@ -258,21 +259,24 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
 
   createEnvironment(): Observable<Project> {
     this.loadingCreateEnvironment = true;
-    return this._projectStore.addProjectEnvironment(this.project.key, this.newEnvironment)
-      .pipe(
-        first(),
-        finalize(() => this.loadingCreateEnvironment = false)
-      ).pipe(
-        map((proj) => {
-          this._toast.success('', this._translate.instant('environment_created'));
-          this.node.context.environment_id = proj.environments.find((env) => env.name === this.newEnvironment.name).id;
-          if (!this.node.context.application_id) {
-            this.createNode();
-          } else {
-            this.pipelineSection = 'integration';
-          }
-          return proj;
-        }));
+    return this.store.dispatch(new AddEnvironmentInProject({
+      projectKey: this.project.key,
+      environment: this.newEnvironment
+    })).pipe(
+      finalize(() => this.loadingCreateEnvironment = false),
+      flatMap(() => this.store.selectOnce(ProjectState)),
+      map((projState: ProjectStateModel) => {
+        let proj = projState.project;
+        this._toast.success('', this._translate.instant('environment_created'));
+        this.node.context.environment_id = proj.environments.find((env) => env.name === this.newEnvironment.name).id;
+        if (!this.node.context.application_id) {
+          this.createNode();
+        } else {
+          this.pipelineSection = 'integration';
+        }
+        return proj;
+      })
+    );
   }
 
   selectOrCreateEnvironment() {

@@ -1,11 +1,11 @@
-import {Component} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize} from 'rxjs/operators';
-import {Pipeline} from '../../../model/pipeline.model';
-import {Project} from '../../../model/project.model';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {ToastService} from '../../../shared/toast/ToastService';
+import { Component } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { finalize } from 'rxjs/operators';
+import { Pipeline } from '../../../model/pipeline.model';
+import { Project } from '../../../model/project.model';
+import { PipelineStore } from '../../../service/pipeline/pipeline.store';
+import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-add',
@@ -13,11 +13,9 @@ import {ToastService} from '../../../shared/toast/ToastService';
     styleUrls: ['./pipeline.add.scss']
 })
 export class PipelineAddComponent {
-
-    ready = false;
     loadingCreate = false;
-    pipelineType: Array<string>;
     newPipeline = new Pipeline();
+    asCode = false;
 
     codeMirrorConfig: any;
     pipToImport = `# Pipeline example
@@ -36,14 +34,14 @@ jobs:
 
     project: Project;
 
-    constructor(private _pipStore: PipelineStore, private _translate: TranslateService, private _toast: ToastService,
-                private _routeActivated: ActivatedRoute, private _router: Router) {
+    constructor(
+        private _pipStore: PipelineStore,
+        private _translate: TranslateService,
+        private _toast: ToastService,
+        private _routeActivated: ActivatedRoute,
+        private _router: Router
+    ) {
         this.project = this._routeActivated.snapshot.data['project'];
-        this._pipStore.getPipelineType().subscribe(list => {
-            this.ready = true;
-            this.pipelineType = list.toArray();
-            this.newPipeline.type = this.pipelineType[0];
-        });
 
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -64,18 +62,17 @@ jobs:
         }
 
         this.loadingCreate = true;
-        this._pipStore.createPipeline(this.project.key, this.newPipeline).subscribe(() => {
-            this.loadingCreate = false;
-            this._toast.success('', this._translate.instant('pipeline_added'));
-            this._router.navigate(['/project', this.project.key, 'pipeline', this.newPipeline.name]);
-        }, () => {
-            this.loadingCreate = false;
-        });
+        this._pipStore.createPipeline(this.project.key, this.newPipeline)
+            .pipe(finalize(() => this.loadingCreate = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('pipeline_added'));
+                this._router.navigate(['/project', this.project.key, 'pipeline', this.newPipeline.name]);
+            });
 
     }
 
     goToProject(): void {
-        this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'pipelines'}});
+        this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'pipelines' } });
     }
 
     importPipeline() {
@@ -88,7 +85,7 @@ jobs:
             });
     }
 
-    fileEvent(event: {content: string, file: File}) {
+    fileEvent(event: { content: string, file: File }) {
         this.pipToImport = event.content;
     }
 }

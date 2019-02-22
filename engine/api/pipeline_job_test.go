@@ -32,7 +32,6 @@ func TestAddJobHandler(t *testing.T) {
 	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
@@ -99,7 +98,6 @@ func TestUpdateJobHandler(t *testing.T) {
 	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
@@ -181,7 +179,6 @@ func TestDeleteJobHandler(t *testing.T) {
 	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
-		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}

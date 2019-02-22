@@ -56,7 +56,6 @@ func (api *API) updatePipelineHandler() service.Handler {
 		oldName := pipelineDB.Name
 		pipelineDB.Name = p.Name
 		pipelineDB.Description = p.Description
-		pipelineDB.Type = p.Type
 
 		if err := pipeline.UpdatePipeline(tx, pipelineDB); err != nil {
 			return sdk.WrapError(err, "cannot update pipeline %s", name)
@@ -233,12 +232,6 @@ func (api *API) getPipelineHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
-	}
-}
-
-func (api *API) getPipelineTypeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, sdk.AvailablePipelineType, http.StatusOK)
 	}
 }
 

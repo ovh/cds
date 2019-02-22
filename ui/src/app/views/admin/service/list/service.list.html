@@ -5,30 +5,6 @@
         <ng-template #globalsPart>
             <div class="paddingContent">
                 <div class="viewContent">
-                    <div *ngIf="globalQueue && globalQueue.length > 0;then globalQueuelist;else noglobalQueuelist"></div>
-                    <ng-template #globalQueuelist>
-                        <div class="ui grid">
-                            <div class="wide column">
-                                <h1>
-                                    {{'queue_monitoring' | translate}}
-                                </h1>
-                            </div>
-                        </div>
-                        <div class="ui stackable four cards">
-                            <div class="ui card" *ngFor="let g of globalQueue">
-                                <div class="content">
-                                    <div class="ui horizontal label right floated" [ngClass]="{'red': g.status==='AL', 'orange': g.status==='WARN', 'green': g.status==='OK'}">
-                                        {{g.status}}
-                                    </div>
-                                    <div class="header" [innerText]="g.name"></div>
-                                    <div class="extra content" *ngIf="g.value !== '0'">
-                                        <a [routerLink]="['/settings', 'queue']">{{g.value}}</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </ng-template>
-
                     <div class="ui grid">
                         <div class="wide column">
                             <h1>

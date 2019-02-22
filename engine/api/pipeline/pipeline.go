@@ -26,12 +26,12 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 	var p sdk.Pipeline
 
 	var lastModified time.Time
-	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.type, pipeline.last_modified
+	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.last_modified
 			FROM pipeline
 	 			JOIN project on pipeline.project_id = project.id
 	 		WHERE pipeline.name = $1 AND project.projectKey = $2`
 
-	err := db.QueryRow(query, name, projectKey).Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &p.Type, &lastModified)
+	err := db.QueryRow(query, name, projectKey).Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrPipelineNotFound
@@ -67,12 +67,12 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 
 	var lastModified time.Time
 	var p sdk.Pipeline
-	query := `SELECT pipeline.name, pipeline.description, pipeline.type, project.projectKey, pipeline.last_modified
+	query := `SELECT pipeline.name, pipeline.description, project.projectKey, pipeline.last_modified
 	FROM pipeline
 		JOIN project on pipeline.project_id = project.id
 	WHERE pipeline.id = $1`
 
-	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Description, &p.Type, &p.ProjectKey, &lastModified)
+	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Description, &p.ProjectKey, &lastModified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrPipelineNotFound
@@ -214,7 +214,7 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 // LoadPipelines loads all pipelines in a project
 func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) ([]sdk.Pipeline, error) {
 	var pip []sdk.Pipeline
-	query := `SELECT id, name, description, project_id, type, last_modified
+	query := `SELECT id, name, description, project_id, last_modified
 			  FROM pipeline
 			  WHERE project_id = $1
 			  ORDER BY pipeline.name`
@@ -230,7 +230,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) 
 		var lastModified time.Time
 
 		// scan pipeline id
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &p.Type, &lastModified); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified); err != nil {
 			return nil, err
 		}
 		p.LastModified = lastModified.Unix()
@@ -295,29 +295,25 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	}
 
 	//Update pipeline
-	query := `UPDATE pipeline SET name=$1, description = $2, type=$3, last_modified=$5 WHERE id=$4`
-	_, err := db.Exec(query, p.Name, p.Description, p.Type, p.ID, now)
+	query := `UPDATE pipeline SET name=$1, description = $2, last_modified=$4 WHERE id=$3`
+	_, err := db.Exec(query, p.Name, p.Description, p.ID, now)
 	return sdk.WithStack(err)
 }
 
 // InsertPipeline inserts pipeline informations in database
 func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
-	query := `INSERT INTO pipeline (name, description, project_id, type, last_modified) VALUES ($1, $2, $3, $4, current_timestamp) RETURNING id`
+	query := `INSERT INTO pipeline (name, description, project_id, last_modified) VALUES ($1, $2, $3, current_timestamp) RETURNING id`
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
 	}
 
-	if p.Type != sdk.BuildPipeline && p.Type != sdk.DeploymentPipeline && p.Type != sdk.TestingPipeline {
-		return sdk.WrapError(sdk.ErrInvalidType, "InsertPipeline>")
-	}
-
 	if p.ProjectID == 0 {
 		return sdk.WrapError(sdk.ErrInvalidProject, "InsertPipeline>")
 	}
 
-	if err := db.QueryRow(query, p.Name, p.Description, p.ProjectID, p.Type).Scan(&p.ID); err != nil {
+	if err := db.QueryRow(query, p.Name, p.Description, p.ProjectID).Scan(&p.ID); err != nil {
 		return err
 	}
 

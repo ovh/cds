@@ -27,7 +27,6 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
-		Type:      "build",
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
