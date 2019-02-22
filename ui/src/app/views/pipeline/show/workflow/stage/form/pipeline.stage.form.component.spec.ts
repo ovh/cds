@@ -1,17 +1,19 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync} from '@angular/core/testing';
-import {ActivatedRoute} from '@angular/router';
-import {RouterTestingModule} from '@angular/router/testing';
-import {Observable} from 'rxjs/Observable';
-
-import {PipelineStageFormComponent} from './pipeline.stage.form.component';
-import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
-import {PipelineModule} from '../../../../pipeline.module';
-import {SharedModule} from '../../../../../../shared/shared.module';
-import {Stage} from '../../../../../../model/stage.model';
-import {Prerequisite} from '../../../../../../model/prerequisite.model';
-import {PrerequisiteEvent} from '../../../../../../shared/prerequisites/prerequisite.event.model';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
+import { Observable } from 'rxjs/Observable';
+import { Prerequisite } from '../../../../../../model/prerequisite.model';
+import { Stage } from '../../../../../../model/stage.model';
+import { PrerequisiteEvent } from '../../../../../../shared/prerequisites/prerequisite.event.model';
+import { SharedModule } from '../../../../../../shared/shared.module';
+import { PipelineModule } from '../../../../pipeline.module';
+import { PipelineStageFormComponent } from './pipeline.stage.form.component';
+
 
 describe('CDS: Stage From component', () => {
 
@@ -19,16 +21,18 @@ describe('CDS: Stage From component', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                {provide: ActivatedRoute, useClass: MockActivatedRoutes},
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 TranslateService,
                 TranslateLoader,
                 TranslateParser
             ],
             imports: [
                 PipelineModule,
+                NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
     });
@@ -71,7 +75,7 @@ class MockToast {
 class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
-        this.params = Observable.of({key: 'key1', appName: 'app1'});
-        this.queryParams = Observable.of({key: 'key1', appName: 'app1'});
+        this.params = Observable.of({ key: 'key1', appName: 'app1' });
+        this.queryParams = Observable.of({ key: 'key1', appName: 'app1' });
     }
 }

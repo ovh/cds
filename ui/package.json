@@ -14,6 +14,7 @@
     "test:shared": "ng lint && ng test -c shared --watch false --code-coverage",
     "test:views": "ng lint && ng test -c views --watch false --code-coverage",
     "test:service": "ng lint && ng test -c service --watch false --code-coverage",
+    "test:store": "ng lint && ng test -c store --watch false --code-coverage",
     "pree2e": "webdriver-manager update --standalone false --gecko false",
     "e2e": "protractor",
     "doc": "./node_modules/.bin/compodoc -p tsconfig.json -s",

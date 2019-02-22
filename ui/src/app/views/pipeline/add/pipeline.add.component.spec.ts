@@ -1,30 +1,31 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
-import {RouterTestingModule} from '@angular/router/testing';
-import {SharedModule} from '../../../shared/shared.module';
-import {of} from 'rxjs';
-import {Injector} from '@angular/core';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {ProjectStore} from '../../../service/project/project.store';
-import {ProjectService} from '../../../service/project/project.service';
-import {PipelineService} from '../../../service/pipeline/pipeline.service';
-import {EnvironmentService} from '../../../service/environment/environment.service';
-import {VariableService} from '../../../service/variable/variable.service';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {Project} from '../../../model/project.model';
-import {Application} from '../../../model/application.model';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {PipelineModule} from '../pipeline.module';
-import {PipelineAddComponent} from './pipeline.add.component';
-import {Pipeline} from '../../../model/pipeline.model';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { Injector } from '@angular/core';
+import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
+import { XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { NgxsStoreModule } from 'app/store/store.module';
+import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import {NavbarService} from '../../../service/navbar/navbar.service';
+import { Application } from '../../../model/application.model';
+import { Pipeline } from '../../../model/pipeline.model';
+import { Project } from '../../../model/project.model';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { EnvironmentService } from '../../../service/environment/environment.service';
+import { NavbarService } from '../../../service/navbar/navbar.service';
+import { PipelineService } from '../../../service/pipeline/pipeline.service';
+import { PipelineStore } from '../../../service/pipeline/pipeline.store';
+import { ProjectService } from '../../../service/project/project.service';
+import { ProjectStore } from '../../../service/project/project.store';
+import { VariableService } from '../../../service/variable/variable.service';
+import { SharedModule } from '../../../shared/shared.module';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { PipelineModule } from '../pipeline.module';
+import { PipelineAddComponent } from './pipeline.add.component';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
@@ -43,9 +44,9 @@ describe('CDS: Pipeline Add Component', () => {
                 AuthentificationStore,
                 ProjectStore,
                 ProjectService,
-                { provide: ActivatedRoute, useClass: MockActivatedRoutes},
-                { provide: Router, useClass: MockRouter},
-                { provide: ToastService, useClass: MockToast},
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
+                { provide: Router, useClass: MockRouter },
+                { provide: ToastService, useClass: MockToast },
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
@@ -55,8 +56,9 @@ describe('CDS: Pipeline Add Component', () => {
                 EnvironmentService,
                 VariableService
             ],
-            imports : [
+            imports: [
                 PipelineModule,
+                NgxsStoreModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 TranslateModule.forRoot(),
@@ -79,7 +81,7 @@ describe('CDS: Pipeline Add Component', () => {
         prjStore = undefined;
     });
 
-    it('should create an empty pipeline', fakeAsync( () => {
+    it('should create an empty pipeline', fakeAsync(() => {
 
         // Create component
         let fixture = TestBed.createComponent(PipelineAddComponent);
@@ -100,7 +102,7 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline.name = 'myPip';
         fixture.componentInstance.newPipeline.type = 'build';
 
-        spyOn(pipStore, 'createPipeline').and.callFake( () => {
+        spyOn(pipStore, 'createPipeline').and.callFake(() => {
             return of(fixture.componentInstance.newPipeline);
         });
 
@@ -124,8 +126,8 @@ class MockRouter {
 class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
-        this.params = of({key: 'key1', appName: 'app1'});
-        this.queryParams = of({key: 'key1', appName: 'app1'});
+        this.params = of({ key: 'key1', appName: 'app1' });
+        this.queryParams = of({ key: 'key1', appName: 'app1' });
 
         this.snapshot = new ActivatedRouteSnapshot();
 

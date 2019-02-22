@@ -8,7 +8,6 @@ import { finalize, first } from 'rxjs/operators';
 import { Group, GroupPermission } from '../../../model/group.model';
 import { Project } from '../../../model/project.model';
 import { GroupService } from '../../../service/group/group.service';
-import { ProjectStore } from '../../../service/project/project.store';
 import { PermissionService } from '../../../shared/permission/permission.service';
 import { ToastService } from '../../../shared/toast/ToastService';
 
@@ -34,7 +33,6 @@ export class ProjectAddComponent {
     modalCreateGroup: SemanticModalComponent;
 
     constructor(
-        private _projectStore: ProjectStore,
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,

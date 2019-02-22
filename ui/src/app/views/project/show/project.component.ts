@@ -29,7 +29,7 @@ export class ProjectShowComponent implements OnInit {
     currentUser: User;
 
     project: Project;
-    private projectSubscriber: Subscription;
+    projectSubscriber: Subscription;
 
     tabs: Array<Tab>;
     selectedTab: Tab;
