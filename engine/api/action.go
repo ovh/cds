@@ -177,7 +177,7 @@ func (api *API) postActionHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// check that no action already exists for same group/name
 		current, err := action.GetTypeDefaultByNameAndGroupID(tx, data.Name, grp.ID)
@@ -264,7 +264,7 @@ func (api *API) putActionHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot begin transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		u := deprecatedGetUser(ctx)
 
@@ -333,7 +333,7 @@ func (api *API) deleteActionHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		used, err := action.Used(tx, a.ID)
 		if err != nil {
@@ -547,7 +547,7 @@ func (api *API) importActionHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// set group id on given action, if no group given use shared.infra fo backward compatibility
 		// current user should be admin if the group
