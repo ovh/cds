@@ -117,9 +117,9 @@ export class AddPipelineInProject {
     static readonly type = '[Project] Add Pipeline in Project';
     constructor(public payload: Pipeline) { }
 }
-export class RenamePipelineInProject {
-    static readonly type = '[Project] Rename pipeline in Project';
-    constructor(public payload: { previousPipName: string, newPipName: string }) { }
+export class UpdatePipelineInProject {
+    static readonly type = '[Project] Update pipeline in Project';
+    constructor(public payload: { previousPipName: string, changes: Pipeline }) { }
 }
 export class DeletePipelineInProject {
     static readonly type = '[Project] Delete Pipeline in Project';

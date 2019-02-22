@@ -1,7 +1,7 @@
 
 import { Injectable } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { AddPipelineInProject, DeletePipelineInProject } from 'app/store/project.action';
+import { AddPipelineInProject, DeletePipelineInProject, UpdatePipelineInProject } from 'app/store/project.action';
 import { List, Map } from 'immutable';
 import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
@@ -189,6 +189,11 @@ export class PipelineStore {
                 pToUpdate.name = pip.name;
                 this._pipeline.next(cache.set(key + '-' + pip.name, pToUpdate).remove(pipKey));
             }
+            this.store.dispatch(new UpdatePipelineInProject({
+                previousPipName: oldName,
+                changes: pipeline
+            }));
+
             return pip;
         }));
     }

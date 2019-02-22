@@ -351,6 +351,40 @@ describe('Project', () => {
         });
     }));
 
+    it('update pipeline in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        let pip = new Pipeline();
+        pip.name = 'myPipeline';
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            pipeline_names: [{ id: 1, name: pip.name }]
+        });
+
+        pip.name = 'otherName';
+        pip.description = 'my description';
+        store.dispatch(new ProjectAction.UpdatePipelineInProject({
+            previousPipName: 'myPipeline',
+            changes: pip
+        }));
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.pipeline_names).toBeTruthy();
+            expect(state.project.pipeline_names.length).toEqual(1);
+            expect(state.project.pipeline_names[0].name).toEqual('otherName');
+            expect(state.project.pipeline_names[0].description).toEqual('my description');
+        });
+    }));
+
     it('delete pipeline in project', async(() => {
         const http = TestBed.get(HttpTestingController);
         let project = new Project();

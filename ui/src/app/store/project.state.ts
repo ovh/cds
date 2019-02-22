@@ -495,6 +495,34 @@ export class ProjectState {
         });
     }
 
+    @Action(ProjectAction.UpdatePipelineInProject)
+    updatePipeline(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdatePipelineInProject) {
+        const state = ctx.getState();
+        let pipelines = state.project.pipelines ? state.project.pipelines.concat([]) : [];
+        let pipeline_names = state.project.pipeline_names ? state.project.pipeline_names.concat([]) : [];
+
+        pipelines = pipelines.map((pip) => {
+            if (pip.name === action.payload.previousPipName) {
+                return Object.assign({}, pip, action.payload.changes);
+            }
+            return pip;
+        });
+        pipeline_names = pipeline_names.map((pip) => {
+            if (pip.name === action.payload.previousPipName) {
+                return Object.assign({}, pip, <IdName>{
+                    name: action.payload.changes.name,
+                    description: action.payload.changes.description
+                });
+            }
+            return pip;
+        });
+
+        return ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, <Project>{ pipelines, pipeline_names }),
+        });
+    }
+
     @Action(ProjectAction.DeletePipelineInProject)
     deletePipeline(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeletePipelineInProject) {
         const state = ctx.getState();
