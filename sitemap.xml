@@ -1174,10 +1174,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/api/pipeline/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/pipeline/</loc>
   </url>
   
