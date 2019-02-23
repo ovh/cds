@@ -274,12 +274,12 @@ Several types of hatchery are available:
  
  So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
-#### Some explanations on the comparaison matrix
+#### Some explanations on the comparison matrix
 
 - *1 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
-- *2 There is the Pipeline plugin, but not compatible with Graphical COnfiguration with ui, Git branching, and repository manager integration.
+- *2 There is the Pipeline plugin, but not compatible with Graphical Configuration with ui, Git branching, and repository manager integration.
 - *3 [Multi-branch pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Multibranch+Plugin ) - but incompatible [Pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Plugin)
-- *4 Job Cacher plugin not compatible with Blue Ocean, MultiBranch PIpeline, Pipeline plugin, but not compatible with Swift Storage
+- *4 Job Cacher plugin not compatible with Blue Ocean, MultiBranch Pipeline, Pipeline plugin, but not compatible with Swift Storage
 - *5 "The current version of this plugin may not be safe to use. " https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin
 - *6 https://jenkins.io/doc/book/managing/security/#authorization
 - *7 it's not builtin, it's JCloud plugin
@@ -291,7 +291,7 @@ Several types of hatchery are available:
 - *13 Upgrade Gitlab can be on several days https://docs.gitlab.com/ee/update/ 
 - *14 it's a plugin
 - *15 K8s, Docker machine & GKE only 
-- *16 limitated to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
+- *16 limited to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
 
 
 ## License
