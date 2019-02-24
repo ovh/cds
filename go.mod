@@ -3,7 +3,7 @@ module github.com/ovh/cds
 require (
 	cloud.google.com/go v0.30.0 // indirect
 	git.apache.org/thrift.git v0.0.0-20180514124809-e59b73d3c2bf // indirect
-	github.com/Azure/azure-sdk-for-go v21.2.0+incompatible // indirect
+	github.com/Azure/azure-sdk-for-go v26.0.0+incompatible // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-autorest v11.1.1+incompatible // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
@@ -105,7 +105,7 @@ require (
 	github.com/gorilla/mux v0.0.0-20160920230813-757bef944d0f
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/gotestyourself/gotestyourself v2.1.0+incompatible // indirect
-	github.com/gregjones/httpcache v0.0.0-20171119193500-2bcd89a1743f // indirect
+	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.5.1 // indirect
@@ -134,9 +134,8 @@ require (
 	github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
-	github.com/json-iterator/go v0.0.0-20171115153421-f7279a603ede // indirect
+	github.com/json-iterator/go v1.1.5 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
-	github.com/juju/ratelimit v1.0.1 // indirect
 	github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
@@ -171,6 +170,8 @@ require (
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v0.0.0-20161020161836-f3009df150da
 	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
 	github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
 	github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace // indirect
@@ -274,9 +275,12 @@ require (
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.1
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20180126130815-dc0dd48d5a5c
-	k8s.io/apimachinery v0.0.0-20180126010535-b621949a1923
-	k8s.io/client-go v6.0.0+incompatible
+	k8s.io/api v0.0.0-20181204000039-89a74a8d264d
+	k8s.io/apimachinery v0.0.0-20190223094358-dcb391cde5ca
+	k8s.io/client-go v10.0.0+incompatible
+	k8s.io/klog v0.2.0 // indirect
+	sigs.k8s.io/yaml v1.1.0 // indirect
+
 )
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
