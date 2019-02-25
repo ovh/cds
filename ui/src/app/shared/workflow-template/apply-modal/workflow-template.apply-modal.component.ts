@@ -101,7 +101,7 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
             this._templateService.getAudits(this.workflowTemplate.group.name, this.workflowTemplate.slug,
                 this.workflowTemplateInstance.workflow_template_version).subscribe(as => {
                     this.workflowTemplateAuditMessages = as.filter(a => !!a.change_message).map(a => a.change_message);
-                    let before = as[as.length - 1].data_after ? <WorkflowTemplate>JSON.parse(as[as.length - 1].data_after) : null;
+                    let before = as[as.length - 1].data_after ? as[as.length - 1].data_after : null;
                     this.diffItems = calculateWorkflowTemplateDiff(before, this.workflowTemplate);
                 });
         } else {

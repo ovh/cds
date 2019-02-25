@@ -31,7 +31,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 		GroupID: g.ID,
 		Name:    name,
 		Slug:    slug.Convert(name),
-		Value: base64.StdEncoding.EncodeToString([]byte(
+		Workflow: base64.StdEncoding.EncodeToString([]byte(
 			`name: [[.name]]
 version: v1.0
 workflow:
@@ -98,7 +98,7 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 		GroupID: g.ID,
 		Name:    name,
 		Slug:    slug.Convert(name),
-		Value: base64.StdEncoding.EncodeToString([]byte(
+		Workflow: base64.StdEncoding.EncodeToString([]byte(
 			`name: [[.name]]
 version: v1.0
 workflow:

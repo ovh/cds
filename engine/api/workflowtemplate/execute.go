@@ -115,7 +115,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 
 	var multiErr sdk.MultiError
 
-	v, err := decodeTemplateValue(wt.Value)
+	v, err := decodeTemplateValue(wt.Workflow)
 	if err != nil {
 		return result, err
 	}

@@ -79,11 +79,11 @@ func (a addWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataAfter:   buffer.String(),
-			DataType:    "yaml",
 		},
 		WorkflowID: wEvent.Workflow.ID,
 		ProjectKey: e.ProjectKey,
+		DataType:   "yaml",
+		DataAfter:  buffer.String(),
 	})
 }
 
@@ -110,12 +110,12 @@ func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataAfter:   newWorkflowBuffer.String(),
-			DataBefore:  oldWorkflowBuffer.String(),
-			DataType:    "yaml",
 		},
 		WorkflowID: wEvent.NewWorkflow.ID,
 		ProjectKey: e.ProjectKey,
+		DataType:   "yaml",
+		DataAfter:  newWorkflowBuffer.String(),
+		DataBefore: oldWorkflowBuffer.String(),
 	})
 }
 
@@ -137,11 +137,11 @@ func (d deleteWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataBefore:  oldWorkflowBuffer.String(),
-			DataType:    "yaml",
 		},
 		WorkflowID: wEvent.Workflow.ID,
 		ProjectKey: e.ProjectKey,
+		DataType:   "yaml",
+		DataBefore: oldWorkflowBuffer.String(),
 	})
 }
 
@@ -163,11 +163,11 @@ func (a addWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) er
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataAfter:   string(b),
-			DataType:    "json",
 		},
 		WorkflowID: wEvent.WorkflowID,
 		ProjectKey: e.ProjectKey,
+		DataType:   "json",
+		DataAfter:  string(b),
 	})
 }
 
@@ -194,12 +194,12 @@ func (u updateWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataBefore:  string(oldPerm),
-			DataAfter:   string(newPerm),
-			DataType:    "json",
 		},
 		WorkflowID: wEvent.WorkflowID,
 		ProjectKey: e.ProjectKey,
+		DataType:   "json",
+		DataBefore: string(oldPerm),
+		DataAfter:  string(newPerm),
 	})
 }
 
@@ -221,11 +221,11 @@ func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataBefore:  string(b),
-			DataType:    "json",
 		},
 		ProjectKey: e.ProjectKey,
 		WorkflowID: wEvent.WorkflowID,
+		DataType:   "json",
+		DataBefore: string(b),
 	})
 }
 

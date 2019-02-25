@@ -34,7 +34,7 @@ func TestCRUD(t *testing.T) {
 				{Key: "my-string", Type: sdk.ParameterTypeString, Required: true},
 				{Key: "my-repository", Type: sdk.ParameterTypeRepository, Required: true},
 			},
-			Value:        "the-yml-workflow-encoded",
+			Workflow:     "the-yml-workflow-encoded",
 			Pipelines:    []sdk.PipelineTemplate{{Value: "the-yml-pipeline-encoded"}},
 			Applications: []sdk.ApplicationTemplate{{Value: "the-yml-application-encoded"}},
 			Environments: []sdk.EnvironmentTemplate{{Value: "the-yml-environment-encoded"}},

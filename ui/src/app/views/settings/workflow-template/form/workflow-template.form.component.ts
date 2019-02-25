@@ -4,6 +4,7 @@ import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
 import { WorkflowTemplate, WorkflowTemplateError, WorkflowTemplateParameter } from '../../../../model/workflow-template.model';
 import { SharedService } from '../../../../shared/shared.service';
+import { Base64 } from './../../../../shared/base64.utils';
 
 @Component({
     selector: 'app-workflow-template-form',
@@ -40,14 +41,14 @@ export class WorkflowTemplateFormComponent {
         }
 
         if (this._workflowTemplate.value) {
-            this.workflowValue = atob(this._workflowTemplate.value);
+            this.workflowValue = Base64.b64DecodeUnicode(this._workflowTemplate.value);
         }
 
         this.pipelineValues = {};
         this.pipelineKeys = [];
         if (this._workflowTemplate.pipelines) {
             this._workflowTemplate.pipelines.forEach((p, i) => {
-                this.pipelineValues[i] = atob(p.value);
+                this.pipelineValues[i] = Base64.b64DecodeUnicode(p.value);
                 this.pipelineKeys.push(i);
             });
         }
@@ -56,7 +57,7 @@ export class WorkflowTemplateFormComponent {
         this.applicationKeys = [];
         if (this._workflowTemplate.applications) {
             this._workflowTemplate.applications.forEach((a, i) => {
-                this.applicationValues[i] = atob(a.value);
+                this.applicationValues[i] = Base64.b64DecodeUnicode(a.value);
                 this.applicationKeys.push(i);
             });
         }
@@ -65,7 +66,7 @@ export class WorkflowTemplateFormComponent {
         this.environmentKeys = [];
         if (this._workflowTemplate.environments) {
             this._workflowTemplate.environments.forEach((e, i) => {
-                this.environmentValues[i] = atob(e.value);
+                this.environmentValues[i] = Base64.b64DecodeUnicode(e.value);
                 this.environmentKeys.push(i);
             });
         }
@@ -159,15 +160,15 @@ export class WorkflowTemplateFormComponent {
             ...this.workflowTemplate,
             import_url: null,
             group_id: Number(this.workflowTemplate.group_id),
-            value: this.workflowValue ? btoa(this.workflowValue) : '',
+            value: this.workflowValue ? Base64.b64EncodeUnicode(this.workflowValue) : '',
             pipelines: Object.keys(this.pipelineValues).map(k => {
-                return { value: this.pipelineValues[k] ? btoa(this.pipelineValues[k]) : '' };
+                return { value: this.pipelineValues[k] ? Base64.b64EncodeUnicode(this.pipelineValues[k]) : '' };
             }),
             applications: Object.keys(this.applicationValues).map(k => {
-                return { value: this.applicationValues[k] ? btoa(this.applicationValues[k]) : '' };
+                return { value: this.applicationValues[k] ? Base64.b64EncodeUnicode(this.applicationValues[k]) : '' };
             }),
             environments: Object.keys(this.environmentValues).map(k => {
-                return { value: this.environmentValues[k] ? btoa(this.environmentValues[k]) : '' };
+                return { value: this.environmentValues[k] ? Base64.b64EncodeUnicode(this.environmentValues[k]) : '' };
             }),
             parameters: Object.keys(this.parameterValues).map(k => {
                 return this.parameterValues[k];

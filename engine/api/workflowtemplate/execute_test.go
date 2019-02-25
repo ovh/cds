@@ -20,9 +20,9 @@ func TestExecuteTemplate(t *testing.T) {
 			{Key: "object", Type: sdk.ParameterTypeJSON},
 			{Key: "list", Type: sdk.ParameterTypeJSON},
 		},
-		Value: base64.StdEncoding.EncodeToString([]byte(`
+		Workflow: base64.StdEncoding.EncodeToString([]byte(`
 name: [[.name]]
-description: Test simple workflow
+description: Test simple workflow 👍
 version: v1.0
 workflow:
 	Node-1:
@@ -89,7 +89,7 @@ values:
 
 	assert.Equal(t, `
 name: my-workflow
-description: Test simple workflow
+description: Test simple workflow 👍
 version: v1.0
 workflow:
 	Node-1:
@@ -143,7 +143,7 @@ func TestExecuteTemplateWithError(t *testing.T) {
 			{Key: "deployWhen", Type: sdk.ParameterTypeString},
 			{Key: "repo", Type: sdk.ParameterTypeRepository},
 		},
-		Value: base64.StdEncoding.EncodeToString([]byte(`
+		Workflow: base64.StdEncoding.EncodeToString([]byte(`
 name: [[.name]
 description: Test simple workflow with error
 version: v1.0`)),
