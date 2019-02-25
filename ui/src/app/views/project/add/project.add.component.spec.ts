@@ -1,30 +1,32 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
-import {ToasterService} from 'angular2-toaster/angular2-toaster';
-import {TranslateParser} from '@ngx-translate/core';
-import {ProjectStore} from '../../../service/project/project.store';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {ProjectService} from '../../../service/project/project.service';
-import {PipelineService} from '../../../service/pipeline/pipeline.service';
-import {EnvironmentService} from '../../../service/environment/environment.service';
-import {VariableService} from '../../../service/variable/variable.service';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {ProjectModule} from '../project.module';
-import {SharedModule} from '../../../shared/shared.module';
-import {of} from 'rxjs';
-import {ProjectAddComponent} from './project.add.component';
-import {GroupService} from '../../../service/group/group.service';
-import {GroupPermission, Group} from '../../../model/group.model';
-import {Router} from '@angular/router';
-import {Project} from '../../../model/project.model';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import { XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { AddProject } from 'app/store/project.action';
+import { NgxsStoreModule } from 'app/store/store.module';
+import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import {NavbarService} from '../../../service/navbar/navbar.service';
+import { Group, GroupPermission } from '../../../model/group.model';
+import { Project } from '../../../model/project.model';
+import { EnvironmentService } from '../../../service/environment/environment.service';
+import { GroupService } from '../../../service/group/group.service';
+import { NavbarService } from '../../../service/navbar/navbar.service';
+import { PipelineService } from '../../../service/pipeline/pipeline.service';
+import { ProjectService } from '../../../service/project/project.service';
+import { ProjectStore } from '../../../service/project/project.store';
+import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
+import { VariableService } from '../../../service/variable/variable.service';
+import { SharedModule } from '../../../shared/shared.module';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { ProjectModule } from '../project.module';
+import { ProjectAddComponent } from './project.add.component';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
@@ -35,7 +37,7 @@ describe('CDS: Project Show Component', () => {
             declarations: [],
             providers: [
                 MockBackend,
-                {provide: XHRBackend, useClass: MockBackend},
+                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
@@ -48,11 +50,12 @@ describe('CDS: Project Show Component', () => {
                 TranslateService,
                 TranslateParser,
                 GroupService,
-                {provide: ToastService, useClass: MockToast}
+                { provide: ToastService, useClass: MockToast }
             ],
             imports: [
                 ProjectModule,
                 SharedModule,
+                NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
@@ -72,11 +75,11 @@ describe('CDS: Project Show Component', () => {
 
 
     it('it should create a project', () => {
-        let projectStore: ProjectStore = injector.get(ProjectStore);
+        let store: Store = injector.get(Store);
         let router: Router = injector.get(Router);
 
-        spyOn(projectStore, 'createProject').and.callFake(() => {
-            return of(true);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of(null);
         });
 
         spyOn(router, 'navigate').and.callFake(() => {
@@ -105,7 +108,7 @@ describe('CDS: Project Show Component', () => {
         project.groups[0].group = new Group();
         project.groups[0].group.name = 'foo';
         project.groups[0].permission = 7;
-        expect(projectStore.createProject).toHaveBeenCalledWith(project);
+        expect(store.dispatch).toHaveBeenCalledWith(new AddProject(project));
         expect(router.navigate).toHaveBeenCalled();
     });
 

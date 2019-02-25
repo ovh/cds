@@ -1,25 +1,26 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {ProjectStore} from '../../../../../service/project/project.store';
-import {ProjectService} from '../../../../../service/project/project.service';
-import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
-import {ProjectModule} from '../../../project.module';
-import {Project} from '../../../../../model/project.model';
-import {SharedModule} from '../../../../../shared/shared.module';
-import {ServicesModule} from '../../../../../service/services.module';
-import {Environment} from '../../../../../model/environment.model';
-import {ProjectEnvironmentListComponent} from './environment.list.component';
-import {ToasterService} from 'angular2-toaster';
-import {ToastService} from '../../../../../shared/toast/ToastService';
-import {EnvironmentService} from '../../../../../service/environment/environment.service';
-import {VariableService} from '../../../../../service/variable/variable.service';
-import {ActivatedRoute, Router} from '@angular/router';
-import {of} from 'rxjs';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
-import {NavbarService} from '../../../../../service/navbar/navbar.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { ToasterService } from 'angular2-toaster';
+import { NgxsStoreModule } from 'app/store/store.module';
+import { of } from 'rxjs';
+import { Environment } from '../../../../../model/environment.model';
+import { Project } from '../../../../../model/project.model';
+import { EnvironmentService } from '../../../../../service/environment/environment.service';
+import { NavbarService } from '../../../../../service/navbar/navbar.service';
+import { PipelineService } from '../../../../../service/pipeline/pipeline.service';
+import { ProjectService } from '../../../../../service/project/project.service';
+import { ProjectStore } from '../../../../../service/project/project.store';
+import { ServicesModule } from '../../../../../service/services.module';
+import { VariableService } from '../../../../../service/variable/variable.service';
+import { SharedModule } from '../../../../../shared/shared.module';
+import { ToastService } from '../../../../../shared/toast/ToastService';
+import { ProjectModule } from '../../../project.module';
+import { ProjectEnvironmentListComponent } from './environment.list.component';
 
 describe('CDS: Environment List Component', () => {
 
@@ -38,13 +39,14 @@ describe('CDS: Environment List Component', () => {
                 VariableService,
                 NavbarService,
                 PipelineService,
-                { provide: ActivatedRoute, useClass: MockActivatedRoutes},
-                { provide: Router, useClass: MockRouter},
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
+                { provide: Router, useClass: MockRouter },
                 EnvironmentService
             ],
-            imports : [
+            imports: [
                 ProjectModule,
                 SharedModule,
+                NgxsStoreModule,
                 TranslateModule.forRoot(),
                 ServicesModule,
                 RouterTestingModule.withRoutes([
@@ -86,7 +88,7 @@ class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
 
-        this.queryParams = of({envName: 'prod'});
+        this.queryParams = of({ envName: 'prod' });
     }
 }
 

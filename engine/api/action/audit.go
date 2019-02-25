@@ -66,10 +66,10 @@ func (a addActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataAfter:   string(b),
-			DataType:    "json",
 		},
-		ActionID: aEvent.Action.ID,
+		ActionID:  aEvent.Action.ID,
+		DataType:  "json",
+		DataAfter: string(b),
 	})
 }
 
@@ -96,10 +96,10 @@ func (a updateActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataBefore:  string(before),
-			DataAfter:   string(after),
-			DataType:    "json",
 		},
-		ActionID: aEvent.NewAction.ID,
+		ActionID:   aEvent.NewAction.ID,
+		DataType:   "json",
+		DataBefore: string(before),
+		DataAfter:  string(after),
 	})
 }

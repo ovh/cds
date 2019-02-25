@@ -1,7 +1,8 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {finalize, first} from 'rxjs/operators';
-import {Project} from '../../../../model/project.model';
-import {ProjectStore} from '../../../../service/project/project.store';
+import { Component, Input, OnInit } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { FetchIntegrationsInProject } from 'app/store/project.action';
+import { finalize } from 'rxjs/operators';
+import { Project } from '../../../../model/project.model';
 
 @Component({
     selector: 'app-project-integrations',
@@ -13,17 +14,11 @@ export class ProjectIntegrationsComponent implements OnInit {
     @Input() project: Project;
     loading = true;
 
-    constructor(private _projectStore: ProjectStore) { }
+    constructor(private store: Store) { }
 
     ngOnInit(): void {
-        if (this.project.integrations && this.project.integrations.length === 0) {
-            this.loading = false;
-            return;
-        }
-        this._projectStore.getProjectIntegrationsResolver(this.project.key)
-            .pipe(first(), finalize(() => this.loading = false))
-            .subscribe((proj) => {
-                this.project = proj;
-            });
+        this.store.dispatch(new FetchIntegrationsInProject({ projectKey: this.project.key }))
+            .pipe(finalize(() => this.loading = false))
+            .subscribe();
     }
 }

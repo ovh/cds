@@ -279,15 +279,15 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     clickAudit(a: AuditWorkflowTemplate) {
-        let before = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
-        let after = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
+        let before = a.data_before ? a.data_before : null;
+        let after = a.data_after ? a.data_after : null;
         this.diffItems = calculateWorkflowTemplateDiff(before, after);
     }
 
     clickRollback(a: AuditWorkflowTemplate) {
-        let wt = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
+        let wt = a.data_before ? a.data_before : null;
         if (!wt) {
-            wt = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
+            wt = a.data_after ? a.data_after : null;
         }
         this.saveWorkflowTemplate(wt);
     }

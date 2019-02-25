@@ -1,11 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { FetchApplicationOverview } from 'app/store/applications.action';
 import { Application, Overview, Severity } from '../../../../model/application.model';
 import { ChartData, ChartSeries, GraphConfiguration, GraphType } from '../../../../model/graph.model';
 import { Metric } from '../../../../model/metric.model';
 import { Tests } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
-import { ApplicationNoCacheService } from '../../../../service/application/application.nocache.service';
 
 @Component({
     selector: 'app-home',
@@ -21,39 +22,41 @@ export class ApplicationHomeComponent implements OnInit {
     ready = false;
     overview: Overview;
 
-    constructor(private _appNoCache: ApplicationNoCacheService, private _translate: TranslateService) {
+    constructor(
+        private _translate: TranslateService,
+        private store: Store
+    ) {
 
     }
 
     ngOnInit(): void {
+        this.store.dispatch(new FetchApplicationOverview({ projectKey: this.project.key, applicationName: this.application.name }));
         this.dashboards = new Array<GraphConfiguration>();
-        this._appNoCache.getOverview(this.project.key, this.application.name).subscribe(d => {
-            this.overview = d;
-            if (d && d.graphs.length > 0) {
-                d.graphs.forEach(g => {
-                    if (g.datas && g.datas.length) {
-                        switch (g.type) {
-                            case 'Vulnerability':
-                                this.createVulnDashboard(g.datas);
-                                break;
-                            case 'UnitTest':
-                                this.createUnitTestDashboard(g.datas);
-                                break;
-                            case 'Coverage':
-                                this.createCoverageDashboard(g.datas);
-                                break;
-                        }
+        this.overview = this.application.overview;
+        if (this.overview && this.overview.graphs.length > 0) {
+            this.overview.graphs.forEach(g => {
+                if (g.datas && g.datas.length) {
+                    switch (g.type) {
+                        case 'Vulnerability':
+                            this.createVulnDashboard(g.datas);
+                            break;
+                        case 'UnitTest':
+                            this.createUnitTestDashboard(g.datas);
+                            break;
+                        case 'Coverage':
+                            this.createCoverageDashboard(g.datas);
+                            break;
                     }
-                });
-            }
-            this.ready = true;
-        });
+                }
+            });
+        }
+        this.ready = true;
     }
 
     createUnitTestDashboard(metrics: Array<Metric>): void {
         let cc = new GraphConfiguration(GraphType.AREA_STACKED);
         cc.title = this._translate.instant('graph_unittest_title');
-        cc.colorScheme = { domain: []};
+        cc.colorScheme = { domain: [] };
         cc.gradient = false;
         cc.showXAxis = true;
         cc.showYAxis = true;
@@ -87,7 +90,7 @@ export class ApplicationHomeComponent implements OnInit {
     createVulnDashboard(metrics: Array<Metric>): void {
         let cc = new GraphConfiguration(GraphType.AREA_STACKED);
         cc.title = this._translate.instant('graph_vulnerability_title');
-        cc.colorScheme = { domain: []};
+        cc.colorScheme = { domain: [] };
         cc.gradient = false;
         cc.showXAxis = true;
         cc.showYAxis = true;

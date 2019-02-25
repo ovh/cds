@@ -1,30 +1,33 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {ProjectEnvironmentComponent} from './environment.component';
-import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
-import {ProjectStore} from '../../../../../../service/project/project.store';
-import {ProjectService} from '../../../../../../service/project/project.service';
-import {EnvironmentService} from '../../../../../../service/environment/environment.service';
-import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
-import {ProjectModule} from '../../../../project.module';
-import {SharedModule} from '../../../../../../shared/shared.module';
-import {ServicesModule} from '../../../../../../service/services.module';
-import {Project} from '../../../../../../model/project.model';
-import {Environment} from '../../../../../../model/environment.model';
-import {ToasterService} from 'angular2-toaster';
-import {ToastService} from '../../../../../../shared/toast/ToastService';
-import {VariableService} from '../../../../../../service/variable/variable.service';
-import {of} from 'rxjs'
-import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
-import {Variable} from '../../../../../../model/variable.model';
-import {ProjectAuditService} from '../../../../../../service/project/project.audit.service';
-import {EnvironmentAuditService} from '../../../../../../service/environment/environment.audit.service';
-import {ApplicationAuditService} from '../../../../../../service/application/application.audit.service';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
-import {NavbarService} from '../../../../../../service/navbar/navbar.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ToasterService } from 'angular2-toaster';
+import { AddEnvironmentVariableInProject, DeleteEnvironmentInProject, DeleteEnvironmentVariableInProject, UpdateEnvironmentInProject, UpdateEnvironmentVariableInProject } from 'app/store/project.action';
+import { NgxsStoreModule } from 'app/store/store.module';
+import { of } from 'rxjs';
+import { Environment } from '../../../../../../model/environment.model';
+import { Project } from '../../../../../../model/project.model';
+import { Variable } from '../../../../../../model/variable.model';
+import { ApplicationAuditService } from '../../../../../../service/application/application.audit.service';
+import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
+import { EnvironmentAuditService } from '../../../../../../service/environment/environment.audit.service';
+import { EnvironmentService } from '../../../../../../service/environment/environment.service';
+import { NavbarService } from '../../../../../../service/navbar/navbar.service';
+import { PipelineService } from '../../../../../../service/pipeline/pipeline.service';
+import { ProjectAuditService } from '../../../../../../service/project/project.audit.service';
+import { ProjectService } from '../../../../../../service/project/project.service';
+import { ProjectStore } from '../../../../../../service/project/project.store';
+import { ServicesModule } from '../../../../../../service/services.module';
+import { VariableService } from '../../../../../../service/variable/variable.service';
+import { SharedModule } from '../../../../../../shared/shared.module';
+import { ToastService } from '../../../../../../shared/toast/ToastService';
+import { VariableEvent } from '../../../../../../shared/variable/variable.event.model';
+import { ProjectModule } from '../../../../project.module';
+import { ProjectEnvironmentComponent } from './environment.component';
 describe('CDS: Environment Component', () => {
 
     beforeEach(() => {
@@ -48,8 +51,9 @@ describe('CDS: Environment Component', () => {
                 PipelineService,
                 AuthentificationStore
             ],
-            imports : [
+            imports: [
                 ProjectModule,
+                NgxsStoreModule,
                 SharedModule,
                 ServicesModule,
                 TranslateModule.forRoot(),
@@ -65,7 +69,7 @@ describe('CDS: Environment Component', () => {
         this.injector = undefined;
     });
 
-    it('should rename environment',  () => {
+    it('should rename environment', () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentComponent);
         let component = fixture.debugElement.componentInstance;
@@ -91,16 +95,20 @@ describe('CDS: Environment Component', () => {
         fixture.detectChanges(true);
         fixture.componentInstance.environment.name = 'production';
         e.name = 'production';
-        let projectStore: ProjectStore = this.injector.get(ProjectStore);
-        spyOn(projectStore, 'renameProjectEnvironment').and.callFake(() => {
-           return of(project);
+        let store: Store = this.injector.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of(null);
         });
 
         fixture.componentInstance.renameEnvironment();
-        expect(projectStore.renameProjectEnvironment).toHaveBeenCalledWith('key1', 'prod', e);
+        expect(store.dispatch).toHaveBeenCalledWith(new UpdateEnvironmentInProject({
+            projectKey: 'key1',
+            environmentName: 'prod',
+            changes: e
+        }));
     });
 
-    it('should delete environment',  () => {
+    it('should delete environment', () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentComponent);
         let component = fixture.debugElement.componentInstance;
@@ -122,9 +130,9 @@ describe('CDS: Environment Component', () => {
         fixture.detectChanges(true);
 
 
-        let projectStore: ProjectStore = this.injector.get(ProjectStore);
-        spyOn(projectStore, 'deleteProjectEnvironment').and.callFake(() => {
-            return of(project);
+        let store: Store = this.injector.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of(null);
         });
 
         let compiled = fixture.debugElement.nativeElement;
@@ -134,10 +142,15 @@ describe('CDS: Environment Component', () => {
 
         compiled.querySelector('.ui.red.button.active').click();
 
-        expect(projectStore.deleteProjectEnvironment).toHaveBeenCalledWith('key1', e);
+        expect(store.dispatch).toHaveBeenCalledWith(
+            new DeleteEnvironmentInProject({
+                projectKey: 'key1',
+                environment: e
+            })
+        );
     });
 
-    it('should add/update/delete an environment variable',  () => {
+    it('should add/update/delete an environment variable', () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentComponent);
         let component = fixture.debugElement.componentInstance;
@@ -163,30 +176,36 @@ describe('CDS: Environment Component', () => {
 
         // Add variable
 
-        let projectStore: ProjectStore = this.injector.get(ProjectStore);
-        spyOn(projectStore, 'addEnvironmentVariable').and.callFake(() => {
-            return of(project);
+        let store: Store = this.injector.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of(null);
         });
 
         fixture.componentInstance.variableEvent(event);
-        expect(projectStore.addEnvironmentVariable).toHaveBeenCalledWith('key1', 'prod', v);
+        expect(store.dispatch).toHaveBeenCalledWith(new AddEnvironmentVariableInProject({
+            projectKey: 'key1',
+            environmentName: 'prod',
+            variable: v
+        }));
 
         // Update variable
         event.type = 'update';
-        spyOn(projectStore, 'updateEnvironmentVariable').and.callFake(() => {
-            return of(project);
-        });
         fixture.componentInstance.variableEvent(event);
-        expect(projectStore.updateEnvironmentVariable).toHaveBeenCalledWith('key1', 'prod', v);
+        expect(store.dispatch).toHaveBeenCalledWith(new UpdateEnvironmentVariableInProject({
+            projectKey: 'key1',
+            environmentName: 'prod',
+            variableName: v.name,
+            changes: v
+        }));
 
         // Delete variable
         event.type = 'delete';
-        spyOn(projectStore, 'removeEnvironmentVariable').and.callFake(() => {
-            return of(project);
-        });
         fixture.componentInstance.variableEvent(event);
-        expect(projectStore.removeEnvironmentVariable).toHaveBeenCalledWith('key1', 'prod', v);
-
+        expect(store.dispatch).toHaveBeenCalledWith(new DeleteEnvironmentVariableInProject({
+            projectKey: 'key1',
+            environmentName: 'prod',
+            variable: v
+        }));
     });
 });
 

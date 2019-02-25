@@ -215,10 +215,9 @@ describe('CDS: Action Component', () => {
             return req.url === '/requirement/types';
         })).flush(actionMock);
 
-        fixture.componentInstance.project = <Project>{ key: 'key' }
         fixture.componentInstance.ngOnInit();
         http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key/action';
+            return req.url === '/action';
         })).flush(actionMock);
 
         let action: Action = new Action();

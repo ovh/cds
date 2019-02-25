@@ -1,7 +1,10 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { CallbackRepositoryManagerInProject, ConnectRepositoryManagerInProject } from 'app/store/project.action';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { finalize, flatMap } from 'rxjs/operators';
 import { Project } from '../../../model/project.model';
-import { ProjectStore } from '../../../service/project/project.store';
 import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
 import { WarningModalComponent } from '../../modal/warning/warning.component';
 import { ToastService } from '../../toast/ToastService';
@@ -11,7 +14,7 @@ import { ToastService } from '../../toast/ToastService';
     templateUrl: './repomanager.form.html',
     styleUrls: ['./repomanager.form.scss']
 })
-export class RepoManagerFormComponent  {
+export class RepoManagerFormComponent {
 
     // project
     @Input() project: Project;
@@ -33,9 +36,13 @@ export class RepoManagerFormComponent  {
     validationToken: string;
     private modalInstance: any;
 
-    constructor(private _repoManService: RepoManagerService, private _projectStore: ProjectStore,
-                private _toast: ToastService, public _translate: TranslateService) {
-        this._repoManService.getAll().subscribe( res => {
+    constructor(
+        private _repoManService: RepoManagerService,
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private store: Store
+    ) {
+        this._repoManService.getAll().subscribe(res => {
             this.ready = true;
             this.reposManagerList = res;
         });
@@ -47,33 +54,34 @@ export class RepoManagerFormComponent  {
                 this.linkRepoWarningModal.show();
             } else {
                 this.connectLoading = true;
-                this._projectStore.connectRepoManager(this.project.key, this.reposManagerList[this.selectedRepoId])
-                  .subscribe( res => {
-                      this.connectLoading = false;
-                      this.addRepoResponse = res;
-                      this.modalInstance = verificationModal;
-                      setTimeout(() => {
-                          verificationModal.show();
-                      }, 1);
-
-                  }, () => {
-                      this.connectLoading = false;
-                  });
+                this.store.dispatch(new ConnectRepositoryManagerInProject({
+                    projectKey: this.project.key,
+                    repoManager: this.reposManagerList[this.selectedRepoId]
+                })).pipe(
+                    flatMap(() => this.store.selectOnce(ProjectState)),
+                    finalize(() => this.connectLoading = false)
+                ).subscribe((projState: ProjectStateModel) => {
+                    this.addRepoResponse = projState.repoManager;
+                    this.modalInstance = verificationModal;
+                    setTimeout(() => {
+                        verificationModal.show();
+                    }, 1);
+                });
             }
         }
     }
 
     sendVerificationCode(): void {
         this.verificationLoading = true;
-        this._projectStore.verificationCallBackRepoManager(
-            this.project.key, this.reposManagerList[this.selectedRepoId], this.addRepoResponse.request_token, this.validationToken
-        ).subscribe( () => {
-            this.verificationLoading = false;
-            this.modalInstance.hide();
-            this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
-        }, () => {
-            this.verificationLoading = false;
-        });
+        this.store.dispatch(new CallbackRepositoryManagerInProject({
+            projectKey: this.project.key,
+            repoManager: this.reposManagerList[this.selectedRepoId],
+            requestToken: this.addRepoResponse.request_token,
+            code: this.validationToken
+        })).pipe(finalize(() => this.verificationLoading = false))
+            .subscribe(() => {
+                this.modalInstance.hide();
+                this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
+            });
     }
-
 }

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { cloneDeep } from 'lodash';
-import { first } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Broadcast, BroadcastEvent } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
@@ -10,16 +11,18 @@ import { PipelineStatus } from './model/pipeline.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
 import { WorkflowNodeRun, WorkflowRun } from './model/workflow.run.model';
-import { ApplicationStore } from './service/application/application.store';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { BroadcastStore } from './service/broadcast/broadcast.store';
 import { PipelineStore } from './service/pipeline/pipeline.store';
-import { ProjectStore } from './service/project/project.store';
 import { RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { WorkflowEventStore } from './service/workflow/workflow.event.store';
 import { WorkflowStore } from './service/workflow/workflow.store';
 import { ToastService } from './shared/toast/ToastService';
+import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
+import { ApplicationsState, ApplicationsStateModel } from './store/applications.state';
+import { DeleteProjectFromCache, ExternalChangeProject, ResyncProject } from './store/project.action';
+import { ProjectState, ProjectStateModel } from './store/project.state';
 
 @Injectable()
 export class AppService {
@@ -31,10 +34,8 @@ export class AppService {
     filter: TimelineFilter;
 
     constructor(
-        private _projStore: ProjectStore,
         private _routerService: RouterService,
         private _routeActivated: ActivatedRoute,
-        private _appStore: ApplicationStore,
         private _authStore: AuthentificationStore,
         private _translate: TranslateService,
         private _pipStore: PipelineStore,
@@ -43,13 +44,14 @@ export class AppService {
         private _broadcastStore: BroadcastStore,
         private _timelineStore: TimelineStore,
         private _toast: ToastService,
-        private _workflowRunService: WorkflowRunService
+        private _workflowRunService: WorkflowRunService,
+        private store: Store
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
 
-    initFilter(filter: TimelineFilter) {
-        this.filter = cloneDeep(filter);
+    initFilter(filterTimeline: TimelineFilter) {
+        this.filter = cloneDeep(filterTimeline);
     }
 
     updateRoute(params: {}) {
@@ -117,71 +119,73 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        this._projStore.getProjects('').pipe(first()).subscribe(projects => {
-            // Project not in cache
-            let projectInCache = projects.get(event.project_key);
-            if (!projectInCache) {
-                return;
-            }
-
-            // If working on project or sub resources
-            if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
-                // if modification from another user, display a notification
-                if (event.username !== this._authStore.getUser().username) {
-                    this._projStore.externalModification(projectInCache.key);
-                    this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
+        this.store.selectOnce(ProjectState)
+            .pipe(
+                filter((projState: ProjectStateModel) => {
+                    return projState && projState.project && projState.project.key === event.project_key;
+                })
+            )
+            .subscribe((projectState: ProjectStateModel) => {
+                let projectInCache = projectState.project;
+                // If working on project or sub resources
+                if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
+                    // if modification from another user, display a notification
+                    if (event.username !== this._authStore.getUser().username) {
+                        this.store.dispatch(new ExternalChangeProject({ projectKey: projectInCache.key }));
+                        this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
+                        return;
+                    }
+                } else {
+                    // If no working on current project, remove from cache
+                    this.store.dispatch(new DeleteProjectFromCache({ projectKey: projectInCache.key }));
                     return;
                 }
-            } else {
-                // If no working on current project, remove from cache
-                this._projStore.removeFromStore(projectInCache.key);
-                return;
-            }
 
-            if (event.type_event === EventType.PROJECT_DELETE) {
-                this._projStore.removeFromStore(projectInCache.key);
-                return
-            }
+                if (event.type_event === EventType.PROJECT_DELETE) {
+                    this.store.dispatch(new DeleteProjectFromCache({ projectKey: projectInCache.key }));
+                    return;
+                }
 
-            let opts = [];
-            if (event.type_event.indexOf(EventType.PROJECT_VARIABLE_PREFIX) === 0) {
-                opts.push(new LoadOpts('withVariables', 'variables'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_PERMISSION_PREFIX) === 0) {
-                opts.push(new LoadOpts('withGroups', 'groups'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
-                opts.push(new LoadOpts('withKeys', 'keys'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
-                opts.push(new LoadOpts('withIntegrations', 'integrations'));
-            } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
-                opts.push(new LoadOpts('withApplicationNames', 'application_names'));
-            } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
-                opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
-            } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
-                opts.push(new LoadOpts('withEnvironments', 'environments'));
-            } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
-                opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
-                opts.push(new LoadOpts('withLabels', 'labels'));
-            }
-            this._projStore.resync(projectInCache.key, opts).pipe(first()).subscribe();
-        });
+                let opts = [];
+                if (event.type_event.indexOf(EventType.PROJECT_VARIABLE_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withVariables', 'variables'));
+                } else if (event.type_event.indexOf(EventType.PROJECT_PERMISSION_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withGroups', 'groups'));
+                } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withKeys', 'keys'));
+                } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withIntegrations', 'integrations'));
+                } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withApplicationNames', 'application_names'));
+                } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
+                } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withEnvironments', 'environments'));
+                } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
+                    opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
+                    opts.push(new LoadOpts('withLabels', 'labels'));
+                }
+                this.store.dispatch(new ResyncProject({ projectKey: projectInCache.key, opts }));
+            });
     }
 
     updateApplicationCache(event: Event): void {
         if (!event || !event.type_event) {
             return
         }
-        let appKey = event.project_key + '-' + event.application_name;
+        const payload = { projectKey: event.project_key, applicationName: event.application_name };
+        const appKey = event.project_key + '/' + event.application_name;
         if (event.type_event === EventType.APPLICATION_DELETE) {
-            this._appStore.removeFromStore(appKey);
+            this.store.dispatch(new DeleteFromCacheApplication(payload))
             return;
         }
 
-        this._appStore.getApplications(event.project_key, null).pipe(first()).subscribe(apps => {
-            if (!apps) {
+        this.store.selectOnce(ApplicationsState).subscribe((appState: ApplicationsStateModel) => {
+            if (!appState.applications || !Object.keys(appState.applications).length) {
                 return;
             }
 
-            if (!apps.get(appKey)) {
+            if (!appState.applications[appKey]) {
                 return;
             }
 
@@ -190,17 +194,16 @@ export class AppService {
                 && this.routeParams['appName'] === event.application_name) {
                 // modification by another user
                 if (event.username !== this._authStore.getUser().username) {
-                    this._appStore.externalModification(appKey);
+                    this.store.dispatch(new ExternalChangeApplication(payload));
                     this._toast.info('', this._translate.instant('warning_application', { username: event.username }));
                     return;
                 }
             } else {
-                this._appStore.removeFromStore(appKey);
+                this.store.dispatch(new DeleteFromCacheApplication(payload))
                 return;
             }
 
-            this._appStore.resync(event.project_key, event.application_name);
-
+            this.store.dispatch(new ResyncApplication(payload));
         });
 
     }
@@ -211,7 +214,7 @@ export class AppService {
         }
         let pipKey = event.project_key + '-' + event.pipeline_name;
         if (event.type_event === EventType.PIPELINE_DELETE) {
-            this._appStore.removeFromStore(pipKey);
+            this._pipStore.removeFromStore(pipKey);
             return;
         }
 
@@ -247,7 +250,7 @@ export class AppService {
         }
         let wfKey = event.project_key + '-' + event.workflow_name;
         if (event.type_event === EventType.WORKFLOW_DELETE) {
-            this._appStore.removeFromStore(wfKey);
+            this._wfStore.removeFromStore(wfKey);
             return;
         }
         this._wfStore.getWorkflows(event.project_key).pipe(first()).subscribe(wfs => {

@@ -1,25 +1,28 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {Injector} from '@angular/core';
-import {ProjectStore} from '../../../../../service/project/project.store';
-import {ProjectService} from '../../../../../service/project/project.service';
-import {VariableService} from '../../../../../service/variable/variable.service';
-import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
-import {EnvironmentService} from '../../../../../service/environment/environment.service';
-import {ToastService} from '../../../../../shared/toast/ToastService';
-import {ProjectModule} from '../../../project.module';
-import {ServicesModule} from '../../../../../service/services.module';
-import {ProjectEnvironmentFormComponent} from './environment.form.component';
-import {Project} from '../../../../../model/project.model';
-import {Observable} from 'rxjs/Observable';
-import {SharedModule} from '../../../../../shared/shared.module';
-import {Environment} from '../../../../../model/environment.model';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { Injector } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddEnvironmentInProject } from 'app/store/project.action';
+import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
-import {NavbarService} from '../../../../../service/navbar/navbar.service';
+import { Observable } from 'rxjs/Observable';
+import { Environment } from '../../../../../model/environment.model';
+import { Project } from '../../../../../model/project.model';
+import { EnvironmentService } from '../../../../../service/environment/environment.service';
+import { NavbarService } from '../../../../../service/navbar/navbar.service';
+import { PipelineService } from '../../../../../service/pipeline/pipeline.service';
+import { ProjectService } from '../../../../../service/project/project.service';
+import { ProjectStore } from '../../../../../service/project/project.store';
+import { ServicesModule } from '../../../../../service/services.module';
+import { VariableService } from '../../../../../service/variable/variable.service';
+import { SharedModule } from '../../../../../shared/shared.module';
+import { ToastService } from '../../../../../shared/toast/ToastService';
+import { ProjectModule } from '../../../project.module';
+import { ProjectEnvironmentFormComponent } from './environment.form.component';
 
 describe('CDS: Environment From Component', () => {
 
@@ -41,9 +44,10 @@ describe('CDS: Environment From Component', () => {
                 NavbarService,
                 EnvironmentService
             ],
-            imports : [
+            imports: [
                 ProjectModule,
                 SharedModule,
+                NgxsStoreModule,
                 ServicesModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
@@ -72,15 +76,19 @@ describe('CDS: Environment From Component', () => {
         env.name = 'Production';
         fixture.componentInstance.newEnvironment = env;
 
-        let projStore: ProjectStore = this.injector.get(ProjectStore);
-        spyOn(projStore, 'addProjectEnvironment').and.callFake(() => {
-           let p = new Project();
-           return Observable.of(p);
+        let store: Store = this.injector.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return Observable.of(null);
         });
 
         fixture.debugElement.nativeElement.querySelector('.ui.green.button').click();
 
-        expect(projStore.addProjectEnvironment).toHaveBeenCalledWith('key1', env);
+        expect(store.dispatch).toHaveBeenCalledWith(
+            new AddEnvironmentInProject({
+                projectKey: 'key1',
+                environment: env
+            })
+        );
     });
 });
 

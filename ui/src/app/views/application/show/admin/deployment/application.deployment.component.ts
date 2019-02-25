@@ -1,12 +1,13 @@
-import {Component, Input, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {Application} from '../../../../../model/application.model';
-import {ProjectIntegration} from '../../../../../model/integration.model';
-import {Project} from '../../../../../model/project.model';
-import {ApplicationStore} from '../../../../../service/application/application.store';
-import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import { Component, Input, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddApplicationDeployment, DeleteApplicationDeployment, UpdateApplicationDeployment } from 'app/store/applications.action';
+import { finalize } from 'rxjs/operators';
+import { Application } from '../../../../../model/application.model';
+import { ProjectIntegration } from '../../../../../model/integration.model';
+import { Project } from '../../../../../model/project.model';
+import { WarningModalComponent } from '../../../../../shared/modal/warning/warning.component';
+import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-deployment',
@@ -44,63 +45,47 @@ export class ApplicationDeploymentComponent {
         return null;
     }
 
-    constructor(private _appStore: ApplicationStore, private _toast: ToastService,
-                public _translate: TranslateService) {
+    constructor(
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private store: Store
+    ) {
+
     }
 
     clickDeleteIntegration(pfName: string) {
         this.loadingBtn = true;
-        this._appStore.deleteDeploymentStrategy(
-            this._project.key,
-            this.application.name,
-            pfName)
-        .pipe(
-            first(),
-            finalize(() => this.loadingBtn = false)
-        ).subscribe(
-            app => {
-                this.application = app;
-                this._toast.success('', this._translate.instant('application_integration_deleted'));
-            }
-        );
+        this.store.dispatch(new DeleteApplicationDeployment({
+            projectKey: this.project.key,
+            applicationName: this.application.name,
+            integrationName: pfName
+        })).pipe(finalize(() => this.loadingBtn = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('application_integration_deleted')));
     }
 
     updateIntegration(pfName: string) {
         this.loadingBtn = true;
-        this._appStore.saveDeploymentStrategy(
-            this._project.key,
-            this.application.name,
-            pfName,
-            this.application.deployment_strategies[pfName])
-        .pipe(
-            first(),
-            finalize(() => this.loadingBtn = false)
-        ).subscribe(
-            app => {
-                this.application = app;
-                this._toast.success('', this._translate.instant('application_integration_updated'));
-            }
-        );
+        this.store.dispatch(new UpdateApplicationDeployment({
+            projectKey: this.project.key,
+            applicationName: this.application.name,
+            deploymentName: pfName,
+            config: this.application.deployment_strategies[pfName]
+        })).pipe(finalize(() => this.loadingBtn = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('application_integration_updated')));
     }
 
     addIntegration() {
         this.loadingBtn = true;
         if (this.selectedIntegration.model) {
-            this._appStore.saveDeploymentStrategy(
-                this._project.key,
-                this.application.name,
-                this.selectedIntegration.name,
-                this.selectedIntegration.model.deployment_default_config)
-            .pipe(
-                first(),
-                finalize(() => this.loadingBtn = false))
-            .subscribe(
-                app => {
-                    this.application = app;
+            this.store.dispatch(new AddApplicationDeployment({
+                projectKey: this.project.key,
+                applicationName: this.application.name,
+                integration: this.selectedIntegration
+            })).pipe(finalize(() => this.loadingBtn = false))
+                .subscribe(() => {
                     this.selectedIntegration = null;
                     this._toast.success('', this._translate.instant('application_integration_added'));
-                }
-            );
+                });
         }
     }
 }
