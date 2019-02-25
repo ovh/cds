@@ -562,7 +562,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		var env sdk.Environment
 		var node *sdk.Node
 		var wNode *sdk.WorkflowNode
-		if wfRun != nil {
+		if wf != nil {
 			node = wf.WorkflowData.NodeByName(nodeName)
 			if node == nil {
 				return sdk.WrapError(sdk.ErrNotFound, "getWorkflowCommitsHandler> Unable to load workflow data node")
@@ -571,10 +571,10 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 				return service.WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
 			}
 			if node.Context != nil && node.Context.ApplicationID != 0 {
-				app = wfRun.Workflow.Applications[node.Context.ApplicationID]
+				app = wf.Applications[node.Context.ApplicationID]
 			}
 			if node.Context != nil && node.Context.EnvironmentID != 0 {
-				env = wfRun.Workflow.Environments[node.Context.EnvironmentID]
+				env = wf.Environments[node.Context.EnvironmentID]
 			}
 		}
 
