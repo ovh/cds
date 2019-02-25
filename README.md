@@ -30,12 +30,12 @@ cdsctl is the CDS Command Line - you can script everything with it, cdsctl also 
 
 Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ovh.github.io/cds/hosting/ready-to-run/)
 
-## FAQ
-
-### Blog posts
+## Blog posts
 
 -	CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/ 
 -	DataBuzzWord Podcast (French) : https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/  
+
+## FAQ
 
 ### Why CDS? Discover the Origins
 
