@@ -32,6 +32,11 @@ Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ov
 
 ## FAQ
 
+### Blog posts
+
+-	CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/ 
+-	DataBuzzWord Podcast (French) : https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/  
+
 ### Why CDS? Discover the Origins
 
 - [Self-Service](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#1-self-service)
