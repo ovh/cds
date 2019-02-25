@@ -11,7 +11,7 @@ import { ProjectState } from './project.state';
 @NgModule({
     imports: [
         CommonModule,
-        NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false }),
+        NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false, disabled: env.production }),
         NgxsReduxDevtoolsPluginModule.forRoot({ disabled: env.production }),
         NgxsModule.forRoot([ProjectState, ApplicationsState], { developmentMode: !env.production })
     ],
