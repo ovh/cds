@@ -12,7 +12,7 @@
         <tr *ngFor="let c of getDataForCurrentPage()">
             <td valign="middle" class="middle">
                 <div class="vcenter">
-                    <img [src]="c.author.avatar">
+                    <img *ngIf="c.author.avatar" [src]="c.author.avatar">
                     <div class="author">
                         {{ c.author.displayName }}
                     </div>

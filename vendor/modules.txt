@@ -233,7 +233,7 @@ github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/snappy
 # github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a
 github.com/google/btree
-# github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135
+# github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
 # github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 github.com/google/gofuzz
@@ -524,7 +524,7 @@ github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/debug
 github.com/vmware/govmomi/vim25/xml
-# github.com/xanzy/go-gitlab v0.7.5
+# github.com/xanzy/go-gitlab v0.15.0
 github.com/xanzy/go-gitlab
 # github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076
 github.com/xeipuuv/gojsonpointer
@@ -594,13 +594,13 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/internal/socks
-# golang.org/x/oauth2 v0.0.0-20181017192945-9dcd33a902f4
+# golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/google
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
+# golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
 golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
 golang.org/x/sys/unix
@@ -618,7 +618,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/time/rate
 # google.golang.org/api v0.0.0-20180517000435-aedc137bffca
 google.golang.org/api/support/bundler
-# google.golang.org/appengine v1.1.0
+# google.golang.org/appengine v1.3.0
 google.golang.org/appengine/cloudsql
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine

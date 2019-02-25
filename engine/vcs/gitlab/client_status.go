@@ -21,7 +21,7 @@ type statusData struct {
 	hash         string
 }
 
-func getGitlabStateFromStatus(s string) gitlab.BuildState {
+func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 	switch s {
 	case sdk.StatusWaiting.String():
 		return gitlab.Pending

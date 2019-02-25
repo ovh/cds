@@ -21,12 +21,14 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 
 	commit, err := c.Commit(ctx, repo, since)
 	if err == nil {
-		opt.Since = time.Unix(commit.Timestamp, 0)
+		since := time.Unix(commit.Timestamp, 0)
+		opt.Since = &since
 	}
 
 	commit, err = c.Commit(ctx, repo, until)
 	if err == nil {
-		opt.Since = time.Unix(commit.Timestamp, 0)
+		since := time.Unix(commit.Timestamp, 0)
+		opt.Since = &since
 	}
 
 	commits, _, err := c.client.Commits.ListCommits(repo, opt)

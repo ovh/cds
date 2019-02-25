@@ -33,9 +33,7 @@ type ProjectSnippetsService struct {
 // ListProjectSnippetsOptions represents the available ListSnippets() options.
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/project_snippets.html#list-snippets
-type ListProjectSnippetsOptions struct {
-	ListOptions
-}
+type ListProjectSnippetsOptions ListOptions
 
 // ListSnippets gets a list of project snippets.
 //
