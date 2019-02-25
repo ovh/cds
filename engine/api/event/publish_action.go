@@ -26,11 +26,17 @@ func publishActionEvent(payload interface{}, u *sdk.User) {
 
 // PublishActionAdd publishes an event for the creation of the given action.
 func PublishActionAdd(a sdk.Action, u *sdk.User) {
+	a.FirstAudit = nil
+	a.LastAudit = nil
 	publishActionEvent(sdk.EventActionAdd{Action: a}, u)
 }
 
 // PublishActionUpdate publishes an event for the update of the given action.
 func PublishActionUpdate(oldAction sdk.Action, newAction sdk.Action, u *sdk.User) {
+	oldAction.FirstAudit = nil
+	oldAction.LastAudit = nil
+	newAction.FirstAudit = nil
+	newAction.LastAudit = nil
 	publishActionEvent(sdk.EventActionUpdate{
 		OldAction: oldAction,
 		NewAction: newAction,

@@ -51,14 +51,13 @@ type Action struct {
 	Optional       bool   `json:"optional" yaml:"-" db:"-"`
 	AlwaysExecuted bool   `json:"always_executed" yaml:"-" db:"-"`
 	// aggregates
-	Requirements  RequirementList `json:"requirements" db:"-"`
-	Parameters    []Parameter     `json:"parameters" db:"-"`
-	Actions       []Action        `json:"actions,omitempty" yaml:"actions,omitempty" db:"-"`
-	Group         *Group          `json:"group,omitempty" db:"-"`
-	FirstAudit    *AuditAction    `json:"first_audit,omitempty" db:"-"`
-	LastAudit     *AuditAction    `json:"last_audit,omitempty" db:"-"`
-	Editable      bool            `json:"editable,omitempty" db:"-"`
-	ChangeMessage string          `json:"change_message,omitempty" db:"-"`
+	Requirements RequirementList `json:"requirements" db:"-"`
+	Parameters   []Parameter     `json:"parameters" db:"-"`
+	Actions      []Action        `json:"actions,omitempty" yaml:"actions,omitempty" db:"-"`
+	Group        *Group          `json:"group,omitempty" db:"-"`
+	FirstAudit   *AuditAction    `json:"first_audit,omitempty" db:"-"`
+	LastAudit    *AuditAction    `json:"last_audit,omitempty" db:"-"`
+	Editable     bool            `json:"editable,omitempty" db:"-"`
 }
 
 // Value returns driver.Value from action.

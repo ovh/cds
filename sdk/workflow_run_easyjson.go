@@ -2644,8 +2644,6 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk14(in *jlexer.Lexer, out *Action) {
 			}
 		case "editable":
 			out.Editable = bool(in.Bool())
-		case "change_message":
-			out.ChangeMessage = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -2861,16 +2859,6 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Action) 
 		}
 		out.Bool(bool(in.Editable))
 	}
-	if in.ChangeMessage != "" {
-		const prefix string = ",\"change_message\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.ChangeMessage))
-	}
 	out.RawByte('}')
 }
 func easyjsonD7860c2dDecodeGithubComOvhCdsSdk16(in *jlexer.Lexer, out *AuditAction) {
@@ -2894,6 +2882,12 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk16(in *jlexer.Lexer, out *AuditActi
 		switch key {
 		case "action_id":
 			out.ActionID = int64(in.Int64())
+		case "data_type":
+			out.DataType = string(in.String())
+		case "data_before":
+			out.DataBefore = string(in.String())
+		case "data_after":
+			out.DataAfter = string(in.String())
 		case "id":
 			out.ID = int64(in.Int64())
 		case "triggered_by":
@@ -2902,14 +2896,8 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk16(in *jlexer.Lexer, out *AuditActi
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.Created).UnmarshalJSON(data))
 			}
-		case "data_before":
-			out.DataBefore = string(in.String())
-		case "data_after":
-			out.DataAfter = string(in.String())
 		case "event_type":
 			out.EventType = string(in.String())
-		case "data_type":
-			out.DataType = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -2933,6 +2921,36 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk16(out *jwriter.Writer, in AuditAct
 			out.RawString(prefix)
 		}
 		out.Int64(int64(in.ActionID))
+	}
+	{
+		const prefix string = ",\"data_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataType))
+	}
+	{
+		const prefix string = ",\"data_before\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataBefore))
+	}
+	{
+		const prefix string = ",\"data_after\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataAfter))
 	}
 	{
 		const prefix string = ",\"id\":"
@@ -2965,26 +2983,6 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk16(out *jwriter.Writer, in AuditAct
 		out.Raw((in.Created).MarshalJSON())
 	}
 	{
-		const prefix string = ",\"data_before\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.DataBefore))
-	}
-	{
-		const prefix string = ",\"data_after\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.DataAfter))
-	}
-	{
 		const prefix string = ",\"event_type\":"
 		if first {
 			first = false
@@ -2993,16 +2991,6 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk16(out *jwriter.Writer, in AuditAct
 			out.RawString(prefix)
 		}
 		out.String(string(in.EventType))
-	}
-	{
-		const prefix string = ",\"data_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.DataType))
 	}
 	out.RawByte('}')
 }
