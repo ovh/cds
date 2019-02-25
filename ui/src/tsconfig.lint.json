@@ -1,4 +1,9 @@
 {
+  "compilerOptions": {
+    "paths": {
+      "@cds/*": ["./app/*"],
+    }
+  },
   "include": [
     "**/*.ts"
   ],

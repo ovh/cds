@@ -5,6 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ToasterModule } from 'angular2-toaster/angular2-toaster';
+import { NgxsStoreModule } from 'app/store/store.module';
 import * as Raven from 'raven-js';
 import { AppComponent } from './app.component';
 import { routing } from './app.routing';
@@ -22,6 +23,7 @@ let ngModule: NgModule = {
         BrowserAnimationsModule,
         HttpClientModule,
         NavbarModule,
+        NgxsStoreModule,
         ToasterModule.forRoot(),
         SharedModule,
         ServicesModule.forRoot(),

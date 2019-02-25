@@ -7,6 +7,7 @@ import { MockBackend } from '@angular/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
 import { Pipeline } from '../../../../model/pipeline.model';
@@ -40,6 +41,7 @@ describe('CDS: Pipeline Admin Component', () => {
             ],
             imports: [
                 PipelineModule,
+                NgxsStoreModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 TranslateModule.forRoot(),

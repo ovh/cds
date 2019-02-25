@@ -1,12 +1,13 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {Key} from '../../../../model/keys.model';
-import {Project} from '../../../../model/project.model';
-import {Warning} from '../../../../model/warning.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {KeyEvent} from '../../../../shared/keys/key.event';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input, OnInit } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddKeyInProject, DeleteKeyInProject, FetchKeysInProject } from 'app/store/project.action';
+import { finalize } from 'rxjs/operators';
+import { Key } from '../../../../model/keys.model';
+import { Project } from '../../../../model/project.model';
+import { Warning } from '../../../../model/warning.model';
+import { KeyEvent } from '../../../../shared/keys/key.event';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-keys',
@@ -50,34 +51,32 @@ export class ProjectKeysComponent implements OnInit {
     loading = false;
     ready = false;
 
-    constructor(private _projectStore: ProjectStore, private _toast: ToastService, private _translate: TranslateService) {
+    constructor(
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private store: Store
+    ) {
     }
 
     ngOnInit(): void {
-        if (this.project.keys) {
-            this.ready = true;
-            return;
-        }
-        this._projectStore.getProjectKeysResolver(this.project.key)
-            .pipe(first(), finalize(() => this.ready = true))
-            .subscribe((proj) => {
-                this.project = proj;
-            });
+        this.store.dispatch(new FetchKeysInProject({ projectKey: this.project.key }))
+            .pipe(finalize(() => this.ready = true))
+            .subscribe();
     }
 
     manageKeyEvent(event: KeyEvent): void {
         switch (event.type) {
             case 'add':
                 this.loading = true;
-                this._projectStore.addKey(this.project.key, event.key).pipe(first(), finalize(() => {
-                    this.loading = false;
-                })).subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
+                this.store.dispatch(new AddKeyInProject({ projectKey: this.project.key, key: event.key }))
+                    .pipe(finalize(() => this.loading = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
                 break;
             case 'delete':
                 this.loading = true;
-                this._projectStore.removeKey(this.project.key, event.key.name).pipe(first(), finalize(() => {
-                    this.loading = false;
-                })).subscribe(() => this._toast.success('', this._translate.instant('keys_removed')))
+                this.store.dispatch(new DeleteKeyInProject({ projectKey: this.project.key, key: event.key }))
+                    .pipe(finalize(() => this.loading = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('keys_removed')));
         }
     }
 }

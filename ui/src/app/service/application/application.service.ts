@@ -27,12 +27,11 @@ export class ApplicationService {
         params = params.append('withDeploymentStrategies', 'true');
         params = params.append('withVulnerabilities', 'true');
 
-        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params}).pipe(map(a => {
+        return this._http.get<Application>('/project/' + key + '/application/' + appName, { params: params }).pipe(map(a => {
             a.vcs_strategy.password = '**********';
             return a;
         }));
     }
-
     /**
      * Update the given application
      * @param key Project unique key
@@ -103,7 +102,7 @@ export class ApplicationService {
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
         let params = new HttpParams();
         params = params.append('fullname', repoFullName);
-        return this._http.post<Application>(url, params.toString(), {headers: headers, params: params});
+        return this._http.post<Application>(url, params.toString(), { headers: headers, params: params });
     }
 
     /**
@@ -185,11 +184,11 @@ export class ApplicationService {
         return this._http.delete<Application>(url);
     }
 
-     /**
-     * Get application deployment strategies
-     * @param key Project unique key
-     * @param appName Application name
-     */
+    /**
+    * Get application deployment strategies
+    * @param key Project unique key
+    * @param appName Application name
+    */
     getDeploymentStrategies(key: string, appName: string): Observable<Map<string, any>> {
         let url = '/project/' + key + '/application/' + appName + '/deployment/config';
         return this._http.get<Map<string, any>>(url);

@@ -22,6 +22,7 @@
     "test.ts",
     "test_shared.ts",
     "test_views.ts",
+    "test_store.ts",
     "test_model.ts",
     "test_service.ts",
     "polyfills.ts"

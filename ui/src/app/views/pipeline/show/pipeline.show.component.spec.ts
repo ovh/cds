@@ -5,6 +5,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Parameter } from '../../../model/parameter.model';
@@ -36,8 +37,8 @@ describe('CDS: Pipeline Show', () => {
                 ProjectService,
                 ProjectStore,
                 NavbarService,
-                {provide: ActivatedRoute, useClass: MockActivatedRoutes},
-                {provide: ToastService, useClass: MockToast},
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
+                { provide: ToastService, useClass: MockToast },
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
@@ -45,6 +46,7 @@ describe('CDS: Pipeline Show', () => {
             ],
             imports: [
                 PipelineModule,
+                NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
@@ -137,8 +139,8 @@ class MockToast {
 class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
-        this.params = of({key: 'key1', pipName: 'pip1'});
-        this.queryParams = of({key: 'key1', appName: 'pip1', tab: 'workflow'});
+        this.params = of({ key: 'key1', pipName: 'pip1' });
+        this.queryParams = of({ key: 'key1', appName: 'pip1', tab: 'workflow' });
         this.snapshot = new ActivatedRouteSnapshot();
         this.snapshot.queryParams = {};
 

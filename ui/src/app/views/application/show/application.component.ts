@@ -1,8 +1,17 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import {
+    AddApplicationVariable,
+    DeleteApplicationVariable,
+    FetchApplication,
+    UpdateApplicationVariable
+} from 'app/store/applications.action';
+import { ApplicationsState } from 'app/store/applications.state';
+import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';
 import { Environment } from '../../../model/environment.model';
 import { PermissionValue } from '../../../model/permission.model';
@@ -65,10 +74,16 @@ export class ApplicationShowComponent implements OnInit {
     usageCount = 0;
     perm = PermissionValue;
 
-    constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
-                private _router: Router, private _authStore: AuthentificationStore,
-                private _toast: ToastService, public _translate: TranslateService,
-                private _projectStore: ProjectStore) {
+    constructor(
+        private _applicationStore: ApplicationStore,
+        private _route: ActivatedRoute,
+        private _router: Router,
+        private _authStore: AuthentificationStore,
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private _projectStore: ProjectStore,
+        private store: Store
+    ) {
         this.currentUser = this._authStore.getUser();
         // Update data if route change
         this._routeDataSub = this._route.data.subscribe(datas => {
@@ -85,39 +100,42 @@ export class ApplicationShowComponent implements OnInit {
             let key = params['key'];
             let appName = params['appName'];
             if (key && appName) {
-                if (this.applicationSubscription) {
-                    this.applicationSubscription.unsubscribe();
-                }
+                this.store.dispatch(new FetchApplication({ projectKey: key, applicationName: appName }))
+                    .subscribe(
+                        null,
+                        () => this._router.navigate(['/project', key], { queryParams: { tab: 'applications' } })
+                    );
+
                 if (this.application && this.application.name !== appName) {
                     this.application = null;
                 }
                 if (!this.application) {
-                    this.applicationSubscription = this._applicationStore
-                        .getApplications(key, appName).subscribe(apps => {
-                        if (apps) {
-                            let updatedApplication = apps.get(key + '-' + appName);
-                            if (updatedApplication && !updatedApplication.externalChange) {
-                                this.readyApp = true;
-                                this.application = updatedApplication;
-                                this.workflows = updatedApplication.usage.workflows || [];
-                                this.environments = updatedApplication.usage.environments || [];
-                                this.pipelines = updatedApplication.usage.pipelines || [];
+                    this.applicationSubscription = this.store.select(ApplicationsState.selectApplication(key, appName))
+                        .pipe(filter((app) => app != null))
+                        .subscribe((app: Application) => {
+                            this.readyApp = true;
+                            // TODO: to delete when all CDS application will be in store. In fact we make a copy to break the read only rule
+                            this.application = cloneDeep(app);
+                            if (app.usage) {
+                                this.workflows = app.usage.workflows || [];
+                                this.environments = app.usage.environments || [];
+                                this.pipelines = app.usage.pipelines || [];
                                 this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
-
-                                // Update recent application viewed
-                                this._applicationStore.updateRecentApplication(key, this.application);
                             }
-                        }
-                    }, () => {
-                        this._router.navigate(['/project', key], {queryParams: {tab: 'applications'}});
-                    });
+
+                            // Update recent application viewed
+                            this._applicationStore.updateRecentApplication(key, this.application);
+
+                        }, () => {
+                            this._router.navigate(['/project', key], { queryParams: { tab: 'applications' } });
+                        })
                 }
             }
         });
     }
 
     ngOnInit() {
-       this._queryParamsSub = this._route.queryParams.subscribe(params => {
+        this._queryParamsSub = this._route.queryParams.subscribe(params => {
             let tab = params['tab'];
             if (tab) {
                 this.selectedTab = tab;
@@ -149,26 +167,30 @@ export class ApplicationShowComponent implements OnInit {
             switch (event.type) {
                 case 'add':
                     this.varFormLoading = true;
-                    this._applicationStore.addVariable(this.project.key, this.application.name, event.variable).pipe(finalize(() => {
+                    this.store.dispatch(new AddApplicationVariable({
+                        projectKey: this.project.key,
+                        applicationName: this.application.name,
+                        variable: event.variable
+                    })).pipe(finalize(() => {
                         event.variable.updating = false;
                         this.varFormLoading = false;
-                    })).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_added'));
-                    });
+                    })).subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                     break;
                 case 'update':
-                    this._applicationStore.updateVariable(this.project.key, this.application.name, event.variable).pipe(finalize(() => {
-                        event.variable.updating = false;
-                    })).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_updated'));
-                    });
+                    this.store.dispatch(new UpdateApplicationVariable({
+                        projectKey: this.project.key,
+                        applicationName: this.application.name,
+                        variableName: event.variable.name,
+                        variable: event.variable
+                    })).pipe(finalize(() => event.variable.updating = false))
+                        .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
                     break;
                 case 'delete':
-                    this._applicationStore.removeVariable(this.project.key, this.application.name, event.variable).pipe(finalize(() => {
-                        event.variable.updating = false;
-                    })).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_deleted'));
-                    });
+                    this.store.dispatch(new DeleteApplicationVariable({
+                        projectKey: this.project.key,
+                        applicationName: this.application.name,
+                        variable: event.variable
+                    })).subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
                     break;
             }
         }

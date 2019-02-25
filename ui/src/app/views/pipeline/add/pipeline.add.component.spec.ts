@@ -8,6 +8,7 @@ import { MockBackend } from '@angular/http/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
@@ -31,7 +32,6 @@ describe('CDS: Pipeline Add Component', () => {
     let pipStore: PipelineStore;
     let backend: MockBackend;
     let router: Router;
-    let prjStore: ProjectStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -57,6 +57,7 @@ describe('CDS: Pipeline Add Component', () => {
             ],
             imports: [
                 PipelineModule,
+                NgxsStoreModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 TranslateModule.forRoot(),
@@ -68,7 +69,6 @@ describe('CDS: Pipeline Add Component', () => {
         backend = injector.get(MockBackend);
         pipStore = injector.get(PipelineStore);
         router = injector.get(Router);
-        prjStore = injector.get(ProjectStore);
     });
 
     afterEach(() => {
@@ -76,7 +76,6 @@ describe('CDS: Pipeline Add Component', () => {
         pipStore = undefined;
         backend = undefined;
         router = undefined;
-        prjStore = undefined;
     });
 
     it('should create an empty pipeline', fakeAsync(() => {

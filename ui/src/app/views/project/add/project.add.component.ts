@@ -1,14 +1,15 @@
-import {Component, ViewChild} from '@angular/core';
-import {Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {first} from 'rxjs/operators';
-import {Group, GroupPermission} from '../../../model/group.model';
-import {Project} from '../../../model/project.model';
-import {GroupService} from '../../../service/group/group.service';
-import {ProjectStore} from '../../../service/project/project.store';
-import {PermissionService} from '../../../shared/permission/permission.service';
-import {ToastService} from '../../../shared/toast/ToastService';
+import { Component, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddProject } from 'app/store/project.action';
+import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { finalize, first } from 'rxjs/operators';
+import { Group, GroupPermission } from '../../../model/group.model';
+import { Project } from '../../../model/project.model';
+import { GroupService } from '../../../service/group/group.service';
+import { PermissionService } from '../../../shared/permission/permission.service';
+import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-add',
@@ -31,8 +32,14 @@ export class ProjectAddComponent {
     @ViewChild('createGroupModal')
     modalCreateGroup: SemanticModalComponent;
 
-    constructor(private _projectStore: ProjectStore, private _toast: ToastService, private _translate: TranslateService,
-                private _router: Router, private _groupService: GroupService, private _permissionService: PermissionService) {
+    constructor(
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _router: Router,
+        private _groupService: GroupService,
+        private _permissionService: PermissionService,
+        private store: Store
+    ) {
         this.project = new Project();
         this.loadGroups(null);
     }
@@ -72,21 +79,21 @@ export class ProjectAddComponent {
             }
         }
         if (this.group && this.group.name !== '') {
-          let gp = new GroupPermission();
-          gp.permission = this._permissionService.getRWX();
-          gp.group = this.group;
-          this.project.groups = new Array<GroupPermission>();
-          this.project.groups.push(gp);
+            let gp = new GroupPermission();
+            gp.permission = this._permissionService.getRWX();
+            gp.group = this.group;
+            this.project.groups = new Array<GroupPermission>();
+            this.project.groups.push(gp);
         }
 
         if (!this.nameError && !this.keyError) {
-            this._projectStore.createProject(this.project).subscribe(p => {
-                this.loading = true;
-                this._toast.success('', this._translate.instant('project_added'));
-                this._router.navigate(['/project', p.key]);
-            }, () => {
-                this.loading = false;
-            });
+            this.loading = true;
+            this.store.dispatch(new AddProject(this.project))
+                .pipe(finalize(() => this.loading = false))
+                .subscribe(() => {
+                    this._toast.success('', this._translate.instant('project_added'));
+                    this._router.navigate(['/project', this.project.key]);
+                });
         } else {
             this.loading = false;
         }
@@ -126,10 +133,10 @@ export class ProjectAddComponent {
         });
     }
 
-    fileEvent(event: {content: string, file: File}) {
+    fileEvent(event: { content: string, file: File }) {
         this.fileTooLarge = event.file.size > 100000
         if (this.fileTooLarge) {
-          return;
+            return;
         }
         this.project.icon = event.content;
     }
