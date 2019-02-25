@@ -658,7 +658,7 @@ export class ProjectState {
     @Action(ProjectAction.AddKeyInProject)
     addKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddKeyInProject) {
         const state = ctx.getState();
-        return this._http.post<Key>('/project/' + action.payload.projectKey + '/keys', action.payload.key.name)
+        return this._http.post<Key>('/project/' + action.payload.projectKey + '/keys', action.payload.key)
             .pipe(tap((key: Key) => {
                 let keys = state.project.keys ? state.project.keys.concat([key]) : [key];
                 ctx.setState({
