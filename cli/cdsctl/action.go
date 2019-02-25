@@ -21,6 +21,11 @@ var actionCmd = cli.Command{
 	Short: "Manage CDS action",
 }
 
+var actionBuiltinCmd = cli.Command{
+	Name:  "builtin",
+	Short: "Manage CDS builtin action",
+}
+
 func action() *cobra.Command {
 	return cli.NewCommand(actionCmd, nil, []*cobra.Command{
 		cli.NewListCommand(actionListCmd, actionListRun, nil),
@@ -29,6 +34,10 @@ func action() *cobra.Command {
 		cli.NewCommand(actionDocCmd, actionDocRun, nil),
 		cli.NewCommand(actionImportCmd, actionImportRun, nil),
 		cli.NewCommand(actionExportCmd, actionExportRun, nil),
+		cli.NewCommand(actionBuiltinCmd, nil, []*cobra.Command{
+			cli.NewListCommand(actionBuiltinListCmd, actionBuiltinListRun, nil),
+			cli.NewGetCommand(actionBuiltinShowCmd, actionBuiltinShowRun, nil),
+		}),
 	})
 }
 
@@ -239,4 +248,40 @@ func actionExportRun(v cli.Values) error {
 	fmt.Println(string(b))
 
 	return nil
+}
+
+var actionBuiltinListCmd = cli.Command{
+	Name:  "list",
+	Short: "List CDS builtin actions",
+}
+
+func actionBuiltinListRun(v cli.Values) (cli.ListResult, error) {
+	as, err := client.ActionBuiltinList()
+	if err != nil {
+		return nil, err
+	}
+
+	ads := make([]actionDisplay, len(as))
+	for i := range as {
+		ads[i] = newActionDisplay(as[i])
+	}
+
+	return cli.AsListResult(ads), nil
+}
+
+var actionBuiltinShowCmd = cli.Command{
+	Name:  "show",
+	Short: "Show a CDS builtin action",
+	Args: []cli.Arg{
+		{Name: "action-name"},
+	},
+}
+
+func actionBuiltinShowRun(v cli.Values) (interface{}, error) {
+	action, err := client.ActionBuiltinGet(v.GetString("action-name"))
+	if err != nil {
+		return nil, err
+	}
+
+	return newActionDisplay(*action), nil
 }

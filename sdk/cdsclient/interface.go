@@ -144,6 +144,8 @@ type ActionClient interface {
 	ActionList() ([]sdk.Action, error)
 	ActionImport(content io.Reader, format string) error
 	ActionExport(groupName, name string, format string) ([]byte, error)
+	ActionBuiltinList() ([]sdk.Action, error)
+	ActionBuiltinGet(name string, mods ...RequestModifier) (*sdk.Action, error)
 }
 
 // GroupClient exposes groups related functions

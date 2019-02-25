@@ -83,3 +83,22 @@ func (c *client) ActionExport(groupName, name string, format string) ([]byte, er
 	}
 	return body, nil
 }
+
+func (c *client) ActionBuiltinList() ([]sdk.Action, error) {
+	actions := []sdk.Action{}
+	if _, err := c.GetJSON(context.Background(), "/actionBuiltin", &actions); err != nil {
+		return nil, err
+	}
+	return actions, nil
+}
+
+func (c *client) ActionBuiltinGet(name string, mods ...RequestModifier) (*sdk.Action, error) {
+	var a sdk.Action
+
+	path := fmt.Sprintf("/actionBuiltin/%s", name)
+	if _, err := c.GetJSON(context.Background(), path, &a, mods...); err != nil {
+		return nil, err
+	}
+
+	return &a, nil
+}
