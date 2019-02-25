@@ -23,7 +23,6 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @AutoUnsubscribe()
 export class ActionEditComponent implements OnInit {
     action: Action;
-    actionDoc: string;
     loadingUsage: boolean;
     usage: Usage;
     path: Array<PathItem>;
@@ -115,8 +114,6 @@ export class ActionEditComponent implements OnInit {
     getAction(): void {
         this._actionService.get(this.groupName, this.actionName).subscribe(u => {
             this.action = u;
-            let re = /\s/gi;
-            this.actionDoc = u.name.toLowerCase().replace(re, '-');
             this.updatePath();
         });
     }
@@ -179,7 +176,7 @@ export class ActionEditComponent implements OnInit {
             .subscribe(a => {
                 this._toast.success('', this._translate.instant('action_saved'));
                 this.action = a;
-                this._router.navigate(['settings', 'action', this.action.group.name, this.action.name]);
+                this._router.navigate(['settings', 'action', 'custom', this.action.group.name, this.action.name]);
             });
     }
 
@@ -204,7 +201,7 @@ export class ActionEditComponent implements OnInit {
         if (this.action && this.action.id) {
             this.path.push(<PathItem>{
                 text: this.action.name,
-                routerLink: ['/', 'settings', 'action', this.action.name]
+                routerLink: ['/', 'settings', 'action', 'custom', this.action.name]
             });
         }
     }

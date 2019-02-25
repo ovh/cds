@@ -3,7 +3,11 @@
         <a class="ui right floated green button small buttonBreadcrumb" [routerLink]="['add']">{{ 'btn_add' | translate
             }}</a>
     </app-breadcrumb>
-    <app-scrollview class="scrollview">
-        <app-data-table [withFilter]="filter" [withPagination]="25" [columns]="columns" [data]="actions" [loading]="loading"></app-data-table>
+    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+    <app-scrollview class="scrollview" [ngSwitch]="selectedTab.key">
+        <app-data-table *ngSwitchCase="'custom'" [withFilter]="filterCustom" [withPagination]="25"
+            [columns]="columnsCustom" [data]="actionsCustom" [loading]="loadingCustom"></app-data-table>
+        <app-data-table *ngSwitchCase="'builtin'" [withFilter]="filterBuiltin" [withPagination]="25"
+            [columns]="columnsBuiltin" [data]="actionsBuiltin" [loading]="loadingBuiltin"></app-data-table>
     </app-scrollview>
 </div>

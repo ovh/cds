@@ -6,6 +6,7 @@ import { ActionEditComponent } from './action/edit/action.edit.component';
 import { ActionFormComponent } from './action/form/action.form.component';
 import { ActionHelpComponent } from './action/help/action.help.component';
 import { ActionListComponent } from './action/list/action.list.component';
+import { ActionShowComponent } from './action/show/action.show.component';
 import { ActionUsageComponent } from './action/usage/action.usage.component';
 import { CdsctlComponent } from './cdsctl/cdsctl.component';
 import { DownloadComponent } from './download/download.component';
@@ -33,6 +34,7 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         ActionEditComponent,
         ActionListComponent,
         ActionUsageComponent,
+        ActionShowComponent,
         ActionFormComponent,
         ActionHelpComponent,
         CdsctlComponent,
