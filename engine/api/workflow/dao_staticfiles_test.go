@@ -41,7 +41,7 @@ func TestInsertStaticFiles(t *testing.T) {
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
-		Name:       "test_purge_1",
+		Name:       "test_staticfiles_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		WorkflowData: &sdk.WorkflowData{
@@ -75,7 +75,7 @@ func TestInsertStaticFiles(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_staticfiles_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -83,12 +83,24 @@ func TestInsertStaticFiles(t *testing.T) {
 	wfr, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, errWr)
 
-	stFile := sdk.StaticFiles{
-		Name:       "mywebsite",
-		NodeRunID:  wfr.ID,
-		PublicURL:  "http://mypublicurl.com",
-		EntryPoint: "index.html",
+	var stFile sdk.StaticFiles
+
+	var nrss []sdk.WorkflowNodeRun
+
+	for _, nrs := range wfr.WorkflowNodeRuns {
+		nrss = append(nrss, nrs...)
 	}
-	test.NoError(t, workflow.InsertStaticFiles(db, &stFile))
+
+	for _, nr := range nrss {
+		stFile = sdk.StaticFiles{
+			Name:       "mywebsite",
+			NodeRunID:  nr.ID,
+			PublicURL:  "http://mypublicurl.com",
+			EntryPoint: "index.html",
+		}
+		test.NoError(t, workflow.InsertStaticFiles(db, &stFile))
+		break
+	}
+
 	assert.NotZero(t, stFile.ID)
 }
