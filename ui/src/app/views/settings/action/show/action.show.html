@@ -4,7 +4,7 @@
     <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
         <div *ngSwitchCase="'action'" class="ui grid">
             <div class="thirteen wide column">
-
+                <app-action [action]="action" [edit]="false"></app-action>
             </div>
             <div class="three wide column">
                 <app-action-help></app-action-help>

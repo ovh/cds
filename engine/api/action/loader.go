@@ -31,7 +31,7 @@ func LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(db gorp.SqlExecutor, groupID
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM action
-		WHERE 
+		WHERE
 			type = $1
 			OR type = $2
 			OR (type = $3 AND group_id = ANY(string_to_array($4, ',')::int[]))
@@ -41,6 +41,14 @@ func LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(db gorp.SqlExecutor, groupID
 		sdk.DefaultAction,
 		gorpmapping.IDsToQueryString(groupIDs),
 	)
+	return getAll(db, query, LiteView)
+}
+
+// LoadAllTypeBuiltInOrPlugin returns all builtin or plugin action from database.
+func LoadAllTypeBuiltInOrPlugin(db gorp.SqlExecutor) ([]sdk.Action, error) {
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM action WHERE type = $1 OR type = $2",
+	).Args(sdk.BuiltinAction, sdk.PluginAction)
 	return getAll(db, query, LiteView)
 }
 

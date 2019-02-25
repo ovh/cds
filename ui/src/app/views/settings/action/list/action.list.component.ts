@@ -12,11 +12,11 @@ import { Tab } from '../../../../shared/tabs/tabs.component';
     styleUrls: ['./action.list.scss']
 })
 export class ActionListComponent {
-    loadingCustom: boolean;
+    loading: boolean;
     loadingBuiltin: boolean;
-    columnsCustom: Array<Column<Action>>;
+    columns: Array<Column<Action>>;
     columnsBuiltin: Array<Column<Action>>;
-    actionsCustom: Array<Action>;
+    actions: Array<Action>;
     actionsBuiltin: Array<Action>;
     path: Array<PathItem>;
     tabs: Array<Tab>;
@@ -36,13 +36,13 @@ export class ActionListComponent {
             key: 'builtin'
         }];
 
-        this.columnsCustom = [
+        this.columns = [
             <Column<Action>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
                 selector: (a: Action) => {
                     return {
-                        link: `/settings/action/custom/${a.group.name}/${a.name}`,
+                        link: `/settings/action/${a.group.name}/${a.name}`,
                         value: a.name
                     };
                 }
@@ -64,7 +64,7 @@ export class ActionListComponent {
                 name: 'common_name',
                 selector: (a: Action) => {
                     return {
-                        link: `/settings/action/builtin/${a.name}`,
+                        link: `/settings/action-builtin/${a.name}`,
                         value: a.name
                     };
                 }
@@ -84,21 +84,21 @@ export class ActionListComponent {
         }];
     }
 
-    getCustomActions() {
-        this.loadingCustom = true;
+    getActions() {
+        this.loading = true;
         this._actionService.getAll()
-            .pipe(finalize(() => this.loadingCustom = false))
-            .subscribe(as => { this.actionsCustom = as; });
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(as => { this.actions = as; });
     }
 
-    getBuiltinActions() {
+    getActionBuiltins() {
         this.loadingBuiltin = true;
-        this._actionService.getAll()
+        this._actionService.getAllBuiltin()
             .pipe(finalize(() => this.loadingBuiltin = false))
             .subscribe(as => { this.actionsBuiltin = as; });
     }
 
-    filterCustom(f: string) {
+    filter(f: string) {
         const lowerFilter = f.toLowerCase();
         return (d: Action) => {
             let s = `${d.group.name}/${d.name}`.toLowerCase();
@@ -117,10 +117,10 @@ export class ActionListComponent {
     selectTab(tab: Tab): void {
         switch (tab.key) {
             case 'custom':
-                this.getCustomActions();
+                this.getActions();
                 break;
             case 'builtin':
-                this.getBuiltinActions();
+                this.getActionBuiltins();
                 break;
         }
         this.selectedTab = tab;

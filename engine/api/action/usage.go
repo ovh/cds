@@ -37,7 +37,7 @@ func GetPipelineUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) 
       pipeline_stage.id, pipeline_stage.name,
       parent.id, parent.name,
       action.id, action.name,
-      CAST((CASE WHEN project_group.role IS NOT NULL OR action.group_id = $1 THEN 0 ELSE 1 END) AS BIT)
+      CAST((CASE WHEN project_group.role IS NOT NULL OR action.group_id = $1 OR action.group_id IS NULL THEN 0 ELSE 1 END) AS BIT)
 		FROM action
     INNER JOIN action_edge ON action_edge.child_id = action.id
     LEFT JOIN action as parent ON parent.id = action_edge.parent_id
@@ -91,7 +91,7 @@ func GetActionUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) ([
 			"group".id, "group".name,
 			parent.id, parent.name,
       action.id, action.name,
-      CAST((CASE WHEN action.group_id = parent.group_id OR action.group_id = $1 THEN 0 ELSE 1 END) AS BIT)
+      CAST((CASE WHEN action.group_id = parent.group_id OR action.group_id = $1 OR action.group_id IS NULL THEN 0 ELSE 1 END) AS BIT)
 		FROM action
 		INNER JOIN action_edge ON action_edge.child_id = action.id
 		LEFT JOIN action as parent ON parent.id = action_edge.parent_id

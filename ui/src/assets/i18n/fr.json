@@ -39,7 +39,7 @@
   "action_usage_not_used": "Cette action n'est pas utilisée par vos pipelines ou actions.",
   "action_usage_warning_pipeline": "Ce pipeline ne sera pas en mesure d'exécuter cette action car la permission pour le group n'existe pas.",
   "action_usage_warning_action": "L'action parente ne sera pas en mesure d'exécuter cette action car elles ne font pas parties du même groupe.",
-  "action_custom": "Personnalisé",
+  "action_custom": "Personnalisée",
   "action_builtin": "Prédéfinie",
 
   "admin_migration_not_started": "Non commencé",

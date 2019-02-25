@@ -12,6 +12,10 @@ export class ActionService {
         return this._http.get<Action[]>('/action');
     }
 
+    getAllBuiltin(): Observable<Action[]> {
+        return this._http.get<Action[]>('/actionBuiltin');
+    }
+
     getAllForProject(projectKey: string): Observable<Action[]> {
         return this._http.get<Action[]>(`/project/${projectKey}/action`);
     }
@@ -24,8 +28,16 @@ export class ActionService {
         return this._http.get<Action>(`/action/${groupName}/${name}`);
     }
 
+    getBuiltin(name: string): Observable<Action> {
+        return this._http.get<Action>(`/actionBuiltin/${name}`);
+    }
+
     getUsage(groupName: string, name: string): Observable<Usage> {
         return this._http.get<Usage>(`/action/${groupName}/${name}/usage`);
+    }
+
+    getBuiltinUsage(name: string): Observable<Usage> {
+        return this._http.get<Usage>(`/actionBuiltin/${name}/usage`);
     }
 
     getAudits(groupName: string, name: string): Observable<Array<AuditAction>> {

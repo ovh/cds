@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Action, Usage } from '../../../../model/action.model';
+import { ActionService } from '../../../../service/action/action.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { Tab } from '../../../../shared/tabs/tabs.component';
@@ -26,6 +28,7 @@ export class ActionShowComponent implements OnInit {
 
     constructor(
         private _route: ActivatedRoute,
+        private _actionService: ActionService
     ) { }
 
     ngOnInit() {
@@ -65,11 +68,22 @@ export class ActionShowComponent implements OnInit {
     }
 
     getAction(): void {
-
+        this.loading = true;
+        this._actionService.getBuiltin(this.actionName)
+            .pipe(finalize(() => this.loading = false))
+            .pipe(first()).subscribe(a => {
+                this.action = a;
+                this.updatePath();
+            });
     }
 
     getUsage(): void {
-
+        this.loadingUsage = true;
+        this._actionService.getBuiltinUsage(this.actionName)
+            .pipe(finalize(() => this.loadingUsage = false))
+            .pipe(first()).subscribe(u => {
+                this.usage = u;
+            });
     }
 
     updatePath() {
@@ -83,7 +97,7 @@ export class ActionShowComponent implements OnInit {
         if (this.action && this.action.id) {
             this.path.push(<PathItem>{
                 text: this.action.name,
-                routerLink: ['/', 'settings', 'action', 'builtin', this.action.name]
+                routerLink: ['/', 'settings', 'action-builtin', this.action.name]
             });
         }
     }

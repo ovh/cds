@@ -112,18 +112,21 @@ export class ActionEditComponent implements OnInit {
     }
 
     getAction(): void {
-        this._actionService.get(this.groupName, this.actionName).subscribe(u => {
-            this.action = u;
-            this.updatePath();
-        });
+        this.loading = true;
+        this._actionService.get(this.groupName, this.actionName)
+            .pipe(finalize(() => this.loading = false))
+            .pipe(first()).subscribe(a => {
+                this.action = a;
+                this.updatePath();
+            });
     }
 
     getUsage(): void {
         this.loadingUsage = true;
         this._actionService.getUsage(this.groupName, this.actionName)
             .pipe(finalize(() => this.loadingUsage = false))
-            .pipe(first()).subscribe(p => {
-                this.usage = p;
+            .pipe(first()).subscribe(u => {
+                this.usage = u;
             });
     }
 
@@ -176,7 +179,7 @@ export class ActionEditComponent implements OnInit {
             .subscribe(a => {
                 this._toast.success('', this._translate.instant('action_saved'));
                 this.action = a;
-                this._router.navigate(['settings', 'action', 'custom', this.action.group.name, this.action.name]);
+                this._router.navigate(['settings', 'action', this.action.group.name, this.action.name]);
             });
     }
 
@@ -201,7 +204,7 @@ export class ActionEditComponent implements OnInit {
         if (this.action && this.action.id) {
             this.path.push(<PathItem>{
                 text: this.action.name,
-                routerLink: ['/', 'settings', 'action', 'custom', this.action.name]
+                routerLink: ['/', 'settings', 'action', this.action.name]
             });
         }
     }

@@ -43,12 +43,12 @@ const routes: Routes = [
             { path: 'action', component: ActionListComponent, data: { title: 'Actions' } },
             { path: 'action/add', component: ActionAddComponent, data: { title: 'Add • Action' } },
             {
-                path: 'action/custom/:groupName/:actionName',
+                path: 'action/:groupName/:actionName',
                 component: ActionEditComponent,
                 data: { title: 'Edit • Action' }
             },
             {
-                path: 'action/builtin/:actionName',
+                path: 'action-builtin/:actionName',
                 component: ActionShowComponent,
                 data: { title: 'Show • Action' }
             },

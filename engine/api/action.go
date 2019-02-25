@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
@@ -423,59 +425,12 @@ func (api *API) getActionUsageHandler() service.Handler {
 			return err
 		}
 
-		a := getAction(ctx)
-
-		pus, err := action.GetPipelineUsages(api.mustDB(), group.SharedInfraGroup.ID, a.ID)
-		if err != nil {
-			return err
-		}
-		aus, err := action.GetActionUsages(api.mustDB(), group.SharedInfraGroup.ID, a.ID)
+		u, err := getActionUsage(ctx, api.mustDB(), api.Cache)
 		if err != nil {
 			return err
 		}
 
-		usage := action.Usage{
-			Pipelines: pus,
-			Actions:   aus,
-		}
-
-		u := deprecatedGetUser(ctx)
-		if !u.Admin {
-			// filter usage in pipeline by user's projects
-			ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
-			if err != nil {
-				return err
-			}
-			mProjectIDs := make(map[int64]struct{}, len(ps))
-			for i := range ps {
-				mProjectIDs[ps[i].ID] = struct{}{}
-			}
-
-			filteredPipelines := make([]action.UsagePipeline, 0, len(usage.Pipelines))
-			for i := range usage.Pipelines {
-				if _, ok := mProjectIDs[usage.Pipelines[i].PipelineID]; ok {
-					filteredPipelines = append(filteredPipelines, usage.Pipelines[i])
-				}
-			}
-			usage.Pipelines = filteredPipelines
-
-			// filter usage in action by user's groups
-			groupIDs := append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID)
-			mGroupIDs := make(map[int64]struct{}, len(groupIDs))
-			for i := range groupIDs {
-				mGroupIDs[groupIDs[i]] = struct{}{}
-			}
-
-			filteredActions := make([]action.UsageAction, 0, len(usage.Actions))
-			for i := range usage.Actions {
-				if _, ok := mGroupIDs[usage.Actions[i].GroupID]; ok {
-					filteredActions = append(filteredActions, usage.Actions[i])
-				}
-			}
-			usage.Actions = filteredActions
-		}
-
-		return service.WriteJSON(w, usage, http.StatusOK)
+		return service.WriteJSON(w, u, http.StatusOK)
 	}
 }
 
@@ -648,4 +603,120 @@ func (api *API) getActionsRequirements() service.Handler {
 
 		return service.WriteJSON(w, rs, http.StatusOK)
 	}
+}
+
+func (api *API) middlewareActionBuiltin() func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
+		// try to get action for given name
+		vars := mux.Vars(r)
+
+		actionName := vars["actionName"]
+
+		if actionName == "" {
+			return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid given action name")
+		}
+
+		a, err := action.LoadTypeBuiltInOrPluginByName(api.mustDB(), actionName)
+		if err != nil {
+			return nil, err
+		}
+		if a == nil {
+			return nil, sdk.WithStack(sdk.ErrNoAction)
+		}
+
+		return context.WithValue(ctx, contextAction, a), nil
+	}
+}
+
+func (api *API) getActionsBuiltinHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		as, err := action.LoadAllTypeBuiltInOrPlugin(api.mustDB())
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, as, http.StatusOK)
+	}
+}
+
+func (api *API) getActionBuiltinHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareActionBuiltin()(ctx, w, r)
+		if err != nil {
+			return err
+		}
+
+		a := getAction(ctx)
+
+		return service.WriteJSON(w, a, http.StatusOK)
+	}
+}
+
+func (api *API) getActionBuiltinUsageHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareActionBuiltin()(ctx, w, r)
+		if err != nil {
+			return err
+		}
+
+		u, err := getActionUsage(ctx, api.mustDB(), api.Cache)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, u, http.StatusOK)
+	}
+}
+
+func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store) (action.Usage, error) {
+	a := getAction(ctx)
+
+	var usage action.Usage
+	var err error
+	usage.Pipelines, err = action.GetPipelineUsages(db, group.SharedInfraGroup.ID, a.ID)
+	if err != nil {
+		return usage, err
+	}
+	usage.Actions, err = action.GetActionUsages(db, group.SharedInfraGroup.ID, a.ID)
+	if err != nil {
+		return usage, err
+	}
+
+	u := deprecatedGetUser(ctx)
+	if !u.Admin {
+		// filter usage in pipeline by user's projects
+		ps, err := project.LoadAll(ctx, db, store, u)
+		if err != nil {
+			return usage, err
+		}
+		mProjectIDs := make(map[int64]struct{}, len(ps))
+		for i := range ps {
+			mProjectIDs[ps[i].ID] = struct{}{}
+		}
+
+		filteredPipelines := make([]action.UsagePipeline, 0, len(usage.Pipelines))
+		for i := range usage.Pipelines {
+			if _, ok := mProjectIDs[usage.Pipelines[i].PipelineID]; ok {
+				filteredPipelines = append(filteredPipelines, usage.Pipelines[i])
+			}
+		}
+		usage.Pipelines = filteredPipelines
+
+		// filter usage in action by user's groups
+		groupIDs := append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID)
+		mGroupIDs := make(map[int64]struct{}, len(groupIDs))
+		for i := range groupIDs {
+			mGroupIDs[groupIDs[i]] = struct{}{}
+		}
+
+		filteredActions := make([]action.UsageAction, 0, len(usage.Actions))
+		for i := range usage.Actions {
+			if _, ok := mGroupIDs[usage.Actions[i].GroupID]; ok {
+				filteredActions = append(filteredActions, usage.Actions[i])
+			}
+		}
+		usage.Actions = filteredActions
+	}
+
+	return usage, nil
 }
