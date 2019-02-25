@@ -471,11 +471,11 @@ func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, n
 		return err
 	}
 
-	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))
-	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
-	writer.WriteField("md5sum", md5sum)
-	writer.WriteField("sha512sum", sha512sum)
-	writer.WriteField("nodeJobRunID", fmt.Sprintf("%d", nodeJobRunID))
+	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))                 // nolint
+	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10)) // nolint
+	writer.WriteField("md5sum", md5sum)                                           // nolint
+	writer.WriteField("sha512sum", sha512sum)                                     // nolint
+	writer.WriteField("nodeJobRunID", fmt.Sprintf("%d", nodeJobRunID))            // nolint
 
 	if errclose := writer.Close(); errclose != nil {
 		return errclose
@@ -546,10 +546,10 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 		return "", err
 	}
 
-	_ = writer.WriteField("name", staticFile.Name)
-	_ = writer.WriteField("entrypoint", staticFile.EntryPoint)
-	_ = writer.WriteField("static_key", staticFile.StaticKey)
-	_ = writer.WriteField("nodeJobRunID", fmt.Sprintf("%d", staticFile.NodeJobRunID))
+	writer.WriteField("name", staticFile.Name)                                    // nolint
+	writer.WriteField("entrypoint", staticFile.EntryPoint)                        // nolint
+	writer.WriteField("static_key", staticFile.StaticKey)                         // nolint
+	writer.WriteField("nodeJobRunID", fmt.Sprintf("%d", staticFile.NodeJobRunID)) // nolint
 
 	if errclose := writer.Close(); errclose != nil {
 		return "", errclose
