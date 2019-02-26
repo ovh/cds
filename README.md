@@ -2,7 +2,6 @@
 
 [![Join the chat at https://gitter.im/ovh-cds/Lobby](https://badges.gitter.im/ovh-cds/Lobby.svg)](https://gitter.im/ovh-cds/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/cds)](https://goreportcard.com/report/github.com/ovh/cds)
-[![Coverage Status](https://coveralls.io/repos/github/ovh/cds/badge.svg?branch=master)](https://coveralls.io/github/ovh/cds?branch=master)
 [![GoDoc](https://godoc.org/github.com/ovh/cds/sdk/cdsclient?status.svg)](https://godoc.org/github.com/ovh/cds/sdk/cdsclient)
 
 <img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo-background.png" width="25%">
@@ -30,6 +29,11 @@ cdsctl is the CDS Command Line - you can script everything with it, cdsctl also 
 ## Want a try?
 
 Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ovh.github.io/cds/hosting/ready-to-run/)
+
+## Blog posts
+
+-	CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/ 
+-	DataBuzzWord Podcast (French) : https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/  
 
 ## FAQ
 
@@ -67,32 +71,32 @@ Core Team is available on [Gitter](https://gitter.im/ovh-cds/Lobby)
 
 All the features of the table are detailed below.
 
-| Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins | 
+| Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins |
 | --- | --- | --- | --- | --- | --- |
-| [Pipeline](#pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
+| [Pipeline](#pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: |
-| [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
+| [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*2](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
-| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>[*3](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
+| [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*2](#some-explanations-on-the-comparison-matrix)</sub></sup> |
+| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>[*3](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
-| [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
+| [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [Enterprise Notification Bus](#enterprise-notification-bus) & [Built-in Hooks](#built-in-hooks) | :white_check_mark: | :x: | :x: | :x: | :x: |
-| [Continuous Deployment & Environment Support](#continuous-deployment--environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
-| [Enterprise-grade permissions, Support of ACLs delegation](#enterprise-grade-permissions--support-of-acls-delegation) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
-| [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*7](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
-| [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*8](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :white_check_mark: |
-| [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x: <sub><sup>[*9](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :white_check_mark: | :x: |
-| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*10](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
-| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*11](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
-| [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*12](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
+| [Continuous Deployment & Environment Support](#continuous-deployment--environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparison-matrix)</sub></sup> |
+| [Enterprise-grade permissions, Support of ACLs delegation](#enterprise-grade-permissions--support-of-acls-delegation) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparison-matrix)</sub></sup> |
+| [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*7](#some-explanations-on-the-comparison-matrix)</sub></sup> |
+| [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*8](#some-explanations-on-the-comparison-matrix)</sub></sup> | :white_check_mark: |
+| [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x: <sub><sup>[*9](#some-explanations-on-the-comparison-matrix)</sub></sup> | :white_check_mark: | :x: |
+| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*10](#some-explanations-on-the-comparison-matrix)</sub></sup> |
+| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*11](#some-explanations-on-the-comparison-matrix)</sub></sup> |
+| [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*12](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [REST API & SDK](#rest-api--sdk) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Self-Hosting](#self-hosting) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [High Availability & Scalability & Upgrade without User Downtime](#high-availability--scalability--upgrade-without-user-downtime) | :white_check_mark: | :x: | :x: | :white_check_mark: <sub><sup>[*13](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :x: | 
-| [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: <sub><sup>[*14](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
+| [High Availability & Scalability & Upgrade without User Downtime](#high-availability--scalability--upgrade-without-user-downtime) | :white_check_mark: | :x: | :x: | :white_check_mark: <sub><sup>[*13](#some-explanations-on-the-comparison-matrix)</sub></sup> | :x: |
+| [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: <sub><sup>[*14](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [Extensibility Plugins](#extensibility-plugins) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [OS/Arch Compatibility](#osarch-compatibility) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*15](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :x: <sub><sup>[*16](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
+| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*15](#some-explanations-on-the-comparison-matrix)</sub></sup> | :x: <sub><sup>[*16](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 
 
 ### CDS User features
@@ -169,12 +173,12 @@ Doc: https://ovh.github.io/cds/cli/worker/cache/
 
 #### Enterprise Notification Bus
 
-As an Enterprise-Grade platform, CDS can send a wide range of its internal events (e.g. build finished) in an event bus. 
+As an Enterprise-Grade platform, CDS can send a wide range of its internal events (e.g. build finished) in an event bus.
 This event flow can then feed other services (reporting, notifications, etc., ).
 
 #### Built-in Hooks
 
-Ability to launch a workflow manually or with git pushes or via a scheduler or via a webhook. 
+Ability to launch a workflow manually or with git pushes or via a scheduler or via a webhook.
 In addition to the above, CDS can also be triggered using an event bus to (kafka or RabbitMQ).
 
 #### Continuous Deployment & Environment Support
@@ -264,7 +268,7 @@ Thus, you can have hundreds of workers model and when necessary, CDS will start 
 
 A [hatchery](https://ovh.github.io/cds/hatchery/) is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
 
-Several types of hatchery are available: 
+Several types of hatchery are available:
 
  - **[hatchery kubernetes](https://ovh.github.io/cds/hatchery/kubernetes/)** starts workers in pods
  - **[hatchery openstack](https://ovh.github.io/cds/hatchery/openstack/)** starts virtual machines
@@ -272,15 +276,15 @@ Several types of hatchery are available:
  - **[hatchery marathon](https://ovh.github.io/cds/hatchery/marathon/)** starts docker containers
  - **[hatchery VSphere](https://ovh.github.io/cds/hatchery/vsphere/)** starts virtual machines
  - **[hatchery local](https://ovh.github.io/cds/hatchery/local/)** starts processes on a host
- 
+
  So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
-#### Some explanations on the comparaison matrix
+#### Some explanations on the comparison matrix
 
 - *1 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
-- *2 There is the Pipeline plugin, but not compatible with Graphical COnfiguration with ui, Git branching, and repository manager integration.
+- *2 There is the Pipeline plugin, but not compatible with Graphical Configuration with ui, Git branching, and repository manager integration.
 - *3 [Multi-branch pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Multibranch+Plugin ) - but incompatible [Pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Plugin)
-- *4 Job Cacher plugin not compatible with Blue Ocean, MultiBranch PIpeline, Pipeline plugin, but not compatible with Swift Storage
+- *4 Job Cacher plugin not compatible with Blue Ocean, MultiBranch Pipeline, Pipeline plugin, but not compatible with Swift Storage
 - *5 "The current version of this plugin may not be safe to use. " https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin
 - *6 https://jenkins.io/doc/book/managing/security/#authorization
 - *7 it's not builtin, it's JCloud plugin
@@ -289,13 +293,12 @@ Several types of hatchery are available:
 - *10 docker only
 - *11 explained on https://www.cloudbees.com/blog/multi-tenancy-jenkins
 - *12 https://jenkins.io/doc/book/managing/cli/
-- *13 Upgrade Gitlab can be on several days https://docs.gitlab.com/ee/update/ 
+- *13 Upgrade Gitlab can be on several days https://docs.gitlab.com/ee/update/
 - *14 it's a plugin
-- *15 K8s, Docker machine & GKE only 
-- *16 limitated to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
+- *15 K8s, Docker machine & GKE only
+- *16 limited to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
 
 
 ## License
 
 [3-clause BSD](./LICENCE)
-

@@ -94,7 +94,6 @@ func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
-		Type:      "build",
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
@@ -164,7 +163,6 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
-		Type:      "build",
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 	s := sdk.Stage{Name: "MyStage", PipelineID: pip.ID}

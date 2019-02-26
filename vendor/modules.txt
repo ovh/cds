@@ -387,7 +387,7 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
-# github.com/ovh/venom v0.23.3
+# github.com/ovh/venom v0.24.0
 github.com/ovh/venom
 github.com/ovh/venom/context/default
 github.com/ovh/venom/context/redis
@@ -582,13 +582,13 @@ golang.org/x/crypto/internal/subtle
 # golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
-golang.org/x/net/trace
 golang.org/x/net/http2
+golang.org/x/net/trace
 golang.org/x/net/proxy
-golang.org/x/net/internal/timeseries
-golang.org/x/net/http2/hpack
 golang.org/x/net/http/httpguts
+golang.org/x/net/http2/hpack
 golang.org/x/net/idna
+golang.org/x/net/internal/timeseries
 golang.org/x/net/internal/socks
 # golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 golang.org/x/sync/semaphore
@@ -698,8 +698,8 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apimachinery v0.0.0-20180126010535-b621949a1923
-k8s.io/apimachinery/pkg/api/resource
 k8s.io/apimachinery/pkg/apis/meta/v1
+k8s.io/apimachinery/pkg/api/resource
 k8s.io/apimachinery/pkg/runtime
 k8s.io/apimachinery/pkg/runtime/schema
 k8s.io/apimachinery/pkg/types

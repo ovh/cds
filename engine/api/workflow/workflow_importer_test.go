@@ -47,7 +47,6 @@ func TestImport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pipeline",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
@@ -56,7 +55,6 @@ func TestImport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pipeline-with-param",
-		Type:       sdk.BuildPipeline,
 	}
 	sdk.AddParameter(&pipparam.Parameter, "name", sdk.StringParameter, "value")
 

@@ -1,9 +1,11 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { DisconnectRepositoryManagerInProject } from 'app/store/project.action';
+import { finalize } from 'rxjs/operators';
 import { Project } from '../../../../../../model/project.model';
 import { RepositoriesManager } from '../../../../../../model/repositories.model';
 import { Warning } from '../../../../../../model/warning.model';
-import { ProjectStore } from '../../../../../../service/project/project.store';
 import { WarningModalComponent } from '../../../../../../shared/modal/warning/warning.component';
 import { Table } from '../../../../../../shared/table/table';
 import { ToastService } from '../../../../../../shared/toast/ToastService';
@@ -24,7 +26,11 @@ export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
 
     public deleteLoading = false;
 
-    constructor(private _toast: ToastService, public _translate: TranslateService, private _projectStore: ProjectStore) {
+    constructor(
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private store: Store
+    ) {
         super();
     }
 
@@ -37,12 +43,9 @@ export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
             this.deleteRepoWarning.show(repoName);
         } else {
             this.deleteLoading = true;
-            this._projectStore.disconnectRepoManager(this.project.key, repoName).subscribe(() => {
-                this._toast.success('', this._translate.instant('repoman_delete_msg_ok'));
-                this.deleteLoading = false;
-            }, () => {
-                this.deleteLoading = false;
-            });
+            this.store.dispatch(new DisconnectRepositoryManagerInProject({ projectKey: this.project.key, repoManager: repoName }))
+                .pipe(finalize(() => this.deleteLoading = false))
+                .subscribe(() => this._toast.success('', this._translate.instant('repoman_delete_msg_ok')));
         }
 
     }

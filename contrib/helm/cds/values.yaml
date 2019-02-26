@@ -5,7 +5,7 @@
 image:
   registry: docker.io
   repository: ovhcom/cds-engine
-  tag: latest
+  tag: 0.38.1
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -108,9 +108,6 @@ readinessProbe:
     port: 8081
   initialDelaySeconds: 30
 
-
-kubernetesConfigFile: kubeconfig.yaml
-
 ##
 ## External database configuration
 ##
@@ -160,17 +157,12 @@ ingress:
   #       - cds.local
 
 
-
-# hatchery kubernetes
-hatchery:
-  k8s_namespace: default
-
 # Ui
 ui:
   image:
     registry: docker.io
     repository: ovhcom/cds-ui
-    tag: latest
+    tag: 0.38.1
   logLevel: info
   baseUrl: /
   api.livenessProbe:

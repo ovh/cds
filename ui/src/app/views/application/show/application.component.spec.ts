@@ -7,13 +7,16 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
-import { Map } from 'immutable';
+import { Store } from '@ngxs/store';
+import { Variable } from 'app/model/variable.model';
+import { VariableEvent } from 'app/shared/variable/variable.event.model';
+import { AddApplicationVariable, DeleteApplicationVariable, UpdateApplicationVariable } from 'app/store/applications.action';
+import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
 import { Project } from '../../../model/project.model';
 import { Usage } from '../../../model/usage.model';
-import { Variable } from '../../../model/variable.model';
 import { ApplicationService } from '../../../service/application/application.service';
 import { ApplicationStore } from '../../../service/application/application.store';
 import { ApplicationWorkflowService } from '../../../service/application/application.workflow.service';
@@ -28,7 +31,6 @@ import { VariableService } from '../../../service/variable/variable.service';
 import { WorkflowService } from '../../../service/workflow/workflow.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
-import { VariableEvent } from '../../../shared/variable/variable.event.model';
 import { ApplicationModule } from '../application.module';
 import { ApplicationShowComponent } from './application.component';
 
@@ -36,6 +38,7 @@ describe('CDS: Application', () => {
 
     let injector: Injector;
     let appStore: ApplicationStore;
+    let store: Store;
     let router: Router;
     let prjStore: ProjectStore;
 
@@ -54,17 +57,19 @@ describe('CDS: Application', () => {
                 EnvironmentService,
                 NavbarService,
                 ApplicationWorkflowService,
-                { provide: ActivatedRoute, useClass: MockActivatedRoutes},
-                { provide: Router, useClass: MockRouter},
-                { provide: ToastService, useClass: MockToast},
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
+                { provide: Router, useClass: MockRouter },
+                { provide: ToastService, useClass: MockToast },
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
                 WorkflowStore,
-                WorkflowService
+                WorkflowService,
+                Store
             ],
-            imports : [
+            imports: [
                 ApplicationModule,
+                NgxsStoreModule,
                 ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
@@ -75,6 +80,7 @@ describe('CDS: Application', () => {
 
         injector = getTestBed();
         appStore = injector.get(ApplicationStore);
+        store = injector.get(Store);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);
     });
@@ -82,20 +88,20 @@ describe('CDS: Application', () => {
     afterEach(() => {
         injector = undefined;
         appStore = undefined;
+        store = undefined;
         router = undefined;
         prjStore = undefined;
     });
 
-    it('Load component + load application', fakeAsync( () => {
+    it('Load component + load application', fakeAsync(() => {
 
         spyOn(appStore, 'updateRecentApplication');
 
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
 
         // Create component
@@ -108,7 +114,7 @@ describe('CDS: Application', () => {
 
     }));
 
-    it('Load component + load application with error', fakeAsync( () => {
+    it('Load component + load application with error', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
 
         spyOn(appStore, 'updateRecentApplication');
@@ -121,25 +127,24 @@ describe('CDS: Application', () => {
 
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/key1/application/app1';
-        })).flush({'name': 'app1'}, { status: 404, statusText: 'App does not exist'});
+        })).flush({ 'name': 'app1' }, { status: 404, statusText: 'App does not exist' });
 
         tick(250);
 
         expect(appStore.updateRecentApplication).not.toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1'], { queryParams: { tab: 'applications'}});
+        expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1'], { queryParams: { tab: 'applications' } });
     }));
 
-    it('should run add variable', fakeAsync( () => {
+    it('should run add variable', fakeAsync(() => {
         let call = 0;
 
-        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
+        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
 
         // Create component
@@ -149,28 +154,30 @@ describe('CDS: Application', () => {
 
         fixture.componentInstance.ngOnInit();
 
-        spyOn(appStore, 'addVariable').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of();
         });
 
         let v: Variable = new Variable();
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('add', v));
         tick(250);
-        expect(appStore.addVariable).toHaveBeenCalledWith('key1', 'app1', v);
+        expect(store.dispatch).toHaveBeenCalledWith(new AddApplicationVariable({
+            projectKey: 'key1',
+            applicationName: 'app1',
+            variable: v
+        }));
     }));
 
-    it('should run update variable', fakeAsync( () => {
+    it('should run update variable', fakeAsync(() => {
 
-        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
+        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
 
         // Create component
@@ -180,47 +187,51 @@ describe('CDS: Application', () => {
 
         fixture.componentInstance.ngOnInit();
 
-        spyOn(appStore, 'updateVariable').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of();
         });
 
         let v: Variable = new Variable();
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('update', v));
         tick(250);
-        expect(appStore.updateVariable).toHaveBeenCalledWith('key1', 'app1', v);
+        expect(store.dispatch).toHaveBeenCalledWith(new UpdateApplicationVariable({
+            projectKey: 'key1',
+            applicationName: 'app1',
+            variableName: 'foo',
+            variable: v
+        }));
     }));
 
-    it('should run remove variable', fakeAsync( () => {
+    it('should run remove variable', fakeAsync(() => {
 
-        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
+        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
 
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
+        spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
             app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
+            return of(app);
         });
-
         // Create component
         let fixture = TestBed.createComponent(ApplicationShowComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
         fixture.componentInstance.ngOnInit();
-
-        spyOn(appStore, 'removeVariable').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of();
         });
 
         let v: Variable = new Variable();
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
         tick(250);
-        expect(appStore.removeVariable).toHaveBeenCalledWith('key1', 'app1', v);
+        expect(store.dispatch).toHaveBeenCalledWith(new DeleteApplicationVariable({
+            projectKey: 'key1',
+            applicationName: 'app1',
+            variable: v
+        }));
     }));
 });
 
@@ -241,8 +252,8 @@ class MockRouter {
 class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
-        this.params = of({key: 'key1', appName: 'app1'});
-        this.queryParams = of({key: 'key1', appName: 'app1', version: 0, branch: 'master'});
+        this.params = of({ key: 'key1', appName: 'app1' });
+        this.queryParams = of({ key: 'key1', appName: 'app1', version: 0, branch: 'master' });
 
         this.snapshot = new ActivatedRouteSnapshot();
 
@@ -251,7 +262,7 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.snapshot.data = {
             project: project
         };
-        this.snapshot.queryParams = {key: 'key1', appName: 'app1', version: 0, branch: 'master'};
+        this.snapshot.queryParams = { key: 'key1', appName: 'app1', version: 0, branch: 'master' };
 
         this.data = of({ project: project });
     }

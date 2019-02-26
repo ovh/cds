@@ -1,10 +1,11 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { finalize, first } from 'rxjs/operators';
+import { Store } from '@ngxs/store';
+import { AddGroupInProject, DeleteGroupInProject, UpdateGroupInProject } from 'app/store/project.action';
+import { finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
 import { Warning } from '../../../../model/warning.model';
-import { ProjectStore } from '../../../../service/project/project.store';
 import { ConfirmModalComponent } from '../../../../shared/modal/confirm/confirm.component';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { PermissionEvent } from '../../../../shared/permission/permission.event.model';
@@ -14,7 +15,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     selector: 'app-project-permissions',
     templateUrl: './permission.html'
 })
-export class ProjectPermissionsComponent implements OnInit {
+export class ProjectPermissionsComponent {
 
     @Input() project: Project;
     @Input() warnings: Array<Warning>;
@@ -25,26 +26,16 @@ export class ProjectPermissionsComponent implements OnInit {
     confirmPropagationModal: ConfirmModalComponent;
 
     permissionEnum = PermissionValue;
-    loading = true;
+    loading = false;
     permFormLoading = false;
     currentPermEvent: PermissionEvent;
 
-    constructor(private _projectStore: ProjectStore,
+    constructor(
         public _translate: TranslateService,
-        private _toast: ToastService) {
+        private _toast: ToastService,
+        private store: Store
+    ) {
 
-    }
-
-    ngOnInit() {
-        if (this.project.environments) {
-            this.loading = false;
-            return
-        }
-        this._projectStore.getProjectEnvironmentsResolver(this.project.key)
-            .pipe(first(), finalize(() => this.loading = false))
-            .subscribe((proj) => {
-                this.project = proj;
-            });
     }
 
     groupEvent(event: PermissionEvent, skip?: boolean): void {
@@ -57,14 +48,12 @@ export class ProjectPermissionsComponent implements OnInit {
                     this.confirmPropagationModal.show();
                     break;
                 case 'update':
-                    this._projectStore.updateProjectPermission(this.project.key, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_updated'));
-                    });
+                    this.store.dispatch(new UpdateGroupInProject({ projectKey: this.project.key, group: event.gp }))
+                        .subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
                     break;
                 case 'delete':
-                    this._projectStore.removeProjectPermission(this.project.key, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_deleted'));
-                    });
+                    this.store.dispatch(new DeleteGroupInProject({ projectKey: this.project.key, group: event.gp }))
+                        .subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
                     break;
             }
         }
@@ -72,7 +61,7 @@ export class ProjectPermissionsComponent implements OnInit {
 
     confirmPermPropagation(propagate: boolean) {
         this.permFormLoading = true;
-        this._projectStore.addProjectPermission(this.project.key, this.currentPermEvent.gp, !propagate)
+        this.store.dispatch(new AddGroupInProject({ projectKey: this.project.key, group: this.currentPermEvent.gp }))
             .pipe(finalize(() => this.permFormLoading = false))
             .subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
     }

@@ -64,12 +64,10 @@
           },
           "configurations": {
             "test": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.test.ts"
-                }
-              ]
+              "fileReplacements": [{
+                "replace": "src/environments/environment.ts",
+                "with": "src/environments/environment.test.ts"
+              }]
             },
             "development": {},
             "production": {
@@ -82,12 +80,10 @@
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ]
+              "fileReplacements": [{
+                "replace": "src/environments/environment.ts",
+                "with": "src/environments/environment.prod.ts"
+              }]
             }
           }
         },
@@ -180,6 +176,9 @@
             },
             "views": {
               "main": "src/test_views.ts"
+            },
+            "store": {
+              "main": "src/test_store.ts"
             },
             "all": {
               "main": "src/test.ts"

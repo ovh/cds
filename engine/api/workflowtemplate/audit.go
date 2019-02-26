@@ -58,20 +58,14 @@ func (a addWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) erro
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
-	b, err := json.Marshal(wtEvent.WorkflowTemplate)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal workflow template")
-	}
-
 	return InsertAudit(db, &sdk.AuditWorkflowTemplate{
 		AuditCommon: sdk.AuditCommon{
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataAfter:   string(b),
-			DataType:    "json",
 		},
 		WorkflowTemplateID: wtEvent.WorkflowTemplate.ID,
+		DataAfter:          wtEvent.WorkflowTemplate,
 	})
 }
 
@@ -83,27 +77,16 @@ func (a updateWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) e
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
-	before, err := json.Marshal(wtEvent.OldWorkflowTemplate)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal workflow template")
-	}
-
-	after, err := json.Marshal(wtEvent.NewWorkflowTemplate)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal workflow template")
-	}
-
 	return InsertAudit(db, &sdk.AuditWorkflowTemplate{
 		AuditCommon: sdk.AuditCommon{
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataBefore:  string(before),
-			DataAfter:   string(after),
-			DataType:    "json",
 		},
 		WorkflowTemplateID: wtEvent.NewWorkflowTemplate.ID,
 		ChangeMessage:      wtEvent.ChangeMessage,
+		DataBefore:         wtEvent.OldWorkflowTemplate,
+		DataAfter:          wtEvent.NewWorkflowTemplate,
 	})
 }
 
@@ -125,10 +108,10 @@ func (a addWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.Eve
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataAfter:   string(b),
-			DataType:    "json",
 		},
 		WorkflowTemplateInstanceID: wtEvent.WorkflowTemplateInstance.ID,
+		DataType:                   "json",
+		DataAfter:                  string(b),
 	})
 }
 
@@ -155,10 +138,10 @@ func (a updateWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataBefore:  string(before),
-			DataAfter:   string(after),
-			DataType:    "json",
 		},
 		WorkflowTemplateInstanceID: wtEvent.NewWorkflowTemplateInstance.ID,
+		DataType:                   "json",
+		DataBefore:                 string(before),
+		DataAfter:                  string(after),
 	})
 }

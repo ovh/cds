@@ -1,26 +1,27 @@
-import {Component, EventEmitter, Input, OnChanges, Output} from '@angular/core';
-import {Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {finalize} from 'rxjs/operators';
-import {Application} from '../../../../../../model/application.model';
-import {Environment} from '../../../../../../model/environment.model';
-import {Pipeline} from '../../../../../../model/pipeline.model';
-import {Project} from '../../../../../../model/project.model';
-import {User} from '../../../../../../model/user.model';
-import {Workflow} from '../../../../../../model/workflow.model';
-import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
-import {EnvironmentService} from '../../../../../../service/environment/environment.service';
-import {ProjectStore} from '../../../../../../service/project/project.store';
-import {ToastService} from '../../../../../../shared/toast/ToastService';
-import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import * as projectActions from 'app/store/project.action';
+import { cloneDeep } from 'lodash';
+import { finalize } from 'rxjs/operators';
+import { Application } from '../../../../../../model/application.model';
+import { Environment } from '../../../../../../model/environment.model';
+import { Pipeline } from '../../../../../../model/pipeline.model';
+import { Project } from '../../../../../../model/project.model';
+import { User } from '../../../../../../model/user.model';
+import { Workflow } from '../../../../../../model/workflow.model';
+import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
+import { EnvironmentService } from '../../../../../../service/environment/environment.service';
+import { ToastService } from '../../../../../../shared/toast/ToastService';
+import { VariableEvent } from '../../../../../../shared/variable/variable.event.model';
 
 @Component({
     selector: 'app-environment',
     templateUrl: './environment.html',
     styleUrls: ['./environment.scss']
 })
-export class ProjectEnvironmentComponent implements OnChanges {
+export class ProjectEnvironmentComponent implements OnInit {
 
     editableEnvironment: Environment;
     attachedWorkflows: Array<Workflow> = [];
@@ -51,53 +52,61 @@ export class ProjectEnvironmentComponent implements OnChanges {
 
     @Output() deletedEnv = new EventEmitter<string>();
 
-    constructor(private _projectStore: ProjectStore, private _toast: ToastService, private _router: Router,
-      private _translate: TranslateService, private _authenticationStore: AuthentificationStore,
-      private _environmentService: EnvironmentService) {
-          this.currentUser = this._authenticationStore.getUser();
+    constructor(
+        private _toast: ToastService,
+        private _router: Router,
+        private _translate: TranslateService,
+        private _authenticationStore: AuthentificationStore,
+        private _environmentService: EnvironmentService,
+        private store: Store
+    ) {
+        this.currentUser = this._authenticationStore.getUser();
     }
 
-    ngOnChanges() {
+    ngOnInit() {
         this.loadingUsage = true;
         this._environmentService.getUsage(this.project.key, this.oldEnvName)
-          .pipe(finalize(() => this.loadingUsage = false))
-          .subscribe((usage) => {
-            if (usage) {
-                this.attachedWorkflows = usage.workflows || [];
-                this.attachedApplications = usage.applications || [];
-                this.attachedPipelines = usage.pipelines || [];
-            }
-          });
+            .pipe(finalize(() => this.loadingUsage = false))
+            .subscribe((usage) => {
+                if (usage) {
+                    this.attachedWorkflows = usage.workflows || [];
+                    this.attachedApplications = usage.applications || [];
+                    this.attachedPipelines = usage.pipelines || [];
+                }
+            });
     }
 
     renameEnvironment(): void {
         this.loading = true;
-        this._projectStore.renameProjectEnvironment(this.project.key, this.oldEnvName, this.editableEnvironment)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                this._toast.success('', this._translate.instant('environment_renamed'));
-            });
+        this.store.dispatch(new projectActions.UpdateEnvironmentInProject({
+            projectKey: this.project.key,
+            environmentName: this.oldEnvName,
+            changes: this.editableEnvironment
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('environment_renamed')));
     }
 
     cloneEnvironment(cloneModal?: any): void {
         this.cloneLoading = true;
-
-        this._projectStore.cloneProjectEnvironment(this.project.key, this.editableEnvironment, this.cloneName)
-            .pipe(finalize(() => {
-                this.cloneLoading = false;
-                this.cloneName = '';
-                cloneModal.hide();
-            }))
-            .subscribe(() => {
-              this._toast.success('', this._translate.instant('environment_cloned'));
-              this._router.navigate(['/project/', this.project.key], {queryParams: { tab: 'environments', envName: this.cloneName}});
-            });
+        this.store.dispatch(new projectActions.CloneEnvironmentInProject({
+            projectKey: this.project.key,
+            cloneName: this.cloneName,
+            environment: this.editableEnvironment
+        })).pipe(finalize(() => {
+            this.cloneLoading = false;
+            this.cloneName = '';
+            cloneModal.hide();
+        })).subscribe(() => {
+            this._toast.success('', this._translate.instant('environment_cloned'));
+            this._router.navigate(['/project/', this.project.key], { queryParams: { tab: 'environments', envName: this.cloneName } });
+        });
     }
 
     deleteEnvironment(): void {
         this.loading = true;
-        this._projectStore.deleteProjectEnvironment(this.project.key, this.editableEnvironment)
-            .pipe(finalize(() => this.loading = false))
+        this.store.dispatch(new projectActions.DeleteEnvironmentInProject({
+            projectKey: this.project.key, environment: this.editableEnvironment
+        })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('environment_deleted'));
                 this.deletedEnv.emit(this.editableEnvironment.name);
@@ -110,30 +119,29 @@ export class ProjectEnvironmentComponent implements OnChanges {
         switch (event.type) {
             case 'add':
                 this.addVarLoading = true;
-                this._projectStore.addEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .pipe(finalize(() => this.addVarLoading = false))
-                    .subscribe(() => {
-                        if (this.environment.variables) {
-                            this.environment.variables.push(event.variable);
-                        } else {
-                            this.environment.variables = [event.variable];
-                        }
-                        this._toast.success('', this._translate.instant('variable_added'));
-                    });
+                this.store.dispatch(new projectActions.AddEnvironmentVariableInProject({
+                    projectKey: this.project.key,
+                    environmentName: this.editableEnvironment.name,
+                    variable: event.variable
+                })).pipe(finalize(() => this.addVarLoading = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                 break;
             case 'update':
-                this._projectStore.updateEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .pipe(finalize(() => event.variable.updating = false))
-                    .subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_updated'));
-                    });
+                this.store.dispatch(new projectActions.UpdateEnvironmentVariableInProject({
+                    projectKey: this.project.key,
+                    environmentName: this.editableEnvironment.name,
+                    variableName: event.variable.name,
+                    changes: event.variable
+                })).pipe(finalize(() => event.variable.updating = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
                 break;
             case 'delete':
-                this._projectStore.removeEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .pipe(finalize(() => event.variable.updating = false))
-                    .subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_deleted'));
-                    });
+                this.store.dispatch(new projectActions.DeleteEnvironmentVariableInProject({
+                    projectKey: this.project.key,
+                    environmentName: this.editableEnvironment.name,
+                    variable: event.variable
+                })).pipe(finalize(() => event.variable.updating = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
                 break;
         }
     }

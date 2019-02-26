@@ -49,7 +49,7 @@ type WorkflowTemplate struct {
 	Slug         string                     `json:"slug" db:"slug"`
 	Description  string                     `json:"description" db:"description"`
 	Parameters   WorkflowTemplateParameters `json:"parameters" db:"parameters"`
-	Value        string                     `json:"value" db:"value"`
+	Workflow     string                     `json:"value" db:"value"`
 	Pipelines    PipelineTemplates          `json:"pipelines" db:"pipelines"`
 	Applications ApplicationTemplates       `json:"applications" db:"applications"`
 	Environments EnvironmentTemplates       `json:"environments" db:"environments"`
@@ -61,6 +61,21 @@ type WorkflowTemplate struct {
 	LastAudit     *AuditWorkflowTemplate `json:"last_audit,omitempty" db:"-"`
 	Editable      bool                   `json:"editable,omitempty" db:"-"`
 	ChangeMessage string                 `json:"change_message,omitempty" db:"-"`
+}
+
+// Value returns driver.Value from workflow template.
+func (w WorkflowTemplate) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal WorkflowTemplate")
+}
+
+// Scan workflow template.
+func (w *WorkflowTemplate) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplate")
 }
 
 // IsValid returns workflow template validity.
@@ -158,7 +173,7 @@ func (w *WorkflowTemplate) Update(data WorkflowTemplate) {
 	w.Slug = data.Slug
 	w.GroupID = data.GroupID
 	w.Description = data.Description
-	w.Value = data.Value
+	w.Workflow = data.Workflow
 	w.Parameters = data.Parameters
 	w.Pipelines = data.Pipelines
 	w.Applications = data.Applications

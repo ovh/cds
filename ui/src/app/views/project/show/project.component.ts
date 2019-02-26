@@ -1,16 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import * as  immutable from 'immutable';
+import { Store } from '@ngxs/store';
+import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import * as immutable from 'immutable';
+import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../model/permission.model';
 import { LoadOpts, Project } from '../../../model/project.model';
 import { User } from '../../../model/user.model';
 import { Warning } from '../../../model/warning.model';
 import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { HelpersService } from '../../../service/helpers/helpers.service';
-import { ProjectStore } from '../../../service/project/project.store';
 import { WarningStore } from '../../../service/warning/warning.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { Tab } from '../../../shared/tabs/tabs.component';
@@ -26,7 +29,7 @@ export class ProjectShowComponent implements OnInit {
     currentUser: User;
 
     project: Project;
-    private projectSubscriber: Subscription;
+    projectSubscriber: Subscription;
 
     tabs: Array<Tab>;
     selectedTab: Tab;
@@ -45,17 +48,33 @@ export class ProjectShowComponent implements OnInit {
     warningsSub: Subscription;
 
     constructor(
-        private _projectStore: ProjectStore,
         private _route: ActivatedRoute,
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
         private _authentificationStore: AuthentificationStore,
         private _warningStore: WarningStore,
-        private _helpersService: HelpersService
+        private _helpersService: HelpersService,
+        private store: Store
     ) {
         this.initWarnings();
         this.currentUser = this._authentificationStore.getUser();
+
+        this.projectSubscriber = this.store.select(ProjectState)
+            .pipe(filter((projState: ProjectStateModel) => {
+                return projState && projState.project && projState.project.key !== null && !projState.project.externalChange &&
+                    this._route.snapshot.params['key'] === projState.project.key;
+            }))
+            .subscribe((projState: ProjectStateModel) => {
+                let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is usefull to skip readonly
+                if (proj.labels) {
+                    proj.labels = proj.labels.map((lbl) => {
+                        lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
+                        return lbl;
+                    });
+                }
+                this.project = proj;
+            });
     }
 
     ngOnInit() {
@@ -102,7 +121,13 @@ export class ProjectShowComponent implements OnInit {
             key: 'advanced'
         }];
 
-        this._route.queryParams.subscribe((params) => {
+        this._route.queryParams.subscribe((queryParams) => {
+            if (queryParams['tab']) {
+                let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
+            }
             this._route.params.subscribe(routeParams => {
                 const key = routeParams['key'];
                 if (key) {
@@ -142,9 +167,6 @@ export class ProjectShowComponent implements OnInit {
     }
 
     refreshDatas(key: string): void {
-        if (this.projectSubscriber) {
-            this.projectSubscriber.unsubscribe();
-        }
         let opts = [
             new LoadOpts('withApplicationNames', 'application_names'),
             new LoadOpts('withPipelineNames', 'pipeline_names'),
@@ -166,22 +188,8 @@ export class ProjectShowComponent implements OnInit {
             }
         }
 
-        this.projectSubscriber = this._projectStore.getProjects(key, opts).subscribe(prjs => {
-            let proj = prjs.get(key);
-            if (proj) {
-                if (!proj.externalChange) {
-                    if (proj.labels) {
-                        proj.labels = proj.labels.map((lbl) => {
-                            lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
-                            return lbl;
-                        });
-                    }
-                    this.project = proj;
-                }
-            }
-        }, () => {
-            this._router.navigate(['/home']);
-        });
+        this.store.dispatch(new FetchProject({ projectKey: key, opts }))
+            .subscribe(null, () => this._router.navigate(['/home']));
 
         this.warningsSub = this._warningStore.getProjectWarnings(key).subscribe(ws => {
             this.splitWarnings(ws.get(key));
@@ -232,8 +240,8 @@ export class ProjectShowComponent implements OnInit {
 
     updateFav() {
         this.loadingFav = true;
-        this._projectStore.updateFavorite(this.project.key)
+        this.store.dispatch(new UpdateFavoriteProject({ projectKey: this.project.key }))
             .pipe(finalize(() => this.loadingFav = false))
-            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
+            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }
 }

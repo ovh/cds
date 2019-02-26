@@ -101,7 +101,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 
 		if oldSrv == nil {
 			s.Service.LastHeartbeat = time.Now()
-			s.Service.Config = s
+			s.Service.Config = s.ServiceConfig()
 			if err := Insert(db, &s.Service); err != nil {
 				return sdk.WrapError(err, "Unable to insert external service")
 			}
@@ -119,7 +119,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 			}
 			s.Service.LastHeartbeat = oldSrv.LastHeartbeat
 			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
-			s.Service.Config = s
+			s.Service.Config = s.ServiceConfig()
 			if err := Update(tx, &s.Service); err != nil {
 				_ = tx.Rollback()
 				return sdk.WrapError(err, "Unable to update external service")

@@ -61,6 +61,11 @@ func (api *API) getApplicationsHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load applications from db")
 		}
 
+		projectPerm := permission.ProjectPermission(projectKey, u)
+		for i := range applications {
+			applications[i].Permission = projectPerm
+		}
+
 		if strings.ToUpper(withPermissions) == "W" {
 			res := make([]sdk.Application, 0, len(applications))
 			for _, a := range applications {
@@ -117,6 +122,7 @@ func (api *API) getApplicationHandler() service.Handler {
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
+		app.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		if withUsage {
 			usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applicationName)
@@ -236,6 +242,7 @@ func (api *API) addApplicationHandler() service.Handler {
 		if err := application.Insert(tx, api.Cache, proj, &app, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
+		app.Permission = permission.ProjectPermission(key, deprecatedGetUser(ctx))
 
 		if err := group.LoadGroupByProject(tx, proj); err != nil {
 			return sdk.WrapError(err, "Cannot load group from project")
@@ -328,6 +335,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		if err := cloneApplication(tx, api.Cache, proj, &newApp, appToClone, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
 		}
+		newApp.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
@@ -438,6 +446,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+		app.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		event.PublishUpdateApplication(p.Key, *app, old, deprecatedGetUser(ctx))
 

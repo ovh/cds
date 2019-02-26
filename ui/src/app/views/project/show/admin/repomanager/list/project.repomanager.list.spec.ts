@@ -1,29 +1,31 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
-import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
-import {ProjectStore} from '../../../../../../service/project/project.store';
-import {ProjectService} from '../../../../../../service/project/project.service';
-import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
-import {EnvironmentService} from '../../../../../../service/environment/environment.service';
-import {VariableService} from '../../../../../../service/variable/variable.service';
-import {SharedModule} from '../../../../../../shared/shared.module';
-import {ToasterService} from 'angular2-toaster/angular2-toaster';
-import {Project} from '../../../../../../model/project.model';
-import {TranslateParser} from '@ngx-translate/core';
-import {ProjectModule} from '../../../../project.module';
-import {ProjectRepoManagerComponent} from './project.repomanager.list.component';
-import {RepositoriesManager} from '../../../../../../model/repositories.model';
-import {Observable} from 'rxjs/Observable';
-import {ToastService} from '../../../../../../shared/toast/ToastService';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import { XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { DisconnectRepositoryManagerInProject } from 'app/store/project.action';
+import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
-import {NavbarService} from '../../../../../../service/navbar/navbar.service';
+import { Observable } from 'rxjs/Observable';
+import { Project } from '../../../../../../model/project.model';
+import { RepositoriesManager } from '../../../../../../model/repositories.model';
+import { EnvironmentService } from '../../../../../../service/environment/environment.service';
+import { NavbarService } from '../../../../../../service/navbar/navbar.service';
+import { PipelineService } from '../../../../../../service/pipeline/pipeline.service';
+import { ProjectService } from '../../../../../../service/project/project.service';
+import { ProjectStore } from '../../../../../../service/project/project.store';
+import { RepoManagerService } from '../../../../../../service/repomanager/project.repomanager.service';
+import { VariableService } from '../../../../../../service/variable/variable.service';
+import { SharedModule } from '../../../../../../shared/shared.module';
+import { ToastService } from '../../../../../../shared/toast/ToastService';
+import { ProjectModule } from '../../../../project.module';
+import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
@@ -48,11 +50,12 @@ describe('CDS: Project RepoManager List Component', () => {
                 TranslateService,
                 TranslateParser,
                 NavbarService,
-                { provide: ToastService, useClass: MockToast}
+                { provide: ToastService, useClass: MockToast }
             ],
-            imports : [
+            imports: [
                 ProjectModule,
                 SharedModule,
+                NgxsStoreModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
@@ -74,7 +77,7 @@ describe('CDS: Project RepoManager List Component', () => {
     });
 
 
-    it('it should delete a repo manager',  () => {
+    it('it should delete a repo manager', () => {
         // Create Project RepoManager Form Component
         let fixture = TestBed.createComponent(ProjectRepoManagerComponent);
         let component = fixture.debugElement.componentInstance;
@@ -85,14 +88,15 @@ describe('CDS: Project RepoManager List Component', () => {
         fixture.componentInstance.project = p;
 
         let reposMans = new Array<RepositoriesManager>();
-        let r: RepositoriesManager = { name : 'stash'};
+        let r: RepositoriesManager = { name: 'stash' };
         reposMans.push(r);
         fixture.componentInstance.reposmanagers = reposMans;
 
         fixture.detectChanges(true);
 
-        spyOn(projectStore, 'disconnectRepoManager').and.callFake(() => {
-            return Observable.of(p);
+        let store: Store = injector.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return Observable.of(null);
         });
 
         let compiled = fixture.debugElement.nativeElement;
@@ -101,7 +105,10 @@ describe('CDS: Project RepoManager List Component', () => {
 
         compiled.querySelector('.ui.red.button.active').click();
 
-        expect(projectStore.disconnectRepoManager).toHaveBeenCalledWith('key1', 'stash');
+        expect(store.dispatch).toHaveBeenCalledWith(new DisconnectRepositoryManagerInProject({
+            projectKey: 'key1',
+            repoManager: 'stash'
+        }));
     });
 });
 

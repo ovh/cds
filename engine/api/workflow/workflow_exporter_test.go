@@ -35,7 +35,6 @@ func TestPull(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
@@ -59,7 +58,6 @@ func TestPull(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")

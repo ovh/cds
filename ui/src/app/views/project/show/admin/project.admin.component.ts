@@ -1,13 +1,15 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Project} from '../../../../model/project.model';
-import {User} from '../../../../model/user.model';
-import {Warning} from '../../../../model/warning.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { DeleteProject, UpdateProject } from 'app/store/project.action';
+import { finalize } from 'rxjs/operators';
+import { Project } from '../../../../model/project.model';
+import { User } from '../../../../model/user.model';
+import { Warning } from '../../../../model/warning.model';
+import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-admin',
@@ -35,18 +37,23 @@ export class ProjectAdminComponent implements OnInit {
 
     @Input() project: Project;
     @ViewChild('updateWarning')
-        private warningUpdateModal: WarningModalComponent;
+    private warningUpdateModal: WarningModalComponent;
 
     loading = false;
     fileTooLarge = false;
     user: User;
 
-    constructor(private _projectStore: ProjectStore, private _toast: ToastService,
-                public _translate: TranslateService, private _router: Router, private _authStore: AuthentificationStore) {};
+    constructor(
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private _router: Router,
+        private _authStore: AuthentificationStore,
+        private store: Store
+    ) { };
 
     ngOnInit(): void {
         if (this.project.permission !== 7) {
-            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' }});
+            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
         this.user = this._authStore.getUser();
     }
@@ -56,26 +63,23 @@ export class ProjectAdminComponent implements OnInit {
             this.warningUpdateModal.show();
         } else {
             this.loading = true;
-            this._projectStore.updateProject(this.project).subscribe(() => {
-                this.loading = false;
-                this._toast.success('', this._translate.instant('project_update_msg_ok') );
-            }, () => {
-                this.loading = false;
-            });
+            this.store.dispatch(new UpdateProject(this.project))
+                .pipe(finalize(() => this.loading = false))
+                .subscribe(() => this._toast.success('', this._translate.instant('project_update_msg_ok')));
         }
     };
 
     deleteProject(): void {
-        this._projectStore.deleteProject(this.project.key).subscribe(() => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('project_deleted'));
-            this._router.navigate(['/home']);
-        }, () => {
-            this.loading = false;
-        });
+        this.loading = true;
+        this.store.dispatch(new DeleteProject({ projectKey: this.project.key }))
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('project_deleted'));
+                this._router.navigate(['/home']);
+            });
     }
 
-    fileEvent(event: {content: string, file: File}) {
+    fileEvent(event: { content: string, file: File }) {
         this.fileTooLarge = event.file.size > 100000;
         if (this.fileTooLarge) {
             return;

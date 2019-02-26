@@ -3,7 +3,7 @@ version: v1.0
 pipeline: clonetagbis
 payload:
   git.author: ""
-  git.tag: "v0.4.0"
+  git.tag: "0.38.1"
   git.hash: ""
   git.message: ""
   git.repository: ovh/cds

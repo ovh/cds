@@ -37,7 +37,6 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
 
@@ -61,7 +60,6 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -158,7 +156,6 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -182,7 +179,6 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -309,7 +305,6 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -333,7 +328,6 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -422,7 +416,6 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -446,7 +439,6 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -552,7 +544,6 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -576,7 +567,6 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -672,7 +662,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -696,7 +685,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -812,7 +800,6 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
 
@@ -932,7 +919,6 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -956,7 +942,6 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -1039,7 +1024,6 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -1063,7 +1047,6 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
@@ -1167,7 +1150,6 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -1231,7 +1213,6 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -1295,7 +1276,6 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
@@ -1319,7 +1299,6 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")

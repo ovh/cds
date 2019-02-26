@@ -9,7 +9,6 @@ type Pipeline struct {
 	ID           int64       `json:"id" yaml:"-"`
 	Name         string      `json:"name" cli:"name,key"`
 	Description  string      `json:"description" cli:"description"`
-	Type         string      `json:"type"`
 	ProjectKey   string      `json:"projectKey"`
 	ProjectID    int64       `json:"-"`
 	Stages       []Stage     `json:"stages"`
@@ -37,20 +36,9 @@ type PipelineBuildWarning struct {
 
 // This constant deals with pipelines
 const (
-	// Different types of Pipeline
-	BuildPipeline      = "build"      // DEPRECATED with workflows
-	DeploymentPipeline = "deployment" // DEPRECATED with workflows
-	TestingPipeline    = "testing"    // DEPRECATED with workflows
 	// Different types of warning for PipelineBuild
 	OptionalStepFailed = "optional_step_failed"
 )
-
-// AvailablePipelineType List of all pipeline type
-var AvailablePipelineType = []string{
-	BuildPipeline,
-	DeploymentPipeline,
-	TestingPipeline,
-}
 
 // PipelineAction represents an action in a pipeline
 type PipelineAction struct {

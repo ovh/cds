@@ -42,7 +42,7 @@
                         <div class="ui styled fluid accordion">
                             <ng-container *ngFor="let instance of selectedInstances;let i = index">
                                 <div class="title" [class.active]="accordionOpenedIndex === i" (click)="accordionOpen($event, i)">
-                                    <i class="dropdown icon"></i>{{instance.request.workflow_name}}{{instance.id}}
+                                    <i class="dropdown icon"></i>{{instance.request.workflow_name}}
                                 </div>
                                 <div class="content" [class.active]="accordionOpenedIndex === i">
                                     <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i" [project]="instance.project"

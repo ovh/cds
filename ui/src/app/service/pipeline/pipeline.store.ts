@@ -1,8 +1,10 @@
 
 import { Injectable } from '@angular/core';
-import { List, Map } from 'immutable';
+import { Store } from '@ngxs/store';
+import { AddPipelineInProject, DeletePipelineInProject, UpdatePipelineInProject } from 'app/store/project.action';
+import { Map } from 'immutable';
 import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, tap } from 'rxjs/operators';
 import { Application } from '../../model/application.model';
 import { Job } from '../../model/job.model';
 import { Parameter } from '../../model/parameter.model';
@@ -18,10 +20,7 @@ export class PipelineStore {
     // List of all pipelines.
     private _pipeline: BehaviorSubject<Map<string, Pipeline>> = new BehaviorSubject(Map<string, Pipeline>());
 
-    // List of all pipeline types.
-    private _pipelineType: BehaviorSubject<List<string>> = new BehaviorSubject(List([]));
-
-    constructor(private _pipelineService: PipelineService) {
+    constructor(private _pipelineService: PipelineService, private store: Store) {
 
     }
 
@@ -35,7 +34,7 @@ export class PipelineStore {
         let store = this._pipeline.getValue();
         let pipKey = key + '-' + pipName;
         if (store.size === 0 || !store.get(pipKey)) {
-            return this._pipelineService.getPipeline(key, pipName).pipe(map( res => {
+            return this._pipelineService.getPipeline(key, pipName).pipe(map(res => {
                 this._pipeline.next(store.set(pipKey, res));
                 return res;
             }));
@@ -44,29 +43,13 @@ export class PipelineStore {
         }
     }
 
-    /**
-    /**
-     * Get the list of all pipeline type.
-     * @returns {Observable<List<string>>}
-     */
-    getPipelineType(): Observable<List<string>> {
-        let store = this._pipelineType.getValue();
-        // If the store is empty, fill it
-        if (store.size === 0) {
-            this._pipelineService.getPipelineTypes().subscribe( res => {
-                this._pipelineType.next(store.push(...res));
-            });
-        }
-        return new Observable<List<string>>(fn => this._pipelineType.subscribe(fn));
-    }
-
     getPipelines(key: string, pipName?: string): Observable<Map<string, Pipeline>> {
-      let store = this._pipeline.getValue();
-      let pipKey = key + '-' + pipName;
-      if (pipName && !store.get(pipKey)) {
-        this.resync(key, pipName);
-      }
-      return new Observable<Map<string, Pipeline>>(fn => this._pipeline.subscribe(fn));
+        let store = this._pipeline.getValue();
+        let pipKey = key + '-' + pipName;
+        if (pipName && !store.get(pipKey)) {
+            this.resync(key, pipName);
+        }
+        return new Observable<Map<string, Pipeline>>(fn => this._pipeline.subscribe(fn));
     }
 
     resync(key: string, pipName: string) {
@@ -104,17 +87,20 @@ export class PipelineStore {
         return this._pipelineService.importPipeline(key, pipName, pipelineCode, force)
             .pipe(
                 mergeMap(() => {
-                  if (pipName) {
-                    return this._pipelineService.getPipeline(key, pipName);
-                  }
-                  return observableOf(null);
+                    if (pipName) {
+                        return this._pipelineService.getPipeline(key, pipName);
+                    }
+                    return observableOf(null);
+                }),
+                tap((pip) => {
+                    this.store.dispatch(new AddPipelineInProject(pip));
                 }),
                 map((pip) => {
                     if (pip) {
-                      pip.forceRefresh = true;
-                      let pipKey = key + '-' + pip.name;
-                      let store = this._pipeline.getValue();
-                      this._pipeline.next(store.set(pipKey, pip));
+                        pip.forceRefresh = true;
+                        let pipKey = key + '-' + pip.name;
+                        let store = this._pipeline.getValue();
+                        this._pipeline.next(store.set(pipKey, pip));
                     }
                     return pip;
                 })
@@ -132,13 +118,13 @@ export class PipelineStore {
             .pipe(
                 map((pip) => {
                     if (pip) {
-                      pip.forceRefresh = true;
-                      let pipKey = key + '-' + pip.name;
-                      let store = this._pipeline.getValue();
-                      let oldPip = store.get(pipKey);
-                      oldPip.stages = pip.stages;
+                        pip.forceRefresh = true;
+                        let pipKey = key + '-' + pip.name;
+                        let store = this._pipeline.getValue();
+                        let oldPip = store.get(pipKey);
+                        oldPip.stages = pip.stages;
 
-                      this._pipeline.next(store.set(pipKey, oldPip));
+                        this._pipeline.next(store.set(pipKey, oldPip));
                     }
                     return pip;
                 })
@@ -152,12 +138,18 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     createPipeline(key: string, pipeline: Pipeline): Observable<Pipeline> {
-        return this._pipelineService.createPipeline(key, pipeline).pipe(map(pip => {
-            let store = this._pipeline.getValue();
-            let pipKey = key + '-' + pip.name;
-            this._pipeline.next(store.set(pipKey, pip));
-            return pip;
-        }));
+        return this._pipelineService.createPipeline(key, pipeline)
+            .pipe(
+                tap((pip) => {
+                    this.store.dispatch(new AddPipelineInProject(pip));
+                }),
+                map(pip => {
+                    let store = this._pipeline.getValue();
+                    let pipKey = key + '-' + pip.name;
+                    this._pipeline.next(store.set(pipKey, pip));
+                    return pip;
+                })
+            );
     }
 
     /**
@@ -178,6 +170,11 @@ export class PipelineStore {
                 pToUpdate.name = pip.name;
                 this._pipeline.next(cache.set(key + '-' + pip.name, pToUpdate).remove(pipKey));
             }
+            this.store.dispatch(new UpdatePipelineInProject({
+                previousPipName: oldName,
+                changes: pipeline
+            }));
+
             return pip;
         }));
     }
@@ -189,11 +186,16 @@ export class PipelineStore {
      * @returns {Observable<boolean>}
      */
     deletePipeline(key: string, pipName: string): Observable<boolean> {
-        return this._pipelineService.deletePipeline(key, pipName).pipe(map(() => {
-            let pipKey = key + '-' + pipName;
-            this.removeFromStore(pipKey);
-            return true;
-        }));
+        return this._pipelineService.deletePipeline(key, pipName).pipe(
+            tap((pip) => {
+                this.store.dispatch(new DeletePipelineInProject({ pipelineName: pipName }));
+            }),
+            map(() => {
+                let pipKey = key + '-' + pipName;
+                this.removeFromStore(pipKey);
+                return true;
+            })
+        );
     }
 
     /**
@@ -363,8 +365,8 @@ export class PipelineStore {
      * @param stageMoved Stage to move
      */
     moveStage(key: string, pipName: string, stageMoved: Stage) {
-        return this._pipelineService.moveStage(key, pipName, stageMoved).pipe(map( pip => {
-           return this.refreshPipelineStageCache(key, pipName, pip);
+        return this._pipelineService.moveStage(key, pipName, stageMoved).pipe(map(pip => {
+            return this.refreshPipelineStageCache(key, pipName, pip);
         }));
     }
 

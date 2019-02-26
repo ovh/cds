@@ -1,4 +1,5 @@
 import { WorkflowTemplate } from '../../model/workflow-template.model';
+import { Base64 } from '../../shared/base64.utils';
 import { Item } from './list/diff.list.component';
 
 export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: WorkflowTemplate): Array<Item> {
@@ -33,8 +34,8 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
         },
         <Item>{
             translate: 'workflow_template_diff_workflow',
-            before: before ? atob(before.value) : null,
-            after: after ? atob(after.value) : null,
+            before: before ? Base64.b64DecodeUnicode(before.value) : null,
+            after: after ? Base64.b64DecodeUnicode(after.value) : null,
             type: 'text/x-yaml'
         }
     ];
@@ -45,8 +46,8 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             <Item>{
                 translate: 'workflow_template_diff_pipeline',
                 translateData: { number: pipelinesLength > 1 ? i : '' },
-                before: before && before.pipelines[i] ? atob(before.pipelines[i].value) : null,
-                after: after && after.pipelines[i] ? atob(after.pipelines[i].value) : null,
+                before: before && before.pipelines[i] ? Base64.b64DecodeUnicode(before.pipelines[i].value) : null,
+                after: after && after.pipelines[i] ? Base64.b64DecodeUnicode(after.pipelines[i].value) : null,
                 type: 'text/x-yaml'
             })
     }
@@ -57,8 +58,8 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             <Item>{
                 translate: 'workflow_template_diff_application',
                 translateData: { number: applicationsLength > 1 ? i : '' },
-                before: before && before.applications[i] ? atob(before.applications[i].value) : null,
-                after: after && after.applications[i] ? atob(after.applications[i].value) : null,
+                before: before && before.applications[i] ? Base64.b64DecodeUnicode(before.applications[i].value) : null,
+                after: after && after.applications[i] ? Base64.b64DecodeUnicode(after.applications[i].value) : null,
                 type: 'text/x-yaml'
             })
     }
@@ -69,8 +70,8 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             <Item>{
                 translate: 'workflow_template_diff_environment',
                 translateData: { number: environmentsLength > 1 ? i : '' },
-                before: before && before.environments[i] ? atob(before.environments[i].value) : null,
-                after: after && after.environments[i] ? atob(after.environments[i].value) : null,
+                before: before && before.environments[i] ? Base64.b64DecodeUnicode(before.environments[i].value) : null,
+                after: after && after.environments[i] ? Base64.b64DecodeUnicode(after.environments[i].value) : null,
                 type: 'text/x-yaml'
             })
     }

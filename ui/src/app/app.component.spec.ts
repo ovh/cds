@@ -1,27 +1,28 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed} from '@angular/core/testing';
-import {AppModule} from './app.module';
-import {AppComponent} from './app.component';
-import {Injector} from '@angular/core';
-import {AuthentificationStore} from './service/auth/authentification.store';
-import {User} from './model/user.model';
-import {SharedModule} from './shared/shared.module';
-import {ProjectStore} from './service/project/project.store';
-import {ApplicationStore} from './service/application/application.store';
-import {ProjectService} from './service/project/project.service';
-import {ActivatedRoute} from '@angular/router';
-import {APP_BASE_HREF} from '@angular/common';
-import {Observable} from 'rxjs/Observable';
-import {ApplicationService} from './service/application/application.service';
-import {PipelineService} from './service/pipeline/pipeline.service';
-import {PipelineStore} from './service/pipeline/pipeline.store';
-import {RouterTestingModule} from '@angular/router/testing';
-import {Pipeline} from './model/pipeline.model';
-import {Application} from './model/application.model';
-import {Project} from './model/project.model';
-import {of} from 'rxjs';
+import { APP_BASE_HREF } from '@angular/common';
+import { Injector } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { Store } from '@ngxs/store';
+import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
+import { AppComponent } from './app.component';
+import { AppModule } from './app.module';
+import { Application } from './model/application.model';
+import { Pipeline } from './model/pipeline.model';
+import { Project } from './model/project.model';
+import { User } from './model/user.model';
+import { ApplicationService } from './service/application/application.service';
+import { ApplicationStore } from './service/application/application.store';
+import { AuthentificationStore } from './service/auth/authentification.store';
+import { PipelineService } from './service/pipeline/pipeline.service';
+import { PipelineStore } from './service/pipeline/pipeline.store';
+import { ProjectService } from './service/project/project.service';
+import { ProjectStore } from './service/project/project.store';
+import { SharedModule } from './shared/shared.module';
+import { NgxsStoreModule } from './store/store.module';
 
 describe('App: CDS', () => {
 
@@ -36,16 +37,18 @@ describe('App: CDS', () => {
             declarations: [],
             providers: [
                 AuthentificationStore,
+                Store,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                { provide: ActivatedRoute, useClass: MockActivatedRoutes},
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ProjectService, useClass: MockProjectService },
-                { provide: ApplicationService, useClass: MockApplicationService},
-                { provide: PipelineService, useClass: MockPipelineService},
-                { provide: ActivatedRoute, useClass: MockActivatedRoutes}
+                { provide: ApplicationService, useClass: MockApplicationService },
+                { provide: PipelineService, useClass: MockPipelineService },
+                { provide: ActivatedRoute, useClass: MockActivatedRoutes }
             ],
-            imports : [
+            imports: [
                 AppModule,
                 SharedModule,
+                NgxsStoreModule,
                 RouterTestingModule.withRoutes([])
             ]
         });
@@ -137,7 +140,7 @@ class MockProjectService extends ProjectService {
 class MockApplicationService extends ApplicationService {
     callAPP2 = 0;
 
-    getApplication(key: string, appName: string, filter?: {branch: string, remote: string}) {
+    getApplication(key: string, appName: string, filter?: { branch: string, remote: string }) {
         if (key === 'key1') {
             if (appName === 'app1') {
                 let app = new Application();

@@ -1,8 +1,7 @@
 <div class="ui grid" *ngIf="!loading">
     <div class="three wide column">
         <div class="ui vertical steps">
-            <div class="step" *ngFor="let e of project.environments; let i = index"
-                 [class.active]="selectedEnv?.name === e.name">
+            <div class="step" *ngFor="let e of project.environments; let i = index" [class.active]="selectedEnvIndex === i">
                 <div class="content">
                     <app-warning-mark-list [warnings]="warnMap?.get(e.name)"></app-warning-mark-list>
                     <a class="title pointing" (click)="selectNewEnv(e.name)">{{e.name}}</a>
@@ -14,8 +13,8 @@
         </div>
     </div>
     <div class="thirteen wide stretched detailed column">
-        <ng-container *ngIf="selectedEnv != null">
-            <app-environment [environment]="selectedEnv" [project]="project" (deletedEnv)="deleteEnv($event)"></app-environment>
+        <ng-container *ngIf="selectedEnvIndex != null && selectedEnvIndex != -1 && project.environments[selectedEnvIndex]">
+            <app-environment [environment]="project.environments[selectedEnvIndex]" [project]="project" (deletedEnv)="deleteEnv($event)"></app-environment>
         </ng-container>
     </div>
 </div>
