@@ -1275,7 +1275,6 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {
 	pip := &sdk.Pipeline{
 		Name: "build",
-		Type: "build",
 		Stages: []sdk.Stage{
 			{
 				Name:       "stage1",
@@ -1294,7 +1293,6 @@ func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {
 	pip := &sdk.Pipeline{
 		Name: "build",
-		Type: "build",
 		Stages: []sdk.Stage{
 			{
 				Name:       "stage1",
