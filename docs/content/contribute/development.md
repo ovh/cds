@@ -17,7 +17,7 @@ if you are familiar with these different tools, you probably will not need to re
 
 ## PostgreSQL
 
-Download PostgreSQL from https://www.postgresql.org/download/, version >= 9.4.
+Download PostgreSQL from https://www.postgresql.org/download/, version >= 9.5.
 
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 
