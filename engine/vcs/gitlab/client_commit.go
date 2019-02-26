@@ -45,7 +45,7 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 				DisplayName: c.AuthorName,
 				Email:       c.AuthorEmail,
 			},
-			Timestamp: c.AuthoredDate.Unix(),
+			Timestamp: c.AuthoredDate.Unix() * 1000,
 			Message:   c.Message,
 		}
 	}
@@ -68,7 +68,7 @@ func (c *gitlabClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 		DisplayName: gc.AuthorName,
 		Email:       gc.AuthorEmail,
 	}
-	commit.Timestamp = gc.AuthoredDate.Unix()
+	commit.Timestamp = gc.AuthoredDate.Unix() * 1000
 	commit.Message = gc.Message
 
 	return commit, nil
@@ -98,7 +98,7 @@ func (c *gitlabClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 				DisplayName: c.AuthorName,
 				Email:       c.AuthorEmail,
 			},
-			Timestamp: c.AuthoredDate.Unix(),
+			Timestamp: c.AuthoredDate.Unix() * 1000,
 			Message:   c.Message,
 		}
 	}
