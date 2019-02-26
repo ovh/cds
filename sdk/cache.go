@@ -13,12 +13,13 @@ import (
 
 // Cache define a file needed to be save for cache
 type Cache struct {
-	ID        int64  `json:"id" cli:"id"`
-	Project   string `json:"project"`
-	Name      string `json:"name" cli:"name"`
-	Tag       string `json:"tag"`
-	TmpURL    string `json:"tmp_url"`
-	SecretKey string `json:"secret_key"`
+	ID              int64  `json:"id" cli:"id"`
+	Project         string `json:"project"`
+	Name            string `json:"name" cli:"name"`
+	Tag             string `json:"tag"`
+	TmpURL          string `json:"tmp_url"`
+	SecretKey       string `json:"secret_key"`
+	IntegrationName string `json:"integration_name"`
 
 	Files            []string `json:"files"`
 	WorkingDirectory string   `json:"working_directory"`

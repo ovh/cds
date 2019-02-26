@@ -271,28 +271,26 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 	return nodeRun, nil
 }
 
-func (c *client) WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error {
+func (c *client) WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader) error {
 	store := new(sdk.ArtifactsStore)
-	_, _ = c.GetJSON(context.Background(), "/artifact/store", store)
+	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
+	_, _ = c.GetJSON(context.Background(), uri, store)
 	if store.TemporaryURLSupported {
-		err := c.workflowCachePushIndirectUpload(projectKey, ref, tarContent)
+		err := c.workflowCachePushIndirectUpload(projectKey, integrationName, ref, tarContent)
 		return err
 	}
-	err := c.workflowCachePushDirectUpload(projectKey, ref, tarContent)
-
-	return err
+	return c.workflowCachePushDirectUpload(projectKey, integrationName, ref, tarContent)
 }
 
-func (c *client) workflowCachePushDirectUpload(projectKey, ref string, tarContent io.Reader) error {
-	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
-
+func (c *client) workflowCachePushDirectUpload(projectKey, integrationName, ref string, tarContent io.Reader) error {
 	mods := []RequestModifier{
 		(func(r *http.Request) {
 			r.Header.Set("Content-Type", "application/tar")
 		}),
 	}
 
-	_, _, code, err := c.Stream(context.Background(), "POST", url, tarContent, true, mods...)
+	uri := fmt.Sprintf("/project/%s/storage/%s/cache/%s", projectKey, integrationName, ref)
+	_, _, code, err := c.Stream(context.Background(), "POST", uri, tarContent, true, mods...)
 	if err != nil {
 		return err
 	}
@@ -304,11 +302,10 @@ func (c *client) workflowCachePushDirectUpload(projectKey, ref string, tarConten
 	return nil
 }
 
-func (c *client) workflowCachePushIndirectUpload(projectKey, ref string, tarContent io.Reader) error {
-	url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
-
+func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, ref string, tarContent io.Reader) error {
+	uri := fmt.Sprintf("/project/%s/storage/%s/cache/%s/url", projectKey, integrationName, ref)
 	cacheObj := sdk.Cache{}
-	code, err := c.PostJSON(context.Background(), url, nil, &cacheObj)
+	code, err := c.PostJSON(context.Background(), uri, nil, &cacheObj)
 	if err != nil {
 		return err
 	}
@@ -317,11 +314,7 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, ref string, tarCont
 		return fmt.Errorf("HTTP Code %d", code)
 	}
 
-	if err := c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent); err != nil {
-		return err
-	}
-
-	return nil
+	return c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent)
 }
 
 func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.Reader) error {
@@ -361,14 +354,15 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 	return globalErr
 }
 
-func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
-	downloadURL := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
+func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
+	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
 	store := new(sdk.ArtifactsStore)
-	_, _ = c.GetJSON(context.Background(), "/artifact/store", store)
+	_, _ = c.GetJSON(context.Background(), uri, store)
+
+	downloadURL := fmt.Sprintf("/project/%s/storage/%s/cache/%s", projectKey, integrationName, ref)
 
 	if store.TemporaryURLSupported {
-		url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
-
+		url := fmt.Sprintf("/project/%s/storage/%s/cache/%s/url", projectKey, integrationName, ref)
 		var cacheObj sdk.Cache
 		code, err := c.GetJSON(context.Background(), url, &cacheObj)
 		if err != nil {

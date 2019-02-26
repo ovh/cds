@@ -12,8 +12,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func runArtifactUpload(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
+func runArtifactUpload(wk *currentWorker) BuiltInAction {
+	return func(ctx context.Context, a *sdk.Action, wJobID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
 		path := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))
@@ -58,13 +58,16 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			}
 		}()
 
+		integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
+		projectKey := sdk.ParameterValue(*params, "cds.project")
+
 		wg.Add(len(filesPath))
 		for _, p := range filesPath {
 			filename := filepath.Base(p)
 			go func(path string) {
-				log.Debug("Uploading %s", path)
+				log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, wJobID)
 				defer wg.Done()
-				throughTempURL, duration, err := w.client.QueueArtifactUpload(ctx, buildID, tag.Value, path)
+				throughTempURL, duration, err := wk.client.QueueArtifactUpload(ctx, projectKey, integrationName, wJobID, tag.Value, path)
 				if err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 					wgErrors.Add(1)

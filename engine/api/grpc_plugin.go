@@ -152,7 +152,7 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load old plugin")
 		}
 
-		if err := plugin.Delete(api.mustDB(), old); err != nil {
+		if err := plugin.Delete(api.mustDB(), api.SharedStorage, old); err != nil {
 			return sdk.WrapError(err, "unable to delete plugin")
 		}
 
@@ -187,11 +187,11 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 
 		old := p.GetBinary(b.OS, b.Arch)
 		if old == nil {
-			if err := plugin.AddBinary(tx, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.AddBinary(tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		} else {
-			if err := plugin.UpdateBinary(tx, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.UpdateBinary(tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		}
@@ -222,8 +222,10 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 		}
 
 		acceptRedirect := FormBool(r, "accept-redirect")
-		if acceptRedirect && objectstore.Instance().TemporaryURLSupported {
-			url, err := objectstore.FetchTempURL(b)
+
+		s, temporaryURLSupported := api.SharedStorage.(objectstore.DriverWithRedirect)
+		if acceptRedirect && api.SharedStorage.TemporaryURLSupported() && temporaryURLSupported {
+			url, _, err := s.FetchURL(b)
 			if err != nil {
 				return sdk.WrapError(err, "unable to get a temp URL")
 			}
@@ -231,7 +233,7 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 			return nil
 		}
 
-		f, err := objectstore.Fetch(b)
+		f, err := api.SharedStorage.Fetch(b)
 		if err != nil {
 			return sdk.WrapError(err, "unable to get object")
 		}

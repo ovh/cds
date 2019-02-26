@@ -3,15 +3,12 @@
         <ng-template let-option #optionTemplate>
             <div><i class="option.icon icon" *ngIf="option.icon"></i>{{ option.name }}</div>
             <ul>
-                <li *ngIf="option.hook"><div class="ui green label">{{'provider_hook' | translate}}</div></li>
-                <li *ngIf="option.deployment"><div class="ui purple label">{{'provider_deployment' | translate}}</div></li>
+                <li *ngIf="option.storage"><div class="ui green label">{{'integration_storage' | translate}}</div></li>
+                <li *ngIf="option.hook"><div class="ui green label">{{'integration_hook' | translate}}</div></li>
+                <li *ngIf="option.deployment"><div class="ui purple label">{{'integration_deployment' | translate}}</div></li>
             </ul>
         </ng-template>
         <div class="fields">
-            <div class="four wide field">
-                <label>{{ 'integration_name' | translate }}</label>
-                <input name="name" type="text" [(ngModel)]="newIntegration.name">
-            </div>
             <div class="four wide field">
                 <label>{{ 'integration_model' | translate }}</label>
                 <sui-select class="selection"
@@ -29,6 +26,14 @@
             </div>
             <div class="six wide field">
                 <ng-container *ngIf="newIntegration.model">
+                    <div class="inline fields">
+                        <div class="six wide field">
+                            <label>{{ 'integration_name' | translate }}</label>
+                        </div>
+                        <div class="ten wide field">
+                            <input name="name" type="text" [(ngModel)]="newIntegration.name">
+                        </div>
+                    </div>
                     <label>{{ 'integration_configuration' | translate }}</label>
                     <div class="inline fields" *ngFor="let k of newIntegration.model.default_config | keys">
                         <div class="six wide field">

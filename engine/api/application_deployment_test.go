@@ -55,7 +55,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
 	pf := sdk.IntegrationModel{
-		Name:       "test-deploy-2",
+		Name:       "test-deploy-post-2" + pkey,
 		Deployment: true,
 	}
 	test.NoError(t, integration.InsertModel(db, &pf))
@@ -178,7 +178,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
 	pf := sdk.IntegrationModel{
-		Name:       "test-deploy-2",
+		Name:       "test-deploy-TwoDifferentIntegrations-2" + pkey,
 		Deployment: true,
 	}
 	test.NoError(t, integration.InsertModel(db, &pf))
@@ -307,7 +307,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
 	pf := sdk.IntegrationModel{
-		Name:       "test-deploy-3",
+		Name:       "test-deploy-3" + pkey,
 		Deployment: true,
 		DeploymentDefaultConfig: sdk.IntegrationConfig{
 			"token": sdk.IntegrationConfigValue{

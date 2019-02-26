@@ -33,19 +33,19 @@ import (
 This plugin have to be used as a deployment integration plugin
 
 Kubernetes deployment plugin must configured as following:
-	name: kubernetes-deployment-plugin
+	name: plugin-kubernetes-deployment
 	type: integration
 	author: "Benjamin Coenen"
 	description: "Kubernetes Deployment Plugin"
 
-$ cdsctl admin plugins import kubernetes-deployment-plugin.yml
+$ cdsctl admin plugins import plugin-kubernetes-deployment.yml
 
 Build the present binaries and import in CDS:
 	os: linux
 	arch: amd64
 	cmd: <path-to-binary-file>
 
-$ cdsctl admin plugins binary-add kubernetes-deployment-plugin kubernetes-deployment-plugin-bin.yml <path-to-binary-file>
+$ cdsctl admin plugins binary-add plugin-kubernetes-deployment plugin-kubernetes-deployment-bin.yml <path-to-binary-file>
 */
 const (
 	kubectlLink = "https://storage.googleapis.com/kubernetes-release/release/v1.13.0/bin/"

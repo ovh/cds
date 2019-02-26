@@ -136,6 +136,10 @@ func newSteps(a sdk.Action) []Step {
 				if tag != nil {
 					artifactUploadArgs["tag"] = tag.Value
 				}
+				destination := sdk.ParameterFind(&act.Parameters, "destination")
+				if destination != nil {
+					artifactUploadArgs["destination"] = destination.Value
+				}
 				s["artifactUpload"] = artifactUploadArgs
 			case sdk.ServeStaticFiles:
 				serveStaticFilesArgs := map[string]string{}
@@ -154,6 +158,10 @@ func newSteps(a sdk.Action) []Step {
 				staticKey := sdk.ParameterFind(&act.Parameters, "static-key")
 				if staticKey != nil && staticKey.Value != "" {
 					serveStaticFilesArgs["static-key"] = staticKey.Value
+				}
+				destination := sdk.ParameterFind(&act.Parameters, "destination")
+				if destination != nil {
+					serveStaticFilesArgs["destination"] = destination.Value
 				}
 				s["serveStaticFiles"] = serveStaticFilesArgs
 			case sdk.GitCloneAction:

@@ -1,5 +1,5 @@
 name: arsenal-deployment-plugin
 type: integration-deploy_application
 integration: Arsenal
-author: "François Samin"
+author: "OVH SAS"
 description: "OVH Arsenal Deployment Plugin"

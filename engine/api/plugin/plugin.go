@@ -12,8 +12,8 @@ import (
 )
 
 // AddBinary add binary to the plugin, uploading it to objectsore and updates databases
-func AddBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
-	objectPath, err := objectstore.Store(b, r)
+func AddBinary(db gorp.SqlExecutor, storage objectstore.Driver, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
+	objectPath, err := storage.Store(b, r)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func AddBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, 
 }
 
 // UpdateBinary updates binary for the plugin, uploading it to objectsore and updates databases
-func UpdateBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
+func UpdateBinary(db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
 	var oldBinary *sdk.GRPCPluginBinary
 	var index int
 	for i := range p.Binaries {
@@ -63,11 +63,11 @@ func UpdateBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinar
 		return sdk.ErrUnsupportedOSArchPlugin
 	}
 
-	if err := objectstore.Delete(oldBinary); err != nil {
+	if err := storageDriver.Delete(oldBinary); err != nil {
 		log.Error("UpdateBinary> unable to delete %+v", oldBinary)
 	}
 
-	objectPath, err := objectstore.Store(b, r)
+	objectPath, err := storageDriver.Store(b, r)
 	if err != nil {
 		return err
 	}
