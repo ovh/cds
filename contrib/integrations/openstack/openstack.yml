@@ -1,0 +1,29 @@
+name: MyOpenstackTenant
+model:
+  name: Openstack
+  public: false
+config:
+  address:
+    value: https://auth.cloud.ovh.net/v2.0/
+    type: string
+  domain:
+    value: ""
+    type: string
+  password:
+    value: 'your-password-here'
+    type: password
+  region:
+    value: your-region
+    type: string
+  storage_container_prefix:
+    value: cds-prefix-
+    type: string
+  storage_temporary_url_supported:
+    value: "true"
+    type: string
+  tenant_name:
+    value: "your-openstack-tenant"
+    type: string
+  username:
+    value: your-openstack-user
+    type: string

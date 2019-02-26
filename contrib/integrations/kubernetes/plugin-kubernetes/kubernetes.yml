@@ -1,5 +1,5 @@
-name: kubernetes-deployment-plugin
-type: integration
+name: plugin-kubernetes-deployment
+type: integration-deploy_application
 integration: Kubernetes
-author: "Benjamin Coenen"
+author: "OVH SAS"
 description: "Kubernetes Deployment Plugin"

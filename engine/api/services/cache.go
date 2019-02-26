@@ -94,7 +94,6 @@ func (c *iCache) doUpdateData(ctx context.Context) {
 		case <-ctx.Done():
 			break
 		case e, has := <-c.chanEvent:
-			log.Debug("service.doUpdateData> updating service cache")
 			if e.f != nil {
 				c.mutex.Lock()
 				e.f(e.s)

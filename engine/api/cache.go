@@ -15,7 +15,6 @@ import (
 func (api *API) postPushCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars[permProjectKey]
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -31,13 +30,17 @@ func (api *API) postPushCacheHandler() service.Handler {
 
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar",
-			Project: projectKey,
+			Project: vars[permProjectKey],
 			Tag:     tag,
 		}
 
-		_, errO := objectstore.Store(&cacheObject, r.Body)
-		if errO != nil {
-			return sdk.WrapError(errO, "postPushCacheHandler>Cannot store cache")
+		storageDriver, err := api.getStorageDriver(vars[permProjectKey], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
+		if _, err := storageDriver.Store(&cacheObject, r.Body); err != nil {
+			return sdk.WrapError(err, "postPushCacheHandler>Cannot store cache")
 		}
 
 		return nil
@@ -47,7 +50,6 @@ func (api *API) postPushCacheHandler() service.Handler {
 func (api *API) getPullCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars[permProjectKey]
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -57,13 +59,19 @@ func (api *API) getPullCacheHandler() service.Handler {
 		}
 
 		cacheObject := sdk.Cache{
-			Project: projectKey,
+			Project: vars[permProjectKey],
 			Name:    "cache.tar",
 			Tag:     tag,
 		}
 
-		if objectstore.Instance().TemporaryURLSupported {
-			fURL, err := objectstore.FetchTempURL(&cacheObject)
+		storageDriver, err := api.getStorageDriver(vars[permProjectKey], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
+		s, temporaryURLSupported := storageDriver.(objectstore.DriverWithRedirect)
+		if storageDriver.TemporaryURLSupported() && temporaryURLSupported { // with temp URL
+			fURL, _, err := s.FetchURL(&cacheObject)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot fetch cache object")
 			}
@@ -73,7 +81,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 			return nil
 		}
 
-		ioread, err := objectstore.Fetch(&cacheObject)
+		ioread, err := storageDriver.Fetch(&cacheObject)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getPullCacheHandler> Cannot fetch artifact cache.tar : %v", err)
 		}
@@ -92,7 +100,6 @@ func (api *API) getPullCacheHandler() service.Handler {
 func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars[permProjectKey]
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -101,14 +108,19 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 			return sdk.ErrInvalidName
 		}
 
-		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		storageDriver, err := api.getStorageDriver(vars[permProjectKey], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
+		store, ok := storageDriver.(objectstore.DriverWithRedirect)
 		if !ok {
 			return sdk.WrapError(sdk.ErrNotImplemented, "postPushCacheWithTempURLHandler> cast error")
 		}
 
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar",
-			Project: projectKey,
+			Project: vars[permProjectKey],
 			Tag:     tag,
 		}
 
@@ -126,7 +138,6 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars[permProjectKey]
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -135,14 +146,19 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 			return sdk.ErrInvalidName
 		}
 
-		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		storageDriver, err := api.getStorageDriver(vars[permProjectKey], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
+		store, ok := storageDriver.(objectstore.DriverWithRedirect)
 		if !ok {
 			return sdk.WrapError(sdk.ErrNotImplemented, "getPullCacheWithTempURLHandler> cast error")
 		}
 
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar",
-			Project: projectKey,
+			Project: vars[permProjectKey],
 			Tag:     tag,
 		}
 

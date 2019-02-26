@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -106,7 +105,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		}
 
 		for _, a := range artifactToUpload {
-			f, err := objectstore.Fetch(&a)
+			f, err := api.SharedStorage.Fetch(&a)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot fetch artifact")
 			}
