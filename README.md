@@ -18,7 +18,7 @@ CDS provides an intuitive UI that allows you to build complex workflows, run the
 
 <p align="center">
   <br/>
-  <img src="./docs/static/images/capture-start.gif" alt="CDS Demonstration" width="80%">
+  <img src="./docs/static/images/capture-start.gif" alt="CDS Demonstration" width="80%" style="border: solid 1px #222222;">
   <br/>
 </p>
 
