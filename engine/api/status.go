@@ -310,8 +310,8 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
 				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
 				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
-				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT MAX(id) FROM workflow_run")
-				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT MAX(id) FROM workflow_node_run")
+				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COALESCE(MAX(id), 0) FROM workflow_run")
+				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COALESCE(MAX(id),0) FROM workflow_node_run")
 				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
 
 				now := time.Now()
@@ -336,6 +336,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryOld, now10min)
 
 				api.processStatusMetrics(ctx)
+
 			}
 		}
 	})
@@ -344,15 +345,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
 	n, err := api.mustDB().SelectInt(query)
 	if err != nil {
-		// Example: Errors while fetching count SELECT MAX(id) FROM workflow_run: sql: Scan error on column index 0: converting driver.Value type <nil> ("<nil>") to a int64: invalid syntax
-		// this error is displayed when there is no data in the current table
-		// so that, record 0
-		// this will avoid unuseful warn logs on a fresh CDS Installation
-		if strings.Contains(query, "SELECT MAX") && strings.Contains(err.Error(), "converting driver.Value type <nil>") {
-			n = 0
-		} else {
-			log.Warning("metrics>Errors while fetching count %s: %v", query, err)
-		}
+		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
 	}
 	observability.Record(ctx, v, n)
 }
@@ -378,7 +371,12 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 
 	for _, line := range mStatus.Lines {
 		idx := strings.Index(line.Component, "/")
-		service := line.Component[0:idx]
+
+		var service string
+		if idx >= 0 {
+			service = line.Component[0:idx]
+		}
+
 		item := strings.ToLower(line.Component[idx+1:])
 
 		if service == "Global" {
@@ -435,6 +433,5 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 			continue
 		}
 		observability.Record(ctx, v.Measure, number)
-
 	}
 }
