@@ -1,9 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { DeletePipeline, UpdatePipeline } from 'app/store/pipelines.action';
 import { cloneDeep } from 'lodash';
+import { finalize } from 'rxjs/operators';
 import { Pipeline } from '../../../../model/pipeline.model';
-import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -26,8 +28,13 @@ export class PipelineAdminComponent implements OnInit {
         this.editablePipeline = cloneDeep(data);
     }
 
-    constructor(private _pipStore: PipelineStore, private _toast: ToastService, private _translate: TranslateService,
-        private _router: Router) {
+    constructor(
+        private store: Store,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _router: Router
+    ) {
+
     }
 
     ngOnInit(): void {
@@ -43,29 +50,34 @@ export class PipelineAdminComponent implements OnInit {
 
     updatePipeline(): void {
         this.loading = true;
-        this._pipStore.updatePipeline(this.project.key, this.oldName, this.editablePipeline).subscribe(() => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('pipeline_updated'));
-            this._router.navigate(
-                ['project', this.project.key, 'pipeline', this.editablePipeline.name],
-                { queryParams: { 'tab': 'advanced' } }
-            );
-        }, () => {
-            this.loading = false;
-        });
+        this.store.dispatch(new UpdatePipeline({
+            projectKey: this.project.key,
+            pipelineName: this.oldName,
+            changes: this.editablePipeline
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('pipeline_updated'));
+                if (this.oldName !== this.editablePipeline.name) {
+                    this._router.navigate(
+                        ['project', this.project.key, 'pipeline', this.editablePipeline.name],
+                        { queryParams: { 'tab': 'advanced' } }
+                    );
+                }
+            });
     }
 
     deletePipeline(): void {
         this.loading = true;
-        this._pipStore.deletePipeline(this.project.key, this.editablePipeline.name).subscribe(() => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('pipeline_deleted'));
-            this._router.navigate(
-                ['project', this.project.key],
-                { queryParams: { 'tab': 'pipelines' } }
-            );
-        }, () => {
-            this.loading = false;
-        });
+        this.store.dispatch(new DeletePipeline({
+            projectKey: this.project.key,
+            pipelineName: this.editablePipeline.name
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('pipeline_deleted'));
+                this._router.navigate(
+                    ['project', this.project.key],
+                    { queryParams: { 'tab': 'pipelines' } }
+                );
+            });
     }
 }

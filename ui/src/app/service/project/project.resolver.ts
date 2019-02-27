@@ -4,10 +4,9 @@ import { Store } from '@ngxs/store';
 import { FetchProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { Observable } from 'rxjs';
-import { first, flatMap, map } from 'rxjs/operators';
+import { flatMap, map } from 'rxjs/operators';
 import { LoadOpts, Project } from '../../model/project.model';
 import { RouterService } from '../router/router.service';
-import { ProjectStore } from './project.store';
 
 @Injectable()
 export class ProjectResolver implements Resolve<Project> {
@@ -21,10 +20,16 @@ export class ProjectResolver implements Resolve<Project> {
             new LoadOpts('withLabels', 'labels')
         ];
 
-        return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
+        return this.store.dispatch(new FetchProject({
+            projectKey: params['key'],
+            opts
+        })).pipe(
+            flatMap(() => this.store.selectOnce(ProjectState)),
+            map((projectState: ProjectStateModel) => projectState.project)
+        );
     }
 
-    constructor(private projectStore: ProjectStore, private routerService: RouterService) { }
+    constructor(private store: Store, private routerService: RouterService) { }
 }
 
 @Injectable()
@@ -68,8 +73,14 @@ export class ProjectForApplicationResolver implements Resolve<Project> {
             new LoadOpts('withEnvironments', 'environments'),
         ];
 
-        return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
+        return this.store.dispatch(new FetchProject({
+            projectKey: params['key'],
+            opts
+        })).pipe(
+            flatMap(() => this.store.selectOnce(ProjectState)),
+            map((projectState: ProjectStateModel) => projectState.project)
+        );
     }
 
-    constructor(private projectStore: ProjectStore, private routerService: RouterService) { }
+    constructor(private store: Store, private routerService: RouterService) { }
 }

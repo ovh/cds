@@ -1,10 +1,13 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import * as pipelineActions from 'app/store/pipelines.action';
+import { PipelinesState } from 'app/store/pipelines.state';
 import { cloneDeep } from 'lodash';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
 import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { finalize, first, flatMap } from 'rxjs/operators';
 import { Job } from '../../../../model/job.model';
 import { AllKeys } from '../../../../model/keys.model';
 import { PermissionValue } from '../../../../model/permission.model';
@@ -13,7 +16,6 @@ import { Project } from '../../../../model/project.model';
 import { Stage } from '../../../../model/stage.model';
 import { KeyService } from '../../../../service/keys/keys.service';
 import { PipelineCoreService } from '../../../../service/pipeline/pipeline.core.service';
-import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
 import { VariableService } from '../../../../service/variable/variable.service';
 import { ActionEvent } from '../../../../shared/action/action.event.model';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
@@ -30,7 +32,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     @Input() project: Project;
     @Input('currentPipeline')
     set currentPipeline(data: Pipeline) {
-        this.pipeline = data;
+        this.pipeline = cloneDeep(data);
 
         if (!this.pipeline) {
             return;
@@ -42,6 +44,29 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
         if (!this.pipeline.stages) {
             this.pipeline.stages = new Array<Stage>();
+        }
+
+        if (this.pipeline.preview) {
+            this.previewMode = true;
+            this.pipeline = this.pipeline.preview;
+            this.selectDefaultJob();
+            this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
+        } else {
+            let jobFound = false;
+            let stageFound = null;
+            if (this.selectedStage) {
+                stageFound = this.selectedStage && data.stages.find((stage) => stage.id === this.selectedStage.id);
+                jobFound = stageFound && this.selectedJob && stageFound.jobs.some((job) => {
+                    return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
+                });
+                if (stageFound && !jobFound) {
+                    this.selectDefaultJobInStage(this.selectedStage);
+                }
+            }
+            if (!stageFound && !jobFound) {
+                this.selectDefaultJob();
+            }
+            this.previewMode = false;
         }
     }
     @Input() queryParams: {};
@@ -65,7 +90,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     dragulaSubscription: Subscription;
 
     constructor(
-        private _pipelineStore: PipelineStore,
+        private store: Store,
         private _toast: ToastService,
         private _dragularService: DragulaService,
         private _translate: TranslateService,
@@ -95,37 +120,25 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                         break;
                     }
                 }
-                this._pipelineStore.moveStage(this.project.key, this.pipeline.name, stageMoved).subscribe(() => {
-                    this._toast.success('', this._translate.instant('pipeline_stage_moved'));
-                });
+                this.store.dispatch(new pipelineActions.MovePipelineStage({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    stage: stageMoved
+                })).subscribe(() => this._toast.success('', this._translate.instant('pipeline_stage_moved')));
             });
         });
-
-        this.pipelinePreviewSubscription = this._pipCoreService.getPipelinePreview()
-            .subscribe((pipPreview) => {
-                if (pipPreview != null) {
-                    this.originalPipeline = this.pipeline;
-                    this.pipeline = null;
-                    this.pipeline = Object.assign({}, this.originalPipeline, {
-                        stages: pipPreview.stages,
-                        previewMode: pipPreview.previewMode,
-                        forceRefresh: pipPreview.forceRefresh
-                    });
-                    this.selectDefaultJob();
-                    this.previewMode = true;
-                    this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
-                } else if (this.originalPipeline != null) {
-                    this.previewMode = false;
-                    this.pipeline = this.originalPipeline;
-                    this.selectDefaultJob();
-                }
-            });
     }
 
     selectDefaultJob() {
         if (this.pipeline.stages && this.pipeline.stages.length &&
             this.pipeline.stages[0].jobs && this.pipeline.stages[0].jobs.length) {
             this.selectJob(this.pipeline.stages[0].jobs[0], this.pipeline.stages[0]);
+        }
+    }
+
+    selectDefaultJobInStage(stage: Stage) {
+        if (stage.jobs && stage.jobs.length) {
+            this.selectJob(this.pipeline.stages[0].jobs[0], stage);
         }
     }
 
@@ -160,9 +173,17 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         }
 
         s.name = 'Stage ' + (this.pipeline.stages.length + 1);
-        this._pipelineStore.addStage(this.project.key, this.pipeline.name, s).subscribe(p => {
+
+        this.store.dispatch(new pipelineActions.AddPipelineStage({
+            projectKey: this.project.key,
+            pipelineName: this.pipeline.name,
+            stage: s
+        })).pipe(
+            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.pipeline.name)))
+        ).subscribe((pip) => {
             this._toast.success('', this._translate.instant('stage_added'));
-            this.selectedStage = p.stages[p.stages.length - 1];
+            this.selectedStage = pip.stages[pip.stages.length - 1];
+            console.log(this.selectedStage);
             this.addJob(this.selectedStage);
         });
     }
@@ -171,14 +192,24 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         let jobToAdd = new Job();
         jobToAdd.action.name = 'New Job';
         jobToAdd.enabled = true;
-        this._pipelineStore.addJob(this.project.key, this.pipeline.name, s.id, jobToAdd).subscribe((pip) => {
-            this._toast.success('', this._translate.instant('stage_job_added'));
+        this.store.dispatch(new pipelineActions.AddPipelineJob({
+            projectKey: this.project.key,
+            pipelineName: this.pipeline.name,
+            stageId: s.id,
+            job: jobToAdd
+        })).pipe(
+            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.pipeline.name)))
+        )
+            .subscribe((pip) => {
+                this._toast.success('', this._translate.instant('stage_job_added'));
 
-            let currentStage = pip.stages.find((stage) => this.selectedStage.id === stage.id);
-            if (currentStage) {
-                this.selectJob(currentStage.jobs[currentStage.jobs.length - 1], this.selectedStage);
-            }
-        });
+                console.log('selectedStage ID', this.selectedStage.id);
+                let currentStage = pip.stages.find((stage) => this.selectedStage.id === stage.id);
+                console.log(currentStage);
+                if (currentStage) {
+                    this.selectJob(currentStage.jobs[currentStage.jobs.length - 1], this.selectedStage);
+                }
+            });
     }
 
     /**
@@ -189,24 +220,28 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         this.loadingStage = true;
         switch (type) {
             case 'update':
-                this._pipelineStore.updateStage(this.project.key, this.pipeline.name, this.selectedStage).subscribe(() => {
-                    this._toast.success('', this._translate.instant('stage_updated'));
-                    this.loadingStage = false;
-                    this.editStageModal.hide();
-                }, () => {
-                    this.loadingStage = false;
-                });
+                this.store.dispatch(new pipelineActions.UpdatePipelineStage({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    changes: this.selectedStage
+                })).pipe(finalize(() => this.loadingStage = false))
+                    .subscribe(() => {
+                        this._toast.success('', this._translate.instant('stage_updated'));
+                        this.editStageModal.hide();
+                    });
                 break;
             case 'delete':
-                this._pipelineStore.removeStage(this.project.key, this.pipeline.name, this.selectedStage).subscribe(() => {
-                    this._toast.success('', this._translate.instant('stage_deleted'));
-                    this.loadingStage = false;
-                    this.editStageModal.hide();
-                    delete this.selectedStage;
-                    delete this.selectedJob;
-                }, () => {
-                    this.loadingStage = false;
-                });
+                this.store.dispatch(new pipelineActions.DeletePipelineStage({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    stage: this.selectedStage
+                })).pipe(finalize(() => this.loadingStage = false))
+                    .subscribe(() => {
+                        this._toast.success('', this._translate.instant('stage_deleted'));
+                        this.editStageModal.hide();
+                        this.selectedStage = null;
+                        this.selectedJob = null;
+                    });
                 break;
         }
     }
@@ -253,24 +288,31 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
         switch (event.type) {
             case 'update':
-                this._pipelineStore.updateJob(this.project.key, this.pipeline.name, this.selectedStage.id, job).subscribe((pip) => {
-                    this._toast.success('', this._translate.instant('stage_job_updated'));
+                this.store.dispatch(new pipelineActions.UpdatePipelineJob({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    stageId: this.selectedStage.id,
+                    changes: job
+                })).pipe(finalize(() => {
                     job.action.loading = false;
                     job.action.hasChanged = false;
-                    this.pipeline = pip;
+                })).subscribe(() => {
+                    this._toast.success('', this._translate.instant('stage_job_updated'));
                     this.selectedStage = this.pipeline.stages.find((s) => this.selectedStage.id === s.id) || this.selectedStage;
                     this.selectedJob = this.selectedStage.jobs.find((j) => this.selectedJob.action.id === j.action.id) || this.selectedJob;
-                }, () => {
-                    job.action.loading = false;
                 });
                 break;
             case 'delete':
-                this._pipelineStore.removeJob(this.project.key, this.pipeline.name, this.selectedStage.id, job).subscribe(() => {
-                    this._toast.success('', this._translate.instant('stage_job_deleted'));
-                    this.selectedJob = undefined;
-                }, () => {
-                    job.action.loading = false;
-                });
+                this.store.dispatch(new pipelineActions.DeletePipelineJob({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    stageId: this.selectedStage.id,
+                    job
+                })).pipe(finalize(() => job.action.loading = false))
+                    .subscribe(() => {
+                        this._toast.success('', this._translate.instant('stage_job_deleted'));
+                        this.selectedJob = undefined;
+                    });
                 break;
         }
     }

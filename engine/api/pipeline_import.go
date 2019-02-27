@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
@@ -50,6 +52,7 @@ func (api *API) postPipelinePreviewHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "Unable to parse pipeline")
 		}
+		pip.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
