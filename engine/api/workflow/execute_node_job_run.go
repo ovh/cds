@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -492,14 +492,14 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		secrets = append(secrets, ev...)
 
 		if pp != nil {
-			pf, err := integration.LoadByID(db, pp.ID, true)
+			projectIntegration, err := integration.LoadProjectIntegrationByID(db, pp.ID, true)
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load integration %d", pp.ID)
 			}
 
 			// Project integration variable
-			pfv := make([]sdk.Variable, 0, len(pf.Config))
-			for k, v := range pf.Config {
+			pfv := make([]sdk.Variable, 0, len(projectIntegration.Config))
+			for k, v := range projectIntegration.Config {
 				pfv = append(pfv, sdk.Variable{
 					Name:  k,
 					Type:  v.Type,

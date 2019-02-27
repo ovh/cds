@@ -7,7 +7,7 @@ BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 TARGET_DIR = ./dist
 TARGET_NAME = kubernetes
 
-PLUGIN_MANIFEST=`echo $TARGET_NAME.yml`
+PLUGIN_MANIFEST=`echo plugin.yml`
 export PLUGIN_MANIFEST
 
 define PLUGIN_MANIFEST_BINARY
@@ -37,7 +37,7 @@ clean:
 	@rm -rf $(TARGET_DIR)
 
 build: $(TARGET_DIR)
-	@cp $(TARGET_NAME).yml $(TARGET_DIR)/plugin.yml
+	@cp plugin.yml $(TARGET_DIR)/plugin.yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
@@ -60,6 +60,6 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add kubernetes-deployment-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl admin plugins binary-add plugin-kubernetes-deployment $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done

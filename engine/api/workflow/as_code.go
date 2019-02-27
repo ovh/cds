@@ -181,6 +181,9 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			log.Error("unable to get repository operation %s: %v", ope.UUID, err)
 			continue
 		}
+		if ope.Status == sdk.OperationStatusError {
+			break
+		}
 		if ope.Status == sdk.OperationStatusDone {
 			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)

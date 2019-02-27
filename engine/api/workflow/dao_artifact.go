@@ -22,6 +22,7 @@ func LoadWorkfowArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.WorkflowN
 				object_path,
 				created,
 				workflow_run_id,
+				project_integration_id,
 				coalesce(sha512sum, '') AS sha512sum
 		  FROM workflow_node_run_artifacts
 		  WHERE workflow_node_run_artifacts.download_hash = $1`
@@ -50,6 +51,7 @@ func LoadArtifactByIDs(db gorp.SqlExecutor, workflowID, artifactID int64) (*sdk.
 			workflow_node_run_artifacts.object_path,
 			workflow_node_run_artifacts.created,
 			workflow_node_run_artifacts.workflow_run_id,
+			workflow_node_run_artifacts.project_integration_id,
 			coalesce(workflow_node_run_artifacts.sha512sum, '') AS sha512sum
 		FROM workflow_node_run_artifacts
 		JOIN workflow_run ON workflow_run.id = workflow_node_run_artifacts.workflow_run_id
@@ -78,6 +80,7 @@ func loadArtifactByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) ([]sdk.Workfl
 			object_path,
 			created,
 			workflow_run_id,
+			project_integration_id,
 			coalesce(sha512sum, '') AS sha512sum
 		FROM workflow_node_run_artifacts WHERE workflow_node_run_id = $1`, nodeRunID); err != nil {
 		return nil, err

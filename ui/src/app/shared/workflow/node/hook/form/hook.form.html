@@ -11,7 +11,7 @@
                             (ngModelChange)="updateHook()"
                             [options]="hooksModel"
                             [isSearchable]="true"
-                            [isDisabled]="hook.id"
+                            [isDisabled]="hook.uuid"
                             labelField="name" #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                     </sui-select-option>

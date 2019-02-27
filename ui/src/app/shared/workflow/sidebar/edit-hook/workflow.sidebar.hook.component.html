@@ -12,7 +12,8 @@
       <a class="item noborder" (click)="openHookEditModal()">
         <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{'btn_edit' | translate}}</span><span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">Configuration</span> <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="openDeleteHookModal()" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+      <a class="item noborder" (click)="openDeleteHookModal()" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
+         *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
         {{'btn_delete' | translate}} <i class="angle right icon"></i>
       </a>
     </div>

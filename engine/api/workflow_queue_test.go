@@ -15,8 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/venom"
@@ -37,6 +35,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type testRunWorkflowCtx struct {
@@ -643,8 +642,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 		},
 	}
 
-	errO := objectstore.Initialize(context.Background(), cfg)
+	storage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
+	api.SharedStorage = storage
 
 	//Prepare request
 	vars := map[string]string{
@@ -671,8 +671,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"ref":    base64.RawURLEncoding.EncodeToString([]byte("latest")),
-		"permID": fmt.Sprintf("%d", ctx.job.ID),
+		"ref":             base64.RawURLEncoding.EncodeToString([]byte("latest")),
+		"integrationName": sdk.DefaultStorageIntegrationName,
+		"permProjectKey":  ctx.project.Key,
 	}
 
 	uri = router.GetRoute("POST", api.postWorkflowJobArtifactHandler, vars)
@@ -692,6 +693,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["perm"] = "7"
 	params["md5sum"] = "123"
 	params["sha512sum"] = "1234"
+	params["nodeJobRunID"] = fmt.Sprintf("%d", ctx.job.ID)
 	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
@@ -763,8 +765,9 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 		},
 	}
 
-	errO := objectstore.Initialize(context.Background(), cfg)
+	storage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
+	api.SharedStorage = storage
 
 	//Prepare request
 	vars := map[string]string{
@@ -791,8 +794,9 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"name":   url.PathEscape("mywebsite"),
-		"permID": fmt.Sprintf("%d", ctx.job.ID),
+		"name":            url.PathEscape("mywebsite"),
+		"integrationName": sdk.DefaultStorageIntegrationName,
+		"permProjectKey":  ctx.project.Key,
 	}
 
 	uri = router.GetRoute("POST", api.postWorkflowJobStaticFilesHandler, vars)
@@ -808,7 +812,8 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	test.NoError(t, errClose)
 
 	params := map[string]string{
-		"entrypoint": "index.html",
+		"entrypoint":   "index.html",
+		"nodeJobRunID": fmt.Sprintf("%d", ctx.job.ID),
 	}
 	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "mystaticfile"), "mystaticfile", params)
 	rec = httptest.NewRecorder()

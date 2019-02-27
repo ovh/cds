@@ -102,7 +102,9 @@
                 [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
             </a>
-            <a class="item noborder" (click)="openTriggerModal('outgoinghook', false)" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            <a class="item noborder" (click)="openTriggerModal('outgoinghook', false)"
+               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
+               *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
                 {{ 'workflow_node_outgoing_hook' | translate }} <i class="angle right icon"></i>
             </a>
             <a class="item noborder" (click)="linkJoin()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"

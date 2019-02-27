@@ -76,8 +76,11 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
+		projectKey := sdk.ParameterValue(*params, "cds.project")
+
 		sendLog(fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
-		publicURL, _, _, err := w.client.QueueStaticFilesUpload(ctx, buildID, name.Value, entrypoint.Value, staticKey, file)
+		publicURL, _, _, err := w.client.QueueStaticFilesUpload(ctx, projectKey, integrationName, buildID, name.Value, entrypoint.Value, staticKey, file)
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("Cannot upload static files: %v", err)

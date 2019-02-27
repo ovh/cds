@@ -54,7 +54,6 @@ Theses two commands have the same result:
 	c.Flags().StringVar(&cmdDownloadNumber, "number", "", "Workflow Number to download from. Optional, default: current workflow run")
 	c.Flags().StringVar(&cmdDownloadArtefactName, "pattern", "", "Pattern matching files to download. Optional, default: *")
 	c.Flags().StringVar(&cmdDownloadTag, "tag", "", "Tag matching files to download. Optional")
-
 	return c
 }
 
@@ -123,7 +122,6 @@ func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 }
 
 func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request) {
-	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
 		newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
