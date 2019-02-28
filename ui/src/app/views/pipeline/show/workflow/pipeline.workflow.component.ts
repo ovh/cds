@@ -55,8 +55,8 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             let jobFound = false;
             let stageFound = null;
             if (this.selectedStage) {
-                stageFound = this.selectedStage && data.stages.find((stage) => stage.id === this.selectedStage.id);
-                jobFound = stageFound && this.selectedJob && stageFound.jobs.some((job) => {
+                stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
+                jobFound = stageFound && this.selectedJob && stageFound.jobs && stageFound.jobs.some((job) => {
                     return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
                 });
                 if (stageFound && !jobFound) {
@@ -138,7 +138,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     selectDefaultJobInStage(stage: Stage) {
         if (stage.jobs && stage.jobs.length) {
-            this.selectJob(this.pipeline.stages[0].jobs[0], stage);
+            this.selectJob(stage.jobs[0], stage);
         }
     }
 
