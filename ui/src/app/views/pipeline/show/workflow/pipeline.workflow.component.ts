@@ -183,7 +183,6 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         ).subscribe((pip) => {
             this._toast.success('', this._translate.instant('stage_added'));
             this.selectedStage = pip.stages[pip.stages.length - 1];
-            console.log(this.selectedStage);
             this.addJob(this.selectedStage);
         });
     }
@@ -202,10 +201,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         )
             .subscribe((pip) => {
                 this._toast.success('', this._translate.instant('stage_job_added'));
-
-                console.log('selectedStage ID', this.selectedStage.id);
                 let currentStage = pip.stages.find((stage) => this.selectedStage.id === stage.id);
-                console.log(currentStage);
                 if (currentStage) {
                     this.selectJob(currentStage.jobs[currentStage.jobs.length - 1], this.selectedStage);
                 }
