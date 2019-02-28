@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"bytes"
 	"encoding/json"
 
 	dump "github.com/fsamin/go-dump"
@@ -24,7 +23,7 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 	if payload, ok := t.Config[sdk.Payload]; ok && payload.Value != "{}" {
 		var payloadInt interface{}
 		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e := dump.NewDefaultEncoder()
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 			e.ExtraFields.DetailedMap = false
 			e.ExtraFields.DetailedStruct = false

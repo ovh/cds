@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fsamin/go-dump"
 	defaults "github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"
 
@@ -156,6 +157,20 @@ func configBootstrap(args []string) {
 	}
 }
 
+// asEnvVariables returns the object attributes as env variables. It used for configuration structs
+func asEnvVariables(o interface{}) map[string]string {
+	dumper := dump.NewDefaultEncoder()
+	dumper.DisableTypePrefix = true
+	dumper.Separator = "_"
+	dumper.Prefix = "CDS"
+	dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
+	envs, _ := dumper.ToStringMap(o)
+	for k := range envs {
+		viper.BindEnv(dumper.ViperKey(k), k)
+	}
+	return envs
+}
+
 func config(args []string) {
 	if conf.Debug == nil {
 		conf.Debug = &DebugConfiguration{}
@@ -165,9 +180,7 @@ func config(args []string) {
 		conf.Tracing = &observability.Configuration{}
 	}
 
-	for k := range AsEnvVariables(conf, "", false) {
-		viper.BindEnv(strings.ToLower(strings.Replace(k, "_", ".", -1)), "CDS_"+k)
-	}
+	asEnvVariables(conf)
 
 	var setDefault bool
 	switch {

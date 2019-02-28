@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"mime"
@@ -157,7 +156,7 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 		h := sdk.WorkflowNodeRunHookEvent{
 			WorkflowNodeHookUUID: t.UUID,
 		}
-		d := dump.NewDefaultEncoder(&bytes.Buffer{})
+		d := dump.NewDefaultEncoder()
 		d.ExtraFields.Type = false
 		d.ExtraFields.Len = false
 		d.ExtraFields.DetailedMap = false
@@ -225,7 +224,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 			}
 
 			//Go Dump
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e := dump.NewDefaultEncoder()
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 			e.ExtraFields.DetailedMap = false
 			e.ExtraFields.DetailedStruct = false

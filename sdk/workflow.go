@@ -1516,7 +1516,7 @@ func (c *WorkflowNodeContext) HasDefaultPayload() bool {
 	if c.DefaultPayload == nil {
 		return false
 	}
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false
@@ -1533,7 +1533,7 @@ func (c *WorkflowNodeContext) DefaultPayloadToMap() (map[string]string, error) {
 	if c.DefaultPayload == nil {
 		return map[string]string{}, nil
 	}
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false
@@ -1559,7 +1559,7 @@ func IsWorkflowNodeContextDefaultPayloadVCS(i interface{}) bool {
 		return true
 	}
 
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false
