@@ -9,12 +9,12 @@ editURL = "https://github.com/ovh/cds/edit/master/docs/content/"
 noHomeIcon = true
 themeVariant = "custom"
 description = "Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform"
+disableNavChevron = true
 
 [outputs]
 home = [ "HTML", "RSS", "JSON"]
 
 [[menu.shortcuts]]
-pre = "<h3></h3>"
 name = "<i class='fa fa-github'></i> Source Code"
 identifier = "ds"
 url = "https://github.com/ovh/cds"

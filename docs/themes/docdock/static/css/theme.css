@@ -331,7 +331,8 @@ figcaption h4 {
   -moz-transform: translateY(-50%);
   -o-transform: translateY(-50%);
   -ms-transform: translateY(-50%);
-  transform: translateY(-50%); }
+  transform: translateY(-50%); 
+}
 
 .button, .button-secondary {
   display: inline-block;
@@ -403,7 +404,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
   color: #fff;
   text-align: center;
   border-bottom: 1px solid #183f81;
-  padding: 1rem; }
+}
 
 #header a {
   display: inline-block; }
@@ -416,10 +417,8 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
   fill: #fff; }
 
 .searchbox {
-  margin-top: 1rem;
   position: relative;
-  border: 1px solid #6795e3;
-  background: #183f81;
+  background: #777;
   border-radius: 4px; }
 
 .searchbox label {
@@ -1021,11 +1020,16 @@ td {
   height: 0;
   min-height: 3rem; }
 
+#top-github-link a {
+  padding-left: 1rem;
+}
+
 #top-github-link {
   position: relative;
   z-index: 1;
   float: right;
-  display: block; }
+  display: block; 
+}
 
 #body #breadcrumbs {
   overflow: hidden;

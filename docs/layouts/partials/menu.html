@@ -7,9 +7,6 @@
     <div id="header">
       <a href="/" title="CDS Documentation Home Page">{{ partial "logo.html" . }}</a>
     </div>
-    {{if not .Site.Params.noSearch}}
-        {{ partial "search.html" . }}
-    {{end}}
   </div>
 
   <div id="sidebar-body">
@@ -30,28 +27,10 @@
           {{end}}
         {{end}}
 
-        {{with .Site.Menus.shortcuts}}
-        <section id="shortcuts">
-            {{ range sort . "Weight"}}
-                <li class="" role="">
-                    {{.Pre}}
-                    <a href="{{.URL}}">{{safeHTML .Name}}</a>
-                    {{.Post}}
-                </li>
-            {{end}}
-        </section>
-
-        {{ if $.Site.Params.showVisitedLinks}}
-            <a class="" href="#" data-clear-history-toggle=""><i class="fa  fa-history"></i> {{T "Clear-History"}}</a>
-        {{ end }}
-
-        {{end}}
     </ul>
     </div>
 
-    <section id="footer">
-      {{ partial "menu-footer.html" . }}
-    </section>
+
   </div>
 </nav>
 

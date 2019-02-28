@@ -1,5 +1,5 @@
 :root {
-    --SIDE-MAIN-color: #344860;
+    --SIDE-MAIN-color: #333;
     --SIDE-MAIN-TXT-color: #e6e6e6;
     --MAIN-LINK-color: #5f7ca2;
     --MAIN-HOVER-color: #344860;
@@ -42,8 +42,8 @@ a:hover {
 #sidebar #header-wrapper {
     background: var(--SIDE-MAIN-color);
     color: var(--BF-color);
-    border-color: var(--SIDE-FOCUS-BACK-color);
-    height: 225px;
+    border: 0;
+    height: 140px;
 }
 
 #sidebar #header img {
@@ -51,19 +51,18 @@ a:hover {
 }
 
 #sidebar #sidebar-body {
-    height: calc(100% - 325px);
+    height: calc(100% - 140px);
     overflow-y: auto;
 }
 
 #sidebar #footer {
-    border-top: 1px solid var(--SIDE-FOCUS-BACK-color);
-    height: 90px;
-    padding-top: 10px;
+    height: 30px;
+    padding-top: 0px;
     min-height: initial;
 }
 
 #sidebar ul.topics {
-    padding: 1rem 0;
+    padding: 0rem 0;
 }
 
 #sidebar .searchbox {
@@ -124,9 +123,11 @@ a:hover {
 }
 
 #top-bar {
-    margin: 0 .25rem;
+    margin: 0;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
     z-index: 10;
+    background-color: #333;
+    border-radius: 0;
 }
 
 #body-inner {
