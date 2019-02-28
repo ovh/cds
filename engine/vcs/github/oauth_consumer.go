@@ -2,10 +2,8 @@ package github
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/url"
 	"strings"
 
@@ -24,26 +22,12 @@ var (
 	requestedScope = []string{"user:email", "repo", "admin:repo_hook"} //https://developer.github.com/v3/oauth/#scopes
 )
 
-func generateHash() (string, error) {
-	size := 128
-	bs := make([]byte, size)
-	if _, err := rand.Read(bs); err != nil {
-		log.Error("vcs> github> generateID: rand.Read failed: %s\n", err)
-		return "", err
-	}
-	str := hex.EncodeToString(bs)
-	token := []byte(str)[0:size]
-
-	log.Debug("vcs> github> generateID: new generated id: %s\n", token)
-	return string(token), nil
-}
-
 //AuthorizeRedirect returns the request token, the Authorize URL
 //doc: https://developer.github.com/v3/oauth/#web-application-flow
 func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	// GET https://github.com/login/oauth/authorize
 	// with parameters : client_id, redirect_uri, scope, state
-	requestToken, err := generateHash()
+	requestToken, err := sdk.GenerateHash()
 	if err != nil {
 		return "", "", err
 	}

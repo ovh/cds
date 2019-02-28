@@ -1,8 +1,12 @@
 package plugin
 
 import (
+	"context"
+	"os"
+	"path"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
@@ -37,6 +41,19 @@ func TestInsertUpdateLoadDelete(t *testing.T) {
 	test.NoError(t, err)
 	assert.Len(t, all, 1)
 
-	test.NoError(t, Delete(db, &p))
+	// Init store
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: path.Join(os.TempDir(), "store"),
+			},
+		},
+	}
+
+	storage, errO := objectstore.Init(context.Background(), cfg)
+	test.NoError(t, errO)
+
+	test.NoError(t, Delete(db, storage, &p))
 
 }

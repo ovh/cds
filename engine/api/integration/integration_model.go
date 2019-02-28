@@ -12,6 +12,7 @@ var (
 	BuiltinModels = []sdk.IntegrationModel{
 		sdk.KafkaIntegration,
 		sdk.RabbitMQIntegration,
+		sdk.OpenstackIntegration,
 	}
 )
 

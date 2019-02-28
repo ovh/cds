@@ -444,5 +444,8 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 	if err := teardownBuildDirectory(wd); err != nil {
 		log.Error("Cannot remove build directory: %s", err)
 	}
+	if err := teardownBuildDirectory(keysDirectory); err != nil {
+		log.Error("Cannot remove keys directory: %s", err)
+	}
 	return res
 }

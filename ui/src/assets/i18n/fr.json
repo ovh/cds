@@ -665,8 +665,9 @@
   "integration_configuration": "Configuration",
   "integration_official_tooltip": "Intégration publique",
 
-  "provider_hook": "hook",
-  "provider_deployment": "déploiement",
+  "integration_hook": "hook",
+  "integration_deployment": "déploiement",
+  "integration_storage": "stockage",
 
   "queue_monitoring": "Queue Monitoring",
 

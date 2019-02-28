@@ -1,5 +1,0 @@
-name: hello-deployment-plugin
-type: integration
-integration: Hello
-author: "Yvonnick Esnault"
-description: "Hello Example Deployment Plugin"

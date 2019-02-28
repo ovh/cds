@@ -16,8 +16,9 @@ CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform writ
 ## Intuitive UI
 CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
 
-<img src="./docs/static/images/capture-start.gif" alt="CDS Demonstration" width="80%">
-
+<kbd>
+  <img src="./docs/static/images/capture-start.gif" alt="CDS Demonstration">
+</kbd>
 
 ## The most powerful Command Line for a CI/CD Platform
 

@@ -1,0 +1,5 @@
+name: hello-deployment-plugin
+type: integration-deploy_application
+integration: Hello
+author: "OVH SAS"
+description: "Hello Example Deployment Plugin"

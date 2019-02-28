@@ -2,8 +2,10 @@ package sdk
 
 // This is the buitin integration model
 const (
-	KafkaIntegrationModel    = "Kafka"
-	RabbitMQIntegrationModel = "RabbitMQ"
+	KafkaIntegrationModel         = "Kafka"
+	RabbitMQIntegrationModel      = "RabbitMQ"
+	OpenstackIntegrationModel     = "Openstack"
+	DefaultStorageIntegrationName = "shared.infra"
 )
 
 // Here are the default plateform models
@@ -11,8 +13,9 @@ var (
 	BuiltinIntegrationModels = []*IntegrationModel{
 		&KafkaIntegration,
 		&RabbitMQIntegration,
+		&OpenstackIntegration,
 	}
-	// KafkaIntegration represent a kafka integration
+	// KafkaIntegration represents a kafka integration
 	KafkaIntegration = IntegrationModel{
 		Name:       KafkaIntegrationModel,
 		Author:     "CDS",
@@ -32,7 +35,7 @@ var (
 		Disabled: false,
 		Hook:     true,
 	}
-	// RabbitMQIntegration represent a kafka integration
+	// RabbitMQIntegration represents a kafka integration
 	RabbitMQIntegration = IntegrationModel{
 		Name:       RabbitMQIntegrationModel,
 		Author:     "CDS",
@@ -52,7 +55,51 @@ var (
 		Disabled: false,
 		Hook:     true,
 	}
+	// OpenstackIntegration represents an openstack integration
+	OpenstackIntegration = IntegrationModel{
+		Name:       OpenstackIntegrationModel,
+		Author:     "CDS",
+		Identifier: "github.com/ovh/cds/integration/builtin/openstack",
+		Icon:       "",
+		DefaultConfig: IntegrationConfig{
+			"address": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"region": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"domain": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"tenant_name": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"username": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"password": IntegrationConfigValue{
+				Type: IntegrationConfigTypePassword,
+			},
+			"storage_container_prefix": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"storage_temporary_url_supported": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+		},
+		Storage:  true,
+		Disabled: false,
+		Hook:     false,
+	}
 )
+
+// DefaultIfEmptyStorage return sdk.DefaultStorageIntegrationName if integrationName is empty
+func DefaultIfEmptyStorage(integrationName string) string {
+	if integrationName == "" {
+		return DefaultStorageIntegrationName
+	}
+	return integrationName
+}
 
 // IntegrationConfig represent the configuration of a plateform
 type IntegrationConfig map[string]IntegrationConfigValue
@@ -124,8 +171,7 @@ type IntegrationModel struct {
 	PublicConfigurations    map[string]IntegrationConfig `json:"public_configurations,omitempty" db:"-" yaml:"public_configurations"`
 	Disabled                bool                         `json:"disabled" db:"disabled" yaml:"disabled"`
 	Hook                    bool                         `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
-	FileStorage             bool                         `json:"file_storage" db:"file_storage" yaml:"file_storage" cli:"file_storage supported"`
-	BlockStorage            bool                         `json:"block_storage" db:"block_storage" yaml:"block_storage" cli:"block_storage supported"`
+	Storage                 bool                         `json:"storage" db:"storage" yaml:"storage" cli:"storage supported"`
 	Deployment              bool                         `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
 	Compute                 bool                         `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
 	Public                  bool                         `json:"public,omitempty" db:"public" yaml:"public,omitempty"`
@@ -149,6 +195,9 @@ type ProjectIntegration struct {
 	IntegrationModelID int64             `json:"integration_model_id" db:"integration_model_id" yaml:"-"`
 	Model              IntegrationModel  `json:"model" db:"-" yaml:"model"`
 	Config             IntegrationConfig `json:"config" db:"-" yaml:"config"`
+	// GRPCPlugin field is used to get all plugins associatied to an integration
+	// when we GET /project/{permProjectKey}/integrations/{integrationName}
+	GRPCPlugins []GRPCPlugin `json:"integration_plugins,omitempty" db:"-" yaml:"-"`
 }
 
 // HideSecrets replaces password with a placeholder

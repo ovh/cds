@@ -788,7 +788,7 @@ describe('Project', () => {
         key.name = 'proj-test';
         store.dispatch(new ProjectAction.AddKeyInProject({ projectKey: project.key, key }));
         http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/keys';
+            return req.url === '/project/test1/keys' && req.body === key;
         })).flush(key);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {

@@ -1,0 +1,34 @@
+name: Integration model admin
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} project remove --force ITCLIPFARSENAL1
+  - script: {{.cds.build.cdsctl}} group remove ITCLIPFARSENAL1 --force
+  - script: {{.cds.build.cdsctl}} project remove --force ITCLIPFARSENAL2
+  - script: {{.cds.build.cdsctl}} group remove ITCLIPFARSENAL2 --force
+
+- name: List all the model
+  steps:
+  - script: {{.cds.build.cdsctl}} admin integration-model list
+
+- name: Import a public integration should update existing project
+  steps:
+  - script: {{.cds.build.cdsctl}} project add ITCLIPFARSENAL1 ITCLIPFARSENAL1
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/arsenal.yml
+  - script: {{.cds.build.cdsctl}} project integration list ITCLIPFARSENAL1
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring "arsenal-dev"
+      - result.systemout ShouldContainSubstring "arsenal-prod"
+    retry: 10
+    delay: 10
+  - script: {{.cds.build.cdsctl}} project add ITCLIPFARSENAL2 ITCLIPFARSENAL2
+  - script: {{.cds.build.cdsctl}} project integration list ITCLIPFARSENAL2
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring "arsenal-dev"
+      - result.systemout ShouldContainSubstring "arsenal-prod"
+    retry: 10
+    delay: 10
+  -- script: {{.cds.build.cdsctl}} project integration delete ITCLIPFARSENAL2 arsenal-dev
+  -- script: {{.cds.build.cdsctl}} project integration delete ITCLIPFARSENAL2 arsenal-prod

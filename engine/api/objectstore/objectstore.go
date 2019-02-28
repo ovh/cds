@@ -7,86 +7,24 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-gorp/gorp"
+	"github.com/ncw/swift"
+
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
 )
-
-var storage Driver
-var instance sdk.ArtifactsStore
-
-//Status is for status handler
-func Status() sdk.MonitoringStatusLine {
-	if storage == nil {
-		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Store not initialized", Status: sdk.MonitoringStatusAlert}
-	}
-	return storage.Status()
-}
-
-// Instance returns the objectstore singleton
-func Instance() sdk.ArtifactsStore {
-	return instance
-}
-
-// Storage returns the Driver singleton
-func Storage() Driver {
-	return storage
-}
-
-//Store an object with default objectstore driver
-func Store(o Object, data io.ReadCloser) (string, error) {
-	if storage != nil {
-		return storage.Store(o, data)
-	}
-	return "", fmt.Errorf("store not initialized")
-}
-
-//ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
-func ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	if storage != nil {
-		return storage.ServeStaticFiles(o, entrypoint, data)
-	}
-	return "", fmt.Errorf("store not initialized")
-}
-
-//Fetch an object with default objectstore driver
-func Fetch(o Object) (io.ReadCloser, error) {
-	if storage != nil {
-		return storage.Fetch(o)
-	}
-	return nil, fmt.Errorf("store not initialized")
-}
-
-//Delete an object with default objectstore driver
-func Delete(o Object) error {
-	if storage != nil {
-		return storage.Delete(o)
-	}
-	return fmt.Errorf("store not initialized")
-}
-
-//FetchTempURL returns a temp URL
-func FetchTempURL(o Object) (string, error) {
-	if storage == nil {
-		return "", fmt.Errorf("store not initialized")
-	}
-
-	s, ok := storage.(DriverWithRedirect)
-	if !ok {
-		return "", fmt.Errorf("temp URL not supported")
-	}
-
-	url, _, err := s.FetchURL(o)
-	return url, err
-}
 
 // Driver allows artifact to be stored and retrieve the same way to any backend
 // - Openstack / Swift
 // - Filesystem
 type Driver interface {
+	GetProjectIntegration() sdk.ProjectIntegration
 	Status() sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error
+	TemporaryURLSupported() bool
 }
 
 // DriverWithRedirect has to be implemented if your storage backend supports temp url
@@ -101,16 +39,6 @@ type DriverWithRedirect interface {
 	GetPublicURL(o Object) (url string, err error)
 }
 
-// Initialize setup wanted ObjectStore driver
-func Initialize(c context.Context, cfg Config) error {
-	var err error
-	storage, err = New(c, cfg)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Kind will define const defining all supported objecstore drivers
 type Kind int
 
@@ -123,8 +51,10 @@ const (
 
 // Config represents all the configuration for all objecstore drivers
 type Config struct {
-	Kind    Kind
-	Options ConfigOptions
+	IntegrationName string
+	ProjectName     string
+	Kind            Kind
+	Options         ConfigOptions
 }
 
 // ConfigOptions is used by Config
@@ -150,29 +80,64 @@ type ConfigOptionsFilesystem struct {
 	Basedir string
 }
 
-// New initialise a new ArtifactStorage
-func New(c context.Context, cfg Config) (Driver, error) {
+// InitDriver init a storage driver from a project integration
+func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
+	projectIntegration, err := integration.LoadProjectIntegrationByName(db, projectKey, integrationName, true)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
+	}
+
+	if !projectIntegration.Model.Storage {
+		return nil, fmt.Errorf("projectIntegration.Model %t is not a storage integration", projectIntegration.Model.Storage)
+	}
+
+	if projectIntegration.Model.Name == sdk.OpenstackIntegrationModel {
+		s := SwiftStore{
+			Connection: swift.Connection{
+				AuthUrl:  projectIntegration.Config["address"].Value,
+				Region:   projectIntegration.Config["region"].Value,
+				Tenant:   projectIntegration.Config["tenant_name"].Value,
+				Domain:   projectIntegration.Config["domain"].Value,
+				UserName: projectIntegration.Config["username"].Value,
+				ApiKey:   projectIntegration.Config["password"].Value,
+			},
+			containerprefix:    projectIntegration.Config["storage_container_prefix"].Value,
+			disableTempURL:     projectIntegration.Config["storage_temporary_url_supported"].Value == "false",
+			projectIntegration: projectIntegration,
+		}
+
+		if err := s.Authenticate(); err != nil {
+			return nil, sdk.WrapError(err, "Unable to authenticate")
+		}
+		return &s, nil
+	}
+
+	return nil, fmt.Errorf("Invalid Integration %s", projectIntegration.Model.Name)
+}
+
+// Init initialise a new ArtifactStorage
+func Init(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack, Swift:
-		instance = sdk.ArtifactsStore{
-			Name:                  "Swift",
-			Private:               false,
-			TemporaryURLSupported: !cfg.Options.Openstack.DisableTempURL,
+		s := SwiftStore{
+			Connection: swift.Connection{
+				AuthUrl:  cfg.Options.Openstack.Address,
+				Region:   cfg.Options.Openstack.Region,
+				Tenant:   cfg.Options.Openstack.Tenant,
+				Domain:   cfg.Options.Openstack.Domain,
+				UserName: cfg.Options.Openstack.Username,
+				ApiKey:   cfg.Options.Openstack.Password,
+			},
+			containerprefix:    cfg.Options.Openstack.ContainerPrefix,
+			disableTempURL:     cfg.Options.Openstack.DisableTempURL,
+			projectIntegration: sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName},
 		}
-		return NewSwiftStore(cfg.Options.Openstack.Address,
-			cfg.Options.Openstack.Username,
-			cfg.Options.Openstack.Password,
-			cfg.Options.Openstack.Region,
-			cfg.Options.Openstack.Tenant,
-			cfg.Options.Openstack.Domain,
-			cfg.Options.Openstack.ContainerPrefix)
+		if err := s.Authenticate(); err != nil {
+			return nil, sdk.WrapError(err, "Unable to authenticate on swift storage")
+		}
+		return &s, nil
 	case Filesystem:
-		instance = sdk.ArtifactsStore{
-			Name:                  "Local FS",
-			Private:               false,
-			TemporaryURLSupported: false,
-		}
-		return NewFilesystemStore(cfg.Options.Filesystem.Basedir)
+		return newFilesystemStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Filesystem.Basedir)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}

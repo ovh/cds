@@ -10,12 +10,15 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	zglob "github.com/mattn/go-zglob"
 )
+
+var urlRegExp = regexp.MustCompile(`https:\/\/[-a-zA-Z0-9@:%._\+#?&//=]*`)
 
 // Clone a git repository from the specified url to the destination path. Use Options to force the use of SSH Key and or PGP Key on this repo
 func Clone(path, url string, opts ...Option) (Repo, error) {
@@ -351,7 +354,14 @@ func (r Repo) Commit(m string, opts ...Option) error {
 func (r Repo) Push(remote, branch string) error {
 	out, err := r.runCmd("git", "push", "-f", "-u", remote, branch)
 	if err != nil {
-		return fmt.Errorf("command 'git push' failed: %v (%s)", err, out)
+		errS := fmt.Sprintf("%v", err)
+		URLS := urlRegExp.FindString(errS)
+		URL, errURL := url.Parse(URLS)
+		if errURL == nil {
+			URL.User = nil
+			errS = strings.Replace(errS, URLS, URL.String(), -1)
+		}
+		return fmt.Errorf("%s (%s)", errS, out)
 	}
 	return nil
 }

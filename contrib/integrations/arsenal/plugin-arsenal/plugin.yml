@@ -1,0 +1,5 @@
+name: arsenal-deployment-plugin
+type: integration-deploy_application
+integration: Arsenal
+author: "OVH SAS"
+description: "OVH Arsenal Deployment Plugin"

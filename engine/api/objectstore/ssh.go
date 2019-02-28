@@ -21,6 +21,11 @@ type SSHStore struct {
 	client *ssh.Client
 }
 
+// TemporaryURLSupported returns true is temporary URL are supported
+func (s *SSHStore) TemporaryURLSupported() bool {
+	return false
+}
+
 //Status return filesystem storage status
 func (s *SSHStore) Status() sdk.MonitoringStatusLine {
 	if s.client == nil {
