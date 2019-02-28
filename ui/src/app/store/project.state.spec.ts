@@ -12,6 +12,8 @@ import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { RepositoriesManager } from 'app/model/repositories.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
+import { ApplicationsState } from './applications.state';
+import { PipelinesState } from './pipelines.state';
 import * as ProjectAction from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 
@@ -21,7 +23,7 @@ describe('Project', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [
-                NgxsModule.forRoot([ProjectState]),
+                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();

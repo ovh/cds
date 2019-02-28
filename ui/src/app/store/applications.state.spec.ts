@@ -9,6 +9,7 @@ import { Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
 import * as ActionApplication from './applications.action';
 import { ApplicationsState } from './applications.state';
+import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 
@@ -19,7 +20,7 @@ describe('Applications', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [
-                NgxsModule.forRoot([ApplicationsState, ProjectState]),
+                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();
