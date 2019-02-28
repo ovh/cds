@@ -77,6 +77,9 @@ describe('CDS: Pipeline Show', () => {
             return req.url === '/project/key1/pipeline/pip1';
         })).flush(pipelineMock);
 
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.ngOnInit();
 
         expect(fixture.componentInstance.selectedTab).toBe('workflow');
@@ -154,6 +157,10 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.queryParams = of({ key: 'key1', appName: 'pip1', tab: 'workflow' });
         this.snapshot = new ActivatedRouteSnapshot();
         this.snapshot.queryParams = {};
+        this.snapshot.params = {
+            'key': 'key1',
+            'pipName': 'pip1'
+        };
 
         let project = new Project();
         project.key = 'key1';

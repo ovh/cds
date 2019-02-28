@@ -158,6 +158,9 @@ describe('CDS: Application', () => {
 
         let v: Variable = new Variable();
         v.name = 'foo';
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.variableEvent(new VariableEvent('add', v));
         tick(250);
         expect(store.dispatch).toHaveBeenCalledWith(new AddApplicationVariable({
@@ -168,7 +171,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run update variable', fakeAsync(() => {
-
         spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
@@ -189,6 +191,9 @@ describe('CDS: Application', () => {
 
         let v: Variable = new Variable();
         v.name = 'foo';
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.variableEvent(new VariableEvent('update', v));
         tick(250);
         expect(store.dispatch).toHaveBeenCalledWith(new UpdateApplicationVariable({
@@ -218,6 +223,9 @@ describe('CDS: Application', () => {
 
         let v: Variable = new Variable();
         v.name = 'foo';
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
         tick(250);
         expect(store.dispatch).toHaveBeenCalledWith(new DeleteApplicationVariable({
