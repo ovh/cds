@@ -166,7 +166,7 @@ func asEnvVariables(o interface{}) map[string]string {
 	dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
 	envs, _ := dumper.ToStringMap(o)
 	for k := range envs {
-		viper.BindEnv(dumper.ViperKey(k), k)
+		viper.BindEnv(dumper.ViperKey(k), k) // nolint
 	}
 	return envs
 }
