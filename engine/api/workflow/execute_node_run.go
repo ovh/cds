@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -624,7 +623,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 
 	// Add payload from root
 	if wf.Root.Context.DefaultPayload != nil {
-		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e := dump.NewDefaultEncoder()
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false
 		e.ExtraFields.DetailedStruct = false

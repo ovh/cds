@@ -243,7 +243,7 @@ var configNewCmd = &cobra.Command{
 			}
 			fmt.Println(string(btes))
 		} else {
-			m := AsEnvVariables(conf, "cds", true)
+			m := asEnvVariables(conf)
 			keys := []string{}
 
 			for k := range m {

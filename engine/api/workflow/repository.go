@@ -193,7 +193,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 		commit = opts.Hook.Payload[tagGitHash]
 	}
 	if opts.Manual != nil {
-		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e := dump.NewDefaultEncoder()
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false
 		e.ExtraFields.DetailedStruct = false

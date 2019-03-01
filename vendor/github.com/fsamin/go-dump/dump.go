@@ -1,7 +1,6 @@
 package dump
 
 import (
-	"bytes"
 	"io"
 	"os"
 )
@@ -19,8 +18,7 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 	if formatters == nil {
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
-	w := new(bytes.Buffer)
-	e := NewDefaultEncoder(w)
+	e := NewDefaultEncoder()
 	e.Formatters = formatters
 	return e.Sdump(i)
 }
@@ -30,7 +28,7 @@ func Fdump(w io.Writer, i interface{}, formatters ...KeyFormatterFunc) error {
 	if formatters == nil {
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
-	e := NewDefaultEncoder(w)
+	e := NewEncoder(w)
 	e.Formatters = formatters
 	return e.Fdump(i)
 }
@@ -40,8 +38,7 @@ func ToMap(i interface{}, formatters ...KeyFormatterFunc) (map[string]interface{
 	if formatters == nil {
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
-	w := new(bytes.Buffer)
-	e := NewDefaultEncoder(w)
+	e := NewDefaultEncoder()
 	e.Formatters = formatters
 	return e.ToMap(i)
 }
@@ -51,8 +48,7 @@ func ToStringMap(i interface{}, formatters ...KeyFormatterFunc) (map[string]stri
 	if formatters == nil {
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
-	w := new(bytes.Buffer)
-	e := NewDefaultEncoder(w)
+	e := NewDefaultEncoder()
 	e.Formatters = formatters
 	return e.ToStringMap(i)
 }
@@ -60,7 +56,8 @@ func ToStringMap(i interface{}, formatters ...KeyFormatterFunc) (map[string]stri
 // MustSdump is a helper that wraps a call to a function returning (string, error)
 // and panics if the error is non-nil.
 func MustSdump(i interface{}, formatters ...KeyFormatterFunc) string {
-	enc := NewDefaultEncoder(new(bytes.Buffer))
+	enc := NewDefaultEncoder()
+	enc.Formatters = formatters
 	s, err := enc.Sdump(i)
 	if err != nil {
 		panic(err)

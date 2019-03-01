@@ -26,4 +26,4 @@ mod:
 	@echo "removing file /vendor/github.com/docker/docker/distribution/oci.go..." && rm -f vendor/github.com/docker/docker/distribution/oci.go
 
 install:
-	go install -v $$(go list ./... | grep -v vendor)
+	go install $$(go list ./...)
