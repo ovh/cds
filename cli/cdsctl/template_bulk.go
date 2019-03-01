@@ -46,9 +46,8 @@ var templateBulkCmd = cli.Command{
 			Default: "",
 		},
 		{
-			Name:      "file",
-			ShortHand: "f",
-			Usage:     "Specify path|url of a json|yaml file that contains instances with params",
+			Name:  "instances-file",
+			Usage: "Specify path|url of a json|yaml file that contains instances with params",
 		},
 		{
 			Type:      cli.FlagBool,
@@ -331,7 +330,7 @@ func templateBulkRun(v cli.Values) error {
 	}
 
 	// validate data from file
-	filePath := v.GetString("file")
+	filePath := v.GetString("instances-file")
 	wtFromFile, fileOperations, err := templateExtractAndValidateFileParams(filePath)
 	if err != nil {
 		return err
