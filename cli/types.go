@@ -62,6 +62,9 @@ func (v *Values) GetBool(s string) bool {
 
 // GetStringSlice returns a string slice.
 func (v *Values) GetStringSlice(s string) []string {
+	if strings.TrimSpace(v.GetString(s)) == "" {
+		return nil
+	}
 	res := strings.Split(v.GetString(s), "||")
 	if len(res) == 1 && strings.Contains(res[0], ",") {
 		return strings.Split(res[0], ",")

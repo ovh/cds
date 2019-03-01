@@ -33,7 +33,7 @@ func (api *API) InitRouter() {
 
 	// Access token
 	r.Handle("/accesstoken", r.POST(api.postNewAccessTokenHandler))
-	r.Handle("/accesstoken/{id}", r.PUT(api.putRegenAccessTokenHandler))
+	r.Handle("/accesstoken/{id}", r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
 	r.Handle("/accesstoken/user/{id}", r.GET(api.getAccessTokenByUserHandler))
 	r.Handle("/accesstoken/group/{id}", r.GET(api.getAccessTokenByGroupHandler))
 

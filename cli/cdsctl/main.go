@@ -24,6 +24,7 @@ var (
 func main() {
 	root = rootFromSubCommands([]*cobra.Command{
 		doc(), // hidden command
+		accesstoken(),
 		action(),
 		login(),
 		signup(),

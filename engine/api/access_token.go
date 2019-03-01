@@ -62,11 +62,10 @@ func (api *API) postNewAccessTokenHandler() service.Handler {
 			}
 		}
 
-		var expiration *time.Time
-		if accessTokenRequest.ExpirationDelaySecond > 0 {
-			t := time.Now().Add(time.Duration(accessTokenRequest.ExpirationDelaySecond) * time.Second)
-			expiration = &t
+		if accessTokenRequest.ExpirationDelaySecond <= 0 {
+			accessTokenRequest.ExpirationDelaySecond = 86400 // 1 Day
 		}
+		expiration := time.Now().Add(time.Duration(accessTokenRequest.ExpirationDelaySecond) * time.Second)
 
 		// Create the token
 		token, jwttoken, err := accesstoken.New(grantedUser.OnBehalfOf, scopeGroup, accessTokenRequest.Origin, accessTokenRequest.Description, expiration)
@@ -99,17 +98,6 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		// the groupIDs are the scope of the requested token
-		var accessTokenRequest sdk.AccessTokenRequest
-		if err := service.UnmarshalBody(r, &accessTokenRequest); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		// if the scope is empty, raise an error
-		if len(accessTokenRequest.GroupsIDs) == 0 {
-			return sdk.WithStack(sdk.ErrWrongRequest)
-		}
-
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -118,6 +106,11 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 		t, err := accesstoken.FindByID(tx, id)
 		if err != nil {
 			return sdk.WithStack(err)
+		}
+
+		// Only the creator of the token can regen it
+		if t.UserID != getGrantedUser(ctx).OnBehalfOf.ID {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		// Create the token
@@ -155,10 +148,61 @@ func (api *API) getAccessTokenByGroupHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
+		// Check that the current user is member of the group
+		g, err := group.LoadGroupByID(api.mustDB(), id)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		if err := group.LoadUserGroup(api.mustDB(), g); err != nil {
+			return sdk.WithStack(err)
+		}
+		var isGroupMember bool
+		for _, u := range g.Users {
+			if u.ID == getGrantedUser(ctx).OnBehalfOf.ID {
+				isGroupMember = true
+				break
+			}
+		}
+		if !isGroupMember {
+			for _, u := range g.Admins {
+				if u.ID == getGrantedUser(ctx).OnBehalfOf.ID {
+					isGroupMember = true
+					break
+				}
+			}
+		}
+
+		if !isGroupMember {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		tokens, err := accesstoken.FindAllByGroup(api.mustDB(), id)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		return service.WriteJSON(w, tokens, http.StatusOK)
+	}
+}
+
+func (api *API) deleteAccessTokenHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		t, err := accesstoken.FindByID(api.mustDB(), id)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		// Only the creator of the token can delete it
+		if t.UserID != getGrantedUser(ctx).OnBehalfOf.ID {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		if err := accesstoken.Delete(api.mustDB(), &t); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return nil
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
@@ -16,6 +17,9 @@ import (
 func FindByID(db gorp.SqlExecutor, id string) (sdk.AccessToken, error) {
 	var token accessToken
 	if err := db.SelectOne(&token, "select * from access_token where id = $1", id); err != nil {
+		if err == sql.ErrNoRows {
+			return sdk.AccessToken{}, sdk.WithStack(sdk.ErrNotFound)
+		}
 		return sdk.AccessToken{}, sdk.WithStack(err)
 	}
 
@@ -72,7 +76,12 @@ func FindAllByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.AccessToken, erro
 func Insert(db gorp.SqlExecutor, token *sdk.AccessToken) error {
 	dbToken := accessToken(*token)
 	if err := db.Insert(&dbToken); err != nil {
-		return sdk.WithStack(err)
+		if e, ok := err.(*pq.Error); ok {
+			if e.Code == gorpmapping.ViolateUniqueKeyPGCode {
+				return sdk.ErrConflict
+			}
+			return sdk.WithStack(err)
+		}
 	}
 	return nil
 }
