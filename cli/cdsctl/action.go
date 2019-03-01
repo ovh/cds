@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -9,7 +8,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -167,21 +165,21 @@ var actionDocCmd = cli.Command{
 }
 
 func actionDocRun(v cli.Values) error {
-	btes, errRead := ioutil.ReadFile(v.GetString("path"))
-	if errRead != nil {
-		return fmt.Errorf("Error while reading file: %s", errRead)
+	p := v.GetString("path")
+
+	contentFile, format, err := exportentities.OpenPath(p)
+	if err != nil {
+		return err
+	}
+	defer contentFile.Close()
+
+	body, err := ioutil.ReadAll(contentFile)
+	if err != nil {
+		return err
 	}
 
 	var ea exportentities.Action
-	var err error
-	if strings.HasSuffix(path.Base(v.GetString("path")), ".json") {
-		err = json.Unmarshal(btes, &ea)
-	} else if strings.HasSuffix(path.Base(v.GetString("path")), ".yml") || strings.HasSuffix(path.Base(v.GetString("path")), ".yaml") {
-		err = yaml.Unmarshal(btes, &ea)
-	} else {
-		return fmt.Errorf("unsupported extension on %s", path.Base(v.GetString("path")))
-	}
-	if err != nil {
+	if err := exportentities.Unmarshal(body, format, &ea); err != nil {
 		return err
 	}
 
@@ -190,7 +188,7 @@ func actionDocRun(v cli.Values) error {
 		return errapp
 	}
 
-	fmt.Println(sdk.ActionInfoMarkdown(act, path.Base(v.GetString("path"))))
+	fmt.Println(sdk.ActionInfoMarkdown(act, path.Base(p)))
 	return nil
 }
 
