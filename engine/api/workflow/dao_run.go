@@ -579,10 +579,33 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
+// CreateRun create a new workflow run and insert it
+func CreateRun(db *gorp.DbMap, wf *sdk.Workflow) (*sdk.WorkflowRun, error) {
+	number, err := NextRunNumber(db, wf.ID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get next run number")
+	}
+
+	lastRun := &sdk.WorkflowRun{
+		Number:        number,
+		WorkflowID:    wf.ID,
+		Start:         time.Now(),
+		LastModified:  time.Now(),
+		ProjectID:     wf.ProjectID,
+		Status:        sdk.StatusRunAsync.String(),
+		LastExecution: time.Now(),
+	}
+
+	if err := insertWorkflowRun(db, lastRun); err != nil {
+		return nil, sdk.WrapError(err, "unable to create workflow run")
+	}
+	return lastRun, nil
+}
+
 // UpdateRunNum Update run number for the given workflow
 func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	if num == 1 {
-		if _, err := nextRunNumber(db, w); err != nil {
+		if _, err := NextRunNumber(db, w.ID); err != nil {
 			return sdk.WrapError(err, "Cannot create run number")
 		}
 		return nil
@@ -597,8 +620,8 @@ func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
-func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
-	i, err := db.SelectInt("select workflow_sequences_nextval($1)", w.ID)
+func NextRunNumber(db gorp.SqlExecutor, workflowID int64) (int64, error) {
+	i, err := db.SelectInt("select workflow_sequences_nextval($1)", workflowID)
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}

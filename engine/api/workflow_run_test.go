@@ -109,14 +109,17 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	wr, _, errMR := workflow.ManualRun(context.TODO(), db, api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	wrCreate, err := workflow.CreateRun(db, w1)
+	assert.NoError(t, err)
+	wrCreate.Workflow = *w1
+	wr, _, errMR := workflow.ManualRun(context.TODO(), db, api.Cache, proj, wrCreate, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	if errMR != nil {
 		test.NoError(t, errMR)
 	}
 
-	_, _, errMR2 := workflow.ManualRunFromNode(context.TODO(), db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.WorkflowData.Node.ID)
+	_, _, errMR2 := workflow.ManualRunFromNode(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.WorkflowData.Node.ID)
 	if errMR2 != nil {
 		test.NoError(t, errMR2)
 	}
@@ -229,7 +232,10 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		wr, err := workflow.CreateRun(db, w1)
+		assert.NoError(t, err)
+		wr.Workflow = *w1
+		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		}, nil)
 		test.NoError(t, err)
@@ -378,7 +384,10 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	wr, err := workflow.CreateRun(db, w1)
+	assert.NoError(t, err)
+	wr.Workflow = *w1
+	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
@@ -489,7 +498,10 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		wr, err := workflow.CreateRun(db, w1)
+		wr.Workflow = *w1
+		assert.NoError(t, err)
+		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -619,7 +631,10 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		wr, err := workflow.CreateRun(db, w1)
+		assert.NoError(t, err)
+		wr.Workflow = *w1
+		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		}, nil)
 		test.NoError(t, err)
@@ -737,7 +752,10 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj2, w1, &sdk.WorkflowNodeRunManual{
+	wr, err := workflow.CreateRun(db, w1)
+	assert.NoError(t, err)
+	wr.Workflow = *w1
+	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj2, wr, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
@@ -1352,7 +1370,10 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	wr, err := workflow.CreateRun(db, w1)
+	assert.NoError(t, err)
+	wr.Workflow = *w1
+	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)

@@ -903,7 +903,11 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	wr, errwr := workflow.CreateRun(db, &w)
+	assert.NoError(t, errwr)
+	wr.Workflow = w
+
+	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, wr, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	assert.NoError(t, errmr)
 
 	log.Debug("%+v", wrDB.WorkflowNodeRuns)
@@ -1120,7 +1124,10 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	)
 
 	// Create previous run on default branch
-	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{
+	wr, errwr := workflow.CreateRun(db, &w)
+	assert.NoError(t, errwr)
+	wr.Workflow = w
+	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, wr, &sdk.WorkflowNodeRunManual{
 		Payload: map[string]string{
 			"git.branch": "master",
 		},
@@ -1129,7 +1136,10 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errmr)
 
 	// Create previous run on a branch
-	wrCB, _, errm := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{
+	wr2, errwr2 := workflow.CreateRun(db, &w)
+	assert.NoError(t, errwr2)
+	wr2.Workflow = w
+	wrCB, _, errm := workflow.ManualRun(context.Background(), db, api.Cache, p, wr2, &sdk.WorkflowNodeRunManual{
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
@@ -1180,7 +1190,10 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Run test
 
 	// Create a workflow run
-	wrToTest, _, errT := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{
+	wr3, errwr3 := workflow.CreateRun(db, &w)
+	assert.NoError(t, errwr3)
+	wr3.Workflow = w
+	wrToTest, _, errT := workflow.ManualRun(context.Background(), db, api.Cache, p, wr3, &sdk.WorkflowNodeRunManual{
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
