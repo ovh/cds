@@ -41,7 +41,8 @@ export class WorkflowEventStore {
         }
 
         let sRun = this._currentWorkflowRun.getValue();
-        if (sRun && sRun.id === wr.id && new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime()) {
+        if (sRun && sRun.id === wr.id && (sRun.status !== wr.status ||
+            new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime())) {
             // Call get workflow run to get workflow
             this._workflowRunService.getWorkflowRun(key, name, wr.num).subscribe(wrUpdated => {
                 wr = wrUpdated;

@@ -56,10 +56,6 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 		}
 
-		if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
-			return wr, report, err
-		}
-
 		//Process it
 		r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, e, nil, nil)
 		if errWR != nil {
@@ -79,7 +75,6 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
 func ManualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	report := new(ProcessorReport)
-
 	wr.Tag(tagTriggeredBy, e.User.Username)
 
 	r1, condOk, err := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, &nodeID)
@@ -91,7 +86,6 @@ func ManualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	if !condOk {
 		return nil, report, sdk.WrapError(sdk.ErrConditionsNotOk, "ManualRunFromNode> Conditions aren't ok")
 	}
-
 	return wr, report, nil
 }
 

@@ -109,7 +109,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	wrCreate, err := workflow.CreateRun(db, w1)
+	wrCreate, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wrCreate.Workflow = *w1
 	wr, _, errMR := workflow.ManualRun(context.TODO(), db, api.Cache, proj, wrCreate, &sdk.WorkflowNodeRunManual{
@@ -232,7 +232,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(db, w1)
+		wr, err := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, err)
 		wr.Workflow = *w1
 		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
@@ -384,7 +384,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	wr, err := workflow.CreateRun(db, w1)
+	wr, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
@@ -498,7 +498,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(db, w1)
+		wr, err := workflow.CreateRun(db, w1, nil, u)
 		wr.Workflow = *w1
 		assert.NoError(t, err)
 		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
@@ -631,7 +631,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		wr, err := workflow.CreateRun(db, w1)
+		wr, err := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, err)
 		wr.Workflow = *w1
 		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
@@ -752,7 +752,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	wr, err := workflow.CreateRun(db, w1)
+	wr, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj2, wr, &sdk.WorkflowNodeRunManual{
@@ -1370,7 +1370,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 	})
 	test.NoError(t, err)
 
-	wr, err := workflow.CreateRun(db, w1)
+	wr, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wr.Workflow = *w1
 	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{

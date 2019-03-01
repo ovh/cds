@@ -803,6 +803,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			if wf.Name != name {
 				wf.Name = name
 			}
+			lastRun.Status = sdk.StatusWaiting.String()
 		} else {
 			var errWf error
 			wf, errWf = workflow.Load(ctx, api.mustDB(), api.Cache, p, name, u, workflow.LoadOptions{
@@ -823,7 +824,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 			// CREATE WORKFLOW RUN
 			var errCreateRun error
-			lastRun, errCreateRun = workflow.CreateRun(api.mustDB(), wf)
+			lastRun, errCreateRun = workflow.CreateRun(api.mustDB(), wf, opts, u)
 			if errCreateRun != nil {
 				return errCreateRun
 			}
@@ -838,22 +839,24 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache.Store, p *sdk.Project, wf *sdk.Workflow, wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, language string, u *sdk.User) {
 
 	var asCodeInfosMsg []sdk.Message
-	if wfRun == nil {
 
+	// IF NEW WORKFLOW RUN
+	if wfRun.Status == sdk.StatusRunAsync.String() {
 		// BECOME AS CODE ?
 		if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
 			tx, err := db.Begin()
 			if err != nil {
-				failInitWorkflowRun(db, wfRun, sdk.WrapError(err, "unable to start transaction"))
+				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to start transaction"))
 				return
 			}
 			if err := workflow.SyncAsCodeEvent(ctx, tx, cache, p, wf); err != nil {
 				tx.Rollback() // nolint
-				failInitWorkflowRun(db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
+				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				return
 			}
 			if err := tx.Commit(); err != nil {
-				failInitWorkflowRun(db, wfRun, sdk.WrapError(err, "unable to commit transaction as code event"))
+				tx.Rollback() // nolint
+				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to commit transaction as code event"))
 				return
 			}
 		}
@@ -872,7 +875,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			)
 
 			if errp != nil {
-				failInitWorkflowRun(db, wfRun, sdk.WrapError(errp, "cannot load project for as code workflow creation"))
+				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errp, "cannot load project for as code workflow creation"))
 				return
 			}
 			// Get workflow from repository
@@ -883,7 +886,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 				if len(asCodeInfosMsg) > 0 {
 					msgListString = strings.Join(translateMsgs(language, asCodeInfosMsg), " ")
 				}
-				failInitWorkflowRun(db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository.%s", msgListString))
+				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository.%s", msgListString))
 				return
 			}
 		} else {
@@ -894,19 +897,18 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			}
 			wf, errl = workflow.Load(ctx, db, cache, p, wf.Name, u, options)
 			if errl != nil {
-				failInitWorkflowRun(db, wfRun, sdk.WrapError(errl, "unable to load workflow %s/%s", p.Key, wf.Name))
+				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errl, "unable to load workflow %s/%s", p.Key, wf.Name))
 				return
 			}
 		}
-	}
-	if wfRun.Workflow.ID == 0 {
+
 		wfRun.Workflow = *wf
 	}
 
 	report, errS := startWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
 
 	if errS != nil {
-		failInitWorkflowRun(db, wfRun, sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", p.Key, wf.Name))
+		failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", p.Key, wf.Name))
 		return
 	}
 
@@ -929,8 +931,13 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	return
 }
 
-func failInitWorkflowRun(db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) {
-	// TODO
+func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) {
+	// TODO - add spawninfo
+	wfRun.Status = sdk.StatusFail.String()
+	log.Error("unable to start workflow: %v", err)
+	if errU := workflow.UpdateWorkflowRun(ctx, db, wfRun); errU != nil {
+		log.Error("unable to fail workflow run %v", errU)
+	}
 }
 
 func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*workflow.ProcessorReport, error) {
@@ -945,58 +952,59 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 	}
 	defer tx.Rollback() // nolint
 
-	// Run from HOOK
+	wr.Status = sdk.StatusBuilding.String()
+	if err := workflow.UpdateWorkflowRun(ctx, db, wr); err != nil {
+		return report, err
+	}
+
 	if opts.Hook != nil {
+		// Run from HOOK
 		_, r1, err := workflow.RunFromHook(ctx, tx, store, p, wr, opts.Hook, asCodeInfos)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Unable to run workflow from hook")
 		}
 
-		//Commit and return success
-		if err := tx.Commit(); err != nil {
-			return nil, sdk.WrapError(err, "Unable to commit transaction")
-		}
-
-		return report.Merge(r1, nil)
-	}
-
-	// Manual RUN
-	if opts.Manual == nil {
-		opts.Manual = &sdk.WorkflowNodeRunManual{}
-	}
-	opts.Manual.User = *u
-
-	if len(opts.FromNodeIDs) > 0 && len(wr.WorkflowNodeRuns) > 0 {
-		// MANUAL RUN FROM NODE
-
-		fromNode := wr.Workflow.WorkflowData.NodeByID(opts.FromNodeIDs[0])
-		if fromNode == nil {
-			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
-		}
-
-		if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
-			return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.Root.ID)
-		}
-
-		// Continue  the current workflow run
-		_, r1, errmr := workflow.ManualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
-		if errmr != nil {
-			return nil, sdk.WrapError(errmr, "Unable to run workflow")
-		}
 		_, _ = report.Merge(r1, nil)
 
 	} else {
-		// MANUAL RUN FROM ROOT NODE
-		if !permission.AccessToWorkflowNode(&wr.Workflow, &wr.Workflow.WorkflowData.Node, u, permission.PermissionReadExecute) {
-			return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
+		// Manual RUN
+		if opts.Manual == nil {
+			opts.Manual = &sdk.WorkflowNodeRunManual{}
 		}
+		opts.Manual.User = *u
 
-		// Start new workflow
-		_, r1, errmr := workflow.ManualRun(ctx, tx, store, p, wr, opts.Manual, asCodeInfos)
-		if errmr != nil {
-			return nil, sdk.WrapError(errmr, "Unable to run workflow")
+		if len(opts.FromNodeIDs) > 0 && len(wr.WorkflowNodeRuns) > 0 {
+			// MANUAL RUN FROM NODE
+
+			fromNode := wr.Workflow.WorkflowData.NodeByID(opts.FromNodeIDs[0])
+			if fromNode == nil {
+				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
+			}
+
+			if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
+				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.Root.ID)
+			}
+
+			// Continue  the current workflow run
+			_, r1, errmr := workflow.ManualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
+			if errmr != nil {
+				return nil, sdk.WrapError(errmr, "Unable to run workflow")
+			}
+			_, _ = report.Merge(r1, nil)
+
+		} else {
+			// MANUAL RUN FROM ROOT NODE
+			if !permission.AccessToWorkflowNode(&wr.Workflow, &wr.Workflow.WorkflowData.Node, u, permission.PermissionReadExecute) {
+				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
+			}
+
+			// Start new workflow
+			_, r1, errmr := workflow.ManualRun(ctx, tx, store, p, wr, opts.Manual, asCodeInfos)
+			if errmr != nil {
+				return nil, sdk.WrapError(errmr, "Unable to run workflow")
+			}
+			_, _ = report.Merge(r1, nil)
 		}
-		_, _ = report.Merge(r1, nil)
 	}
 
 	//Commit and return success

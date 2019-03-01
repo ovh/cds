@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"go.opencensus.io/stats"
 
@@ -58,7 +60,6 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 	defer end()
 
 	wr.LastModified = time.Now()
-
 	for _, info := range wr.Infos {
 		if info.IsError && info.SubNumber == wr.LastSubNumber {
 			wr.Status = string(sdk.StatusFail)
@@ -164,15 +165,6 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	// TODO: to delete when old runs will be purged
 	for i := range w.Joins {
 		w.Joins[i].Ref = fmt.Sprintf("%d", w.Joins[i].ID)
-	}
-	// This is usefull for oldserialized workflows...
-	//TODO: delete this after a while
-	if len(w.Pipelines) == 0 {
-		w.Pipelines = map[int64]sdk.Pipeline{}
-		w.Visit(func(n *sdk.WorkflowNode) {
-			w.Pipelines[n.PipelineID] = n.DeprecatedPipeline
-			n.PipelineName = n.DeprecatedPipeline.Name
-		})
 	}
 	r.Workflow = w
 
@@ -580,7 +572,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 }
 
 // CreateRun create a new workflow run and insert it
-func CreateRun(db *gorp.DbMap, wf *sdk.Workflow) (*sdk.WorkflowRun, error) {
+func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) (*sdk.WorkflowRun, error) {
 	number, err := NextRunNumber(db, wf.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get next run number")
@@ -594,6 +586,38 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow) (*sdk.WorkflowRun, error) {
 		ProjectID:     wf.ProjectID,
 		Status:        sdk.StatusRunAsync.String(),
 		LastExecution: time.Now(),
+		Tags:          make([]sdk.WorkflowRunTag, 0),
+	}
+
+	lastRun.Tag("triggered_by", u.Username)
+	tags := wf.Metadata["default_tags"]
+	var payload map[string]string
+	if opts != nil && opts.Hook != nil {
+		payload = opts.Hook.Payload
+	}
+	if opts != nil && opts.Manual != nil {
+		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+		m1, errm1 := e.ToStringMap(opts.Manual)
+		if errm1 != nil {
+			return nil, sdk.WrapError(errm1, "unable to compute manual payload")
+		}
+		payload = m1
+	}
+	if tags != "" {
+		tagsSplited := strings.Split(tags, ",")
+		for _, t := range tagsSplited {
+			if pTag, hash := payload[t]; hash {
+				lastRun.Tags = append(lastRun.Tags, sdk.WorkflowRunTag{
+					Tag:   t,
+					Value: pTag,
+				})
+			}
+		}
 	}
 
 	if err := insertWorkflowRun(db, lastRun); err != nil {

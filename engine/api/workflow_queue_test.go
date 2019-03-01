@@ -903,7 +903,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wr, errwr := workflow.CreateRun(db, &w)
+	wr, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
 	wr.Workflow = w
 
@@ -1124,7 +1124,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	)
 
 	// Create previous run on default branch
-	wr, errwr := workflow.CreateRun(db, &w)
+	wr, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
 	wr.Workflow = w
 	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, wr, &sdk.WorkflowNodeRunManual{
@@ -1136,7 +1136,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errmr)
 
 	// Create previous run on a branch
-	wr2, errwr2 := workflow.CreateRun(db, &w)
+	wr2, errwr2 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr2)
 	wr2.Workflow = w
 	wrCB, _, errm := workflow.ManualRun(context.Background(), db, api.Cache, p, wr2, &sdk.WorkflowNodeRunManual{
@@ -1190,7 +1190,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Run test
 
 	// Create a workflow run
-	wr3, errwr3 := workflow.CreateRun(db, &w)
+	wr3, errwr3 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr3)
 	wr3.Workflow = w
 	wrToTest, _, errT := workflow.ManualRun(context.Background(), db, api.Cache, p, wr3, &sdk.WorkflowNodeRunManual{
