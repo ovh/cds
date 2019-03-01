@@ -46,24 +46,24 @@ func newActionDisplay(a sdk.Action) actionDisplay {
 	}
 
 	ad := actionDisplay{
-		ID:   a.ID,
-		Name: name,
-		Type: a.Type,
+		Fullname: name,
+		Type:     a.Type,
 	}
 
 	if a.FirstAudit != nil {
 		ad.Created = fmt.Sprintf("On %s by %s", a.FirstAudit.Created.Format(time.RFC3339),
 			a.FirstAudit.AuditCommon.TriggeredBy)
+	} else {
+		ad.Created = "No audit found"
 	}
 
 	return ad
 }
 
 type actionDisplay struct {
-	ID      int64  `cli:"ID,key"`
-	Created string `cli:"Created"`
-	Name    string `cli:"Name"`
-	Type    string `cli:"Type"`
+	Created  string `cli:"Created"`
+	Fullname string `cli:"Fullname,Key"`
+	Type     string `cli:"Type"`
 }
 
 func actionParsePath(path string) (string, string, error) {

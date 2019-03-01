@@ -91,6 +91,7 @@ func (api *API) getActionsHandler() service.Handler {
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
+				action.LoadOptions.WithAudits,
 			)
 		} else {
 			as, err = action.LoadAllTypeDefaultByGroupIDs(api.mustDB(),
@@ -98,6 +99,7 @@ func (api *API) getActionsHandler() service.Handler {
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
+				action.LoadOptions.WithAudits,
 			)
 		}
 		if err != nil {

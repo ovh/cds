@@ -54,7 +54,7 @@ func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk
 // LoadAllByTypes actions from database.
 func LoadAllByTypes(db gorp.SqlExecutor, types []string, opts ...LoadOptionFunc) ([]sdk.Action, error) {
 	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE type = ANY(string_to_array($1, ',')::text[] ORDER BY name",
+		"SELECT * FROM action WHERE type = ANY(string_to_array($1, ',')::text[]) ORDER BY name",
 	).Args(strings.Join(types, ","))
 	return getAll(db, query, opts...)
 }
@@ -279,8 +279,12 @@ func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAc
 	var aa sdk.AuditAction
 
 	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created DESC LIMIT 1`).Args(actionID)
-	if _, err := gorpmapping.Get(db, query, &aa); err != nil {
+	found, err := gorpmapping.Get(db, query, &aa)
+	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get action latest audit")
+	}
+	if !found {
+		return nil, nil
 	}
 
 	return &aa, nil
@@ -291,8 +295,12 @@ func GetAuditOldestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAc
 	var aa sdk.AuditAction
 
 	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created ASC LIMIT 1`).Args(actionID)
-	if _, err := gorpmapping.Get(db, query, &aa); err != nil {
+	found, err := gorpmapping.Get(db, query, &aa)
+	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get action oldtest audit")
+	}
+	if !found {
+		return nil, nil
 	}
 
 	return &aa, nil
