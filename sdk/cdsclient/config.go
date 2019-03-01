@@ -5,6 +5,7 @@ type Config struct {
 	Host                  string
 	User                  string
 	Token                 string
+	AccessToken           string
 	Hash                  string
 	userAgent             string
 	Verbose               bool

@@ -6,7 +6,8 @@ import (
 	"path"
 	"strconv"
 
-	repo "github.com/fsamin/go-repo"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -104,10 +105,22 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	conf := &cdsclient.Config{
 		Host:                  c.Host,
 		User:                  c.User,
-		Token:                 c.Token,
 		Verbose:               verbose,
 		InsecureSkipVerifyTLS: c.InsecureSkipVerifyTLS,
 	}
+
+	// TEMPORARY CODE
+	// Try to parse the token as JWT and set it as access token
+	if _, _, err := new(jwt.Parser).ParseUnverified(c.Token, &sdk.AccessTokenJWTClaims{}); err == nil {
+		conf.AccessToken = c.Token
+		conf.Token = ""
+		if verbose {
+			fmt.Println("JWT recognized")
+		}
+	} else {
+		conf.Token = c.Token
+	}
+	// TEMPORARY CODE - END
 
 	return conf, nil
 }
