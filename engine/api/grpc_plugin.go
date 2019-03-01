@@ -43,7 +43,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
-			old, err := action.LoadTypePluginByName(db, p.Name)
+			old, err := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
 			if err != nil {
 				return sdk.WithStack(err)
 			}

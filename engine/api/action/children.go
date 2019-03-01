@@ -62,10 +62,10 @@ func CheckChildrenForGroupIDs(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int
 	query := gorpmapping.NewQuery(`
   	SELECT *
 		FROM action
-		WHERE 
+		WHERE
 			id = ANY(string_to_array($1, ',')::int[])
 			AND (
-				type = $2 
+				type = $2
 				OR type = $3
 				OR (type = $4 AND group_id = ANY(string_to_array($5, ',')::int[]))
 			)
@@ -76,7 +76,7 @@ func CheckChildrenForGroupIDs(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int
 		sdk.DefaultAction,
 		gorpmapping.IDsToQueryString(groupIDs),
 	)
-	children, err := getAll(db, query, nil)
+	children, err := getAll(db, query)
 	if err != nil {
 		return err
 	}
@@ -110,10 +110,10 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM action
-		WHERE 
+		WHERE
 			id = ANY(string_to_array($1, ',')::int[])
 			AND (
-				type = $2 
+				type = $2
 				OR type = $3
 				OR (type = $4 AND group_id = ANY(string_to_array($5, ',')::int[]))
 			)
@@ -124,7 +124,7 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 		sdk.DefaultAction,
 		gorpmapping.IDsToQueryString(groupIDs),
 	)
-	children, err := getAll(db, query, nil)
+	children, err := getAll(db, query)
 	if err != nil {
 		return err
 	}

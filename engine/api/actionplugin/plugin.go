@@ -48,7 +48,7 @@ func UpdateGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Para
 		Enabled:    true,
 	}
 
-	oldA, err := action.LoadTypePluginByName(db, a.Name)
+	oldA, err := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, a.Name, action.LoadOptions.Default)
 	if err != nil {
 		return nil, err
 	}

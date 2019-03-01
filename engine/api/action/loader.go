@@ -7,96 +7,262 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadAllTypeDefault actions from database.
-func LoadAllTypeDefault(db gorp.SqlExecutor) ([]sdk.Action, error) {
+// LoadOptionFunc for action.
+type LoadOptionFunc func(gorp.SqlExecutor, ...*sdk.Action) error
+
+// LoadOptions provides all options on project loads functions
+var LoadOptions = struct {
+	Default          LoadOptionFunc
+	WithRequirements LoadOptionFunc
+	WithParameters   LoadOptionFunc
+	WithChildren     LoadOptionFunc
+	WithAudits       LoadOptionFunc
+	WithGroup        LoadOptionFunc
+}{
+	Default:          loadDefault,
+	WithRequirements: loadRequirements,
+	WithParameters:   loadParameters,
+	WithChildren:     loadChildren,
+	WithAudits:       loadAudits,
+	WithGroup:        loadGroup,
+}
+
+func loadDefault(db gorp.SqlExecutor, as ...*sdk.Action) error {
+	if err := loadRequirements(db, as...); err != nil {
+		return err
+	}
+
+	if err := loadParameters(db, as...); err != nil {
+		return err
+	}
+
+	if err := loadChildren(db, as...); err != nil {
+		return err
+	}
+
+	if err := loadAudits(db, as...); err != nil {
+		return err
+	}
+
+	return loadGroup(db, as...)
+}
+
+func loadRequirements(db gorp.SqlExecutor, as ...*sdk.Action) error {
+	actionIDs := sdk.ActionsToIDs(as)
+
+	var rs []sdk.Requirement
 	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE type = $1 ORDER BY name",
-	).Args(sdk.DefaultAction)
-	return getAll(db, query, LiteView)
+		"SELECT * FROM action_requirement WHERE action_id = ANY(string_to_array($1, ',')::int[]) ORDER BY name",
+	).Args(gorpmapping.IDsToQueryString(actionIDs))
+	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
+		return sdk.WrapError(err, "cannot get requirements for action ids %v", actionIDs)
+	}
+
+	m := make(map[int64][]sdk.Requirement, len(rs))
+	for i := range rs {
+		if _, ok := m[rs[i].ActionID]; !ok {
+			m[rs[i].ActionID] = make([]sdk.Requirement, 0)
+		}
+		m[rs[i].ActionID] = append(m[rs[i].ActionID], rs[i])
+	}
+	for i := range as {
+		if rs, ok := m[as[i].ID]; ok {
+			as[i].Requirements = rs
+		}
+	}
+
+	return nil
 }
 
-// LoadAllTypeDefaultByGroupIDs actions from database.
-func LoadAllTypeDefaultByGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.Action, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM action
-    WHERE type = $1 AND group_id = ANY(string_to_array($2, ',')::int[])
-    ORDER BY name
-  `).Args(sdk.DefaultAction, gorpmapping.IDsToQueryString(groupIDs))
-	return getAll(db, query, LiteView)
+func loadParameters(db gorp.SqlExecutor, as ...*sdk.Action) error {
+	actionIDs := sdk.ActionsToIDs(as)
+
+	var ps []actionParameter
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM action_parameter WHERE action_id = ANY(string_to_array($1, ',')::int[]) ORDER BY name",
+	).Args(gorpmapping.IDsToQueryString(actionIDs))
+	if err := gorpmapping.GetAll(db, query, &ps); err != nil {
+		return sdk.WrapError(err, "cannot get parameters for action ids %v", actionIDs)
+	}
+
+	m := make(map[int64][]actionParameter, len(ps))
+	for i := range ps {
+		if _, ok := m[ps[i].ActionID]; !ok {
+			m[ps[i].ActionID] = make([]actionParameter, 0)
+		}
+		m[ps[i].ActionID] = append(m[ps[i].ActionID], ps[i])
+	}
+	for i := range as {
+		if ps, ok := m[as[i].ID]; ok {
+			as[i].Parameters = actionParametersToParameters(ps)
+		}
+	}
+
+	return nil
 }
 
-// LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs actions from database.
-func LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.Action, error) {
-	query := gorpmapping.NewQuery(`
-		SELECT *
-		FROM action
-		WHERE
-			type = $1
-			OR type = $2
-			OR (type = $3 AND group_id = ANY(string_to_array($4, ',')::int[]))
-	`).Args(
-		sdk.BuiltinAction,
-		sdk.PluginAction,
-		sdk.DefaultAction,
-		gorpmapping.IDsToQueryString(groupIDs),
+func loadAudits(db gorp.SqlExecutor, as ...*sdk.Action) error {
+	for i := range as {
+		latestAudit, err := GetAuditLatestByActionID(db, as[i].ID)
+		if err != nil {
+			return err
+		}
+
+		oldestAudit, err := GetAuditOldestByActionID(db, as[i].ID)
+		if err != nil {
+			return err
+		}
+
+		as[i].FirstAudit = oldestAudit
+		as[i].LastAudit = latestAudit
+	}
+
+	return nil
+}
+
+func loadChildren(db gorp.SqlExecutor, as ...*sdk.Action) error {
+	// don't try to load children if action is builtin
+	actionsNotBuiltIn := sdk.ActionsFilterNotTypes(as, sdk.BuiltinAction)
+	if len(actionsNotBuiltIn) == 0 {
+		return nil
+	}
+
+	// get edges for all actions, then init a map of edges for all actions
+	edges, err := loadEdgesByParentIDs(db, sdk.ActionsToIDs(actionsNotBuiltIn))
+	if err != nil {
+		return err
+	}
+	mEdges := make(map[int64][]actionEdge, len(edges))
+	for i := range edges {
+		if _, ok := mEdges[edges[i].ParentID]; !ok {
+			mEdges[edges[i].ParentID] = make([]actionEdge, 0)
+		}
+		mEdges[edges[i].ParentID] = append(mEdges[edges[i].ParentID], edges[i])
+	}
+
+	// for all actions set children from its edges
+	for i := range actionsNotBuiltIn {
+		edges, ok := mEdges[actionsNotBuiltIn[i].ID]
+		if !ok {
+			continue
+		}
+
+		children := make([]sdk.Action, len(edges))
+		for i := range edges {
+			// init child from edge child then override with edge attributes and parameters
+			child := *edges[i].Child
+			child.StepName = edges[i].StepName
+			child.Optional = edges[i].Optional
+			child.AlwaysExecuted = edges[i].AlwaysExecuted
+			child.Enabled = edges[i].Enabled
+
+			// replace action parameter with value configured by user when he created the child action
+			params := make([]sdk.Parameter, len(child.Parameters))
+			for j := range child.Parameters {
+				params[j] = child.Parameters[j]
+				for k := range edges[i].Parameters {
+					if edges[i].Parameters[k].Name == params[j].Name {
+						params[j].Value = edges[i].Parameters[k].Value
+						break
+					}
+				}
+			}
+			child.Parameters = params
+
+			children[i] = child
+		}
+
+		actionsNotBuiltIn[i].Actions = children
+	}
+
+	// for all actions update its requirements from its children
+	for i := range actionsNotBuiltIn {
+		actionsNotBuiltIn[i].Requirements = actionsNotBuiltIn[i].FlattenRequirements()
+	}
+
+	return nil
+}
+
+func loadGroup(db gorp.SqlExecutor, as ...*sdk.Action) error {
+	gs := []sdk.Group{}
+
+	if err := gorpmapping.GetAll(db,
+		gorpmapping.NewQuery(`SELECT * FROM "group" WHERE id = ANY(string_to_array($1, ',')::int[])`).
+			Args(gorpmapping.IDsToQueryString(sdk.ActionsToGroupIDs(as))),
+		&gs,
+	); err != nil {
+		return sdk.WrapError(err, "cannot get groups")
+	}
+
+	m := make(map[int64]sdk.Group, len(gs))
+	for i := range gs {
+		m[gs[i].ID] = gs[i]
+	}
+
+	for _, a := range as {
+		if a.GroupID != nil {
+			if g, ok := m[*a.GroupID]; ok {
+				a.Group = &g
+			}
+		}
+	}
+
+	return nil
+}
+
+type loadOptionEdgeFunc func(gorp.SqlExecutor, ...*actionEdge) error
+
+func loadEdgeParameters(db gorp.SqlExecutor, es ...*actionEdge) error {
+	edgeIDs := actionEdgesToIDs(es)
+
+	ps := []actionEdgeParameter{}
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM action_edge_parameter WHERE action_edge_id = ANY(string_to_array($1, ',')::int[]) ORDER BY name",
+	).Args(gorpmapping.IDsToQueryString(edgeIDs))
+	if err := gorpmapping.GetAll(db, query, &ps); err != nil {
+		return sdk.WrapError(err, "cannot get action edge parameters for edge ids %d", edgeIDs)
+	}
+
+	m := make(map[int64][]actionEdgeParameter, len(ps))
+	for i := range ps {
+		if _, ok := m[ps[i].ActionEdgeID]; !ok {
+			m[ps[i].ActionEdgeID] = make([]actionEdgeParameter, 0)
+		}
+		m[ps[i].ActionEdgeID] = append(m[ps[i].ActionEdgeID], ps[i])
+	}
+	for i := range es {
+		if ps, ok := m[es[i].ID]; ok {
+			es[i].Parameters = ps
+		}
+	}
+
+	return nil
+}
+
+func loadEdgeChildren(db gorp.SqlExecutor, es ...*actionEdge) error {
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM action WHERE action.id = ANY(string_to_array($1, ',')::int[])",
+	).Args(gorpmapping.IDsToQueryString(actionEdgesToChildIDs(es)))
+
+	children, err := getAll(db, query,
+		loadParameters,
+		loadRequirements,
+		loadGroup,
+		loadChildren,
 	)
-	return getAll(db, query, LiteView)
-}
+	if err != nil {
+		return err
+	}
 
-// LoadAllTypeBuiltInOrPlugin returns all builtin or plugin action from database.
-func LoadAllTypeBuiltInOrPlugin(db gorp.SqlExecutor) ([]sdk.Action, error) {
-	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE type = $1 OR type = $2",
-	).Args(sdk.BuiltinAction, sdk.PluginAction)
-	return getAll(db, query, LiteView)
-}
+	m := make(map[int64]sdk.Action, len(children))
+	for i := range children {
+		m[children[i].ID] = children[i]
+	}
+	for i := range es {
+		if child, ok := m[es[i].ChildID]; ok {
+			es[i].Child = &child
+		}
+	}
 
-// LoadTypeBuiltInByName returns a action from database for given name.
-func LoadTypeBuiltInByName(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
-	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE type = $1 AND lower(action.name) = lower($3)",
-	).Args(sdk.BuiltinAction, name)
-	return get(db, query, FullView)
-}
-
-// LoadTypePluginByName returns a action from database for given name.
-func LoadTypePluginByName(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
-	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE type = $1 AND lower(action.name) = lower($2)",
-	).Args(sdk.PluginAction, name)
-	return get(db, query, FullView)
-}
-
-// LoadTypeDefaultByNameAndGroupID returns an action from database with given name and group id.
-func LoadTypeDefaultByNameAndGroupID(db gorp.SqlExecutor, name string, groupID int64) (*sdk.Action, error) {
-	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE type = $1 AND lower(name) = lower($2) AND group_id = $3",
-	).Args(sdk.DefaultAction, name, groupID)
-	return get(db, query, LiteView)
-}
-
-// LoadTypeBuiltInOrPluginByName returns an action from database with given name.
-func LoadTypeBuiltInOrPluginByName(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
-	query := gorpmapping.NewQuery(
-		"SELECT * FROM action WHERE (type = $1 OR type = $2) AND lower(name) = lower($3)",
-	).Args(sdk.BuiltinAction, sdk.PluginAction, name)
-	return get(db, query, LiteView)
-}
-
-// LoadByID retrieves in database the action with given id.
-func LoadByID(db gorp.SqlExecutor, id int64) (*sdk.Action, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM action WHERE action.id = $1").Args(id)
-	return get(db, query, FullView)
-}
-
-// loadEdgesByParentIDs retrieves in database all action edges for given parent ids.
-func loadEdgesByParentIDs(db gorp.SqlExecutor, parentIDs []int64) ([]actionEdge, error) {
-	query := gorpmapping.NewQuery(
-		"SELECT * FROM action_edge WHERE parent_id = ANY(string_to_array($1, ',')::int[]) ORDER BY exec_order ASC",
-	).Args(gorpmapping.IDsToQueryString(parentIDs))
-	return getEdges(db, query,
-		aggregateEdgeParameters,
-		aggregateEdgeChildren,
-	)
+	return nil
 }

@@ -218,7 +218,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 			job := mapActionsStages[id][index]
 
 			var a *sdk.Action
-			a, err = action.LoadByID(db, mapActionsStages[id][index].Action.ID)
+			a, err = action.LoadByID(db, mapActionsStages[id][index].Action.ID, action.LoadOptions.Default)
 			if err != nil {
 				return sdk.WrapError(err, "cannot action.LoadActionByID %d", mapActionsStages[id][index].Action.ID)
 			}

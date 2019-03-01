@@ -96,7 +96,11 @@ func RetrieveForGroupAndName(db gorp.SqlExecutor, g *sdk.Group, name string) (*s
 			return nil, err
 		}
 
-		a, err := LoadTypeDefaultByNameAndGroupID(db, name, grp.ID)
+		a, err := LoadTypeDefaultByNameAndGroupID(db, name, grp.ID,
+			LoadOptions.WithRequirements,
+			LoadOptions.WithParameters,
+			LoadOptions.WithGroup,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +111,11 @@ func RetrieveForGroupAndName(db gorp.SqlExecutor, g *sdk.Group, name string) (*s
 		return a, nil
 	}
 
-	a, err := LoadTypeDefaultByNameAndGroupID(db, name, group.SharedInfraGroup.ID)
+	a, err := LoadTypeDefaultByNameAndGroupID(db, name, group.SharedInfraGroup.ID,
+		LoadOptions.WithRequirements,
+		LoadOptions.WithParameters,
+		LoadOptions.WithGroup,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +123,11 @@ func RetrieveForGroupAndName(db gorp.SqlExecutor, g *sdk.Group, name string) (*s
 		return a, nil
 	}
 
-	a, err = LoadTypeBuiltInOrPluginByName(db, name)
+	a, err = LoadByTypesAndName(db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
+		LoadOptions.WithRequirements,
+		LoadOptions.WithParameters,
+		LoadOptions.WithGroup,
+	)
 	if err != nil {
 		return nil, err
 	}

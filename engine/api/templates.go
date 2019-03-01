@@ -121,7 +121,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 			tsPointers[i] = &ts[i]
 		}
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
@@ -201,7 +201,7 @@ func (api *API) postTemplateHandler() service.Handler {
 
 		event.PublishWorkflowTemplateAdd(data, u)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &data); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), &data); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &data); err != nil {
@@ -222,7 +222,7 @@ func (api *API) getTemplateHandler() service.Handler {
 
 		t := getWorkflowTemplate(ctx)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), t); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), t); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), t); err != nil {
@@ -311,7 +311,7 @@ func (api *API) putTemplateHandler() service.Handler {
 
 		event.PublishWorkflowTemplateUpdate(*old, new, data.ChangeMessage, u)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &new); err != nil {
@@ -460,7 +460,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 		wt := getWorkflowTemplate(ctx)
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 			return err
 		}
 
@@ -535,7 +535,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 		wt := getWorkflowTemplate(ctx)
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 			return err
 		}
 
@@ -818,7 +818,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 
 		wt := getWorkflowTemplate(ctx)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 			return err
 		}
 
@@ -851,7 +851,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 		}
 
 		if wt != nil {
-			if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+			if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 				return err
 			}
 			w.Header().Add(sdk.ResponseTemplateGroupNameHeader, wt.Group.Name)
