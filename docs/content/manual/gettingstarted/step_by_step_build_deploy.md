@@ -90,7 +90,7 @@ Expand configuration, select 'https'. If your repository is public, you can keep
 
 ### 4 - Add a variable on your application
 
-You've got an application, let's create an application [variable]({{< relref "workflows/pipelines/variables.md" >}}).
+You've got an application, let's create an application [variable]({{< relref "manual/concepts/variables.md" >}}).
 We will use it further in a [Job]({{< relref "gettingstarted/concepts/job.md" >}}).
 
 * Select the variables tab, name 'my-variable', type 'string', value 'my-value'
@@ -364,7 +364,7 @@ Do the same for the second 'deploy-pipeline', rename it to 'manual-deploy-pipeli
 ### 14 - Edit the 'deploy-pipeline'
 
 The 'deploy-pipeline' is empty for now. Let's add some stuff to simulate a deployment.
-We will use [CDS Variable]({{< relref "workflows/pipelines/variables.md" >}}) from application.
+We will use [CDS Variable]({{< relref "manual/concepts/variables.md" >}}) from application.
 
 * Select the 'auto-deploy-pipeline', then click on 'Edit the pipeline' on the sidebar
 * Add a step 'Artifact Download' and a step 'script'.

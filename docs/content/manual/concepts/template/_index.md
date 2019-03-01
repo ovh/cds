@@ -1,6 +1,6 @@
 +++
 title = "Workflow Template"
-weight = 4
+weight = 8
 
 +++
 

@@ -12,6 +12,6 @@ You have to:
 
 * link your project to a Repository Manager, on Advanced Section. [See how to setup repository manager on your CDS instance]({{< relref "hosting/repositories-manager/_index.md" >}}).
 * link an application to a git repository
-* add a Git Poller on the root pipeline, this pipeline have the application linked in the [context]({{< relref "workflows/design/pipeline-context.md" >}})
+* add a Git Poller on the root pipeline, this pipeline have the application linked in the [context]({{< relref "manual/concepts/workflow/pipeline-context.md" >}})
 
 For now, only GitHub are supported for git poller by CDS.

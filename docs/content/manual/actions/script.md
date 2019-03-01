@@ -59,7 +59,7 @@ exit 0
 
 #### Using CDS variables in a script
 
-You can use [CDS Variables]({{< relref "workflows/pipelines/variables.md" >}}) in a step script.
+You can use [CDS Variables]({{< relref "manual/concepts/variables.md" >}}) in a step script.
 
 ![img](/images/workflows.pipelines.actions.builtin.script-bash.png)
 
