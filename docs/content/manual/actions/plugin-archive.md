@@ -7,9 +7,9 @@ This is a plugin to compress or uncompress an archive. Supported formats: .zip, 
 
 ## Parameters
 
-* **source**: The source path
 * **destination**: The destination path
 * **action**: "compress" or "uncompress" an archive
+* **source**: The source path
 
 
 

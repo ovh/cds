@@ -6,6 +6,7 @@ doc:
 ifndef GEN_PATH
 	$(error GEN_PATH is undefined)
 endif
+    # export GEN_PATH=$HOME/src/github.com/ovh/cds/docs/content/manual/components
 	$(TARGET_CDSCTL) doc $(GEN_PATH)
 	$(TARGET_WORKER) doc $(GEN_PATH)
 	$(TARGET_ENGINE) doc $(GEN_PATH) ./

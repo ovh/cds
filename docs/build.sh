@@ -10,8 +10,7 @@ function generateUserActionsDocumentation {
   filename=$(basename "$action")
   actionName=${filename/.yml/}
 
-  mkdir -p content/workflows/pipelines/actions/user
-  ACTION_FILE="content/workflows/pipelines/actions/user/${actionName}.md"
+  ACTION_FILE="content/manual/actions/${actionName}.md"
 
   echo "generate ${ACTION_FILE}"
 
@@ -33,9 +32,8 @@ function generatePluginsDocumentation {
   filename=$(basename "$plugin")
   pluginName=${filename/.yml/}
 
-  mkdir -p content/workflows/pipelines/actions/plugins
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/workflows/pipelines/actions/plugins/plugin-${pluginName}.md"
+  PLUGIN_FILE="$OLD/content/manual/actions/plugin-${pluginName}.md"
 
   echo "generate ${PLUGIN_FILE}"
 
