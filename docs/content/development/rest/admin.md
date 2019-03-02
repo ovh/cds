@@ -105,30 +105,13 @@ Code        | [postDatabaseMigrationUnlockedHandler](https://github.com/ovh/cds/
 
 
 
-### PUT `/admin/services/call`
+### POST `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | PUT     
+Method      | POST     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### DELETE `/admin/services/call`
-
-URL         | **`/admin/services/call`**
------------ |----------
-Method      | DELETE     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22)
+Code        | [postAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22)
     
 
 
@@ -156,13 +139,30 @@ Code        | [getAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### POST `/admin/services/call`
+### DELETE `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | POST     
+Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [postAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22)
+Code        | [deleteAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/admin/services/call`
+
+URL         | **`/admin/services/call`**
+----------- |----------
+Method      | PUT     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22)
     
 
 

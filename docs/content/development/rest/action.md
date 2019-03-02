@@ -54,6 +54,23 @@ Code        | [getPipelinesUsingActionHandler](https://github.com/ovh/cds/search
 
 
 
+### GET `/action/<permActionName>`
+
+URL         | **`/action/<permActionName>`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### PUT `/action/<permActionName>`
 
 URL         | **`/action/<permActionName>`**
@@ -78,23 +95,6 @@ URL         | **`/action/<permActionName>`**
 Method      | POST     
 Permissions |  Auth: true
 Code        | [addActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/action/<permActionName>`
-
-URL         | **`/action/<permActionName>`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22)
     
 
 

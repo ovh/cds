@@ -3,13 +3,13 @@ title = "worker"
 +++
 
 
-### GET `/worker`
+### POST `/worker`
 
 URL         | **`/worker`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22)
+Method      | POST     
+Permissions |  Auth: false
+Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+registerWorkerHandler%22)
     
 
 
@@ -20,13 +20,13 @@ Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
-### POST `/worker`
+### GET `/worker`
 
 URL         | **`/worker`**
 ----------- |----------
-Method      | POST     
-Permissions |  Auth: false
-Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+registerWorkerHandler%22)
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22)
     
 
 
@@ -275,23 +275,6 @@ Code        | [unregisterWorkerHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/worker/model/pattern`
-
-URL         | **`/worker/model/pattern`**
------------ |----------
-Method      | POST     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [postAddWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAddWorkerModelPatternHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### GET `/worker/model/pattern`
 
 URL         | **`/worker/model/pattern`**
@@ -309,13 +292,13 @@ Code        | [getWorkerModelPatternsHandler](https://github.com/ovh/cds/search?
 
 
 
-### GET `/worker/model/pattern/<type>/<name>`
+### POST `/worker/model/pattern`
 
-URL         | **`/worker/model/pattern/<type>/<name>`**
+URL         | **`/worker/model/pattern`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22)
+Method      | POST     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [postAddWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAddWorkerModelPatternHandler%22)
     
 
 
@@ -333,6 +316,23 @@ URL         | **`/worker/model/pattern/<type>/<name>`**
 Method      | PUT     
 Permissions |  NeedAdmin: true -  Auth: true
 Code        | [putWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelPatternHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/worker/model/pattern/<type>/<name>`
+
+URL         | **`/worker/model/pattern/<type>/<name>`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22)
     
 
 
