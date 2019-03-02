@@ -21,10 +21,10 @@ $ cds generate  token -g shared.infra -e persistent
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 ```
 
-Edit the CDS [configuration]({{< relref "hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the vSphere variables.
+Edit the CDS [configuration]({{< relref "/manual/hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the vSphere variables.
 
 This hatchery will now start worker of model 'vsphere' on vSphere infrastructure.
 
 ## Setup a worker model
 
-See [Tutorial]({{< relref "hatchery/vsphere.md" >}})
+See [Tutorial]({{< relref "/manual/components/hatchery/vsphere.md" >}})

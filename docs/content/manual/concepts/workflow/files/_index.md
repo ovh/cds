@@ -63,22 +63,22 @@ workflow:
 
 This is the representation of the whole workflow, starting from `build` then `deploy`.  As shown, the workflow file only contains the description of pipelines orchestration.
 
-Read more about CDS [workflow syntax]({{< relref "workflows/files/workflow-syntax.md" >}})
+Read more about CDS [workflow syntax]({{< relref "/manual/concepts/workflow/files/workflow-syntax.md" >}})
 
 ### Pipeline syntax
 The pipelines files represents the most important part of your workflow. The pipeline file represents the jobs triggered within parallel stages.
 
-Read more about CDS [pipeline syntax]({{< relref "workflows/files/pipeline-syntax.md" >}})
+Read more about CDS [pipeline syntax]({{< relref "/manual/concepts/workflow/files/pipeline-syntax.md" >}})
 
 ### Application syntax
 The application file describe the application and the way to checkout it. It can also set number of variables.
 
-Read more about CDS [application syntax]({{< relref "workflows/files/application-syntax.md" >}})
+Read more about CDS [application syntax]({{< relref "/manual/concepts/workflow/files/application-syntax.md" >}})
 
 ### Environment syntax
 You can attach an environment to a pipeline in a workflow. An environemnt is basically a set of variables.
 
-Read more about CDS [environment syntax]({{< relref "workflows/files/environment-syntax.md" >}})
+Read more about CDS [environment syntax]({{< relref "/manual/concepts/workflow/files/environment-syntax.md" >}})
 
 
 

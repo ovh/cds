@@ -13,7 +13,7 @@ can launch CDS Worker on your host.
 
 Two prerequisites: 
 
-* your host must reach your CDS API on HTTP port or GRPC Port defined on your [CDS Configuration]({{< relref "hosting/configuration.md">}})
+* your host must reach your CDS API on HTTP port or GRPC Port defined on your [CDS Configuration]({{< relref "/manual/hosting/configuration.md">}})
 * you need the CDS Worker binary on your host. 
 
 You can download it from [latest release on GitHub](https://github.com/ovh/cds/releases) or from download page on your CDS Instance (Navbar -> Settings -> Download)
@@ -27,7 +27,7 @@ $ cds generate token -g shared.infra -e persistent
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 ```
 
-Edit the [CDS Configuration]({{< relref "hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated.
+Edit the [CDS Configuration]({{< relref "/manual/hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated.
 
 This hatchery use the CDS worker binary existing on the PATH on your host.
 

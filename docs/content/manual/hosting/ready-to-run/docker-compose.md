@@ -61,7 +61,7 @@ After registration on UI, keep the password displayed, we will use it in next st
 Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
 If you don't want to use the keychain, you can select the version i386.
 
-See: [cdsctl documentation]({{< relref "cli/cdsctl/_index.md" >}})
+See: [cdsctl documentation]({{< relref "/manual/components/cdsctl/_index.md" >}})
 
 You can download cdsctl CLI from http://localhost:2015/settings/downloads
 ```bash
@@ -187,6 +187,6 @@ $ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contri
 
 # Go further
 
-- How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "hatchery/openstack.md" >}})
-- Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
-- Learn more about CDS variables [read more]({{< relref "manual/concepts/variables.md" >}})
+- How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "/manual/components/hatchery/openstack.md" >}})
+- Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/manual/hosting/repositories-manager/_index.md" >}})
+- Learn more about CDS variables [read more]({{< relref "/manual/concepts/variables.md" >}})

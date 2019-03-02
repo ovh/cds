@@ -17,7 +17,7 @@ In this tutorial, you will create a CDS Workflow with the Web UI.
 Let's create a project. On the top navbar, click on 'Create a project'.
 
 * Enter a Project Name
-* The project key will be useful when you want to use [cdsctl]({{< relref "cli/cdsctl/_index.md" >}}).
+* The project key will be useful when you want to use [cdsctl]({{< relref "/manual/components/cdsctl/_index.md" >}}).
 * Click on 'Create' button.
 
 {{%expand "view screenshots..." %}}

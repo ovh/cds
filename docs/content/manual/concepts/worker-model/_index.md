@@ -15,9 +15,9 @@ The goal of a worker model is to describe the capabilities of a given Docker/ISO
 
 There are 4 types of worker models:
 
- * Docker images, see [how to create a worker model Docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}})
- * OpenStack images, see [how to create a worker model OpenStack]({{< relref "workflows/pipelines/requirements/worker-model/openstack.md" >}})
- * vSphere images, see [how to create a worker model vSphere]({{< relref "workflows/pipelines/requirements/worker-model/vsphere.md" >}})
+ * Docker images, see [how to create a worker model Docker]({{< relref "/manual/gettingstarted/tutorials/worker_model-docker/_index.md" >}})
+ * OpenStack images, see [how to create a worker model OpenStack]({{< relref "/manual/gettingstarted/tutorials/worker_model-openstack.md" >}})
+ * vSphere images, see [how to create a worker model vSphere]({{< relref "/manual/gettingstarted/tutorials/worker_model-vsphere.md" >}})
  * Host worker models, which is a worker launched on the same host than the hatchery, we don't recommend to use this in production.
 
 ### Behavior
@@ -30,11 +30,11 @@ All registered CDS [hatcheries]({{< relref "hatchery/_index.md" >}}) start/kill 
 
 A user can add a worker model by setting an owner group if user is administrator of group.
 
-A CDS administrator can add a worker model, a [worker model pattern]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he want.
+A CDS administrator can add a worker model, a [worker model pattern]({{< relref "/manual/concepts/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he want.
 
 ### What's a worker model pattern?
 
-A pattern of scripts configuration of CDS workers that CDS administrator create to let users use this pattern when they want to create a worker model. For more information [click here]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}).
+A pattern of scripts configuration of CDS workers that CDS administrator create to let users use this pattern when they want to create a worker model. For more information [click here]({{< relref "/manual/concepts/worker-model/patterns.md" >}}).
 
 ### What's a restricted worker model?
 

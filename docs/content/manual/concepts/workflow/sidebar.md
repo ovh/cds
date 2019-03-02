@@ -14,7 +14,7 @@ Inside a job, a user can add a Tag with the worker command
 worker tag tagKey=tagValue
 ```
 
-See [worker tab documentation]({{< relref "cli/worker/tag.md" >}})
+See [worker tab documentation]({{< relref "/manual/components/worker/tag.md" >}})
 
 Tags are useful to add informations and context for a run.
 

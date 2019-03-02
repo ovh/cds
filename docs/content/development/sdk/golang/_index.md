@@ -6,8 +6,8 @@ title = "SDK Golang"
 
 There is three ways to generate a persistent token:
 
-- [cdsctl login]({{< relref "/cli/cdsctl/login.md" >}})
-- [call CDS API]({{< relref "/cli/api/_index.md" >}})
+- [cdsctl login]({{< relref "/manual/components/cdsctl/login.md" >}})
+- [call CDS API]({{< relref "/development/rest/_index.md" >}})
 - Code it:
 
 ```go

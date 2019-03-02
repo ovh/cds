@@ -120,7 +120,7 @@ weight = 3
 [[params.section]]
   heading = "Testing data at your fingertips"
   cta = "Learn more about the Junit step."
-  link = "workflows/pipelines/actions/builtin/junit/"
+  link = "manual/actions/builtin/junit/"
   color_classes = "bg-primary-color-light black"
   image = "images/workflows.pipelines.actions.builtin.junit-view-details.png"
   copy = "CDS parses the Junit files produced by your build and displays them in a friendly manner to help you analyse what went wrong."

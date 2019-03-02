@@ -7,7 +7,7 @@ chapter = true
 
 **Artifact Download Action** is a builtin action, you can't modify it.
 
-This action can be used to retrieve an artifact previously uploaded by an [Artifact Upload]({{< relref "workflows/pipelines/actions/builtin/artifact-upload.md" >}}) action.
+This action can be used to retrieve an artifact previously uploaded by an [Artifact Upload]({{< relref "/manual/actions/artifact-upload.md" >}}) action.
 
 ## Parameters
 * application: Application from where artifacts will be downloaded

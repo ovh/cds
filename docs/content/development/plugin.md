@@ -6,11 +6,7 @@ weight = 2
 
 A CDS worker executes job, and job is composed of steps.
 
-A step is:
-
-* a builtin action, as GitClone, etc... [read more]({{< relref "workflows/pipelines/actions/builtin/_index.md" >}})
-* a user action [read more]({{< relref "workflows/pipelines/actions/user-actions/_index.md" >}})
-* a plugin action
+A step is an [action]({{< relref "/manual/actions/_index.md" >}})
 
 A Plugin is simply an executable which expose a GRPC server corresponding to the right [proto file](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto). You can use the programming language of your choice. The CDS worker will simply query the GRPC server of the plugin.
 

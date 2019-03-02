@@ -65,7 +65,7 @@ You can use [CDS Variables]({{< relref "manual/concepts/variables.md" >}}) in a 
 
 #### Using CDS keys in a script
 
-You can use CDS SSH keys and PGP keys in a step script with the [worker key command]({{< relref "cli/worker/key/_index.md" >}}). Just use `worker key install proj-mykey` and it will install the SSH/PGP environment and private SSH/PGP key of your key in your project named **mykey**.
+You can use CDS SSH keys and PGP keys in a step script with the [worker key command]({{< relref "/manual/components/worker/key/_index.md" >}}). Just use `worker key install proj-mykey` and it will install the SSH/PGP environment and private SSH/PGP key of your key in your project named **mykey**.
 
 The command `worker key install proj-mykey` will return the path where the private key is stored. In that way you can save this value in a variable and use it for a ssh command like this:
 
@@ -80,13 +80,13 @@ Pay attention, to use a PGP key, please add in your pipeline requirements the bi
 
 You can use worker CLI to make different actions
 
-+ [worker artifacts]({{< relref "cli/worker/artifacts.md" >}})
-+ [worker download]({{< relref "cli/worker/download.md" >}})
-+ [worker export]({{< relref "cli/worker/export.md" >}})
-+ [worker tag]({{< relref "cli/worker/tag.md" >}})
-+ [worker cache]({{< relref "cli/worker/cache/_index.md" >}})
-+ [worker tmpl]({{< relref "cli/worker/tmpl.md" >}})
-+ [worker key]({{< relref "cli/worker/key/_index.md" >}})
++ [worker artifacts]({{< relref "/manual/components/worker/artifacts.md" >}})
++ [worker download]({{< relref "/manual/components/worker/download.md" >}})
++ [worker export]({{< relref "/manual/components/worker/export.md" >}})
++ [worker tag]({{< relref "/manual/components/worker/tag.md" >}})
++ [worker cache]({{< relref "/manual/components/worker/cache/_index.md" >}})
++ [worker tmpl]({{< relref "/manual/components/worker/tmpl.md" >}})
++ [worker key]({{< relref "/manual/components/worker/key/_index.md" >}})
 
 ### Example
 

@@ -20,7 +20,7 @@ windows | <a class="download-cds-worker-windows-386-exe" href="https://github.co
 
 ### CDSCTL
 
-[cdsctl Documentation]({{< relref "/cli/cdsctl/_index.md">}})
+[cdsctl Documentation]({{< relref "/manual/components/cdsctl/_index.md">}})
 
  OS     | 386  | amd64 | arm
 --------|------------|-------------|-----------

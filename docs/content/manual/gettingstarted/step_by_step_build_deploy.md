@@ -25,7 +25,7 @@ CDS Variables.
 Let's create a project. On the top navbar, click on 'Create a project'.
 
 * Enter a Project Name
-* The project key will be useful when you want to use [cdsctl]({{< relref "cli/cdsctl/_index.md" >}}).
+* The project key will be useful when you want to use [cdsctl]({{< relref "/manual/components/cdsctl/_index.md" >}}).
 * Click on 'Create' button.
 
 {{%expand "view screenshots..." %}}
@@ -91,7 +91,7 @@ Expand configuration, select 'https'. If your repository is public, you can keep
 ### 4 - Add a variable on your application
 
 You've got an application, let's create an application [variable]({{< relref "manual/concepts/variables.md" >}}).
-We will use it further in a [Job]({{< relref "gettingstarted/concepts/job.md" >}}).
+We will use it further in a [Job]({{< relref "/manual/concepts/job/_index.md" >}}).
 
 * Select the variables tab, name 'my-variable', type 'string', value 'my-value'
 * Then click on 'Save'

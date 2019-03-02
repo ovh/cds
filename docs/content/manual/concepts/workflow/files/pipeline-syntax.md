@@ -110,7 +110,7 @@ Each job has several properties:
 
 ## Steps
 
-Each job is composed of steps. A step is an action performed by a [CDS Worker]({{< relref "/worker/_index.md" >}}) within a [workspace]{{< relref "/worker/workspace.md" >}}. Each step use an [action]({{< relref "/workflows/pipelines/actions/_index.md" >}}) and the syntax is:
+Each job is composed of steps. A step is an action performed by a [CDS Worker]({{< relref "/worker/_index.md" >}}) within a workspace. Each step use an [action]({{< relref "/workflows/pipelines/actions/_index.md" >}}) and the syntax is:
 
 If the action has only one parameter:
 

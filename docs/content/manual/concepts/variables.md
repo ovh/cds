@@ -54,7 +54,7 @@ Here is the list of builtin variables, generated for every build:
 - `{{.cds.triggered_by.username}}` Username of the user who launched the current build
 - `{{.cds.version}}` The current version number, it's an alias to `{{.cds.run.number}}`
 - `{{.cds.workflow}}` The name of the current workflow
-- `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), `{{.cds.workspace}}` == $HOME
+- `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step [script]({{< relref "/manual/actions/script.md" >}}), `{{.cds.workspace}}` == $HOME
 - `{{.payload}}` The current payload in JSON format
 
 ## The cds.version variable
@@ -77,7 +77,7 @@ You can use the build variable in:
 * the next stages in same pipeline `{{.cds.build.varname}}`
 * the next pipelines `{{.workflow.pipelineName.build.varname}}` with `pipelineName` the name of the pipeline in your workflow
 
-[See worker export documentation]({{< relref "/cli/worker/export.md" >}})
+[See worker export documentation]({{< relref "/manual/components/worker/export.md" >}})
 
 ## Shell Environment Variable
 
