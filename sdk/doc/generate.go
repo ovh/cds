@@ -37,7 +37,7 @@ title = "%s"
 	linkHandler := func(name string) string {
 		base := strings.TrimSuffix(name, path.Ext(name))
 		base = strings.Replace(base, rootName+"_", "", 1)
-		return fmt.Sprintf("/cli/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
+		return fmt.Sprintf("/manual/components/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
 	}
 
 	fmt.Printf("%s\n", rootName)
