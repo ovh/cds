@@ -32,5 +32,5 @@ engine database status [flags]
 
 ### SEE ALSO
 
-* [engine database](/cli/engine/database/)	 - `Manage CDS database`
+* [engine database](/manual/components/engine/database/)	 - `Manage CDS database`
 

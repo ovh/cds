@@ -32,5 +32,5 @@ engine uptodate --from-github
 
 ### SEE ALSO
 
-* [engine](/cli/engine/engine/)	 - CDS Engine
+* [engine](/manual/components/engine/engine/)	 - CDS Engine
 

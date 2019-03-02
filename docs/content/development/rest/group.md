@@ -37,13 +37,13 @@ Code        | [getGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### DELETE `/group/<group-name>`
+### PUT `/group/<group-name>`
 
 URL         | **`/group/<group-name>`**
 ----------- |----------
-Method      | DELETE     
+Method      | PUT     
 Permissions |  Auth: true
-Code        | [deleteGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22)
+Code        | [updateGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupHandler%22)
     
 
 
@@ -71,13 +71,13 @@ Code        | [getGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
-### PUT `/group/<group-name>`
+### DELETE `/group/<group-name>`
 
 URL         | **`/group/<group-name>`**
 ----------- |----------
-Method      | PUT     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [updateGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupHandler%22)
+Code        | [deleteGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22)
     
 
 

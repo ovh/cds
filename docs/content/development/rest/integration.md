@@ -3,23 +3,6 @@ title = "integration"
 +++
 
 
-### GET `/integration/models`
-
-URL         | **`/integration/models`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getIntegrationModelsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelsHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### POST `/integration/models`
 
 URL         | **`/integration/models`**
@@ -37,13 +20,13 @@ Code        | [postIntegrationModelHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### GET `/integration/models/<name>`
+### GET `/integration/models`
 
-URL         | **`/integration/models/<name>`**
+URL         | **`/integration/models`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
-Code        | [getIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelHandler%22)
+Code        | [getIntegrationModelsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelsHandler%22)
     
 
 
@@ -61,6 +44,23 @@ URL         | **`/integration/models/<name>`**
 Method      | PUT     
 Permissions |  NeedAdmin: true -  Auth: true
 Code        | [putIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putIntegrationModelHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/integration/models/<name>`
+
+URL         | **`/integration/models/<name>`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelHandler%22)
     
 
 

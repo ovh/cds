@@ -37,6 +37,23 @@ Code        | [addBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
+### PUT `/broadcast/<id>`
+
+URL         | **`/broadcast/<id>`**
+----------- |----------
+Method      | PUT     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [updateBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### DELETE `/broadcast/<id>`
 
 URL         | **`/broadcast/<id>`**
@@ -61,23 +78,6 @@ URL         | **`/broadcast/<id>`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/broadcast/<id>`
-
-URL         | **`/broadcast/<id>`**
------------ |----------
-Method      | PUT     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [updateBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22)
     
 
 

@@ -17,7 +17,7 @@ title = "config"
 
 ### SEE ALSO
 
-* [engine](/cli/engine/engine/)	 - CDS Engine
-* [engine config check](/cli/engine/config/check/)	 - `Check CDS configuration file`
-* [engine config new](/cli/engine/config/new/)	 - `CDS configuration file assistant`
+* [engine](/manual/components/engine/engine/)	 - CDS Engine
+* [engine config check](/manual/components/engine/config/check/)	 - `Check CDS configuration file`
+* [engine config new](/manual/components/engine/config/new/)	 - `CDS configuration file assistant`
 

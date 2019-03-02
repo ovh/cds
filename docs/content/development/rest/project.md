@@ -37,6 +37,23 @@ Code        | [getProjectsHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
+### DELETE `/project/<project-key>`
+
+URL         | **`/project/<project-key>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteProjectHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### GET `/project/<project-key>`
 
 URL         | **`/project/<project-key>`**
@@ -71,23 +88,6 @@ Code        | [updateProjectHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### DELETE `/project/<project-key>`
-
-URL         | **`/project/<project-key>`**
------------ |----------
-Method      | DELETE     
-Permissions |  Auth: true
-Code        | [deleteProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteProjectHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### GET `/project/<project-key>/all/keys`
 
 URL         | **`/project/<project-key>/all/keys`**
@@ -105,13 +105,13 @@ Code        | [getAllKeysProjectHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### PUT `/project/<project-key>/application/<applicationName>`
+### DELETE `/project/<project-key>/application/<applicationName>`
 
 URL         | **`/project/<project-key>/application/<applicationName>`**
 ----------- |----------
-Method      | PUT     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [updateApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateApplicationHandler%22)
+Code        | [deleteApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteApplicationHandler%22)
     
 
 
@@ -139,13 +139,13 @@ Code        | [getApplicationHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### DELETE `/project/<project-key>/application/<applicationName>`
+### PUT `/project/<project-key>/application/<applicationName>`
 
 URL         | **`/project/<project-key>/application/<applicationName>`**
 ----------- |----------
-Method      | DELETE     
+Method      | PUT     
 Permissions |  Auth: true
-Code        | [deleteApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteApplicationHandler%22)
+Code        | [updateApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateApplicationHandler%22)
     
 
 
@@ -207,23 +207,6 @@ Code        | [postApplicationDeploymentStrategyConfigHandler](https://github.co
 
 
 
-### DELETE `/project/<project-key>/application/<applicationName>/deployment/config/<integration>`
-
-URL         | **`/project/<project-key>/application/<applicationName>/deployment/config/<integration>`**
------------ |----------
-Method      | DELETE     
-Permissions |  Auth: true
-Code        | [deleteApplicationDeploymentStrategyConfigHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteApplicationDeploymentStrategyConfigHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### GET `/project/<project-key>/application/<applicationName>/deployment/config/<integration>`
 
 URL         | **`/project/<project-key>/application/<applicationName>/deployment/config/<integration>`**
@@ -241,13 +224,13 @@ Code        | [getApplicationDeploymentStrategyConfigHandler](https://github.com
 
 
 
-### POST `/project/<project-key>/application/<applicationName>/keys`
+### DELETE `/project/<project-key>/application/<applicationName>/deployment/config/<integration>`
 
-URL         | **`/project/<project-key>/application/<applicationName>/keys`**
+URL         | **`/project/<project-key>/application/<applicationName>/deployment/config/<integration>`**
 ----------- |----------
-Method      | POST     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [addKeyInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addKeyInApplicationHandler%22)
+Code        | [deleteApplicationDeploymentStrategyConfigHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteApplicationDeploymentStrategyConfigHandler%22)
     
 
 
@@ -265,6 +248,23 @@ URL         | **`/project/<project-key>/application/<applicationName>/keys`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getKeysInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getKeysInApplicationHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/project/<project-key>/application/<applicationName>/keys`
+
+URL         | **`/project/<project-key>/application/<applicationName>/keys`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [addKeyInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addKeyInApplicationHandler%22)
     
 
 
@@ -343,30 +343,13 @@ Code        | [getVariablesInApplicationHandler](https://github.com/ovh/cds/sear
 
 
 
-### POST `/project/<project-key>/application/<applicationName>/variable/<name>`
+### PUT `/project/<project-key>/application/<applicationName>/variable/<name>`
 
 URL         | **`/project/<project-key>/application/<applicationName>/variable/<name>`**
 ----------- |----------
-Method      | POST     
+Method      | PUT     
 Permissions |  Auth: true
-Code        | [addVariableInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInApplicationHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/project/<project-key>/application/<applicationName>/variable/<name>`
-
-URL         | **`/project/<project-key>/application/<applicationName>/variable/<name>`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getVariableInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getVariableInApplicationHandler%22)
+Code        | [updateVariableInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateVariableInApplicationHandler%22)
     
 
 
@@ -394,13 +377,30 @@ Code        | [deleteVariableFromApplicationHandler](https://github.com/ovh/cds/
 
 
 
-### PUT `/project/<project-key>/application/<applicationName>/variable/<name>`
+### POST `/project/<project-key>/application/<applicationName>/variable/<name>`
 
 URL         | **`/project/<project-key>/application/<applicationName>/variable/<name>`**
 ----------- |----------
-Method      | PUT     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [updateVariableInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateVariableInApplicationHandler%22)
+Code        | [addVariableInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInApplicationHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/project/<project-key>/application/<applicationName>/variable/<name>`
+
+URL         | **`/project/<project-key>/application/<applicationName>/variable/<name>`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getVariableInApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getVariableInApplicationHandler%22)
     
 
 
@@ -479,13 +479,13 @@ Code        | [postVulnerabilityHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### POST `/project/<project-key>/applications`
+### GET `/project/<project-key>/applications`
 
 URL         | **`/project/<project-key>/applications`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [addApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addApplicationHandler%22)
+Code        | [getApplicationsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getApplicationsHandler%22)
     
 
 
@@ -496,13 +496,13 @@ Code        | [addApplicationHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### GET `/project/<project-key>/applications`
+### POST `/project/<project-key>/applications`
 
 URL         | **`/project/<project-key>/applications`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getApplicationsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getApplicationsHandler%22)
+Code        | [addApplicationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addApplicationHandler%22)
     
 
 
@@ -564,13 +564,13 @@ Code        | [getEnvironmentsHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### DELETE `/project/<project-key>/environment/<environmentName>`
+### GET `/project/<project-key>/environment/<environmentName>`
 
 URL         | **`/project/<project-key>/environment/<environmentName>`**
 ----------- |----------
-Method      | DELETE     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [deleteEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteEnvironmentHandler%22)
+Code        | [getEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getEnvironmentHandler%22)
     
 
 
@@ -581,13 +581,13 @@ Code        | [deleteEnvironmentHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### GET `/project/<project-key>/environment/<environmentName>`
+### DELETE `/project/<project-key>/environment/<environmentName>`
 
 URL         | **`/project/<project-key>/environment/<environmentName>`**
 ----------- |----------
-Method      | GET     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [getEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getEnvironmentHandler%22)
+Code        | [deleteEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteEnvironmentHandler%22)
     
 
 
@@ -632,13 +632,13 @@ Code        | [cloneEnvironmentHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### GET `/project/<project-key>/environment/<environmentName>/keys`
+### POST `/project/<project-key>/environment/<environmentName>/keys`
 
 URL         | **`/project/<project-key>/environment/<environmentName>/keys`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getKeysInEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getKeysInEnvironmentHandler%22)
+Code        | [addKeyInEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addKeyInEnvironmentHandler%22)
     
 
 
@@ -649,13 +649,13 @@ Code        | [getKeysInEnvironmentHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### POST `/project/<project-key>/environment/<environmentName>/keys`
+### GET `/project/<project-key>/environment/<environmentName>/keys`
 
 URL         | **`/project/<project-key>/environment/<environmentName>/keys`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [addKeyInEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addKeyInEnvironmentHandler%22)
+Code        | [getKeysInEnvironmentHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getKeysInEnvironmentHandler%22)
     
 
 
@@ -921,13 +921,13 @@ Code        | [addGroupInProjectHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### PUT `/project/<project-key>/group/<group>`
+### DELETE `/project/<project-key>/group/<group>`
 
 URL         | **`/project/<project-key>/group/<group>`**
 ----------- |----------
-Method      | PUT     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [updateGroupRoleOnProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupRoleOnProjectHandler%22)
+Code        | [deleteGroupFromProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupFromProjectHandler%22)
     
 
 
@@ -938,13 +938,13 @@ Code        | [updateGroupRoleOnProjectHandler](https://github.com/ovh/cds/searc
 
 
 
-### DELETE `/project/<project-key>/group/<group>`
+### PUT `/project/<project-key>/group/<group>`
 
 URL         | **`/project/<project-key>/group/<group>`**
 ----------- |----------
-Method      | DELETE     
+Method      | PUT     
 Permissions |  Auth: true
-Code        | [deleteGroupFromProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupFromProjectHandler%22)
+Code        | [updateGroupRoleOnProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupRoleOnProjectHandler%22)
     
 
 
@@ -1076,13 +1076,13 @@ Code        | [putWorkflowImportHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### GET `/project/<project-key>/integrations`
+### POST `/project/<project-key>/integrations`
 
 URL         | **`/project/<project-key>/integrations`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getProjectIntegrationsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getProjectIntegrationsHandler%22)
+Code        | [postProjectIntegrationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postProjectIntegrationHandler%22)
     
 
 
@@ -1093,13 +1093,13 @@ Code        | [getProjectIntegrationsHandler](https://github.com/ovh/cds/search?
 
 
 
-### POST `/project/<project-key>/integrations`
+### GET `/project/<project-key>/integrations`
 
 URL         | **`/project/<project-key>/integrations`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [postProjectIntegrationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postProjectIntegrationHandler%22)
+Code        | [getProjectIntegrationsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getProjectIntegrationsHandler%22)
     
 
 
@@ -1246,13 +1246,13 @@ Code        | [getProjectNotificationsHandler](https://github.com/ovh/cds/search
 
 
 
-### POST `/project/<project-key>/pipeline`
+### GET `/project/<project-key>/pipeline`
 
 URL         | **`/project/<project-key>/pipeline`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [addPipelineHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addPipelineHandler%22)
+Code        | [getPipelinesHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPipelinesHandler%22)
     
 
 
@@ -1263,13 +1263,13 @@ Code        | [addPipelineHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### GET `/project/<project-key>/pipeline`
+### POST `/project/<project-key>/pipeline`
 
 URL         | **`/project/<project-key>/pipeline`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getPipelinesHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPipelinesHandler%22)
+Code        | [addPipelineHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addPipelineHandler%22)
     
 
 
@@ -1365,23 +1365,6 @@ Code        | [getParametersInPipelineHandler](https://github.com/ovh/cds/search
 
 
 
-### PUT `/project/<project-key>/pipeline/<pipelineKey>/parameter/<name>`
-
-URL         | **`/project/<project-key>/pipeline/<pipelineKey>/parameter/<name>`**
------------ |----------
-Method      | PUT     
-Permissions |  Auth: true
-Code        | [updateParameterInPipelineHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateParameterInPipelineHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### POST `/project/<project-key>/pipeline/<pipelineKey>/parameter/<name>`
 
 URL         | **`/project/<project-key>/pipeline/<pipelineKey>/parameter/<name>`**
@@ -1406,6 +1389,23 @@ URL         | **`/project/<project-key>/pipeline/<pipelineKey>/parameter/<name>`
 Method      | DELETE     
 Permissions |  Auth: true
 Code        | [deleteParameterFromPipelineHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteParameterFromPipelineHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/project/<project-key>/pipeline/<pipelineKey>/parameter/<name>`
+
+URL         | **`/project/<project-key>/pipeline/<pipelineKey>/parameter/<name>`**
+----------- |----------
+Method      | PUT     
+Permissions |  Auth: true
+Code        | [updateParameterInPipelineHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateParameterInPipelineHandler%22)
     
 
 
@@ -1518,13 +1518,13 @@ Code        | [addJobToStageHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### PUT `/project/<project-key>/pipeline/<pipelineKey>/stage/<stageID>/job/<jobID>`
+### DELETE `/project/<project-key>/pipeline/<pipelineKey>/stage/<stageID>/job/<jobID>`
 
 URL         | **`/project/<project-key>/pipeline/<pipelineKey>/stage/<stageID>/job/<jobID>`**
 ----------- |----------
-Method      | PUT     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [updateJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateJobHandler%22)
+Code        | [deleteJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteJobHandler%22)
     
 
 
@@ -1535,13 +1535,13 @@ Code        | [updateJobHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### DELETE `/project/<project-key>/pipeline/<pipelineKey>/stage/<stageID>/job/<jobID>`
+### PUT `/project/<project-key>/pipeline/<pipelineKey>/stage/<stageID>/job/<jobID>`
 
 URL         | **`/project/<project-key>/pipeline/<pipelineKey>/stage/<stageID>/job/<jobID>`**
 ----------- |----------
-Method      | DELETE     
+Method      | PUT     
 Permissions |  Auth: true
-Code        | [deleteJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteJobHandler%22)
+Code        | [updateJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateJobHandler%22)
     
 
 
@@ -1858,23 +1858,6 @@ Code        | [postWorkflowJobArtifactWithTempURLCallbackHandler](https://github
 
 
 
-### GET `/project/<project-key>/storage/<integrationName>/cache/<tag>`
-
-URL         | **`/project/<project-key>/storage/<integrationName>/cache/<tag>`**
------------ |----------
-Method      | GET     
-Permissions |  NeedWorker:  -  Auth: true
-Code        | [getPullCacheHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPullCacheHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### POSTEXECUTE `/project/<project-key>/storage/<integrationName>/cache/<tag>`
 
 URL         | **`/project/<project-key>/storage/<integrationName>/cache/<tag>`**
@@ -1892,13 +1875,13 @@ Code        | [postPushCacheHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### GET `/project/<project-key>/storage/<integrationName>/cache/<tag>/url`
+### GET `/project/<project-key>/storage/<integrationName>/cache/<tag>`
 
-URL         | **`/project/<project-key>/storage/<integrationName>/cache/<tag>/url`**
+URL         | **`/project/<project-key>/storage/<integrationName>/cache/<tag>`**
 ----------- |----------
 Method      | GET     
 Permissions |  NeedWorker:  -  Auth: true
-Code        | [getPullCacheWithTempURLHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPullCacheWithTempURLHandler%22)
+Code        | [getPullCacheHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPullCacheHandler%22)
     
 
 
@@ -1916,6 +1899,23 @@ URL         | **`/project/<project-key>/storage/<integrationName>/cache/<tag>/ur
 Method      | POSTEXECUTE     
 Permissions |  NeedWorker:  -  Auth: true
 Code        | [postPushCacheWithTempURLHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPushCacheWithTempURLHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/project/<project-key>/storage/<integrationName>/cache/<tag>/url`
+
+URL         | **`/project/<project-key>/storage/<integrationName>/cache/<tag>/url`**
+----------- |----------
+Method      | GET     
+Permissions |  NeedWorker:  -  Auth: true
+Code        | [getPullCacheWithTempURLHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPullCacheWithTempURLHandler%22)
     
 
 
@@ -1960,13 +1960,13 @@ Code        | [getVariablesInProjectHandler](https://github.com/ovh/cds/search?q
 
 
 
-### DELETE `/project/<project-key>/variable/<name>`
+### PUT `/project/<project-key>/variable/<name>`
 
 URL         | **`/project/<project-key>/variable/<name>`**
 ----------- |----------
-Method      | DELETE     
+Method      | PUT     
 Permissions |  Auth: true
-Code        | [deleteVariableFromProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteVariableFromProjectHandler%22)
+Code        | [updateVariableInProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateVariableInProjectHandler%22)
     
 
 
@@ -1994,13 +1994,13 @@ Code        | [getVariableInProjectHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### POST `/project/<project-key>/variable/<name>`
+### DELETE `/project/<project-key>/variable/<name>`
 
 URL         | **`/project/<project-key>/variable/<name>`**
 ----------- |----------
-Method      | POST     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [addVariableInProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInProjectHandler%22)
+Code        | [deleteVariableFromProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteVariableFromProjectHandler%22)
     
 
 
@@ -2011,13 +2011,13 @@ Code        | [addVariableInProjectHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### PUT `/project/<project-key>/variable/<name>`
+### POST `/project/<project-key>/variable/<name>`
 
 URL         | **`/project/<project-key>/variable/<name>`**
 ----------- |----------
-Method      | PUT     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [updateVariableInProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateVariableInProjectHandler%22)
+Code        | [addVariableInProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInProjectHandler%22)
     
 
 
@@ -2351,13 +2351,13 @@ Code        | [postWorkflowRollbackHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### GET `/project/<project-key>/workflows/<workflow-name>/runs`
+### POSTEXECUTE `/project/<project-key>/workflows/<workflow-name>/runs`
 
 URL         | **`/project/<project-key>/workflows/<workflow-name>/runs`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkflowRunsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowRunsHandler%22)
+Method      | POSTEXECUTE     
+Permissions |  AllowServices: true -  Auth: true
+Code        | [postWorkflowRunHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowRunHandler%22)
     
 
 
@@ -2368,13 +2368,13 @@ Code        | [getWorkflowRunsHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### POSTEXECUTE `/project/<project-key>/workflows/<workflow-name>/runs`
+### GET `/project/<project-key>/workflows/<workflow-name>/runs`
 
 URL         | **`/project/<project-key>/workflows/<workflow-name>/runs`**
 ----------- |----------
-Method      | POSTEXECUTE     
-Permissions |  AllowServices: true -  Auth: true
-Code        | [postWorkflowRunHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowRunHandler%22)
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkflowRunsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowRunsHandler%22)
     
 
 
@@ -2657,13 +2657,13 @@ Code        | [getLatestWorkflowRunHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### getWorkflowRunNum returns the last run number for the given workflow
+### postWorkflowRunNum updates the current run number for the given workflow
 
 URL         | **`/project/<project-key>/workflows/<workflow-name>/runs/num`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getWorkflowRunNumHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowRunNumHandler%22)
+Code        | [postWorkflowRunNumHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowRunNumHandler%22)
     
 
 
@@ -2674,13 +2674,13 @@ Code        | [getWorkflowRunNumHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### postWorkflowRunNum updates the current run number for the given workflow
+### getWorkflowRunNum returns the last run number for the given workflow
 
 URL         | **`/project/<project-key>/workflows/<workflow-name>/runs/num`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [postWorkflowRunNumHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowRunNumHandler%22)
+Code        | [getWorkflowRunNumHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowRunNumHandler%22)
     
 
 

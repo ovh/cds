@@ -29,10 +29,10 @@ You'll find last release of CDS `engine` on [Github Releases](https://github.com
 
 ### SEE ALSO
 
-* [engine config](/cli/engine/config/)	 - `Manage CDS Configuration`
-* [engine database](/cli/engine/database/)	 - `Manage CDS database`
-* [engine start](/cli/engine/start/)	 - `Start CDS`
-* [engine update](/cli/engine/update/)	 - `Update engine binary`
-* [engine uptodate](/cli/engine/uptodate/)	 - `check if engine is uptodate`
-* [engine version](/cli/engine/version/)	 - `Display CDS version`
+* [engine config](/manual/components/engine/config/)	 - `Manage CDS Configuration`
+* [engine database](/manual/components/engine/database/)	 - `Manage CDS database`
+* [engine start](/manual/components/engine/start/)	 - `Start CDS`
+* [engine update](/manual/components/engine/update/)	 - `Update engine binary`
+* [engine uptodate](/manual/components/engine/uptodate/)	 - `check if engine is uptodate`
+* [engine version](/manual/components/engine/version/)	 - `Display CDS version`
 

@@ -54,40 +54,6 @@ Code        | [getPipelinesUsingActionHandler](https://github.com/ovh/cds/search
 
 
 
-### DELETE `/action/<permActionName>`
-
-URL         | **`/action/<permActionName>`**
------------ |----------
-Method      | DELETE     
-Permissions |  Auth: true
-Code        | [deleteActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/action/<permActionName>`
-
-URL         | **`/action/<permActionName>`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [addActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### PUT `/action/<permActionName>`
 
 URL         | **`/action/<permActionName>`**
@@ -105,6 +71,23 @@ Code        | [updateActionHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
+### DELETE `/action/<permActionName>`
+
+URL         | **`/action/<permActionName>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### GET `/action/<permActionName>`
 
 URL         | **`/action/<permActionName>`**
@@ -112,6 +95,23 @@ URL         | **`/action/<permActionName>`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/action/<permActionName>`
+
+URL         | **`/action/<permActionName>`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [addActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22)
     
 
 

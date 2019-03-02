@@ -207,13 +207,13 @@ Code        | [getTimelineHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### GET `/user/timeline/filter`
+### POST `/user/timeline/filter`
 
 URL         | **`/user/timeline/filter`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22)
+Code        | [postTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22)
     
 
 
@@ -224,13 +224,13 @@ Code        | [getTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### POST `/user/timeline/filter`
+### GET `/user/timeline/filter`
 
 URL         | **`/user/timeline/filter`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [postTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22)
+Code        | [getTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22)
     
 
 

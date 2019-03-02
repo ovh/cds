@@ -17,8 +17,8 @@ Manage CDS database
 
 ### SEE ALSO
 
-* [engine](/cli/engine/engine/)	 - CDS Engine
-* [engine database downgrade](/cli/engine/database/downgrade/)	 - `Downgrade schema`
-* [engine database status](/cli/engine/database/status/)	 - `Show current migration status`
-* [engine database upgrade](/cli/engine/database/upgrade/)	 - `Upgrade schema`
+* [engine](/manual/components/engine/engine/)	 - CDS Engine
+* [engine database downgrade](/manual/components/engine/database/downgrade/)	 - `Downgrade schema`
+* [engine database status](/manual/components/engine/database/status/)	 - `Show current migration status`
+* [engine database upgrade](/manual/components/engine/database/upgrade/)	 - `Upgrade schema`
 

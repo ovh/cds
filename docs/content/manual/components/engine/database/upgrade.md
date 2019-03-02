@@ -44,5 +44,5 @@ engine database upgrade --db-password=your-password --db-sslmode=disable --db-na
 
 ### SEE ALSO
 
-* [engine database](/cli/engine/database/)	 - `Manage CDS database`
+* [engine database](/manual/components/engine/database/)	 - `Manage CDS database`
 

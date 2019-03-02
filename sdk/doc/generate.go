@@ -46,7 +46,7 @@ title = "%s"
 	}
 
 	if gitPath != "" {
-		if err := os.MkdirAll(genPath+"/api", os.ModePerm); err != nil {
+		if err := os.MkdirAll(genPath+"/../../development/rest", os.ModePerm); err != nil {
 			return err
 		}
 
@@ -62,7 +62,7 @@ title = "%s"
 		func (api *API) getActionsHandler() service.Handler {
 		[...]
 		*/
-		if err := writeRouteInfo(getAllRouteInfo(gitPath+"/engine/api"), genPath+"/api"); err != nil {
+		if err := writeRouteInfo(getAllRouteInfo(gitPath+"/engine/api"), genPath+"/../../development/rest"); err != nil {
 			return err
 		}
 	}

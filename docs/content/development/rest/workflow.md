@@ -37,13 +37,13 @@ Code        | [getWorkflowHooksHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### GET `/workflow/hook/model/<model>`
+### PUT `/workflow/hook/model/<model>`
 
 URL         | **`/workflow/hook/model/<model>`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkflowHookModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowHookModelHandler%22)
+Method      | PUT     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [putWorkflowHookModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowHookModelHandler%22)
     
 
 
@@ -54,13 +54,13 @@ Code        | [getWorkflowHookModelHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### PUT `/workflow/hook/model/<model>`
+### GET `/workflow/hook/model/<model>`
 
 URL         | **`/workflow/hook/model/<model>`**
 ----------- |----------
-Method      | PUT     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [putWorkflowHookModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowHookModelHandler%22)
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkflowHookModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowHookModelHandler%22)
     
 
 

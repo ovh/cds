@@ -190,6 +190,23 @@ Code        | [postMaintenanceHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
+### POST `/admin/plugin`
+
+URL         | **`/admin/plugin`**
+----------- |----------
+Method      | POST     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [postPGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPGRPCluginHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### GET `/admin/plugin`
 
 URL         | **`/admin/plugin`**
@@ -207,13 +224,13 @@ Code        | [getAllGRPCluginHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### POST `/admin/plugin`
+### GET `/admin/plugin/<name>`
 
-URL         | **`/admin/plugin`**
+URL         | **`/admin/plugin/<name>`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [postPGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPGRPCluginHandler%22)
+Code        | [getGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginHandler%22)
     
 
 
@@ -248,23 +265,6 @@ URL         | **`/admin/plugin/<name>`**
 Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
 Code        | [deleteGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/admin/plugin/<name>`
-
-URL         | **`/admin/plugin/<name>`**
------------ |----------
-Method      | GET     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginHandler%22)
     
 
 
@@ -343,13 +343,13 @@ Code        | [getGRPCluginBinaryInfosHandler](https://github.com/ovh/cds/search
 
 
 
-### GET `/admin/service/<name>`
+### DELETE `/admin/service/<name>`
 
 URL         | **`/admin/service/<name>`**
 ----------- |----------
-Method      | GET     
+Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getAdminServiceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceHandler%22)
+Code        | [deleteAdminServiceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceHandler%22)
     
 
 
@@ -360,13 +360,13 @@ Code        | [getAdminServiceHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### DELETE `/admin/service/<name>`
+### GET `/admin/service/<name>`
 
 URL         | **`/admin/service/<name>`**
 ----------- |----------
-Method      | DELETE     
+Method      | GET     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteAdminServiceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceHandler%22)
+Code        | [getAdminServiceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceHandler%22)
     
 
 
@@ -394,13 +394,13 @@ Code        | [getAdminServicesHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### PUT `/admin/services/call`
+### POST `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | PUT     
+Method      | POST     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22)
+Code        | [postAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22)
     
 
 
@@ -411,13 +411,13 @@ Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### GET `/admin/services/call`
+### PUT `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | GET     
+Method      | PUT     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22)
+Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22)
     
 
 
@@ -445,13 +445,13 @@ Code        | [deleteAdminServiceCallHandler](https://github.com/ovh/cds/search?
 
 
 
-### POST `/admin/services/call`
+### GET `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [postAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22)
+Code        | [getAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22)
     
 
 

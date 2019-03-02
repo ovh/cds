@@ -37,5 +37,5 @@ engine config new [flags]
 
 ### SEE ALSO
 
-* [engine config](/cli/engine/config/)	 - `Manage CDS Configuration`
+* [engine config](/manual/components/engine/config/)	 - `Manage CDS Configuration`
 
