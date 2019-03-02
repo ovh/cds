@@ -105,12 +105,12 @@ Each job has several properties:
 * **name** - `job: Build UI` defines the name as `Build UI`
 * **stage** - this is mandatory if you have more than one stage. It must be one of the list stages described above
 * **enabled** - can be omitted, true by default. If you want to disable a Job
-* **requirements** - the list of the requirements to match a worker. Read more about [requirements]({{< relref "/workflows/pipelines/requirements/_index.md" >}})
+* **requirements** - the list of the requirements to match a worker. Read more about [requirements]({{< relref "/manual/concepts/requirement/_index.md" >}})
 * **steps** - the ordered list of steps 
 
 ## Steps
 
-Each job is composed of steps. A step is an action performed by a [CDS Worker]({{< relref "/worker/_index.md" >}}) within a workspace. Each step use an [action]({{< relref "/workflows/pipelines/actions/_index.md" >}}) and the syntax is:
+Each job is composed of steps. A step is an action performed by a [CDS Worker]({{< relref "/manual/components/worker/_index.md" >}}) within a workspace. Each step use an [action]({{< relref "/manual/actions/_index.md" >}}) and the syntax is:
 
 If the action has only one parameter:
 
@@ -130,4 +130,4 @@ If the action has more that one parameter:
       mySecondParameter: value
 ```
 
-Read more about available [actions]({{< relref "/workflows/pipelines/actions/_index.md" >}})
+Read more about available [actions]({{< relref "/manual/actions/_index.md" >}})

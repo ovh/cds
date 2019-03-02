@@ -50,7 +50,7 @@ tar xzf sql.tar.gz
 
 ### Launch CDS API
 
-Generate a **[Configuration File]({{<relref "/hosting/configuration/_index.md" >}})**
+Generate a **[Configuration File]({{<relref "/manual/hosting/configuration.md" >}})**
 
 ```bash
 cd $HOME/cds
@@ -136,4 +136,4 @@ Then, start the local hatchery
 
 - How to use OpenStack infrastructure to spawn CDS container [read more]({{< relref "/manual/components/hatchery/openstack.md" >}})
 - Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/manual/hosting/repositories-manager/_index.md" >}})
-- Learn more about CDS variables [read more]({{< relref "manual/concepts/variables.md" >}})
+- Learn more about CDS variables [read more]({{< relref "/manual/concepts/variables.md" >}})

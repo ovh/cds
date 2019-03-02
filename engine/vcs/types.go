@@ -53,7 +53,7 @@ type ServerConfiguration struct {
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
+	ClientID     string `toml:"clientId" json:"-" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-"  comment:"Github OAuth Application Client Secret"`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
@@ -83,7 +83,7 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
-	AppID  string `toml:"appId" json:"-" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/ \n#######"`
+	AppID  string `toml:"appId" json:"-" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/gitlab/ \n#######"`
 	Secret string `toml:"secret" json:"-"`
 	Status struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
@@ -103,7 +103,7 @@ func (s GitlabServerConfiguration) check() error {
 
 // BitbucketServerConfiguration represents the bitbucket configuration
 type BitbucketServerConfiguration struct {
-	ConsumerKey string `toml:"consumerKey" json:"-" comment:"#######\n CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/ \n#######\n You can change the consumeKey if you want"`
+	ConsumerKey string `toml:"consumerKey" json:"-" comment:"#######\n CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/bitbucket/ \n#######\n You can change the consumeKey if you want"`
 	PrivateKey  string `toml:"privateKey" json:"-"`
 	Status      struct {
 		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`

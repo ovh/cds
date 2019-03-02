@@ -35,7 +35,7 @@ Set value to `appId` and `secret`
       [vcs.servers.Gitlab.gitlab]
 
         #######
-        # CDS <-> GitLab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
+        # CDS <-> GitLab. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/gitlab/
         ########
         appId = "xxxx"
 
@@ -60,4 +60,4 @@ Set value to `appId` and `secret`
 
 **Then restart CDS**
 
-See how to generate **[Configuration File]({{<relref "/hosting/configuration/_index.md" >}})**
+See how to generate **[Configuration File]({{<relref "/manual/hosting/configuration.md" >}})**

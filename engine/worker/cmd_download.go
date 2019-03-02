@@ -32,7 +32,7 @@ func cmdDownload(w *currentWorker) *cobra.Command {
 Inside a job, there are two ways to download an artifact:
 
 * with a step using action Download Artifacts
-* with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command.
+* with a step script (https://ovh.github.io/cds/manual/actions/script/), using the worker command.
 
 Worker Command:
 

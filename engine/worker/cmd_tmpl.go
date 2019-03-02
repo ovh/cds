@@ -23,7 +23,7 @@ func cmdTmpl(w *currentWorker) *cobra.Command {
 		Short: "worker tmpl inputFile outputFile",
 		Long: `
 
-Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+Inside a step script (https://ovh.github.io/cds/manual/actions/script/), you can add a replace CDS variables with the real value into a file:
 
 	# create a file
 	cat << EOF > myFile

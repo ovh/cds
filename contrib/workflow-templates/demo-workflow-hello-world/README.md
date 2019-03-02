@@ -9,7 +9,7 @@ The template will generates a Hello World workflow with usual steps:
 - deploy on pre-production and production environments
 
 It's the same as demo-workflow-skeleton workflow template, but does not contain dependency with a Git Repository Manager. So that, it's pretty
-useful to discover CDS Workflow with the [Ready To Run](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/) without having a Git
+useful to discover CDS Workflow with the [Ready To Run](https://ovh.github.io/cds/manual/hosting/ready-to-run/docker-compose/) without having a Git
 repository manager attached.
 
 # How to import it on your CDS Instance

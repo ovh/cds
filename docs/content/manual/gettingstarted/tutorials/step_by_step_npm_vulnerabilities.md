@@ -29,7 +29,7 @@ Let's create a project. On the top navbar, click on 'Create a project'.
 ### 2 - Add a repository manager on your project
 
 The project is now create, you have to link a repository manager. 
-Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager/_index.md" >}}) setted up on your CDS Instance.
+Be sure to have a [Repository manager]({{< relref "/manual/hosting/repositories-manager/_index.md" >}}) setted up on your CDS Instance.
 
 * Select 'Advanced' section
 * In the section 'Link to a repository manager', select 'github', then click on 'Connect'

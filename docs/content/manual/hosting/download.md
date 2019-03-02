@@ -8,7 +8,7 @@ You'll find the latest release of CDS on [GitHub Releases](https://github.com/ov
 
 ### CDS Worker
 
-[CDS Worker Documentation]({{< relref "/cli/worker/_index.md">}})
+[CDS Worker Documentation]({{< relref "/manual/components/worker/_index.md">}})
 
  OS     | 386  | amd64 | arm
 --------|------------|-------------|-----------
@@ -32,7 +32,7 @@ windows | <a class="download-cdsctl-windows-386-exe" href="https://github.com/ov
 
 ### CDS Engine
 
-[CDS Engine Documentation]({{< relref "/cli/engine/_index.md">}})
+[CDS Engine Documentation]({{< relref "/manual/components/engine/_index.md">}})
 
  OS     | 386  | amd64 | arm
 --------|------------|-------------|-----------

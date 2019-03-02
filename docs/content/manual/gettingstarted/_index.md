@@ -24,11 +24,11 @@ weight = 1
 
 * Understand the concepts
     * **Before design your workflows**
-    * [**CDS - The Origins**]({{< relref "manual/about/why_cds.md" >}})
-    * What's a [workflow]({{< relref "/manual/concepts/workflow/_index.md" >}}), a [pipeline]({{< relref "manual/concepts/pipeline.md" >}}), a [job]({{< relref "/manual/concepts/job/_index.md" >}})
+    * [**CDS - The Origins**]({{< relref "/manual/about/why_cds.md" >}})
+    * What's a [workflow]({{< relref "/manual/concepts/workflow/_index.md" >}}), a [pipeline]({{< relref "/manual/concepts/pipeline.md" >}}), a [job]({{< relref "/manual/concepts/job/_index.md" >}})
 
 * Understand the Scopes
     * **scopes & ACLs**
-    * [How to manage user rights]({{< relref "manual/concepts/permissions.md" >}})
+    * [How to manage user rights]({{< relref "/manual/concepts/permissions.md" >}})
 
 {{%/items%}}

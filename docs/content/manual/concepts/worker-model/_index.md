@@ -22,7 +22,7 @@ There are 4 types of worker models:
 
 ### Behavior
 
-All registered CDS [hatcheries]({{< relref "hatchery/_index.md" >}}) start/kill workers as needed.
+All registered CDS [hatcheries]({{< relref "/manual/components/hatchery/_index.md" >}}) start/kill workers as needed.
 
 ### Add a worker model
 
@@ -40,16 +40,16 @@ A pattern of scripts configuration of CDS workers that CDS administrator create 
 
 A `shared.infra` hatchery can launch all worker models, except 'restricted' worker models.
 
-**Use case**: users can launch their own [hatchery]({{< relref "hatchery/_index.md" >}}).
+**Use case**: users can launch their own [hatchery]({{< relref "/manual/components/hatchery/_index.md" >}}).
 To use their worker models only with their hatchery, they have to set worker model as 'restricted'.
 
 ### What's workers provisioning?
 
-A [hatchery]({{< relref "hatchery/_index.md" >}}) can start workers based on worker models with provisioning > 0.
+A [hatchery]({{< relref "/manual/components/hatchery/_index.md" >}}) can start workers based on worker models with provisioning > 0.
 
 On 'restricted' worker models, users can set provisioning, as they launch CDS Workers on their infrastructure.
 
 Otherwise, provisioning is only editable by CDS Administrators.
 
-**Notice**: if you use [Service Requirement]({{< relref "/workflows/pipelines/requirements/service/_index.md" >}}), you can't
+**Notice**: if you use [Service Requirement]({{< relref "/manual/concepts/requirement/requirement_service.md" >}}), you can't
 use provisioned workers.

@@ -36,9 +36,9 @@ A more common scenario consists in giving `Read / Execute` permissions on the no
 
 # Tokens
 
-A group permission is also attached to [CLI]({{< relref "cli/_index.md" >}}), [workers]({{< relref "worker/_index.md" >}}), [worker models]({{< relref "/manual/concepts/worker-model/_index.md" >}}), [hatchery]({{< relref "hatchery/_index.md" >}}) and all different services in CDS.
+A group permission is also attached to [CLI]({{< relref "/manual/components/cdsctl/_index.md" >}}), [workers]({{< relref "/manual/components/worker/_index.md" >}}), [worker models]({{< relref "/manual/concepts/worker-model/_index.md" >}}), [hatchery]({{< relref "/manual/components/hatchery/_index.md" >}}) and all different services in CDS.
 
-When using the CDS [CLI]({{< relref "cli/_index.md" >}}) in a script, instead of providing your own passwords, you want to generate and use an [CLI]({{< relref "cli/_index.md" >}}) **authentication token**. Similarly, when you start a [hatchery]({{< relref "hatchery/_index.md" >}}) you will need an authentication token to contact the CDS API.
+When using the CDS [CLI]({{< relref "/manual/components/cdsctl/_index.md" >}}) in a script, instead of providing your own passwords, you want to generate and use an [CLI]({{< relref "/manual/components/cdsctl/_index.md" >}}) **authentication token**. Similarly, when you start a [hatchery]({{< relref "hatchery/_index.md" >}}) you will need an authentication token to contact the CDS API.
 
 The `cdsctl group token` command allows to list, generate and remove tokens linked to a group permission ([documentation available here]({{< relref "/manual/components/cdsctl/token/_index.md" >}})). Alternatively, you can do it via the user interface in the group administration view.
 

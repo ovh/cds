@@ -183,8 +183,6 @@ The build pipeline contains two stages, with only one job in each stage
 $ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
 ```
 
-- Import plugins: Please read [Plugins]({{< relref "workflows/pipelines/actions/plugins/_index.md" >}})
-
 # Go further
 
 - How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "/manual/components/hatchery/openstack.md" >}})

@@ -23,7 +23,7 @@ You need:
 The CDS engine is made of following components:
 
 - API
-- [Hatcheries (local, Docker, Kubernetes, OpenStack, Swarm, vSphere)]({{< relref "hatchery/_index.md">}})
+- [Hatcheries (local, Docker, Kubernetes, OpenStack, Swarm, vSphere)]({{< relref "/manual/components/hatchery/_index.md">}})
 - Hooks
 
 To start a services you just have to run `$PATH_TO_CDS/engine start <service>`.

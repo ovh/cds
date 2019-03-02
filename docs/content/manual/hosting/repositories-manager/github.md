@@ -25,7 +25,7 @@ Set value to `clientId` and `clientSecret`
       [vcs.servers.Github.github]
 
         #######
-        # CDS <-> GitHub. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
+        # CDS <-> GitHub. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/github/
         ########
         # GitHub OAuth Application Client ID
         clientId = "xxxx"
@@ -59,4 +59,4 @@ Set value to `clientId` and `clientSecret`
 
 **Then restart CDS**
 
-See how to generate **[Configuration File]({{<relref "/hosting/configuration/_index.md" >}})**
+See how to generate **[Configuration File]({{<relref "/manual/hosting/configuration.md" >}})**

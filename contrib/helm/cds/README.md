@@ -173,7 +173,7 @@ After registration on UI, keep the password displayed, we will use it in next st
 
 The first user created on CDS is a CDS Administrator.
 
-In order to have all that you need to run your first job you need to add a first [worker model](https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/). It's the perfect use case to use the [CDS Command Line](https://ovh.github.io/cds/cli/cdsctl/) named `cdsctl`.
+In order to have all that you need to run your first job you need to add a first [worker model](https://ovh.github.io/cds/manual/concepts/worker-model/). It's the perfect use case to use the [CDS Command Line](https://ovh.github.io/cds/manual/components/cdsctl/) named `cdsctl`.
 
 + Dowload cdsctl
 

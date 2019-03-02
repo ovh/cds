@@ -47,4 +47,4 @@ jobs:
 
 This pipeline could be used in a workflow, with a Run Condition on cds.manual = true.
 
-Tutorial: [Build, tag and release an application]({{< relref "step_by_step_build_tag_release.md" >}})
+Tutorial: [Build, tag and release an application]({{< relref "/manual/gettingstarted/step_by_step_build_tag_release.md" >}})

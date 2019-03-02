@@ -10,6 +10,6 @@ You have to:
 
 * link your project to a Repository Manager, on Advanced Section. [See how to setup repository manager on your CDS instance]({{< relref "/manual/hosting/repositories-manager/_index.md" >}}).
 * link an application to a git repository
-* add a Repository Webhook on the root pipeline, this pipeline have the application linked in the [context]({{< relref "manual/concepts/workflow/pipeline-context.md" >}})
+* add a Repository Webhook on the root pipeline, this pipeline have the application linked in the [context]({{< relref "/manual/concepts/workflow/pipeline-context.md" >}})
 
 GitHub / Bitbucket / GitLab are supported by CDS.

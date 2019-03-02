@@ -222,7 +222,7 @@
       # [vcs.servers.Bitbucket.bitbucket]
       #
       #   #######
-      #   # CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/
+      #   # CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/bitbucket/
       #   ########
       #   # You can change the consumeKey if you want
       #   consumerKey = "xxx"
@@ -256,7 +256,7 @@
       [vcs.servers.Github.github]
 
         #######
-        # CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
+        # CDS <-> Github. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/github/
         ########
         # Github OAuth Application Client ID
         clientId = "XXX"
@@ -295,7 +295,7 @@
     #   [vcs.servers.Gitlab.gitlab]
     #
     #     #######
-    #     # CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
+    #     # CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/gitlab/
     #     ########
     #     appId = "xxxx"
     #

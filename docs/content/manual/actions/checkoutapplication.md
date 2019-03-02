@@ -14,7 +14,7 @@ This will run git clone with the following options:
 - `--recursive`
 - authentication from Application VCS Strategy (ssh or http(s))
 
-If you want to modify options `depth` or `recursive`, you have to use [GitClone action]({{< relref "gitclone.md" >}}).
+If you want to modify options `depth` or `recursive`, you have to use [GitClone action]({{< relref "/manual/actions/gitclone.md" >}}).
 
 ## Parameters
 

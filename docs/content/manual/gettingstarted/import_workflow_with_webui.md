@@ -14,7 +14,7 @@ In this tutorial, you will create a CDS Workflow from an existing git repository
 ## Prerequisites
 
  * Have an account on your CDS instance
- * Have a CDS project and a [Repository manager]({{< relref "/hosting/repositories-manager/_index.md" >}}) has been set up on your CDS Instance
+ * Have a CDS project and a [Repository manager]({{< relref "/manual/hosting/repositories-manager/_index.md" >}}) has been set up on your CDS Instance
  
 ## Prepare your git repository
 

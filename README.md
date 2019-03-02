@@ -178,7 +178,7 @@ Please read: https://ovh.github.io/cds/workflows/pipelines/requirements/service/
 
 A remote cache is used by a team of developers and/or a continuous integration (CI) system to share build outputs. If your build is reproducible, the outputs from one machine can be safely reused on another machine, which can make builds significantly faster
 
-Doc: https://ovh.github.io/cds/cli/worker/cache/
+Doc: https://ovh.github.io/cds/manual/components/worker/cache/
 
 #### Enterprise Notification Bus
 

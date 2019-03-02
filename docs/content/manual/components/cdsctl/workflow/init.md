@@ -7,10 +7,9 @@ title = "init"
 
 ### Synopsis
 
-[WARNING] THIS IS AN EXPERIMENTAL FEATURE
 Initialize a workflow from your current repository, this will create yml files and push them to CDS.
 
-Documentation: https://ovh.github.io/cds/gettingstarted/firstworkflow/
+Documentation: https://ovh.github.io/cds/manual/gettingstarted/init_workflow_with_cdsctl/
 
 
 

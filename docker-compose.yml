@@ -1,5 +1,5 @@
 #
-# PLEASE READ https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/
+# PLEASE READ https://ovh.github.io/cds/manual/hosting/ready-to-run/docker-compose/
 #
 
 version: '3'

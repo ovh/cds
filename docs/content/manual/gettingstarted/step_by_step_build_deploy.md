@@ -37,7 +37,7 @@ Let's create a project. On the top navbar, click on 'Create a project'.
 ### 2 - Add a repository manager on your project
 
 The project is now create, you have to link a repository manager. 
-Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager/_index.md" >}}) setted up on your CDS Instance.
+Be sure to have a [Repository manager]({{< relref "/manual/hosting/repositories-manager/_index.md" >}}) setted up on your CDS Instance.
 
 * Select 'Advanced' section
 * In the section 'Link to a repository manager', select 'github', then click on 'Connect'
@@ -90,7 +90,7 @@ Expand configuration, select 'https'. If your repository is public, you can keep
 
 ### 4 - Add a variable on your application
 
-You've got an application, let's create an application [variable]({{< relref "manual/concepts/variables.md" >}}).
+You've got an application, let's create an application [variable]({{< relref "/manual/concepts/variables.md" >}}).
 We will use it further in a [Job]({{< relref "/manual/concepts/job/_index.md" >}}).
 
 * Select the variables tab, name 'my-variable', type 'string', value 'my-value'
@@ -364,7 +364,7 @@ Do the same for the second 'deploy-pipeline', rename it to 'manual-deploy-pipeli
 ### 14 - Edit the 'deploy-pipeline'
 
 The 'deploy-pipeline' is empty for now. Let's add some stuff to simulate a deployment.
-We will use [CDS Variable]({{< relref "manual/concepts/variables.md" >}}) from application.
+We will use [CDS Variable]({{< relref "/manual/concepts/variables.md" >}}) from application.
 
 * Select the 'auto-deploy-pipeline', then click on 'Edit the pipeline' on the sidebar
 * Add a step 'Artifact Download' and a step 'script'.

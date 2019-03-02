@@ -62,7 +62,7 @@ Set value to `privateKey`. You can modify `consumerKey` if you want.
       [vcs.servers.Bitbucket.bitbucket]
 
         #######
-        # CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/
+        # CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/manual/hosting/repositories-manager/bitbucket/
         ########
         # You can change the consumeKey if you want
         consumerKey = "CDS"
@@ -158,4 +158,4 @@ You can configure many instances of Bitbucket:
 
 **Then restart CDS**
 
-See how to generate **[Configuration File]({{<relref "/hosting/configuration/_index.md" >}})**
+See how to generate **[Configuration File]({{<relref "/manual/hosting/configuration.md" >}})**

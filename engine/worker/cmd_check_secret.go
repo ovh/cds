@@ -22,7 +22,7 @@ func cmdCheckSecret(w *currentWorker) *cobra.Command {
 		Short: "worker check-secret fileA fileB",
 		Long: `
 
-Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add check if a file contains a CDS variable of type password or private key:
+Inside a step script (https://ovh.github.io/cds/manual/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
 
 ` + "```bash" + `
 #!/bin/bash

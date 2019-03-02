@@ -8,7 +8,7 @@ weight = 4
 In this tutorial, you will create a CDS Workflow with the Web UI.
 
 * Create a workflow using two pipelines: one for building, a second for tagging
-* You will discover the [GitTag]({{< relref "gittag.md" >}}) action, which create tag compatible which [Semantic Verstionning 2.0.0](https://semver.org/)
+* You will discover the [GitTag]({{< relref "/manual/actions/gittag.md" >}}) action, which create tag compatible which [Semantic Verstionning 2.0.0](https://semver.org/)
 
 {{% /notice %}}
 
@@ -29,7 +29,7 @@ Let's create a project. On the top navbar, click on 'Create a project'.
 ### 2 - Add a repository manager on your project
 
 The project is now create, you have to link a repository manager. 
-Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager/_index.md" >}}) setted up on your CDS Instance.
+Be sure to have a [Repository manager]({{< relref "/manual/hosting/repositories-manager/_index.md" >}}) setted up on your CDS Instance.
 
 * Select 'Advanced' section
 * In the section 'Link to a repository manager', select 'github', then click on 'Connect'
@@ -229,7 +229,7 @@ Tag is created on GitHub.
 
 ### 9 - Release Action
 
-[Release action]({{< relref "release.md" >}}) action is implemented for GitHub only. 
+[Release action]({{< relref "/manual/actions/release.md" >}}) action is implemented for GitHub only. 
 You can use it to create a release from a tag and push some artifacts on it.
 
 {{%expand "view screenshots..." %}}

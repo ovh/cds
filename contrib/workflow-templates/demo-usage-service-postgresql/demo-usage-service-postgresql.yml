@@ -6,7 +6,7 @@ description: |
 
   This is pretty useful if you want to make some tests with a real database, or put your builded application as a job prerequisite for doing some tests.
 
-  Doc: https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/
+  Doc: https://ovh.github.io/cds/manual/gettingstarted/tutorials/service-requirement-pg/
 workflow: workflow.yml
 pipelines:
 - 1.pipeline.yml
