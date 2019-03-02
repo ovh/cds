@@ -26,7 +26,7 @@ title = "artifact"
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
-* [cdsctl workflow artifact download](/cli/cdsctl/workflow/artifact/download/)	 - `Download artifacts of one Workflow Run`
-* [cdsctl workflow artifact list](/cli/cdsctl/workflow/artifact/list/)	 - `List artifacts of one Workflow Run`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow artifact download](/manual/components/cdsctl/workflow/artifact/download/)	 - `Download artifacts of one Workflow Run`
+* [cdsctl workflow artifact list](/manual/components/cdsctl/workflow/artifact/list/)	 - `List artifacts of one Workflow Run`
 

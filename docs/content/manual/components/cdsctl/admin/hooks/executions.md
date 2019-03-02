@@ -40,5 +40,5 @@ cdsctl admin hooks executions 5178ce1f-2f76-45c5-a203-58c10c3e2c73
 
 ### SEE ALSO
 
-* [cdsctl admin hooks](/cli/cdsctl/admin/hooks/)	 - `Manage CDS Hooks tasks`
+* [cdsctl admin hooks](/manual/components/cdsctl/admin/hooks/)	 - `Manage CDS Hooks tasks`
 

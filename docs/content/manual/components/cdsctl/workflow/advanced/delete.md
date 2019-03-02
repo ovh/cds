@@ -31,5 +31,5 @@ cdsctl workflow advanced delete [ PROJECT-KEY WORKFLOW-NAME ] [flags]
 
 ### SEE ALSO
 
-* [cdsctl workflow advanced](/cli/cdsctl/workflow/advanced/)	 - `Manage Workflow Advanced`
+* [cdsctl workflow advanced](/manual/components/cdsctl/workflow/advanced/)	 - `Manage Workflow Advanced`
 

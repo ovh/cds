@@ -26,6 +26,6 @@ title = "errors"
 
 ### SEE ALSO
 
-* [cdsctl admin](/cli/cdsctl/admin/)	 - `Manage CDS (admin only)`
-* [cdsctl admin errors get](/cli/cdsctl/admin/errors/get/)	 - `Get CDS error`
+* [cdsctl admin](/manual/components/cdsctl/admin/)	 - `Manage CDS (admin only)`
+* [cdsctl admin errors get](/manual/components/cdsctl/admin/errors/get/)	 - `Get CDS error`
 

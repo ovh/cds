@@ -30,5 +30,5 @@ cdsctl admin maintenance disable [flags]
 
 ### SEE ALSO
 
-* [cdsctl admin maintenance](/cli/cdsctl/admin/maintenance/)	 - `Manage CDS maintenance`
+* [cdsctl admin maintenance](/manual/components/cdsctl/admin/maintenance/)	 - `Manage CDS maintenance`
 

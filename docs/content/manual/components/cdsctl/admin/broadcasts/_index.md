@@ -26,9 +26,9 @@ title = "broadcasts"
 
 ### SEE ALSO
 
-* [cdsctl admin](/cli/cdsctl/admin/)	 - `Manage CDS (admin only)`
-* [cdsctl admin broadcasts create](/cli/cdsctl/admin/broadcasts/create/)	 - `Create a CDS broadcast`
-* [cdsctl admin broadcasts delete](/cli/cdsctl/admin/broadcasts/delete/)	 - `Delete a CDS broadcast`
-* [cdsctl admin broadcasts list](/cli/cdsctl/admin/broadcasts/list/)	 - `List CDS broadcasts`
-* [cdsctl admin broadcasts show](/cli/cdsctl/admin/broadcasts/show/)	 - `Show a CDS broadcast`
+* [cdsctl admin](/manual/components/cdsctl/admin/)	 - `Manage CDS (admin only)`
+* [cdsctl admin broadcasts create](/manual/components/cdsctl/admin/broadcasts/create/)	 - `Create a CDS broadcast`
+* [cdsctl admin broadcasts delete](/manual/components/cdsctl/admin/broadcasts/delete/)	 - `Delete a CDS broadcast`
+* [cdsctl admin broadcasts list](/manual/components/cdsctl/admin/broadcasts/list/)	 - `List CDS broadcasts`
+* [cdsctl admin broadcasts show](/manual/components/cdsctl/admin/broadcasts/show/)	 - `Show a CDS broadcast`
 

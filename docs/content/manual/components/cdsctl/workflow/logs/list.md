@@ -38,5 +38,5 @@ cdsctl workflow logs list [ PROJECT-KEY WORKFLOW-NAME ] [RUN-NUMBER] [flags]
 
 ### SEE ALSO
 
-* [cdsctl workflow logs](/cli/cdsctl/workflow/logs/)	 - `Manage CDS Workflow Run Logs`
+* [cdsctl workflow logs](/manual/components/cdsctl/workflow/logs/)	 - `Manage CDS Workflow Run Logs`
 

@@ -22,14 +22,15 @@ cdsctl template apply project-key workflow-name group-name/template-slug
 ### Options
 
 ```
-      --force               Force, may override files
-  -h, --help                help for applyTemplate
-      --import-as-code      If true, will import the generated workflow as code on given project
-      --import-push         If true, will push the generated workflow on given project
-  -n, --no-interactive      Set to not ask interactively for params
-  -d, --output-dir string   Output directory (default ".cds")
-  -p, --params strings      Specify params for template
-      --quiet               If true, do not output filename created
+      --detach               Set to generate a workflow detached from the template
+      --force                Force, may override files
+  -h, --help                 help for applyTemplate
+      --import-as-code       If true, will import the generated workflow as code on given project
+      --import-push          If true, will push the generated workflow on given project
+  -n, --no-interactive       Set to not ask interactively for params
+  -d, --output-dir string    Output directory (default ".cds")
+  -p, --params stringArray   Specify params for template like --params paramKey:paramValue
+      --quiet                If true, do not output filename created
 ```
 
 ### Options inherited from parent commands
@@ -43,5 +44,5 @@ cdsctl template apply project-key workflow-name group-name/template-slug
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
 

@@ -30,5 +30,5 @@ cdsctl project keys delete [ PROJECT-KEY ] KEY-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl project keys](/cli/cdsctl/project/keys/)	 - `Manage CDS project keys`
+* [cdsctl project keys](/manual/components/cdsctl/project/keys/)	 - `Manage CDS project keys`
 

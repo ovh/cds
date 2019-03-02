@@ -30,5 +30,5 @@ cdsctl project create [ PROJECT-KEY PROJECT-NAME ] [GROUP-NAME] [flags]
 
 ### SEE ALSO
 
-* [cdsctl project](/cli/cdsctl/project/)	 - `Manage CDS project`
+* [cdsctl project](/manual/components/cdsctl/project/)	 - `Manage CDS project`
 

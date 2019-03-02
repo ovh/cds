@@ -34,5 +34,5 @@ cdsctl environment keys list [ PROJECT-KEY ] ENV-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl environment keys](/cli/cdsctl/environment/keys/)	 - `Manage CDS environment keys`
+* [cdsctl environment keys](/manual/components/cdsctl/environment/keys/)	 - `Manage CDS environment keys`
 

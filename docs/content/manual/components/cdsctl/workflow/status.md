@@ -32,5 +32,5 @@ cdsctl workflow status [ PROJECT-KEY WORKFLOW-NAME ] [RUN-NUMBER] [flags]
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
 

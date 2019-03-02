@@ -26,8 +26,8 @@ title = "keys"
 
 ### SEE ALSO
 
-* [cdsctl project](/cli/cdsctl/project/)	 - `Manage CDS project`
-* [cdsctl project keys add](/cli/cdsctl/project/keys/add/)	 - `Add a new key on project. key-type can be ssh or pgp`
-* [cdsctl project keys delete](/cli/cdsctl/project/keys/delete/)	 - `Delete CDS project key`
-* [cdsctl project keys list](/cli/cdsctl/project/keys/list/)	 - `List CDS project keys`
+* [cdsctl project](/manual/components/cdsctl/project/)	 - `Manage CDS project`
+* [cdsctl project keys add](/manual/components/cdsctl/project/keys/add/)	 - `Add a new key on project. key-type can be ssh or pgp`
+* [cdsctl project keys delete](/manual/components/cdsctl/project/keys/delete/)	 - `Delete CDS project key`
+* [cdsctl project keys list](/manual/components/cdsctl/project/keys/list/)	 - `List CDS project keys`
 

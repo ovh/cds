@@ -26,11 +26,11 @@ title = "action"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl action delete](/cli/cdsctl/action/delete/)	 - `Delete a CDS action`
-* [cdsctl action doc](/cli/cdsctl/action/doc/)	 - `Generate Action Documentation: cdsctl action doc <path-to-file>`
-* [cdsctl action export](/cli/cdsctl/action/export/)	 - `Export a CDS action`
-* [cdsctl action import](/cli/cdsctl/action/import/)	 - `Import a CDS action`
-* [cdsctl action list](/cli/cdsctl/action/list/)	 - `List CDS actions`
-* [cdsctl action show](/cli/cdsctl/action/show/)	 - `Show a CDS action`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl action delete](/manual/components/cdsctl/action/delete/)	 - `Delete a CDS action`
+* [cdsctl action doc](/manual/components/cdsctl/action/doc/)	 - `Generate Action Documentation: cdsctl action doc <path-to-file>`
+* [cdsctl action export](/manual/components/cdsctl/action/export/)	 - `Export a CDS action`
+* [cdsctl action import](/manual/components/cdsctl/action/import/)	 - `Import a CDS action`
+* [cdsctl action list](/manual/components/cdsctl/action/list/)	 - `List CDS actions`
+* [cdsctl action show](/manual/components/cdsctl/action/show/)	 - `Show a CDS action`
 

@@ -26,8 +26,8 @@ title = "worker"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl worker disable](/cli/cdsctl/worker/disable/)	 - `Disable CDS workers`
-* [cdsctl worker list](/cli/cdsctl/worker/list/)	 - `List CDS workers`
-* [cdsctl worker model](/cli/cdsctl/worker/model/)	 - `Manage Worker Model`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl worker disable](/manual/components/cdsctl/worker/disable/)	 - `Disable CDS workers`
+* [cdsctl worker list](/manual/components/cdsctl/worker/list/)	 - `List CDS workers`
+* [cdsctl worker model](/manual/components/cdsctl/worker/model/)	 - `Manage Worker Model`
 

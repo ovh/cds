@@ -30,5 +30,5 @@ cdsctl group user removeAdmin GROUPNAME USERNAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl group user](/cli/cdsctl/group/user/)	 - `Manage CDS users group`
+* [cdsctl group user](/manual/components/cdsctl/group/user/)	 - `Manage CDS users group`
 

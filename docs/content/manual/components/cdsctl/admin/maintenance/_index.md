@@ -26,7 +26,7 @@ title = "maintenance"
 
 ### SEE ALSO
 
-* [cdsctl admin](/cli/cdsctl/admin/)	 - `Manage CDS (admin only)`
-* [cdsctl admin maintenance disable](/cli/cdsctl/admin/maintenance/disable/)	 - `Disable CDS maintenance`
-* [cdsctl admin maintenance enable](/cli/cdsctl/admin/maintenance/enable/)	 - `Enable CDS maintenance`
+* [cdsctl admin](/manual/components/cdsctl/admin/)	 - `Manage CDS (admin only)`
+* [cdsctl admin maintenance disable](/manual/components/cdsctl/admin/maintenance/disable/)	 - `Disable CDS maintenance`
+* [cdsctl admin maintenance enable](/manual/components/cdsctl/admin/maintenance/enable/)	 - `Enable CDS maintenance`
 

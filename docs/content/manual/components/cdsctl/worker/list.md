@@ -34,5 +34,5 @@ cdsctl worker list [flags]
 
 ### SEE ALSO
 
-* [cdsctl worker](/cli/cdsctl/worker/)	 - `Manage CDS worker`
+* [cdsctl worker](/manual/components/cdsctl/worker/)	 - `Manage CDS worker`
 

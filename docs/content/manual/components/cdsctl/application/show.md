@@ -31,5 +31,5 @@ cdsctl application show [ PROJECT-KEY APPLICATION-NAME ] [flags]
 
 ### SEE ALSO
 
-* [cdsctl application](/cli/cdsctl/application/)	 - `Manage CDS application`
+* [cdsctl application](/manual/components/cdsctl/application/)	 - `Manage CDS application`
 

@@ -34,5 +34,5 @@ cdsctl application keys list [ PROJECT-KEY APPLICATION-NAME ] [flags]
 
 ### SEE ALSO
 
-* [cdsctl application keys](/cli/cdsctl/application/keys/)	 - `Manage CDS application keys`
+* [cdsctl application keys](/manual/components/cdsctl/application/keys/)	 - `Manage CDS application keys`
 

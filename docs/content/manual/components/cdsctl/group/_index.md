@@ -26,11 +26,13 @@ title = "group"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl group create](/cli/cdsctl/group/create/)	 - `Create a CDS group`
-* [cdsctl group delete](/cli/cdsctl/group/delete/)	 - `Delete a CDS group`
-* [cdsctl group list](/cli/cdsctl/group/list/)	 - `List CDS groups`
-* [cdsctl group rename](/cli/cdsctl/group/rename/)	 - `Rename a CDS group`
-* [cdsctl group show](/cli/cdsctl/group/show/)	 - `Show a CDS group`
-* [cdsctl group user](/cli/cdsctl/group/user/)	 - `Manage CDS users group`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl group create](/manual/components/cdsctl/group/create/)	 - `Create a CDS group`
+* [cdsctl group delete](/manual/components/cdsctl/group/delete/)	 - `Delete a CDS group`
+* [cdsctl group grant](/manual/components/cdsctl/group/grant/)	 - `Grant a CDS group in a project or workflow`
+* [cdsctl group list](/manual/components/cdsctl/group/list/)	 - `List CDS groups`
+* [cdsctl group rename](/manual/components/cdsctl/group/rename/)	 - `Rename a CDS group`
+* [cdsctl group revoke](/manual/components/cdsctl/group/revoke/)	 - `Revoke a CDS group in a project or workflow`
+* [cdsctl group show](/manual/components/cdsctl/group/show/)	 - `Show a CDS group`
+* [cdsctl group user](/manual/components/cdsctl/group/user/)	 - `Manage CDS users group`
 

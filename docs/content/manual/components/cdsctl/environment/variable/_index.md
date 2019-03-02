@@ -26,10 +26,10 @@ title = "variable"
 
 ### SEE ALSO
 
-* [cdsctl environment](/cli/cdsctl/environment/)	 - `Manage CDS environment`
-* [cdsctl environment variable add](/cli/cdsctl/environment/variable/add/)	 - `Add a new variable on environment. variable type can be one of password, text, string, key, boolean, number, repository`
-* [cdsctl environment variable delete](/cli/cdsctl/environment/variable/delete/)	 - `Delete CDS environment variable`
-* [cdsctl environment variable list](/cli/cdsctl/environment/variable/list/)	 - `List CDS environment variables`
-* [cdsctl environment variable show](/cli/cdsctl/environment/variable/show/)	 - `Show a CDS environment variable`
-* [cdsctl environment variable update](/cli/cdsctl/environment/variable/update/)	 - `Update CDS environment variable value`
+* [cdsctl environment](/manual/components/cdsctl/environment/)	 - `Manage CDS environment`
+* [cdsctl environment variable add](/manual/components/cdsctl/environment/variable/add/)	 - `Add a new variable on environment. variable type can be one of password, text, string, key, boolean, number, repository`
+* [cdsctl environment variable delete](/manual/components/cdsctl/environment/variable/delete/)	 - `Delete CDS environment variable`
+* [cdsctl environment variable list](/manual/components/cdsctl/environment/variable/list/)	 - `List CDS environment variables`
+* [cdsctl environment variable show](/manual/components/cdsctl/environment/variable/show/)	 - `Show a CDS environment variable`
+* [cdsctl environment variable update](/manual/components/cdsctl/environment/variable/update/)	 - `Update CDS environment variable value`
 

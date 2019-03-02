@@ -26,8 +26,8 @@ title = "keys"
 
 ### SEE ALSO
 
-* [cdsctl environment](/cli/cdsctl/environment/)	 - `Manage CDS environment`
-* [cdsctl environment keys add](/cli/cdsctl/environment/keys/add/)	 - `Add a new key on environment. key-type can be ssh or pgp`
-* [cdsctl environment keys delete](/cli/cdsctl/environment/keys/delete/)	 - `Delete CDS environment key`
-* [cdsctl environment keys list](/cli/cdsctl/environment/keys/list/)	 - `List CDS environment keys`
+* [cdsctl environment](/manual/components/cdsctl/environment/)	 - `Manage CDS environment`
+* [cdsctl environment keys add](/manual/components/cdsctl/environment/keys/add/)	 - `Add a new key on environment. key-type can be ssh or pgp`
+* [cdsctl environment keys delete](/manual/components/cdsctl/environment/keys/delete/)	 - `Delete CDS environment key`
+* [cdsctl environment keys list](/manual/components/cdsctl/environment/keys/list/)	 - `List CDS environment keys`
 

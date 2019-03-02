@@ -26,14 +26,13 @@ title = "application"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl application create](/cli/cdsctl/application/create/)	 - `Create a CDS application`
-* [cdsctl application delete](/cli/cdsctl/application/delete/)	 - `Delete a CDS application`
-* [cdsctl application export](/cli/cdsctl/application/export/)	 - `Export an application`
-* [cdsctl application group](/cli/cdsctl/application/group/)	 - `Manage CDS group linked to an application`
-* [cdsctl application import](/cli/cdsctl/application/import/)	 - `Import an application`
-* [cdsctl application keys](/cli/cdsctl/application/keys/)	 - `Manage CDS application keys`
-* [cdsctl application list](/cli/cdsctl/application/list/)	 - `List CDS applications`
-* [cdsctl application show](/cli/cdsctl/application/show/)	 - `Show a CDS application`
-* [cdsctl application variable](/cli/cdsctl/application/variable/)	 - `Manage CDS application variables`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl application create](/manual/components/cdsctl/application/create/)	 - `Create a CDS application`
+* [cdsctl application delete](/manual/components/cdsctl/application/delete/)	 - `Delete a CDS application`
+* [cdsctl application export](/manual/components/cdsctl/application/export/)	 - `Export an application`
+* [cdsctl application import](/manual/components/cdsctl/application/import/)	 - `Import an application with a local filepath or an URL`
+* [cdsctl application keys](/manual/components/cdsctl/application/keys/)	 - `Manage CDS application keys`
+* [cdsctl application list](/manual/components/cdsctl/application/list/)	 - `List CDS applications`
+* [cdsctl application show](/manual/components/cdsctl/application/show/)	 - `Show a CDS application`
+* [cdsctl application variable](/manual/components/cdsctl/application/variable/)	 - `Manage CDS application variables`
 

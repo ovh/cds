@@ -16,9 +16,8 @@ cdsctl environment export [ PROJECT-KEY ] ENVIRONMENT-NAME [flags]
 ### Options
 
 ```
-      --format string      Specify export format (json or yaml) (default "yaml")
-  -h, --help               help for export
-      --with-permissions   Export permissions
+      --format string   Specify export format (json or yaml) (default "yaml")
+  -h, --help            help for export
 ```
 
 ### Options inherited from parent commands
@@ -32,5 +31,5 @@ cdsctl environment export [ PROJECT-KEY ] ENVIRONMENT-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl environment](/cli/cdsctl/environment/)	 - `Manage CDS environment`
+* [cdsctl environment](/manual/components/cdsctl/environment/)	 - `Manage CDS environment`
 

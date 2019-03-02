@@ -1,6 +1,5 @@
 +++
 title = "cdsctl"
-weight = 1
 +++
 ## cdsctl
 
@@ -55,24 +54,24 @@ cdsctl [flags]
 
 ### SEE ALSO
 
-* [cdsctl action](/cli/cdsctl/action/)	 - `Manage CDS action`
-* [cdsctl admin](/cli/cdsctl/admin/)	 - `Manage CDS (admin only)`
-* [cdsctl application](/cli/cdsctl/application/)	 - `Manage CDS application`
-* [cdsctl encrypt](/cli/cdsctl/encrypt/)	 - `Encrypt variable into your CDS project`
-* [cdsctl environment](/cli/cdsctl/environment/)	 - `Manage CDS environment`
-* [cdsctl group](/cli/cdsctl/group/)	 - `Manage CDS group`
-* [cdsctl health](/cli/cdsctl/health/)	 - `Check CDS health`
-* [cdsctl login](/cli/cdsctl/login/)	 - `Login to CDS`
-* [cdsctl monitoring](/cli/cdsctl/monitoring/)	 - `CDS monitoring`
-* [cdsctl pipeline](/cli/cdsctl/pipeline/)	 - `Manage CDS pipeline`
-* [cdsctl project](/cli/cdsctl/project/)	 - `Manage CDS project`
-* [cdsctl shell](/cli/cdsctl/shell/)	 - `cdsctl interactive shell`
-* [cdsctl signup](/cli/cdsctl/signup/)	 - `Signup on CDS`
-* [cdsctl template](/cli/cdsctl/template/)	 - `Manage CDS workflow template`
-* [cdsctl token](/cli/cdsctl/token/)	 - `Manage CDS group token`
-* [cdsctl update](/cli/cdsctl/update/)	 - `Update cdsctl from CDS API or from CDS Release`
-* [cdsctl user](/cli/cdsctl/user/)	 - `Manage CDS user`
-* [cdsctl version](/cli/cdsctl/version/)	 - `show cdsctl version`
-* [cdsctl worker](/cli/cdsctl/worker/)	 - `Manage CDS worker`
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl action](/manual/components/cdsctl/action/)	 - `Manage CDS action`
+* [cdsctl admin](/manual/components/cdsctl/admin/)	 - `Manage CDS (admin only)`
+* [cdsctl application](/manual/components/cdsctl/application/)	 - `Manage CDS application`
+* [cdsctl encrypt](/manual/components/cdsctl/encrypt/)	 - `Encrypt variable into your CDS project`
+* [cdsctl environment](/manual/components/cdsctl/environment/)	 - `Manage CDS environment`
+* [cdsctl group](/manual/components/cdsctl/group/)	 - `Manage CDS group`
+* [cdsctl health](/manual/components/cdsctl/health/)	 - `Check CDS health`
+* [cdsctl login](/manual/components/cdsctl/login/)	 - `Login to CDS`
+* [cdsctl monitoring](/manual/components/cdsctl/monitoring/)	 - `CDS monitoring`
+* [cdsctl pipeline](/manual/components/cdsctl/pipeline/)	 - `Manage CDS pipeline`
+* [cdsctl project](/manual/components/cdsctl/project/)	 - `Manage CDS project`
+* [cdsctl shell](/manual/components/cdsctl/shell/)	 - `cdsctl interactive shell`
+* [cdsctl signup](/manual/components/cdsctl/signup/)	 - `Signup on CDS`
+* [cdsctl template](/manual/components/cdsctl/template/)	 - `Manage CDS workflow template`
+* [cdsctl token](/manual/components/cdsctl/token/)	 - `Manage CDS group token`
+* [cdsctl update](/manual/components/cdsctl/update/)	 - `Update cdsctl from CDS API or from CDS Release`
+* [cdsctl user](/manual/components/cdsctl/user/)	 - `Manage CDS user`
+* [cdsctl version](/manual/components/cdsctl/version/)	 - `show cdsctl version`
+* [cdsctl worker](/manual/components/cdsctl/worker/)	 - `Manage CDS worker`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
 

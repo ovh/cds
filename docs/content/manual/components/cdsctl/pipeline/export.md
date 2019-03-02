@@ -16,9 +16,8 @@ cdsctl pipeline export [ PROJECT-KEY ] PIPELINE-NAME [flags]
 ### Options
 
 ```
-      --format string     yml or json (default "yml")
-  -h, --help              help for export
-      --with-permission   true or false
+      --format string   yml or json (default "yml")
+  -h, --help            help for export
 ```
 
 ### Options inherited from parent commands
@@ -32,5 +31,5 @@ cdsctl pipeline export [ PROJECT-KEY ] PIPELINE-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl pipeline](/cli/cdsctl/pipeline/)	 - `Manage CDS pipeline`
+* [cdsctl pipeline](/manual/components/cdsctl/pipeline/)	 - `Manage CDS pipeline`
 

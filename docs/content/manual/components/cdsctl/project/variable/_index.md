@@ -26,10 +26,10 @@ title = "variable"
 
 ### SEE ALSO
 
-* [cdsctl project](/cli/cdsctl/project/)	 - `Manage CDS project`
-* [cdsctl project variable add](/cli/cdsctl/project/variable/add/)	 - `Add a new variable on project. Variable type can be one of password, text, string, key, boolean, number, repository`
-* [cdsctl project variable delete](/cli/cdsctl/project/variable/delete/)	 - `Delete CDS project variable`
-* [cdsctl project variable list](/cli/cdsctl/project/variable/list/)	 - `List CDS project variables`
-* [cdsctl project variable show](/cli/cdsctl/project/variable/show/)	 - `Show a CDS project variable`
-* [cdsctl project variable update](/cli/cdsctl/project/variable/update/)	 - `Update CDS project variable value`
+* [cdsctl project](/manual/components/cdsctl/project/)	 - `Manage CDS project`
+* [cdsctl project variable add](/manual/components/cdsctl/project/variable/add/)	 - `Add a new variable on project. Variable type can be one of password, text, string, key, boolean, number, repository`
+* [cdsctl project variable delete](/manual/components/cdsctl/project/variable/delete/)	 - `Delete CDS project variable`
+* [cdsctl project variable list](/manual/components/cdsctl/project/variable/list/)	 - `List CDS project variables`
+* [cdsctl project variable show](/manual/components/cdsctl/project/variable/show/)	 - `Show a CDS project variable`
+* [cdsctl project variable update](/manual/components/cdsctl/project/variable/update/)	 - `Update CDS project variable value`
 

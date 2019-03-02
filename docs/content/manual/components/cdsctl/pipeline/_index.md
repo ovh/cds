@@ -26,10 +26,9 @@ title = "pipeline"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl pipeline delete](/cli/cdsctl/pipeline/delete/)	 - `Delete a CDS pipeline`
-* [cdsctl pipeline export](/cli/cdsctl/pipeline/export/)	 - `Export CDS pipeline`
-* [cdsctl pipeline group](/cli/cdsctl/pipeline/group/)	 - `Manage CDS group linked to a pipeline`
-* [cdsctl pipeline import](/cli/cdsctl/pipeline/import/)	 - `Import CDS pipeline`
-* [cdsctl pipeline list](/cli/cdsctl/pipeline/list/)	 - `List CDS pipelines`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl pipeline delete](/manual/components/cdsctl/pipeline/delete/)	 - `Delete a CDS pipeline`
+* [cdsctl pipeline export](/manual/components/cdsctl/pipeline/export/)	 - `Export CDS pipeline`
+* [cdsctl pipeline import](/manual/components/cdsctl/pipeline/import/)	 - `Import CDS pipeline`
+* [cdsctl pipeline list](/manual/components/cdsctl/pipeline/list/)	 - `List CDS pipelines`
 

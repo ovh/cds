@@ -35,5 +35,5 @@ cdsctl token delete GROUPNAME TOKENID [flags]
 
 ### SEE ALSO
 
-* [cdsctl token](/cli/cdsctl/token/)	 - `Manage CDS group token`
+* [cdsctl token](/manual/components/cdsctl/token/)	 - `Manage CDS group token`
 

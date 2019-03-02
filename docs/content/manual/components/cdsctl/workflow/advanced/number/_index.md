@@ -26,7 +26,7 @@ title = "number"
 
 ### SEE ALSO
 
-* [cdsctl workflow advanced](/cli/cdsctl/workflow/advanced/)	 - `Manage Workflow Advanced`
-* [cdsctl workflow advanced number set](/cli/cdsctl/workflow/advanced/number/set/)	 - `Set a Workflow Run Number`
-* [cdsctl workflow advanced number show](/cli/cdsctl/workflow/advanced/number/show/)	 - `Show a Workflow Run Number`
+* [cdsctl workflow advanced](/manual/components/cdsctl/workflow/advanced/)	 - `Manage Workflow Advanced`
+* [cdsctl workflow advanced number set](/manual/components/cdsctl/workflow/advanced/number/set/)	 - `Set a Workflow Run Number`
+* [cdsctl workflow advanced number show](/manual/components/cdsctl/workflow/advanced/number/show/)	 - `Show a Workflow Run Number`
 

@@ -34,5 +34,5 @@ cdsctl project list [flags]
 
 ### SEE ALSO
 
-* [cdsctl project](/cli/cdsctl/project/)	 - `Manage CDS project`
+* [cdsctl project](/manual/components/cdsctl/project/)	 - `Manage CDS project`
 

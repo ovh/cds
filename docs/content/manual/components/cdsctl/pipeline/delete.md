@@ -31,5 +31,5 @@ cdsctl pipeline delete [ PROJECT-KEY ] PIPELINE-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl pipeline](/cli/cdsctl/pipeline/)	 - `Manage CDS pipeline`
+* [cdsctl pipeline](/manual/components/cdsctl/pipeline/)	 - `Manage CDS pipeline`
 

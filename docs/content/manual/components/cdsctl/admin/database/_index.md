@@ -26,6 +26,8 @@ title = "database"
 
 ### SEE ALSO
 
-* [cdsctl admin](/cli/cdsctl/admin/)	 - `Manage CDS (admin only)`
-* [cdsctl admin database unlock](/cli/cdsctl/admin/database/unlock/)	 - `Unlock a pending migration (Use with caution)`
+* [cdsctl admin](/manual/components/cdsctl/admin/)	 - `Manage CDS (admin only)`
+* [cdsctl admin database delete](/manual/components/cdsctl/admin/database/delete/)	 - `Delete a database migration from table gorp_migration (use with caution)`
+* [cdsctl admin database list](/manual/components/cdsctl/admin/database/list/)	 - `List all CDS DB migrations`
+* [cdsctl admin database unlock](/manual/components/cdsctl/admin/database/unlock/)	 - `Unlock a pending migration (Use with caution)`
 

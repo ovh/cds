@@ -35,5 +35,5 @@ cdsctl admin hooks list [flags]
 
 ### SEE ALSO
 
-* [cdsctl admin hooks](/cli/cdsctl/admin/hooks/)	 - `Manage CDS Hooks tasks`
+* [cdsctl admin hooks](/manual/components/cdsctl/admin/hooks/)	 - `Manage CDS Hooks tasks`
 

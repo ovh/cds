@@ -39,5 +39,5 @@ cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node ru
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
 

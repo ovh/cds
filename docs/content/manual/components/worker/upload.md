@@ -15,6 +15,8 @@ Inside a job, there are two ways to upload an artifact:
 
 `worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml`
 
+You can use you storage integration: 
+	worker upload --destination="yourStorageIntegrationName"
 		
 
 ```
@@ -24,8 +26,9 @@ worker upload [flags]
 ### Options
 
 ```
-  -h, --help         help for upload
-      --tag string   Tag for artifact Upload - Tag is mandatory
+      --destination string   optional. Your storage integration name
+  -h, --help                 help for upload
+      --tag string           Tag for artifact Upload - Tag is mandatory
 ```
 
 ### SEE ALSO

@@ -31,5 +31,5 @@ cdsctl user show USERNAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl user](/cli/cdsctl/user/)	 - `Manage CDS user`
+* [cdsctl user](/manual/components/cdsctl/user/)	 - `Manage CDS user`
 

@@ -26,8 +26,8 @@ title = "keys"
 
 ### SEE ALSO
 
-* [cdsctl application](/cli/cdsctl/application/)	 - `Manage CDS application`
-* [cdsctl application keys add](/cli/cdsctl/application/keys/add/)	 - `Add a new key on application. key type can be ssh or pgp`
-* [cdsctl application keys delete](/cli/cdsctl/application/keys/delete/)	 - `Delete CDS an application key`
-* [cdsctl application keys list](/cli/cdsctl/application/keys/list/)	 - `List CDS application keys`
+* [cdsctl application](/manual/components/cdsctl/application/)	 - `Manage CDS application`
+* [cdsctl application keys add](/manual/components/cdsctl/application/keys/add/)	 - `Add a new key on application. key type can be ssh or pgp`
+* [cdsctl application keys delete](/manual/components/cdsctl/application/keys/delete/)	 - `Delete CDS an application key`
+* [cdsctl application keys list](/manual/components/cdsctl/application/keys/list/)	 - `List CDS application keys`
 

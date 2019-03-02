@@ -31,5 +31,5 @@ cdsctl project group import [ PROJECT-KEY ] PATH [flags]
 
 ### SEE ALSO
 
-* [cdsctl project group](/cli/cdsctl/project/group/)	 - `Manage CDS group linked to a project`
+* [cdsctl project group](/manual/components/cdsctl/project/group/)	 - `Manage CDS group linked to a project`
 

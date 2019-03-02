@@ -26,6 +26,6 @@ title = "group"
 
 ### SEE ALSO
 
-* [cdsctl project](/cli/cdsctl/project/)	 - `Manage CDS project`
-* [cdsctl project group import](/cli/cdsctl/project/group/import/)	 - `Import group linked to a CDS project`
+* [cdsctl project](/manual/components/cdsctl/project/)	 - `Manage CDS project`
+* [cdsctl project group import](/manual/components/cdsctl/project/group/import/)	 - `Import group linked to a CDS project`
 

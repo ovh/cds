@@ -3,14 +3,14 @@ title = "import"
 +++
 ## cdsctl environment import
 
-`Import an environment`
+`Import an environment with local filepath or URL`
 
 ### Synopsis
 
-`Import an environment`
+`Import an environment with local filepath or URL`
 
 ```
-cdsctl environment import [ PROJECT-KEY ] FILENAME [flags]
+cdsctl environment import [ PROJECT-KEY ] PATH [flags]
 ```
 
 ### Options
@@ -31,5 +31,5 @@ cdsctl environment import [ PROJECT-KEY ] FILENAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl environment](/cli/cdsctl/environment/)	 - `Manage CDS environment`
+* [cdsctl environment](/manual/components/cdsctl/environment/)	 - `Manage CDS environment`
 

@@ -26,13 +26,12 @@ title = "environment"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl environment create](/cli/cdsctl/environment/create/)	 - `Create a CDS environment`
-* [cdsctl environment delete](/cli/cdsctl/environment/delete/)	 - `Delete a CDS environment`
-* [cdsctl environment export](/cli/cdsctl/environment/export/)	 - `Export an environment`
-* [cdsctl environment group](/cli/cdsctl/environment/group/)	 - `Manage CDS group linked to an environment`
-* [cdsctl environment import](/cli/cdsctl/environment/import/)	 - `Import an environment`
-* [cdsctl environment keys](/cli/cdsctl/environment/keys/)	 - `Manage CDS environment keys`
-* [cdsctl environment list](/cli/cdsctl/environment/list/)	 - `List CDS environments`
-* [cdsctl environment variable](/cli/cdsctl/environment/variable/)	 - `Manage CDS environment variables`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl environment create](/manual/components/cdsctl/environment/create/)	 - `Create a CDS environment`
+* [cdsctl environment delete](/manual/components/cdsctl/environment/delete/)	 - `Delete a CDS environment`
+* [cdsctl environment export](/manual/components/cdsctl/environment/export/)	 - `Export an environment`
+* [cdsctl environment import](/manual/components/cdsctl/environment/import/)	 - `Import an environment with local filepath or URL`
+* [cdsctl environment keys](/manual/components/cdsctl/environment/keys/)	 - `Manage CDS environment keys`
+* [cdsctl environment list](/manual/components/cdsctl/environment/list/)	 - `List CDS environments`
+* [cdsctl environment variable](/manual/components/cdsctl/environment/variable/)	 - `Manage CDS environment variables`
 

@@ -26,11 +26,11 @@ title = "user"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl user confirm](/cli/cdsctl/user/confirm/)	 - `Confirm CDS user password reset`
-* [cdsctl user favorite](/cli/cdsctl/user/favorite/)	 - `Display all the user favorites`
-* [cdsctl user list](/cli/cdsctl/user/list/)	 - `List CDS users`
-* [cdsctl user me](/cli/cdsctl/user/me/)	 - `Show Current CDS user details`
-* [cdsctl user reset](/cli/cdsctl/user/reset/)	 - `Reset CDS user password`
-* [cdsctl user show](/cli/cdsctl/user/show/)	 - `Show CDS user details`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl user confirm](/manual/components/cdsctl/user/confirm/)	 - `Confirm CDS user password reset`
+* [cdsctl user favorite](/manual/components/cdsctl/user/favorite/)	 - `Display all the user favorites`
+* [cdsctl user list](/manual/components/cdsctl/user/list/)	 - `List CDS users`
+* [cdsctl user me](/manual/components/cdsctl/user/me/)	 - `Show Current CDS user details`
+* [cdsctl user reset](/manual/components/cdsctl/user/reset/)	 - `Reset CDS user password`
+* [cdsctl user show](/manual/components/cdsctl/user/show/)	 - `Show CDS user details`
 

@@ -34,5 +34,5 @@ cdsctl login [flags]
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
 

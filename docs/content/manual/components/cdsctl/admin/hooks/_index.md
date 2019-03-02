@@ -26,12 +26,12 @@ title = "hooks"
 
 ### SEE ALSO
 
-* [cdsctl admin](/cli/cdsctl/admin/)	 - `Manage CDS (admin only)`
-* [cdsctl admin hooks executions](/cli/cdsctl/admin/hooks/executions/)	 - `List CDS Executions for one task`
-* [cdsctl admin hooks list](/cli/cdsctl/admin/hooks/list/)	 - `List CDS Hooks Tasks`
-* [cdsctl admin hooks purge](/cli/cdsctl/admin/hooks/purge/)	 - `Delete all executions for a task`
-* [cdsctl admin hooks start](/cli/cdsctl/admin/hooks/start/)	 - `Start a task`
-* [cdsctl admin hooks startall](/cli/cdsctl/admin/hooks/startall/)	 - `Start all tasks`
-* [cdsctl admin hooks stop](/cli/cdsctl/admin/hooks/stop/)	 - `Stop a task`
-* [cdsctl admin hooks stopall](/cli/cdsctl/admin/hooks/stopall/)	 - `Stop all tasks`
+* [cdsctl admin](/manual/components/cdsctl/admin/)	 - `Manage CDS (admin only)`
+* [cdsctl admin hooks executions](/manual/components/cdsctl/admin/hooks/executions/)	 - `List CDS Executions for one task`
+* [cdsctl admin hooks list](/manual/components/cdsctl/admin/hooks/list/)	 - `List CDS Hooks Tasks`
+* [cdsctl admin hooks purge](/manual/components/cdsctl/admin/hooks/purge/)	 - `Delete all executions for a task`
+* [cdsctl admin hooks start](/manual/components/cdsctl/admin/hooks/start/)	 - `Start a task`
+* [cdsctl admin hooks startall](/manual/components/cdsctl/admin/hooks/startall/)	 - `Start all tasks`
+* [cdsctl admin hooks stop](/manual/components/cdsctl/admin/hooks/stop/)	 - `Stop a task`
+* [cdsctl admin hooks stopall](/manual/components/cdsctl/admin/hooks/stopall/)	 - `Stop all tasks`
 

@@ -37,5 +37,5 @@ cdsctl action delete ACTION-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl action](/cli/cdsctl/action/)	 - `Manage CDS action`
+* [cdsctl action](/manual/components/cdsctl/action/)	 - `Manage CDS action`
 

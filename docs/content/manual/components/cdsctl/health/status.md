@@ -34,5 +34,5 @@ cdsctl health status [flags]
 
 ### SEE ALSO
 
-* [cdsctl health](/cli/cdsctl/health/)	 - `Check CDS health`
+* [cdsctl health](/manual/components/cdsctl/health/)	 - `Check CDS health`
 

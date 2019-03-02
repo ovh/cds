@@ -26,9 +26,10 @@ title = "model"
 
 ### SEE ALSO
 
-* [cdsctl worker](/cli/cdsctl/worker/)	 - `Manage CDS worker`
-* [cdsctl worker model delete](/cli/cdsctl/worker/model/delete/)	 - `Delete a CDS worker model`
-* [cdsctl worker model import](/cli/cdsctl/worker/model/import/)	 - 
-* [cdsctl worker model list](/cli/cdsctl/worker/model/list/)	 - `List CDS worker models`
-* [cdsctl worker model show](/cli/cdsctl/worker/model/show/)	 - `Show a Worker Model`
+* [cdsctl worker](/manual/components/cdsctl/worker/)	 - `Manage CDS worker`
+* [cdsctl worker model delete](/manual/components/cdsctl/worker/model/delete/)	 - `Delete a CDS worker model`
+* [cdsctl worker model export](/manual/components/cdsctl/worker/model/export/)	 - `Export a worker model`
+* [cdsctl worker model import](/manual/components/cdsctl/worker/model/import/)	 - 
+* [cdsctl worker model list](/manual/components/cdsctl/worker/model/list/)	 - `List CDS worker models`
+* [cdsctl worker model show](/manual/components/cdsctl/worker/model/show/)	 - `Show a Worker Model`
 

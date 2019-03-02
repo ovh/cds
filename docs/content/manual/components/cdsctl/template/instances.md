@@ -40,5 +40,5 @@ cdsctl template instances group-name/template-slug
 
 ### SEE ALSO
 
-* [cdsctl template](/cli/cdsctl/template/)	 - `Manage CDS workflow template`
+* [cdsctl template](/manual/components/cdsctl/template/)	 - `Manage CDS workflow template`
 

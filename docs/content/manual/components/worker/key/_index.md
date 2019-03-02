@@ -18,5 +18,5 @@ Inside a step script you can install/uninstall a ssh key generated in CDS in you
 ### SEE ALSO
 
 * [worker](/cli/worker/worker/)	 - CDS Worker
-* [worker key install](/cli/worker/key/install/)	 - `worker key install [--env-git] [--env] <key-name>`
+* [worker key install](/cli/worker/key/install/)	 - `worker key install [--env-git] [--env] [--file destination-file] <key-name>`
 

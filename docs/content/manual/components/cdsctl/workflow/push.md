@@ -38,5 +38,5 @@ cdsctl workflow push [ PROJECT-KEY ] YAML-FILE ... [flags]
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
 

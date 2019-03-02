@@ -30,5 +30,5 @@ cdsctl admin database unlock ID [flags]
 
 ### SEE ALSO
 
-* [cdsctl admin database](/cli/cdsctl/admin/database/)	 - `Manage CDS Database`
+* [cdsctl admin database](/manual/components/cdsctl/admin/database/)	 - `Manage CDS Database`
 

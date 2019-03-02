@@ -26,7 +26,7 @@ title = "health"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl health dbmigrate](/cli/cdsctl/health/dbmigrate/)	 - `Show DB Migrate status`
-* [cdsctl health status](/cli/cdsctl/health/status/)	 - `Show CDS Status`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl health dbmigrate](/manual/components/cdsctl/health/dbmigrate/)	 - `Show DB Migrate status`
+* [cdsctl health status](/manual/components/cdsctl/health/status/)	 - `Show CDS Status`
 

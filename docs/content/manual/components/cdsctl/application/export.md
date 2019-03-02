@@ -16,9 +16,8 @@ cdsctl application export [ PROJECT-KEY APPLICATION-NAME ] [flags]
 ### Options
 
 ```
-      --format string      Specify export format (json or yaml) (default "yaml")
-  -h, --help               help for export
-      --with-permissions   Export permissions
+      --format string   Specify export format (json or yaml) (default "yaml")
+  -h, --help            help for export
 ```
 
 ### Options inherited from parent commands
@@ -32,5 +31,5 @@ cdsctl application export [ PROJECT-KEY APPLICATION-NAME ] [flags]
 
 ### SEE ALSO
 
-* [cdsctl application](/cli/cdsctl/application/)	 - `Manage CDS application`
+* [cdsctl application](/manual/components/cdsctl/application/)	 - `Manage CDS application`
 

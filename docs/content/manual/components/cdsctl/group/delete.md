@@ -31,5 +31,5 @@ cdsctl group delete GROUP-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl group](/cli/cdsctl/group/)	 - `Manage CDS group`
+* [cdsctl group](/manual/components/cdsctl/group/)	 - `Manage CDS group`
 

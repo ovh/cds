@@ -16,7 +16,8 @@ cdsctl version [flags]
 ### Options
 
 ```
-  -h, --help   help for version
+      --format string   Specify out format (json or yaml)
+  -h, --help            help for version
 ```
 
 ### Options inherited from parent commands
@@ -30,5 +31,5 @@ cdsctl version [flags]
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
 

@@ -30,5 +30,5 @@ cdsctl admin errors get UUID [flags]
 
 ### SEE ALSO
 
-* [cdsctl admin errors](/cli/cdsctl/admin/errors/)	 - `Manage CDS errors`
+* [cdsctl admin errors](/manual/components/cdsctl/admin/errors/)	 - `Manage CDS errors`
 

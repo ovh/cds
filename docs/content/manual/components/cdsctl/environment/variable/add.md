@@ -30,5 +30,5 @@ cdsctl environment variable add [ PROJECT-KEY ] ENV-NAME VARIABLE-NAME VARIABLE-
 
 ### SEE ALSO
 
-* [cdsctl environment variable](/cli/cdsctl/environment/variable/)	 - `Manage CDS environment variables`
+* [cdsctl environment variable](/manual/components/cdsctl/environment/variable/)	 - `Manage CDS environment variables`
 

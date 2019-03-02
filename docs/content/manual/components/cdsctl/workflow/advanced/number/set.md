@@ -36,5 +36,5 @@ cdsctl workflow advanced number set MYPROJECT my-workflow 22
 
 ### SEE ALSO
 
-* [cdsctl workflow advanced number](/cli/cdsctl/workflow/advanced/number/)	 - `Manage Workflow Run Number`
+* [cdsctl workflow advanced number](/manual/components/cdsctl/workflow/advanced/number/)	 - `Manage Workflow Run Number`
 

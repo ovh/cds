@@ -31,5 +31,5 @@ cdsctl admin broadcasts delete ID [flags]
 
 ### SEE ALSO
 
-* [cdsctl admin broadcasts](/cli/cdsctl/admin/broadcasts/)	 - `Manage CDS broadcasts`
+* [cdsctl admin broadcasts](/manual/components/cdsctl/admin/broadcasts/)	 - `Manage CDS broadcasts`
 

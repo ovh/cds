@@ -41,7 +41,7 @@ Download logs from a workflow run.
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
-* [cdsctl workflow logs download](/cli/cdsctl/workflow/logs/download/)	 - `Download logs from a workflow run.`
-* [cdsctl workflow logs list](/cli/cdsctl/workflow/logs/list/)	 - `List logs from a workflow run`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow logs download](/manual/components/cdsctl/workflow/logs/download/)	 - `Download logs from a workflow run.`
+* [cdsctl workflow logs list](/manual/components/cdsctl/workflow/logs/list/)	 - `List logs from a workflow run`
 

@@ -22,6 +22,10 @@ The command:
 
 will create the directory {{.cds.workspace}}/pathToUpload with the content of the cache
 
+If you want to push a cache into a storage integration:
+
+	worker cache push latest --from=MyStorageIntegration {{.cds.workspace}}/pathToUpload
+
 		
 
 ```
@@ -31,7 +35,8 @@ worker cache pull [flags]
 ### Options
 
 ```
-  -h, --help   help for pull
+      --from string   optional. Your storage integration name
+  -h, --help          help for pull
 ```
 
 ### SEE ALSO

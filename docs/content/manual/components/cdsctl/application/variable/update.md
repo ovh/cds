@@ -30,5 +30,5 @@ cdsctl application variable update [ PROJECT-KEY APPLICATION-NAME ] VARIABLE-OLD
 
 ### SEE ALSO
 
-* [cdsctl application variable](/cli/cdsctl/application/variable/)	 - `Manage CDS application variables`
+* [cdsctl application variable](/manual/components/cdsctl/application/variable/)	 - `Manage CDS application variables`
 

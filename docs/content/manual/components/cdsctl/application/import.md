@@ -3,14 +3,14 @@ title = "import"
 +++
 ## cdsctl application import
 
-`Import an application`
+`Import an application with a local filepath or an URL`
 
 ### Synopsis
 
-`Import an application`
+`Import an application with a local filepath or an URL`
 
 ```
-cdsctl application import [ PROJECT-KEY ] FILENAME [flags]
+cdsctl application import [ PROJECT-KEY ] PATH [flags]
 ```
 
 ### Options
@@ -31,5 +31,5 @@ cdsctl application import [ PROJECT-KEY ] FILENAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl application](/cli/cdsctl/application/)	 - `Manage CDS application`
+* [cdsctl application](/manual/components/cdsctl/application/)	 - `Manage CDS application`
 

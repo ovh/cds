@@ -34,5 +34,5 @@ cdsctl application variable list [ PROJECT-KEY APPLICATION-NAME ] [flags]
 
 ### SEE ALSO
 
-* [cdsctl application variable](/cli/cdsctl/application/variable/)	 - `Manage CDS application variables`
+* [cdsctl application variable](/manual/components/cdsctl/application/variable/)	 - `Manage CDS application variables`
 

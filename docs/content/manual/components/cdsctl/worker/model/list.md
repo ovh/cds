@@ -36,5 +36,5 @@ cdsctl worker model list [flags]
 
 ### SEE ALSO
 
-* [cdsctl worker model](/cli/cdsctl/worker/model/)	 - `Manage Worker Model`
+* [cdsctl worker model](/manual/components/cdsctl/worker/model/)	 - `Manage Worker Model`
 

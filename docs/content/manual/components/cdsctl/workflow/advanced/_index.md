@@ -26,7 +26,7 @@ title = "advanced"
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
-* [cdsctl workflow advanced delete](/cli/cdsctl/workflow/advanced/delete/)	 - `Delete a CDS workflow`
-* [cdsctl workflow advanced number](/cli/cdsctl/workflow/advanced/number/)	 - `Manage Workflow Run Number`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow advanced delete](/manual/components/cdsctl/workflow/advanced/delete/)	 - `Delete a CDS workflow`
+* [cdsctl workflow advanced number](/manual/components/cdsctl/workflow/advanced/number/)	 - `Manage Workflow Run Number`
 

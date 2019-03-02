@@ -16,7 +16,7 @@ cdsctl template push YAML-FILE ... [flags]
 ### Examples
 
 ```
-cdsctl template push my-template.yml workflow.yml 0.pipeline.yml
+cdsctl template push my-template.yml workflow.yml 1.pipeline.yml
 ```
 
 ### Options
@@ -37,5 +37,5 @@ cdsctl template push my-template.yml workflow.yml 0.pipeline.yml
 
 ### SEE ALSO
 
-* [cdsctl template](/cli/cdsctl/template/)	 - `Manage CDS workflow template`
+* [cdsctl template](/manual/components/cdsctl/template/)	 - `Manage CDS workflow template`
 

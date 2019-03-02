@@ -8,14 +8,14 @@ title = "import"
 ### Synopsis
 
 
-In case you want to import just your workflow.
-		
+In case you want to import just your workflow. Instead of use a local file you can also use an URL to your yaml file.
+
 If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
 
 	
 
 ```
-cdsctl workflow import [ PROJECT-KEY ] FILENAME [flags]
+cdsctl workflow import [ PROJECT-KEY ] PATH [flags]
 ```
 
 ### Options
@@ -36,5 +36,5 @@ cdsctl workflow import [ PROJECT-KEY ] FILENAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl workflow](/cli/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl workflow](/manual/components/cdsctl/workflow/)	 - `Manage CDS workflow`
 

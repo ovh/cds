@@ -31,5 +31,5 @@ cdsctl workflow artifact download [ PROJECT-KEY WORKFLOW-NAME ] NUMBER [ARTEFACT
 
 ### SEE ALSO
 
-* [cdsctl workflow artifact](/cli/cdsctl/workflow/artifact/)	 - `Manage Workflow Artifact`
+* [cdsctl workflow artifact](/manual/components/cdsctl/workflow/artifact/)	 - `Manage Workflow Artifact`
 

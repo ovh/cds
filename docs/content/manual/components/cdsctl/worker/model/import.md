@@ -19,13 +19,13 @@ For admin:
 	
 
 ```
-cdsctl worker model import FILEPATH ... [flags]
+cdsctl worker model import PATH ... [flags]
 ```
 
 ### Examples
 
 ```
-cdsctl worker model import my_worker_model_file.yml
+cdsctl worker model import my_worker_model_file.yml https://mydomain.com/myworkermodel.yml
 ```
 
 ### Options
@@ -46,5 +46,5 @@ cdsctl worker model import my_worker_model_file.yml
 
 ### SEE ALSO
 
-* [cdsctl worker model](/cli/cdsctl/worker/model/)	 - `Manage Worker Model`
+* [cdsctl worker model](/manual/components/cdsctl/worker/model/)	 - `Manage Worker Model`
 

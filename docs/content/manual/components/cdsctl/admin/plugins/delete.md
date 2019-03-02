@@ -31,5 +31,5 @@ cdsctl admin plugins delete NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl admin plugins](/cli/cdsctl/admin/plugins/)	 - `Manage CDS Plugins`
+* [cdsctl admin plugins](/manual/components/cdsctl/admin/plugins/)	 - `Manage CDS Plugins`
 

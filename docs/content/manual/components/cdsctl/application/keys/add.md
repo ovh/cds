@@ -30,5 +30,5 @@ cdsctl application keys add [ PROJECT-KEY APPLICATION-NAME ] KEY-NAME KEY-TYPE [
 
 ### SEE ALSO
 
-* [cdsctl application keys](/cli/cdsctl/application/keys/)	 - `Manage CDS application keys`
+* [cdsctl application keys](/manual/components/cdsctl/application/keys/)	 - `Manage CDS application keys`
 

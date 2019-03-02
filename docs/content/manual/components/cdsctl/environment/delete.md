@@ -31,5 +31,5 @@ cdsctl environment delete [ PROJECT-KEY ] ENVIRONMENT-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl environment](/cli/cdsctl/environment/)	 - `Manage CDS environment`
+* [cdsctl environment](/manual/components/cdsctl/environment/)	 - `Manage CDS environment`
 

@@ -35,5 +35,5 @@ cdsctl admin services list [flags]
 
 ### SEE ALSO
 
-* [cdsctl admin services](/cli/cdsctl/admin/services/)	 - `Manage CDS services`
+* [cdsctl admin services](/manual/components/cdsctl/admin/services/)	 - `Manage CDS services`
 

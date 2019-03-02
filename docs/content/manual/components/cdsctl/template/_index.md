@@ -26,9 +26,12 @@ title = "template"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl template apply](/cli/cdsctl/template/apply/)	 - `Apply CDS workflow template`
-* [cdsctl template instances](/cli/cdsctl/template/instances/)	 - `Get instances for a CDS workflow template`
-* [cdsctl template pull](/cli/cdsctl/template/pull/)	 - `Pull CDS workflow template`
-* [cdsctl template push](/cli/cdsctl/template/push/)	 - `Push CDS workflow template`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl template apply](/manual/components/cdsctl/template/apply/)	 - `Apply CDS workflow template`
+* [cdsctl template bulk](/manual/components/cdsctl/template/bulk/)	 - `Bulk apply CDS workflow template and push all given workflows`
+* [cdsctl template delete](/manual/components/cdsctl/template/delete/)	 - `Delete a workflow template`
+* [cdsctl template detach](/manual/components/cdsctl/template/detach/)	 - `Detach a workflow from template`
+* [cdsctl template instances](/manual/components/cdsctl/template/instances/)	 - `Get instances for a CDS workflow template`
+* [cdsctl template pull](/manual/components/cdsctl/template/pull/)	 - `Pull CDS workflow template`
+* [cdsctl template push](/manual/components/cdsctl/template/push/)	 - `Push CDS workflow template`
 

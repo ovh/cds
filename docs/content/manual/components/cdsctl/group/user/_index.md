@@ -26,9 +26,10 @@ title = "user"
 
 ### SEE ALSO
 
-* [cdsctl group](/cli/cdsctl/group/)	 - `Manage CDS group`
-* [cdsctl group user add](/cli/cdsctl/group/user/add/)	 - `Add a user into a group`
-* [cdsctl group user delete](/cli/cdsctl/group/user/delete/)	 - `Delete an user from a group`
-* [cdsctl group user removeAdmin](/cli/cdsctl/group/user/removeadmin/)	 - `Remove a user from administrators of a group`
-* [cdsctl group user setAdmin](/cli/cdsctl/group/user/setadmin/)	 - `Set a user as an administrator of a group`
+* [cdsctl group](/manual/components/cdsctl/group/)	 - `Manage CDS group`
+* [cdsctl group user add](/manual/components/cdsctl/group/user/add/)	 - `Add an user into a group`
+* [cdsctl group user delete](/manual/components/cdsctl/group/user/delete/)	 - `Delete an user from a group`
+* [cdsctl group user list](/manual/components/cdsctl/group/user/list/)	 - `List users into a group`
+* [cdsctl group user removeAdmin](/manual/components/cdsctl/group/user/removeadmin/)	 - `Remove a user from administrators of a group`
+* [cdsctl group user setAdmin](/manual/components/cdsctl/group/user/setadmin/)	 - `Set a user as an administrator of a group`
 

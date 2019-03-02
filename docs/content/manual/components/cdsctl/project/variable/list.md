@@ -34,5 +34,5 @@ cdsctl project variable list [ PROJECT-KEY ] [flags]
 
 ### SEE ALSO
 
-* [cdsctl project variable](/cli/cdsctl/project/variable/)	 - `Manage CDS project variables`
+* [cdsctl project variable](/manual/components/cdsctl/project/variable/)	 - `Manage CDS project variables`
 

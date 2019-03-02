@@ -26,9 +26,9 @@ title = "token"
 
 ### SEE ALSO
 
-* [cdsctl](/cli/cdsctl/cdsctl/)	 - CDS Command line utility
-* [cdsctl token delete](/cli/cdsctl/token/delete/)	 - `Delete a token linked to a group`
-* [cdsctl token find](/cli/cdsctl/token/find/)	 - `Find an existing token`
-* [cdsctl token generate](/cli/cdsctl/token/generate/)	 - `Generate a new token`
-* [cdsctl token list](/cli/cdsctl/token/list/)	 - `List tokens from group`
+* [cdsctl](/manual/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl token delete](/manual/components/cdsctl/token/delete/)	 - `Delete a token linked to a group`
+* [cdsctl token find](/manual/components/cdsctl/token/find/)	 - `Find an existing token`
+* [cdsctl token generate](/manual/components/cdsctl/token/generate/)	 - `Generate a new token`
+* [cdsctl token list](/manual/components/cdsctl/token/list/)	 - `List tokens from group`
 

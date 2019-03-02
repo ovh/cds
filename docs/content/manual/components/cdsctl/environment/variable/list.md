@@ -34,5 +34,5 @@ cdsctl environment variable list [ PROJECT-KEY ] ENV-NAME [flags]
 
 ### SEE ALSO
 
-* [cdsctl environment variable](/cli/cdsctl/environment/variable/)	 - `Manage CDS environment variables`
+* [cdsctl environment variable](/manual/components/cdsctl/environment/variable/)	 - `Manage CDS environment variables`
 
