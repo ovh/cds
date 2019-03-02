@@ -9,7 +9,7 @@ title = "tmpl"
 
 
 
-Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+Inside a step script (https://ovh.github.io/cds/manual/actions/script/), you can add a replace CDS variables with the real value into a file:
 
 	# create a file
 	cat << EOF > myFile
@@ -40,5 +40,5 @@ worker tmpl [flags]
 
 ### SEE ALSO
 
-* [worker](/cli/worker/worker/)	 - CDS Worker
+* [worker](/manual/components/worker/worker/)	 - CDS Worker
 

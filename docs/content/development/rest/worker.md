@@ -3,13 +3,13 @@ title = "worker"
 +++
 
 
-### POST `/worker`
+### GET `/worker`
 
 URL         | **`/worker`**
 ----------- |----------
-Method      | POST     
-Permissions |  Auth: false
-Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+registerWorkerHandler%22)
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22)
     
 
 
@@ -20,13 +20,13 @@ Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### GET `/worker`
+### POST `/worker`
 
 URL         | **`/worker`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22)
+Method      | POST     
+Permissions |  Auth: false
+Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+registerWorkerHandler%22)
     
 
 
@@ -71,13 +71,13 @@ Code        | [workerCheckingHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### POST `/worker/model`
+### GET `/worker/model`
 
 URL         | **`/worker/model`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [addWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22)
+Code        | [getWorkerModelsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsHandler%22)
     
 
 
@@ -88,13 +88,13 @@ Code        | [addWorkerModelHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### GET `/worker/model`
+### POST `/worker/model`
 
 URL         | **`/worker/model`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getWorkerModelsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsHandler%22)
+Code        | [addWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22)
     
 
 
@@ -122,13 +122,13 @@ Code        | [getWorkerModelUsageHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### PUT `/worker/model/<permModelID>`
+### DELETE `/worker/model/<permModelID>`
 
 URL         | **`/worker/model/<permModelID>`**
 ----------- |----------
-Method      | PUT     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [updateWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22)
+Code        | [deleteWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22)
     
 
 
@@ -139,13 +139,13 @@ Code        | [updateWorkerModelHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### DELETE `/worker/model/<permModelID>`
+### PUT `/worker/model/<permModelID>`
 
 URL         | **`/worker/model/<permModelID>`**
 ----------- |----------
-Method      | DELETE     
+Method      | PUT     
 Permissions |  Auth: true
-Code        | [deleteWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22)
+Code        | [updateWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22)
     
 
 
@@ -258,32 +258,13 @@ Code        | [spawnErrorWorkerModelHandler](https://github.com/ovh/cds/search?q
 
 
 
-### import a worker model yml/json file
+### POST `/worker/unregister`
 
-URL         | **`/worker/model/import`**
+URL         | **`/worker/unregister`**
 ----------- |----------
 Method      | POST     
-Query Parameter | force=true or false. If false and if the worker model already exists, raise an error
 Permissions |  Auth: true
-Code        | [postWorkerModelImportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkerModelImportHandler%22)
-    
-
-#### Description
-import a worker model yml/json file with `cdsctl worker model import mywm.yml`
-
-
-
-
-
-
-
-### GET `/worker/model/pattern`
-
-URL         | **`/worker/model/pattern`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkerModelPatternsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternsHandler%22)
+Code        | [unregisterWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+unregisterWorkerHandler%22)
     
 
 
@@ -311,13 +292,30 @@ Code        | [postAddWorkerModelPatternHandler](https://github.com/ovh/cds/sear
 
 
 
-### DELETE `/worker/model/pattern/<type>/<name>`
+### GET `/worker/model/pattern`
+
+URL         | **`/worker/model/pattern`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelPatternsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternsHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/worker/model/pattern/<type>/<name>`
 
 URL         | **`/worker/model/pattern/<type>/<name>`**
 ----------- |----------
-Method      | DELETE     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelPatternHandler%22)
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22)
     
 
 
@@ -345,13 +343,13 @@ Code        | [putWorkerModelPatternHandler](https://github.com/ovh/cds/search?q
 
 
 
-### GET `/worker/model/pattern/<type>/<name>`
+### DELETE `/worker/model/pattern/<type>/<name>`
 
 URL         | **`/worker/model/pattern/<type>/<name>`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22)
+Method      | DELETE     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [deleteWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelPatternHandler%22)
     
 
 
@@ -396,23 +394,6 @@ Code        | [refreshWorkerHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### POST `/worker/unregister`
-
-URL         | **`/worker/unregister`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [unregisterWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+unregisterWorkerHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### POST `/worker/waiting`
 
 URL         | **`/worker/waiting`**
@@ -423,6 +404,25 @@ Code        | [workerWaitingHandler](https://github.com/ovh/cds/search?q=%22func
     
 
 
+
+
+
+
+
+
+
+### import a worker model yml/json file
+
+URL         | **`/worker/model/import`**
+----------- |----------
+Method      | POST     
+Query Parameter | force=true or false. If false and if the worker model already exists, raise an error
+Permissions |  Auth: true
+Code        | [postWorkerModelImportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkerModelImportHandler%22)
+    
+
+#### Description
+import a worker model yml/json file with `cdsctl worker model import mywm.yml`
 
 
 

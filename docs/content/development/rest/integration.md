@@ -3,23 +3,6 @@ title = "integration"
 +++
 
 
-### POST `/integration/models`
-
-URL         | **`/integration/models`**
------------ |----------
-Method      | POST     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [postIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postIntegrationModelHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### GET `/integration/models`
 
 URL         | **`/integration/models`**
@@ -37,13 +20,30 @@ Code        | [getIntegrationModelsHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### PUT `/integration/models/<name>`
+### POST `/integration/models`
+
+URL         | **`/integration/models`**
+----------- |----------
+Method      | POST     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [postIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postIntegrationModelHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### DELETE `/integration/models/<name>`
 
 URL         | **`/integration/models/<name>`**
 ----------- |----------
-Method      | PUT     
+Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [putIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putIntegrationModelHandler%22)
+Code        | [deleteIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteIntegrationModelHandler%22)
     
 
 
@@ -71,13 +71,13 @@ Code        | [getIntegrationModelHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### DELETE `/integration/models/<name>`
+### PUT `/integration/models/<name>`
 
 URL         | **`/integration/models/<name>`**
 ----------- |----------
-Method      | DELETE     
+Method      | PUT     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteIntegrationModelHandler%22)
+Code        | [putIntegrationModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putIntegrationModelHandler%22)
     
 
 

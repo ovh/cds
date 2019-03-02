@@ -21,5 +21,5 @@ worker version [flags]
 
 ### SEE ALSO
 
-* [worker](/cli/worker/worker/)	 - CDS Worker
+* [worker](/manual/components/worker/worker/)	 - CDS Worker
 

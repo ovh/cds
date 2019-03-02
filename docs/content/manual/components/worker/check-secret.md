@@ -9,7 +9,7 @@ title = "check-secret"
 
 
 
-Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add check if a file contains a CDS variable of type password or private key:
+Inside a step script (https://ovh.github.io/cds/manual/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
 
 ```bash
 #!/bin/bash
@@ -45,5 +45,5 @@ worker check-secret [flags]
 
 ### SEE ALSO
 
-* [worker](/cli/worker/worker/)	 - CDS Worker
+* [worker](/manual/components/worker/worker/)	 - CDS Worker
 

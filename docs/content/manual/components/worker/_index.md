@@ -7,7 +7,7 @@ CDS Worker
 
 ### Synopsis
 
-CDS Worker
+A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
 
 ```
 worker [flags]
@@ -43,16 +43,16 @@ worker [flags]
 
 ### SEE ALSO
 
-* [worker artifacts](/cli/worker/artifacts/)	 - `worker artifacts [--workflow=<workflow-name>] [--number=<run-number>] [--tag=<tag>] [--pattern=<pattern>]`
-* [worker cache](/cli/worker/cache/)	 - 
-* [worker check-secret](/cli/worker/check-secret/)	 - `worker check-secret fileA fileB`
-* [worker download](/cli/worker/download/)	 - `worker download [--workflow=<workflow-name>] [--number=<run-number>] [--tag=<tag>] [--pattern=<pattern>]`
-* [worker exit](/cli/worker/exit/)	 - `worker exit`
-* [worker export](/cli/worker/export/)	 - `worker export <varname> <value>`
-* [worker key](/cli/worker/key/)	 - 
-* [worker tag](/cli/worker/tag/)	 - `worker tag key=value key=value`
-* [worker tmpl](/cli/worker/tmpl/)	 - `worker tmpl inputFile outputFile`
-* [worker update](/cli/worker/update/)	 - `worker update [flags]`
-* [worker upload](/cli/worker/upload/)	 - `worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload`
-* [worker version](/cli/worker/version/)	 - `Print the version of the worker binary`
+* [worker artifacts](/manual/components/worker/artifacts/)	 - `worker artifacts [--workflow=<workflow-name>] [--number=<run-number>] [--tag=<tag>] [--pattern=<pattern>]`
+* [worker cache](/manual/components/worker/cache/)	 - 
+* [worker check-secret](/manual/components/worker/check-secret/)	 - `worker check-secret fileA fileB`
+* [worker download](/manual/components/worker/download/)	 - `worker download [--workflow=<workflow-name>] [--number=<run-number>] [--tag=<tag>] [--pattern=<pattern>]`
+* [worker exit](/manual/components/worker/exit/)	 - `worker exit`
+* [worker export](/manual/components/worker/export/)	 - `worker export <varname> <value>`
+* [worker key](/manual/components/worker/key/)	 - 
+* [worker tag](/manual/components/worker/tag/)	 - `worker tag key=value key=value`
+* [worker tmpl](/manual/components/worker/tmpl/)	 - `worker tmpl inputFile outputFile`
+* [worker update](/manual/components/worker/update/)	 - `worker update [flags]`
+* [worker upload](/manual/components/worker/upload/)	 - `worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload`
+* [worker version](/manual/components/worker/version/)	 - `Print the version of the worker binary`
 

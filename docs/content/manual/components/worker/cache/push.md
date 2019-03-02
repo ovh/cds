@@ -34,5 +34,5 @@ worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUp
 
 ### SEE ALSO
 
-* [worker cache](/cli/worker/cache/)	 - 
+* [worker cache](/manual/components/worker/cache/)	 - 
 

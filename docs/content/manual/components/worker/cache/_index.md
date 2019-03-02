@@ -51,7 +51,7 @@ Here, an example of a script inside a CDS Job using the cache feature:
 
 ### SEE ALSO
 
-* [worker](/cli/worker/worker/)	 - CDS Worker
-* [worker cache pull](/cli/worker/cache/pull/)	 - `worker cache pull tagValue`
-* [worker cache push](/cli/worker/cache/push/)	 - `worker cache push tagValue {{.cds.workspace}}/pathToUpload`
+* [worker](/manual/components/worker/worker/)	 - CDS Worker
+* [worker cache pull](/manual/components/worker/cache/pull/)	 - `worker cache pull tagValue`
+* [worker cache push](/manual/components/worker/cache/push/)	 - `worker cache push tagValue {{.cds.workspace}}/pathToUpload`
 

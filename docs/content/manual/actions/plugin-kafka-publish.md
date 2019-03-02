@@ -14,18 +14,18 @@ How to use: https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/ka
 
 ## Parameters
 
-* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
-* **kafkaAddresses**: Kafka Addresses
-* **topic**: Kafka Topic
-* **publicKey**: GPG Public Key (ASCII armored format)
-* **key**: Key used by AES Encryption. It have to be the same value as --key on plugin binary
-* **waitForAck**: Wait for ACK
-* **waitForAckTopic**: Wait for ACK topic
 * **message**: Kafka Message
+* **kafkaUser**: Kafka user
+* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
+* **topic**: Kafka Topic
+* **waitForAckTopic**: Wait for ACK topic
+* **waitForAck**: Wait for ACK
 * **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
 * **kafkaPassword**: Kafka password
+* **kafkaAddresses**: Kafka Addresses
 * **artifacts**: Artifacts list (comma separated)"
-* **kafkaUser**: Kafka user
+* **publicKey**: GPG Public Key (ASCII armored format)
+* **key**: Key used by AES Encryption. It have to be the same value as --key on plugin binary
 
 
 

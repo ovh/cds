@@ -61,5 +61,5 @@ worker key install proj-test
 
 ### SEE ALSO
 
-* [worker key](/cli/worker/key/)	 - 
+* [worker key](/manual/components/worker/key/)	 - 
 

@@ -8,7 +8,7 @@ title = "export"
 ### Synopsis
 
 
-Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can create a build variable with the worker command:
+Inside a step script (https://ovh.github.io/cds/manual/actions/script/), you can create a build variable with the worker command:
 
 	worker export foo bar
 
@@ -40,5 +40,5 @@ worker export [flags]
 
 ### SEE ALSO
 
-* [worker](/cli/worker/worker/)	 - CDS Worker
+* [worker](/manual/components/worker/worker/)	 - CDS Worker
 

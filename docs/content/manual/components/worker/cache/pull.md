@@ -41,5 +41,5 @@ worker cache pull [flags]
 
 ### SEE ALSO
 
-* [worker cache](/cli/worker/cache/)	 - 
+* [worker cache](/manual/components/worker/cache/)	 - 
 

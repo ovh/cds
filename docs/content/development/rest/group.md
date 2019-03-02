@@ -3,13 +3,13 @@ title = "group"
 +++
 
 
-### POST `/group`
+### GET `/group/public`
 
-URL         | **`/group`**
+URL         | **`/group/public`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [addGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22)
+Code        | [getPublicGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPublicGroupsHandler%22)
     
 
 
@@ -54,23 +54,6 @@ Code        | [updateGroupHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### GET `/group/<group-name>`
-
-URL         | **`/group/<group-name>`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### DELETE `/group/<group-name>`
 
 URL         | **`/group/<group-name>`**
@@ -88,13 +71,13 @@ Code        | [deleteGroupHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### generateToken allows a user to generate a token associated to a group permission
+### GET `/group/<group-name>`
 
-URL         | **`/group/<group-name>/token`**
+URL         | **`/group/<group-name>`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [generateTokenHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+generateTokenHandler%22)
+Code        | [getGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22)
     
 
 
@@ -112,6 +95,23 @@ URL         | **`/group/<group-name>/token`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getGroupTokenListHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupTokenListHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/group`
+
+URL         | **`/group`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [addGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22)
     
 
 
@@ -173,23 +173,6 @@ Code        | [removeUserFromGroupHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### DELETE `/group/<group-name>/user/<user-name>/admin`
-
-URL         | **`/group/<group-name>/user/<user-name>/admin`**
------------ |----------
-Method      | DELETE     
-Permissions |  Auth: true
-Code        | [removeUserGroupAdminHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserGroupAdminHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### POST `/group/<group-name>/user/<user-name>/admin`
 
 URL         | **`/group/<group-name>/user/<user-name>/admin`**
@@ -207,13 +190,30 @@ Code        | [setUserGroupAdminHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### GET `/group/public`
+### DELETE `/group/<group-name>/user/<user-name>/admin`
 
-URL         | **`/group/public`**
+URL         | **`/group/<group-name>/user/<user-name>/admin`**
 ----------- |----------
-Method      | GET     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [getPublicGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPublicGroupsHandler%22)
+Code        | [removeUserGroupAdminHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserGroupAdminHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### generateToken allows a user to generate a token associated to a group permission
+
+URL         | **`/group/<group-name>/token`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [generateTokenHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+generateTokenHandler%22)
     
 
 

@@ -105,13 +105,13 @@ Code        | [postDatabaseMigrationUnlockedHandler](https://github.com/ovh/cds/
 
 
 
-### getProfileIndex returns the profiles index
+### PUT `/admin/services/call`
 
-URL         | **`/admin/debug`**
+URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: false
-Code        | [getProfileIndexHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getProfileIndexHandler%22)
+Method      | PUT     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22)
     
 
 
@@ -122,13 +122,13 @@ Code        | [getProfileIndexHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### getProfile responds with the pprof-formatted profile named by the request.
+### DELETE `/admin/services/call`
 
-URL         | **`/admin/debug/<name>`**
+URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | GET     
+Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getProfileHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getProfileHandler%22)
+Code        | [deleteAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22)
     
 
 
@@ -139,13 +139,13 @@ Code        | [getProfileHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
-### getCPUProfile responds with the pprof-formatted cpu profile.
+### GET `/admin/services/call`
 
-URL         | **`/admin/debug/cpu`**
+URL         | **`/admin/services/call`**
 ----------- |----------
 Method      | GET     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getCPUProfileHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getCPUProfileHandler%22)
+Code        | [getAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22)
     
 
 
@@ -156,13 +156,13 @@ Code        | [getCPUProfileHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### getTrace responds with the execution trace in binary form.
+### POST `/admin/services/call`
 
-URL         | **`/admin/debug/trace`**
+URL         | **`/admin/services/call`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getTraceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTraceHandler%22)
+Code        | [postAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22)
     
 
 
@@ -224,40 +224,6 @@ Code        | [getAllGRPCluginHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/admin/plugin/<name>`
-
-URL         | **`/admin/plugin/<name>`**
------------ |----------
-Method      | GET     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/admin/plugin/<name>`
-
-URL         | **`/admin/plugin/<name>`**
------------ |----------
-Method      | PUT     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [putGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putGRPCluginHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### DELETE `/admin/plugin/<name>`
 
 URL         | **`/admin/plugin/<name>`**
@@ -265,6 +231,40 @@ URL         | **`/admin/plugin/<name>`**
 Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
 Code        | [deleteGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/admin/service/<name>`
+
+URL         | **`/admin/service/<name>`**
+----------- |----------
+Method      | GET     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [getAdminServiceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/admin/plugin/<name>`
+
+URL         | **`/admin/plugin/<name>`**
+----------- |----------
+Method      | GET     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [getGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginHandler%22)
     
 
 
@@ -292,13 +292,13 @@ Code        | [postGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### DELETE `/admin/plugin/<name>/binary/<os>/<arch>`
+### GET `/admin/plugin/<name>/binary/<os>/<arch>`
 
 URL         | **`/admin/plugin/<name>/binary/<os>/<arch>`**
 ----------- |----------
-Method      | DELETE     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginBinaryHandler%22)
+Method      | GET     
+Permissions |  Auth: false
+Code        | [getGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginBinaryHandler%22)
     
 
 
@@ -309,13 +309,13 @@ Code        | [deleteGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q
 
 
 
-### GET `/admin/plugin/<name>/binary/<os>/<arch>`
+### DELETE `/admin/plugin/<name>/binary/<os>/<arch>`
 
 URL         | **`/admin/plugin/<name>/binary/<os>/<arch>`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: false
-Code        | [getGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginBinaryHandler%22)
+Method      | DELETE     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [deleteGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginBinaryHandler%22)
     
 
 
@@ -360,13 +360,13 @@ Code        | [deleteAdminServiceHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-### GET `/admin/service/<name>`
+### PUT `/admin/plugin/<name>`
 
-URL         | **`/admin/service/<name>`**
+URL         | **`/admin/plugin/<name>`**
 ----------- |----------
-Method      | GET     
+Method      | PUT     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getAdminServiceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceHandler%22)
+Code        | [putGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putGRPCluginHandler%22)
     
 
 
@@ -394,74 +394,6 @@ Code        | [getAdminServicesHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/admin/services/call`
-
-URL         | **`/admin/services/call`**
------------ |----------
-Method      | POST     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [postAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/admin/services/call`
-
-URL         | **`/admin/services/call`**
------------ |----------
-Method      | PUT     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### DELETE `/admin/services/call`
-
-URL         | **`/admin/services/call`**
------------ |----------
-Method      | DELETE     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/admin/services/call`
-
-URL         | **`/admin/services/call`**
------------ |----------
-Method      | GET     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### DELETE `/admin/warning`
 
 URL         | **`/admin/warning`**
@@ -469,6 +401,74 @@ URL         | **`/admin/warning`**
 Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
 Code        | [adminTruncateWarningsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+adminTruncateWarningsHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### getCPUProfile responds with the pprof-formatted cpu profile.
+
+URL         | **`/admin/debug/cpu`**
+----------- |----------
+Method      | GET     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [getCPUProfileHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getCPUProfileHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### getProfile responds with the pprof-formatted profile named by the request.
+
+URL         | **`/admin/debug/<name>`**
+----------- |----------
+Method      | GET     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [getProfileHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getProfileHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### getProfileIndex returns the profiles index
+
+URL         | **`/admin/debug`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: false
+Code        | [getProfileIndexHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getProfileIndexHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### getTrace responds with the execution trace in binary form.
+
+URL         | **`/admin/debug/trace`**
+----------- |----------
+Method      | GET     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [getTraceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTraceHandler%22)
     
 
 

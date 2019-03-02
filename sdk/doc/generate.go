@@ -280,6 +280,9 @@ func writeRouteInfo(inputDocs []Doc, genPath string) error {
 			Routes: []routeTmpl{},
 		}
 
+		sort.Slice(docs, func(i, j int) bool {
+			return docs[i].Title < docs[j].Title
+		})
 		for _, doc := range docs {
 			route := routeTmpl{}
 			if doc.Title == "" {
