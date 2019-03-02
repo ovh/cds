@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -176,6 +177,10 @@ func (c *Common) Stop(context.Context, *empty.Empty) (*empty.Empty, error) {
 // InfoMarkdown returns string formatted with markdown
 func InfoMarkdown(pl sdk.GRPCPlugin) string {
 	var sp string
+	sort.Slice(pl.Parameters, func(i, j int) bool {
+		return pl.Parameters[i].Name < pl.Parameters[j].Name
+	})
+
 	for _, param := range pl.Parameters {
 		sp += fmt.Sprintf("* **%s**: %s\n", param.Name, param.Description)
 	}

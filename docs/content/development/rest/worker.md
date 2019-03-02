@@ -3,13 +3,13 @@ title = "worker"
 +++
 
 
-### POST `/worker`
+### DELETE `/worker/model/<permModelID>`
 
-URL         | **`/worker`**
+URL         | **`/worker/model/<permModelID>`**
 ----------- |----------
-Method      | POST     
-Permissions |  Auth: false
-Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+registerWorkerHandler%22)
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22)
     
 
 
@@ -20,81 +20,13 @@ Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### GET `/worker`
+### DELETE `/worker/model/pattern/<type>/<name>`
 
-URL         | **`/worker`**
+URL         | **`/worker/model/pattern/<type>/<name>`**
 ----------- |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/worker/<id>/disable`
-
-URL         | **`/worker/<id>/disable`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [disableWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+disableWorkerHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/worker/checking`
-
-URL         | **`/worker/checking`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [workerCheckingHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+workerCheckingHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/worker/model`
-
-URL         | **`/worker/model`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkerModelsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/worker/model`
-
-URL         | **`/worker/model`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [addWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22)
+Method      | DELETE     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [deleteWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelPatternHandler%22)
     
 
 
@@ -122,40 +54,6 @@ Code        | [getWorkerModelUsageHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### DELETE `/worker/model/<permModelID>`
-
-URL         | **`/worker/model/<permModelID>`**
------------ |----------
-Method      | DELETE     
-Permissions |  Auth: true
-Code        | [deleteWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/worker/model/<permModelID>`
-
-URL         | **`/worker/model/<permModelID>`**
------------ |----------
-Method      | PUT     
-Permissions |  Auth: true
-Code        | [updateWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### GET `/worker/model/<permModelID>/export`
 
 URL         | **`/worker/model/<permModelID>/export`**
@@ -163,23 +61,6 @@ URL         | **`/worker/model/<permModelID>/export`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getWorkerModelExportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelExportHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/worker/model/book/<permModelID>`
-
-URL         | **`/worker/model/book/<permModelID>`**
------------ |----------
-Method      | PUT     
-Permissions |  NeedHatchery:  -  Auth: true
-Code        | [bookWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+bookWorkerModelHandler%22)
     
 
 
@@ -241,30 +122,13 @@ Code        | [getWorkerModelsEnabledHandler](https://github.com/ovh/cds/search?
 
 
 
-### PUT `/worker/model/error/<permModelID>`
+### GET `/worker/model/pattern/<type>/<name>`
 
-URL         | **`/worker/model/error/<permModelID>`**
+URL         | **`/worker/model/pattern/<type>/<name>`**
 ----------- |----------
-Method      | PUT     
-Permissions |  NeedHatchery:  -  Auth: true
-Code        | [spawnErrorWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+spawnErrorWorkerModelHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/worker/unregister`
-
-URL         | **`/worker/unregister`**
------------ |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [unregisterWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+unregisterWorkerHandler%22)
+Code        | [getWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22)
     
 
 
@@ -292,6 +156,91 @@ Code        | [getWorkerModelPatternsHandler](https://github.com/ovh/cds/search?
 
 
 
+### GET `/worker/model/type`
+
+URL         | **`/worker/model/type`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelTypesHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelTypesHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/worker/model`
+
+URL         | **`/worker/model`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/worker`
+
+URL         | **`/worker`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/worker/<id>/disable`
+
+URL         | **`/worker/<id>/disable`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [disableWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+disableWorkerHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/worker/checking`
+
+URL         | **`/worker/checking`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [workerCheckingHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+workerCheckingHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### POST `/worker/model/pattern`
 
 URL         | **`/worker/model/pattern`**
@@ -309,64 +258,13 @@ Code        | [postAddWorkerModelPatternHandler](https://github.com/ovh/cds/sear
 
 
 
-### PUT `/worker/model/pattern/<type>/<name>`
+### POST `/worker/model`
 
-URL         | **`/worker/model/pattern/<type>/<name>`**
+URL         | **`/worker/model`**
 ----------- |----------
-Method      | PUT     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [putWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelPatternHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/worker/model/pattern/<type>/<name>`
-
-URL         | **`/worker/model/pattern/<type>/<name>`**
------------ |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### DELETE `/worker/model/pattern/<type>/<name>`
-
-URL         | **`/worker/model/pattern/<type>/<name>`**
------------ |----------
-Method      | DELETE     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelPatternHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/worker/model/type`
-
-URL         | **`/worker/model/type`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getWorkerModelTypesHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelTypesHandler%22)
+Code        | [addWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22)
     
 
 
@@ -394,6 +292,23 @@ Code        | [refreshWorkerHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
+### POST `/worker/unregister`
+
+URL         | **`/worker/unregister`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [unregisterWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+unregisterWorkerHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### POST `/worker/waiting`
 
 URL         | **`/worker/waiting`**
@@ -401,6 +316,91 @@ URL         | **`/worker/waiting`**
 Method      | POST     
 Permissions |  Auth: true
 Code        | [workerWaitingHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+workerWaitingHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/worker`
+
+URL         | **`/worker`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: false
+Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+registerWorkerHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/worker/model/<permModelID>`
+
+URL         | **`/worker/model/<permModelID>`**
+----------- |----------
+Method      | PUT     
+Permissions |  Auth: true
+Code        | [updateWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/worker/model/book/<permModelID>`
+
+URL         | **`/worker/model/book/<permModelID>`**
+----------- |----------
+Method      | PUT     
+Permissions |  NeedHatchery:  -  Auth: true
+Code        | [bookWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+bookWorkerModelHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/worker/model/error/<permModelID>`
+
+URL         | **`/worker/model/error/<permModelID>`**
+----------- |----------
+Method      | PUT     
+Permissions |  NeedHatchery:  -  Auth: true
+Code        | [spawnErrorWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+spawnErrorWorkerModelHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/worker/model/pattern/<type>/<name>`
+
+URL         | **`/worker/model/pattern/<type>/<name>`**
+----------- |----------
+Method      | PUT     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [putWorkerModelPatternHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelPatternHandler%22)
     
 
 

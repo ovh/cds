@@ -281,16 +281,13 @@ func writeRouteInfo(inputDocs []Doc, genPath string) error {
 		}
 
 		sort.Slice(docs, func(i, j int) bool {
-			return docs[i].Title < docs[j].Title
+			titlea := docTitle(docs[i])
+			titleb := docTitle(docs[j])
+			return titlea < titleb
 		})
 		for _, doc := range docs {
 			route := routeTmpl{}
-			if doc.Title == "" {
-				route.Title = fmt.Sprintf("%s `%s`", doc.HTTPOperation, doc.URL)
-			} else {
-				route.Title = doc.Title
-			}
-
+			route.Title = docTitle(doc)
 			var permissions string
 			var noAuth bool
 			for _, v := range doc.Middleware {
@@ -333,6 +330,12 @@ func writeRouteInfo(inputDocs []Doc, genPath string) error {
 	return nil
 }
 
+func docTitle(doc Doc) string {
+	if doc.Title == "" {
+		return fmt.Sprintf("%s `%s`", doc.HTTPOperation, doc.URL)
+	}
+	return doc.Title
+}
 func extractFromMethod(doc *Doc, m Method) {
 	docSliptted := strings.Split(m.Doc, "\n")
 	for _, dLine := range docSliptted {

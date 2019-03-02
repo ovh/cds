@@ -3,30 +3,13 @@ title = "template"
 +++
 
 
-### GET `/template`
+### DELETE `/template/<group-name>/<templateSlug>/instance/<instanceID>`
 
-URL         | **`/template`**
+URL         | **`/template/<group-name>/<templateSlug>/instance/<instanceID>`**
 ----------- |----------
-Method      | GET     
+Method      | DELETE     
 Permissions |  Auth: true
-Code        | [getTemplatesHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplatesHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/template`
-
-URL         | **`/template`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [postTemplateHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateHandler%22)
+Code        | [deleteTemplateInstanceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateInstanceHandler%22)
     
 
 
@@ -54,57 +37,6 @@ Code        | [deleteTemplateHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### GET `/template/<group-name>/<templateSlug>`
-
-URL         | **`/template/<group-name>/<templateSlug>`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getTemplateHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/template/<group-name>/<templateSlug>`
-
-URL         | **`/template/<group-name>/<templateSlug>`**
------------ |----------
-Method      | PUT     
-Permissions |  Auth: true
-Code        | [putTemplateHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putTemplateHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/template/<group-name>/<templateSlug>/apply`
-
-URL         | **`/template/<group-name>/<templateSlug>/apply`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [postTemplateApplyHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateApplyHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### GET `/template/<group-name>/<templateSlug>/audit`
 
 URL         | **`/template/<group-name>/<templateSlug>/audit`**
@@ -112,23 +44,6 @@ URL         | **`/template/<group-name>/<templateSlug>/audit`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getTemplateAuditsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateAuditsHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/template/<group-name>/<templateSlug>/bulk`
-
-URL         | **`/template/<group-name>/<templateSlug>/bulk`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [postTemplateBulkHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateBulkHandler%22)
     
 
 
@@ -173,13 +88,81 @@ Code        | [getTemplateInstancesHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### DELETE `/template/<group-name>/<templateSlug>/instance/<instanceID>`
+### GET `/template/<group-name>/<templateSlug>/usage`
 
-URL         | **`/template/<group-name>/<templateSlug>/instance/<instanceID>`**
+URL         | **`/template/<group-name>/<templateSlug>/usage`**
 ----------- |----------
-Method      | DELETE     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [deleteTemplateInstanceHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateInstanceHandler%22)
+Code        | [getTemplateUsageHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateUsageHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/template/<group-name>/<templateSlug>`
+
+URL         | **`/template/<group-name>/<templateSlug>`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getTemplateHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/template`
+
+URL         | **`/template`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getTemplatesHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplatesHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/template/<group-name>/<templateSlug>/apply`
+
+URL         | **`/template/<group-name>/<templateSlug>/apply`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [postTemplateApplyHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateApplyHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/template/<group-name>/<templateSlug>/bulk`
+
+URL         | **`/template/<group-name>/<templateSlug>/bulk`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [postTemplateBulkHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateBulkHandler%22)
     
 
 
@@ -207,13 +190,13 @@ Code        | [postTemplatePullHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### GET `/template/<group-name>/<templateSlug>/usage`
+### POST `/template/push`
 
-URL         | **`/template/<group-name>/<templateSlug>/usage`**
+URL         | **`/template/push`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getTemplateUsageHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateUsageHandler%22)
+Code        | [postTemplatePushHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplatePushHandler%22)
     
 
 
@@ -224,13 +207,30 @@ Code        | [getTemplateUsageHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/template/push`
+### POST `/template`
 
-URL         | **`/template/push`**
+URL         | **`/template`**
 ----------- |----------
 Method      | POST     
 Permissions |  Auth: true
-Code        | [postTemplatePushHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplatePushHandler%22)
+Code        | [postTemplateHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/template/<group-name>/<templateSlug>`
+
+URL         | **`/template/<group-name>/<templateSlug>`**
+----------- |----------
+Method      | PUT     
+Permissions |  Auth: true
+Code        | [putTemplateHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putTemplateHandler%22)
     
 
 

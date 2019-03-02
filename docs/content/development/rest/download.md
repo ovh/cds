@@ -3,13 +3,13 @@ title = "download"
 +++
 
 
-### GET `/download`
+### GET `/download/<name>/<os>/<arch>`
 
-URL         | **`/download`**
+URL         | **`/download/<name>/<os>/<arch>`**
 ----------- |----------
 Method      | GET     
-Permissions |  Auth: true
-Code        | [downloadsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+downloadsHandler%22)
+Permissions |  Auth: false
+Code        | [downloadHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+downloadHandler%22)
     
 
 
@@ -20,13 +20,13 @@ Code        | [downloadsHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### GET `/download/<name>/<os>/<arch>`
+### GET `/download`
 
-URL         | **`/download/<name>/<os>/<arch>`**
+URL         | **`/download`**
 ----------- |----------
 Method      | GET     
-Permissions |  Auth: false
-Code        | [downloadHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+downloadHandler%22)
+Permissions |  Auth: true
+Code        | [downloadsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+downloadsHandler%22)
     
 
 

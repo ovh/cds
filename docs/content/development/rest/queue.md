@@ -3,6 +3,57 @@ title = "queue"
 +++
 
 
+### DELETE `/queue/workflows/<id>/book`
+
+URL         | **`/queue/workflows/<id>/book`**
+----------- |----------
+Method      | DELETE     
+Permissions |  NeedHatchery:  -  Auth: true
+Code        | [deleteBookWorkflowJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBookWorkflowJobHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/queue/workflows/<id>/infos`
+
+URL         | **`/queue/workflows/<id>/infos`**
+----------- |----------
+Method      | GET     
+Permissions |  NeedWorker:  -  NeedHatchery:  -  Auth: true
+Code        | [getWorkflowJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowJobHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/queue/workflows/count`
+
+URL         | **`/queue/workflows/count`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [countWorkflowJobQueueHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+countWorkflowJobQueueHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### GET `/queue/workflows`
 
 URL         | **`/queue/workflows`**
@@ -37,23 +88,6 @@ Code        | [postIncWorkflowJobAttemptHandler](https://github.com/ovh/cds/sear
 
 
 
-### DELETE `/queue/workflows/<id>/book`
-
-URL         | **`/queue/workflows/<id>/book`**
------------ |----------
-Method      | DELETE     
-Permissions |  NeedHatchery:  -  Auth: true
-Code        | [deleteBookWorkflowJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBookWorkflowJobHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### POST `/queue/workflows/<id>/book`
 
 URL         | **`/queue/workflows/<id>/book`**
@@ -61,23 +95,6 @@ URL         | **`/queue/workflows/<id>/book`**
 Method      | POST     
 Permissions |  NeedHatchery:  -  Auth: true
 Code        | [postBookWorkflowJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postBookWorkflowJobHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/queue/workflows/<id>/infos`
-
-URL         | **`/queue/workflows/<id>/infos`**
------------ |----------
-Method      | GET     
-Permissions |  NeedWorker:  -  NeedHatchery:  -  Auth: true
-Code        | [getWorkflowJobHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowJobHandler%22)
     
 
 
@@ -248,23 +265,6 @@ URL         | **`/queue/workflows/<token>/vulnerability`**
 Method      | POSTEXECUTE     
 Permissions |  NeedWorker:  -  Auth: true
 Code        | [postVulnerabilityReportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postVulnerabilityReportHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/queue/workflows/count`
-
-URL         | **`/queue/workflows/count`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [countWorkflowJobQueueHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+countWorkflowJobQueueHandler%22)
     
 
 

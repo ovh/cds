@@ -54,57 +54,6 @@ Code        | [getPipelinesUsingActionHandler](https://github.com/ovh/cds/search
 
 
 
-### GET `/action/<permActionName>`
-
-URL         | **`/action/<permActionName>`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/action/<permActionName>`
-
-URL         | **`/action/<permActionName>`**
------------ |----------
-Method      | PUT     
-Permissions |  Auth: true
-Code        | [updateActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/action/<permActionName>`
-
-URL         | **`/action/<permActionName>`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [addActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### GET `/action/<permActionName>/export`
 
 URL         | **`/action/<permActionName>/export`**
@@ -112,6 +61,23 @@ URL         | **`/action/<permActionName>/export`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getActionExportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionExportHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/action/<permActionName>`
+
+URL         | **`/action/<permActionName>`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22)
     
 
 
@@ -146,6 +112,40 @@ URL         | **`/action`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getActionsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionsHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/action/<permActionName>`
+
+URL         | **`/action/<permActionName>`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [addActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/action/<permActionName>`
+
+URL         | **`/action/<permActionName>`**
+----------- |----------
+Method      | PUT     
+Permissions |  Auth: true
+Code        | [updateActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22)
     
 
 

@@ -3,81 +3,13 @@ title = "group"
 +++
 
 
-### GET `/group`
+### DELETE `/group/<group-name>/token/<tokenid>`
 
-URL         | **`/group`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupsHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/group`
-
-URL         | **`/group`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [addGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### DELETE `/group/<group-name>`
-
-URL         | **`/group/<group-name>`**
+URL         | **`/group/<group-name>/token/<tokenid>`**
 ----------- |----------
 Method      | DELETE     
 Permissions |  Auth: true
-Code        | [deleteGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### PUT `/group/<group-name>`
-
-URL         | **`/group/<group-name>`**
------------ |----------
-Method      | PUT     
-Permissions |  Auth: true
-Code        | [updateGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/group/<group-name>`
-
-URL         | **`/group/<group-name>`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22)
+Code        | [deleteTokenHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTokenHandler%22)
     
 
 
@@ -105,6 +37,40 @@ Code        | [removeUserGroupAdminHandler](https://github.com/ovh/cds/search?q=
 
 
 
+### DELETE `/group/<group-name>/user/<user-name>`
+
+URL         | **`/group/<group-name>/user/<user-name>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [removeUserFromGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserFromGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### DELETE `/group/<group-name>`
+
+URL         | **`/group/<group-name>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### GET `/group/<group-name>/token`
 
 URL         | **`/group/<group-name>/token`**
@@ -122,13 +88,13 @@ Code        | [getGroupTokenListHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### DELETE `/group/<group-name>/token/<tokenid>`
+### GET `/group/<group-name>`
 
-URL         | **`/group/<group-name>/token/<tokenid>`**
+URL         | **`/group/<group-name>`**
 ----------- |----------
-Method      | DELETE     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [deleteTokenHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTokenHandler%22)
+Code        | [getGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22)
     
 
 
@@ -139,13 +105,13 @@ Code        | [deleteTokenHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### POST `/group/<group-name>/user`
+### GET `/group/public`
 
-URL         | **`/group/<group-name>/user`**
+URL         | **`/group/public`**
 ----------- |----------
-Method      | POST     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [addUserInGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addUserInGroupHandler%22)
+Code        | [getPublicGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPublicGroupsHandler%22)
     
 
 
@@ -156,13 +122,13 @@ Code        | [addUserInGroupHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### DELETE `/group/<group-name>/user/<user-name>`
+### GET `/group`
 
-URL         | **`/group/<group-name>/user/<user-name>`**
+URL         | **`/group`**
 ----------- |----------
-Method      | DELETE     
+Method      | GET     
 Permissions |  Auth: true
-Code        | [removeUserFromGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserFromGroupHandler%22)
+Code        | [getGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupsHandler%22)
     
 
 
@@ -190,13 +156,47 @@ Code        | [setUserGroupAdminHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### GET `/group/public`
+### POST `/group/<group-name>/user`
 
-URL         | **`/group/public`**
+URL         | **`/group/<group-name>/user`**
 ----------- |----------
-Method      | GET     
+Method      | POST     
 Permissions |  Auth: true
-Code        | [getPublicGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPublicGroupsHandler%22)
+Code        | [addUserInGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addUserInGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/group`
+
+URL         | **`/group`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [addGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/group/<group-name>`
+
+URL         | **`/group/<group-name>`**
+----------- |----------
+Method      | PUT     
+Permissions |  Auth: true
+Code        | [updateGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupHandler%22)
     
 
 

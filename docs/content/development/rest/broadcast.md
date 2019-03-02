@@ -3,30 +3,13 @@ title = "broadcast"
 +++
 
 
-### POST `/broadcast`
+### DELETE `/broadcast/<id>`
 
-URL         | **`/broadcast`**
+URL         | **`/broadcast/<id>`**
 ----------- |----------
-Method      | POST     
+Method      | DELETE     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [addBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addBroadcastHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/broadcast`
-
-URL         | **`/broadcast`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getBroadcastsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastsHandler%22)
+Code        | [deleteBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBroadcastHandler%22)
     
 
 
@@ -54,30 +37,13 @@ Code        | [getBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### PUT `/broadcast/<id>`
+### GET `/broadcast`
 
-URL         | **`/broadcast/<id>`**
+URL         | **`/broadcast`**
 ----------- |----------
-Method      | PUT     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [updateBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### DELETE `/broadcast/<id>`
-
-URL         | **`/broadcast/<id>`**
------------ |----------
-Method      | DELETE     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [deleteBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBroadcastHandler%22)
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getBroadcastsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastsHandler%22)
     
 
 
@@ -95,6 +61,40 @@ URL         | **`/broadcast/<id>/mark`**
 Method      | POST     
 Permissions |  Auth: true
 Code        | [postMarkAsReadBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postMarkAsReadBroadcastHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/broadcast`
+
+URL         | **`/broadcast`**
+----------- |----------
+Method      | POST     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [addBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addBroadcastHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### PUT `/broadcast/<id>`
+
+URL         | **`/broadcast/<id>`**
+----------- |----------
+Method      | PUT     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [updateBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22)
     
 
 

@@ -3,125 +3,6 @@ title = "user"
 +++
 
 
-### POST `/user/<username>/reset`
-
-URL         | **`/user/<username>/reset`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: false
-Code        | [resetUserHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+resetUserHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/user/token`
-
-URL         | **`/user/token`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getUserTokenListHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserTokenListHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/user/timeline/filter`
-
-URL         | **`/user/timeline/filter`**
------------ |----------
-Method      | POST     
-Permissions |  Auth: true
-Code        | [postTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/user/timeline/filter`
-
-URL         | **`/user/timeline/filter`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/user/timeline`
-
-URL         | **`/user/timeline`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getTimelineHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### POST `/user/import`
-
-URL         | **`/user/import`**
------------ |----------
-Method      | POST     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [importUsersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+importUsersHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/user/token/<token>`
-
-URL         | **`/user/token/<token>`**
------------ |----------
-Method      | GET     
-Permissions |  Auth: true
-Code        | [getUserTokenHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserTokenHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ### AddUser creates a new user and generate verification email
 
 URL         | **`/user/signup`**
@@ -173,6 +54,74 @@ Code        | [deleteUserHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
+### GET `/user/timeline/filter`
+
+URL         | **`/user/timeline/filter`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/user/timeline`
+
+URL         | **`/user/timeline`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getTimelineHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/user/token/<token>`
+
+URL         | **`/user/token/<token>`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getUserTokenHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserTokenHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### GET `/user/token`
+
+URL         | **`/user/token`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getUserTokenListHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserTokenListHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ### GetUser returns a specific user's information
 
 URL         | **`/user/<username>`**
@@ -197,6 +146,57 @@ URL         | **`/user`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getUsersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUsersHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/user/<username>/reset`
+
+URL         | **`/user/<username>/reset`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: false
+Code        | [resetUserHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+resetUserHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/user/import`
+
+URL         | **`/user/import`**
+----------- |----------
+Method      | POST     
+Permissions |  NeedAdmin: true -  Auth: true
+Code        | [importUsersHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+importUsersHandler%22)
+    
+
+
+
+
+
+
+
+
+
+### POST `/user/timeline/filter`
+
+URL         | **`/user/timeline/filter`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [postTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22)
     
 
 
