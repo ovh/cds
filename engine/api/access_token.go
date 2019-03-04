@@ -16,6 +16,60 @@ import (
 
 // Manage access token handlers
 
+func (api *API) createNewAccessToken(u sdk.User, accessTokenRequest sdk.AccessTokenRequest) (token sdk.AccessToken, jwttoken string, err error) {
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return token, jwttoken, sdk.WithStack(err)
+	}
+
+	defer tx.Rollback() // nolint
+
+	allGroups, err := group.LoadGroupByAdmin(tx, u.ID)
+	if err != nil {
+		return token, jwttoken, sdk.WithStack(err)
+	}
+
+	// check that provided group is among the allGroups slice
+	// a user can create a token associated to a group only if he is admin of this group
+	var scopeGroup = make([]sdk.Group, 0, len(accessTokenRequest.GroupsIDs))
+	for _, groupID := range accessTokenRequest.GroupsIDs {
+		var found bool
+		for _, g := range allGroups {
+			if g.ID == groupID {
+				found = true
+				scopeGroup = append(scopeGroup, g)
+				break
+			}
+		}
+		if !found {
+			return token, jwttoken, sdk.WrapError(sdk.ErrWrongRequest, "group %d not found", groupID)
+		}
+	}
+
+	if accessTokenRequest.ExpirationDelaySecond <= 0 {
+		accessTokenRequest.ExpirationDelaySecond = 86400 // 1 Day
+	}
+	expiration := time.Now().Add(time.Duration(accessTokenRequest.ExpirationDelaySecond) * time.Second)
+
+	// Create the token
+	token, jwttoken, err = accesstoken.New(u, scopeGroup, accessTokenRequest.Origin, accessTokenRequest.Description, expiration)
+	if err != nil {
+		return token, jwttoken, sdk.WithStack(err)
+	}
+
+	// Insert the token
+	if err := accesstoken.Insert(tx, &token); err != nil {
+		return token, jwttoken, sdk.WithStack(err)
+	}
+
+	// Commit the token
+	if err := tx.Commit(); err != nil {
+		return token, jwttoken, sdk.WithStack(err)
+	}
+
+	return token, jwttoken, nil
+}
+
 // postNewAccessTokenHandler create a new specific accesstoken with a specific scope (list of groups)
 // the JWT token is send through a header X-CDS-JWT
 func (api *API) postNewAccessTokenHandler() service.Handler {
@@ -33,53 +87,8 @@ func (api *API) postNewAccessTokenHandler() service.Handler {
 
 		grantedUser := getGrantedUser(ctx)
 
-		tx, err := api.mustDB().Begin()
+		token, jwttoken, err := api.createNewAccessToken(grantedUser.OnBehalfOf, accessTokenRequest)
 		if err != nil {
-			return sdk.WithStack(err)
-		}
-
-		defer tx.Rollback() // nolint
-
-		allGroups, err := group.LoadGroupByAdmin(tx, grantedUser.OnBehalfOf.ID)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-
-		// check that provided group is among the allGroups slice
-		// a user can create a token associated to a group only if he is admin of this group
-		var scopeGroup = make([]sdk.Group, 0, len(accessTokenRequest.GroupsIDs))
-		for _, groupID := range accessTokenRequest.GroupsIDs {
-			var found bool
-			for _, g := range allGroups {
-				if g.ID == groupID {
-					found = true
-					scopeGroup = append(scopeGroup, g)
-					break
-				}
-			}
-			if !found {
-				return sdk.WrapError(sdk.ErrWrongRequest, "group %d not found", groupID)
-			}
-		}
-
-		if accessTokenRequest.ExpirationDelaySecond <= 0 {
-			accessTokenRequest.ExpirationDelaySecond = 86400 // 1 Day
-		}
-		expiration := time.Now().Add(time.Duration(accessTokenRequest.ExpirationDelaySecond) * time.Second)
-
-		// Create the token
-		token, jwttoken, err := accesstoken.New(grantedUser.OnBehalfOf, scopeGroup, accessTokenRequest.Origin, accessTokenRequest.Description, expiration)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-
-		// Insert the token
-		if err := accesstoken.Insert(tx, &token); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		// Commit the token
-		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
 

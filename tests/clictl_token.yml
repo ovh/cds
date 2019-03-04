@@ -9,7 +9,7 @@ testcases:
 
 - name: token generate
   steps:
-  - script: {{.cds.build.cdsctl}}  token-deprecated generate ITCLIAPP_GRP persistent "this is a test token"
+  - script: {{.cds.build.cdsctl}}  token generate ITCLIAPP_GRP persistent "this is a test token"
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring ITCLIAPP_GRP
@@ -18,7 +18,7 @@ testcases:
 
 - name: token generate without description
   steps:
-  - script: {{.cds.build.cdsctl}}  token-deprecated generate ITCLIAPP_GRP daily
+  - script: {{.cds.build.cdsctl}}  token generate ITCLIAPP_GRP daily
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring ITCLIAPP_GRP
@@ -26,7 +26,7 @@ testcases:
 
 - name: token list in a group
   steps:
-  - script: {{.cds.build.cdsctl}}  token-deprecated list ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}}  token list ITCLIAPP_GRP
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring ITCLIAPP_GRP
@@ -36,7 +36,7 @@ testcases:
 
 - name: token generate in another group
   steps:
-  - script: {{.cds.build.cdsctl}}  token-deprecated generate ITCLIAPP_GRP2 session "this is another test token"
+  - script: {{.cds.build.cdsctl}}  token generate ITCLIAPP_GRP2 session "this is another test token"
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring ITCLIAPP_GRP2
@@ -44,7 +44,7 @@ testcases:
 
 - name: token list for user
   steps:
-  - script: {{.cds.build.cdsctl}}  token-deprecated list
+  - script: {{.cds.build.cdsctl}}  token list
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring ITCLIAPP_GRP

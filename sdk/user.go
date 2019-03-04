@@ -47,8 +47,14 @@ type UserAPIRequest struct {
 
 // UserLoginRequest login request
 type UserLoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	RequestToken string `json:"request_token"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+}
+
+type UserLoginCallbackRequest struct {
+	RequestToken string `json:"request_token"`
+	PublicKey    []byte `json:"public_key"`
 }
 
 // UserAPIResponse  response from rest API

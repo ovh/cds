@@ -9,3 +9,11 @@ export class User {
 
     constructor() {}
 }
+
+export class UserLoginRequest {
+    username: string;
+    password: string;
+    request_token: string;
+
+    constructor() {}
+}

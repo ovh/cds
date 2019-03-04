@@ -246,6 +246,7 @@ type UserClient interface {
 	UserGet(username string) (*sdk.User, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UserLogin(username, password string) (bool, string, error)
+	UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error)
 	UserReset(username, email, callback string) error
 	UserSignup(username, fullname, email, callback string) error
 	ListAllTokens() ([]sdk.Token, error)

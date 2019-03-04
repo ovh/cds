@@ -9,7 +9,7 @@ import (
 )
 
 var tokenCmd = cli.Command{
-	Name:  "token-deprecated",
+	Name:  "token",
 	Short: "Manage CDS group token",
 }
 

@@ -18,8 +18,8 @@ func accesstoken() *cobra.Command {
 
 	var (
 		cmd = cli.Command{
-			Name:  "token",
-			Short: "Manage CDS access tokens",
+			Name:  "xtoken",
+			Short: "Manage CDS access tokens [EXPERIMENTAL]",
 		}
 
 		listbyUserCmd = cli.Command{

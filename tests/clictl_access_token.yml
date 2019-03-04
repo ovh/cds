@@ -2,20 +2,20 @@ name: Access token TestSuite
 testcases:
 - name: prepare_test
   steps:
-  - script: "{{.cds.build.cdsctl}} token delete $({{.cds.build.cdsctl}} token list -q) | true"
+  - script: "{{.cds.build.cdsctl}} xtoken delete $({{.cds.build.cdsctl}} token list -q) | true"
   - script: "{{.cds.build.cdsctl}} group remove --force IT_ACCESS_TOKEN_GROUP"
 
 - name: manage_token
   steps:
   - script: "{{.cds.build.cdsctl}} group add IT_ACCESS_TOKEN_GROUP"
-  - script: "{{.cds.build.cdsctl}} token new -d test -e 10s -g IT_ACCESS_TOKEN_GROUP"
-  - script: "{{.cds.build.cdsctl}} token list --group IT_ACCESS_TOKEN_GROUP --format json"
+  - script: "{{.cds.build.cdsctl}} xtoken new -d test -e 10s -g IT_ACCESS_TOKEN_GROUP"
+  - script: "{{.cds.build.cdsctl}} xtoken list --group IT_ACCESS_TOKEN_GROUP --format json"
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.systemoutjson0.id ShouldNotBeEmpty
-  - script: "{{.cds.build.cdsctl}} token regen {{.manage_token.result.systemoutjson.systemoutjson0.id}}"
-  - script: "{{.cds.build.cdsctl}} token delete {{.manage_token.result.systemoutjson.systemoutjson0.id}}" 
-  - script: "{{.cds.build.cdsctl}} token list --group IT_ACCESS_TOKEN_GROUP"
+  - script: "{{.cds.build.cdsctl}} xtoken regen {{.manage_token.result.systemoutjson.systemoutjson0.id}}"
+  - script: "{{.cds.build.cdsctl}} xtoken delete {{.manage_token.result.systemoutjson.systemoutjson0.id}}" 
+  - script: "{{.cds.build.cdsctl}} xtoken list --group IT_ACCESS_TOKEN_GROUP"
     assertions:
     - result.systemout ShouldEqual "nothing to display..."
 

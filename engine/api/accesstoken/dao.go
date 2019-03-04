@@ -78,7 +78,7 @@ func Insert(db gorp.SqlExecutor, token *sdk.AccessToken) error {
 	if err := db.Insert(&dbToken); err != nil {
 		if e, ok := err.(*pq.Error); ok {
 			if e.Code == gorpmapping.ViolateUniqueKeyPGCode {
-				return sdk.ErrConflict
+				return sdk.WrapError(sdk.ErrConflict, "conflict: %v", e)
 			}
 			return sdk.WithStack(err)
 		}
