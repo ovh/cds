@@ -1,0 +1,219 @@
+{{- $linkMore := $.Get "linkMore" | default "" -}}
+{{- $title := $.Get "title" | default "" -}}
+<main>
+
+	{{ if  $title }}
+	<h2>{{ $title}}</h2>
+	{{ end }}
+	
+	<div id="matrix">
+			<table>
+					<thead>
+					<tr>
+					<th>Feature</th>
+					<th>CDS</th>
+					<th>Bamboo</th>
+					<th>Buildbot</th>
+					<th>Gitlab CI</th>
+					<th>Jenkins</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr>
+					<td><a href="{{ $linkMore }}#pipeline">Pipeline</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#workflow">Workflow</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*17</a></sup></sub></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#visual-configuration-with-web-ui">Visual configuration with Web UI</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*1</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#configuration-on-git-repository">Configuration on Git Repository</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#configuration-as-code-on-ui">Configuration as code on UI</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*2</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#native-git-branching">Native Git branching</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*3</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#jobs-services">Job's Services</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#secure-remote-caching">Secure Remote Caching</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*4</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#enterprise-notification-bus">Enterprise Notification Bus</a> &amp; <a href="{{ $linkMore }}#built-in-hooks">Built-in Hooks</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#continuous-deployment--environment-support">Continuous Deployment &amp; Environment Support</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*5</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#enterprise-grade-permissions--support-of-acls-delegation">Enterprise-grade permissions, Support of ACLs delegation</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*6</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#build-artifacts-cloud">Build Artifacts Cloud</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*7</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#tests--vulnerabilities-reports">Tests &amp; Vulnerabilities Reports</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*8</a></sup></sub></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#self-service-project-creation">Self-Service Project Creation - ability to create a tenant</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*9</a></sup></sub></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#execution-environment-customization">Execution Environment Customization</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*10</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#multi-tenancy">Multi-Tenancy</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*11</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#command-line-interface-cdsctl-100-features-supported">Command Line Interface (cdsctl): 100% features supported &amp; User Friendly</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*12</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#rest-api--sdk">REST API &amp; SDK</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#self-hosting">Self-Hosting</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#high-availability--scalability--upgrade-without-user-downtime">High Availability &amp; Scalability &amp; Upgrade without User Downtime</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*13</a></sup></sub></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#built-in-metrics">Built-in Metrics</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*14</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#extensibility-plugins">Extensibility Plugins</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#osarch-compatibility">OS/Arch Compatibility</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="{{ $linkMore }}#auto-scale-ondemand-multi-cloud">Auto-Scale OnDemand multi-cloud</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*15</a></sup></sub></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a href="{{ $linkMore }}#some-explanations-on-the-comparison-matrix">*16</a></sup></sub></td>
+					</tr>
+					</tbody>
+					</table>
+					
+		{{ $.Inner }}
+	</div>
+</main>

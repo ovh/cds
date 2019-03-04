@@ -48,18 +48,18 @@ Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ov
 
 ### Why CDS? Discover the Origins
 
-- [Self-Service](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#1-self-service)
-- [Horizontal Scalability](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#2-horizontal-scalability)
-- [High Availability](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#3-high-availability)
-- [Pipeline Reutilisability](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#4-pipeline-reutilisability)
-- [Rest API](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#5-rest-api)
-- [Customizable](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#6-customizable)
+- [Self-Service](https://ovh.github.io/cds/about/why_cds/#1-self-service)
+- [Horizontal Scalability](https://ovh.github.io/cds/about/why_cds/#2-horizontal-scalability)
+- [High Availability](https://ovh.github.io/cds/about/why_cds/#3-high-availability)
+- [Pipeline Reutilisability](https://ovh.github.io/cds/about/why_cds/#4-pipeline-reutilisability)
+- [Rest API](https://ovh.github.io/cds/about/why_cds/#5-rest-api)
+- [Customizable](https://ovh.github.io/cds/about/why_cds/#6-customizable)
 
 ### What is a CDS workflow?
 
 Most of the CI/CD Tools play with jobs inside a pipeline. CDS introduce a new concept named `CDS Workflows`.
-A [CDS Workflow](https://ovh.github.io/cds/gettingstarted/concepts/workflow/) allows you to chain pipelines with triggers.
-A [pipeline](https://ovh.github.io/cds/gettingstarted/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/gettingstarted/concepts/stage/) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/gettingstarted/concepts/job/).
+A [CDS Workflow](https://ovh.github.io/cds/docs/concepts/workflow/) allows you to chain pipelines with triggers.
+A [pipeline](https://ovh.github.io/cds/docs/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/docs/concepts/stage/) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/docs/concepts/job/).
 
 
 ### Can I use it in production?
@@ -112,7 +112,7 @@ All the features of the table are detailed below.
 
 #### Pipeline
 
-Ability to run multiple jobs simultaneously while keeping an isolation between them. [See doc about stages & jobs inside a pipeline](https://ovh.github.io/cds/gettingstarted/concepts/pipeline/). A pipeline is started with a context: 0 or 1 application, 0 or 1 environment.
+Ability to run multiple jobs simultaneously while keeping an isolation between them. [See doc about stages & jobs inside a pipeline](https://ovh.github.io/cds/docs/concepts/pipeline/). A pipeline is started with a context: 0 or 1 application, 0 or 1 environment.
 
 #### Workflow
 
@@ -178,7 +178,7 @@ Please read: https://ovh.github.io/cds/workflows/pipelines/requirements/service/
 
 A remote cache is used by a team of developers and/or a continuous integration (CI) system to share build outputs. If your build is reproducible, the outputs from one machine can be safely reused on another machine, which can make builds significantly faster
 
-Doc: https://ovh.github.io/cds/manual/components/worker/cache/
+Doc: https://ovh.github.io/cds/docs/components/worker/cache/
 
 #### Enterprise Notification Bus
 

@@ -1,7 +1,8 @@
-+++
-title = "REST API"
-weight = 6
-+++
+---
+title: "REST API"
+main_menu: true
+weight: 6
+---
 
 ## How to request CDS API?
 
@@ -21,7 +22,7 @@ The CDS UI uses a non-persistent token. If you want to play with CDS API, you pr
 
 You can generate it with:
 
-- [cdsctl login]({{< relref "/manual/components/cdsctl/login.md" >}})
+- [cdsctl login]({{< relref "/docs/components/cdsctl/login.md" >}})
 - Code it with the [Go SDK]({{< relref "/development/sdk/golang/_index.md" >}})
 - Call CDS API: POST `/login` with body `{"username":"your-username","password":"your-password"}` and header `-H "X-Requested-With: X-CDS-SDK"`
 

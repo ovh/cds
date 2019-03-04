@@ -13,15 +13,15 @@ See [CDS documentation](https://github.com/ovh/cds) for more details.
 
 ## Actions
 
-See [User Actions Documentation](https://ovh.github.io/cds/manual/actions)
+See [User Actions Documentation](https://ovh.github.io/cds/docs/actions)
 
 ## Worker Models
 
-See [Worker Models Documentation](https://ovh.github.io/cds/manual/concepts/requirement/worker-model/)
+See [Worker Models Documentation](https://ovh.github.io/cds/docs/concepts/requirement/worker-model/)
 
 ## Workflow Templates
 
-See [Workflow Templates Documentation](https://ovh.github.io/cds/manual/concepts/template/)
+See [Workflow Templates Documentation](https://ovh.github.io/cds/docs/concepts/template/)
 
 ## µServices
 

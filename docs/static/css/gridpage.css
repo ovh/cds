@@ -1,0 +1,102 @@
+.gridPage .portal-content {
+    position: relative;
+    margin: 20px auto 50px;
+}
+
+.portal-cards {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.portal-card {
+    position: relative;
+    width: 33%;
+    padding: 0 30px 0 0;
+    margin-bottom: 50px;
+    min-height: 152px;
+}
+
+.gridPage p {
+    color: rgb(26,26,26) !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    font-weight: 300 !important;
+}
+
+.gridPage #mainContent {
+    padding: 0;
+}
+
+.gridPage #mainContent .content {
+    padding-top: 0;
+}
+
+.gridPage main {
+    max-width: 1100px !important;
+}
+
+.gridPage .content {
+    position: relative;
+    margin: 0 auto 50px;
+    max-width: 90%;
+}
+
+.gridPage .content p {
+    line-height: 24px !important;
+}
+
+.gridPage .content h3 {
+    padding: 0 !important;
+}
+
+.gridPage #hero h5 {
+    padding-left: 20px;
+    margin: 0;
+}
+
+p.attrib {
+    font-style: italic;
+}
+
+.gridPage .feature {
+    position: relative;
+    padding: 20px 0 20px 242px;
+}
+
+.gridPage .feature img {
+    position: absolute;
+    top: 20px;
+    left: 0;
+}
+
+.details h4, p {
+    margin-bottom: 0.5em;
+}
+
+.gridPage .feature p.quote {
+    font-size: 20px;
+    line-height: 28px !important;
+}
+
+@media screen and (max-width: 640px){
+    .gridPage .feature {
+        margin-top: 50px;
+        padding: 180px 0 0;
+    }
+
+    .gridPage .feature img {
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+@media screen and (max-width: 480px){
+    .gridPage #hero {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+}

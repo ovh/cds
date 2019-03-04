@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="{{ .Params.class }}">
+	<head>
+	{{ partial "head.html" . }}
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			{{- if ne .Params.cid "home" }}
+			<a href="{{ site.Home.RelPermalink }}" class="logo"></a>
+			{{- end -}}
+
+			<div class="nav-buttons" data-auto-burger="primary">
+					<ul class="global-nav">
+							{{ $sections := slice "docs" "hosting" "development" "about" }}
+							{{ range $sections }}
+							{{ with site.GetPage "section" . }}<li><a href="{{ .RelPermalink }}"{{ if eq .Section $.Section }} class="active"{{ end}}>{{ .LinkTitle }}</a></li>{{ end }}
+							{{ end }}
+							<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search").focus().select()'></i></li>
+					</ul>
+					<div id="searchbox">
+							<input data-search-input id="search" type="text" placeholder="search...">
+							<span data-search-clear=""><i class="fa fa-close"></i></span>
+					</div>
+			</div>
+
+			{{- if eq .Params.cid "home" }}
+			<main>
+				<div class="land">
+					<img src="{{ "images/logo-background.png" | relURL }}" />
+					<h3>CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform.</h3>
+					<div>
+							CDS is the third generation of CI/CD tools at OVH. It is the end-result of 12 years’ experience 
+							in the field of CI/CD. Familiar with most of the standard tools of the industry, we found that none 
+							completely matched our expectations regarding the four key aspects we identified. That is what CDS tries to solve.
+					</div>
+				</div>
+			</main>
+			{{- end -}}
+			{{ partial "top-menu.html" . }}
+		</section>
+
+		{{- if eq .Params.cid "home" }}
+		<article class="page-content">
+			{{ block "main" . }}{{ end }}
+		</article>
+		{{- end -}}
+
+		{{- if ne .Params.cid "home" }}
+		<section id="page-content-with-menu">
+			{{ block "side-menu" . }}
+				<div id="toc" style="display:none;"></div>
+			{{ end }}
+			<div id="{{ block "content-id" . }}docsContent{{ end }}">
+        {{ block "content" . }}{{ end }}
+			</div>
+		</section>
+		{{- end -}}
+
+		<footer>
+				<main>
+				<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+				<div>
+						The CDS logos are copyrighted.
+						Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+						from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+				</div>
+				</main>
+		</footer>
+
+	</body>
+</html>

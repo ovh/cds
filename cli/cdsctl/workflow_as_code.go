@@ -22,7 +22,7 @@ var workflowInitCmd = cli.Command{
 	Short: "Init a workflow",
 	Long: `Initialize a workflow from your current repository, this will create yml files and push them to CDS.
 
-Documentation: https://ovh.github.io/cds/manual/gettingstarted/init_workflow_with_cdsctl/
+Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/
 
 `,
 	OptionalArgs: []cli.Arg{

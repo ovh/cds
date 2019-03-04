@@ -2,7 +2,7 @@ This directory contains some examples of worker models.
 
 # What's a worker model?
 
-See https://ovh.github.io/cds/manual/concepts/worker-model/
+See https://ovh.github.io/cds/docs/concepts/worker-model/
 
 # How to import a worker model?
 

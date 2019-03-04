@@ -1,8 +1,7 @@
-+++
-title = "Development Environment"
-weight = 3
-
-+++
+---
+title: "Development Environment"
+weight: 3
+---
 
 Before contributing to CDS, you'll need to install your
 development environment. 
@@ -81,23 +80,23 @@ $ tar xzf node-v10.8.0-darwin-x64.tar.gz
 
 ## Golang
 
-Download the latest Golang version from https://golang.org/dl/, version >= 1.10
+Download the latest Golang version from https://golang.org/dl/, version >= 1.12
 
-Example with version 1.10.3 on macOS:
+Example with version 1.12 on macOS:
 
 ```bash
 $ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.10.3.darwin-amd64.tar.gz
-$ tar xzf go1.10.3.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.12.darwin-amd64.tar.gz
+$ tar xzf go1.12.darwin-amd64.tar.gz
 ```
 
 Check if Go installation is ok
 
 ```bash
 $ go version
-go version go1.10.3 darwin/amd64
+go version go1.12 darwin/amd64
 ```
 
 ## CDS
@@ -181,7 +180,7 @@ $ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local -
 
 Open a browser, go on http://localhost:4200 - Have fun.
 
-### Notes:
+## Notes
 
 If you want to launch uService on different process:
 
@@ -197,7 +196,7 @@ If you want to launch vcs & hooks uServices, you have to:
 
 - set name in sections `[vcs]` and `[hooks]`
 - uncomment API URL in sections `[vcs.api.http]` and `[hooks.api.http]`
-- for vcs uService, please read [repositories-manager]({{< relref "/manual/hosting/repositories-manager/_index.md" >}})
+- for vcs uService, please read [repositories-manager]({{< relref "/hosting/repositories-manager/_index.md" >}})
 
 Of course, you have to do the same thing with other uServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
 

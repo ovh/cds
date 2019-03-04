@@ -1,0 +1,89 @@
+---
+title: "Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform"
+cid: home
+---
+
+{{< section id="homeGrid" >}}
+
+{{% feature image="elastic" %}}
+#### Elastic
+
+CDS resources/workers are launched on demand, to guarantee low waiting times for users, with no over-consumption of idle resources
+
+{{% /feature %}}
+
+{{% feature image="extensible" %}}
+#### Extensible
+In CDS, any kind of action (Kubernetes and OpenStack deployments, pushing to Kafka, testing for CVEs…) can be captured in high-level plugins, to be used as building blocks by users. These plugins are straightforward to write and use, so it’s easy to meet the most exotic needs in an effective and stress-free way.
+
+{{% /feature %}}
+
+{{% feature image="flexible" %}}
+#### Flexible, but easy
+
+CDS can run complex workflows, with all sorts of intermediary steps, including build, test, deploy 1/10/100, manual or automatic gates, rollback, conditional branches… These workflows can be stored as code in the git repository. CDS provides basic workflow templates for the Core team’s most common scenarios, in order to ease the adoption process. This way, building a functional CI/CD chain from nothing can be quick and easy.
+
+{{% /feature %}}
+
+{{% feature image="selfservice" %}}
+####  Self-service
+
+Finally, a key aspect is the idea of self-service. Once a CDS project is created by users, 
+they are completely autonomous within that space, with the freedom to manage pipelines, 
+delegate access rights etc. All users are free to customise their space as they see fit, 
+and build on what is provided out-of-the-box. Personalising workflow templates, plugins, 
+running build and tests on custom VM flavors or custom hardware… all this can be done without 
+any intervention from the CDS administrators.
+
+{{% /feature %}}
+
+{{< /section >}}
+
+<section id="intuitiveui">
+    <div class="section-gif">
+        <img src="./images/capture-start.gif" width="80%" alt="create and run workflow with CDS ui" title="create and run workflow with CDS ui"> 
+    </div>
+    <div class="section-text">
+        <h2>Clearly visualize your workflow</h2>
+        CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.    
+    </div>
+</section>
+
+<section id="powerfulcli">
+    <main>
+        <div class="section-text">
+            <h2>The most powerful Command Line for a CI/CD Platform</h2>
+            cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands such as cdsctl shell to browse your projects and workflows without the need to open a browser.
+        </div>
+        <div>
+            <asciinema-player src="./images/init_template_as_code.cast" cols="80" rows="25" autoplay="true" loop="true"></asciinema-player>                
+        </div>
+    </main>
+</section>
+
+<section id="matrix-home">
+{{% matrix linkMore="about/matrix/" title="Comparaison Matrix" %}}
+{{% /matrix %}}
+</section>
+
+<section id="home-contribution">    
+    <main>
+        <div>
+                <img src="./images/GitHub-Mark-64px.png">
+        </div>
+        <div>
+                <h4>We welcome all contributions</h4>
+                Fork the repo and work on an issue 
+                <a href="https://github.com/ovh/cds/blob/master/CONTRIBUTING.md"><i class="fa fa-external-link-alt"></i></a>
+        </div>
+        <div>
+                <p>CDS is open-source and completely free.</p>
+                <a href="https://github.com/ovh/cds">https://github.com/ovh/cds</a>
+        </div>
+        <div>
+                <h4>More ways to contribute</h4>
+                Help improve the docs 
+                <a href="./development/contribute/documentation/"><i class="fa fa-external-link-alt"></i></a>
+        </div>
+    </main>
+</section>

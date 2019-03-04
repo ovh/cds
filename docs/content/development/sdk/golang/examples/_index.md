@@ -1,5 +1,3 @@
-+++
-title = "Examples"
-+++
-
-{{%children style="ul"%}}
+---
+title: "Examples"
+---

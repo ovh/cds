@@ -1,0 +1,29 @@
+{{ $p := . }}
+{{ $home := site.Home }}
+
+{{- if ne .Params.cid "home" }}
+<div id="headSubMenu" class="light-text">
+{{ end }}
+
+{{ $sections := slice "docs" "hosting" "development" "about" }}
+{{ range $sections }}
+	{{ with site.GetPage "section" . }}
+
+		{{ $menuSections := (where .Sections ".Params.main_menu" true) }}
+
+		{{ if eq .Section $.Section }}
+		<ul>
+			{{ range $menuSections }}
+			{{ if $p.IsDescendant . }}
+			{{ end }}
+			{{ $menuSelected := $p.IsDescendant . }}
+			<li><a href="{{ .RelPermalink }}"{{ if $menuSelected }} class="menuSelected"{{ end }}>{{ .LinkTitle }}</a></li>
+			{{ end }}
+		</ul>
+		{{ end }}
+	{{ end }}
+{{ end }}
+
+{{- if ne .Params.cid "home" }}
+</div>
+{{ end }}

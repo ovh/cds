@@ -1,0 +1,829 @@
+@import "reset"
+
+$blue: #48bfe2
+$light-grey: #f7f7f7
+$dark-grey: #333
+$medium-grey: #4c4c4c
+$white: #ffffff
+
+*, .button
+  box-sizing: border-box
+  font-family: 'Open Sans', sans-serif
+  background: none
+  margin: 0
+  border: 0
+
+body
+  font-family: 'Open Sans', sans-serif
+
+h1, h2, h5, p
+  font-weight: 300
+
+h3, h4
+  font-weight: 400
+
+$main-max-width: 100%
+$header-height: 80px
+$head-submenu-height: 88px
+
+h1
+  font-size: 32px
+  line-height: 40px
+
+h2
+  font-size: 38px
+  line-height: 60px
+
+h3
+  font-size: 24px
+  line-height: 32px
+
+h4
+  font-size: 20px
+  line-height: 40px
+
+h5
+  font-size: 16px
+  line-height: 36px
+
+p
+  font-size: 14px
+  line-height: 22px
+
+section, header, #headSubMenu
+  padding-left: 20px
+  padding-right: 20px
+
+  main
+    width: 100%
+    max-width: $main-max-width
+
+header
+  height: $header-height
+
+.nav-buttons
+  height: $header-height
+  line-height: $header-height
+
+  .button + *
+    margin-left: 30px
+
+#mainNav
+  padding: 140px 0 30px
+
+  h5
+    margin-bottom: 1em
+
+  h3
+    margin-bottom: 0.6em
+
+  .nav-box
+    width: 20%
+
+  .nav-box + .nav-box
+    margin-left: calc(20% / 3)
+
+  main + main
+    margin-top: 60px
+
+  .left .button
+    height: 50px
+    line-height: 50px
+    font-size: 18px
+
+#hero
+  padding-top: 120px
+
+#docs
+  #hero
+    h1, h5
+      padding-left: 20px
+      padding-right: 20px
+
+#headSubMenu
+  height: $head-submenu-height
+  line-height: $head-submenu-height
+  font-size: 16px
+
+body
+  background-color: white
+  color: #666666
+
+section
+  position: relative
+  background-color: white
+
+section, header, footer
+  main
+    position: relative
+    margin: auto
+
+    .land
+      height: 650px
+      margin-left: 200px
+      margin-right: 200px
+      margin-bottom: 0px
+      text-align: center
+
+      h3
+        padding-top: 20px
+
+      div
+        margin-top: 30px
+        text-align: center
+
+#matrix
+  .fa-check
+    color: #92c455
+
+  .fa-times
+    color: #de3e7b
+
+  table
+    width: 100%
+    border: 1px solid #ccc
+    border-spacing: 0
+    margin-top: 30px
+    margin-bottom: 30px
+
+  thead, tr:nth-child(even)
+    background-color: $light-grey
+
+  thead
+    background-color: #555
+    color: white
+
+  th
+    white-space: nowrap
+
+  th, td
+    padding: 8px
+    text-align: left
+    margin: 0
+
+  th
+    font-weight: normal
+
+  td
+    font-size: 0.85em
+p
+  font-size: 14px
+  font-weight: 400
+
+
+.button
+  display: inline-block
+  border-radius: 6px
+  padding: 0 20px
+  line-height: 40px
+  color: white!important
+  background-color: $blue
+  text-decoration: none
+  font-size: 1rem
+
+header
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  z-index: 8888
+  background-color: transparent
+  box-shadow: 0 0 0 transparent
+  overflow: hidden
+  transition: 0.3s
+  text-align: center
+
+.logo
+  float: left
+  display: block
+  width: 180px
+  height: 90px
+  margin-top: -80px
+  top: -26px
+  left: 0
+  transform: none
+  background-image: url(/images/logo-background.png)
+  background-size: contain
+  background-position: center center
+  background-repeat: no-repeat
+
+#docs
+  .logo
+    position: absolute
+    top: 40px
+    left: 50%
+    transform: translate(-50%, -50%)
+    display: block
+    width: 45px
+    height: 44px
+
+.nav-buttons
+  float: right
+  margin-top: -115px
+  padding-right: 86px
+
+#mainNav
+  h5
+    color: $blue
+    font-weight: normal
+
+  main
+    white-space: nowrap
+    overflow: hidden
+    clear: both
+
+  .nav-box
+    float: left
+    white-space: normal
+
+  h3
+    a
+      color: $blue
+      text-decoration: none
+
+ul.global-nav
+  display: none
+
+  li
+    display: inline-block
+    margin-right: 14px
+
+    i
+      color: rgba(255, 255, 255, 0.5)
+
+    a
+      color: rgba(255, 255, 255, 0.5)
+      font-weight: 400
+      padding: 0
+      position: relative
+
+      &.active
+        color:#f7f7f7
+
+      .ui-icon
+        filter: brightness(0) invert(1)
+
+    ul
+      display: none
+      position: fixed
+      top: 40px
+      text-align: left
+
+      li
+        display: block
+        height: 28px
+
+        a
+          background: $dark-grey
+          color: #fff
+          padding: 7px
+
+      li:last-child
+        a
+          border-radius: 7px
+
+  li:hover
+    ul
+      display: block
+
+#hero
+  background-color: $dark-grey
+  text-align: center
+  padding-left: 0
+  padding-right: 0
+  margin-bottom: 0
+  position: relative
+
+  &.no-sub
+
+    h5
+      display: none
+
+    h1
+      margin-bottom: 20px
+
+#home #hero:after
+  display: none
+
+#headSubMenu
+  position: relative
+  font-weight: 100
+  white-space: nowrap
+  text-align: center
+
+  li a
+    color: transparentize(white, 0.5)
+
+    &.menuSelected
+      color: white
+
+footer
+  width: 100%
+  background-color: $dark-grey
+  color: #666666
+  font-size: small
+
+  a, a:visited
+    color: #666666
+
+  main
+    padding: 20px 0
+
+section
+  background-color: white
+
+#hero
+  background-color: $dark-grey
+
+  h5
+    margin: 20px 0
+    line-height: 28px
+
+#headSubMenu
+  position: relative
+
+  ul
+    float: left
+
+  li
+    display: inline-block
+    height: 100%
+
+  a
+    display: block
+    height: 100%
+    color: white
+    font-size: 0.75em
+    font-weight: bold
+
+  li + li
+    margin-left: 0
+
+
+#docs
+  #headSubMenu
+    line-height: 44px
+    max-width: 100%
+    overflow-x: auto
+    -webkit-overflow-scrolling: touch
+
+    ul
+      float: none
+
+#page-content
+  .asciinema-terminal .line span
+    font-family: Consolas, Menlo, 'Bitstream Vera Sans Mono', monospace, 'Powerline Symbols';  
+
+#page-content-with-menu
+  position: relative
+  padding: 50px 20px 20px 20px
+  overflow: hidden
+  font-size: 14px
+
+  & > div
+    height: 100%
+
+#toc
+  position: fixed
+  background-color: white
+  top: 0
+  left: 0
+  width: 0
+  height: 100vh
+  overflow: hidden
+  padding: 50px 0
+  z-index: 999999
+  transition: 0.3s
+
+  .menuSelected
+    & > .title
+      background-color: $light-grey
+      border-left: 3px solid $blue
+      padding: 7.5px 10px 7.5px 18px
+      margin-left: -3px
+      color: $blue
+
+.toc-container
+  & > .container:first-child > .item:first-child > .title:first-child
+    padding-left: 0
+    font-size: 1.5em
+    font-weight: 700
+
+  & > .container:first-child > .item.menuSelected:first-child > .title:first-child
+    margin-left: -20px !important
+
+  .item
+    overflow: hidden
+
+  .title
+    color: $dark-grey
+    position: relative
+    padding: 7.5px 10px 7.5px 18px
+    cursor: pointer
+    transition: 0.3s
+
+    &:hover
+      color: $blue
+
+  a.item > .title
+    color: black
+
+    &:hover
+      color: $blue
+
+  div.item > .title
+    &:before
+      content: ""
+      position: absolute
+      top: 12px
+      left: 2px
+      border-style: solid
+      border-width: 5px 0 5px 8px
+      border-color: transparent transparent transparent $blue
+      transform: rotate(0deg)
+      transition: 0.3s
+
+  .wrapper
+    position: relative
+    width: 100%
+    transition: height 0.3s
+
+  .content
+    padding-left: 20px
+    opacity: 0
+    transition: 0.3s
+
+  .item.on
+    & > .title:before
+      transform: rotate(90deg)
+
+    & > .wrapper > .content
+      opacity: 1
+
+dt
+  margin-bottom: 8px
+
+dd
+  margin-bottom: 16px
+
+#docsContent
+  position: relative
+  float: right
+  width: 100%
+
+  $toc-margin: 15px
+  $header-height-adjusted: $header-height + 20px
+
+  * + h2, * + h3, * + h4, * + h5, * + h6
+    margin-top: 30px
+
+  h1, h2, h3, h4, h5, h6
+    line-height: normal
+    font-weight: 500
+    margin-bottom: 30px
+    padding-bottom: 10px
+
+    &:before
+      display: block
+      content: " "
+      margin-top: -$header-height-adjusted
+      height: $header-height-adjusted
+      visibility: hidden
+
+  h1,h2
+    border-bottom: 1px solid #cccccc
+
+  h1
+    font-size: 32px
+    padding-right: 60px
+
+  h2
+    font-size: 28px
+
+  h3
+    font-size: 24px
+    font-weight: 300
+    margin-bottom: 5px
+
+  h4
+    font-size: 20px
+    margin-bottom: 0px
+
+  h5, h6
+    font-size: 16px
+    font-weight: 500
+
+  p
+    font-size: 16px
+    font-weight: 300
+    line-height: 1.75em
+
+  p + p
+    margin-top: 10px
+
+  code
+    display: inline-block
+    box-sizing: border-box
+    background-color: $light-grey
+    color: $dark-grey
+    font-family: 'Open Sans Mono', monospace
+    vertical-align: baseline
+    font-size: 14px
+    font-weight: bold
+    padding: 2px 4px
+
+  a code
+    color: $blue
+    text-decoration: underline
+
+  pre .pi, pre .s
+    margin: 0
+    padding: 0
+
+  .highlight code span, code, pre code
+    font-family: "Open Sans Mono", monospace
+
+  code, pre code
+    color: #303030
+
+  pre code
+    padding: 0
+
+  .asciinema-terminal .line span
+    font-family: Consolas, Menlo, 'Bitstream Vera Sans Mono', monospace, 'Powerline Symbols';
+
+  .asciinema-player-wrapper
+    pre
+      background-color: #121314!important
+
+  pre
+    background-color: #f7f7f7
+    display: block
+    margin: 20px 0
+    padding: 15px
+    position: relative
+    overflow-x: auto
+
+  h1 code, h2 code, h3 code, h4 code, h5 code, h6 code
+    font-size: inherit
+    background-color: transparent
+
+  ul li
+    list-style: disc
+
+  ol ul li
+    list-style: disc
+
+  ol li
+    list-style: decimal
+
+  ul, ol
+    margin: 20px 0
+    padding-left: 30px
+    font-weight: 300
+
+  ul ul, ol ol, ul ol, ol ul
+    margin: 0.75em 0
+
+  li
+    margin-bottom: 0.75em
+    font-size: 16px
+    line-height: 1.75em
+
+  table
+    width: 100%
+    border: 1px solid #ccc
+    border-spacing: 0
+    margin-top: 30px
+    margin-bottom: 30px
+
+  thead, tr:nth-child(even)
+    background-color: $light-grey
+
+  thead
+    background-color: #555
+    color: white
+
+  th, td
+    padding: 8px
+    text-align: left
+    margin: 0
+
+  th
+    font-weight: normal
+
+  td
+    font-size: 0.85em
+
+  #TableOfContents
+    margin-bottom: 20px
+
+    ul, li
+      list-style: disc
+      color: $blue
+
+    ul
+      padding: 0 15px
+      margin: 0
+
+    li
+      padding: 0
+      line-height: 1.5em
+      margin-bottom: 0
+
+    a
+      position: relative
+      color: $blue
+      font-weight: 700
+
+  img
+    max-width: 100%
+
+  #TableOfContents
+    & > ul > li
+      list-style: none
+
+    ul, li
+      list-style: disk
+
+  a.button
+    border-radius: 2px
+    text-decoration: none
+
+    &:visited
+      color: white
+
+footer
+  bottom: 0
+  text-align: center
+
+html.search #docsContent
+  position: relative
+  float: none
+  width: 90%
+  max-width: 850px
+  margin: 0 auto
+
+  table
+    border: 0
+    margin-bottom: 0
+
+  td
+    padding: 0
+
+  h1
+    margin-bottom: 0
+    border-bottom: 0
+    padding-bottom: 0
+    padding-left: 8px
+
+$home-grid-padding-Y: 60px
+$home-grid-h3-margin-bottom: 30px
+
+$features-h3-margin-bottom: 20px
+$feature-box-div-width: 100%
+$feature-box-div-margin-bottom: 40px
+
+#homeGrid
+  padding-top: $home-grid-padding-Y
+  padding-bottom: $home-grid-padding-Y
+
+  a
+    color: $blue
+
+  main
+    margin-bottom: $home-grid-padding-Y
+    min-height: 160px
+
+  .content
+    display: inline-block
+    width: 75%;
+
+  .image-wrapper
+    max-width: 75%
+    margin: 0 auto 20px
+    text-align: center
+
+    img
+      width: 100%
+      max-width: 160px
+
+  h3
+    margin-bottom: $home-grid-h3-margin-bottom
+
+#home-contribution
+  font-size: 1.2rem
+  background-color: #fff;
+  padding-top: 200px;
+  padding-bottom: 200px;
+  padding-left: 30px
+  padding-right: 30px
+  vertical-align: top
+  text-align: center
+  color: #000
+  
+  h4
+    color: #de3e7b
+
+  div:first-child
+    display: inline-block;
+    vertical-align: top;
+    width: 100%
+
+  div
+    display: inline-block;
+    vertical-align: top;
+    width: 31%
+
+    p
+      padding-top: 10px
+      font-size: 1.2rem
+
+
+
+#intuitiveui
+  font-size: 1.2rem
+  background-color: #92c455;
+  padding-top: 100px;
+  padding-bottom: 140px;
+  padding-left: 10%
+  padding-right: 5%
+  
+  div:first-child
+    width: 60%
+
+  div
+    display: inline-block;
+    color: #fff
+    vertical-align: top;
+    width: 30%
+    
+    h2
+      color: black  
+      padding-bottom: 50px
+
+#powerfulcli
+  font-size: 1.2rem
+  background-color: #fff;
+  padding-top: 100px;
+  padding-bottom: 140px;
+  padding-left: 10%
+  padding-right: 5%
+  
+  .section-text
+    width: 45%
+    padding-right: 10%
+
+    h2
+      color: black  
+      padding-bottom: 50px
+
+  div
+    display: inline-block;
+    vertical-align: top;
+
+#matrix-home
+  h2
+    color:#fff
+    padding-top: 40px
+
+  background-color: #de3e7bad
+  padding-bottom: 40px
+
+  table
+    border: 0
+    th
+      font-size: 1.2rem
+      color: #fff
+      background-color: #941d4b
+
+    tr:nth-child(odd)
+      background-color: #de3e7bad
+      
+    tr:nth-child(even)
+      background-color: #de3e7b;  
+    
+    .fa-times
+      font-size: 2rem
+      color: #dddd
+
+    .fa-check
+      font-size: 2rem
+      color: #8bcb16
+
+    td:first-child
+      a
+        font-size: 1.2rem
+        color: #eeee
+    td
+      a
+        font-size: 0.9rem
+        color: #eeee
+
+.page
+  display: flex
+  flex-direction: column
+  min-height: 100vh
+
+  .page-content
+    flex: 1

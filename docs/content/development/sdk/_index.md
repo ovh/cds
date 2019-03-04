@@ -1,5 +1,5 @@
-+++
-title = "SDK"
-weight = 7
-
-+++
+---
+title: "SDK"
+weight: 7
+main_menu: true
+---

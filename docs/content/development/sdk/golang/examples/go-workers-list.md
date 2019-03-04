@@ -1,9 +1,6 @@
-+++
-title = "Workers List"
-+++
-
-
-### List workers
+---
+title: "Workers List"
+---
 
 Create a file `main.go` with this content:
 
@@ -54,7 +51,7 @@ func main() {
 
 ```
 
-## Build & run it
+Build & run it: 
 
 ```bash
 go run main.go --username admin --token xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx --api http://localhost:8081

@@ -1,0 +1,108 @@
+$main-max-width: 1200px
+$head-submenu-height: 44px
+
+@media screen and (min-width: 1025px)
+  ul.global-nav
+    display: inline-block
+
+  #headSubMenu
+    height: $head-submenu-height
+    line-height: $head-submenu-height
+
+  #home
+    #hero
+      #headSubMenu
+        display: block
+
+  #docs
+    #hero
+      h1, h5
+        text-align: left
+
+      #headSubMenu
+        ul
+          float: left
+
+        #search
+          vertical-align: middle
+
+    .logo
+      float: left
+      display: block
+      width: 180px
+      height: 90px
+      top: 95px
+      left: 70px
+      transform: none
+      background-image: url(../images/cds-transparent.png)
+
+  #page-content-with-menu
+    padding: 50px 50px 100px 100px
+    clear: both
+
+  #toc
+    position: relative
+    float: left
+    padding: 0 20px
+    left: 0
+    width: 350px
+    z-index: auto
+
+  #docsContent
+    width: calc(100% - 400px)
+
+  section, header, footer
+    main
+      max-width: $main-max-width
+
+  header, #headSubMenu, #page-content-with-menu
+    padding-left: 100px
+    padding-right: 100px
+
+  #home
+    section, header, footer
+      main
+        max-width: 1000px
+
+  #homeGrid
+    main
+      position: relative
+      max-width: 830px
+
+  footer
+    width: 100%
+    background-color: $dark-grey
+
+    main
+      padding: 20px 0
+
+  #searchbox
+    display: none
+
+  .fa-search
+    cursor: pointer    
+
+  #search
+    background-color: transparent
+    padding: 10px
+    font-size: 16px
+    font-weight: 100
+    color: white
+    border: 1px solid white
+    transition: 0.3s
+    width: 100%
+    top: -30px;
+    position: relative;
+
+    &:focus
+      background-color: $light-grey
+      color: $dark-grey
+
+@media screen and (min-width: 1300px)
+  #headSubMenu
+    padding-right: 100px
+
+@media screen and (min-width: 456px)
+  #headSubMenu
+    li + li
+      margin-left: 20px

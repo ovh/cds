@@ -1,0 +1,49 @@
+{{ define "content" }}
+    {{ if not .Params.notitle }}
+	 <h1>{{ .Title }}</h1>
+    {{ end }}
+    {{ template "docs-portal-content" . }}
+{{ end }}
+
+{{ define "content-id" }}content{{ end }}
+
+{{ define "docs-portal-content" }}
+  <section id="mainContent">
+  <div class="portal-content">
+    <p>{{ .Params.overview | safeHTML }}</p>
+    <br>
+    <div class="portal-cards">
+      {{ template "docs-portal-card" . }}
+    </div>
+  </div>
+</section>
+{{ end }}
+
+{{ define "docs-portal-card" }}
+  {{ range .Params.cards }}
+    <div class="portal-card">
+      <h4>{{ .title }}</h4>
+      <p>{{ .description }}</p>
+      <br>
+      <ul>
+        {{ $name := .name }}
+        {{ range where ($.Site.Pages.ByParam "card.weight") ".Params.card" "!=" nil }}
+          {{ if eq .Params.card.name $name }}
+            {{ $p := . }}
+            {{ if (isset .Params.card "anchors") }}
+              {{ range .Params.card.anchors }}
+                <li><a href="{{ $p.Permalink }}{{ .anchor }}">{{ .title }}</a></li>
+              {{ end }}
+            {{ else }}
+              <li><a href={{ .Permalink }}>
+                {{ if (isset .Params.card "title") }}{{ .Params.card.title }}{{ else }}{{ .LinkTitle }}{{ end }}
+              </a></li>
+            {{ end }}
+          {{ end }}
+        {{ end }}
+      </ul>
+      <br><br>
+      <a id="btn-concepts" class="button" href="{{ .button_path | relURL }}">{{ .button }}</a>
+    </div>
+  {{ end }}
+{{ end }}

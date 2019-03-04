@@ -1,6 +1,7 @@
 package doc
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	godoc "go/doc"
@@ -15,16 +16,17 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
 
 	"github.com/ovh/cds/sdk"
 )
 
 // GenerateDocumentation generates hugo documentation for a command line
 func GenerateDocumentation(root *cobra.Command, genPath, gitPath string) error {
-	const fmTemplate = `+++
-title = "%s"
-+++
+	const fmTemplate = `---
+title: "%s"
+notitle: true
+notoc: true
+---
 `
 	rootName := root.Name()
 	filePrepender := func(filename string) string {
@@ -37,7 +39,7 @@ title = "%s"
 	linkHandler := func(name string) string {
 		base := strings.TrimSuffix(name, path.Ext(name))
 		base = strings.Replace(base, rootName+"_", "", 1)
-		return fmt.Sprintf("/manual/components/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
+		return fmt.Sprintf("/docs/components/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
 	}
 
 	fmt.Printf("%s\n", rootName)
@@ -130,7 +132,7 @@ func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, li
 		return err
 	}
 	cmd.DisableAutoGenTag = true
-	return doc.GenMarkdownCustom(cmd, f, linkHandler)
+	return GenMarkdownCustom(cmd, f, linkHandler)
 }
 
 const (
@@ -467,3 +469,104 @@ func setMiddleWare(callExpr *ast.CallExpr) {
 		currentRouteInfo.Middleware = append(currentRouteInfo.Middleware, m)
 	}
 }
+
+// GenMarkdownCustom below is inspired from spf13/cobra. spf13/cobra is licensed under the Apache License 2.0
+
+// GenMarkdownCustom creates custom markdown output.
+func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
+	buf := new(bytes.Buffer)
+	name := cmd.CommandPath()
+
+	short := cmd.Short
+	long := cmd.Long
+	if len(long) == 0 {
+		long = short
+	}
+
+	buf.WriteString("# " + name + "\n\n")
+	buf.WriteString(short + "\n\n")
+	buf.WriteString("## Synopsis\n\n")
+	buf.WriteString(long + "\n\n")
+
+	if cmd.Runnable() {
+		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.UseLine()))
+	}
+
+	if len(cmd.Example) > 0 {
+		buf.WriteString("## Examples\n\n")
+		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.Example))
+	}
+
+	if err := printOptions(buf, cmd, name); err != nil {
+		return err
+	}
+	if hasSeeAlso(cmd) {
+		buf.WriteString("## SEE ALSO\n\n")
+		if cmd.HasParent() {
+			parent := cmd.Parent()
+			pname := parent.CommandPath()
+			link := pname + ".md"
+			link = strings.Replace(link, " ", "_", -1)
+			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", pname, linkHandler(link), parent.Short))
+			cmd.VisitParents(func(c *cobra.Command) {
+				if c.DisableAutoGenTag {
+					cmd.DisableAutoGenTag = c.DisableAutoGenTag
+				}
+			})
+		}
+
+		children := cmd.Commands()
+		sort.Sort(byName(children))
+
+		for _, child := range children {
+			if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
+				continue
+			}
+			cname := name + " " + child.Name()
+			link := cname + ".md"
+			link = strings.Replace(link, " ", "_", -1)
+			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", cname, linkHandler(link), child.Short))
+		}
+		buf.WriteString("\n")
+	}
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
+	flags := cmd.NonInheritedFlags()
+	flags.SetOutput(buf)
+	if flags.HasFlags() {
+		buf.WriteString("## Options\n\n```\n")
+		flags.PrintDefaults()
+		buf.WriteString("```\n\n")
+	}
+
+	parentFlags := cmd.InheritedFlags()
+	parentFlags.SetOutput(buf)
+	if parentFlags.HasFlags() {
+		buf.WriteString("## Options inherited from parent commands\n\n```\n")
+		parentFlags.PrintDefaults()
+		buf.WriteString("```\n\n")
+	}
+	return nil
+}
+
+func hasSeeAlso(cmd *cobra.Command) bool {
+	if cmd.HasParent() {
+		return true
+	}
+	for _, c := range cmd.Commands() {
+		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+type byName []*cobra.Command
+
+func (s byName) Len() int           { return len(s) }
+func (s byName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s byName) Less(i, j int) bool { return s[i].Name() < s[j].Name() }

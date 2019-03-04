@@ -1,4 +1,4 @@
-+++
-title = "CDS Developer Manual"
-weight = 2
-+++
+---
+title: "CDS Developer Manual"
+weight: 2
+---
