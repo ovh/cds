@@ -354,7 +354,7 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/mcuadros/go-defaults
 # github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
 github.com/mgutz/ansi
-# github.com/mholt/archiver v2.1.0+incompatible
+# github.com/mholt/archiver v3.1.1+incompatible
 github.com/mholt/archiver
 # github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
 github.com/mitchellh/go-homedir
@@ -421,10 +421,9 @@ github.com/pelletier/go-toml
 github.com/peterbourgon/diskv
 # github.com/phayes/permbits v0.0.0-20160816172359-32459f104210
 github.com/phayes/permbits
-# github.com/pierrec/lz4 v0.0.0-20161206202305-5c9560bfa9ac
+# github.com/pierrec/lz4 v0.0.0-20190222153722-062282ea0dcf
 github.com/pierrec/lz4
-# github.com/pierrec/xxHash v0.0.0-20160112165351-5a004441f897
-github.com/pierrec/xxHash/xxHash32
+github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 github.com/pkg/browser
 # github.com/pkg/errors v0.0.0-20171216070316-e881fd58d78e
@@ -536,6 +535,8 @@ github.com/xeipuuv/gojsonpointer
 github.com/xeipuuv/gojsonreference
 # github.com/xeipuuv/gojsonschema v0.0.0-20161231055540-f06f290571ce
 github.com/xeipuuv/gojsonschema
+# github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
+github.com/xi2/xz
 # github.com/xordataexchange/crypt v0.0.0-20150523230031-749e360c8f23
 github.com/xordataexchange/crypt/config
 github.com/xordataexchange/crypt/backend
