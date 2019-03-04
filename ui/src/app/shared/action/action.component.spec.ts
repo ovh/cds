@@ -204,12 +204,12 @@ describe('CDS: Action Component', () => {
         let actionMock = new Action();
         actionMock.name = 'action1';
 
-
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
+        fixture.componentInstance.project = <Project>{ key: 'key' }
+
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
-
 
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/requirement/types';

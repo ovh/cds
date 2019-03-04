@@ -21,64 +21,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-const (
-	contextAction contextKey = iota
-)
-
-func (api *API) middlewareAction(needAdmin bool) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-		// try to get action for given path that match user's groups with/without admin grants
-		vars := mux.Vars(r)
-
-		groupName := vars["groupName"]
-		actionName := vars["actionName"]
-
-		if groupName == "" || actionName == "" {
-			return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid given group or action name")
-		}
-
-		u := deprecatedGetUser(ctx)
-
-		// check that group exists
-		g, err := group.LoadGroup(api.mustDB(), groupName)
-		if err != nil {
-			return nil, err
-		}
-
-		if needAdmin {
-			if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := group.CheckUserIsGroupMember(g, u); err != nil {
-				return nil, err
-			}
-		}
-
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
-		if err != nil {
-			return nil, err
-		}
-		if a == nil {
-			return nil, sdk.WithStack(sdk.ErrNoAction)
-		}
-
-		return context.WithValue(ctx, contextAction, a), nil
-	}
-}
-
-func getAction(c context.Context) *sdk.Action {
-	i := c.Value(contextAction)
-	if i == nil {
-		return nil
-	}
-	a, ok := i.(*sdk.Action)
-	if !ok {
-		return nil
-	}
-	return a
-}
-
 func (api *API) getActionsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := deprecatedGetUser(ctx)
@@ -242,12 +184,23 @@ func (api *API) postActionHandler() service.Handler {
 
 func (api *API) getActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareAction(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		actionName := vars["permActionName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		a := getAction(ctx)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		if err != nil {
+			return err
+		}
+		if a == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
 
 		if err := action.LoadOptions.Default(api.mustDB(), a); err != nil {
 			return err
@@ -262,12 +215,23 @@ func (api *API) getActionHandler() service.Handler {
 
 func (api *API) putActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareAction(true)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		actionName := vars["permActionName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		old := getAction(ctx)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		if err != nil {
+			return err
+		}
+		if old == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
 
 		if err := action.LoadOptions.Default(api.mustDB(), old); err != nil {
 			return err
@@ -343,12 +307,23 @@ func (api *API) putActionHandler() service.Handler {
 
 func (api *API) deleteActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareAction(true)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		actionName := vars["permActionName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		a := getAction(ctx)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		if err != nil {
+			return err
+		}
+		if a == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -378,12 +353,23 @@ func (api *API) deleteActionHandler() service.Handler {
 
 func (api *API) getActionAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareAction(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		actionName := vars["permActionName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		a := getAction(ctx)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		if err != nil {
+			return err
+		}
+		if a == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
 
 		as, err := action.GetAuditsByActionID(api.mustDB(), a.ID)
 		if err != nil {
@@ -439,12 +425,25 @@ func (api *API) getActionAuditHandler() service.Handler {
 
 func (api *API) getActionUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareAction(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		actionName := vars["permActionName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		u, err := getActionUsage(ctx, api.mustDB(), api.Cache)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		if err != nil {
+			return err
+		}
+		if a == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
+
+		u, err := getActionUsage(ctx, api.mustDB(), api.Cache, a)
 		if err != nil {
 			return err
 		}
@@ -455,12 +454,23 @@ func (api *API) getActionUsageHandler() service.Handler {
 
 func (api *API) getActionExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareAction(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		actionName := vars["permActionName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		a := getAction(ctx)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		if err != nil {
+			return err
+		}
+		if a == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
 
 		format := FormString(r, "format")
 		if format == "" {
@@ -628,33 +638,6 @@ func (api *API) getActionsRequirements() service.Handler {
 	}
 }
 
-func (api *API) middlewareActionBuiltin() func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-		// try to get action for given name
-		vars := mux.Vars(r)
-
-		actionName := vars["actionName"]
-
-		if actionName == "" {
-			return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid given action name")
-		}
-
-		a, err := action.LoadByTypesAndName(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
-			action.LoadOptions.WithRequirements,
-			action.LoadOptions.WithParameters,
-			action.LoadOptions.WithGroup,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if a == nil {
-			return nil, sdk.WithStack(sdk.ErrNoAction)
-		}
-
-		return context.WithValue(ctx, contextAction, a), nil
-	}
-}
-
 func (api *API) getActionsBuiltinHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		as, err := action.LoadAllByTypes(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction},
@@ -672,12 +655,21 @@ func (api *API) getActionsBuiltinHandler() service.Handler {
 
 func (api *API) getActionBuiltinHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareActionBuiltin()(ctx, w, r)
+		vars := mux.Vars(r)
+
+		actionName := vars["permActionBuiltinName"]
+
+		a, err := action.LoadByTypesAndName(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
+			action.LoadOptions.WithRequirements,
+			action.LoadOptions.WithParameters,
+			action.LoadOptions.WithGroup,
+		)
 		if err != nil {
 			return err
 		}
-
-		a := getAction(ctx)
+		if a == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
 
 		return service.WriteJSON(w, a, http.StatusOK)
 	}
@@ -685,12 +677,23 @@ func (api *API) getActionBuiltinHandler() service.Handler {
 
 func (api *API) getActionBuiltinUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareActionBuiltin()(ctx, w, r)
+		vars := mux.Vars(r)
+
+		actionName := vars["permActionBuiltinName"]
+
+		a, err := action.LoadByTypesAndName(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
+			action.LoadOptions.WithRequirements,
+			action.LoadOptions.WithParameters,
+			action.LoadOptions.WithGroup,
+		)
 		if err != nil {
 			return err
 		}
+		if a == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
 
-		u, err := getActionUsage(ctx, api.mustDB(), api.Cache)
+		u, err := getActionUsage(ctx, api.mustDB(), api.Cache, a)
 		if err != nil {
 			return err
 		}
@@ -699,9 +702,7 @@ func (api *API) getActionBuiltinUsageHandler() service.Handler {
 	}
 }
 
-func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store) (action.Usage, error) {
-	a := getAction(ctx)
-
+func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, a *sdk.Action) (action.Usage, error) {
 	var usage action.Usage
 	var err error
 	usage.Pipelines, err = action.GetPipelineUsages(db, group.SharedInfraGroup.ID, a.ID)

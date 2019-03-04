@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -17,14 +18,16 @@ import (
 )
 
 // PermCheckFunc defines func call to check permission
-type PermCheckFunc func(ctx context.Context, key string, permission int, routeVar map[string]string) bool
+type PermCheckFunc func(ctx context.Context, key string, perm int, routeVars map[string]string) error
 
 func permissionFunc(api *API) map[string]PermCheckFunc {
 	return map[string]PermCheckFunc{
-		"permProjectKey":   api.checkProjectPermissions,
-		"permWorkflowName": api.checkWorkflowPermissions,
-		"permGroupName":    api.checkGroupPermissions,
-		"permModelID":      api.checkWorkerModelPermissions,
+		"permProjectKey":        api.checkProjectPermissions,
+		"permWorkflowName":      api.checkWorkflowPermissions,
+		"permGroupName":         api.checkGroupPermissions,
+		"permModelID":           api.checkWorkerModelPermissions,
+		"permActionName":        api.checkActionPermissions,
+		"permActionBuiltinName": api.checkActionBuiltinPermissions,
 	}
 }
 
@@ -92,88 +95,102 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 	return true
 }
 
-func (api *API) checkPermission(ctx context.Context, routeVar map[string]string, permission int) bool {
+func (api *API) checkPermission(ctx context.Context, routeVar map[string]string, permission int) error {
+	// FIXME to remove with new auth, by pass only used for workers
 	for _, g := range deprecatedGetUser(ctx).Groups {
 		if group.SharedInfraGroup != nil && g.Name == group.SharedInfraGroup.Name {
-			return true
+			return nil
 		}
 	}
 
-	permissionOk := true
 	for key, value := range routeVar {
 		if permFunc, ok := permissionFunc(api)[key]; ok {
-			permissionOk = permFunc(ctx, value, permission, routeVar)
-			if !permissionOk {
-				return permissionOk
+			if err := permFunc(ctx, value, permission, routeVar); err != nil {
+				return err
 			}
 		}
 	}
-	return permissionOk
+
+	return nil
 }
 
-func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, perm int, routeVar map[string]string) bool {
+func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, perm int, routeVars map[string]string) error {
 	if permission.PermissionReadExecute == perm && getService(ctx) != nil {
-		return true
+		return nil
 	}
-	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= perm
+
+	if deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= perm {
+		return nil
+	}
+
+	return sdk.WrapError(sdk.ErrForbidden, "user not authorized for project %s", projectKey)
 }
 
-func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVar map[string]string) bool {
-	if projectKey, ok := routeVar["key"]; ok {
-		// If need read permission, just check project read permission
+func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVars map[string]string) error {
+	if projectKey, ok := routeVars["key"]; ok {
 		switch perm {
 		case permission.PermissionRead:
-			return checkProjectReadPermission(ctx, projectKey)
+			// If need read permission, just check project read permission
+			if checkProjectReadPermission(ctx, projectKey) {
+				return nil
+			}
+			return sdk.WrapError(sdk.ErrForbidden, "user not authorized for workflow %s", workflowName)
 		default:
-			return deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)] >= perm
+			if deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)] >= perm {
+				return nil
+			}
+			return sdk.WrapError(sdk.ErrForbidden, "user not authorized for workflow %s", workflowName)
 		}
-	} else {
-		log.Warning("Wrong route configuration. need key parameter")
 	}
-	return false
+
+	return sdk.WrapError(sdk.ErrForbidden, "user not authorized for workflow %s, missing project key value", workflowName)
 }
 
 func checkProjectReadPermission(ctx context.Context, projectKey string) bool {
 	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
 }
 
-func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVar map[string]string) bool {
+func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVar map[string]string) error {
 	for _, g := range deprecatedGetUser(ctx).Groups {
 		if g.Name == groupName {
-
 			if permissionValue == permission.PermissionRead {
-				return true
+				return nil
 			}
 
 			for i := range g.Admins {
 				if g.Admins[i].ID == deprecatedGetUser(ctx).ID {
-					return true
+					return nil
 				}
 			}
 		}
 	}
 
-	return false
+	return sdk.WrapError(sdk.ErrForbidden, "user not authorized for group %s", groupName)
 }
 
-func (api *API) checkWorkerModelPermissions(ctx context.Context, modelID string, permissionValue int, routeVar map[string]string) bool {
+func (api *API) checkWorkerModelPermissions(ctx context.Context, modelID string, permissionValue int, routeVar map[string]string) error {
 	id, err := strconv.ParseInt(modelID, 10, 64)
 	if err != nil {
-		log.Warning("checkWorkerModelPermissions> modelID is not an integer: %s", err)
-		return false
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model id %s", modelID)
 	}
 
 	m, err := worker.LoadWorkerModelByID(api.mustDB(), id)
 	if err != nil {
-		log.Warning("checkWorkerModelPermissions> unable to load model by id %s: %s", modelID, err)
-		return false
+		return err
 	}
 
 	h := getHatchery(ctx)
 	if h != nil && h.GroupID != nil {
-		return *h.GroupID == group.SharedInfraGroup.ID || m.GroupID == *h.GroupID
+		if *h.GroupID == group.SharedInfraGroup.ID || m.GroupID == *h.GroupID {
+			return nil
+		}
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "user not authorized for worker model %s", modelID)
 	}
-	return api.checkWorkerModelPermissionsByUser(m, deprecatedGetUser(ctx), permissionValue)
+
+	if api.checkWorkerModelPermissionsByUser(m, deprecatedGetUser(ctx), permissionValue) {
+		return nil
+	}
+	return sdk.NewErrorFrom(sdk.ErrForbidden, "user not authorized for worker model %s", modelID)
 }
 
 func (api *API) checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.User, permissionValue int) bool {
@@ -195,4 +212,58 @@ func (api *API) checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.User, per
 		}
 	}
 	return false
+}
+
+func (api *API) checkActionPermissions(ctx context.Context, actionName string, permissionValue int, routeVars map[string]string) error {
+	// try to get action for given path that match user's groups with/without admin grants
+	groupName := routeVars["groupName"]
+
+	if groupName == "" || actionName == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group or action name")
+	}
+
+	u := deprecatedGetUser(ctx)
+
+	// check that group exists
+	g, err := group.LoadGroup(api.mustDB(), groupName)
+	if err != nil {
+		return err
+	}
+
+	if permissionValue > permission.PermissionRead {
+		if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
+			return err
+		}
+	} else {
+		if err := group.CheckUserIsGroupMember(g, u); err != nil {
+			return err
+		}
+	}
+
+	a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+	if err != nil {
+		return err
+	}
+	if a == nil {
+		return sdk.WithStack(sdk.ErrNoAction)
+	}
+
+	return nil
+}
+
+func (api *API) checkActionBuiltinPermissions(ctx context.Context, actionName string, permissionValue int, routeVars map[string]string) error {
+	// try to get action for given name
+	if actionName == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given action name")
+	}
+
+	a, err := action.LoadByTypesAndName(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName)
+	if err != nil {
+		return err
+	}
+	if a == nil {
+		return sdk.WithStack(sdk.ErrNoAction)
+	}
+
+	return nil
 }

@@ -33,8 +33,8 @@ func Test_getActionExportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":  grp.Name,
-		"actionName": "myAction",
+		"groupName":      grp.Name,
+		"permActionName": "myAction",
 	}
 	uri := api.Router.GetRoute("GET", api.getActionExportHandler, vars)
 	test.NotEmpty(t, uri)
