@@ -829,9 +829,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			// Check allow as code
-			enabled, has := p.Features[feature.FeatWorkflowAsCode]
-			if has && !enabled {
-				return sdk.WrapError(sdk.ErrForbidden, "as code is not allowed for project %s", p.Key)
+			if wf.FromRepository != "" {
+				enabled, has := p.Features[feature.FeatWorkflowAsCode]
+				if has && !enabled {
+					return sdk.WrapError(sdk.ErrForbidden, "as code is not allowed for project %s", p.Key)
+				}
 			}
 
 			// Check node permission
