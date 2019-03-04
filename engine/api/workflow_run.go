@@ -847,14 +847,15 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 		}
 
-		go api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, r.Header.Get("Accept-Language"), u)
+		defer func() {
+			api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, r.Header.Get("Accept-Language"), u)
+		}()
 
 		return service.WriteJSON(w, lastRun, http.StatusAccepted)
 	}
 }
 
 func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache.Store, p *sdk.Project, wf *sdk.Workflow, wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, language string, u *sdk.User) {
-
 	var asCodeInfosMsg []sdk.Message
 
 	// IF NEW WORKFLOW RUN
@@ -922,7 +923,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		wfRun.Workflow = *wf
 	}
 
-	report, errS := startWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
+	report, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
 
 	if errS != nil {
 		failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", p.Key, wf.Name))
@@ -944,7 +945,6 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		wr = &report.WorkflowRuns()[0]
 		wr.Translate(language)
 	}
-
 	return
 }
 
@@ -955,80 +955,6 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 	if errU := workflow.UpdateWorkflowRun(ctx, db, wfRun); errU != nil {
 		log.Error("unable to fail workflow run %v", errU)
 	}
-}
-
-func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*workflow.ProcessorReport, error) {
-	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
-	defer end()
-
-	report := new(workflow.ProcessorReport)
-
-	tx, errb := db.Begin()
-	if errb != nil {
-		return nil, sdk.WrapError(errb, "Cannot start transaction")
-	}
-	defer tx.Rollback() // nolint
-
-	wr.Status = sdk.StatusBuilding.String()
-	if err := workflow.UpdateWorkflowRun(ctx, db, wr); err != nil {
-		return report, err
-	}
-
-	if opts.Hook != nil {
-		// Run from HOOK
-		_, r1, err := workflow.RunFromHook(ctx, tx, store, p, wr, opts.Hook, asCodeInfos)
-		if err != nil {
-			return nil, sdk.WrapError(err, "Unable to run workflow from hook")
-		}
-
-		_, _ = report.Merge(r1, nil)
-
-	} else {
-		// Manual RUN
-		if opts.Manual == nil {
-			opts.Manual = &sdk.WorkflowNodeRunManual{}
-		}
-		opts.Manual.User = *u
-
-		if len(opts.FromNodeIDs) > 0 && len(wr.WorkflowNodeRuns) > 0 {
-			// MANUAL RUN FROM NODE
-
-			fromNode := wr.Workflow.WorkflowData.NodeByID(opts.FromNodeIDs[0])
-			if fromNode == nil {
-				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
-			}
-
-			if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
-				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.Root.ID)
-			}
-
-			// Continue  the current workflow run
-			_, r1, errmr := workflow.ManualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
-			if errmr != nil {
-				return nil, sdk.WrapError(errmr, "Unable to run workflow")
-			}
-			_, _ = report.Merge(r1, nil)
-
-		} else {
-			// MANUAL RUN FROM ROOT NODE
-			if !permission.AccessToWorkflowNode(&wr.Workflow, &wr.Workflow.WorkflowData.Node, u, permission.PermissionReadExecute) {
-				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
-			}
-
-			// Start new workflow
-			_, r1, errmr := workflow.ManualRun(ctx, tx, store, p, wr, opts.Manual, asCodeInfos)
-			if errmr != nil {
-				return nil, sdk.WrapError(errmr, "Unable to run workflow")
-			}
-			_, _ = report.Merge(r1, nil)
-		}
-	}
-
-	//Commit and return success
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to commit transaction")
-	}
-	return report, nil
 }
 
 func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {

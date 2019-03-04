@@ -225,7 +225,6 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
 		return sdk.WrapError(err, "Unable to store tags")
 	}
-
 	return InsertWorkflowRunTags(db, r.ID, r.Tags)
 }
 
@@ -578,7 +577,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		return nil, sdk.WrapError(err, "unable to get next run number")
 	}
 
-	lastRun := &sdk.WorkflowRun{
+	wr := &sdk.WorkflowRun{
 		Number:        number,
 		WorkflowID:    wf.ID,
 		Start:         time.Now(),
@@ -589,7 +588,16 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		Tags:          make([]sdk.WorkflowRunTag, 0),
 	}
 
-	lastRun.Tag("triggered_by", u.Username)
+	if opts.Hook != nil {
+		if trigg, ok := opts.Hook.Payload["cds.triggered_by.username"]; ok {
+			wr.Tag(tagTriggeredBy, trigg)
+		} else {
+			wr.Tag(tagTriggeredBy, "cds.hook")
+		}
+	} else {
+		wr.Tag(tagTriggeredBy, u.Username)
+	}
+
 	tags := wf.Metadata["default_tags"]
 	var payload map[string]string
 	if opts != nil && opts.Hook != nil {
@@ -612,7 +620,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		tagsSplited := strings.Split(tags, ",")
 		for _, t := range tagsSplited {
 			if pTag, hash := payload[t]; hash {
-				lastRun.Tags = append(lastRun.Tags, sdk.WorkflowRunTag{
+				wr.Tags = append(wr.Tags, sdk.WorkflowRunTag{
 					Tag:   t,
 					Value: pTag,
 				})
@@ -620,10 +628,10 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		}
 	}
 
-	if err := insertWorkflowRun(db, lastRun); err != nil {
+	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, sdk.WrapError(err, "unable to create workflow run")
 	}
-	return lastRun, nil
+	return wr, nil
 }
 
 // UpdateRunNum Update run number for the given workflow

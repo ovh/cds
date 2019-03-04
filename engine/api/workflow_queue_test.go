@@ -132,6 +132,37 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		t.FailNow()
 	}
 
+	// Wait building status
+	cpt := 0
+	for {
+		varsGet := map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": w1.Name,
+			"number":           fmt.Sprintf("%d", wr.Number),
+		}
+		uriGet := router.GetRoute("GET", api.getWorkflowRunHandler, varsGet)
+		test.NotEmpty(t, uriGet)
+		reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
+
+		//Do the request
+		recGet := httptest.NewRecorder()
+		router.Mux.ServeHTTP(recGet, reqGet)
+		assert.Equal(t, 200, recGet.Code)
+
+		wrGet := &sdk.WorkflowRun{}
+		test.NoError(t, json.Unmarshal(recGet.Body.Bytes(), wrGet))
+		if wrGet.Status != sdk.StatusRunAsync.String() {
+			wr = wrGet
+			break
+		}
+		cpt++
+		if cpt == 20 {
+			t.Errorf("Workflow still in checking status: %s", wrGet.Status)
+			t.FailNow()
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
 	return testRunWorkflowCtx{
 		user:     u,
 		password: pass,
@@ -628,6 +659,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+
 	assert.NotNil(t, ctx.job)
 
 	// Init store
@@ -903,11 +935,13 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wr, errwr := workflow.CreateRun(db, &w, nil, u)
+	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
-	wr.Workflow = w
+	wrDB.Workflow = w
 
-	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, wr, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{User: *u},
+	}, u, nil)
 	assert.NoError(t, errmr)
 
 	log.Debug("%+v", wrDB.WorkflowNodeRuns)
@@ -1124,28 +1158,33 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	)
 
 	// Create previous run on default branch
-	wr, errwr := workflow.CreateRun(db, &w, nil, u)
+	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
-	wr.Workflow = w
-	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, wr, &sdk.WorkflowNodeRunManual{
-		Payload: map[string]string{
-			"git.branch": "master",
+	wrDB.Workflow = w
+	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "master",
+			},
 		},
-		User: *u,
-	}, nil)
+	}, u, nil)
+
 	assert.NoError(t, errmr)
 
 	// Create previous run on a branch
-	wr2, errwr2 := workflow.CreateRun(db, &w, nil, u)
+	wrCB, errwr2 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr2)
-	wr2.Workflow = w
-	wrCB, _, errm := workflow.ManualRun(context.Background(), db, api.Cache, p, wr2, &sdk.WorkflowNodeRunManual{
-		Payload: map[string]string{
-			"git.branch": "my-branch",
+	wrCB.Workflow = w
+	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrCB, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "my-branch",
+			},
 		},
-		User: *u,
-	}, nil)
-	assert.NoError(t, errm)
+	}, u, nil)
+	assert.NoError(t, errmr)
 
 	// Add a coverage report on default branch node run
 	coverateReportDefaultBranch := sdk.WorkflowNodeRunCoverage{
@@ -1190,15 +1229,17 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Run test
 
 	// Create a workflow run
-	wr3, errwr3 := workflow.CreateRun(db, &w, nil, u)
+	wrToTest, errwr3 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr3)
-	wr3.Workflow = w
-	wrToTest, _, errT := workflow.ManualRun(context.Background(), db, api.Cache, p, wr3, &sdk.WorkflowNodeRunManual{
-		Payload: map[string]string{
-			"git.branch": "my-branch",
+	wrToTest.Workflow = w
+	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "my-branch",
+			},
 		},
-		User: *u,
-	}, nil)
+	}, u, nil)
 	assert.NoError(t, errT)
 
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})

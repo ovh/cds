@@ -112,24 +112,29 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	wrCreate, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wrCreate.Workflow = *w1
-	wr, _, errMR := workflow.ManualRun(context.TODO(), db, api.Cache, proj, wrCreate, &sdk.WorkflowNodeRunManual{
-		User: *u,
-	}, nil)
+	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+	}, u, nil)
 	if errMR != nil {
 		test.NoError(t, errMR)
 	}
 
-	_, _, errMR2 := workflow.ManualRunFromNode(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.WorkflowData.Node.ID)
-	if errMR2 != nil {
-		test.NoError(t, errMR2)
-	}
+	_, errMR2 := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+		FromNodeIDs: []int64{wrCreate.Workflow.WorkflowData.Node.ID},
+	}, u, nil)
+	assert.NoError(t, errMR2)
 
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", wr.Number),
-		"nodeID":           fmt.Sprintf("%d", wr.Workflow.WorkflowData.Node.ID),
+		"number":           fmt.Sprintf("%d", wrCreate.Number),
+		"nodeID":           fmt.Sprintf("%d", wrCreate.Workflow.WorkflowData.Node.ID),
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunHistoryHandler, vars)
 	test.NotEmpty(t, uri)
@@ -235,9 +240,11 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		wr, err := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, err)
 		wr.Workflow = *w1
-		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
-			User: *u,
-		}, nil)
+		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+			},
+		}, u, nil)
 		test.NoError(t, err)
 	}
 
@@ -387,9 +394,11 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	wr, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wr.Workflow = *w1
-	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
-		User: *u,
-	}, nil)
+	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+	}, u, nil)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -501,13 +510,15 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		wr, err := workflow.CreateRun(db, w1, nil, u)
 		wr.Workflow = *w1
 		assert.NoError(t, err)
-		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
-			User: *u,
-			Payload: map[string]string{
-				"git.branch": "master",
-				"git.hash":   fmt.Sprintf("%d", i),
+		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+				Payload: map[string]string{
+					"git.branch": "master",
+					"git.hash":   fmt.Sprintf("%d", i),
+				},
 			},
-		}, nil)
+		}, u, nil)
 		test.NoError(t, err)
 	}
 
@@ -634,9 +645,11 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		wr, err := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, err)
 		wr.Workflow = *w1
-		_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
-			User: *u,
-		}, nil)
+		_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+			},
+		}, u, nil)
 		test.NoError(t, err)
 	}
 
@@ -755,9 +768,11 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	wr, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wr.Workflow = *w1
-	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj2, wr, &sdk.WorkflowNodeRunManual{
-		User: *u,
-	}, nil)
+	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj2, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+	}, u, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
@@ -900,7 +915,6 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
-	assert.Equal(t, "stage 1", wr.Workflow.Pipelines[pip.ID].Stages[0].Name)
 
 	pip.Stages[0].Name = "New awesome stage"
 	errS := pipeline.UpdateStage(db, &pip.Stages[0])
@@ -1373,9 +1387,11 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 	wr, err := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, err)
 	wr.Workflow = *w1
-	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, wr, &sdk.WorkflowNodeRunManual{
-		User: *u,
-	}, nil)
+	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+	}, u, nil)
 	test.NoError(t, err)
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true})
