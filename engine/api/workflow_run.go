@@ -803,6 +803,18 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			if wf.Name != name {
 				wf.Name = name
 			}
+
+			for _, id := range opts.FromNodeIDs {
+				fromNode := lastRun.Workflow.WorkflowData.NodeByID(opts.FromNodeIDs[0])
+				if fromNode == nil {
+					return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", id)
+				}
+
+				if !permission.AccessToWorkflowNode(&lastRun.Workflow, fromNode, u, permission.PermissionReadExecute) {
+					return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", fromNode.Name)
+				}
+			}
+
 			lastRun.Status = sdk.StatusWaiting.String()
 		} else {
 			var errWf error
@@ -820,6 +832,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			enabled, has := p.Features[feature.FeatWorkflowAsCode]
 			if has && !enabled {
 				return sdk.WrapError(sdk.ErrForbidden, "as code is not allowed for project %s", p.Key)
+			}
+
+			// Check node permission
+			if !permission.AccessToWorkflowNode(wf, &wf.WorkflowData.Node, u, permission.PermissionReadExecute) {
+				return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
 			}
 
 			// CREATE WORKFLOW RUN
