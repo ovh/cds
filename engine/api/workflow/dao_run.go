@@ -588,7 +588,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		Tags:          make([]sdk.WorkflowRunTag, 0),
 	}
 
-	if opts.Hook != nil {
+	if opts != nil && opts.Hook != nil {
 		if trigg, ok := opts.Hook.Payload["cds.triggered_by.username"]; ok {
 			wr.Tag(tagTriggeredBy, trigg)
 		} else {
