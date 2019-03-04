@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Params, Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
-import {User} from '../../../model/user.model';
+import {UserLoginRequest} from '../../../model/user.model';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {UserService} from '../../../service/user/user.service';
 import {AccountComponent} from '../account.component';
@@ -36,9 +36,11 @@ export class VerifyComponent extends AccountComponent implements OnInit  {
     }
 
     signIn() {
-        let user: User = this.userVerified.user;
-        user.password = this.userVerified.password;
-        this._userService.login(user).subscribe(() => {
+        let userloginRequest = new UserLoginRequest();
+        userloginRequest.username = this.userVerified.user;
+        userloginRequest.password = this.userVerified.password;
+
+        this._userService.login(userloginRequest).subscribe(() => {
             this._router.navigate(['home']);
         });
     }

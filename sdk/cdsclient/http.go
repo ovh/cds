@@ -14,6 +14,8 @@ import (
 	"runtime/pprof"
 	"strings"
 
+	"github.com/dgrijalva/jwt-go"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
@@ -228,9 +230,20 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
 				req.Header.Set(AuthHeader, basedHash)
 			}
-			if c.config.User != "" && c.config.Token != "" {
-				req.Header.Add(SessionTokenHeader, c.config.Token)
-				req.SetBasicAuth(c.config.User, c.config.Token)
+
+			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.AccessToken, &sdk.AccessTokenJWTClaims{}); err == nil {
+				if c.config.Verbose {
+					fmt.Println("JWT recognized")
+				}
+				auth := "Bearer " + c.config.AccessToken
+				req.Header.Add("Authorization", auth)
+			} else {
+				// TEMPORARY CODE TO HANDLE OLD TOKEN
+				if c.config.User != "" && c.config.Token != "" {
+					req.Header.Add(SessionTokenHeader, c.config.Token)
+					req.SetBasicAuth(c.config.User, c.config.Token)
+				}
+				// TEMPORARY CODE - END
 			}
 		}
 

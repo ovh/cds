@@ -582,6 +582,7 @@ golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp/elgamal
+golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
 # golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
@@ -683,6 +684,10 @@ gopkg.in/ldap.v2
 gopkg.in/olivere/elastic.v5
 gopkg.in/olivere/elastic.v5/config
 gopkg.in/olivere/elastic.v5/uritemplates
+# gopkg.in/square/go-jose.v2 v2.3.0
+gopkg.in/square/go-jose.v2
+gopkg.in/square/go-jose.v2/cipher
+gopkg.in/square/go-jose.v2/json
 # gopkg.in/testfixtures.v2 v2.4.2
 gopkg.in/testfixtures.v2
 # gopkg.in/urfave/cli.v1 v1.18.1

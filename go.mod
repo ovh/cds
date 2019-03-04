@@ -269,6 +269,7 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/olivere/elastic.v5 v5.0.69
 	gopkg.in/ory-am/dockertest.v2 v2.2.3 // indirect
+	gopkg.in/square/go-jose.v2 v2.3.0
 	gopkg.in/stomp.v1 v1.0.1 // indirect
 	gopkg.in/testfixtures.v2 v2.4.2 // indirect
 	gopkg.in/urfave/cli.v1 v1.18.1
