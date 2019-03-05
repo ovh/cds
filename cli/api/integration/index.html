@@ -1850,6 +1850,38 @@
     </li>
         </ul>
     </li>
+      <li data-nav-id="/cli/cdsctl/xlogin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/xlogin/">
+          <span>xlogin</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/xtoken/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/xtoken/">
+        <span>xtoken</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/xtoken/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/xtoken/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/xtoken/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/xtoken/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/xtoken/new/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/xtoken/new/">
+          <span>new</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/xtoken/regen/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/xtoken/regen/">
+          <span>regen</span>
+        </a>
+    </li>
+        </ul>
+    </li>
         </ul>
     </li>
     <li data-nav-id="/cli/engine/" class="dd-item">
@@ -2226,9 +2258,9 @@
 <ul>
 <li><a href="#post-integration-models">POST <code>/integration/models</code></a></li>
 <li><a href="#get-integration-models">GET <code>/integration/models</code></a></li>
+<li><a href="#get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></a></li>
 <li><a href="#delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></a></li>
 <li><a href="#put-integration-models-name">PUT <code>/integration/models/&lt;name&gt;</code></a></li>
-<li><a href="#get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -2308,6 +2340,34 @@
 </tbody>
 </table>
 
+<h3 id="get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/integration/models/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelHandler%22">getIntegrationModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></h3>
 
 <table>
@@ -2360,34 +2420,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putIntegrationModelHandler%22">putIntegrationModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/integration/models/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelHandler%22">getIntegrationModelHandler</a></td>
 </tr>
 </tbody>
 </table>

@@ -750,6 +750,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/xtoken/delete/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/template/detach/</loc>
   </url>
   
@@ -1118,6 +1122,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/xtoken/list/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/login/</loc>
   </url>
   
@@ -1151,6 +1159,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/monitoring/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/xtoken/new/</loc>
   </url>
   
   <url>
@@ -1255,6 +1267,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/api/queue/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/xtoken/regen/</loc>
   </url>
   
   <url>
@@ -1539,6 +1555,14 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/xlogin/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/xtoken/</loc>
   </url>
   
 </urlset>
