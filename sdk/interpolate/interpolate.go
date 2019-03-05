@@ -113,6 +113,8 @@ func Do(input string, vars map[string]string) (string, error) {
 					switch splittedExpression[i][0] {
 					case '.':
 						usedVariables[splittedExpression[i][1:]] = void{}
+					case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+						quotedStuff = append(quotedStuff, splittedExpression[i:]...)
 					case '"':
 						q := strings.TrimPrefix(splittedExpression[i], "\"")
 						q = strings.TrimSuffix(q, "\"")
