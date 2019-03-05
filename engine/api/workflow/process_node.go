@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -182,7 +181,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		//Merge the payloads from all the sources
 		_, next := observability.Span(ctx, "workflow.processNode.mergePayload")
 		for _, r := range parents {
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e := dump.NewDefaultEncoder()
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 			e.ExtraFields.DetailedMap = false
 			e.ExtraFields.DetailedStruct = false
@@ -242,7 +241,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			Value: string(payloadStr),
 		})
 
-		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e := dump.NewDefaultEncoder()
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false
 		e.ExtraFields.DetailedStruct = false

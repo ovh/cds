@@ -23,6 +23,14 @@ func WithDefaultLowerCaseFormatter() KeyFormatterFunc {
 	}
 }
 
+// WithDefaultUpperCaseFormatter formats keys in uppercase and apply default formatting
+func WithDefaultUpperCaseFormatter() KeyFormatterFunc {
+	f := WithDefaultFormatter()
+	return func(s string) string {
+		return strings.ToUpper(f(s))
+	}
+}
+
 // WithDefaultFormatter is the default formatter
 func WithDefaultFormatter() KeyFormatterFunc {
 	return func(s string) string {

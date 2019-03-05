@@ -255,7 +255,7 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 		}
 
 		if n.Context.HasDefaultPayload() {
-			enc := dump.NewDefaultEncoder(nil)
+			enc := dump.NewDefaultEncoder()
 			enc.ExtraFields.DetailedMap = false
 			enc.ExtraFields.DetailedStruct = false
 			enc.ExtraFields.Len = false

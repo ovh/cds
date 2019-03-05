@@ -1,12 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-
-	"github.com/fatih/structs"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/elasticsearch"
@@ -59,31 +53,4 @@ type HatcheryConfiguration struct {
 	Openstack  *openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/" json:"openstack"`
 	Swarm      *swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/" json:"swarm"`
 	VSphere    *vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/" json:"vshpere"`
-}
-
-// AsEnvVariables returns the object attributes as env variables. It used for configuration structs
-func AsEnvVariables(o interface{}, prefix string, skipCommented bool) map[string]string {
-	r := map[string]string{}
-	prefix = strings.ToUpper(prefix)
-	delim := "_"
-	if prefix == "" {
-		delim = ""
-	}
-	fields := structs.Fields(o)
-	for _, f := range fields {
-		if skipCommented {
-			if commented, _ := strconv.ParseBool(f.Tag("commented")); commented {
-				continue
-			}
-		}
-		if structs.IsStruct(f.Value()) {
-			rf := AsEnvVariables(f.Value(), prefix+delim+f.Name(), skipCommented)
-			for k, v := range rf {
-				r[k] = v
-			}
-		} else {
-			r[prefix+"_"+strings.ToUpper(f.Name())] = fmt.Sprintf("%v", f.Value())
-		}
-	}
-	return r
 }

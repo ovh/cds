@@ -68,7 +68,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 					filename := v.OutputDir + "/" + slug(ts.ShortName) + "." + slug(tc.Name) + ".dump"
 
 					sdump := &bytes.Buffer{}
-					dumpEncoder := dump.NewDefaultEncoder(sdump)
+					dumpEncoder := dump.NewEncoder(sdump)
 					dumpEncoder.ExtraFields.DetailedMap = false
 					dumpEncoder.ExtraFields.DetailedStruct = false
 					dumpEncoder.ExtraFields.Len = false

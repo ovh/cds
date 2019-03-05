@@ -39,15 +39,15 @@ func (g *GrantedUser) IsRealUser() bool {
 
 // AccessToken is either a Personnal Access Token or a Group Access Token
 type AccessToken struct {
-	ID          string     `json:"id" cli:"-" db:"id"`
-	Description string     `json:"description" cli:"description,key" db:"description"`
-	UserID      int64      `json:"user_id,omitempty" db:"user_id"`
-	User        User       `json:"user" db:"-"`
-	ExpireAt    *time.Time `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
-	Created     time.Time  `json:"created" cli:"created" db:"created"`
-	Status      string     `json:"status" cli:"status" db:"status"`
-	Origin      string     `json:"-" cli:"-" db:"origin"`
-	Groups      []Group    `json:"groups" cli:"-" db:"-"`
+	ID          string    `json:"id" cli:"id,key" db:"id"`
+	Description string    `json:"description" cli:"description" db:"description"`
+	UserID      int64     `json:"user_id,omitempty" db:"user_id"`
+	User        User      `json:"user" db:"-"`
+	ExpireAt    time.Time `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
+	Created     time.Time `json:"created" cli:"created" db:"created"`
+	Status      string    `json:"status" cli:"status" db:"status"`
+	Origin      string    `json:"-" cli:"-" db:"origin"`
+	Groups      []Group   `json:"groups" cli:"scope" db:"-"`
 }
 
 // Token describes tokens used by worker to access the API

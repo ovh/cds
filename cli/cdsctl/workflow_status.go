@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"sort"
@@ -162,7 +161,7 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 		}
 	}
 
-	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e := dump.NewDefaultEncoder()
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
 	e.ExtraFields.DetailedStruct = false
