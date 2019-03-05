@@ -322,31 +322,31 @@ func TestDo(t *testing.T) {
 			name: "config",
 			args: args{
 				input: `
-		{
-		"env": {
-		"KEYA":"{{.cds.env.vAppKey}}",
-		"KEYB": "{{.cds.env.vAppKeyHatchery}}",
-		"ADDR":"{{.cds.env.addr}}"
-		},
-		"labels": {
-		"TOKEN": "{{.cds.env.token}}",
-		"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
-		}
-		}`,
+				{
+				"env": {
+				"KEYA":"{{.cds.env.vAppKey}}",
+				"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+				"ADDR":"{{.cds.env.addr}}"
+				},
+				"labels": {
+				"TOKEN": "{{.cds.env.token}}",
+				"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
+				}
+				}`,
 				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
 			},
 			want: `
-		{
-		"env": {
-		"KEYA":"aValue",
-		"KEYB": "{{.cds.env.vAppKeyHatchery}}",
-		"ADDR":""
-		},
-		"labels": {
-		"TOKEN": "aValidTokenString",
-		"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
-		}
-		}`,
+				{
+				"env": {
+				"KEYA":"aValue",
+				"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+				"ADDR":""
+				},
+				"labels": {
+				"TOKEN": "aValidTokenString",
+				"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
+				}
+				}`,
 			enable: true,
 		},
 		{
@@ -362,28 +362,28 @@ func TestDo(t *testing.T) {
 			name: "git.branch in payload should not be interpolated",
 			args: args{
 				input: `
-name: "w{{.cds.pip.docker.image}}-generated"
-version: v1.0
-workflow:
-  build-go:
-    pipeline: build-go-generated
-    payload:
-      git.author: ""
-      git.branch: master`,
+		name: "w{{.cds.pip.docker.image}}-generated"
+		version: v1.0
+		workflow:
+		  build-go:
+		    pipeline: build-go-generated
+		    payload:
+		      git.author: ""
+		      git.branch: master`,
 				vars: map[string]string{
 					"git.branch": "master",
 					"git.author": "",
 				},
 			},
 			want: `
-name: "w{{.cds.pip.docker.image}}-generated"
-version: v1.0
-workflow:
-  build-go:
-    pipeline: build-go-generated
-    payload:
-      git.author: ""
-      git.branch: master`,
+		name: "w{{.cds.pip.docker.image}}-generated"
+		version: v1.0
+		workflow:
+		  build-go:
+		    pipeline: build-go-generated
+		    payload:
+		      git.author: ""
+		      git.branch: master`,
 			enable: true,
 		},
 		{
@@ -407,6 +407,17 @@ workflow:
 				},
 			},
 			want:   `name: "coucou-toi"`,
+			enable: true,
+		},
+		{
+			name: "- substring",
+			args: args{
+				input: `name: coucou-{{ .name | substr 0 5 }}`,
+				vars: map[string]string{
+					"name": "github",
+				},
+			},
+			want:   `name: coucou-githu`,
 			enable: true,
 		},
 	}
