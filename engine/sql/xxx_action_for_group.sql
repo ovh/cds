@@ -1,5 +1,16 @@
 -- +migrate Up
 
+-- remove unused data
+DELETE FROM action_requirement WHERE id IN (
+  SELECT actr.id FROM action_requirement AS actr
+  LEFT JOIN "action" AS act ON act.id = actr.action_id
+  WHERE act.id IS NULL
+);
+
+-- set empty string instead of null values
+UPDATE action_parameter SET "description" = '' WHERE "description" IS NULL;
+ALTER TABLE action_parameter ALTER COLUMN "description" SET NOT NULL;
+
 -- remove unused table and column
 DROP TABLE IF EXISTS template_action;
 ALTER TABLE action_parameter DROP COLUMN IF EXISTS worker_model_name;
