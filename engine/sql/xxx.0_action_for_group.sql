@@ -6,11 +6,11 @@ ALTER TABLE action_parameter DROP COLUMN IF EXISTS worker_model_name;
 ALTER TABLE "action" DROP COLUMN public;
 
 -- replace existing foreign keys with cascade ones
-ALTER TABLE action_parameter DROP CONSTRAINT "fk_action_parameter_action";
-ALTER TABLE action_requirement DROP CONSTRAINT "fk_action_requirement_action";
-ALTER TABLE action_edge DROP CONSTRAINT "fk_action_edge_parent_action";
-ALTER TABLE action_edge_parameter DROP CONSTRAINT "fk_action_edge_parameter_action_edge";
-ALTER TABLE pipeline_action DROP CONSTRAINT "fk_pipeline_action_action";
+ALTER TABLE action_parameter DROP CONSTRAINT IF EXISTS "fk_action_parameter_action";
+ALTER TABLE action_requirement DROP CONSTRAINT IF EXISTS "fk_action_requirement_action";
+ALTER TABLE action_edge DROP CONSTRAINT IF EXISTS "fk_action_edge_parent_action";
+ALTER TABLE action_edge_parameter DROP CONSTRAINT IF EXISTS "fk_action_edge_parameter_action_edge";
+ALTER TABLE pipeline_action DROP CONSTRAINT IF EXISTS "fk_pipeline_action_action";
 SELECT create_foreign_key_idx_cascade('FK_ACTION_PARAMETER_ACTION', 'action_parameter', 'action', 'action_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_REQUIREMENT_ACTION', 'action_requirement', 'action', 'action_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_PARENT_ACTION', 'action_edge', 'action', 'parent_id', 'id');
