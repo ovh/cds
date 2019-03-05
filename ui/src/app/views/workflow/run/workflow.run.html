@@ -1,9 +1,29 @@
 <div *ngIf="workflowRun" class="workflowRun">
     <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflow]="workflow" [workflowName]="workflowName"
-        (relaunch)="relaunch()">
+        (relaunch)="relaunch()" [class.above]="workflowRun.status === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
-    <app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowRun]="workflowRun">
-    </app-workflow-graph>
+    <ng-container *ngIf="workflowRun.status !== pipelineStatusEnum.PENDING; else pendingBlock">
+        <app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowRun]="workflowRun">
+        </app-workflow-graph>
+    </ng-container>
+    <ng-template #pendingBlock>
+        <div class="ui full segment">
+
+            <!--app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowData]="workflow">
+            </app-workflow-graph-->
+            <sui-dimmer class="inverted" isDimmed="true" [isClickable]="false">
+                <!--div class="ui text loader">{{ 'workflow_run_scheduling' | translate }}</div-->
+                <div class="sk-folding-cube">
+                    <div class="sk-cube1 sk-cube"></div>
+                    <div class="sk-cube2 sk-cube"></div>
+                    <div class="sk-cube4 sk-cube"></div>
+                    <div class="sk-cube3 sk-cube"></div>
+                </div>
+            </sui-dimmer>
+
+        </div>
+    </ng-template>
+
 </div>
 <div class="ui full segment" *ngIf="loadingRun && workflowRun">
     <sui-dimmer class="inverted" [isDimmed]="true" [isClickable]="false">

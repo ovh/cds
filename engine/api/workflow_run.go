@@ -850,7 +850,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		}
 
 		defer func() {
-			api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, r.Header.Get("Accept-Language"), u)
+			// api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, r.Header.Get("Accept-Language"), u)
 		}()
 
 		return service.WriteJSON(w, lastRun, http.StatusAccepted)
@@ -861,7 +861,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	var asCodeInfosMsg []sdk.Message
 
 	// IF NEW WORKFLOW RUN
-	if wfRun.Status == sdk.StatusRunAsync.String() {
+	if wfRun.Status == sdk.StatusPending.String() {
 		// BECOME AS CODE ?
 		if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
 			tx, err := db.Begin()

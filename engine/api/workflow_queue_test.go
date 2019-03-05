@@ -151,7 +151,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 
 		wrGet := &sdk.WorkflowRun{}
 		test.NoError(t, json.Unmarshal(recGet.Body.Bytes(), wrGet))
-		if wrGet.Status != sdk.StatusRunAsync.String() {
+		if wrGet.Status != sdk.StatusPending.String() {
 			wr = wrGet
 			break
 		}

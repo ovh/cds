@@ -582,7 +582,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		Start:         time.Now(),
 		LastModified:  time.Now(),
 		ProjectID:     wf.ProjectID,
-		Status:        sdk.StatusRunAsync.String(),
+		Status:        sdk.StatusPending.String(),
 		LastExecution: time.Now(),
 		Tags:          make([]sdk.WorkflowRunTag, 0),
 	}

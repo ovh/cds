@@ -1,4 +1,6 @@
 @import '../../../../common';
+@import '../../../../../node_modules/spinkit/scss/spinners/11-folding-cube';
+
 .workflowRun {
   width: 100%;
   height: 100%;
@@ -7,6 +9,9 @@
   .graph {
     flex: 1;
   }
+}
+.above {
+    z-index: 1001;
 }
 
 .ui.full.segment {
@@ -17,4 +22,17 @@
   height: 100%;
   width: calc(100% - 250px);
   border-radius: 0px;
+}
+
+.ui.invisible.segment {
+    height: 100%;
+    border: none;
+    margin-top: 20px;
+}
+
+.sk-folding-cube {
+    z-index: 1001;
+}
+.sk-cube {
+    border: 2px solid white;
 }
