@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -604,7 +603,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		payload = opts.Hook.Payload
 	}
 	if opts != nil && opts.Manual != nil {
-		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e := dump.NewDefaultEncoder()
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false
 		e.ExtraFields.DetailedStruct = false

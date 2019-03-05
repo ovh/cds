@@ -143,7 +143,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, nil, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -239,7 +239,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, nil, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 		wfr.Status = sdk.StatusBuilding.String()
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
@@ -336,7 +336,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 				"git.author": "test",
 			},
 		},
-	}, nil, nil)
+	}, u, nil)
 	test.NoError(t, errWr)
 
 	for i := 0; i < 5; i++ {
@@ -351,7 +351,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, nil, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail.String()
@@ -454,7 +454,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, nil, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail.String()
@@ -551,7 +551,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, nil, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -645,7 +645,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, nil, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 	}
 
