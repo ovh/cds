@@ -159,20 +159,17 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 		}
 	}
 
-	baseBranch, err := b.Branch(ctx, repo, pr.Base.Branch.ID)
-	if err != nil {
-		return pr, sdk.WrapError(err, "unable to get branch %v", baseBranch)
-	}
-	pr.Base.Branch = *baseBranch
-	pr.Base.Commit = sdk.VCSCommit{
-		Hash: baseBranch.LatestCommit,
+	pr.Base.Branch = sdk.VCSBranch{
+		ID:           pullRequest.FromRef.ID,
+		DisplayID:    pullRequest.FromRef.DisplayID,
+		LatestCommit: pullRequest.FromRef.LatestCommit,
 	}
 
-	headBranch, err := b.Branch(ctx, pullRequest.FromRef.Repository.Project.Key+"/"+pullRequest.FromRef.Repository.Slug, pr.Head.Branch.ID)
-	if err != nil {
-		return pr, sdk.WrapError(err, "unable to get branch %v", headBranch)
+	pr.Head.Branch = sdk.VCSBranch{
+		ID:           pullRequest.ToRef.ID,
+		DisplayID:    pullRequest.ToRef.DisplayID,
+		LatestCommit: pullRequest.ToRef.LatestCommit,
 	}
-	pr.Head.Branch = *headBranch
 
 	pr.Closed = pullRequest.Closed
 	pr.Merged = pullRequest.State == "MERGED"
