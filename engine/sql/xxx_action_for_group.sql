@@ -1,3 +1,4 @@
+
 -- +migrate Up
 
 -- remove unused data
@@ -37,7 +38,7 @@ CREATE INDEX idx_action_type ON "action" ("type");
 -- add column group_id on action and set to 1 (shared.infra) for all not joined action
 ALTER TABLE "action" ADD COLUMN group_id BIGINT;
 SELECT create_foreign_key_idx_cascade('FK_ACTION_GROUP', 'action', 'group', 'group_id', 'id');
-UPDATE "action" SET group_id = 1 WHERE "type" = 'Default';
+UPDATE "action" SET group_id = shared.id FROM (SELECT id FROM "group" WHERE name = 'shared.infra') AS shared WHERE "type" = 'Default';
 
 -- migrate action audits
 DELETE FROM action_audit WHERE LOWER(change) = 'action delete';
