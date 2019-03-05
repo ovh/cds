@@ -68,7 +68,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 }
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
-func ManualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, *ProcessorReport, error) {
+func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	report := new(ProcessorReport)
 
 	r1, condOk, err := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, &nodeID)
@@ -133,7 +133,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			}
 
 			// Continue  the current workflow run
-			_, r1, errmr := ManualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
+			_, r1, errmr := manualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
 			if errmr != nil {
 				return nil, sdk.WrapError(errmr, "Unable to run workflow")
 			}
@@ -145,7 +145,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
 			}
 			// Start new workflow
-			_, r1, errmr := ManualRun(ctx, tx, store, p, wr, opts.Manual)
+			_, r1, errmr := manualRun(ctx, tx, store, p, wr, opts.Manual)
 			if errmr != nil {
 				return nil, sdk.WrapError(errmr, "Unable to run workflow")
 			}
@@ -161,7 +161,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 }
 
 //ManualRun is the entry point to trigger a workflow manually
-func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, *ProcessorReport, error) {
+func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	report := new(ProcessorReport)
 	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, wr.Number))
 	defer end()
