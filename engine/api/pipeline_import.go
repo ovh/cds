@@ -6,12 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/permission"
-
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
