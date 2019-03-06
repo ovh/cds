@@ -138,9 +138,8 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			}
 
 			// check for failure caused by action not usable or requirements problem
-			if sdk.StatusStopped == stage.Status {
-				newStatus = sdk.StatusStopped.String()
-				stagesTerminated++
+			if sdk.StatusFail == stage.Status {
+				newStatus = sdk.StatusFail.String()
 				break
 			}
 
@@ -148,6 +147,12 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				stagesTerminated++
 				continue
 			}
+			break
+		}
+
+		// check for failure caused by action not usable or requirements problem
+		if sdk.StatusFail == stage.Status {
+			newStatus = sdk.StatusFail.String()
 			break
 		}
 
@@ -462,7 +467,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	}
 
 	if failedJobs > 0 {
-		stage.Status = sdk.StatusStopped
+		stage.Status = sdk.StatusFail
 	}
 
 	return report, nil
