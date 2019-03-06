@@ -11,7 +11,7 @@
   }
 }
 .above {
-    z-index: 1001;
+    z-index: 1010;
 }
 
 .ui.full.segment {
@@ -35,4 +35,8 @@
 }
 .sk-cube {
     border: 2px solid white;
+}
+.loading {
+    color: black;
+    margin: 0 auto 0 auto;
 }
