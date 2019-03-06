@@ -33,7 +33,7 @@ impl From<reqwest::Error> for Error {
         if e.is_serialization() {
             match e.get_ref() {
                 None => (),
-                Some(err) => cds_error.message = err.description().into(),
+                Some(err) => cds_error.message = format!("JSON ERROR: {:?}", err).into(),
             }
         }
         cds_error
