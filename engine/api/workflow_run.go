@@ -850,7 +850,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		}
 
 		defer func() {
-			// api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, r.Header.Get("Accept-Language"), u)
+			api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, r.Header.Get("Accept-Language"), u)
 		}()
 
 		return service.WriteJSON(w, lastRun, http.StatusAccepted)
@@ -906,6 +906,15 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 				if len(asCodeInfosMsg) > 0 {
 					msgListString = strings.Join(translateMsgs(language, asCodeInfosMsg), " ")
 				}
+
+				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
+				for i, msg := range asCodeInfosMsg {
+					infos[i] = sdk.SpawnMsg{
+						ID:   msg.ID,
+						Args: msg.Args,
+					}
+					workflow.AddWorkflowRunInfo(wfRun, false, infos...)
+				}
 				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository.%s", msgListString))
 				return
 			}
@@ -951,9 +960,13 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 }
 
 func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) {
-	// TODO - add spawninfo
-	wfRun.Status = sdk.StatusFail.String()
 	log.Error("unable to start workflow: %v", err)
+	wfRun.Status = sdk.StatusFail.String()
+	info := sdk.SpawnMsg{
+		ID:   sdk.MsgWorkflowError.ID,
+		Args: []interface{}{sdk.ErrUnknownError.Message},
+	}
+	workflow.AddWorkflowRunInfo(wfRun, true, info)
 	if errU := workflow.UpdateWorkflowRun(ctx, db, wfRun); errU != nil {
 		log.Error("unable to fail workflow run %v", errU)
 	}

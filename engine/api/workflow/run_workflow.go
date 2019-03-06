@@ -46,7 +46,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 
-		// Add ass code spawn info
+		// Add add code spawn info
 		for _, msg := range asCodeMsg {
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 		}
