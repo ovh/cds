@@ -25,10 +25,18 @@ impl From<IOError> for Error {
 
 impl From<reqwest::Error> for Error {
     fn from(e: reqwest::Error) -> Error {
-        Error {
+        // Inspect the internal error and output it
+        let mut cds_error = Error {
             message: e.description().into(),
             ..Default::default()
+        };
+        if e.is_serialization() {
+            match e.get_ref() {
+                None => (),
+                Some(err) => cds_error.message = err.description().into(),
+            }
         }
+        cds_error
     }
 }
 
