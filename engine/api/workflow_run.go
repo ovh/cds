@@ -850,14 +850,14 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		}
 
 		defer func() {
-			api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, r.Header.Get("Accept-Language"), u)
+			api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, u)
 		}()
 
 		return service.WriteJSON(w, lastRun, http.StatusAccepted)
 	}
 }
 
-func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache.Store, p *sdk.Project, wf *sdk.Workflow, wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, language string, u *sdk.User) {
+func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache.Store, p *sdk.Project, wf *sdk.Workflow, wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) {
 	var asCodeInfosMsg []sdk.Message
 
 	// IF NEW WORKFLOW RUN
@@ -902,11 +902,6 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			var errCreate error
 			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p, wf, *opts, u, project.DecryptWithBuiltinKey)
 			if errCreate != nil {
-				var msgListString string
-				if len(asCodeInfosMsg) > 0 {
-					msgListString = strings.Join(translateMsgs(language, asCodeInfosMsg), " ")
-				}
-
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 				for i, msg := range asCodeInfosMsg {
 					infos[i] = sdk.SpawnMsg{
@@ -915,7 +910,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 					}
 					workflow.AddWorkflowRunInfo(wfRun, false, infos...)
 				}
-				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository.%s", msgListString))
+				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository."))
 				return
 			}
 		} else {
@@ -950,12 +945,6 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			log.Error("workflow.PurgeWorkflowRun> error %v", err)
 		}
 	}, api.PanicDump())
-
-	var wr *sdk.WorkflowRun
-	if len(report.WorkflowRuns()) > 0 {
-		wr = &report.WorkflowRuns()[0]
-		wr.Translate(language)
-	}
 	return
 }
 
