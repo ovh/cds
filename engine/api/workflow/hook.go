@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -75,7 +74,7 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 						}
 
 						//Go Dump
-						e := dump.NewDefaultEncoder(new(bytes.Buffer))
+						e := dump.NewDefaultEncoder()
 						e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 						e.ExtraFields.DetailedMap = false
 						e.ExtraFields.DetailedStruct = false
@@ -109,7 +108,7 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 						if errDefault != nil {
 							return sdk.WrapError(errDefault, "HookRegistration> Unable to get default payload")
 						}
-						dumper := dump.NewDefaultEncoder(nil)
+						dumper := dump.NewDefaultEncoder()
 						dumper.ExtraFields.DetailedMap = false
 						dumper.ExtraFields.DetailedStruct = false
 						dumper.ExtraFields.Len = false

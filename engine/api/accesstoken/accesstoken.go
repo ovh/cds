@@ -34,7 +34,7 @@ func Init(issuer string, k []byte) error {
 const OriginUI = "UI"
 
 // New returns a new access token for a user
-func New(u sdk.User, groups []sdk.Group, origin, desc string, expiration *time.Time) (sdk.AccessToken, string, error) {
+func New(u sdk.User, groups []sdk.Group, origin, desc string, expiration time.Time) (sdk.AccessToken, string, error) {
 	var token sdk.AccessToken
 	token.ID = sdk.UUID()
 	token.Created = time.Now()
@@ -66,15 +66,12 @@ func Regen(token *sdk.AccessToken) (string, error) {
 		ID:     token.ID,
 		Groups: sdk.GroupsToIDs(token.Groups),
 		StandardClaims: jwt.StandardClaims{
-			Issuer:   localIssuer,
-			Subject:  token.User.Username,
-			Id:       token.ID,
-			IssuedAt: time.Now().Unix(),
+			Issuer:    localIssuer,
+			Subject:   token.User.Username,
+			Id:        token.ID,
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: token.ExpireAt.Unix(),
 		},
-	}
-
-	if token.ExpireAt != nil {
-		claims.ExpiresAt = token.ExpireAt.Unix()
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)

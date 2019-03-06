@@ -244,7 +244,7 @@
 [58.884835, "o", "e"]
 [59.749469, "o", "\u001b[?1l\u001b>"]
 [59.749647, "o", "\u001b[?2004l\r\r\n"]
-[59.75067, "o", "\u001b]2;cdsctl template bulk -f instances.yml --track --no-interactive\u0007\u001b]1;cdsctl\u0007"]
+[59.75067, "o", "\u001b]2;cdsctl template bulk --instances-file instances.yml --track --no-interactive\u0007\u001b]1;cdsctl\u0007"]
 [60.038244, "o", "Bulk request with id 98 successfully created for template shared.infra/example-simple with 2 operations\r\n"]
 [60.138665, "o", "\r                                                                                                                            \rDEMO/demo1 -> \u001b[33mprocessing\u001b[0m \r\nDEMO/demo2 -> \u001b[34mpending\u001b[0m \r\n"]
 [60.655449, "o", "\r                                                                                                                            \u001b[1F\r                                                                                                                            \u001b[1F\r                                                                                                                            \rDEMO/demo1 -> \u001b[32mdone\u001b[0m \r\nDEMO/demo2 -> \u001b[32mdone\u001b[0m \r\n"]

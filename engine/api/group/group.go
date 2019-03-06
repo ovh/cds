@@ -111,7 +111,7 @@ func LoadGroupByName(db gorp.SqlExecutor, name string) (*sdk.Group, error) {
 
 // LoadUserGroup retrieves all group users from database
 func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	query := `SELECT "user".username, "user".data, "group_user".group_admin FROM "user"
+	query := `SELECT "user".id, "user".username, "user".data, "group_user".group_admin FROM "user"
 	 		  JOIN group_user ON group_user.user_id = "user".id
 	 		  WHERE group_user.group_id = $1 ORDER BY "user".username ASC`
 
@@ -122,10 +122,11 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	defer rows.Close()
 
 	for rows.Next() {
+		var id int64
 		var username string
 		var jsonUser []byte
 		var admin bool
-		if err := rows.Scan(&username, &jsonUser, &admin); err != nil {
+		if err := rows.Scan(&id, &username, &jsonUser, &admin); err != nil {
 			return err
 		}
 
@@ -133,7 +134,8 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 		if err := json.Unmarshal(jsonUser, u); err != nil {
 			return sdk.WrapError(err, "Error while converting jsonUser")
 		}
-
+		u.ID = id
+		u.Username = username
 		if admin {
 			group.Admins = append(group.Admins, *u)
 		} else {

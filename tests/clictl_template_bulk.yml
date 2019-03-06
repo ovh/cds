@@ -14,7 +14,7 @@ testcases:
 
 - name: sendTemplateBulkRequest
   steps:
-  - script: {{.cds.build.cdsctl}} template bulk --file ./tests/fixtures/template/bulk_request.yml --no-interactive
+  - script: {{.cds.build.cdsctl}} template bulk --instances-file ./tests/fixtures/template/bulk_request.yml --no-interactive
     assertions:
       - result.code ShouldEqual 0
     extracts:

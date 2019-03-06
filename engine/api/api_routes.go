@@ -19,6 +19,7 @@ func (api *API) InitRouter() {
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
+	r.Handle("/login/callback", r.POST(api.loginUserCallbackHandler, Auth(false)))
 
 	log.Info("Initializing Events broker")
 	// Initialize event broker
@@ -33,7 +34,7 @@ func (api *API) InitRouter() {
 
 	// Access token
 	r.Handle("/accesstoken", r.POST(api.postNewAccessTokenHandler))
-	r.Handle("/accesstoken/{id}", r.PUT(api.putRegenAccessTokenHandler))
+	r.Handle("/accesstoken/{id}", r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
 	r.Handle("/accesstoken/user/{id}", r.GET(api.getAccessTokenByUserHandler))
 	r.Handle("/accesstoken/group/{id}", r.GET(api.getAccessTokenByGroupHandler))
 
@@ -321,7 +322,7 @@ func (api *API) InitRouter() {
 	r.Handle("/requirement/types/{type}", r.GET(api.getRequirementTypeValuesHandler))
 
 	// config
-	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(true)))
+	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(false)))
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))

@@ -72,7 +72,7 @@ require (
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
-	github.com/fsamin/go-dump v0.0.0-20180223131834-7ae1b0fe42eb
+	github.com/fsamin/go-dump v1.0.8
 	github.com/fsamin/go-repo v0.0.0-20190227101938-952eab8f1609
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
@@ -185,7 +185,7 @@ require (
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
-	github.com/ovh/venom v0.24.0
+	github.com/ovh/venom v0.25.0
 	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -269,6 +269,7 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/olivere/elastic.v5 v5.0.69
 	gopkg.in/ory-am/dockertest.v2 v2.2.3 // indirect
+	gopkg.in/square/go-jose.v2 v2.3.0
 	gopkg.in/stomp.v1 v1.0.1 // indirect
 	gopkg.in/testfixtures.v2 v2.4.2 // indirect
 	gopkg.in/urfave/cli.v1 v1.18.1

@@ -246,6 +246,7 @@ type UserClient interface {
 	UserGet(username string) (*sdk.User, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UserLogin(username, password string) (bool, string, error)
+	UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error)
 	UserReset(username, email, callback string) error
 	UserSignup(username, fullname, email, callback string) error
 	ListAllTokens() ([]sdk.Token, error)
@@ -327,6 +328,7 @@ type IntegrationClient interface {
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
+	AccessTokenClient
 	ActionClient
 	AdminService
 	APIURL() string
@@ -425,4 +427,13 @@ func WithUsage() RequestModifier {
 		q.Set("withUsage", "true")
 		r.URL.RawQuery = q.Encode()
 	}
+}
+
+// AccessTokenClient is the interface for access token management
+type AccessTokenClient interface {
+	AccessTokenListByUser(username string) ([]sdk.AccessToken, error)
+	AccessTokenListByGroup(groups ...string) ([]sdk.AccessToken, error)
+	AccessTokenDelete(id string) error
+	AccessTokenCreate(request sdk.AccessTokenRequest) (sdk.AccessToken, string, error)
+	AccessTokenRegen(id string) (sdk.AccessToken, string, error)
 }
