@@ -1,46 +1,55 @@
-import { Component, Input } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { Component } from '@angular/core';
+import { finalize } from 'rxjs/operators/finalize';
 import { User } from '../../../../model/user.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Table } from '../../../../shared/table/table';
-import { ToastService } from '../../../../shared/toast/ToastService';
+import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-user-list',
     templateUrl: './user.list.html',
     styleUrls: ['./user.list.scss']
 })
-export class UserListComponent extends Table<User> {
-    currentUser: User;
-    filter: string;
+export class UserListComponent {
+    loading: boolean;
+    columns: Array<Column<User>>;
     users: Array<User>;
     path: Array<PathItem>;
 
-    @Input('maxPerPage')
-    set maxPerPage(data: number) {
-        this.nbElementsByPage = data;
-    };
-
     constructor(
         private _userService: UserService,
-        private _toast: ToastService,
-        private _authentificationStore: AuthentificationStore,
-        private _translate: TranslateService
     ) {
-        super();
-
-        this.currentUser = this._authentificationStore.getUser();
-
-        // list only for admin
-        if (this.currentUser.admin) {
-            this._userService.getUsers().subscribe(users => {
-                this.users = users;
-            });
-        } else {
-            this._toast.error('', this._translate.instant('access_refused'));
-        }
+        this.columns = [
+            <Column<User>>{
+                type: ColumnType.ICON,
+                class: 'one',
+                selector: (u: User) => { return u.admin ? ['user', 'outline', 'icon'] : ['user', 'icon']; }
+            },
+            <Column<User>>{
+                type: ColumnType.ROUTER_LINK,
+                class: 'five',
+                name: 'user_label_username',
+                selector: (u: User) => {
+                    return {
+                        link: '/settings/user/' + u.username,
+                        value: u.username
+                    };
+                }
+            },
+            <Column<User>>{
+                type: ColumnType.TEXT,
+                class: 'five',
+                name: 'user_label_fullname',
+                selector: (u: User) => { return u.username; }
+            },
+            <Column<User>>{
+                type: ColumnType.TEXT,
+                class: 'five',
+                name: 'user_label_email',
+                selector: (u: User) => { return u.email; }
+            }
+        ];
+        this.getUsers();
 
         this.path = [<PathItem>{
             translate: 'common_settings'
@@ -50,10 +59,19 @@ export class UserListComponent extends Table<User> {
         }];
     }
 
-    getData(): Array<User> {
-        if (!this.filter) {
-            return this.users;
+    getUsers(): void {
+        this.loading = true;
+        this._userService.getUsers()
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(us => { this.users = us; });
+    }
+
+    filter(f: string) {
+        const lowerFilter = f.toLowerCase();
+        return (u: User) => {
+            return u.username.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                u.email.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                u.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
         }
-        return this.users.filter(v => v.username.indexOf(this.filter) !== -1);
     }
 }
