@@ -16,9 +16,6 @@ import (
 var eventsCmd = cli.Command{
 	Name:  "events",
 	Short: "Listen CDS Event",
-	Aliases: []string{
-		"events",
-	},
 }
 
 func events() *cobra.Command {
