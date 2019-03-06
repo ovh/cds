@@ -130,7 +130,7 @@ type EnvironmentVariableClient interface {
 	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 }
 
-// EventsClient listen
+// EventsClient listen SSE Events from CDS API
 type EventsClient interface {
 	// Must be  run in a go routine
 	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)

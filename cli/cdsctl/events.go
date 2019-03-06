@@ -15,7 +15,7 @@ import (
 
 var eventsCmd = cli.Command{
 	Name:  "events",
-	Short: "Listen CDS Event",
+	Short: "Listen CDS Events",
 }
 
 func events() *cobra.Command {
@@ -26,7 +26,7 @@ func events() *cobra.Command {
 
 var eventsListenCmd = cli.Command{
 	Name:  "listen",
-	Short: "Listen cds events",
+	Short: "Listen CDS events",
 }
 
 func eventsListenRun(v cli.Values) error {
