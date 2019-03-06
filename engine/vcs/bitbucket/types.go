@@ -307,8 +307,10 @@ type PullRequestAuthor struct {
 }
 
 type PullRequestRef struct {
-	ID         string                   `json:"id"`
-	Repository PullRequestRefRepository `json:"repository"`
+	ID           string                   `json:"id"`
+	DisplayID    string                   `json:"displayId"`
+	LatestCommit string                   `json:"latestCommit"`
+	Repository   PullRequestRefRepository `json:"repository"`
 }
 
 type PullRequestRefRepository struct {
