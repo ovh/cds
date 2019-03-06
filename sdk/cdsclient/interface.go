@@ -130,6 +130,12 @@ type EnvironmentVariableClient interface {
 	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 }
 
+// EventsClient listen
+type EventsClient interface {
+	// Must be  run in a go routine
+	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)
+}
+
 // DownloadClient exposes download related functions
 type DownloadClient interface {
 	Download() ([]sdk.Download, error)
@@ -336,6 +342,7 @@ type Interface interface {
 	ConfigUser() (map[string]string, error)
 	DownloadClient
 	EnvironmentClient
+	EventsClient
 	ExportImportInterface
 	GroupClient
 	GRPCPluginsClient
