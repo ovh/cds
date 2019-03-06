@@ -7,6 +7,7 @@ import { MockBackend } from '@angular/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
@@ -76,13 +77,13 @@ describe('CDS: Pipeline Admin Component', () => {
         fixture.detectChanges();
         tick(250);
 
-        let pipStore: PipelineStore = injector.get(PipelineStore);
-        spyOn(pipStore, 'updatePipeline').and.callFake(() => {
-            return Observable.of(pip);
+        let store: Store = injector.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return Observable.of(null);
         });
         fixture.debugElement.nativeElement.querySelector('.ui.button.green.button').click();
 
-        expect(pipStore.updatePipeline).toHaveBeenCalledTimes(1);
+        expect(store.dispatch).toHaveBeenCalledTimes(1);
     }));
 });
 

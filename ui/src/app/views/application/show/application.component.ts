@@ -2,13 +2,9 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import {
-    AddApplicationVariable,
-    DeleteApplicationVariable,
-    FetchApplication,
-    UpdateApplicationVariable
-} from 'app/store/applications.action';
+import * as applicationsActions from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
@@ -21,7 +17,6 @@ import { User } from '../../../model/user.model';
 import { Workflow } from '../../../model/workflow.model';
 import { ApplicationStore } from '../../../service/application/application.store';
 import { AuthentificationStore } from '../../../service/auth/authentification.store';
-import { ProjectStore } from '../../../service/project/project.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../shared/toast/ToastService';
@@ -81,7 +76,6 @@ export class ApplicationShowComponent implements OnInit {
         private _authStore: AuthentificationStore,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private _projectStore: ProjectStore,
         private store: Store
     ) {
         this.currentUser = this._authStore.getUser();
@@ -89,6 +83,9 @@ export class ApplicationShowComponent implements OnInit {
         this._routeDataSub = this._route.data.subscribe(datas => {
             this.project = datas['project'];
         });
+
+        this.projectSubscription = this.store.select(ProjectState)
+            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         if (this._route.snapshot && this._route.queryParams) {
             this.workflowName = this._route.snapshot.queryParams['workflow'];
@@ -100,7 +97,7 @@ export class ApplicationShowComponent implements OnInit {
             let key = params['key'];
             let appName = params['appName'];
             if (key && appName) {
-                this.store.dispatch(new FetchApplication({ projectKey: key, applicationName: appName }))
+                this.store.dispatch(new applicationsActions.FetchApplication({ projectKey: key, applicationName: appName }))
                     .subscribe(
                         null,
                         () => this._router.navigate(['/project', key], { queryParams: { tab: 'applications' } })
@@ -141,14 +138,6 @@ export class ApplicationShowComponent implements OnInit {
                 this.selectedTab = tab;
             }
         });
-
-        this.projectSubscription = this._projectStore.getProjects(this.project.key)
-            .subscribe((proj) => {
-                if (!this.project || !proj || !proj.get(this.project.key)) {
-                    return;
-                }
-                this.project = proj.get(this.project.key);
-            });
     }
 
     showTab(tab: string): void {
@@ -167,7 +156,7 @@ export class ApplicationShowComponent implements OnInit {
             switch (event.type) {
                 case 'add':
                     this.varFormLoading = true;
-                    this.store.dispatch(new AddApplicationVariable({
+                    this.store.dispatch(new applicationsActions.AddApplicationVariable({
                         projectKey: this.project.key,
                         applicationName: this.application.name,
                         variable: event.variable
@@ -177,7 +166,7 @@ export class ApplicationShowComponent implements OnInit {
                     })).subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                     break;
                 case 'update':
-                    this.store.dispatch(new UpdateApplicationVariable({
+                    this.store.dispatch(new applicationsActions.UpdateApplicationVariable({
                         projectKey: this.project.key,
                         applicationName: this.application.name,
                         variableName: event.variable.name,
@@ -186,7 +175,7 @@ export class ApplicationShowComponent implements OnInit {
                         .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
                     break;
                 case 'delete':
-                    this.store.dispatch(new DeleteApplicationVariable({
+                    this.store.dispatch(new applicationsActions.DeleteApplicationVariable({
                         projectKey: this.project.key,
                         applicationName: this.application.name,
                         variable: event.variable

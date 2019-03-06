@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -50,6 +51,7 @@ func (api *API) postPipelinePreviewHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "Unable to parse pipeline")
 		}
+		pip.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}

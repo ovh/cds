@@ -1,37 +1,52 @@
 
-import {Observable, of as observableOf} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Store } from '@ngxs/store';
+import { FetchApplication } from 'app/store/applications.action';
+import { ApplicationsState } from 'app/store/applications.state';
+import { Observable, of as observableOf } from 'rxjs';
+import { catchError, flatMap } from 'rxjs/operators';
+import { Application } from '../../model/application.model';
 
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {catchError, map} from 'rxjs/operators';
-import {Application} from '../../model/application.model';
-import {ApplicationStore} from './application.store';
 
 
 @Injectable()
 export class ApplicationResolver implements Resolve<Application> {
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-        return this.appStore.getApplicationResolver(route.params['key'], route.params['appName']);
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+        return this.store.dispatch(new FetchApplication({
+            projectKey: route.params['key'],
+            applicationName: route.queryParams['application']
+        })).pipe(
+            flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(
+                route.params['key'], route.queryParams['application']
+            )))
+        );
     }
 
-    constructor(private appStore: ApplicationStore) {}
+    constructor(private store: Store) { }
 }
 
 @Injectable()
 export class ApplicationQueryParamResolver implements Resolve<Application> {
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
         if (route.queryParams['application']) {
-            return this.appStore.getApplicationResolver(route.params['key'], route.queryParams['application']).pipe(map( app => {
-                return app;
-            }), catchError(() => {
-                return observableOf(null);
-            }));
+            return this.store.dispatch(new FetchApplication({
+                projectKey: route.params['key'],
+                applicationName: route.queryParams['application']
+            })).pipe(
+                flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(
+                    route.params['key'], route.queryParams['application']
+                ))),
+                catchError(() => {
+                    return observableOf(null);
+                })
+            );
         } else {
             return observableOf(null);
         }
     }
 
-    constructor(private appStore: ApplicationStore) {}
+    constructor(private store: Store) { }
 }

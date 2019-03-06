@@ -1,15 +1,15 @@
-import {Component, Input, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {Pipeline, PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
-import {PipelineService} from '../../../../service/pipeline/pipeline.service';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { FetchAsCodePipeline, ImportPipeline, PreviewPipeline, ResyncPipeline } from 'app/store/pipelines.action';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { Pipeline, PipelineStatus } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { PipelineCoreService } from '../../../../service/pipeline/pipeline.core.service';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-ascode-editor',
@@ -27,9 +27,11 @@ export class PipelineAsCodeEditorComponent {
     set open(data: boolean) {
         if (data && !this.updated) {
             this.loadingGet = true;
-            this._pipelineService.getPipelineExport(this.project.key, this.pipeline.name)
-                .pipe(finalize(() => this.loadingGet = false))
-                .subscribe((wf) => this.exportedPip = wf);
+            this.store.dispatch(new FetchAsCodePipeline({
+                projectKey: this.project.key,
+                pipelineName: this.pipeline.name
+            })).pipe(finalize(() => this.loadingGet = false))
+                .subscribe(() => this.exportedPip = this.pipeline.asCode);
         }
         this._open = data;
     }
@@ -44,16 +46,16 @@ export class PipelineAsCodeEditorComponent {
     asCodeEditorSubscription: Subscription;
     codeMirrorConfig: any;
 
-    exportedPip: string;
     updated = false;
     loading = false;
     loadingGet = true;
+    previewMode = false;
+    exportedPip = '';
     statusEnum = PipelineStatus;
 
     constructor(
+        private store: Store,
         private _pipCoreService: PipelineCoreService,
-        private _pipelineService: PipelineService,
-        private _pipStore: PipelineStore,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
@@ -73,30 +75,44 @@ export class PipelineAsCodeEditorComponent {
     }
 
     keyEvent(event: KeyboardEvent) {
-      if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
-          this.save();
-          event.preventDefault();
-      }
+        if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+            this.save();
+            event.preventDefault();
+        }
     }
 
     cancel() {
-        this._pipCoreService.setPipelinePreview(null);
-        this._pipCoreService.toggleAsCodeEditor({open: false, save: false});
+        if (this.previewMode) {
+            this.store.dispatch(new ResyncPipeline({
+                projectKey: this.project.key,
+                pipelineName: this.pipeline.name
+            })).subscribe(() => this._pipCoreService.toggleAsCodeEditor({ open: false, save: false }));
+            this.previewMode = false;
+        } else {
+            this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
+        }
     }
 
     preview() {
         this.loading = true;
-        this._pipelineService.previewPipelineImport(this.project.key, this.exportedPip)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe((pip) => this._pipCoreService.setPipelinePreview(pip));
+        this.previewMode = true;
+        this.store.dispatch(new PreviewPipeline({
+            projectKey: this.project.key,
+            pipelineName: this.pipeline.name,
+            pipCode: this.exportedPip
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe();
     }
 
     save() {
         this.loading = true;
-        this._pipStore.importPipeline(this.project.key, this.pipeline.name, this.exportedPip)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe((pip) => {
-                this._pipCoreService.toggleAsCodeEditor({open: false, save: false});
+        this.store.dispatch(new ImportPipeline({
+            projectKey: this.project.key,
+            pipName: this.pipeline.name,
+            pipelineCode: this.exportedPip
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
                 this._pipCoreService.setPipelinePreview(null);
                 this._toast.success('', this._translate.instant('pipeline_updated'));
             });

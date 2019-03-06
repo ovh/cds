@@ -124,6 +124,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+		audit.Pipeline.Permission = permission.PermissionReadWriteExecute
 
 		event.PublishPipelineUpdate(key, audit.Pipeline.Name, name, u)
 

@@ -1,14 +1,15 @@
 import { Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
 import { Workflow } from '../../model/workflow.model';
 import { WorkflowRun } from '../../model/workflow.run.model';
-import { ProjectStore } from '../../service/project/project.store';
 import { RouterService } from '../../service/router/router.service';
 import { WorkflowRunService } from '../../service/workflow/run/workflow.run.service';
 import { WorkflowCoreService } from '../../service/workflow/workflow.core.service';
@@ -34,6 +35,10 @@ export class WorkflowComponent implements OnInit {
     workflow: Workflow;
     workflowSubscription: Subscription;
     projectSubscription: Subscription;
+    dataRouteSubscription: Subscription;
+    qpRouteSubscription: Subscription;
+    paramsRouteSubscription: Subscription;
+    eventsRouteSubscription: Subscription;
 
     loading = true;
     loadingFav = false;
@@ -65,20 +70,26 @@ export class WorkflowComponent implements OnInit {
     showButtons = false;
     loadingPopupButton = false;
 
-    constructor(private _activatedRoute: ActivatedRoute,
+    constructor(
+        private _activatedRoute: ActivatedRoute,
         private _workflowStore: WorkflowStore,
         private _workflowRunService: WorkflowRunService,
         private _workflowEventStore: WorkflowEventStore,
         private _router: Router,
         private _routerService: RouterService,
-        private _projectStore: ProjectStore,
         public _sidebarStore: WorkflowSidebarStore,
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
-        private _translate: TranslateService) {
-        this._activatedRoute.data.subscribe(datas => {
+        private _translate: TranslateService,
+        private store: Store
+    ) {
+        this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
+
+        this.projectSubscription = this.store.select(ProjectState)
+            .pipe(filter((projState) => projState.project && projState.project.key))
+            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
             .subscribe((state) => {
@@ -89,7 +100,7 @@ export class WorkflowComponent implements OnInit {
 
         this.initSidebar();
 
-        this._activatedRoute.queryParams.subscribe(qps => {
+        this.qpRouteSubscription = this._activatedRoute.queryParams.subscribe(qps => {
             if (qps['node_id']) {
                 this.selectedNodeID = Number(qps['node_id']);
                 delete this.selectecHookRef;
@@ -106,7 +117,7 @@ export class WorkflowComponent implements OnInit {
         });
 
         // Workflow subscription
-        this._activatedRoute.params.subscribe(params => {
+        this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
             let key = params['key'];
 
@@ -142,7 +153,7 @@ export class WorkflowComponent implements OnInit {
         });
 
         // unselect all when returning on workflow main page
-        this._router.events.subscribe(e => {
+        this.eventsRouteSubscription = this._router.events.subscribe(e => {
             if (e instanceof NavigationStart && this.workflow) {
                 if (e.url.indexOf('/project/' + this.project.key + '/workflow/') === 0 && e.url.indexOf('/run/') === -1) {
                     this._workflowEventStore.setSelectedRun(null);
@@ -175,13 +186,7 @@ export class WorkflowComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.projectSubscription = this._projectStore.getProjects(this.project.key)
-            .subscribe((proj) => {
-                if (!this.project || !proj || !proj.get(this.project.key)) {
-                    return;
-                }
-                this.project = proj.get(this.project.key);
-            });
+
     }
 
     updateFav() {

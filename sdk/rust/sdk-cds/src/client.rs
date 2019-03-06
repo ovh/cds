@@ -141,6 +141,7 @@ impl<'a> Client<'a> {
             .request(reqwest::Method::from_bytes(method.as_bytes())?, &url)
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .header(reqwest::header::USER_AGENT, "CDS/sdk")
+            .header("X-Requested-With", "X-CDS-SDK")
             .header(SESSION_TOKEN_HEADER, self.token)
             .basic_auth(self.username, Some(self.token))
             .json(&body)

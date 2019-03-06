@@ -55,6 +55,9 @@ export class Pipeline {
     last_modified: number;
     projectKey: string;
     usage: Usage;
+    audits: Array<PipelineAudit>;
+    preview: Pipeline;
+    asCode: string;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
