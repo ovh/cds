@@ -31,6 +31,7 @@ func main() {
 		signup(),
 		application(),
 		environment(),
+		events(),
 		pipeline(),
 		group(),
 		health(),
