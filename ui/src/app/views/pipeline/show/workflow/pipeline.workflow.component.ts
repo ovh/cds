@@ -171,6 +171,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         let jobToAdd = new Job();
         jobToAdd.action.name = 'New Job';
         jobToAdd.enabled = true;
+        jobToAdd.pipeline_stage_id = s.id;
         this._pipelineStore.addJob(this.project.key, this.pipeline.name, s.id, jobToAdd).subscribe((pip) => {
             this._toast.success('', this._translate.instant('stage_job_added'));
 

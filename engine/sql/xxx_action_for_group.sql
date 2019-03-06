@@ -15,7 +15,14 @@ ALTER TABLE action_parameter ALTER COLUMN "description" SET NOT NULL;
 -- remove unused table and column
 DROP TABLE IF EXISTS template_action;
 ALTER TABLE action_parameter DROP COLUMN IF EXISTS worker_model_name;
-ALTER TABLE "action" DROP COLUMN public;
+ALTER TABLE "action" DROP COLUMN IF EXISTS "data";
+ALTER TABLE "action" DROP COLUMN IS EXISTS public;
+
+-- set Default type for actions with empty type and set not null constraints
+UPDATE "action" SET "type" = 'Default' WHERE "type" = '';
+ALTER TABLE "action" ALTER COLUMN "name" SET NOT NULL;
+ALTER TABLE "action" ALTER COLUMN "type" SET NOT NULL;
+ALTER TABLE "action" ALTER COLUMN "description" SET NOT NULL;
 
 -- replace existing foreign keys with cascade ones
 ALTER TABLE action_parameter DROP CONSTRAINT IF EXISTS "fk_action_parameter_action";
