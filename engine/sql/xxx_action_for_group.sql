@@ -16,7 +16,6 @@ ALTER TABLE action_parameter ALTER COLUMN "description" SET NOT NULL;
 DROP TABLE IF EXISTS template_action;
 ALTER TABLE action_parameter DROP COLUMN IF EXISTS worker_model_name;
 ALTER TABLE "action" DROP COLUMN IF EXISTS "data";
-ALTER TABLE "action" DROP COLUMN IS EXISTS public;
 
 -- set Default type for actions with empty type and set not null constraints
 UPDATE "action" SET "type" = 'Default' WHERE "type" = '';
@@ -73,12 +72,9 @@ UPDATE action_audit SET data_type = 'json';
 ALTER TABLE action_audit ALTER COLUMN user_id DROP NOT NULL;
 ALTER TABLE action_audit ALTER COLUMN versionned DROP NOT NULL;
 
--- TODO remove action_audit.change, action_audit.user_id, action_audit.versionned, action_audit.action_json in futur script
+-- TODO remove action.public, action_audit.change, action_audit.user_id, action_audit.versionned, action_audit.action_json in futur script
 
 -- +migrate Down
-
--- restore public column
-ALTER TABLE "action" ADD COLUMN public BOOLEAN NOT NULL DEFAULT true;
 
 -- restore foreign keys
 ALTER TABLE action_parameter DROP CONSTRAINT "fk_action_parameter_action";
