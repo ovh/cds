@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -80,11 +81,7 @@ func CheckChildrenForGroupIDs(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int
 	if err != nil {
 		return err
 	}
-	if len(children) != len(childrenIDs) {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given step actions are not usable")
-	}
-
-	return nil
+	return handleChildrenError(a, children)
 }
 
 // CheckChildrenForGroupIDsWithLoop return an error if given children not found or tree loop detected.
@@ -128,8 +125,8 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 	if err != nil {
 		return err
 	}
-	if len(children) != len(childrenIDs) {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given step actions are not usable")
+	if err := handleChildrenError(current, children); err != nil {
+		return err
 	}
 
 	for i := range children {
@@ -139,4 +136,40 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 	}
 
 	return nil
+}
+
+func handleChildrenError(current *sdk.Action, children []sdk.Action) error {
+	childrenIDs := current.ToUniqueChildrenIDs()
+
+	if len(children) == len(childrenIDs) {
+		return nil
+	}
+
+	// construct list of children not found names or ids
+	mChildren := make(map[int64]sdk.Action, len(children))
+	for i := range children {
+		mChildren[children[i].ID] = children[i]
+	}
+
+	notFoundChildrenIDs := make([]int64, 0, len(childrenIDs))
+	for i := range childrenIDs {
+		if _, ok := mChildren[childrenIDs[i]]; !ok {
+			notFoundChildrenIDs = append(notFoundChildrenIDs, childrenIDs[i])
+		}
+	}
+
+	notFoundChildrenRefs := make([]string, len(notFoundChildrenIDs))
+	for i := range notFoundChildrenIDs {
+		for j := range current.Actions {
+			if current.Actions[j].ID == notFoundChildrenIDs[i] {
+				if current.Actions[j].Group != nil && current.Actions[j].Name != "" {
+					notFoundChildrenRefs[i] = fmt.Sprintf("path: %s/%s", current.Actions[j].Group.Name, current.Actions[j].Name)
+				} else {
+					notFoundChildrenRefs[i] = fmt.Sprintf("id: %d", current.Actions[j].ID)
+				}
+			}
+		}
+	}
+
+	return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given step actions are not usable: (%s)", strings.Join(notFoundChildrenRefs, ", "))
 }
