@@ -6,7 +6,7 @@ edition = "2018"
 description = "SDK in Rust to use CDS API"
 repository = "https://github.com/ovh/cds"
 readme = "README.md"
-keywords = ["cds", "sdk", "continuous-delivery", "continuous-integration"]
+keywords = ["cds", "sdk", "cd", "ci"]
 license = "BSD-3-Clause"
 categories = ["api-bindings", "development-tools"]
 
