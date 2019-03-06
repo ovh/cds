@@ -36,7 +36,7 @@ func eventsListenRun(v cli.Values) error {
 	ctx := context.Background()
 	chanSSE := make(chan cdsclient.SSEvent)
 
-	sdk.GoRoutine(ctx, "EventsListenCdm", func(ctx context.Context) {
+	sdk.GoRoutine(ctx, "EventsListenCmd", func(ctx context.Context) {
 		client.EventsListen(ctx, chanSSE)
 	})
 
