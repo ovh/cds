@@ -249,6 +249,23 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 	return loadRun(db, loadOpts, query, projectkey, workflowname)
 }
 
+// LockRun locks a workflow run
+func LockRun(db gorp.SqlExecutor, id int64) error {
+	query := fmt.Sprintf(`SELECT id
+	FROM workflow_run
+	WHERE id = $1 FOR UDPDATE NOWAIT`)
+	_, err := db.Query(query, id)
+	return sdk.WithStack(err)
+}
+
+// LoadRunIDsWithOldModel loads all ids for run that use old workflow model
+func LoadRunIDsWithOldModel(db gorp.SqlExecutor) ([]int64, error) {
+	query := "SELECT id FROM workflow_run WHERE workflow->'workflow_data' IS NULL"
+	var ids []int64
+	_, err := db.Select(&ids, query)
+	return ids, sdk.WithStack(err)
+}
+
 // LoadRun returns a specific run
 func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
