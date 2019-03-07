@@ -944,7 +944,6 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			log.Error("workflow.PurgeWorkflowRun> error %v", err)
 		}
 	}, api.PanicDump())
-	return
 }
 
 func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) {

@@ -1108,7 +1108,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	api.mustDB().Exec("DELETE FROM services")
+	_, _ = api.mustDB().Exec("DELETE FROM services")
 	// Prepare VCS Mock
 	mockService := &sdk.Service{Name: "Test_postWorkflowRunAsyncFailedHandlerVCS", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(api.mustDB(), mockService))
