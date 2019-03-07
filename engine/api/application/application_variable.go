@@ -327,13 +327,12 @@ func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	return nil
 }
 
-// DeleteAllVariable Delete all variables from the given pipeline
+// DeleteAllVariable Delete all variables from the given application.
 func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 	query := `DELETE FROM application_variable
 	          WHERE application_variable.application_id = $1`
-	_, err := db.Exec(query, applicationID)
-	if err != nil {
-		return err
+	if _, err := db.Exec(query, applicationID); err != nil {
+		return sdk.WrapError(err, "cannot delete application variable")
 	}
 	return nil
 }
