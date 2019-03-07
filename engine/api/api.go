@@ -719,7 +719,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.Permissions(a.DBConnectionFactory.GetDBMap, a.Cache)
 	}})
 	migrate.Add(sdk.Migration{Name: "WorkflowOldStruct", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.WorkflowRunOldModel(a.DBConnectionFactory.GetDBMap, a.Cache)
+		return migrate.WorkflowRunOldModel(ctx, a.DBConnectionFactory.GetDBMap)
 	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {

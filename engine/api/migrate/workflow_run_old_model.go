@@ -11,7 +11,7 @@ import (
 )
 
 // WorkflowRunOldModel migrates workflow run with old workflow struct to the new one
-func WorkflowRunOldModel(ctx context.Context, DBFunc func() *gorp.DbMap) {
+func WorkflowRunOldModel(ctx context.Context, DBFunc func() *gorp.DbMap) error {
 	db := DBFunc()
 
 	log.Info("migrate>WorkflowRunOldModel> Start migration")
@@ -19,18 +19,18 @@ func WorkflowRunOldModel(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	var ids []int64
 	ids, err := workflow.LoadRunIDsWithOldModel(db)
 	if err != nil {
-		log.Error("migrate>WorkflowRunOldModel> failed to load ids: %v", err)
-		return
+		return err
 	}
 
 	log.Info("migrate>WorkflowRunOldModel> %d run to migrate", len(ids))
 	for _, id := range ids {
 		if err := migrateRun(ctx, db, id); err != nil {
-			log.Error("unable to migrate run %d: %v", id, err)
+			return err
 		}
 	}
 
 	log.Info("End WorkflowRunOldModel migration")
+	return nil
 }
 
 func migrateRun(ctx context.Context, db *gorp.DbMap, id int64) error {
