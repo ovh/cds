@@ -936,6 +936,7 @@
   "workflow_app_info_new_wf_link_pipeline": "ATTENTION. Cette action est obsolète. Vous devriez utiliser les nouveaux Workflows CDS (Projet -> Worflow) pour créer et gérer vos workflows.",
   "workflow_added": "Workflow créé",
   "workflow_run_summary": "Résumé du run",
+  "workflow_run_scheduling" : "Construction du workflow",
   "workflow_context_invalid": "JSON invalide",
   "workflow_icon": "Icône du workflow",
   "workflow_create": "Création d'un workflow",
