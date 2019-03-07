@@ -3,6 +3,8 @@ import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { FetchWorkflow } from 'app/store/workflows.action';
+import { WorkflowsState } from 'app/store/workflows.state';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
@@ -116,6 +118,7 @@ export class WorkflowComponent implements OnInit {
             }
         });
 
+
         // Workflow subscription
         this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
@@ -126,31 +129,30 @@ export class WorkflowComponent implements OnInit {
                     this.workflowSubscription.unsubscribe();
                 }
                 this.loading = true;
-                this.workflowSubscription = this._workflowStore.getWorkflows(key, workflowName)
-                    .subscribe(ws => {
-                        if (ws) {
-                            let updatedWorkflow = ws.get(key + '-' + workflowName);
-                            if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                                if (!this.workflow || (this.workflow && updatedWorkflow.id !== this.workflow.id)) {
-                                    this.initRuns(key, workflowName);
-                                }
-                                this.workflow = updatedWorkflow;
-
-                                if (this.selectecHookRef) {
-                                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
-                                    if (h) {
-                                        this._workflowEventStore.setSelectedHook(h);
-                                    }
-                                }
-                            }
-                        }
-                        this.loading = false;
-                    }, () => {
-                        this.loading = false;
-                        this._router.navigate(['/project', key]);
-                    });
+                this.store.dispatch(new FetchWorkflow({ projectKey: key, workflowName }))
+                    .pipe(finalize(() => this.loading = false))
+                    .subscribe(null, () => this._router.navigate(['/project', key]));
             }
         });
+
+        let projectKey = this._activatedRoute.snapshot.params['key'];
+        let wfName = this._activatedRoute.snapshot.params['workflowName'];
+        this.store.select(WorkflowsState.selectWorkflow(projectKey, wfName))
+            .pipe(filter((wf) => wf != null && !wf.externalChange))
+            .subscribe((wf) => {
+                if (!this.workflow || (this.workflow && wf.id !== this.workflow.id)) {
+                    this.initRuns(projectKey, wfName);
+                }
+                this.workflow = wf;
+
+                if (this.selectecHookRef) {
+                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                    if (h) {
+                        this._workflowEventStore.setSelectedHook(h);
+                    }
+                }
+            });
+
 
         // unselect all when returning on workflow main page
         this.eventsRouteSubscription = this._router.events.subscribe(e => {

@@ -7,6 +7,7 @@ import { ApplicationsState } from 'app/store/applications.state';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { environment as env } from '../../environments/environment';
 import { ProjectState } from './project.state';
+import { WorkflowsState } from './workflows.state';
 
 
 @NgModule({
@@ -14,7 +15,7 @@ import { ProjectState } from './project.state';
         CommonModule,
         NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false, disabled: env.production }),
         NgxsReduxDevtoolsPluginModule.forRoot({ disabled: env.production }),
-        NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState], { developmentMode: !env.production })
+        NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowsState], { developmentMode: !env.production })
     ],
     exports: [
         NgxsLoggerPluginModule,

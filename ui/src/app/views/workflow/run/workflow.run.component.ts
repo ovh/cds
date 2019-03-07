@@ -2,8 +2,12 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { FetchWorkflow } from 'app/store/workflows.action';
+import { WorkflowsState } from 'app/store/workflows.state';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { PipelineStatus } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
 import { WNode, Workflow } from '../../../model/workflow.model';
@@ -51,13 +55,14 @@ export class WorkflowRunComponent implements OnInit {
     nodeToRun: WNode;
 
     constructor(
-      private _activatedRoute: ActivatedRoute,
-      private _workflowStore: WorkflowStore,
-      private _notification: NotificationService,
-      private _translate: TranslateService,
-      private _workflowEventStore: WorkflowEventStore,
-      private _workflowRunService: WorkflowRunService,
-      private _titleService: Title
+        private store: Store,
+        private _activatedRoute: ActivatedRoute,
+        private _workflowStore: WorkflowStore,
+        private _notification: NotificationService,
+        private _translate: TranslateService,
+        private _workflowEventStore: WorkflowEventStore,
+        private _workflowRunService: WorkflowRunService,
+        private _titleService: Title
     ) {
         this._workflowEventStore.setSelectedNodeRun(null, false);
 
@@ -73,9 +78,10 @@ export class WorkflowRunComponent implements OnInit {
         // Get workflow
         this.parentParamsSubs = this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
-        });
-        this.subWorkflow = this._workflowStore.getWorkflows(this.project.key, this.workflowName).subscribe(ws => {
-            this.workflow = ws.get(this.project.key + '-' + this.workflowName);
+            this.store.dispatch(new FetchWorkflow({
+                projectKey: params['key'],
+                workflowName: this.workflowName
+            }));
         });
 
         // Get workflow run
@@ -110,6 +116,15 @@ export class WorkflowRunComponent implements OnInit {
             this.selectedNodeRef = params['node_ref'];
             this.selectNode();
         });
+    }
+
+    ngOnInit(): void {
+        this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
+        let projectKey = this._activatedRoute.snapshot.params['key'];
+        let wfName = this._activatedRoute.snapshot.params['workflowName'];
+        this.store.select(WorkflowsState.selectWorkflow(projectKey, wfName))
+            .pipe(filter((wf) => wf != null))
+            .subscribe((wf) => this.workflow = wf);
     }
 
     selectNode() {
@@ -163,17 +178,17 @@ export class WorkflowRunComponent implements OnInit {
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
                     workflowName: this.workflowName,
                 }), {
-                    icon: 'assets/images/checked.png',
-                    tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
-                }).subscribe();
+                        icon: 'assets/images/checked.png',
+                        tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
+                    }).subscribe();
                 break;
             case PipelineStatus.FAIL:
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_failing', {
                     workflowName: this.workflowName
                 }), {
-                    icon: 'assets/images/close.png',
-                    tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
-                }).subscribe();
+                        icon: 'assets/images/close.png',
+                        tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
+                    }).subscribe();
                 break;
         }
     }
@@ -203,9 +218,5 @@ export class WorkflowRunComponent implements OnInit {
 
             setTimeout(() => this.runWithParamComponent.show(), 100);
         }
-    }
-
-    ngOnInit(): void {
-        this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
     }
 }
