@@ -32,9 +32,7 @@
                                     <div class="job ui segment pointing" [class.inactive]="!j.enabled"
                                         (click)="selectJob(j, stage)"
                                         [class.active]="j.pipeline_action_id === selectedJob?.pipeline_action_id">
-                                        <span class="label">{{j.action.name}}</span>
-                                        <i class="ui icon share large" [title]="'action_btn_init_from_job' | translate"
-                                            (click)="$event.stopPropagation(); initActionFromJob(project.key, pipeline.name, stage.id, j.action.name)"></i>
+                                        {{j.action.name}}
                                     </div>
                                 </li>
                                 <li class="new job">
@@ -66,7 +64,7 @@
     </div>
     <div *ngIf="selectedJob && pipeline" class="mb130">
         <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [pipeline]="pipeline"
-            [keys]="keys" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
+            [stage]="selectedStage" [keys]="keys" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
             (actionEvent)="jobEvent($event)">
         </app-action>
     </div>

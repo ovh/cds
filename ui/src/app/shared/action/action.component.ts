@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs/Subscription';
@@ -8,6 +9,7 @@ import { Parameter } from '../../model/parameter.model';
 import { Pipeline } from '../../model/pipeline.model';
 import { Project } from '../../model/project.model';
 import { Requirement } from '../../model/requirement.model';
+import { Stage } from '../../model/stage.model';
 import { ActionStore } from '../../service/action/action.store';
 import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
 import { ParameterEvent } from '../parameter/parameter.event.model';
@@ -30,6 +32,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     @Input() project: Project;
     @Input() keys: AllKeys;
     @Input() pipeline: Pipeline;
+    @Input() stage: Stage;
     @Input() edit = false;
     @Input() suggest: Array<string>;
 
@@ -58,7 +61,8 @@ export class ActionComponent implements OnDestroy, OnInit {
     constructor(
         private sharedService: SharedService,
         private _actionStore: ActionStore,
-        private dragulaService: DragulaService
+        private dragulaService: DragulaService,
+        private _router: Router
     ) {
         dragulaService.createGroup('bag-nonfinal', {
             moves: function (el, source, handle) {
@@ -225,10 +229,6 @@ export class ActionComponent implements OnDestroy, OnInit {
         }
     }
 
-    /**
-     * Send action event
-     * @param type type of event (update/delete)
-     */
     sendActionEvent(type: string): void {
         // Rebuild step
         this.parseRequirements();
@@ -240,5 +240,13 @@ export class ActionComponent implements OnDestroy, OnInit {
         }
 
         this.actionEvent.emit(new ActionEvent(type, this.editableAction));
+    }
+
+    initActionFromJob(): void {
+        this._router.navigate(['settings', 'action', 'add'], {
+            queryParams: {
+                from: `${this.project.key}/${this.pipeline.name}/${this.stage.id}/${this.editableAction.name}`
+            }
+        });
     }
 }
