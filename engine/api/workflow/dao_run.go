@@ -260,7 +260,7 @@ func LockRun(db gorp.SqlExecutor, id int64) error {
 
 // LoadRunIDsWithOldModel loads all ids for run that use old workflow model
 func LoadRunIDsWithOldModel(db gorp.SqlExecutor) ([]int64, error) {
-	query := "SELECT id FROM workflow_run WHERE workflow->'workflow_data' IS NULL"
+	query := "SELECT id FROM workflow_run WHERE workflow->'workflow_data' IS NULL LIMIT 100"
 	var ids []int64
 	_, err := db.Select(&ids, query)
 	return ids, sdk.WithStack(err)

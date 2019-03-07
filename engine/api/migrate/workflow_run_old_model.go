@@ -16,16 +16,22 @@ func WorkflowRunOldModel(ctx context.Context, DBFunc func() *gorp.DbMap) error {
 
 	log.Info("migrate>WorkflowRunOldModel> Start migration")
 
-	var ids []int64
-	ids, err := workflow.LoadRunIDsWithOldModel(db)
-	if err != nil {
-		return err
-	}
-
-	log.Info("migrate>WorkflowRunOldModel> %d run to migrate", len(ids))
-	for _, id := range ids {
-		if err := migrateRun(ctx, db, id); err != nil {
+	for {
+		var ids []int64
+		ids, err := workflow.LoadRunIDsWithOldModel(db)
+		if err != nil {
 			return err
+		}
+
+		if len(ids) == 0 {
+			break
+		}
+
+		log.Info("migrate>WorkflowRunOldModel> %d run to migrate", len(ids))
+		for _, id := range ids {
+			if err := migrateRun(ctx, db, id); err != nil {
+				return err
+			}
 		}
 	}
 
