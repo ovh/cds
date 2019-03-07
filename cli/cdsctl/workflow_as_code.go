@@ -180,7 +180,11 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	// Check if the project is linked to a repository
-	proj, err := client.ProjectGet(pkey)
+	proj, err := client.ProjectGet(pkey, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withKeys", "true")
+		r.URL.RawQuery = q.Encode()
+	})
 	if err != nil {
 		return fmt.Errorf("unable to get project: %v", err)
 	}
@@ -309,21 +313,67 @@ func workflowInitRun(c cli.Values) error {
 			connectionType = "https"
 		}
 
-		pgpKeyName := fmt.Sprintf("app-pgp-%s", repoManagerName)
 		app := exportentities.Application{
 			Name:              appName,
 			RepositoryName:    repoName,
 			VCSServer:         repoManagerName,
 			VCSConnectionType: connectionType,
-			VCSPGPKey:         pgpKeyName,
-			Keys: map[string]exportentities.KeyValue{
-				pgpKeyName: exportentities.KeyValue{Type: sdk.KeyTypePGP},
-			},
+			Keys:              map[string]exportentities.KeyValue{},
 		}
 
+		projectPGPKeys := make([]sdk.ProjectKey, 0, len(proj.Keys))
+		projectSSHKeys := make([]sdk.ProjectKey, 0, len(proj.Keys))
+		for i := range proj.Keys {
+			switch proj.Keys[i].Type {
+			case "pgp":
+				projectPGPKeys = append(projectPGPKeys, proj.Keys[i])
+			case "ssh":
+				projectSSHKeys = append(projectSSHKeys, proj.Keys[i])
+			}
+		}
+
+		// ask for pgp key, if not selected or no existing key create a new one.
+		if len(projectPGPKeys) > 1 {
+			opts := make([]string, len(projectPGPKeys)+1)
+			opts[0] = "Use a new pgp key"
+			for i := range projectPGPKeys {
+				opts[i+1] = projectPGPKeys[i].Name
+			}
+			selected := cli.MultiChoice("Select a PGP key to use in application VCS strategy", opts...)
+			if selected > 0 {
+				app.VCSPGPKey = opts[selected]
+			}
+		} else if len(projectPGPKeys) == 1 {
+			if cli.AskForConfirmation(fmt.Sprintf("Found one existing PGP key '%s' on project. Use it in application VCS strategy?", projectPGPKeys[0].Name)) {
+				app.VCSPGPKey = projectPGPKeys[0].Name
+			}
+		}
+		if app.VCSPGPKey == "" {
+			app.VCSPGPKey = fmt.Sprintf("app-pgp-%s", repoManagerName)
+			app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+		}
+
+		// ask for ssh key if connection type is ssh, if not selected or no existing key create a new one
 		if connectionType == "ssh" {
-			app.VCSSSHKey = fmt.Sprintf("app-ssh-%s", repoManagerName)
-			app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypeSSH}
+			if len(projectSSHKeys) > 1 {
+				opts := make([]string, len(projectSSHKeys)+1)
+				opts[0] = "Use a new ssh key"
+				for i := range projectSSHKeys {
+					opts[i+1] = projectSSHKeys[i].Name
+				}
+				selected := cli.MultiChoice("Select a SSH key to use in application VCS strategy", opts...)
+				if selected > 0 {
+					app.VCSSSHKey = opts[selected]
+				}
+			} else if len(projectSSHKeys) == 1 {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one existing SSH key '%s' on project. Use it in application VCS strategy?", projectSSHKeys[0].Name)) {
+					app.VCSSSHKey = projectSSHKeys[0].Name
+				}
+			}
+			if app.VCSSSHKey == "" {
+				app.VCSSSHKey = fmt.Sprintf("app-ssh-%s", repoManagerName)
+				app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypeSSH}
+			}
 		}
 
 		b, err := exportentities.Marshal(app, exportentities.FormatYAML)

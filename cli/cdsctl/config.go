@@ -264,7 +264,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		// if given project key not valid ask for a project
 		if project == nil {
 			if len(projects) == 1 {
-				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
+				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project '%s - %s'. Is it correct?", projects[0].Key, projects[0].Name)) {
 					// there is no filter on repo so there was only one choice possible
 					if !repoExists {
 						return nil, fmt.Errorf("Can't find a project to use")
@@ -308,7 +308,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var application *sdk.Application
 			if len(applications) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", applications[0].Name)) {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application '%s'. Is it correct?", applications[0].Name)) {
 					application = &applications[0]
 				}
 			} else if len(applications) > 1 {
@@ -347,7 +347,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var workflow *sdk.Workflow
 			if len(workflows) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", workflows[0].Name)) {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow '%s'. Is it correct?", workflows[0].Name)) {
 					workflow = &workflows[0]
 				}
 			} else if len(workflows) > 1 {

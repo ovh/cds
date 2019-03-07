@@ -53,7 +53,7 @@ func projectCreateKeyRun(v cli.Values) error {
 var projectKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS project keys",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
 }
