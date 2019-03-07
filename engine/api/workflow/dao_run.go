@@ -253,7 +253,7 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 func LockRun(db gorp.SqlExecutor, id int64) error {
 	query := fmt.Sprintf(`SELECT id
 	FROM workflow_run
-	WHERE id = $1 FOR UDPDATE NOWAIT`)
+	WHERE id = $1 FOR UPDATE NOWAIT`)
 	_, err := db.Query(query, id)
 	return sdk.WithStack(err)
 }
