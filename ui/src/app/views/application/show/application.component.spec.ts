@@ -109,7 +109,7 @@ describe('CDS: Application', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        expect(fixture.componentInstance.project.key).toBe('key1');
+        expect(fixture.componentInstance.application.name).toBe('app1');
         expect(appStore.updateRecentApplication).toHaveBeenCalled();
 
     }));
@@ -138,8 +138,6 @@ describe('CDS: Application', () => {
     it('should run add variable', fakeAsync(() => {
         let call = 0;
 
-        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
-
         spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
@@ -160,6 +158,9 @@ describe('CDS: Application', () => {
 
         let v: Variable = new Variable();
         v.name = 'foo';
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.variableEvent(new VariableEvent('add', v));
         tick(250);
         expect(store.dispatch).toHaveBeenCalledWith(new AddApplicationVariable({
@@ -170,9 +171,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run update variable', fakeAsync(() => {
-
-        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
-
         spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
@@ -193,6 +191,9 @@ describe('CDS: Application', () => {
 
         let v: Variable = new Variable();
         v.name = 'foo';
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.variableEvent(new VariableEvent('update', v));
         tick(250);
         expect(store.dispatch).toHaveBeenCalledWith(new UpdateApplicationVariable({
@@ -204,9 +205,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run remove variable', fakeAsync(() => {
-
-        prjStore.getProjects('key1').subscribe(() => { }).unsubscribe();
-
         spyOn(store, 'select').and.callFake(() => {
             let app: Application = new Application();
             app.name = 'app1';
@@ -225,6 +223,9 @@ describe('CDS: Application', () => {
 
         let v: Variable = new Variable();
         v.name = 'foo';
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
         tick(250);
         expect(store.dispatch).toHaveBeenCalledWith(new DeleteApplicationVariable({

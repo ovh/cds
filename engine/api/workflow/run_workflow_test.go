@@ -109,16 +109,28 @@ func TestManualRun1(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-		User: *u,
-		Payload: map[string]string{
-			"git.branch": "master",
+	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr.Workflow = *w1
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "master",
+			},
 		},
-	}, nil)
-	test.NoError(t, err)
+	}, u, nil)
+	test.NoError(t, errS)
 
-	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
-	test.NoError(t, err)
+	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr2.Workflow = *w1
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+	}, u, nil)
+	test.NoError(t, errS)
 
 	//LoadLastRun
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
@@ -145,9 +157,13 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, 2, len(jobs))
 
 	//TestprocessWorkflowRun
-	wr2, _, err := workflow.ManualRunFromNode(context.TODO(), db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.WorkflowData.Node.ID)
-	test.NoError(t, err)
-	assert.NotNil(t, wr2)
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+		FromNodeIDs: []int64{wr2.Workflow.WorkflowData.Node.ID},
+	}, u, nil)
+	test.NoError(t, errS)
 
 	//TestLoadRuns
 	runs, offset, limit, count, err := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 50, nil)
@@ -250,17 +266,27 @@ func TestManualRun2(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-		User: *u,
-	}, nil)
-	test.NoError(t, err)
+	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr.Workflow = *w1
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{User: *u},
+	}, u, nil)
+	test.NoError(t, errS)
 
-	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
-	test.NoError(t, err)
+	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr2.Workflow = *w1
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{User: *u},
+	}, u, nil)
+	test.NoError(t, errS)
 
-	//TestprocessWorkflowRun
-	_, _, err = workflow.ManualRunFromNode(context.TODO(), db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.WorkflowData.Node.ID)
-	test.NoError(t, err)
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual:      &sdk.WorkflowNodeRunManual{User: *u},
+		FromNodeIDs: []int64{wr.Workflow.WorkflowData.Node.ID},
+	}, u, nil)
+	test.NoError(t, errS)
 
 	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache,
 		workflow.QueueFilter{
@@ -395,10 +421,13 @@ func TestManualRun3(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-		User: *u,
-	}, nil)
-	test.NoError(t, err)
+	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr.Workflow = *w1
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{User: *u},
+	}, u, nil)
+	test.NoError(t, errS)
 
 	filter := workflow.QueueFilter{
 		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
@@ -703,8 +732,13 @@ func TestNoStage(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
-	test.NoError(t, err)
+	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr.Workflow = *w1
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{User: *u},
+	}, u, nil)
+	test.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
 	test.NoError(t, err)
@@ -773,8 +807,13 @@ func TestNoJob(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
-	test.NoError(t, err)
+	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr.Workflow = *w1
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{User: *u},
+	}, u, nil)
+	test.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
 	test.NoError(t, err)

@@ -1,7 +1,0 @@
-<div class="ui segment" *ngIf="applications">
-    <div class="ui grid">
-        <div class="four wide center aligned column" *ngFor="let app of applications">
-            <a [routerLink]="['/project/', project.key, 'application', app.name]">{{app.name}}</a>
-        </div>
-    </div>
-</div>

@@ -331,7 +331,9 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		p, errP := project.Load(db, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames)
+		p, errP := project.Load(db, api.Cache, key, deprecatedGetUser(ctx),
+			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
+			project.LoadOptions.WithFavorites, project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
 		}
@@ -510,7 +512,14 @@ func (api *API) addProjectHandler() service.Handler {
 
 		event.PublishAddProject(p, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, p, http.StatusCreated)
+		proj, errL := project.Load(api.mustDB(), api.Cache, p.Key, deprecatedGetUser(ctx), project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames,
+			project.LoadOptions.WithFavorites, project.LoadOptions.WithKeys, project.LoadOptions.WithPermission,
+			project.LoadOptions.WithIntegrations, project.LoadOptions.WithVariables)
+		if errL != nil {
+			return sdk.WrapError(errL, "Cannot load project %s", p.Key)
+		}
+
+		return service.WriteJSON(w, *proj, http.StatusCreated)
 	}
 }
 

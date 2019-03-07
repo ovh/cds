@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -68,7 +67,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 	if payload, ok := task.Config["payload"]; ok && payload.Value != "{}" {
 		var payloadInt interface{}
 		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e := dump.NewDefaultEncoder()
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 			e.ExtraFields.DetailedMap = false
 			e.ExtraFields.DetailedStruct = false

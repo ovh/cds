@@ -15,13 +15,14 @@ export class PipelineStatus {
     static SKIPPED = 'Skipped';
     static NEVER_BUILT = 'Never Built';
     static STOPPED = 'Stopped';
+    static PENDING = 'Pending';
 
     static neverRun(status: string) {
         return status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED;
     }
 
     static isActive(status: string) {
-        return status === this.WAITING || status === this.BUILDING;
+        return status === this.WAITING || status === this.BUILDING || status === this.PENDING;
     }
 
     static isDone(status: string) {
@@ -55,6 +56,9 @@ export class Pipeline {
     last_modified: number;
     projectKey: string;
     usage: Usage;
+    audits: Array<PipelineAudit>;
+    preview: Pipeline;
+    asCode: string;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;

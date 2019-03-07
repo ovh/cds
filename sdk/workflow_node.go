@@ -96,7 +96,7 @@ func (c *NodeContext) HasDefaultPayload() bool {
 	if c.DefaultPayload == nil {
 		return false
 	}
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false
@@ -113,7 +113,7 @@ func (c *NodeContext) DefaultPayloadToMap() (map[string]string, error) {
 	if c.DefaultPayload == nil {
 		return map[string]string{}, nil
 	}
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false

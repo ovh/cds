@@ -5,6 +5,8 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
@@ -66,13 +68,18 @@ describe('CDS: Pipeline Show', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let pipStore: PipelineStore = TestBed.get(PipelineStore);
-        pipStore.getPipelines('key1', 'pip1').subscribe(() => {
-        });
+        let store: Store = TestBed.get(Store);
+        store.dispatch(new FetchPipeline({
+            projectKey: 'key1',
+            pipelineName: 'pip1'
+        }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/key1/pipeline/pip1';
         })).flush(pipelineMock);
 
+        let project = new Project();
+        project.key = 'key1';
+        fixture.componentInstance.project = project;
         fixture.componentInstance.ngOnInit();
 
         expect(fixture.componentInstance.selectedTab).toBe('workflow');
@@ -104,29 +111,36 @@ describe('CDS: Pipeline Show', () => {
         // ADD
 
         let event: ParameterEvent = new ParameterEvent('add', param);
-        let pipStore: PipelineStore = TestBed.get(PipelineStore);
-        spyOn(pipStore, 'addParameter').and.callFake(() => {
+        let store: Store = TestBed.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => {
             return of(new Pipeline());
         });
         fixture.componentInstance.parameterEvent(event, true);
-        expect(pipStore.addParameter).toHaveBeenCalledWith('key1', 'pip1', param);
+        expect(store.dispatch).toHaveBeenCalledWith(new AddPipelineParameter({
+            projectKey: 'key1',
+            pipelineName: 'pip1',
+            parameter: param
+        }));
 
         // Update
 
         event.type = 'update';
-        spyOn(pipStore, 'updateParameter').and.callFake(() => {
-            return of(new Pipeline());
-        });
         fixture.componentInstance.parameterEvent(event, true);
-        expect(pipStore.updateParameter).toHaveBeenCalledWith('key1', 'pip1', param);
+        expect(store.dispatch).toHaveBeenCalledWith(new UpdatePipelineParameter({
+            projectKey: 'key1',
+            pipelineName: 'pip1',
+            parameterName: 'foo',
+            parameter: param
+        }));
 
         // Delete
         event.type = 'delete';
-        spyOn(pipStore, 'removeParameter').and.callFake(() => {
-            return of(new Pipeline());
-        });
         fixture.componentInstance.parameterEvent(event, true);
-        expect(pipStore.removeParameter).toHaveBeenCalledWith('key1', 'pip1', param);
+        expect(store.dispatch).toHaveBeenCalledWith(new DeletePipelineParameter({
+            projectKey: 'key1',
+            pipelineName: 'pip1',
+            parameter: param
+        }));
     }));
 });
 
@@ -143,6 +157,10 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.queryParams = of({ key: 'key1', appName: 'pip1', tab: 'workflow' });
         this.snapshot = new ActivatedRouteSnapshot();
         this.snapshot.queryParams = {};
+        this.snapshot.params = {
+            'key': 'key1',
+            'pipName': 'pip1'
+        };
 
         let project = new Project();
         project.key = 'key1';

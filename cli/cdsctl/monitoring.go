@@ -284,12 +284,10 @@ const (
 )
 
 func (ui *Termui) staticRender() {
-	checking, checkingColor := statusShort(sdk.StatusChecking.String())
 	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
 	building, buildingColor := statusShort(sdk.StatusBuilding.String())
 	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend: ](fg-cyan)[Checking:%s](%s) [Waiting:%s](%s) [Building:%s](%s) [Disabled:%s](%s)",
-		checking, checkingColor,
+	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend: ](fg-cyan) [Waiting:%s](%s) [Building:%s](%s) [Disabled:%s](%s)",
 		waiting, waitingColor,
 		building, buildingColor,
 		disabled, disabledColor)

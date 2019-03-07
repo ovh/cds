@@ -43,6 +43,30 @@ func MultiChoice(s string, opts ...string) int {
 	return 0
 }
 
+// MultiSelect for multiple choices question. It returns the selected options
+func MultiSelect(s string, opts ...string) []int {
+	var result []string
+
+	if err := survey.AskOne(&survey.MultiSelect{
+		Message:  s,
+		Options:  opts,
+		PageSize: 10,
+	}, &result, nil); err != nil {
+		log.Fatal(err)
+	}
+
+	var choices []int
+	for i := range opts {
+		for j := range result {
+			if opts[i] == result[j] {
+				choices = append(choices, i)
+			}
+		}
+	}
+
+	return choices
+}
+
 // AskValueChoice ask for a string and returns it.
 func AskValueChoice(s string) string {
 	var result string

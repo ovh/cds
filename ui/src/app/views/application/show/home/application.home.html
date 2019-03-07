@@ -24,22 +24,27 @@
         <div class="ui segment">
             <h4>{{ 'application_home_repo' | translate }}</h4>
             <ng-container *ngIf="application.vcs_server">
-                <ul><li><a [href]="overview?.git_url" target="_blank">{{application.vcs_server + ' - ' + application.repository_fullname}}</a></li></ul>
+                <ul>
+                    <li><a [href]="overview?.git_url" target="_blank">{{application.vcs_server + ' - ' +
+                            application.repository_fullname}}</a></li>
+                </ul>
             </ng-container>
             <ng-container *ngIf="!application.vcs_server">
                 <div class="ui info message">
-                    <a [routerLink]="['/project', project.key,'application', application.name]" [queryParams]="{tab: 'advanced'}">{{ 'application_home_no_repo' | translate }}</a>
+                    <a [routerLink]="['/project', project.key, 'application', application.name]" [queryParams]="{tab: 'advanced'}">{{
+                        'application_home_no_repo' | translate }}</a>
                 </div>
             </ng-container>
             <h4>{{ 'application_home_integration' | translate }}</h4>
-                <ul *ngIf="application.deployment_strategies">
-                    <li *ngFor="let p of application.deployment_strategies | keys">
-                        {{ p }}
-                    </li>
-                </ul>
-                <div class="ui info message" *ngIf="!application.deployment_strategies">
-                    <a [routerLink]="['/project', project.key,'application', application.name]" [queryParams]="{tab: 'advanced'}">{{ 'application_home_no_integration' | translate }}</a>
-                </div>
+            <ul *ngIf="application.deployment_strategies">
+                <li *ngFor="let p of application.deployment_strategies | keys">
+                    {{ p }}
+                </li>
+            </ul>
+            <div class="ui info message" *ngIf="!application.deployment_strategies">
+                <a [routerLink]="['/project', project.key,'application', application.name]" [queryParams]="{tab: 'advanced'}">{{
+                    'application_home_no_integration' | translate }}</a>
+            </div>
             <h4>{{ 'common_usage' | translate}}</h4>
             <ng-container *ngIf="application.usage && application.usage.workflows">
                 <ul>
@@ -74,10 +79,9 @@
                                 {{ h.last_modified | amTimeAgo}}
                             </a>
                         </div>
-                   </div>
-               </div>
+                    </div>
+                </div>
             </div>
         </ng-container>
     </div>
 </div>
-

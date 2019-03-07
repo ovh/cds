@@ -6,7 +6,8 @@ import (
 	"path"
 	"strconv"
 
-	repo "github.com/fsamin/go-repo"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -104,10 +105,22 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	conf := &cdsclient.Config{
 		Host:                  c.Host,
 		User:                  c.User,
-		Token:                 c.Token,
 		Verbose:               verbose,
 		InsecureSkipVerifyTLS: c.InsecureSkipVerifyTLS,
 	}
+
+	// TEMPORARY CODE
+	// Try to parse the token as JWT and set it as access token
+	if _, _, err := new(jwt.Parser).ParseUnverified(c.Token, &sdk.AccessTokenJWTClaims{}); err == nil {
+		conf.AccessToken = c.Token
+		conf.Token = ""
+		if verbose {
+			fmt.Println("JWT recognized")
+		}
+	} else {
+		conf.Token = c.Token
+	}
+	// TEMPORARY CODE - END
 
 	return conf, nil
 }
@@ -251,7 +264,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		// if given project key not valid ask for a project
 		if project == nil {
 			if len(projects) == 1 {
-				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
+				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project '%s - %s'. Is it correct?", projects[0].Key, projects[0].Name)) {
 					// there is no filter on repo so there was only one choice possible
 					if !repoExists {
 						return nil, fmt.Errorf("Can't find a project to use")
@@ -295,7 +308,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var application *sdk.Application
 			if len(applications) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", applications[0].Name)) {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application '%s'. Is it correct?", applications[0].Name)) {
 					application = &applications[0]
 				}
 			} else if len(applications) > 1 {
@@ -334,7 +347,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var workflow *sdk.Workflow
 			if len(workflows) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", workflows[0].Name)) {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow '%s'. Is it correct?", workflows[0].Name)) {
 					workflow = &workflows[0]
 				}
 			} else if len(workflows) > 1 {

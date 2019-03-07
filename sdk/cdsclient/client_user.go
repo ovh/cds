@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -147,4 +148,30 @@ func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) 
 		return res, err
 	}
 	return res, nil
+}
+
+func (c *client) UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error) {
+	var ticker = time.NewTicker(time.Second)
+	var callbackRequest = sdk.UserLoginCallbackRequest{
+		RequestToken: request,
+		PublicKey:    publicKey,
+	}
+	var accessToken sdk.AccessToken
+
+	for {
+		select {
+		case <-ctx.Done():
+			return accessToken, "", ctx.Err()
+		case <-ticker.C:
+			_, headers, _, err := c.RequestJSON(ctx, "POST", "/login/callback", callbackRequest, &accessToken)
+			if err != nil {
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
+					continue
+				}
+				return accessToken, "", err
+			}
+			jwt := headers.Get("X-CDS-JWT")
+			return accessToken, jwt, nil
+		}
+	}
 }

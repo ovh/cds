@@ -336,7 +336,7 @@ func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri s
 
 func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.User, groups ...sdk.Group) (string, error) {
 	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := accesstoken.New(u, groups, "test", sdk.RandomString(5), &expiration)
+	token, jwt, err := accesstoken.New(u, groups, "test", sdk.RandomString(5), expiration)
 	if err != nil {
 		return "", err
 	}
@@ -346,7 +346,7 @@ func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.User, groups ...sdk.Gr
 
 func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u sdk.User, groups ...sdk.Group) (string, string, error) {
 	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := accesstoken.New(u, groups, accesstoken.OriginUI, sdk.RandomString(5), &expiration)
+	token, jwt, err := accesstoken.New(u, groups, accesstoken.OriginUI, sdk.RandomString(5), expiration)
 	if err != nil {
 		return "", "", err
 	}

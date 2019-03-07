@@ -23,12 +23,15 @@ var (
 
 func main() {
 	root = rootFromSubCommands([]*cobra.Command{
-		doc(), // hidden command
+		doc(),         // hidden command
+		accesstoken(), // experimental command
 		action(),
-		login(),
+		login(),             // nearly deprecated
+		loginExperimental(), // experimental command to handle JWT
 		signup(),
 		application(),
 		environment(),
+		events(),
 		pipeline(),
 		group(),
 		health(),
@@ -41,7 +44,7 @@ func main() {
 		monitoring(),
 		version(),
 		encrypt(),
-		token(),
+		token(), // nearly deprecated
 		template(),
 		admin(),
 	})
