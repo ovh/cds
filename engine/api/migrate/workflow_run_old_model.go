@@ -55,12 +55,8 @@ func migrateRun(ctx context.Context, db *gorp.DbMap, id int64) error {
 		return err
 	}
 
-	if run.Workflow.WorkflowData == nil {
-		data := run.Workflow.Migrate(true)
-		run.Workflow.WorkflowData = &data
-		if err := workflow.UpdateWorkflowRun(ctx, tx, run); err != nil {
-			return err
-		}
+	if err := workflow.MigrateWorkflowRun(ctx, tx, run); err != nil {
+		return err
 	}
 
 	return sdk.WithStack(tx.Commit())
