@@ -30,7 +30,7 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		var err error
 		url, err = buildGitlabURL(hook.URL)
 		if err != nil {
-			return sdk.WrapError(err, "buildGitlabURL")
+			return err
 		}
 	} else {
 		url = hook.URL
@@ -47,10 +47,10 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	log.Debug("GitlabClient.CreateHook: %s %s\n", repo, *opt.URL)
 	ph, resp, err := c.client.Projects.AddProjectHook(repo, &opt)
 	if err != nil {
-		return sdk.WrapError(err, "AddProjectHook")
+		return sdk.WrapError(err, "cannot create gitlab project hook with url: %s", url)
 	}
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("GitlabClient.CreateHook> Cannot create hook. Http %d, Repo %s, hook %+v", resp.StatusCode, repo, opt)
+		return sdk.WithStack(fmt.Errorf("cannot create hook. Http %d, Repo %s, hook %+v", resp.StatusCode, repo, opt))
 	}
 	hook.ID = fmt.Sprintf("%d", ph.ID)
 	return nil
@@ -103,11 +103,11 @@ func (c *gitlabClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCS
 func buildGitlabURL(givenURL string) (string, error) {
 	u, err := url.Parse(givenURL)
 	if err != nil {
-		return "", err
+		return "", sdk.WithStack(err)
 	}
 	q, err := url.ParseQuery(u.RawQuery)
 	if err != nil {
-		return "", err
+		return "", sdk.WithStack(err)
 	}
 
 	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, q.Get("uid"))

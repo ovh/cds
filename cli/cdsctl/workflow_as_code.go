@@ -308,23 +308,22 @@ func workflowInitRun(c cli.Values) error {
 		if strings.HasPrefix(fetchURL, "https") {
 			connectionType = "https"
 		}
+
+		pgpKeyName := fmt.Sprintf("app-pgp-%s", repoManagerName)
 		app := exportentities.Application{
 			Name:              appName,
 			RepositoryName:    repoName,
 			VCSServer:         repoManagerName,
 			VCSConnectionType: connectionType,
-			VCSPGPKey:         "app-pgp-" + repoManagerName,
+			VCSPGPKey:         pgpKeyName,
 			Keys: map[string]exportentities.KeyValue{
-				"app-pgp-" + repoManagerName: exportentities.KeyValue{
-					Type: sdk.KeyTypePGP,
-				},
+				pgpKeyName: exportentities.KeyValue{Type: sdk.KeyTypePGP},
 			},
 		}
 
 		if connectionType == "ssh" {
-			app.Keys["app-ssh-"+repoManagerName] = exportentities.KeyValue{
-				Type: sdk.KeyTypeSSH,
-			}
+			app.VCSSSHKey = fmt.Sprintf("app-ssh-%s", repoManagerName)
+			app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypeSSH}
 		}
 
 		b, err := exportentities.Marshal(app, exportentities.FormatYAML)
