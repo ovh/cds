@@ -1,7 +1,9 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { AuditWorkflow } from 'app/model/audit.model';
+import { GroupPermission } from 'app/model/group.model';
 import { Workflow } from 'app/model/workflow.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflows.action';
@@ -33,7 +35,7 @@ export class WorkflowsState {
         );
     }
 
-    constructor(private _http: HttpClient) { }
+    constructor(private _http: HttpClient, private _navbarService: NavbarService) { }
 
     @Action(actionWorkflow.AddWorkflow)
     add(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddWorkflow) {
@@ -86,7 +88,7 @@ export class WorkflowsState {
         );
         if (action.payload.wfName) {
             request = this._http.put<Array<string>>(
-                `/project/${action.payload.projectKey}/import/workflow/${action.payload.wfName}`,
+                `/project/${action.payload.projectKey}/import/workflows/${action.payload.wfName}`,
                 action.payload.workflowCode,
                 { headers, params }
             );
@@ -194,6 +196,71 @@ export class WorkflowsState {
         }));
     }
 
+    //  ------- Group Permission --------- //
+    @Action(actionWorkflow.AddGroupInAllWorkflows)
+    propagateProjectPermission(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddGroupInAllWorkflows) {
+        const state = ctx.getState();
+        let group: GroupPermission = { ...action.payload.group, hasChanged: false, updating: false };
+        let workflows = Object.keys(state.workflows).reduce((workflowsObj, key) => {
+            let wf = Object.assign({}, state.workflows[key], <Workflow>{
+                groups: [group].concat(state.workflows[key].groups)
+            });
+            return Object.assign({}, workflowsObj, { [key]: wf });
+        }, {});
+
+        ctx.setState({
+            ...state,
+            workflows
+        });
+    }
+
+    @Action(actionWorkflow.AddGroupInWorkflow)
+    addGroupPermission(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddGroupInWorkflow) {
+        return this._http.post<Workflow>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/groups`,
+            action.payload.group
+        ).pipe(tap((wf: Workflow) => {
+            const state = ctx.getState();
+            let wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+
+            ctx.dispatch(new actionWorkflow.LoadWorkflow({
+                projectKey: action.payload.projectKey,
+                workflow: Object.assign({}, state.workflows[wfKey], <Workflow>{ groups: wf.groups })
+            }));
+        }));
+    }
+
+    @Action(actionWorkflow.UpdateGroupInWorkflow)
+    updateGroupPermission(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.UpdateGroupInWorkflow) {
+        return this._http.put<Workflow>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/groups/${action.payload.group.group.name}`,
+            action.payload.group
+        ).pipe(tap((wf: Workflow) => {
+            const state = ctx.getState();
+            let wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+
+            ctx.dispatch(new actionWorkflow.LoadWorkflow({
+                projectKey: action.payload.projectKey,
+                workflow: Object.assign({}, state.workflows[wfKey], <Workflow>{ groups: wf.groups })
+            }));
+        }));
+    }
+
+    @Action(actionWorkflow.DeleteGroupInWorkflow)
+    deleteGroupPermission(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.DeleteGroupInWorkflow) {
+        return this._http.delete<Workflow>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/groups/${action.payload.group.group.name}`
+        ).pipe(tap((wf: Workflow) => {
+            const state = ctx.getState();
+            let wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+
+            ctx.dispatch(new actionWorkflow.LoadWorkflow({
+                projectKey: action.payload.projectKey,
+                workflow: Object.assign({}, state.workflows[wfKey], <Workflow>{ groups: wf.groups })
+            }));
+        }));
+    }
+
     //  ------- Audit --------- //
     @Action(actionWorkflow.FetchWorkflowAudits)
     fetchAudits(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.FetchWorkflowAudits) {
@@ -232,7 +299,7 @@ export class WorkflowsState {
         params = params.append('withPermissions', 'true');
 
         return this._http.get<string>(
-            `/project/${action.payload.projectKey}/export/workflow/${action.payload.workflowName}`,
+            `/project/${action.payload.projectKey}/export/workflows/${action.payload.workflowName}`,
             { params, responseType: <any>'text' }
         ).pipe(tap((asCode: string) => {
             const state = ctx.getState();
@@ -253,16 +320,16 @@ export class WorkflowsState {
         params = params.append('format', 'yaml');
 
         return this._http.post<Workflow>(
-            `/project/${action.payload.projectKey}/preview/workflow`,
-            action.payload.pipCode,
+            `/project/${action.payload.projectKey}/preview/workflows`,
+            action.payload.wfCode,
             { params, headers }
-        ).pipe(tap((pip: Workflow) => {
+        ).pipe(tap((wf: Workflow) => {
             const state = ctx.getState();
             const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
 
             ctx.dispatch(new actionWorkflow.LoadWorkflow({
                 projectKey: action.payload.projectKey,
-                workflow: Object.assign({}, state.workflows[wfKey], { preview: pip })
+                workflow: Object.assign({}, state.workflows[wfKey], { preview: wf })
             }));
         }));
     }
@@ -271,11 +338,11 @@ export class WorkflowsState {
     externalChange(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.ExternalChangeWorkflow) {
         const state = ctx.getState();
         const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
-        const pipUpdated = Object.assign({}, state.workflows[wfKey], { externalChange: true });
+        const wfUpdated = Object.assign({}, state.workflows[wfKey], { externalChange: true });
 
         ctx.setState({
             ...state,
-            workflows: Object.assign({}, state.workflows, { [wfKey]: pipUpdated }),
+            workflows: Object.assign({}, state.workflows, { [wfKey]: wfUpdated }),
         });
     }
 
@@ -308,6 +375,30 @@ export class WorkflowsState {
                 projectKey: action.payload.projectKey,
                 workflow: wf
             }));
+        }));
+    }
+
+    @Action(actionWorkflow.UpdateFavoriteWorkflow)
+    updateFavorite(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.UpdateFavoriteWorkflow) {
+        const state = ctx.getState();
+
+        return this._http.post(
+            '/user/favorite', {
+                type: 'workflow',
+                project_key: action.payload.projectKey,
+                workflow_name: action.payload.workflowName,
+            }
+        ).pipe(tap(() => {
+            this._navbarService.getData(); // TODO: to delete
+            const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+            const wfUpdated = Object.assign({}, state.workflows[wfKey], <Workflow>{ favorite: !state.workflows[wfKey].favorite });
+
+            ctx.setState({
+                ...state,
+                workflows: Object.assign({}, state.workflows, { [wfKey]: wfUpdated }),
+            });
+            // TODO: dispatch action on global state to update project in list and user state
+            // TODO: move this one on user state and just update state here, not XHR
         }));
     }
 }

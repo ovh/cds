@@ -6,8 +6,10 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { IdName, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
+import { AddGroupInAllWorkflows } from './workflows.action';
 
 export class ProjectStateModel {
     public project: Project;
@@ -27,7 +29,7 @@ export class ProjectStateModel {
 })
 export class ProjectState {
 
-    constructor(private _http: HttpClient) { }
+    constructor(private _http: HttpClient, private _navbarService: NavbarService) { }
 
 
     @Action(ProjectAction.LoadProject)
@@ -367,6 +369,7 @@ export class ProjectState {
                 project_key: action.payload.projectKey
             }
         ).pipe(tap(() => {
+            this._navbarService.getData(); // TODO: to delete
             ctx.setState({
                 ...state,
                 project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
@@ -575,13 +578,26 @@ export class ProjectState {
     @Action(ProjectAction.AddGroupInProject)
     addGroup(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddGroupInProject) {
         const state = ctx.getState();
-        return this._http.post<GroupPermission[]>('/project/' + action.payload.projectKey + '/group', action.payload.group)
-            .pipe(tap((groups: GroupPermission[]) => {
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ groups }),
-                });
-            }));
+        let params = new HttpParams();
+        if (action.payload.onlyProject) {
+            params = params.append('onlyProject', 'true');
+        }
+
+        return this._http.post<GroupPermission[]>('/project/' + action.payload.projectKey + '/group', action.payload.group,
+            { params }
+        ).pipe(tap((groups: GroupPermission[]) => {
+            if (!action.payload.onlyProject) {
+                ctx.dispatch(new AddGroupInAllWorkflows({
+                    projectKey: action.payload.projectKey,
+                    group: action.payload.group
+                }));
+            }
+
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ groups }),
+            });
+        }));
     }
 
     @Action(ProjectAction.DeleteGroupInProject)

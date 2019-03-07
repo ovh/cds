@@ -129,7 +129,7 @@ export class DeletePipelineInProject {
 //  ------- Group Permission --------- //
 export class AddGroupInProject {
     static readonly type = '[Project] Add Group in Project';
-    constructor(public payload: { projectKey: string, group: GroupPermission }) { }
+    constructor(public payload: { projectKey: string, group: GroupPermission, onlyProject?: boolean }) { }
 }
 export class UpdateGroupInProject {
     static readonly type = '[Project] Update Group in Project';

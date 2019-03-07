@@ -1,3 +1,4 @@
+import { GroupPermission } from 'app/model/group.model';
 import { Workflow } from 'app/model/workflow.model';
 
 // Use to load fetched Workflow in our app
@@ -43,6 +44,23 @@ export class RollbackWorkflow {
     constructor(public payload: { projectKey: string, workflowName: string, auditId: number }) { }
 }
 
+//  ------- Group Permission --------- //
+export class AddGroupInAllWorkflows {
+    static readonly type = '[Workflow] Add Group in Workflows already cached';
+    constructor(public payload: { projectKey: string, group: GroupPermission }) { }
+}
+export class AddGroupInWorkflow {
+    static readonly type = '[Workflow] Add Group in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, group: GroupPermission }) { }
+}
+export class UpdateGroupInWorkflow {
+    static readonly type = '[Workflow] Update Group in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, group: GroupPermission }) { }
+}
+export class DeleteGroupInWorkflow {
+    static readonly type = '[Workflow] Delete Group in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, group: GroupPermission }) { }
+}
 
 //  ------- Misc --------- //
 export class FetchAsCodeWorkflow {
@@ -52,7 +70,7 @@ export class FetchAsCodeWorkflow {
 
 export class PreviewWorkflow {
     static readonly type = '[Workflow] Preview Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string, pipCode: string }) { }
+    constructor(public payload: { projectKey: string, workflowName: string, wfCode: string }) { }
 }
 
 export class ExternalChangeWorkflow {
@@ -67,6 +85,11 @@ export class ResyncWorkflow {
 
 export class DeleteFromCacheWorkflow {
     static readonly type = '[Workflow] Delete from cache Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string }) { }
+}
+
+export class UpdateFavoriteWorkflow {
+    static readonly type = '[Workflow] Update Workflow Favorite';
     constructor(public payload: { projectKey: string, workflowName: string }) { }
 }
 

@@ -3,7 +3,7 @@ import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { FetchWorkflow } from 'app/store/workflows.action';
+import { FetchWorkflow, UpdateFavoriteWorkflow } from 'app/store/workflows.action';
 import { WorkflowsState } from 'app/store/workflows.state';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
@@ -16,8 +16,8 @@ import { RouterService } from '../../service/router/router.service';
 import { WorkflowRunService } from '../../service/workflow/run/workflow.run.service';
 import { WorkflowCoreService } from '../../service/workflow/workflow.core.service';
 import { WorkflowEventStore } from '../../service/workflow/workflow.event.store';
+import { WorkflowService } from '../../service/workflow/workflow.service';
 import { WorkflowSidebarMode, WorkflowSidebarStore } from '../../service/workflow/workflow.sidebar.store';
-import { WorkflowStore } from '../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from '../../shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
@@ -74,7 +74,7 @@ export class WorkflowComponent implements OnInit {
 
     constructor(
         private _activatedRoute: ActivatedRoute,
-        private _workflowStore: WorkflowStore,
+        private _workflowService: WorkflowService,
         private _workflowRunService: WorkflowRunService,
         private _workflowEventStore: WorkflowEventStore,
         private _router: Router,
@@ -192,12 +192,14 @@ export class WorkflowComponent implements OnInit {
     }
 
     updateFav() {
-        if (this.loading) {
+        if (this.loading || !this.workflow) {
             return;
         }
         this.loadingFav = true;
-        this._workflowStore.updateFavorite(this.project.key, this.workflow.name)
-            .pipe(finalize(() => this.loadingFav = false))
+        this.store.dispatch(new UpdateFavoriteWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name
+        })).pipe(finalize(() => this.loadingFav = false))
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
     }
 
@@ -234,7 +236,7 @@ export class WorkflowComponent implements OnInit {
 
     migrateAsCode(): void {
         this.loadingPopupButton = true;
-        this._workflowStore.migrateAsCode(this.project.key, this.workflow.name)
+        this._workflowService.migrateAsCode(this.project.key, this.workflow.name)
             .pipe(finalize(() => this.loadingPopupButton = false))
             .subscribe((ope) => {
                 this.showButtons = false;
