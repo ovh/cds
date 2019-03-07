@@ -20,7 +20,7 @@ type UsagePipeline struct {
 	PipelineID   int64  `json:"pipeline_id"`
 	PipelineName string `json:"pipeline_name"`
 	StageID      int64  `json:"stage_id"`
-	StageName    string `json:"stage_Name"`
+	StageName    string `json:"stage_name"`
 	JobID        int64  `json:"job_id"`
 	JobName      string `json:"job_name"`
 	ActionID     int64  `json:"action_id"`
@@ -31,7 +31,7 @@ type UsagePipeline struct {
 // GetPipelineUsages returns the list of pipelines using an action
 func GetPipelineUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) ([]UsagePipeline, error) {
 	rows, err := db.Query(`
-    SELECT
+    SELECT DISTINCT
       project.id, project.projectKey, project.name,
       pipeline.id, pipeline.name,
       pipeline_stage.id, pipeline_stage.name,
@@ -87,7 +87,7 @@ type UsageAction struct {
 // GetActionUsages returns the list of actions using an action
 func GetActionUsages(db gorp.SqlExecutor, sharedInfraGroupID, actionID int64) ([]UsageAction, error) {
 	rows, err := db.Query(`
-    SELECT
+    SELECT DISTINCT
 			"group".id, "group".name,
 			parent.id, parent.name,
       action.id, action.name,

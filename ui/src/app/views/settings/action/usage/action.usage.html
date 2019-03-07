@@ -15,7 +15,8 @@
         <h3>{{ 'action_usage_actions_using' | translate }}</h3>
         <ul>
             <li *ngFor="let a of usage.actions">
-                <a [routerLink]="['/settings/action', a.group_name, a.parent_action_name]">{{a.parent_action_name}}</a>
+                <a [routerLink]="['/settings/action', a.group_name, a.parent_action_name]">
+                    {{a.group_name ? a.group_name+'/' : ''}}{{a.parent_action_name}}</a>
                 <i *ngIf="a.warning" suiPopup [popupText]="'action_usage_warning_action' | translate"
                     class="red exclamation triangle icon"></i>
             </li>

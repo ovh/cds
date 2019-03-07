@@ -30,32 +30,33 @@ export class Action {
 }
 
 export class Usage {
-    Pipelines: Array<UsagePipeline>;
-    Actions: Array<UsageAction>;
+    pipelines: Array<UsagePipeline>;
+    actions: Array<UsageAction>;
 }
 
 export class UsagePipeline {
-    ProjectID: number;
-    ProjectKey: string;
-    ProjectName: string;
-    PipelineID: number;
-    PipelineName: string;
-    StageID: number;
-    StageName: string;
-    JobID: number;
-    JobName: string;
-    ActionID: number;
-    ActionName: string;
-    Warning: boolean;
+    project_id: number;
+    project_key: string;
+    project_name: string;
+    pipeline_id: number;
+    pipeline_name: string;
+    stage_id: number;
+    stage_name: string;
+    job_id: number;
+    job_name: string;
+    action_id: number;
+    action_name: string;
+    warning: boolean;
 }
 
 export class UsageAction {
-    ParentActionID: number;
-    ParentActionGroupName: string;
-    ParentActionName: string;
-    ActionID: number;
-    ActionName: string;
-    Warning: boolean;
+    group_id: number;
+    group_name: string;
+    parent_action_id: number;
+    parent_action_name: string;
+    action_id: number;
+    action_name: string;
+    warning: boolean;
 }
 
 export class ActionWarning {
