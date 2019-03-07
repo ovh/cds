@@ -569,7 +569,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
-// CreateRun create a new workflow run and insert it
+// CreateRun creates a new workflow run and insert it
 func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) (*sdk.WorkflowRun, error) {
 	number, err := NextRunNumber(db, wf.ID)
 	if err != nil {
