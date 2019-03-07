@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { FetchApplicationOverview } from 'app/store/applications.action';
@@ -13,25 +13,24 @@ import { Project } from '../../../../model/project.model';
     templateUrl: './application.home.html',
     styleUrls: ['./application.home.scss']
 })
-export class ApplicationHomeComponent implements OnInit {
-
+export class ApplicationHomeComponent implements OnInit, OnChanges {
     @Input() project: Project;
     @Input() application: Application;
 
     dashboards: Array<GraphConfiguration>;
-    ready = false;
     overview: Overview;
 
     constructor(
         private _translate: TranslateService,
         private store: Store
-    ) {
-
-    }
+    ) { }
 
     ngOnInit(): void {
         this.store.dispatch(new FetchApplicationOverview({ projectKey: this.project.key, applicationName: this.application.name }));
         this.dashboards = new Array<GraphConfiguration>();
+    }
+
+    ngOnChanges(): void {
         this.overview = this.application.overview;
         if (this.overview && this.overview.graphs.length > 0) {
             this.overview.graphs.forEach(g => {
@@ -50,7 +49,6 @@ export class ApplicationHomeComponent implements OnInit {
                 }
             });
         }
-        this.ready = true;
     }
 
     createUnitTestDashboard(metrics: Array<Metric>): void {
@@ -98,7 +96,7 @@ export class ApplicationHomeComponent implements OnInit {
         cc.showXAxisLabel = true;
         cc.showYAxisLabel = true;
         cc.xAxisLabel = this._translate.instant('graph_vulnerability_x');
-        cc.yAxisLabel = this._translate.instant('graph_vulnerability_y'); ;
+        cc.yAxisLabel = this._translate.instant('graph_vulnerability_y');
         cc.datas = new Array<ChartData>();
 
         Severity.Severities.forEach(s => {
