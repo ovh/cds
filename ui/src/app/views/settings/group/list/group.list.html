@@ -4,54 +4,8 @@
             }}</a>
     </app-breadcrumb>
     <app-scrollview class="scrollview">
-        <div *ngIf="groups;then showGroups;else loadGroups"></div>
-        <ng-template #showGroups>
-            <div id="groupList">
-                <div class="ui form">
-                    <div class="field">
-                        <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
-                    </div>
-                </div>
-
-                <table class="ui selectable fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
-                    <thead>
-                        <tr>
-                            <th class="sixteen wide">{{ 'group_name' | translate }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let v of getDataForCurrentPage()">
-                            <td class="border">
-                                <a class="ui" [routerLink]="[v.name]">
-                                    <div class="ui">{{v.name}}</div>
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
-                    <tfoot *ngIf="getNbOfPages() > 1">
-                        <tr>
-                            <th>
-                                <div class="ui right floated pagination menu">
-                                    <a class="icon item" (click)="downPage()">
-                                        <i class="left chevron icon"></i>
-                                    </a>
-                                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
-                                        [class.active]="currentPage === page">{{page}}</a>
-                                    <a class="icon item" (click)="upPage()">
-                                        <i class="right chevron icon"></i>
-                                    </a>
-                                </div>
-                            </th>
-                        </tr>
-                    </tfoot>
-                </table>
-                <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
-                    {{ 'group_none' | translate }}
-                </div>
-            </div>
-        </ng-template>
-        <ng-template #loadGroups>
-            <div class="ui text active loader">{{ 'group_load_groups' | translate }}</div>
-        </ng-template>
+        <app-data-table [withFilter]="filter" [withPagination]="25" [columns]="columns" [data]="groups"
+            [loading]="loading">
+        </app-data-table>
     </app-scrollview>
 </div>
