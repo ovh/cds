@@ -41,6 +41,8 @@
   "action_usage_warning_action": "L'action parente ne sera pas en mesure d'exécuter cette action car elles ne font pas parties du même groupe.",
   "action_custom": "Personnalisée",
   "action_builtin": "Prédéfinie",
+  "action_btn_init_from_job": "Initialiser une nouvelle action à partir du job",
+  "action_help_add_from": "L'action courante a été initialisée à partir des données du job \"{{jobName}}\" du pipeline \"{{pipelineName}}\" dans le projet \"{{projectKey}}\". Ces données ne seront pas enregistrées tant que l'action n'aura pas été sauvegardée.",
 
   "admin_migration_not_started": "Non commencé",
   "admin_migration_started": "En cours",
@@ -1123,7 +1125,7 @@
   "workflow_template_detach": "Détacher",
   "workflow_template_apply_detach": "Détacher le workflow généré du template.",
   "workflow_template_init_from_workflow": "Initialiser un modèle",
-  "workflow_template_help_add_from": "Le modèle de workflow courant a été initialisé à partir des données du workflow {{workflowName}} dans le projet {{projectKey}}. Ces données ne seront pas enregistrées tant que le modèle n'aura pas été sauvegardé.",
+  "workflow_template_help_add_from": "Le modèle de workflow courant a été initialisé à partir des données du workflow \"{{workflowName}}\" dans le projet \"{{projectKey}}\". Ces données ne seront pas enregistrées tant que le modèle n'aura pas été sauvegardé.",
   "workflow_template_help_edit_from": "Le modèle de workflow est synchronisé à partir d'une URL, vous ne pouvez pas modifier ses informations.",
   "workflow_template_import_from_url": "Importer depuis une URL",
   "workflow_template_imported_from_url": "Importé depuis une URL",

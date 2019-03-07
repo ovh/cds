@@ -1,4 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as pipelineActions from 'app/store/pipelines.action';
@@ -96,7 +97,8 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         private _translate: TranslateService,
         private _varService: VariableService,
         private _pipCoreService: PipelineCoreService,
-        private _keyService: KeyService
+        private _keyService: KeyService,
+        private _router: Router
     ) {
         this._dragularService.createGroup('bag-stage', {
             moves: function (el, source, handle) {
@@ -321,5 +323,13 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     showAsCodeEditor() {
         this._pipCoreService.toggleAsCodeEditor({ open: true, save: false });
+    }
+
+    initActionFromJob(projectKey: string, pipelineName: string, stageID: number, jobName: string): void {
+        this._router.navigate(['settings', 'action', 'add'], {
+            queryParams: {
+                from: `${projectKey}/${pipelineName}/${stageID}/${jobName}`
+            }
+        });
     }
 }
