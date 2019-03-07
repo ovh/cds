@@ -2268,11 +2268,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-integration-models">POST <code>/integration/models</code></a></li>
 <li><a href="#get-integration-models">GET <code>/integration/models</code></a></li>
-<li><a href="#delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></a></li>
-<li><a href="#get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></a></li>
+<li><a href="#post-integration-models">POST <code>/integration/models</code></a></li>
 <li><a href="#put-integration-models-name">PUT <code>/integration/models/&lt;name&gt;</code></a></li>
+<li><a href="#get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></a></li>
+<li><a href="#delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -2295,34 +2295,6 @@
 
 
 
-
-<h3 id="post-integration-models">POST <code>/integration/models</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/integration/models</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postIntegrationModelHandler%22">postIntegrationModelHandler</a></td>
-</tr>
-</tbody>
-</table>
 
 <h3 id="get-integration-models">GET <code>/integration/models</code></h3>
 
@@ -2352,7 +2324,35 @@
 </tbody>
 </table>
 
-<h3 id="delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></h3>
+<h3 id="post-integration-models">POST <code>/integration/models</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/integration/models</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postIntegrationModelHandler%22">postIntegrationModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-integration-models-name">PUT <code>/integration/models/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -2365,7 +2365,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -2375,7 +2375,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteIntegrationModelHandler%22">deleteIntegrationModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putIntegrationModelHandler%22">putIntegrationModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2408,7 +2408,7 @@
 </tbody>
 </table>
 
-<h3 id="put-integration-models-name">PUT <code>/integration/models/&lt;name&gt;</code></h3>
+<h3 id="delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -2421,7 +2421,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -2431,7 +2431,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putIntegrationModelHandler%22">putIntegrationModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteIntegrationModelHandler%22">deleteIntegrationModelHandler</a></td>
 </tr>
 </tbody>
 </table>
