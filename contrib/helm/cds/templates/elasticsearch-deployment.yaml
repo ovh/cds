@@ -64,8 +64,8 @@ spec:
           containerPort: 8084
           volumeMounts:
           - name: cds-repos-data
-      mountPath: {{ .Values.repositories.persistence.mountPath }}
-  volumes:
-  - name: cds-repos-data
-    persistentVolumeClaim:
-      claimName: {{ (printf "%s-elasticsearch" (include "cds.fullname" .)) }}
+            mountPath: {{ .Values.repositories.persistence.mountPath }}
+    volumes:
+    - name: cds-repos-data
+      persistentVolumeClaim:
+        claimName: {{ (printf "%s-elasticsearch" (include "cds.fullname" .)) }}
