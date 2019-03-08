@@ -26,7 +26,6 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
-    - result.systemoutjson.status ShouldEqual Pending
 
 - name: check workflow
   steps:
