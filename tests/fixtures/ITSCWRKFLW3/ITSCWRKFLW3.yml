@@ -34,3 +34,5 @@ workflow:
       - tests
     application: ITSCWRKFLW3-APP
     environment: ITSCWRKFLW3-ENV-PROD
+metadata:
+  default_tags: git.branch
