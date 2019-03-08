@@ -24,8 +24,14 @@
             <h4>{{ 'application_home_repo' | translate }}</h4>
             <ng-container *ngIf="application.vcs_server">
                 <ul>
-                    <li><a [href]="overview?.git_url" target="_blank">{{application.vcs_server + ' - ' +
-                            application.repository_fullname}}</a></li>
+                    <li *ngIf="overview">
+                        <a [href]="overview?.git_url" target="_blank">
+                            {{application.vcs_server + ' - ' + application.repository_fullname}}
+                        </a>
+                    </li>
+                    <li *ngIf="!overview">
+                        {{application.vcs_server + ' - ' + application.repository_fullname}}
+                    </li>
                 </ul>
             </ng-container>
             <ng-container *ngIf="!application.vcs_server">

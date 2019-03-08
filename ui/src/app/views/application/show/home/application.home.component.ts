@@ -1,24 +1,30 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { FetchApplicationOverview } from 'app/store/applications.action';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { Application, Overview, Severity } from '../../../../model/application.model';
 import { ChartData, ChartSeries, GraphConfiguration, GraphType } from '../../../../model/graph.model';
 import { Metric } from '../../../../model/metric.model';
 import { Tests } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
+import { FetchApplicationOverview } from '../../../../store/applications.action';
+import { ApplicationsState } from '../../../../store/applications.state';
 
 @Component({
     selector: 'app-home',
     templateUrl: './application.home.html',
     styleUrls: ['./application.home.scss']
 })
-export class ApplicationHomeComponent implements OnInit, OnChanges {
+@AutoUnsubscribe()
+export class ApplicationHomeComponent implements OnInit {
     @Input() project: Project;
     @Input() application: Application;
 
     dashboards: Array<GraphConfiguration>;
     overview: Overview;
+    overviewSubscription: Subscription;
 
     constructor(
         private _translate: TranslateService,
@@ -27,11 +33,16 @@ export class ApplicationHomeComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.store.dispatch(new FetchApplicationOverview({ projectKey: this.project.key, applicationName: this.application.name }));
-        this.dashboards = new Array<GraphConfiguration>();
+        this.overviewSubscription = this.store.select(ApplicationsState.selectOverview(this.project.key, this.application.name))
+            .pipe(filter((o) => o != null))
+            .subscribe((o: Overview) => {
+                this.overview = o;
+                this.renderGraph();
+            });
     }
 
-    ngOnChanges(): void {
-        this.overview = this.application.overview;
+    renderGraph(): void {
+        this.dashboards = new Array<GraphConfiguration>();
         if (this.overview && this.overview.graphs.length > 0) {
             this.overview.graphs.forEach(g => {
                 if (g.datas && g.datas.length) {

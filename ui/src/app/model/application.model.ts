@@ -26,8 +26,6 @@ export class Application {
     vulnerabilities: Array<Vulnerability>;
     project_key: string; // project unique key
 
-    overview: Overview;
-
     // true if someone has updated the application ( used for warnings )
     externalChange: boolean;
 
