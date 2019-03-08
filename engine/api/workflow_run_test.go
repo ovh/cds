@@ -921,6 +921,31 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
 
+	cpt := 0
+	for {
+		varsGet := map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": w1.Name,
+			"number":           "1",
+		}
+		uriGet := router.GetRoute("GET", api.getWorkflowRunHandler, varsGet)
+		reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
+		recGet := httptest.NewRecorder()
+		router.Mux.ServeHTTP(recGet, reqGet)
+
+		var wrGet sdk.WorkflowRun
+		assert.NoError(t, json.Unmarshal(recGet.Body.Bytes(), &wrGet))
+
+		if wrGet.Status != sdk.StatusPending.String() {
+			assert.Equal(t, sdk.StatusBuilding.String(), wrGet.Status)
+			break
+		}
+		cpt++
+		if cpt > 10 {
+			break
+		}
+	}
+
 	pip.Stages[0].Name = "New awesome stage"
 	errS := pipeline.UpdateStage(db, &pip.Stages[0])
 	test.NoError(t, errS)
