@@ -250,12 +250,11 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 }
 
 // LockRun locks a workflow run
-func LockRun(db gorp.SqlExecutor, id int64) error {
-	query := fmt.Sprintf(`SELECT id
+func LockRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`SELECT %s
 	FROM workflow_run
-	WHERE id = $1 FOR UPDATE NOWAIT`)
-	_, err := db.Query(query, id)
-	return sdk.WithStack(err)
+	WHERE id = $1 FOR UPDATE NOWAIT`, wfRunfields)
+	return loadRun(db, LoadRunOptions{}, query, id)
 }
 
 // LoadRunIDsWithOldModel loads all ids for run that use old workflow model

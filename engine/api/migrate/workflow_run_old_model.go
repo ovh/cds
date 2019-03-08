@@ -46,11 +46,7 @@ func migrateRun(ctx context.Context, db *gorp.DbMap, id int64) error {
 	}
 	defer tx.Rollback() // nolint
 
-	if err := workflow.LockRun(tx, id); err != nil {
-		return err
-	}
-
-	run, err := workflow.LoadRunByID(tx, id, workflow.LoadRunOptions{})
+	run, err := workflow.LockRun(tx, id)
 	if err != nil {
 		return err
 	}
