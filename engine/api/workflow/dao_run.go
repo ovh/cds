@@ -399,7 +399,7 @@ func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 }
 
 func MigrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
-	if run != nil && run.Workflow.WorkflowData == nil {
+	if run != nil && run.Workflow.WorkflowData == nil && run.Status != sdk.StatusPending.String() {
 		data := run.Workflow.Migrate(true)
 		run.Workflow.WorkflowData = &data
 
