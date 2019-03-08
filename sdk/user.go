@@ -15,6 +15,21 @@ type User struct {
 	GroupAdmin  bool            `json:"-" yaml:"-" cli:"group_admin"`
 }
 
+const (
+	UserRingAdmin      = "ADMIN"
+	UserRingMaintainer = "MAINTAINER"
+	UserRingUser       = "USER"
+)
+
+type AuthentifiedUser struct {
+	ID       string `json:"id" yaml:"id" cli:"id,key" db:"id"`
+	Username string `json:"username" yaml:"username" cli:"username,key" db:"username"`
+	Fullname string `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
+	Email    string `json:"email" yaml:"email,omitempty" cli:"email" db:"email"`
+	Origin   string `json:"origin" yaml:"origin,omitempty" db:"origin"`
+	Ring     string `json:"ring" yaml:"ring,omitempty" db:"ring"`
+}
+
 // Favorite represent the favorites workflow or project of the user
 type Favorite struct {
 	ProjectIDs  []int64 `json:"project_ids" yaml:"project_ids"`
