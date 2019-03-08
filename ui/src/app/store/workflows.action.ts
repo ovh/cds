@@ -1,5 +1,5 @@
 import { GroupPermission } from 'app/model/group.model';
-import { Workflow } from 'app/model/workflow.model';
+import { Workflow, WorkflowNotification } from 'app/model/workflow.model';
 
 // Use to load fetched Workflow in our app
 export class LoadWorkflow {
@@ -60,6 +60,20 @@ export class UpdateGroupInWorkflow {
 export class DeleteGroupInWorkflow {
     static readonly type = '[Workflow] Delete Group in Workflow';
     constructor(public payload: { projectKey: string, workflowName: string, group: GroupPermission }) { }
+}
+
+//  ------- Notifications --------- //
+export class AddNotificationWorkflow {
+    static readonly type = '[Workflow] Add Notification in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, notification: WorkflowNotification }) { }
+}
+export class UpdateNotificationWorkflow {
+    static readonly type = '[Workflow] Update Notification in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, notification: WorkflowNotification }) { }
+}
+export class DeleteNotificationWorkflow {
+    static readonly type = '[Workflow] Delete Notification in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, notification: WorkflowNotification }) { }
 }
 
 //  ------- Misc --------- //

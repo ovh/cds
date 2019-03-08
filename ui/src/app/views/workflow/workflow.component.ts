@@ -125,33 +125,29 @@ export class WorkflowComponent implements OnInit {
             let key = params['key'];
 
             if (key && workflowName) {
-                if (this.workflowSubscription) {
-                    this.workflowSubscription.unsubscribe();
-                }
                 this.loading = true;
                 this.store.dispatch(new FetchWorkflow({ projectKey: key, workflowName }))
                     .pipe(finalize(() => this.loading = false))
                     .subscribe(null, () => this._router.navigate(['/project', key]));
+
+                this.workflowSubscription = this.store.select(WorkflowsState.selectWorkflow(key, workflowName))
+                    .pipe(filter((wf) => wf != null && !wf.externalChange))
+                    .subscribe((wf) => {
+                        if (!this.workflow || (this.workflow && wf.id !== this.workflow.id)) {
+                            this.initRuns(key, workflowName);
+                        }
+                        this.workflow = wf;
+
+                        if (this.selectecHookRef) {
+                            let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                            if (h) {
+                                this._workflowEventStore.setSelectedHook(h);
+                            }
+                        }
+                    });
             }
         });
 
-        let projectKey = this._activatedRoute.snapshot.params['key'];
-        let wfName = this._activatedRoute.snapshot.params['workflowName'];
-        this.store.select(WorkflowsState.selectWorkflow(projectKey, wfName))
-            .pipe(filter((wf) => wf != null && !wf.externalChange))
-            .subscribe((wf) => {
-                if (!this.workflow || (this.workflow && wf.id !== this.workflow.id)) {
-                    this.initRuns(projectKey, wfName);
-                }
-                this.workflow = wf;
-
-                if (this.selectecHookRef) {
-                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
-                    if (h) {
-                        this._workflowEventStore.setSelectedHook(h);
-                    }
-                }
-            });
 
 
         // unselect all when returning on workflow main page

@@ -96,29 +96,27 @@ export class WorkflowShowComponent implements OnInit {
                     projectKey: projkey,
                     workflowName
                 })).subscribe(null, () => this._router.navigate(['/project', projkey]));
+
+                this.workflowSubscription = this.store.select(WorkflowsState.selectWorkflow(projkey, workflowName))
+                    .pipe(filter((wf) => wf != null && !wf.externalChange))
+                    .subscribe((wf) => {
+                        // TODO: delete cloneDeep
+                        this.detailedWorkflow = cloneDeep(wf);
+                        this.previewWorkflow = wf.preview;
+                        // If a node is selected, update it
+                        this.direction = this._workflowStore.getDirection(projkey, this.detailedWorkflow.name);
+                        this._workflowStore.updateRecentWorkflow(projkey, wf);
+
+                        if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
+                            return;
+                        }
+
+                        this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
+                            return total + this.detailedWorkflow.usage[key].length;
+                        }, 0);
+                    }, () => this._router.navigate(['/project', projkey]));
             }
         });
-
-        let projectKey = this.activatedRoute.snapshot.params['key'];
-        let wfName = this.activatedRoute.snapshot.params['workflowName'];
-        this.workflowSubscription = this.store.select(WorkflowsState.selectWorkflow(projectKey, wfName))
-            .pipe(filter((wf) => wf != null && !wf.externalChange))
-            .subscribe((wf) => {
-                // TODO: delete cloneDeep
-                this.detailedWorkflow = cloneDeep(wf);
-                this.previewWorkflow = wf.preview;
-                // If a node is selected, update it
-                this.direction = this._workflowStore.getDirection(projectKey, this.detailedWorkflow.name);
-                this._workflowStore.updateRecentWorkflow(projectKey, wf);
-
-                if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
-                    return;
-                }
-
-                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
-                    return total + this.detailedWorkflow.usage[key].length;
-                }, 0);
-            }, () => this._router.navigate(['/project', projectKey]));
 
         this.qpsSubs = this.activatedRoute.queryParams.subscribe(params => {
             if (params['tab']) {

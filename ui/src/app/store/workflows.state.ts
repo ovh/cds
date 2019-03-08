@@ -49,7 +49,7 @@ export class WorkflowsState {
         }
 
         return this._http.post<Workflow>(
-            `/project/${action.payload.projectKey}/workflow`,
+            `/project/${action.payload.projectKey}/workflows`,
             action.payload.workflow
         ).pipe(tap((wf) => {
             ctx.setState({
@@ -82,7 +82,7 @@ export class WorkflowsState {
         params = params.append('format', 'yaml');
 
         let request = this._http.post<Array<string>>(
-            `/project/${action.payload.projectKey}/import/workflow`,
+            `/project/${action.payload.projectKey}/import/workflows`,
             action.payload.workflowCode,
             { headers, params }
         );
@@ -142,7 +142,7 @@ export class WorkflowsState {
     @Action(actionWorkflow.UpdateWorkflow)
     update(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.UpdateWorkflow) {
         return this._http.put<Workflow>(
-            `/project/${action.payload.projectKey}/workflow/${action.payload.workflowName}`,
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}`,
             action.payload.changes
         ).pipe(tap((wf) => {
             const state = ctx.getState();
@@ -152,6 +152,10 @@ export class WorkflowsState {
                 let workflows = Object.assign({}, state.workflows, {
                     [action.payload.projectKey + '/' + wf.name]: wf,
                 });
+                workflows[action.payload.projectKey + '/' + wf.name].audits = workflows[wfKey].audits;
+                workflows[action.payload.projectKey + '/' + wf.name].from_template = workflows[wfKey].from_template;
+                workflows[action.payload.projectKey + '/' + wf.name].template_up_to_date = workflows[wfKey].template_up_to_date;
+                workflows[action.payload.projectKey + '/' + wf.name].as_code_events = workflows[wfKey].as_code_events;
                 delete workflows[wfKey];
 
                 ctx.setState({
@@ -168,6 +172,13 @@ export class WorkflowsState {
                     ...wf,
                     preview: null
                 };
+                if (!wf.notifications) {
+                    wfUpdated.notifications = [];
+                }
+                wfUpdated.audits = state.workflows[wfKey].audits;
+                wfUpdated.from_template = state.workflows[wfKey].from_template;
+                wfUpdated.template_up_to_date = state.workflows[wfKey].template_up_to_date;
+                wfUpdated.as_code_events = state.workflows[wfKey].as_code_events;
 
                 ctx.setState({
                     ...state,
@@ -180,7 +191,7 @@ export class WorkflowsState {
     @Action(actionWorkflow.DeleteWorkflow)
     delete(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.DeleteWorkflow) {
         return this._http.delete(
-            `/project/${action.payload.projectKey}/workflow/${action.payload.workflowName}`
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}`
         ).pipe(tap(() => {
             const state = ctx.getState();
             let wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
@@ -258,6 +269,64 @@ export class WorkflowsState {
                 projectKey: action.payload.projectKey,
                 workflow: Object.assign({}, state.workflows[wfKey], <Workflow>{ groups: wf.groups })
             }));
+        }));
+    }
+
+
+    //  ------- Notification --------- //
+    @Action(actionWorkflow.AddNotificationWorkflow)
+    addNotification(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddNotificationWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        const notifications = state.workflows[wfKey].notifications || [];
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            notifications: notifications.concat([action.payload.notification])
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
+    @Action(actionWorkflow.UpdateNotificationWorkflow)
+    updateNotification(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.UpdateNotificationWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            notifications: state.workflows[wfKey].notifications.map((no) => {
+                if (no.id === action.payload.notification.id) {
+                    return action.payload.notification;
+                }
+                return no;
+            })
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
+    @Action(actionWorkflow.DeleteNotificationWorkflow)
+    deleteNotification(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.DeleteNotificationWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            notifications: state.workflows[wfKey].notifications.filter(no => {
+                return action.payload.notification.id !== no.id;
+            })
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
         }));
     }
 
