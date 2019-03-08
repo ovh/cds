@@ -3,90 +3,120 @@ package archiver
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/pierrec/lz4"
 )
 
-// TarLz4 is for TarLz4 format
-var TarLz4 tarLz4Format
+// TarLz4 facilitates lz4 compression
+// (https://github.com/lz4/lz4/tree/master/doc)
+// of tarball archives.
+type TarLz4 struct {
+	*Tar
 
-func init() {
-	RegisterFormat("TarLz4", TarLz4)
+	// The compression level to use when writing.
+	// Minimum 0 (fast compression), maximum 12
+	// (most space savings).
+	CompressionLevel int
 }
 
-type tarLz4Format struct{}
+// CheckExt ensures the file extension matches the format.
+func (*TarLz4) CheckExt(filename string) error {
+	if !strings.HasSuffix(filename, ".tar.lz4") &&
+		!strings.HasSuffix(filename, ".tlz4") {
 
-func (tarLz4Format) Match(filename string) bool {
-	return strings.HasSuffix(strings.ToLower(filename), ".tar.lz4") || strings.HasSuffix(strings.ToLower(filename), ".tlz4") || isTarLz4(filename)
+		return fmt.Errorf("filename must have a .tar.lz4 or .tlz4 extension")
+	}
+	return nil
 }
 
-// isTarLz4 checks the file has the lz4 compressed Tar format header by
-// reading its beginning block.
-func isTarLz4(tarlz4Path string) bool {
-	f, err := os.Open(tarlz4Path)
+// Archive creates a compressed tar file at destination
+// containing the files listed in sources. The destination
+// must end with ".tar.lz4" or ".tlz4". File paths can be
+// those of regular files or directories; directories will
+// be recursively added.
+func (tlz4 *TarLz4) Archive(sources []string, destination string) error {
+	err := tlz4.CheckExt(destination)
 	if err != nil {
-		return false
+		return fmt.Errorf("output %s", err.Error())
 	}
-	defer f.Close()
+	tlz4.wrapWriter()
+	return tlz4.Tar.Archive(sources, destination)
+}
 
-	lz4r := lz4.NewReader(f)
-	buf := make([]byte, tarBlockSize)
-	n, err := lz4r.Read(buf)
-	if err != nil || n < tarBlockSize {
-		return false
+// Unarchive unpacks the compressed tarball at
+// source to destination. Destination will be
+// treated as a folder name.
+func (tlz4 *TarLz4) Unarchive(source, destination string) error {
+	tlz4.wrapReader()
+	return tlz4.Tar.Unarchive(source, destination)
+}
+
+// Walk calls walkFn for each visited item in archive.
+func (tlz4 *TarLz4) Walk(archive string, walkFn WalkFunc) error {
+	tlz4.wrapReader()
+	return tlz4.Tar.Walk(archive, walkFn)
+}
+
+// Create opens tlz4 for writing a compressed
+// tar archive to out.
+func (tlz4 *TarLz4) Create(out io.Writer) error {
+	tlz4.wrapWriter()
+	return tlz4.Tar.Create(out)
+}
+
+// Open opens t for reading a compressed archive from
+// in. The size parameter is not used.
+func (tlz4 *TarLz4) Open(in io.Reader, size int64) error {
+	tlz4.wrapReader()
+	return tlz4.Tar.Open(in, size)
+}
+
+// Extract extracts a single file from the tar archive.
+// If the target is a directory, the entire folder will
+// be extracted into destination.
+func (tlz4 *TarLz4) Extract(source, target, destination string) error {
+	tlz4.wrapReader()
+	return tlz4.Tar.Extract(source, target, destination)
+}
+
+func (tlz4 *TarLz4) wrapWriter() {
+	var lz4w *lz4.Writer
+	tlz4.Tar.writerWrapFn = func(w io.Writer) (io.Writer, error) {
+		lz4w = lz4.NewWriter(w)
+		lz4w.Header.CompressionLevel = tlz4.CompressionLevel
+		return lz4w, nil
 	}
-
-	return hasTarHeader(buf)
-}
-
-// Write outputs a .tar.lz4 file to a Writer containing
-// the contents of files listed in filePaths. File paths
-// can be those of regular files or directories. Regular
-// files are stored at the 'root' of the archive, and
-// directories are recursively added.
-func (tarLz4Format) Write(output io.Writer, filePaths []string) error {
-	return writeTarLz4(filePaths, output, "")
-}
-
-// Make creates a .tar.lz4 file at tarlz4Path containing
-// the contents of files listed in filePaths. File paths
-// can be those of regular files or directories. Regular
-// files are stored at the 'root' of the archive, and
-// directories are recursively added.
-func (tarLz4Format) Make(tarlz4Path string, filePaths []string) error {
-	out, err := os.Create(tarlz4Path)
-	if err != nil {
-		return fmt.Errorf("error creating %s: %v", tarlz4Path, err)
+	tlz4.Tar.cleanupWrapFn = func() {
+		lz4w.Close()
 	}
-	defer out.Close()
-
-	return writeTarLz4(filePaths, out, tarlz4Path)
 }
 
-func writeTarLz4(filePaths []string, output io.Writer, dest string) error {
-	lz4w := lz4.NewWriter(output)
-	defer lz4w.Close()
-
-	return writeTar(filePaths, lz4w, dest)
-}
-
-// Read untars a .tar.xz file read from a Reader and decompresses
-// the contents into destination.
-func (tarLz4Format) Read(input io.Reader, destination string) error {
-	lz4r := lz4.NewReader(input)
-
-	return Tar.Read(lz4r, destination)
-}
-
-// Open untars source and decompresses the contents into destination.
-func (tarLz4Format) Open(source, destination string) error {
-	f, err := os.Open(source)
-	if err != nil {
-		return fmt.Errorf("%s: failed to open archive: %v", source, err)
+func (tlz4 *TarLz4) wrapReader() {
+	tlz4.Tar.readerWrapFn = func(r io.Reader) (io.Reader, error) {
+		return lz4.NewReader(r), nil
 	}
-	defer f.Close()
-
-	return TarLz4.Read(f, destination)
 }
+
+func (tlz4 *TarLz4) String() string { return "tar.lz4" }
+
+// NewTarLz4 returns a new, default instance ready to be customized and used.
+func NewTarLz4() *TarLz4 {
+	return &TarLz4{
+		CompressionLevel: 9, // https://github.com/lz4/lz4/blob/1b819bfd633ae285df2dfe1b0589e1ec064f2873/lib/lz4hc.h#L48
+		Tar:              NewTar(),
+	}
+}
+
+// Compile-time checks to ensure type implements desired interfaces.
+var (
+	_ = Reader(new(TarLz4))
+	_ = Writer(new(TarLz4))
+	_ = Archiver(new(TarLz4))
+	_ = Unarchiver(new(TarLz4))
+	_ = Walker(new(TarLz4))
+	_ = Extractor(new(TarLz4))
+)
+
+// DefaultTarLz4 is a convenient archiver ready to use.
+var DefaultTarLz4 = NewTarLz4()
