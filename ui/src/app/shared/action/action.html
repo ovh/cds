@@ -112,30 +112,44 @@
 
     <div class="ui bottomBtnsWrapper segment" *ngIf="edit && (!pipeline || !pipeline.previewMode)">
         <div class="ui grid">
-            <div class="sixteen wide column" *ngIf="publicActions.length > 0">
+            <div [ngClass]="editableAction.showAddStep ? 'sixteen wide column' : (editableAction.id ? 'seven wide column' : 'eight wide column')"
+                *ngIf="publicActions.length > 0">
                 <app-action-step-form [actions]="publicActions" (onEvent)="stepManagement($event)">
                 </app-action-step-form>
             </div>
 
-            <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
-                <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')"
-                    [disabled]="!editableAction.hasChanged || editableAction.loading"
-                    [class.loading]="editableAction.loading">
-                    <i class="save icon"></i>{{ 'save' | translate }}
-                </button>
-            </div>
-            <div class="five wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
-                <app-delete-button [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')"
-                    [loading]="editableAction.loading" [class]="'fluid'"></app-delete-button>
-            </div>
-            <div class="three wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
-                <button class="ui fluid primary button" suiPopup [popupText]="'action_btn_init_from_job' | translate"
-                    popupPlacement="top right" (click)="$event.stopPropagation(); initActionFromJob()">
-                    <i class="share icon"></i>
-                </button>
-            </div>
+            <ng-container *ngIf="editableAction.id && !editableAction.showAddStep">
+                <div [ngClass]="publicActions.length > 0 ? 'seven wide column' : 'fourteen wide column'">
+                    <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')"
+                        [disabled]="!editableAction.hasChanged || editableAction.loading"
+                        [class.loading]="editableAction.loading">
+                        <i class="save icon"></i>
+                        {{ 'btn_save' | translate }}
+                    </button>
+                </div>
+                <div class="two wide column">
+                    <div class="ui blue pointing dropdown button bottom right buttonOptions" suiDropdown
+                        autoClose="disabled">
+                        <i class="ellipsis vertical icon"></i>
+                        <div class="menu" suiDropdownMenu>
+                            <div class="item">
+                                <button class="ui fluid blue button"
+                                    (click)="$event.stopPropagation(); initActionFromJob()">
+                                    <i class="share icon"></i>
+                                    {{ 'action_btn_init_from_job' | translate }}
+                                </button>
+                            </div>
+                            <div class="item">
+                                <app-delete-button [disabled]="editableAction.hasChanged"
+                                    (event)="sendActionEvent('delete')" [loading]="editableAction.loading"
+                                    [class]="'fluid'"></app-delete-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
 
-            <div class="sixteen wide column" *ngIf="!editableAction.id && !editableAction.showAddStep">
+            <div class="eight wide column" *ngIf="!editableAction.id && !editableAction.showAddStep">
                 <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')"
                     [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
                     <i class="save icon"></i>{{ 'btn_create' | translate }}

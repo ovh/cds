@@ -469,8 +469,7 @@
   "home_documentation": "Documentation",
   "home_title": "Bienvenue sur CDS",
 
-  "job_add_step": "Ajouter une étape",
-  "job_add_step_final": "Ajouter une étape finale",
+  "job_add_step": "Nouvelle étape",
   "job_delete": "Supprimer le job",
   "job_save": "Sauvegarder le job",
   "job_spawn_title": "Informations",
