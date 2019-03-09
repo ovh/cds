@@ -128,7 +128,7 @@ You can configure everything with the web UI. Even if you have complex use cases
 
 #### Configuration on Git Repository
 
-Pipeline as code is a well-known concept of CI / CD tools. CDS, goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is partucularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
+Pipeline as code is a well-known concept of CI / CD tools. CDS, goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is particularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
 
 
 #### Configuration as code on UI
