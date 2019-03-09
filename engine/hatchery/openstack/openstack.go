@@ -373,12 +373,14 @@ func (h *HatcheryOpenstack) killErrorServers() {
 		//Remove server without IP Address
 		if s.Status == "ACTIVE" {
 			if len(s.Addresses) == 0 && time.Since(s.Updated) > 10*time.Minute {
+				log.Info("killErrorServers> len(s.Addresses):%d s.Updated: %v", len(s.Addresses), time.Since(s.Updated))
 				_ = h.deleteServer(s)
 			}
 		}
 
 		//Remove Error server
 		if s.Status == "ERROR" {
+			log.Info("killErrorServers> s.Status: %s", s.Status)
 			_ = h.deleteServer(s)
 		}
 	}
@@ -401,7 +403,10 @@ func (h *HatcheryOpenstack) killDisabledWorkers() {
 		}
 
 		for _, s := range srvs {
-			if s.Name == w.Name {
+			// if the wm was not created for registration, we can delete it, otherwise
+			// the wm will be deleted in killAwolServers func
+			if s.Name == w.Name && s.Metadata["register_only"] != "true" {
+				log.Info("killDisabledWorkers> killDisabledWorkers %v", s.Name)
 				_ = h.deleteServer(s)
 			}
 		}
