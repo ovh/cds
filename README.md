@@ -16,12 +16,12 @@ CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform writ
 ## Intuitive UI
 CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
 
-<figure>
-  <kbd>
-    <img src="./docs/static/images/capture-start.gif" alt="create and run workflow with CDS ui" title="create and run workflow with CDS ui">
-  </kbd>
-  <figcaption>Create and run workflow with CDS ui.</figcaption>
-</figure>
+<kbd>
+  <img src="./docs/static/images/capture-start.gif" alt="create and run workflow with CDS ui" title="create and run workflow with CDS ui">
+</kbd>
+<p align="center">
+  <i>Create and run workflow with CDS ui.</i>
+</p>
 
 ## The most powerful Command Line for a CI/CD Platform
 
@@ -29,12 +29,10 @@ cdsctl is the CDS Command Line - you can script everything with it, cdsctl also 
 
 [See all cdsctl commands](https://ovh.github.io/cds/cli/cdsctl/#see-also)
 
-<figure>
-  <kbd>
-    <img src="./docs/static/images/init_template_as_code.gif" alt="create workflow as code with CDS command line" title="create workflow as code with CDS command line">
-  </kbd>
-  <figcaption>Create workflow as code with CDS command line.</figcaption>
-</figure>
+<img src="./docs/static/images/init_template_as_code.gif" alt="create workflow as code with CDS command line" title="create workflow as code with CDS command line">
+<p align="center">
+  <i>Create workflow as code with CDS command line.</i>
+</p>
 
 ## Want a try?
 
