@@ -208,7 +208,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		if c.PreRun != nil {
 			if err := c.PreRun(&c, &args); err != nil {
-				ExitOnError(ErrWrongUsage, cmd.Help)
+				ExitOnError(err)
 				return
 			}
 		}
