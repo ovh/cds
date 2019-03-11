@@ -836,7 +836,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			// Check node permission
-			if !permission.AccessToWorkflowNode(wf, &wf.WorkflowData.Node, u, permission.PermissionReadExecute) {
+			if getService(ctx) == nil && !permission.AccessToWorkflowNode(wf, &wf.WorkflowData.Node, u, permission.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
 			}
 
