@@ -859,6 +859,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache.Store, p *sdk.Project, wf *sdk.Workflow, wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) {
 	var asCodeInfosMsg []sdk.Message
+	report := new(workflow.ProcessorReport)
+	defer func() {
+		go workflow.SendEvent(db, p.Key, report)
+	}()
 
 	// IF NEW WORKFLOW RUN
 	if wfRun.Status == sdk.StatusPending.String() {
@@ -866,17 +870,20 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
 			tx, err := db.Begin()
 			if err != nil {
-				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to start transaction"))
+				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to start transaction"))
+				report.Merge(r1, nil) // nolint
 				return
 			}
 			if err := workflow.SyncAsCodeEvent(ctx, tx, cache, p, wf); err != nil {
 				tx.Rollback() // nolint
-				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
+				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
+				report.Merge(r1, nil) // nolint
 				return
 			}
 			if err := tx.Commit(); err != nil {
 				tx.Rollback() // nolint
-				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to commit transaction as code event"))
+				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to commit transaction as code event"))
+				report.Merge(r1, nil) // nolint
 				return
 			}
 		}
@@ -895,7 +902,8 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			)
 
 			if errp != nil {
-				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errp, "cannot load project for as code workflow creation"))
+				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errp, "cannot load project for as code workflow creation"))
+				report.Merge(r1, nil) // nolint
 				return
 			}
 			// Get workflow from repository
@@ -910,7 +918,8 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 					}
 					workflow.AddWorkflowRunInfo(wfRun, false, infos...)
 				}
-				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository."))
+				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository."))
+				report.Merge(r1, nil) // nolint
 				return
 			}
 		} else {
@@ -921,7 +930,8 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			}
 			wf, errl = workflow.Load(ctx, db, cache, p, wf.Name, u, options)
 			if errl != nil {
-				failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errl, "unable to load workflow %s/%s", p.Key, wf.Name))
+				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errl, "unable to load workflow %s/%s", p.Key, wf.Name))
+				report.Merge(r1, nil) // nolint
 				return
 			}
 		}
@@ -929,15 +939,15 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		wfRun.Workflow = *wf
 	}
 
-	report, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
-
+	r1, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
+	report.Merge(r1, nil) // nolint
 	if errS != nil {
-		failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", p.Key, wf.Name))
+		r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", p.Key, wf.Name))
+		report.Merge(r1, nil) // nolint
 		return
 	}
 
 	workflow.ResyncNodeRunsWithCommits(db, cache, p, report)
-	go workflow.SendEvent(db, p.Key, report)
 
 	// Purge workflow run
 	sdk.GoRoutine(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
@@ -947,17 +957,20 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	}, api.PanicDump())
 }
 
-func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) {
+func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) *workflow.ProcessorReport {
+	report := new(workflow.ProcessorReport)
 	log.Error("unable to start workflow: %v", err)
 	wfRun.Status = sdk.StatusFail.String()
 	info := sdk.SpawnMsg{
 		ID:   sdk.MsgWorkflowError.ID,
-		Args: []interface{}{sdk.ErrUnknownError.Message},
+		Args: []interface{}{err.Error()},
 	}
 	workflow.AddWorkflowRunInfo(wfRun, true, info)
 	if errU := workflow.UpdateWorkflowRun(ctx, db, wfRun); errU != nil {
 		log.Error("unable to fail workflow run %v", errU)
 	}
+	report.Add(wfRun)
+	return report
 }
 
 func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {

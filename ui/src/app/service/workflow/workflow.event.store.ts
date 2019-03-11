@@ -36,7 +36,22 @@ export class WorkflowEventStore {
         let w = store.get(wr.id);
 
         // Update workflow runs list
-        if (!w || (w && (new Date(wr.last_modified).getTime() > (new Date(w.last_modified)).getTime())) ) {
+        let dNew: number;
+        if (wr.last_modified_nano) {
+            dNew = wr.last_modified_nano / 1000000;
+        } else {
+            dNew = new Date(wr.last_modified).getTime();
+        }
+
+        let dOld: number;
+        if (w) {
+            if (w.last_modified_nano) {
+                dOld = w.last_modified_nano / 1000000;
+            } else {
+                dOld = new Date(w.last_modified).getTime();
+            }
+        }
+        if (!w || (w && dNew > dOld)) {
             this._currentWorkflowRuns.next(store.set(wr.id, wr));
         }
 

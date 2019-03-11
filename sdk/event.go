@@ -103,13 +103,14 @@ type EventRunWorkflowJob struct {
 
 // EventRunWorkflow contains event data for a workflow run
 type EventRunWorkflow struct {
-	ID            int64            `json:"id"`
-	Number        int64            `json:"num"`
-	Status        string           `json:"status"`
-	Start         int64            `json:"start"`
-	LastExecution int64            `json:"last_execution"`
-	LastModified  int64            `json:"last_modified"`
-	Tags          []WorkflowRunTag `json:"tags"`
+	ID               int64            `json:"id"`
+	Number           int64            `json:"num"`
+	Status           string           `json:"status"`
+	Start            int64            `json:"start"`
+	LastExecution    int64            `json:"last_execution"`
+	LastModified     int64            `json:"last_modified"`
+	LastModifiedNano int64            `json:"last_modified_nano"`
+	Tags             []WorkflowRunTag `json:"tags"`
 }
 
 // EventJob contains event data for a job
