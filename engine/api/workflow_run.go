@@ -849,7 +849,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		}
 
 		// Purge workflow run
-		sdk.GoRoutine(ctx, fmt.Sprintf("api.initWorkflowRun-%d", lastRun.ID), func(ctx context.Context) {
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("api.initWorkflowRun-%d", lastRun.ID), func(ctx context.Context) {
 			api.initWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, u)
 		}, api.PanicDump())
 
