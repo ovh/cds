@@ -76,7 +76,7 @@ All the features of the table are detailed below.
 | Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins |
 | --- | --- | --- | --- | --- | --- |
 | [Pipeline](#pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: |
+| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: <sub><sup>[*17] | :x: |
 | [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*2](#some-explanations-on-the-comparison-matrix)</sub></sup> |
@@ -299,7 +299,7 @@ Several types of hatchery are available:
 - *14 it's a plugin
 - *15 K8s, Docker machine & GKE only
 - *16 limited to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
-
+- *17 Only in Silver and Premimum Gitlab Edition https://docs.gitlab.com/ee/ci/yaml/#trigger-premium
 
 ## License
 
