@@ -1,21 +1,21 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {finalize} from 'rxjs/operators';
-import {Subscription} from 'rxjs/Subscription';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Project} from '../../../../model/project.model';
-import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../model/workflow.hook.model';
-import {WNode, WNodeHook, Workflow} from '../../../../model/workflow.model';
-import {HookService} from '../../../../service/hook/hook.service';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
-import {WorkflowStore} from '../../../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {DeleteModalComponent} from '../../../modal/delete/delete.component';
-import {ToastService} from '../../../toast/ToastService';
-import {WorkflowHookModalComponent} from '../../modal/hook-modal/hook.modal.component';
-import {WorkflowNodeHookDetailsComponent} from '../../node/hook/details/hook.details.component';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddHookWorkflow, DeleteHookWorkflow, UpdateHookWorkflow } from 'app/store/workflows.action';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Project } from '../../../../model/project.model';
+import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
+import { WNode, WNodeHook, Workflow } from '../../../../model/workflow.model';
+import { HookService } from '../../../../service/hook/hook.service';
+import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { DeleteModalComponent } from '../../../modal/delete/delete.component';
+import { ToastService } from '../../../toast/ToastService';
+import { WorkflowHookModalComponent } from '../../modal/hook-modal/hook.modal.component';
+import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
 
 @Component({
     selector: 'app-workflow-sidebar-hook',
@@ -48,8 +48,11 @@ export class WorkflowSidebarHookComponent implements OnInit {
     workflowEditHook: WorkflowHookModalComponent;
 
     constructor(
-        private _toast: ToastService, private _hookService: HookService, private _translate: TranslateService,
-        private _workflowEventStore: WorkflowEventStore, private _workflowStore: WorkflowStore
+        private store: Store,
+        private _toast: ToastService,
+        private _hookService: HookService,
+        private _translate: TranslateService,
+        private _workflowEventStore: WorkflowEventStore,
     ) {
     }
 
@@ -88,7 +91,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
 
     openDeleteHookModal() {
         if (this.workflow.permission < PermissionValue.READ_WRITE_EXECUTE) {
-          return;
+            return;
         }
         if (this.deleteHookModal && this.deleteHookModal.show) {
             this.deleteHookModal.show();
@@ -96,27 +99,43 @@ export class WorkflowSidebarHookComponent implements OnInit {
     }
 
     deleteHook() {
-        let currentWorkflow = cloneDeep(this.workflow);
-        for (let i = 0; i < currentWorkflow.workflow_data.node.hooks.length; i++) {
-            if (currentWorkflow.workflow_data.node.hooks[i].uuid === this.hook.uuid) {
-                currentWorkflow.workflow_data.node.hooks.splice(i, 1);
-            }
-        }
-        this.updateWorkflow(currentWorkflow, this.deleteHookModal.modal);
+        this.loading = true;
+        this.store.dispatch(new DeleteHookWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            hook: this.hook
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+                this._workflowEventStore.unselectAll();
+                this.deleteHookModal.modal.approve(null);
+            })
     }
 
-    updateWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>): void {
+    updateHook(hook: WNodeHook, modal: ActiveModal<boolean, boolean, void>) {
         this.loading = true;
-        this._workflowStore.updateWorkflow(this.project.key, w)
-            .pipe(finalize( () => {this.loading = false}))
-            .subscribe(() => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('workflow_updated'));
-            this._workflowEventStore.unselectAll();
-            if (modal) {
-                modal.approve(null);
-            }
+        let action = new UpdateHookWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            hook
         });
+
+        if (!hook.uuid) {
+            action = new AddHookWorkflow({
+                projectKey: this.project.key,
+                workflowName: this.workflow.name,
+                hook
+            });
+        }
+
+        this.store.dispatch(action).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+                this._workflowEventStore.unselectAll();
+                if (modal) {
+                    modal.approve(null);
+                }
+            });
     }
 
     openHookDetailsModal(taskExec: TaskExecution) {

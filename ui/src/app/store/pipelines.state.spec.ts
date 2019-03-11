@@ -9,6 +9,7 @@ import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { User } from 'app/model/user.model';
+import { SharedModule } from 'app/shared/shared.module';
 import { ApplicationsState } from './applications.state';
 import * as pipelinesActions from './pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './pipelines.state';
@@ -23,6 +24,7 @@ describe('Pipelines', () => {
         TestBed.configureTestingModule({
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState]),
+                SharedModule,
                 HttpClientTestingModule
             ],
         }).compileComponents();

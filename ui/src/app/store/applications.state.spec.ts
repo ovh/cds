@@ -7,6 +7,7 @@ import { IntegrationModel, ProjectIntegration } from 'app/model/integration.mode
 import { Key } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
+import { SharedModule } from 'app/shared/shared.module';
 import * as ActionApplication from './applications.action';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
@@ -21,6 +22,7 @@ describe('Applications', () => {
         TestBed.configureTestingModule({
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState]),
+                SharedModule,
                 HttpClientTestingModule
             ],
         }).compileComponents();

@@ -1,5 +1,6 @@
 import { GroupPermission } from 'app/model/group.model';
-import { Workflow, WorkflowNotification } from 'app/model/workflow.model';
+import { Label } from 'app/model/project.model';
+import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
 
 // Use to load fetched Workflow in our app
 export class LoadWorkflow {
@@ -60,6 +61,52 @@ export class UpdateGroupInWorkflow {
 export class DeleteGroupInWorkflow {
     static readonly type = '[Workflow] Delete Group in Workflow';
     constructor(public payload: { projectKey: string, workflowName: string, group: GroupPermission }) { }
+}
+
+//  ------- Nodes --------- //
+export class AddNodeTriggerWorkflow {
+    static readonly type = '[Workflow] Add Node Trigger in Workflow';
+    constructor(public payload: {
+        projectKey: string, workflowName: string, parentId: number, trigger: WNodeTrigger
+    }) { }
+}
+
+//  ------- Joins --------- //
+export class AddJoinWorkflow {
+    static readonly type = '[Workflow] Add Join in Workflow';
+    constructor(public payload: {
+        projectKey: string, workflowName: string, join: WNode
+    }) { }
+}
+
+//  ------- Hooks --------- //
+export class AddHookWorkflow {
+    static readonly type = '[Workflow] Add Hook in Workflow';
+    constructor(public payload: {
+        projectKey: string, workflowName: string, hook: WNodeHook
+    }) { }
+}
+export class UpdateHookWorkflow {
+    static readonly type = '[Workflow] Update Hook in Workflow';
+    constructor(public payload: {
+        projectKey: string, workflowName: string, hook: WNodeHook
+    }) { }
+}
+export class DeleteHookWorkflow {
+    static readonly type = '[Workflow] Delete Hook in Workflow';
+    constructor(public payload: {
+        projectKey: string, workflowName: string, hook: WNodeHook
+    }) { }
+}
+
+//  ------- Labels --------- //
+export class LinkLabelOnWorkflow {
+    static readonly type = '[Workflow] Link Label on Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, label: Label }) { }
+}
+export class UnlinkLabelOnWorkflow {
+    static readonly type = '[Workflow] Unlink Label on Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, label: Label }) { }
 }
 
 //  ------- Notifications --------- //

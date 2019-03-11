@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { UpdateFavoriteProject } from 'app/store/project.action';
+import { UpdateFavoriteWorkflow } from 'app/store/workflows.action';
 import { finalize } from 'rxjs/operators';
 import { Bookmark } from '../../model/bookmark.model';
 import { NavbarProjectData } from '../../model/navbar.model';
-import { ProjectStore } from '../../service/project/project.store';
-import { WorkflowStore } from '../../service/workflow/workflow.store';
 
 @Component({
     selector: 'app-favorite-cards',
@@ -16,10 +17,10 @@ export class FavoriteCardsComponent {
     @Input() centered = true;
     @Input('projects')
     set projects(projects: Array<NavbarProjectData>) {
-         this._projects = projects;
-         if (projects) {
-             this.filteredProjects = projects.filter((prj) => !this.favorites.find((fav) => fav.type === 'project' && fav.key === prj.key));
-         }
+        this._projects = projects;
+        if (projects) {
+            this.filteredProjects = projects.filter((prj) => !this.favorites.find((fav) => fav.type === 'project' && fav.key === prj.key));
+        }
     }
     get projects(): Array<NavbarProjectData> {
         return this._projects;
@@ -45,10 +46,7 @@ export class FavoriteCardsComponent {
     private _projectKeySelected: string;
     private _projects: Array<NavbarProjectData> = [];
 
-    constructor(
-        private _projectStore: ProjectStore,
-        private _workflowStore: WorkflowStore
-    ) { }
+    constructor(private store: Store) { }
 
     updateFav(fav: NavbarProjectData) {
         let key = fav.key + fav.workflow_name;
@@ -58,23 +56,24 @@ export class FavoriteCardsComponent {
         this.loading[key] = true;
         switch (fav.type) {
             case 'project':
-                this._projectStore.updateFavorite(fav.key)
-                    .pipe(finalize(() => {
-                        this.loading[key] = false;
-                        this.newFav = new NavbarProjectData();
-                        this.projectKeySelected = null;
-                    }))
-                    .subscribe(() => this.updated.emit(fav));
-            break;
+                this.store.dispatch(new UpdateFavoriteProject({
+                    projectKey: fav.key
+                })).pipe(finalize(() => {
+                    this.loading[key] = false;
+                    this.newFav = new NavbarProjectData();
+                    this.projectKeySelected = null;
+                })).subscribe(() => this.updated.emit(fav));
+                break;
             case 'workflow':
-                this._workflowStore.updateFavorite(fav.key, fav.workflow_name)
-                    .pipe(finalize(() => {
-                        this.loading[key] = false;
-                        this.newFav = new NavbarProjectData();
-                        this.projectKeySelected = null;
-                    }))
-                    .subscribe(() => this.updated.emit(fav));
-            break;
+                this.store.dispatch(new UpdateFavoriteWorkflow({
+                    projectKey: fav.key,
+                    workflowName: fav.workflow_name
+                })).pipe(finalize(() => {
+                    this.loading[key] = false;
+                    this.newFav = new NavbarProjectData();
+                    this.projectKeySelected = null;
+                })).subscribe(() => this.updated.emit(fav));
+                break;
             default:
                 this.newFav = new NavbarProjectData();
                 this.projectKeySelected = null;

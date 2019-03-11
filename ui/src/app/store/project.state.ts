@@ -370,10 +370,12 @@ export class ProjectState {
             }
         ).pipe(tap(() => {
             this._navbarService.getData(); // TODO: to delete
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
-            });
+            if (state.project && state.project.key) {
+                ctx.setState({
+                    ...state,
+                    project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
+                });
+            }
             // TODO: dispatch action on global state to update project in list and user state
             // TODO: move this one on user state and just update state here, not XHR
         }));

@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { cloneDeep } from 'lodash';
-import { filter, first } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Broadcast, BroadcastEvent } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
@@ -16,7 +16,6 @@ import { BroadcastStore } from './service/broadcast/broadcast.store';
 import { ActionStore, RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { WorkflowEventStore } from './service/workflow/workflow.event.store';
-import { WorkflowStore } from './service/workflow/workflow.store';
 import { ToastService } from './shared/toast/ToastService';
 import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
 import { ApplicationsState, ApplicationsStateModel } from './store/applications.state';
@@ -24,6 +23,8 @@ import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from 
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
+import { DeleteFromCacheWorkflow, ExternalChangeWorkflow, ResyncWorkflow } from './store/workflows.action';
+import { WorkflowsState, WorkflowsStateModel } from './store/workflows.state';
 
 @Injectable()
 export class AppService {
@@ -41,7 +42,6 @@ export class AppService {
         private _actionStore: ActionStore,
         private _translate: TranslateService,
         private _workflowEventStore: WorkflowEventStore,
-        private _wfStore: WorkflowStore,
         private _broadcastStore: BroadcastStore,
         private _timelineStore: TimelineStore,
         private _toast: ToastService,
@@ -215,8 +215,8 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        let pipKey = event.project_key + '-' + event.pipeline_name;
 
+        const pipKey = event.project_key + '-' + event.pipeline_name;
         this.store.selectOnce(PipelinesState).subscribe((pips: PipelinesStateModel) => {
             if (!pips || !pips.pipelines || !pips.pipelines[pipKey]) {
                 return;
@@ -261,37 +261,46 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        let wfKey = event.project_key + '-' + event.workflow_name;
-        this._wfStore.getWorkflows(event.project_key).pipe(first()).subscribe(wfs => {
-            if (!wfs) {
-                return;
-            }
-
-            if (!wfs.get(wfKey)) {
-                return;
-            }
-
-            if (event.type_event === EventType.WORKFLOW_DELETE) {
-                this._wfStore.removeFromStore(wfKey);
-                this.store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name }));
-                return;
-            }
-
-            // update workflow
-            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
-                && this.routeParams['workflowName'] === event.workflow_name) {
-                if (event.username !== this._authStore.getUser().username) {
-                    this._wfStore.externalModification(wfKey);
-                    this._toast.info('', this._translate.instant('warning_workflow', { username: event.username }));
-                    return
+        this.store.selectOnce(WorkflowsState)
+            .pipe(filter((wfs) => wfs != null))
+            .subscribe((wfs: WorkflowsStateModel) => {
+                const wfKey = event.project_key + '-' + event.workflow_name;
+                if (!wfs || !wfs.workflows || !wfs.workflows[wfKey]) {
+                    return;
                 }
-            } else {
-                this._wfStore.removeFromStore(wfKey);
-                return;
-            }
+                if (event.type_event === EventType.WORKFLOW_DELETE) {
+                    this.store.dispatch(new DeleteFromCacheWorkflow({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name
+                    }));
+                    this.store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name }));
+                    return;
+                }
 
-            this._wfStore.resync(event.project_key, event.workflow_name);
-        });
+                // update workflow
+                if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+                    && this.routeParams['workflowName'] === event.workflow_name) {
+                    if (event.username !== this._authStore.getUser().username) {
+                        this.store.dispatch(new ExternalChangeWorkflow({
+                            projectKey: event.project_key,
+                            workflowName: event.workflow_name
+                        }));
+                        this._toast.info('', this._translate.instant('warning_workflow', { username: event.username }));
+                        return;
+                    }
+                } else {
+                    this.store.dispatch(new DeleteFromCacheWorkflow({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name
+                    }));
+                    return;
+                }
+
+                this.store.dispatch(new ResyncWorkflow({
+                    projectKey: event.project_key,
+                    workflowName: event.workflow_name
+                }));
+            });
     }
 
     updateWorkflowRunCache(event: Event): void {

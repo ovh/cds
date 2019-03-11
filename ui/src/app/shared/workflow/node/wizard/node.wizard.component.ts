@@ -3,8 +3,11 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { ApplicationService } from 'app/service/application/application.service';
 import { AddApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
+import { AddPipeline } from 'app/store/pipelines.action';
+import { PipelinesState } from 'app/store/pipelines.state';
 import { AddEnvironmentInProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash';
@@ -15,8 +18,6 @@ import { Environment } from '../../../../model/environment.model';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { IdName, Project } from '../../../../model/project.model';
 import { WNode, WNodeType } from '../../../../model/workflow.model';
-import { ApplicationStore } from '../../../../service/application/application.store';
-import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -102,11 +103,11 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   integrations: IdName[] = [];
   loadingIntegrations = false;
 
-  constructor(private _router: Router,
+  constructor(
+    private _router: Router,
     private _translate: TranslateService,
     private _toast: ToastService,
-    private _pipStore: PipelineStore,
-    private _appStore: ApplicationStore,
+    private _appService: ApplicationService,
     private store: Store
   ) {
 
@@ -165,18 +166,18 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
 
     this.loadingCreatePipeline = true;
-    // TODO: to update with store
-    return this._pipStore.createPipeline(this.project.key, this.newPipeline)
-      .pipe(
-        first(),
-        finalize(() => this.loadingCreatePipeline = false)
-      ).pipe(
-        map((pip) => {
-          this._toast.success('', this._translate.instant('pipeline_added'));
-          this.node.context.pipeline_id = pip.id;
-          this.pipelineSection = 'application';
-          return pip
-        }));
+    return this.store.dispatch(new AddPipeline({
+      projectKey: this.project.key,
+      pipeline: this.newPipeline
+    })).pipe(
+      finalize(() => this.loadingCreatePipeline = false),
+      flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.newPipeline.name))),
+      map((pip) => {
+        this._toast.success('', this._translate.instant('pipeline_added'));
+        this.node.context.pipeline_id = pip.id;
+        this.pipelineSection = 'application';
+        return pip
+      }));
   }
 
   selectOrCreatePipeline(): Observable<string> {
@@ -234,7 +235,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
 
     // TODO: to update with store
-    this._appStore.getDeploymentStrategies(this.project.key, app.name).pipe(
+    this._appService.getDeploymentStrategies(this.project.key, app.name).pipe(
       first(),
       finalize(() => this.loadingIntegrations = false)
     ).subscribe(

@@ -2,8 +2,10 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { AuditWorkflow } from 'app/model/audit.model';
 import { GroupPermission } from 'app/model/group.model';
-import { Workflow } from 'app/model/workflow.model';
+import { Label } from 'app/model/project.model';
+import { WNode, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { cloneDeep } from 'lodash';
 import { tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflows.action';
@@ -272,7 +274,6 @@ export class WorkflowsState {
         }));
     }
 
-
     //  ------- Notification --------- //
     @Action(actionWorkflow.AddNotificationWorkflow)
     addNotification(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddNotificationWorkflow) {
@@ -330,6 +331,129 @@ export class WorkflowsState {
         }));
     }
 
+    //  ------- Nodes --------- //
+    @Action(actionWorkflow.AddNodeTriggerWorkflow)
+    addNodeTrigger(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddNodeTriggerWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        let currentWorkflow = cloneDeep(state.workflows[wfKey]);
+        let node = Workflow.getNodeByID(action.payload.parentId, currentWorkflow);
+        if (!node.triggers) {
+            node.triggers = new Array<WNodeTrigger>();
+        }
+        node.triggers.push(action.payload.trigger);
+
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            workflow_data: {
+                ...state.workflows[wfKey].workflow_data,
+                node: currentWorkflow.workflow_data.node
+            }
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
+    //  ------- Joins --------- //
+    @Action(actionWorkflow.AddJoinWorkflow)
+    addJoinTrigger(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddJoinWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        let joins = state.workflows[wfKey].workflow_data.joins ? state.workflows[wfKey].workflow_data.joins : [];
+        joins.push(action.payload.join);
+
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            workflow_data: {
+                ...state.workflows[wfKey].workflow_data,
+                joins
+            }
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
+    //  ------- Hooks --------- //
+    @Action(actionWorkflow.AddHookWorkflow)
+    addHook(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddHookWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        const hooks = state.workflows[wfKey].workflow_data.node.hooks || [];
+        const root = Object.assign({}, state.workflows[wfKey].workflow_data.node, <WNode>{
+            hooks: hooks.concat([action.payload.hook])
+        });
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            workflow_data: {
+                ...state.workflows[wfKey].workflow_data,
+                node: root
+            }
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
+    @Action(actionWorkflow.UpdateHookWorkflow)
+    updateHook(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.UpdateHookWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        const root = Object.assign({}, state.workflows[wfKey].workflow_data.node, <WNode>{
+            hooks: state.workflows[wfKey].workflow_data.node.hooks.map((hook) => {
+                if (hook.uuid === action.payload.hook.uuid) {
+                    return action.payload.hook;
+                }
+                return hook;
+            })
+        });
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            workflow_data: {
+                ...state.workflows[wfKey].workflow_data,
+                node: root
+            }
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
+    @Action(actionWorkflow.DeleteHookWorkflow)
+    deleteHook(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.DeleteHookWorkflow) {
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        const root = Object.assign({}, state.workflows[wfKey].workflow_data.node, <WNode>{
+            hooks: state.workflows[wfKey].workflow_data.node.hooks.filter((hook) => hook.uuid !== action.payload.hook.uuid)
+        });
+        const workflow: Workflow = {
+            ...state.workflows[wfKey],
+            workflow_data: {
+                ...state.workflows[wfKey].workflow_data,
+                node: root
+            }
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
     //  ------- Audit --------- //
     @Action(actionWorkflow.FetchWorkflowAudits)
     fetchAudits(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.FetchWorkflowAudits) {
@@ -357,6 +481,59 @@ export class WorkflowsState {
                 projectKey: action.payload.projectKey,
                 workflow: pip
             }));
+        }));
+    }
+
+    //  ------- Labels --------- //
+    @Action(actionWorkflow.LinkLabelOnWorkflow)
+    linkLabel(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.LinkLabelOnWorkflow) {
+        return this._http.post<Label>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/label`,
+            action.payload.label
+        ).pipe(tap((label: Label) => {
+            const state = ctx.getState();
+            const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+
+            ctx.dispatch(new ActionProject.AddLabelWorkflowInProject({
+                workflowName: action.payload.workflowName,
+                label: action.payload.label
+            }));
+            if (state.workflows[wfKey]) {
+                const labels = state.workflows[wfKey].labels ? state.workflows[wfKey].labels.concat(label) : [label];
+
+                ctx.dispatch(new actionWorkflow.LoadWorkflow({
+                    projectKey: action.payload.projectKey,
+                    workflow: Object.assign({}, state.workflows[wfKey], <Workflow>{
+                        labels
+                    })
+                }));
+            }
+        }));
+    }
+
+    @Action(actionWorkflow.UnlinkLabelOnWorkflow)
+    unlinkLabel(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.UnlinkLabelOnWorkflow) {
+        return this._http.delete<null>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/label/${action.payload.label.id}`
+        ).pipe(tap(() => {
+            const state = ctx.getState();
+            const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+
+            ctx.dispatch(new ActionProject.DeleteLabelWorkflowInProject({
+                workflowName: action.payload.workflowName,
+                labelId: action.payload.label.id
+            }));
+            if (state.workflows[wfKey]) {
+                let labels = state.workflows[wfKey].labels ? state.workflows[wfKey].labels.concat([]) : [];
+                labels = labels.filter((lbl) => lbl.id !== action.payload.label.id);
+
+                ctx.dispatch(new actionWorkflow.LoadWorkflow({
+                    projectKey: action.payload.projectKey,
+                    workflow: Object.assign({}, state.workflows[wfKey], <Workflow>{
+                        labels
+                    })
+                }));
+            }
         }));
     }
 
@@ -460,12 +637,16 @@ export class WorkflowsState {
         ).pipe(tap(() => {
             this._navbarService.getData(); // TODO: to delete
             const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
-            const wfUpdated = Object.assign({}, state.workflows[wfKey], <Workflow>{ favorite: !state.workflows[wfKey].favorite });
+            if (state.workflows[wfKey]) {
+                const wfUpdated = Object.assign({}, state.workflows[wfKey], <Workflow>{
+                    favorite: !state.workflows[wfKey].favorite
+                });
 
-            ctx.setState({
-                ...state,
-                workflows: Object.assign({}, state.workflows, { [wfKey]: wfUpdated }),
-            });
+                ctx.setState({
+                    ...state,
+                    workflows: Object.assign({}, state.workflows, { [wfKey]: wfUpdated }),
+                });
+            }
             // TODO: dispatch action on global state to update project in list and user state
             // TODO: move this one on user state and just update state here, not XHR
         }));

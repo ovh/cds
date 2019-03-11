@@ -2,14 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AddApplication, CloneApplication } from 'app/store/applications.action';
+import { AddApplication, CloneApplication, FetchApplication } from 'app/store/applications.action';
+import { ApplicationsState } from 'app/store/applications.state';
 import { cloneDeep } from 'lodash';
-import { finalize, first } from 'rxjs/operators';
+import { finalize, first, flatMap } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';
 import { Project } from '../../../model/project.model';
 import { Variable } from '../../../model/variable.model';
-import { ApplicationStore } from '../../../service/application/application.store';
-import { ProjectStore } from '../../../service/project/project.store';
 import { VariableService } from '../../../service/variable/variable.service';
 import { ToastService } from '../../../shared/toast/ToastService';
 
@@ -41,8 +40,6 @@ export class ApplicationAddComponent implements OnInit {
 
     constructor(
         private _activatedRoute: ActivatedRoute,
-        private _projectStore: ProjectStore,
-        private _appStore: ApplicationStore,
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,
@@ -58,19 +55,14 @@ export class ApplicationAddComponent implements OnInit {
         this._varService.getContextVariable(this.project.key).pipe(first()).subscribe(s => {
             this.suggestion = s;
         });
-        if (!this.project.applications) {
-            this._projectStore.getProjectApplicationsResolver(this.project.key).pipe(first()).subscribe(proj => {
-                this.project = proj;
-            });
-        }
     }
 
     updateSelection(type): void {
         switch (type) {
             case 'clone':
-                if (this.project.applications && this.project.applications.length > 0) {
-                    this.selectedApplicationName = this.project.applications[0].name;
-                    this.updateSelectedApplicationToClone(this.project.applications[0].name);
+                if (this.project.application_names && this.project.application_names.length > 0) {
+                    this.selectedApplicationName = this.project.application_names[0].name;
+                    this.updateSelectedApplicationToClone(this.project.application_names[0].name);
                 }
                 break;
             default:
@@ -80,17 +72,21 @@ export class ApplicationAddComponent implements OnInit {
     }
 
     updateSelectedApplicationToClone(appName: string): void {
-        this._appStore.getApplicationResolver(this.project.key, appName).pipe(first()).subscribe(app => {
-            this.selectedApplication = app;
-            this.variables = cloneDeep(app.variables);
-            if (this.variables) {
-                this.variables.forEach(v => {
-                    if (v.type === 'password') {
-                        v.value = '';
-                    }
-                });
-            }
-        });
+        this.store.dispatch(new FetchApplication({
+            projectKey: this.project.key,
+            applicationName: appName
+        })).pipe(flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(this.project.key, appName))))
+            .subscribe(app => {
+                this.selectedApplication = app;
+                this.variables = cloneDeep(app.variables);
+                if (this.variables) {
+                    this.variables.forEach(v => {
+                        if (v.type === 'password') {
+                            v.value = '';
+                        }
+                    });
+                }
+            });
     }
 
     createApplication(): void {

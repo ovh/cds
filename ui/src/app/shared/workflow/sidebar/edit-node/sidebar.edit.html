@@ -102,9 +102,8 @@
                 [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
             </a>
-            <a class="item noborder" (click)="openTriggerModal('outgoinghook', false)"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
-               *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
+            <a class="item noborder" (click)="openTriggerModal('outgoinghook', false)" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
+                *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
                 {{ 'workflow_node_outgoing_hook' | translate }} <i class="angle right icon"></i>
             </a>
             <a class="item noborder" (click)="linkJoin()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
@@ -160,7 +159,7 @@
         (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)" #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
 
     <!-- Add hook -->
-    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateWorkflow($event, workflowAddHook.modal)"
+    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateHook($event, workflowAddHook.modal)"
         #workflowAddHook></app-hook-modal>
     <!-- Add node permissions -->
     <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node" #workflowNodePermissions></app-workflow-node-permissions>

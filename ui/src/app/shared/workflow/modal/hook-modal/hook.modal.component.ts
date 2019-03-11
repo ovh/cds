@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { cloneDeep } from 'lodash';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { PermissionValue } from '../../../../model/permission.model';
@@ -23,7 +22,7 @@ export class WorkflowHookModalComponent {
 
     @Input() hook: WNodeHook;
 
-    @Output() hookEvent = new EventEmitter<Workflow>();
+    @Output() hookEvent = new EventEmitter<WNodeHook>();
 
     @ViewChild('hookModalComponent')
     public hookModalComponent: ModalTemplate<boolean, boolean, void>;
@@ -47,29 +46,11 @@ export class WorkflowHookModalComponent {
     }
 
     deleteHook(): void {
-        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let clonedNode = Workflow.getNodeByID(this.node.id, clonedWorkflow);
-        clonedNode.hooks = clonedNode.hooks.filter(h => h.uuid !== this.hook.uuid);
-        this.hookEvent.emit(clonedWorkflow);
+        this.hookEvent.emit(this.hook);
     }
 
     saveHook(): void {
-        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let clonedNode = Workflow.getNodeByID(this.node.id, clonedWorkflow);
         let updatedHook = this.hookFormComponent.hook;
-        if (updatedHook.uuid) {
-            // Update hook
-            let existingHook = clonedNode.hooks.find(h => h.uuid === updatedHook.uuid);
-            if (existingHook) {
-                existingHook.config = updatedHook.config;
-            }
-        } else {
-            // insert new hook
-            if (!clonedNode.hooks) {
-                clonedNode.hooks = new Array<WNodeHook>();
-            }
-            clonedNode.hooks.push(updatedHook);
-        }
-        this.hookEvent.emit(clonedWorkflow);
+        this.hookEvent.emit(updatedHook);
     }
 }
