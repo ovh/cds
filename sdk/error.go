@@ -177,6 +177,7 @@ var (
 	ErrGroupNotFoundInProject                 = Error{ID: 160, Status: http.StatusBadRequest}
 	ErrGroupNotFoundInWorkflow                = Error{ID: 161, Status: http.StatusBadRequest}
 	ErrWorkflowPermInsufficient               = Error{ID: 162, Status: http.StatusBadRequest}
+	ErrApplicationUsedByWorkflow              = Error{ID: 163, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -282,7 +283,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUnknownKeyType.ID:                         "Unknown key type",
 	ErrInvalidKeyPattern.ID:                      "key name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWebhookConfigDoesNotMatch.ID:              "Webhook config does not match",
-	ErrPipelineUsedByWorkflow.ID:                 "pipeline still used by a workflow",
+	ErrPipelineUsedByWorkflow.ID:                 "Pipeline still used by a workflow",
 	ErrMethodNotAllowed.ID:                       "Method not allowed",
 	ErrInvalidNodeNamePattern.ID:                 "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:               "Cannot run a node if their parents have never been launched",
@@ -336,6 +337,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrGroupNotFoundInProject.ID:                 "Cannot add this permission group on your workflow because this group is not already in the project's permissions",
 	ErrGroupNotFoundInWorkflow.ID:                "Cannot add this permission group on your workflow node because this group is not already your workflow's permissions",
 	ErrWorkflowPermInsufficient.ID:               "Cannot add this permission group on your workflow because you can't have less rights than rights in your project when you are in RWX",
+	ErrApplicationUsedByWorkflow.ID:              "Application still used by a workflow",
 }
 
 var errorsFrench = map[int]string{
@@ -441,7 +443,7 @@ var errorsFrench = map[int]string{
 	ErrUnknownKeyType.ID:                         "Le type de clé n'est pas connu",
 	ErrInvalidKeyPattern.ID:                      "le nom de la clé doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWebhookConfigDoesNotMatch.ID:              "la configuration du webhook ne correspond pas",
-	ErrPipelineUsedByWorkflow.ID:                 "le pipeline est utilisé par un workflow",
+	ErrPipelineUsedByWorkflow.ID:                 "Le pipeline est utilisé par un workflow",
 	ErrMethodNotAllowed.ID:                       "La méthode n'est pas autorisée",
 	ErrInvalidNodeNamePattern.ID:                 "Le nom du noeud du workflow doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:               "Il est interdit de lancer un noeuds si ses parents n'ont jamais été lancés",
@@ -495,6 +497,7 @@ var errorsFrench = map[int]string{
 	ErrGroupNotFoundInProject.ID:                 "Impossible d'ajouter ce groupe dans vos permissions de workflow car ce groupe n'est pas présent dans les permissions de votre projet",
 	ErrGroupNotFoundInWorkflow.ID:                "Impossible d'ajouter ce groupe dans vos permissions de noeud du workflow car ce groupe n'est pas présent dans les permissions de votre workflow",
 	ErrWorkflowPermInsufficient.ID:               "Impossible d'ajouter ce groupe dans vos permissions du workflow car ce groupe a des droits inférieurs (< RWX) à celui du workflow",
+	ErrApplicationUsedByWorkflow.ID:              "L'application est utilisée par un workflow",
 }
 
 var errorsLanguages = []map[int]string{
@@ -551,6 +554,13 @@ func (e Error) Translate(al string) string {
 	}
 
 	return msg
+}
+
+// NewErrorWithStack returns an error with stack.
+func NewErrorWithStack(root error, err error) error {
+	errWithStack := WithStack(root).(errorWithStack)
+	errWithStack.httpError = ExtractHTTPError(err, "")
+	return errWithStack
 }
 
 type errorWithStack struct {

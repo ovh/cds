@@ -45,15 +45,16 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	//////
 
 	//// Process Report
+	oldStatus := wr.Status
 	report := new(ProcessorReport)
 	defer func(oldStatus string, wr *sdk.WorkflowRun) {
 		if oldStatus != wr.Status {
 			report.Add(*wr)
 		}
-	}(wr.Status, wr)
+	}(oldStatus, wr)
 	////
 
-	wr.Status = string(sdk.StatusBuilding)
+	wr.Status = sdk.StatusBuilding.String()
 	maxsn := MaxSubNumber(wr.WorkflowNodeRuns)
 	wr.LastSubNumber = maxsn
 

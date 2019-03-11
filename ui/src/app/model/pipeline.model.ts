@@ -15,13 +15,14 @@ export class PipelineStatus {
     static SKIPPED = 'Skipped';
     static NEVER_BUILT = 'Never Built';
     static STOPPED = 'Stopped';
+    static PENDING = 'Pending';
 
     static neverRun(status: string) {
         return status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED;
     }
 
     static isActive(status: string) {
-        return status === this.WAITING || status === this.BUILDING;
+        return status === this.WAITING || status === this.BUILDING || status === this.PENDING;
     }
 
     static isDone(status: string) {

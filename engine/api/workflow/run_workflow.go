@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -25,14 +26,14 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
+func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.RunFromHook")
 	defer end()
 
 	report := new(ProcessorReport)
 
-	hooks := w.GetHooks()
+	hooks := wr.Workflow.GetHooks()
 	h, ok := hooks[e.WorkflowNodeHookUUID]
 	if !ok {
 		return nil, report, sdk.ErrNoHook
@@ -40,46 +41,14 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 
 	//If the hook is on the root, it will trigger a new workflow run
 	//Else if will trigger a new subnumber of the last workflow run
-	var number int64
-	if h.WorkflowNodeID == w.Root.ID {
-
-		if err := IsValid(ctx, store, db, w, p, nil); err != nil {
+	if h.WorkflowNodeID == wr.Workflow.Root.ID {
+		if err := IsValid(ctx, store, db, &wr.Workflow, p, nil); err != nil {
 			return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 
-		//Get the next number from our sequence
-		var errnum error
-		number, errnum = nextRunNumber(db, w)
-		if errnum != nil {
-			return nil, report, sdk.WrapError(errnum, "RunFromHook> Unable to get next number")
-		}
-
-		//Compute a new workflow run
-		wr := &sdk.WorkflowRun{
-			Number:        number,
-			Workflow:      *w,
-			WorkflowID:    w.ID,
-			Start:         time.Now(),
-			LastModified:  time.Now(),
-			ProjectID:     w.ProjectID,
-			Status:        string(sdk.StatusWaiting),
-			LastExecution: time.Now(),
-		}
-
-		if trigg, ok := e.Payload["cds.triggered_by.username"]; ok {
-			wr.Tag(tagTriggeredBy, trigg)
-		} else {
-			wr.Tag(tagTriggeredBy, "cds.hook")
-		}
-
-		// Add ass code spawn info
+		// Add add code spawn info
 		for _, msg := range asCodeMsg {
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
-		}
-
-		//Insert it
-		if err := insertWorkflowRun(db, wr); err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 		}
 
 		//Process it
@@ -94,50 +63,15 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			return wr, report, UpdateWorkflowRun(ctx, db, wr)
 		}
 		_, _ = report.Merge(r1, nil)
-	} else {
-
-		//Load the last workflow run
-		lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name, LoadRunOptions{})
-		if err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to load last run")
-		}
-
-		number = lastWorkflowRun.Number
-
-		//Load the last definition of the hooks
-		oldHooks := lastWorkflowRun.Workflow.GetHooks()
-		oldH, ok := oldHooks[h.UUID]
-		if !ok {
-			return nil, nil, sdk.WrapError(sdk.ErrNoHook, "RunFromHook> Hook not found")
-		}
-
-		//Process the workflow run from the node ID
-		r1, _, err := processWorkflowDataRun(ctx, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID)
-		if err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to process workflow run")
-		}
-		_, _ = report.Merge(r1, nil)
 	}
-
-	run, err := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})
-	if err != nil {
-		return nil, nil, sdk.WrapError(err, "Unable to reload workflow run")
-	}
-
-	return run, report, nil
+	return wr, report, nil
 }
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
-func ManualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, *ProcessorReport, error) {
+func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	report := new(ProcessorReport)
 
-	lastWorkflowRun, errLoadRun := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})
-	if errLoadRun != nil {
-		return nil, report, sdk.WrapError(errLoadRun, "ManualRunFromNode> Unable to load last run")
-	}
-	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
-
-	r1, condOk, err := processWorkflowDataRun(ctx, db, store, p, lastWorkflowRun, nil, e, &nodeID)
+	r1, condOk, err := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, &nodeID)
 	if err != nil {
 		return nil, report, sdk.WrapError(err, "Unable to process workflow run")
 	}
@@ -146,49 +80,98 @@ func ManualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	if !condOk {
 		return nil, report, sdk.WrapError(sdk.ErrConditionsNotOk, "ManualRunFromNode> Conditions aren't ok")
 	}
-
-	var errLoadRunByID error
-	lastWorkflowRun, errLoadRunByID = LoadRunByIDAndProjectKey(db, w.ProjectKey, lastWorkflowRun.ID, LoadRunOptions{})
-	if errLoadRunByID != nil {
-		return nil, report, errLoadRunByID
-	}
-
-	return lastWorkflowRun, report, nil
+	return wr, report, nil
 }
 
-//ManualRun is the entry point to trigger a workflow manually
-func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual, asCodeInfos []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
-	report := new(ProcessorReport)
-	number, err := nextRunNumber(db, w)
-	if err != nil {
-		return nil, report, sdk.WrapError(err, "Unable to get next number")
-	}
-
-	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, number))
+func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
+	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
 	defer end()
 
-	if err := IsValid(ctx, store, db, w, p, &e.User); err != nil {
-		return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
-	}
+	report := new(ProcessorReport)
 
-	wr := &sdk.WorkflowRun{
-		Number:        number,
-		Workflow:      *w,
-		WorkflowID:    w.ID,
-		Start:         time.Now(),
-		LastModified:  time.Now(),
-		ProjectID:     w.ProjectID,
-		Status:        sdk.StatusWaiting.String(),
-		LastExecution: time.Now(),
+	tx, errb := db.Begin()
+	if errb != nil {
+		return nil, sdk.WrapError(errb, "Cannot start transaction")
 	}
-	wr.Tag(tagTriggeredBy, e.User.Username)
+	defer tx.Rollback() // nolint
 
 	for _, msg := range asCodeInfos {
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 	}
 
-	if err := insertWorkflowRun(db, wr); err != nil {
-		return nil, report, sdk.WrapError(err, "Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
+	wr.Status = sdk.StatusWaiting.String()
+	if err := UpdateWorkflowRun(ctx, tx, wr); err != nil {
+		return report, err
+	}
+
+	if opts.Hook != nil {
+		// Run from HOOK
+		_, r1, err := runFromHook(ctx, tx, store, p, wr, opts.Hook, asCodeInfos)
+		if err != nil {
+			return nil, sdk.WrapError(err, "Unable to run workflow from hook")
+		}
+
+		_, _ = report.Merge(r1, nil)
+
+	} else {
+		// Manual RUN
+		if opts.Manual == nil {
+			opts.Manual = &sdk.WorkflowNodeRunManual{}
+		}
+		opts.Manual.User = *u
+
+		if len(opts.FromNodeIDs) > 0 && len(wr.WorkflowNodeRuns) > 0 {
+			// MANUAL RUN FROM NODE
+
+			fromNode := wr.Workflow.WorkflowData.NodeByID(opts.FromNodeIDs[0])
+			if fromNode == nil {
+				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
+			}
+
+			if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
+				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.Root.ID)
+			}
+
+			// Continue  the current workflow run
+			_, r1, errmr := manualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
+			if errmr != nil {
+				return nil, sdk.WrapError(errmr, "Unable to run workflow")
+			}
+			_, _ = report.Merge(r1, nil)
+
+		} else {
+			// MANUAL RUN FROM ROOT NODE
+			if !permission.AccessToWorkflowNode(&wr.Workflow, &wr.Workflow.WorkflowData.Node, u, permission.PermissionReadExecute) {
+				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
+			}
+			// Start new workflow
+			_, r1, errmr := manualRun(ctx, tx, store, p, wr, opts.Manual)
+			if errmr != nil {
+				return nil, sdk.WrapError(errmr, "Unable to run workflow")
+			}
+			_, _ = report.Merge(r1, nil)
+		}
+	}
+
+	//Commit and return success
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WrapError(err, "Unable to commit transaction")
+	}
+	return report, nil
+}
+
+//ManualRun is the entry point to trigger a workflow manually
+func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, *ProcessorReport, error) {
+	report := new(ProcessorReport)
+	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, wr.Number))
+	defer end()
+
+	if err := IsValid(ctx, store, db, &wr.Workflow, p, &e.User); err != nil {
+		return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
+	}
+
+	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
+		return nil, nil, err
 	}
 
 	r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, nil)

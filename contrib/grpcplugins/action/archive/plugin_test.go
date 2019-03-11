@@ -24,9 +24,7 @@ func Test_Run(t *testing.T) {
 	result, err := subject.Run(context.Background(), compressOpts)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	// assert.FileExists(t, "self.tar.gz")
-	_, err = os.Stat("self.tar.gz")
-	assert.NoError(t, err)
+	assert.FileExists(t, "self.tar.gz")
 
 	uncompressOpts := &actionplugin.ActionQuery{Options: map[string]string{
 		"source":      "self.tar.gz",
@@ -36,7 +34,5 @@ func Test_Run(t *testing.T) {
 	result, err = subject.Run(context.Background(), uncompressOpts)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	// assert.FileExists(t, "self/main.go")
-	_, err = os.Stat("self/main.go")
-	assert.NoError(t, err)
+	assert.FileExists(t, "self/main.go")
 }
