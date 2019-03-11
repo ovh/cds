@@ -11,6 +11,9 @@ import (
 )
 
 const (
+	// ViolateForeignKeyPGCode is the pg code when violating foreign key
+	ViolateForeignKeyPGCode = "23503"
+
 	// ViolateUniqueKeyPGCode is the pg code when duplicating unique key
 	ViolateUniqueKeyPGCode = "23505"
 
