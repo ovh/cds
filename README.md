@@ -83,7 +83,7 @@ All the features of the table are detailed below.
 | Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins |
 | --- | --- | --- | --- | --- | --- |
 | [Pipeline](#pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: <sub><sup>[*17] | :x: |
+| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: <sub><sup>[*17](#some-explanations-on-the-comparison-matrix) | :x: |
 | [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*2](#some-explanations-on-the-comparison-matrix)</sub></sup> |
