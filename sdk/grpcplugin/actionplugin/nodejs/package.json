@@ -14,9 +14,10 @@
   "author": "Benjamin Coenen",
   "license": "ISC",
   "dependencies": {
-    "get-port": "^4.0.0",
-    "google-protobuf": "^3.6.1",
-    "grpc": "^1.15.1",
-    "yaml": "^1.0.0"
+    "get-port": "4.0.0",
+    "google-protobuf": "3.6.1",
+    "grpc": "1.15.1",
+    "lodash": "4.17.11",
+    "yaml": "1.0.0"
   }
 }
