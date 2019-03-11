@@ -140,6 +140,7 @@ type WorkflowNotification struct {
 	WorkflowID     int64                    `json:"workflow_id,omitempty" db:"workflow_id"`
 	SourceNodeRefs []string                 `json:"source_node_ref,omitempty" db:"-"`
 	SourceNodeIDs  []int64                  `json:"source_node_id,omitempty" db:"-"`
+	NodeIDs        []int64                  `json:"node_id,omitempty" db:"-"`
 	Type           string                   `json:"type" db:"type"`
 	Settings       UserNotificationSettings `json:"settings" db:"-"`
 }

@@ -361,7 +361,7 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 		wn.Triggers = triggers
 
-		//Load outgoing hooks
+		// Load outgoing hooks
 		ohooks, errHooks := loadOutgoingHooks(c, db, store, proj, w, &wn, u, opts)
 		if errHooks != nil {
 			return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load outgoing hooks of %d", id)
