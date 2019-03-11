@@ -37,7 +37,7 @@ export class VerifyComponent extends AccountComponent implements OnInit  {
 
     signIn() {
         let userloginRequest = new UserLoginRequest();
-        userloginRequest.username = this.userVerified.user;
+        userloginRequest.username = this.userVerified.user.username;
         userloginRequest.password = this.userVerified.password;
 
         this._userService.login(userloginRequest).subscribe(() => {

@@ -37,8 +37,9 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #2 has been launched"
   - script: "{{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
+    retry: 10
+    delay: 3
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Building
-    - result.systemoutjson.tags ShouldContainSubstring master
     - result.systemoutjson.num ShouldContainSubstring 2
