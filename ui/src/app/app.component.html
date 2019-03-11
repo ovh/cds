@@ -1,9 +1,9 @@
-<div id="AppComponent">
+<div id="AppComponent" [class.night]="currentTheme === 'night'">
     <div id="navbar" *ngIf="isConnected" [class.connected]="isConnected">
         <app-navbar></app-navbar>
     </div>
     <div id="banner" class="pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
-            {{ 'ui_updated' | translate }}
+        {{ 'ui_updated' | translate }}
     </div>
 
     <div class="page" [class.connected]="isConnected">

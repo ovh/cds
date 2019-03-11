@@ -32,6 +32,9 @@
       background-color: $polar_grey_5;
       display: flex;
       flex-direction: column;
+      :host-context(.night) & {
+        background-color: $polar_grey_0;
+      }
       .content {
         flex: 1;
         display: flex;

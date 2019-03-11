@@ -1,7 +1,10 @@
 @import '../common';
+.night {
+  background-color: $darkBackground;
+}
+
 #AppComponent {
   height: 100%;
-
   #navbar {
     padding: 0px;
     width: 100%;
@@ -9,11 +12,9 @@
     display: none;
     z-index: 1020;
   }
-
   #navbar.connected {
     display: inherit;
   }
-
   #banner {
     height: 50px;
     margin-top: $navbarHeight;
@@ -23,15 +24,12 @@
     color: white;
     font-weight: 600;
   }
-
-  .page.connected  {
+  .page.connected {
     padding-top: $navbarHeight;
   }
-
   .page {
     height: inherit;
     z-index: 0;
-
     .content {
       height: inherit;
       margin-left: $sidebarCloseWidth;

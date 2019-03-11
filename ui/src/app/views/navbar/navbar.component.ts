@@ -15,6 +15,7 @@ import { BroadcastStore } from '../../service/broadcast/broadcast.store';
 import { LanguageStore } from '../../service/language/language.store';
 import { NavbarService } from '../../service/navbar/navbar.service';
 import { RouterService } from '../../service/router/router.service';
+import { ThemeStore } from '../../service/theme/theme.store';
 import { WorkflowStore } from '../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 
@@ -25,9 +26,8 @@ import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 })
 @AutoUnsubscribe()
 export class NavbarComponent implements OnInit, AfterViewInit {
-
     // flag to indicate that the component is ready to use
-    public ready = false;
+    ready = false;
 
     // List of projects in the nav bar
     navProjects: Array<NavbarProjectData> = [];
@@ -41,36 +41,42 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     recentBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     previousBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     loading = true;
-
     listWorkflows: List<NavbarRecentData>;
-
     currentCountry: string;
     langSubscription: Subscription;
     navbarSubscription: Subscription;
     userSubscription: Subscription;
     broadcastSubscription: Subscription;
-
     currentRoute: {};
     recentView = true;
+    currentUser: User;
+    currentTheme: string;
+    themeSubscription: Subscription;
 
-
-    public currentUser: User;
-
-    constructor(private _navbarService: NavbarService,
+    constructor(
+        private _navbarService: NavbarService,
         private _authStore: AuthentificationStore,
         private _appStore: ApplicationStore,
         private _workflowStore: WorkflowStore,
         private _broadcastStore: BroadcastStore,
-        private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
+        private _router: Router,
+        private _language: LanguageStore,
+        private _theme: ThemeStore,
+        private _routerService: RouterService,
         private _translate: TranslateService,
         private _authentificationStore: AuthentificationStore,
-        private _cd: ChangeDetectorRef) {
+        private _cd: ChangeDetectorRef
+    ) {
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
         });
 
         this.langSubscription = this._language.get().subscribe(l => {
             this.currentCountry = l;
+        });
+
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.currentTheme = t;
         });
 
         this._router.events.pipe(
@@ -82,6 +88,10 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     changeCountry() {
         this._language.set(this.currentCountry);
+    }
+
+    changeTheme() {
+        this._theme.set(this.currentTheme);
     }
 
     ngAfterViewInit() {

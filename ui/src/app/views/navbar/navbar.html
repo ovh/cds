@@ -1,5 +1,6 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
-    <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"/></a>
+    <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item"
+            title="{{'navbar_home' | translate}}" /></a>
     <ng-container *ngIf="currentUser">
         <a class="item link" href="#" [routerLink]="['project', 'list', 'all']" *ngIf="currentUser">
             {{ 'navbar_projects' | translate }}
@@ -9,50 +10,52 @@
             <i class="dropdown icon"></i>
             <div class="menu" suiDropdownMenu>
                 <ng-container *ngIf="loading">
-                  <div class="item">{{'common_loading' | translate}}</div>
+                    <div class="item">{{'common_loading' | translate}}</div>
                 </ng-container>
                 <ng-container *ngFor="let prj of listFavs">
                     <ng-container [ngSwitch]="prj.type">
-                      <ng-container *ngSwitchCase="'workflow'">
-                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
-                          <div class="details">
-                            <div class="title bold">
-                                {{prj.workflow_name}}
-                            </div>
-                            <div class="info mt">
-                                {{'navbar_workflow_in' | translate}} {{prj.key}}
-                            </div>
-                          </div>
-                        </a>
-                      </ng-container>
-                      <ng-container *ngSwitchCase="'application'">
-                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key, 'application', prj.application_name]">
-                          <div class="details">
-                            <div class="title bold">
-                                {{prj.application_name}}}
-                            </div>
-                            <div class="info mt">
-                                {{'navbar_application_in' | translate}} {{prj.key}}
-                            </div>
-                          </div>
-                        </a>
-                      </ng-container>
-                      <ng-container *ngSwitchDefault>
-                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">
-                          <div class="details">
-                            <div class="title bold">
-                                {{prj.name}}
-                            </div>
-                            <div class="info mt">
-                                {{'common_project' | translate}}
-                            </div>
-                          </div>
-                        </a>
-                      </ng-container>
+                        <ng-container *ngSwitchCase="'workflow'">
+                            <a class="item" sm-item href="#"
+                                [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
+                                <div class="details">
+                                    <div class="title bold">
+                                        {{prj.workflow_name}}
+                                    </div>
+                                    <div class="info mt">
+                                        {{'navbar_workflow_in' | translate}} {{prj.key}}
+                                    </div>
+                                </div>
+                            </a>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'application'">
+                            <a class="item" sm-item href="#"
+                                [routerLink]="['project', prj.key, 'application', prj.application_name]">
+                                <div class="details">
+                                    <div class="title bold">
+                                        {{prj.application_name}}}
+                                    </div>
+                                    <div class="info mt">
+                                        {{'navbar_application_in' | translate}} {{prj.key}}
+                                    </div>
+                                </div>
+                            </a>
+                        </ng-container>
+                        <ng-container *ngSwitchDefault>
+                            <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">
+                                <div class="details">
+                                    <div class="title bold">
+                                        {{prj.name}}
+                                    </div>
+                                    <div class="info mt">
+                                        {{'common_project' | translate}}
+                                    </div>
+                                </div>
+                            </a>
+                        </ng-container>
                     </ng-container>
                 </ng-container>
                 <a class="item" sm-item href="#" [routerLink]="['favorite']">
-                  {{'common_favorites_all' | translate}}
+                    {{'common_favorites_all' | translate}}
                 </a>
             </div>
         </div>
@@ -64,73 +67,74 @@
     <div class="right menu details">
         <ng-template let-result let-query="query" #searchTemplate>
             <div>
-              <div class="title">
-                  {{result.title}}
-                  <div class="inline floated right" *ngIf="result.favorite">
-                    <i class="pointing star icon favorite"></i>
-                  </div>
-              </div>
-              <div class="info">
-                  <span *ngIf="result.type === 'workflow'">{{'navbar_workflow_in' | translate}}</span>
-                  <span *ngIf="result.type === 'application'">{{'navbar_application_in' | translate}}</span>
-                  <span *ngIf="result.type === 'project'">{{'common_project' | translate}}</span>
-                  <span class="ui text tiny blue" *ngIf="result.type !== 'project'">{{result.projectKey}}</span>
-              </div>
+                <div class="title">
+                    {{result.title}}
+                    <div class="inline floated right" *ngIf="result.favorite">
+                        <i class="pointing star icon favorite"></i>
+                    </div>
+                </div>
+                <div class="info">
+                    <span *ngIf="result.type === 'workflow'">{{'navbar_workflow_in' | translate}}</span>
+                    <span *ngIf="result.type === 'application'">{{'navbar_application_in' | translate}}</span>
+                    <span *ngIf="result.type === 'project'">{{'common_project' | translate}}</span>
+                    <span class="ui text tiny blue" *ngIf="result.type !== 'project'">{{result.projectKey}}</span>
+                </div>
             </div>
         </ng-template>
-        <sui-search
-            placeholder="{{'navbar_search' | translate}}"
-            [optionsFilter]="searchItem"
-            [resultTemplate]="searchTemplate"
-            [options]="items"
-            [maxResults]="10"
-            [allowEmptyQuery]="true"
-            [retainSelectedResult]="false"
-            [resetQueryOnChange]="false"
-            (keydown)="searchEvent($event)"
+        <sui-search placeholder="{{'navbar_search' | translate}}" [optionsFilter]="searchItem"
+            [resultTemplate]="searchTemplate" [options]="items" [maxResults]="10" [allowEmptyQuery]="true"
+            [retainSelectedResult]="false" [resetQueryOnChange]="false" (keydown)="searchEvent($event)"
             (resultSelected)="navigateToResult($event)">
         </sui-search>
 
-        <button class="ui icon button link item notification" suiPopup popupPlacement="bottom right" [popupTemplate]="popupTemplate" popupTrigger="outsideClick" #popup="suiPopup">
+        <button class="ui icon button link item notification" suiPopup popupPlacement="bottom right"
+            [popupTemplate]="popupTemplate" popupTrigger="outsideClick" #popup="suiPopup">
             <div>
                 <i class="bell icon" [ngClass]="{'animated bounceIn': broadcasts && broadcasts.length > 0}"></i>
-                <div class="ui floating red circular label animated bounceIn" *ngIf="broadcasts && broadcasts.length > 0">{{broadcasts.length}}</div>
+                <div class="ui floating red circular label animated bounceIn"
+                    *ngIf="broadcasts && broadcasts.length > 0">{{broadcasts.length}}</div>
             </div>
         </button>
         <ng-template let-popup #popupTemplate>
             <div class="content notifpopup">
                 <div class="ui secondary pointing menu">
-                  <a class="item" [class.active]="recentView" (click)="recentView = true">
-                    {{'broadcast_recent' | translate}}
-                  </a>
-                  <a class="item" [class.active]="!recentView" (click)="recentView = false">
-                    {{'broadcast_seen' | translate}}
-                  </a>
+                    <a class="item" [class.active]="recentView" (click)="recentView = true">
+                        {{'broadcast_recent' | translate}}
+                    </a>
+                    <a class="item" [class.active]="!recentView" (click)="recentView = false">
+                        {{'broadcast_seen' | translate}}
+                    </a>
                 </div>
                 <div *ngIf="recentView" class="notification mt5">
-                    <div class="ui relaxed divided list" *ngIf="recentBroadcastsToDisplay && recentBroadcastsToDisplay.length > 0">
+                    <div class="ui relaxed divided list"
+                        *ngIf="recentBroadcastsToDisplay && recentBroadcastsToDisplay.length > 0">
                         <div class="item" *ngFor="let broadcast of recentBroadcastsToDisplay">
                             <div class="notif">
-                              <span class="right floated pointing">
-                                  <i class="check icon" suiPopup [popupText]="'navbar_mark_read' | translate" [popupInverted]="true" popupPlacement="bottom center" (click)="markAsRead($event, broadcast.id)"></i>
-                              </span>
-                              <a class="title bold" (click)="popup.close()" [routerLink]="['broadcast', broadcast.id]" [class.blue]="broadcast.level === 'info'" [class.orange]="broadcast.level === 'warning'">
-                                  {{broadcast.title}}
-                              </a>
-                              <a class="info mt" [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
-                                  <span *ngIf="broadcast.project_key">
-                                      {{'common_project' | translate}} {{broadcast.project_key}}
-                                  </span>
-                                  <span *ngIf="!broadcast.project_key">
-                                      {{'navbar_general' | translate}}
-                                  </span>
-                                  <span class="right floated">
-                                      {{broadcast.updated | amTimeAgo}}
-                                  </span>
-                              </a>
+                                <span class="right floated pointing">
+                                    <i class="check icon" suiPopup [popupText]="'navbar_mark_read' | translate"
+                                        [popupInverted]="true" popupPlacement="bottom center"
+                                        (click)="markAsRead($event, broadcast.id)"></i>
+                                </span>
+                                <a class="title bold" (click)="popup.close()" [routerLink]="['broadcast', broadcast.id]"
+                                    [class.blue]="broadcast.level === 'info'"
+                                    [class.orange]="broadcast.level === 'warning'">
+                                    {{broadcast.title}}
+                                </a>
+                                <a class="info mt" [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
+                                    <span *ngIf="broadcast.project_key">
+                                        {{'common_project' | translate}} {{broadcast.project_key}}
+                                    </span>
+                                    <span *ngIf="!broadcast.project_key">
+                                        {{'navbar_general' | translate}}
+                                    </span>
+                                    <span class="right floated">
+                                        {{broadcast.updated | amTimeAgo}}
+                                    </span>
+                                </a>
                             </div>
                         </div>
-                        <a class="item" *ngIf="broadcasts.length > 4" [routerLink]="['broadcast']" (click)="popup.close()">
+                        <a class="item" *ngIf="broadcasts.length > 4" [routerLink]="['broadcast']"
+                            (click)="popup.close()">
                             {{'navbar_see_all' | translate}}
                         </a>
                     </div>
@@ -139,23 +143,26 @@
                     </div>
                 </div>
                 <div *ngIf="!recentView">
-                    <div class="ui relaxed divided list" *ngIf="previousBroadcastsToDisplay && previousBroadcastsToDisplay.length > 0">
-                        <a class="item" *ngFor="let broadcast of previousBroadcastsToDisplay" [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
+                    <div class="ui relaxed divided list"
+                        *ngIf="previousBroadcastsToDisplay && previousBroadcastsToDisplay.length > 0">
+                        <a class="item" *ngFor="let broadcast of previousBroadcastsToDisplay"
+                            [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
                             <div class="notif">
-                              <div class="title bold" [class.blue]="broadcast.level === 'info'" [class.orange]="broadcast.level === 'warning'">
-                                  {{broadcast.title}}
-                              </div>
-                              <div class="info mt">
-                                  <span *ngIf="broadcast.project_key">
-                                      {{'common_project' | translate}} {{broadcast.project_key}}
-                                  </span>
-                                  <span *ngIf="!broadcast.project_key">
-                                      {{'navbar_general' | translate}}
-                                  </span>
-                                  <span class="right floated">
-                                      {{broadcast.updated | amTimeAgo}}
-                                  </span>
-                              </div>
+                                <div class="title bold" [class.blue]="broadcast.level === 'info'"
+                                    [class.orange]="broadcast.level === 'warning'">
+                                    {{broadcast.title}}
+                                </div>
+                                <div class="info mt">
+                                    <span *ngIf="broadcast.project_key">
+                                        {{'common_project' | translate}} {{broadcast.project_key}}
+                                    </span>
+                                    <span *ngIf="!broadcast.project_key">
+                                        {{'navbar_general' | translate}}
+                                    </span>
+                                    <span class="right floated">
+                                        {{broadcast.updated | amTimeAgo}}
+                                    </span>
+                                </div>
                             </div>
                         </a>
                         <a class="item" [routerLink]="['broadcast']" (click)="popup.close()">
@@ -166,21 +173,29 @@
             </div>
         </ng-template>
 
-        <sm-select class="languageSelect"
-            [options]="{'fullTextSearch': true}"
-            [(model)]="currentCountry"
+        <sm-select class="languageSelect" [options]="{'fullTextSearch': true}" [(model)]="currentCountry"
             (modelChange)="changeCountry()">
             <option value="fr"><i class="france flag"></i></option>
             <option value="en"><i class="gb flag"></i></option>
         </sm-select>
+
+        <sm-select class="languageSelect" [(model)]="currentTheme"
+            (modelChange)="changeTheme()">
+            <option value="light"><i class="ui icon sun"></i></option>
+            <option value="night"><i class="ui icon moon"></i></option>
+        </sm-select>
+        
         <sm-dropdown icon="settings" *ngIf="currentUser">
-            <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
+            <a sm-item href="#"
+                [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
-            <a sm-item *ngIf="currentUser.admin" href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
+            <a sm-item *ngIf="currentUser.admin" href="#"
+                [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates' | translate }}</a>
+            <a sm-item href="#"
+                [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates' | translate }}</a>
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
             <div class="divider"></div>
@@ -189,9 +204,11 @@
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['account', 'login']">{{ 'navbar_disconnect' | translate }}</a>
         </sm-dropdown>
+
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
             <a sm-item href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['admin', 'worker-model-pattern']">{{ 'worker_model_pattern_title' | translate }}</a>
+            <a sm-item href="#"
+                [routerLink]="['admin', 'worker-model-pattern']">{{ 'worker_model_pattern_title' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'hooks-tasks']">{{ 'hook_tasks_summary' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'services']">{{ 'monitoring' | translate }}</a>
         </sm-dropdown>

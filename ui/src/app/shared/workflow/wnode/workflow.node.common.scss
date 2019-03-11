@@ -2,11 +2,14 @@
 .node {
   width: 100%;
   height: 100%;
-  background: white;
   border: 2px solid $polar_grey_3;
   border-radius: 3px;
   color: $polar_grey_1;
   padding: 2px;
+  :host-context(.night) & {
+    border: 2px solid $polar_grey_5;
+    color: $polar_grey_5;
+  }
   .icon {
     display: unset;
     margin: 0;
@@ -18,6 +21,9 @@
   }
   a {
     color: $polar_grey_1;
+    :host-context(.night) & {
+      color: $polar_grey_4;
+    }
     &:hover {
       color: $cds_color_teal;
     }
