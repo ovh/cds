@@ -78,9 +78,34 @@ func LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(db gorp.SqlExecutor, groupID
 		WHERE
 			type = $1
 			OR type = $2
-			OR (type = $3 AND group_id = ANY(string_to_array($4, ',')::int[]))
+      OR (type = $3 AND group_id = ANY(string_to_array($4, ',')::int[]))
+    ORDER BY name
 	`).Args(
 		sdk.BuiltinAction, sdk.PluginAction, sdk.DefaultAction,
+		gorpmapping.IDsToQueryString(groupIDs),
+	)
+	return getAll(db, query, opts...)
+}
+
+// LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs returns all actions for given ids. Action should be
+// of type builtin, plugin or default. Default action should be in given group ids list.
+func LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db gorp.SqlExecutor, ids, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+	// children should be builtin, plugin or default with group matching
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM action
+    WHERE
+      id = ANY(string_to_array($1, ',')::int[])
+      AND (
+        type = $2
+        OR type = $3
+        OR (type = $4 AND group_id = ANY(string_to_array($5, ',')::int[]))
+      )
+  `).Args(
+		gorpmapping.IDsToQueryString(ids),
+		sdk.BuiltinAction,
+		sdk.PluginAction,
+		sdk.DefaultAction,
 		gorpmapping.IDsToQueryString(groupIDs),
 	)
 	return getAll(db, query, opts...)

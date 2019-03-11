@@ -9,6 +9,10 @@ import (
 
 // Insert given action and its components in database.
 func Insert(db gorp.SqlExecutor, a *sdk.Action) error {
+	if a.Type == sdk.DefaultAction {
+		a.Enabled = true
+	}
+
 	if err := insert(db, a); err != nil {
 		return err
 	}
@@ -45,6 +49,10 @@ func Insert(db gorp.SqlExecutor, a *sdk.Action) error {
 
 // Update given action and its components in database.
 func Update(db gorp.SqlExecutor, a *sdk.Action) error {
+	if a.Type == sdk.DefaultAction {
+		a.Enabled = true
+	}
+
 	if err := update(db, a); err != nil {
 		return err
 	}

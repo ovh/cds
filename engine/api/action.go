@@ -153,7 +153,6 @@ func (api *API) postActionHandler() service.Handler {
 
 		// only default action can be posted or updated
 		data.Type = sdk.DefaultAction
-		data.Enabled = true
 
 		// check that given children exists and can be used
 		if err := action.CheckChildrenForGroupIDs(tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
@@ -277,7 +276,6 @@ func (api *API) putActionHandler() service.Handler {
 		// only default action can be posted or updated
 		data.ID = old.ID
 		data.Type = sdk.DefaultAction
-		data.Enabled = true
 
 		// check that given children exists and can be used, and no loop exists
 		if err := action.CheckChildrenForGroupIDsWithLoop(tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -59,25 +58,10 @@ func CheckChildrenForGroupIDs(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int
 
 	childrenIDs := a.ToUniqueChildrenIDs()
 
-	// children should be builtin, plugin or default with group matching
-	query := gorpmapping.NewQuery(`
-  	SELECT *
-		FROM action
-		WHERE
-			id = ANY(string_to_array($1, ',')::int[])
-			AND (
-				type = $2
-				OR type = $3
-				OR (type = $4 AND group_id = ANY(string_to_array($5, ',')::int[]))
-			)
-	`).Args(
-		gorpmapping.IDsToQueryString(childrenIDs),
-		sdk.BuiltinAction,
-		sdk.PluginAction,
-		sdk.DefaultAction,
-		gorpmapping.IDsToQueryString(groupIDs),
-	)
-	children, err := getAll(db, query)
+	children, err := LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db, childrenIDs, groupIDs, LoadOptions.WithChildren)
+	if err != nil {
+		return err
+	}
 	if err != nil {
 		return err
 	}
@@ -103,25 +87,7 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 		}
 	}
 
-	// children should be builtin, plugin or default with group matching
-	query := gorpmapping.NewQuery(`
-		SELECT *
-		FROM action
-		WHERE
-			id = ANY(string_to_array($1, ',')::int[])
-			AND (
-				type = $2
-				OR type = $3
-				OR (type = $4 AND group_id = ANY(string_to_array($5, ',')::int[]))
-			)
-	`).Args(
-		gorpmapping.IDsToQueryString(childrenIDs),
-		sdk.BuiltinAction,
-		sdk.PluginAction,
-		sdk.DefaultAction,
-		gorpmapping.IDsToQueryString(groupIDs),
-	)
-	children, err := getAll(db, query)
+	children, err := LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db, childrenIDs, groupIDs, LoadOptions.WithChildren)
 	if err != nil {
 		return err
 	}
