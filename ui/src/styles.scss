@@ -3,500 +3,500 @@
 @import "common";
 html,
 body {
-  overflow-y: hidden;
+    overflow-y: hidden;
 }
 
 a.disabled {
-  color: gray;
-  cursor: not-allowed;
-  text-decoration: underline;
+    color: gray;
+    cursor: not-allowed;
+    text-decoration: underline;
 }
 
 a.disabled:hover {
-  color: gray;
-  cursor: not-allowed;
-  text-decoration: underline;
-  .content {
     color: gray;
-  }
+    cursor: not-allowed;
+    text-decoration: underline;
+    .content {
+        color: gray;
+    }
 }
 
 input[disabled] {
-  background-color: #efefef !important;
+    background-color: #efefef !important;
 }
 
 .right.floated {
-  float: right;
+    float: right;
 }
 
 .CodeMirror {
-  min-height: 40px;
-  height: auto;
-  border: 1px solid rgba(34, 36, 38, 0.14902);
-  border-radius: 4px;
+    min-height: 40px;
+    height: auto;
+    border: 1px solid rgba(34, 36, 38, 0.14902);
+    border-radius: 4px;
 }
 
 // Dragula mirror item  (append on body)
 .gu-mirror {
-  margin: 10px;
-  padding: 10px;
-  background-color: rgba(0, 0, 0, 0.2);
-  transition: opacity 0.4s ease-in-out;
+    margin: 10px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    transition: opacity 0.4s ease-in-out;
 }
 
 // Code mirror
 .CodeMirror-scroll {
-  text-align: left;
-  height: auto;
-  overflow: hidden !important;
+    text-align: left;
+    height: auto;
+    overflow: hidden !important;
 }
 
 .fullheight {
-  .CodeMirror {
-    height: 100% !important;
-  } // Code mirror
-  .CodeMirror-scroll {
-    height: 100% !important;
-    overflow: auto !important;
-  }
+    .CodeMirror {
+        height: 100% !important;
+    } // Code mirror
+    .CodeMirror-scroll {
+        height: 100% !important;
+        overflow: auto !important;
+    }
 }
 
 // Override semantic-ui to show warning in form
 .ui.form .warning.message,
 .ui.form .error.message {
-  display: inherit;
+    display: inherit;
 }
 
 .message {
-  overflow: hidden;
+    overflow: hidden;
 }
 
 // Override semantic-ui color to apply CDS theme
 .ui.popup {
-  padding: 10px;
-  margin: 0;
+    padding: 10px;
+    margin: 0;
 }
 
 $scrollbarsize: 10px;
 $scrollbarradius: 0px;
 body ::-webkit-scrollbar {
-  width: $scrollbarsize;
-  height: $scrollbarsize;
+    width: $scrollbarsize;
+    height: $scrollbarsize;
 }
 
 * ::-webkit-scrollbar {
-  width: $scrollbarsize;
-  height: $scrollbarsize;
+    width: $scrollbarsize;
+    height: $scrollbarsize;
 }
 
 body ::-webkit-scrollbar-thumb {
-  border-radius: $scrollbarradius;
+    border-radius: $scrollbarradius;
 }
 
 * ::-webkit-scrollbar-thumb {
-  border-radius: $scrollbarradius;
+    border-radius: $scrollbarradius;
 }
 
 // dropdown
 .ui.buttons {
-  sm-dropdown>.ui.dropdown:last-child .menu {
-    left: auto;
-    right: 0;
-  }
+    sm-dropdown>.ui.dropdown:last-child .menu {
+        left: auto;
+        right: 0;
+    }
 }
 
 .ui.selection.dropdown {
-  width: 100%;
-  min-width: 0px;
+    width: 100%;
+    min-width: 0px;
 }
 
 .ui.selection.classic.dropdown {
-  width: auto;
-  min-width: 14em;
+    width: auto;
+    min-width: 14em;
 }
 
 .ui.circular.labels .label,
 .ui.circular.label {
-  min-width: inherit;
-  min-height: inherit;
+    min-width: inherit;
+    min-height: inherit;
 }
 
 // icon
 .ui {
-  i.icon.blue {
-    color: $cds_color_teal !important;
-  }
-  i.icon.red {
-    color: $cds_color_red !important;
-  }
-  i.icon.green {
-    color: $cds_color_green !important;
-  }
+    i.icon.blue {
+        color: $cds_color_teal !important;
+    }
+    i.icon.red {
+        color: $cds_color_red !important;
+    }
+    i.icon.green {
+        color: $cds_color_green !important;
+    }
 }
 
 // Segment
 .ui.green.segment {
-  border-top-color: $cds_color_green !important;
+    border-top-color: $cds_color_green !important;
 }
 
 .ui.red.segment {
-  border-top-color: $cds_color_red !important;
+    border-top-color: $cds_color_red !important;
 }
 
 .ui.blue.segment {
-  border-top-color: $cds_color_teal !important;
+    border-top-color: $cds_color_teal !important;
 }
 
 // Button
 .ui.green.button {
-  background-color: $cds_color_green !important;
+    background-color: $cds_color_green !important;
 }
 
 .ui.green.basic.button {
-  background-color: transparent !important;
+    background-color: transparent !important;
 }
 
 .ui.green.button:active {
-  color: #000000;
+    color: #000000;
 }
 
 .ui.green.button.loading.disabled {
-  opacity: 0.8 !important;
+    opacity: 0.8 !important;
 }
 
 .ui.green.button.loading:after {
-  border-color: #000000 transparent transparent
+    border-color: #000000 transparent transparent
 }
 
 .ui.red.button {
-  background-color: $cds_color_red !important;
+    background-color: $cds_color_red !important;
 }
 
 .ui.red.basic.button {
-  background-color: transparent !important;
+    background-color: transparent !important;
 }
 
 .ui.red.button:active {
-  color: #000000;
+    color: #000000;
 }
 
 .ui.red.button.loading.disabled {
-  opacity: 0.8 !important;
+    opacity: 0.8 !important;
 }
 
 .ui.red.button.loading:after {
-  border-color: #000000 transparent transparent
+    border-color: #000000 transparent transparent
 }
 
 .ui.blue.button {
-  background-color: $cds_color_teal !important;
+    background-color: $cds_color_teal !important;
 }
 
 .ui.blue.basic.button {
-  background-color: transparent !important;
+    background-color: transparent !important;
 }
 
 .ui.blue.button:active {
-  color: #000000;
+    color: #000000;
 }
 
 // Column
 .centered.column {
-  text-align: center;
+    text-align: center;
 }
 
 .ui.grid {
-  .wide.twelve {
-    width: 75% !important;
-  }
-  .wide.sixteen {
-    width: 100% !important;
-  }
+    .wide.twelve {
+        width: 75% !important;
+    }
+    .wide.sixteen {
+        width: 100% !important;
+    }
 }
 
 // Ribbon
 .ui.green.ribbon {
-  background-color: $cds_color_green !important;
-  color: black !important;
+    background-color: $cds_color_green !important;
+    color: black !important;
 }
 
 .ui.red.ribbon {
-  background-color: $cds_color_red !important;
-  color: black !important;
+    background-color: $cds_color_red !important;
+    color: black !important;
 }
 
 .ui.blue.ribbon {
-  background-color: $cds_color_teal !important;
-  color: black !important;
+    background-color: $cds_color_teal !important;
+    color: black !important;
 }
 
 // Circular Label
 .ui.blue.circular.label {
-  background-color: $cds_color_teal !important;
+    background-color: $cds_color_teal !important;
 }
 
 // Loader
 .ui.blue.loader:after {
-  border-top-color: $cds_color_teal;
-  border-right-color: transparent;
-  border-bottom-color: transparent;
-  border-left-color: transparent;
+    border-top-color: $cds_color_teal;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
 }
 
 // Field
 .right.aligned.field {
-  text-align: right;
+    text-align: right;
 }
 
 // card
 .ui.card {
-  width: auto;
+    width: auto;
 }
 
 .ui.card>.content>.description {
-  overflow-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .inline {
-  display: inline;
+    display: inline;
 }
 
 // Modal
 .ui.modal.basic.warning {
-  font-size: 1.25em;
+    font-size: 1.25em;
 }
 
 // dropdown zindex
 .workflow.grid {
-  .dropdown.icon {
-    position: relative;
-    z-index: 11;
-    border: 1px solid #cac9c9;
-    border-radius: 3px;
-    padding: 5px;
-    height: 25px;
-  }
-  .dropdown.icon:active {
-    background-color: #cac9c9;
-    border-color: white;
-    color: white;
-  }
-  .menu.transition {
-    z-index: 13;
-  }
+    .dropdown.icon {
+        position: relative;
+        z-index: 11;
+        border: 1px solid #cac9c9;
+        border-radius: 3px;
+        padding: 5px;
+        height: 25px;
+    }
+    .dropdown.icon:active {
+        background-color: #cac9c9;
+        border-color: white;
+        color: white;
+    }
+    .menu.transition {
+        z-index: 13;
+    }
 }
 
 .pointing,
 .pointer {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 // Horizontal workflow style
 .tree.horizontal {
-  width: 100%;
+    width: 100%;
 }
 
 .tree.horizontal ul {
-  margin-top: 0;
-  display: inline-block;
-  vertical-align: top;
-  margin-left: -40px;
-  padding: 0 0 0 0;
+    margin-top: 0;
+    display: inline-block;
+    vertical-align: top;
+    margin-left: -40px;
+    padding: 0 0 0 0;
 }
 
 .tree.horizontal>li {
-  padding-left: 0px;
+    padding-left: 0px;
 }
 
 .tree.horizontal li {
-  list-style-type: none;
-  position: relative;
-  padding-left: 80px;
+    list-style-type: none;
+    position: relative;
+    padding-left: 80px;
 }
 
 .tree.horizontal li::before {
-  content: '';
-  position: absolute;
-  top: 46px;
-  left: 0px;
-  border-top: 4px solid $cds_trigger_color;
-  border-left: 4px solid $cds_trigger_color;
-  height: 100%;
-  width: 80px;
+    content: '';
+    position: absolute;
+    top: 46px;
+    left: 0px;
+    border-top: 4px solid $cds_trigger_color;
+    border-left: 4px solid $cds_trigger_color;
+    height: 100%;
+    width: 80px;
 }
 
 .tree.horizontal>li::before {
-  border: 0 none;
+    border: 0 none;
 }
 
 .tree.horizontal li:last-child::before {
-  border-left: 0 none;
+    border-left: 0 none;
 }
 
 .tree.horizontal>app-application-tree-workflow>ul>li::before {
-  border: 0 none;
+    border: 0 none;
 }
 
 // Vertical workflow style
 $verticalTreeHeightLine: 40px;
 .tree.vertical {
-  width: 100%;
-  padding-top: 8px;
+    width: 100%;
+    padding-top: 8px;
 }
 
 .tree.vertical ul {
-  margin: 0;
-  padding: $verticalTreeHeightLine 0 0 0;
-  position: relative;
+    margin: 0;
+    padding: $verticalTreeHeightLine 0 0 0;
+    position: relative;
 }
 
 .tree.vertical>app-application-tree-workflow>ul {
-  padding-top: 0px;
+    padding-top: 0px;
 }
 
 .tree.vertical li {
-  margin: 0;
-  list-style-type: none;
-  position: relative;
-  padding: $verticalTreeHeightLine 13px 0 13px;
-  display: inline-table;
-  text-align: center;
+    margin: 0;
+    list-style-type: none;
+    position: relative;
+    padding: $verticalTreeHeightLine 13px 0 13px;
+    display: inline-table;
+    text-align: center;
 }
 
 .tree.vertical li:only-child {
-  padding: $verticalTreeHeightLine 0 0 0;
+    padding: $verticalTreeHeightLine 0 0 0;
 }
 
 .tree.vertical li::before,
 .tree.vertical li::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 50%;
-  border-top: 4px solid $cds_trigger_color;
-  width: 50%;
-  height: $verticalTreeHeightLine;
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 50%;
+    border-top: 4px solid $cds_trigger_color;
+    width: 50%;
+    height: $verticalTreeHeightLine;
 }
 
 .tree.vertical li::after {
-  right: auto;
-  left: 50%;
-  border-left: 4px solid $cds_trigger_color;
+    right: auto;
+    left: 50%;
+    border-left: 4px solid $cds_trigger_color;
 }
 
 .tree.vertical li:only-child::after,
 .tree.vertical li:only-child::before {
-  display: none;
+    display: none;
 }
 
 .tree.vertical li:only-child {
-  padding-top: 0;
+    padding-top: 0;
 }
 
 .tree.vertical ul>li:last-child::before {
-  border-right: 4px solid $cds_trigger_color;
-  border-radius: 0 5px 0 0;
-  -webkit-border-radius: 0 5px 0 0;
-  -moz-border-radius: 0 5px 0 0;
+    border-right: 4px solid $cds_trigger_color;
+    border-radius: 0 5px 0 0;
+    -webkit-border-radius: 0 5px 0 0;
+    -moz-border-radius: 0 5px 0 0;
 }
 
 .tree.vertical>app-application-tree-workflow>ul>li {
-  width: 100%;
-  display: inherit;
+    width: 100%;
+    display: inherit;
 }
 
 .tree.vertical>app-application-tree-workflow>ul::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  border-left: 4px solid $cds_trigger_color;
-  width: 0;
-  height: $verticalTreeHeightLine;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-left: 4px solid $cds_trigger_color;
+    width: 0;
+    height: $verticalTreeHeightLine;
 }
 
 .tree.vertical ul ul::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  border-left: 4px solid $cds_trigger_color;
-  width: 0;
-  height: $verticalTreeHeightLine;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-left: 4px solid $cds_trigger_color;
+    width: 0;
+    height: $verticalTreeHeightLine;
 }
 
 .tree.vertical li:first-child::before,
 .tree.vertical li:last-child::after {
-  border: 0 none;
+    border: 0 none;
 }
 
 .tree.vertical>app-application-tree-workflow>ul::before,
 .tree.vertical>app-application-tree-workflow>ul>li::before,
 .tree.vertical>app-application-tree-workflow>ul>li::after {
-  border: 0 none;
+    border: 0 none;
 }
 
 .tree.vertical>app-application-tree-workflow>ul>li:last-child::before {
-  border: 0 none;
+    border: 0 none;
 }
 
 // Hierarchical workflow style
 .tree.hierarchical,
 .tree.hierarchical ul {
-  list-style-type: none;
-  margin-left: 10px;
-  padding: 0;
-  position: relative;
+    list-style-type: none;
+    margin-left: 10px;
+    padding: 0;
+    position: relative;
 }
 
 .tree.hierarchical li {
-  margin: 0;
-  padding: 0 12px 0 40px;
-  position: relative;
+    margin: 0;
+    padding: 0 12px 0 40px;
+    position: relative;
 }
 
 .tree.hierarchical ul li {
-  padding-top: 27px;
+    padding-top: 27px;
 }
 
 .tree.hierarchical li::before,
 .tree.hierarchical li::after {
-  content: '';
-  position: absolute;
-  left: 0;
+    content: '';
+    position: absolute;
+    left: 0;
 }
 
 /* horizontal line on inner list items */
 
 .tree.hierarchical li::before {
-  border-top: 4px solid $cds_trigger_color;
-  top: 58px;
-  width: 50px;
-  height: 0;
+    border-top: 4px solid $cds_trigger_color;
+    top: 58px;
+    width: 50px;
+    height: 0;
 }
 
 /* vertical line on list items */
 
 .tree.hierarchical li:after {
-  border-left: 4px solid $cds_trigger_color;
-  height: 100%;
-  width: 0px;
-  top: -10px;
+    border-left: 4px solid $cds_trigger_color;
+    height: 100%;
+    width: 0px;
+    top: -10px;
 }
 
 /* vertical line on list items */
 
 .tree.hierarchical li.last:after {
-  border-left: 4px solid $cds_trigger_color;
-  height: 58px;
-  width: 0px;
-  top: 0px;
+    border-left: 4px solid $cds_trigger_color;
+    height: 58px;
+    width: 0px;
+    top: 0px;
 }
 
 /* lower line on list items from the first level because they don't have parents */
 
 .tree.hierarchical>li::after {
-  top: 10px;
+    top: 10px;
 }
 
 /* hide line from the last of the first level list items */
@@ -504,153 +504,153 @@ $verticalTreeHeightLine: 40px;
 .tree.hierarchical>app-application-tree-workflow>ul>li::before,
 .tree.hierarchical>app-application-tree-workflow>ul>li::after,
 .tree.hierarchical>app-application-tree-workflow>ul>li.last::after {
-  border: 0 none;
+    border: 0 none;
 }
 
 .tree {
-  white-space: nowrap;
-  height: 100%;
+    white-space: nowrap;
+    height: 100%;
 }
 
 // Don't know why it's not working on navbar.scss
 .navbar {
-  .ui.dropdown {
-    background-color: transparent;
-    border-color: rgba(34, 36, 38, 0.35);
-    &.item {
-      i {
-        color: white;
-        opacity: 1;
-      }
+    .ui.dropdown {
+        background-color: transparent;
+        border-color: rgba(34, 36, 38, 0.35);
+        &.item {
+            i {
+                color: white;
+                opacity: 1;
+            }
+        }
     }
-  }
-  .ui.selection.dropdown {
-    color: rgba(191, 191, 191, 0.87);
-  }
-  .ui.right.dropdown {
-    border-bottom-left-radius: 0px;
-    border-top-left-radius: 0px;
-    border-left: none;
-  }
-  .ui.left.dropdown {
-    border-bottom-right-radius: 0px;
-    border-top-right-radius: 0px;
-  }
+    .ui.selection.dropdown {
+        color: rgba(191, 191, 191, 0.87);
+    }
+    .ui.right.dropdown {
+        border-bottom-left-radius: 0px;
+        border-top-left-radius: 0px;
+        border-left: none;
+    }
+    .ui.left.dropdown {
+        border-bottom-right-radius: 0px;
+        border-top-right-radius: 0px;
+    }
 }
 
 // Toast global settings
 .toast-top-right {
-  top: $navbarHeight + 10px;
+    top: $navbarHeight + 10px;
 }
 
 .ui.dropdown.nocaret {
-  .dropdown.icon {
-    display: none;
-  }
+    .dropdown.icon {
+        display: none;
+    }
 }
 
 // Hack navbar select language
 .ui.dropdown.languageSelect {
-  min-width: 1em;
-  border: none;
-  .dropdown.icon {
-    display: none;
-  }
-  padding-right: 1em;
-  >.text>.flag {
-    margin-right: 0em;
-  }
+    min-width: 1em;
+    border: none;
+    .dropdown.icon {
+        display: none;
+    }
+    padding-right: 1em;
+    >.text>.flag {
+        margin-right: 0em;
+    }
 }
 
 ngui-auto-complete {
-  height: 200px;
-  overflow-y: auto;
-  z-index: 10 !important;
+    height: 200px;
+    overflow-y: auto;
+    z-index: 10 !important;
 }
 
 ngui-auto-complete .no-match-found {
-  display: none;
-  border: none;
+    display: none;
+    border: none;
 }
 
 ;
 .node {
-  white-space: nowrap;
+    white-space: nowrap;
 }
 
 .node rect,
 .node circle {
-  fill: transparent;
+    fill: transparent;
 }
 
 .node ellipse {
-  stroke: #333;
-  fill: white;
-  stroke-width: 1.5px;
+    stroke: #333;
+    fill: white;
+    stroke-width: 1.5px;
 }
 
 .cluster rect,
 polygon {
-  stroke: #333;
-  fill: transparent;
-  fill-opacity: 0.1;
-  stroke-width: 1.5px;
+    stroke: #333;
+    fill: transparent;
+    fill-opacity: 0.1;
+    stroke-width: 1.5px;
 }
 
 .edgePath path.path {
-  stroke: #333;
-  stroke-width: 4px;
-  fill: none;
+    stroke: #333;
+    stroke-width: 4px;
+    fill: none;
 }
 
 foreignObject {
-  overflow: visible;
+    overflow: visible;
 }
 
 // Ovveride of ng2-semantic-ui
 sui-search {
-  .results {
-    margin-top: 1.5em !important;
-  }
-  .ui.input {
-    .prompt {
-      background-color: rgba(225, 226, 229, .1);
-      border-color: transparent;
-      &:focus {
-        border: 1.5px solid #50cfd9;
-      }
-      color: white;
-      opacity: 1;
+    .results {
+        margin-top: 1.5em !important;
     }
-    i {
-      &.search.icon {
-        opacity: 1;
-      }
-      color: white;
-      opacity: 1;
+    .ui.input {
+        .prompt {
+            background-color: rgba(225, 226, 229, .1);
+            border-color: transparent;
+            &:focus {
+                border: 1.5px solid #50cfd9;
+            }
+            color: white;
+            opacity: 1;
+        }
+        i {
+            &.search.icon {
+                opacity: 1;
+            }
+            color: white;
+            opacity: 1;
+        }
     }
-  }
 }
 
 .codeAdded {
-  background-color: #cdffd8;
+    background-color: #cdffd8;
 }
 
 .codeRemoved {
-  background-color: #ffeef0;
+    background-color: #ffeef0;
 }
 
 .wrapper {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .scrollview {
-  flex: 1;
+    flex: 1;
 }
 
 .buttonBreadcrumb {
-  position: relative;
-  top: -7px;
+    position: relative;
+    top: -7px;
 }

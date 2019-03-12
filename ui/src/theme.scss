@@ -1,0 +1,49 @@
+// This file contains all the overrides on semantic components required for CDS light and night theme.
+$darkBackground: #1b1c1d;
+$polar_grey_0: #333333;
+$polar_grey_1: #666666;
+$polar_grey_2: #6B6F7B;
+$polar_grey_3: #B5B7BD;
+$polar_grey_4: #E1E2E5;
+$polar_grey_5: #FCFCFC;
+$polar_grey_6: #212121;
+.night {
+    color: white;
+    background-color: $darkBackground;
+}
+
+.ui.card {
+    .night & {
+        background-color: $polar_grey_6;
+    }
+}
+
+.ui.selection.dropdown {
+    .night & {
+        background-color: $polar_grey_6;
+    }
+}
+
+.ui.menu .item {
+    .night & {
+        color: white;
+    }
+}
+
+.ui.secondary.pointing.menu .active.item {
+    .night & {
+        color: white;
+    }
+}
+
+.ui.breadcrumb .divider {
+    .night & {
+        color: white;
+    }
+}
+
+.ui.segment {
+    .night & {
+        background-color: $polar_grey_6;
+    }
+}
