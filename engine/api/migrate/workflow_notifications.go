@@ -24,7 +24,8 @@ func WorkflowNotifications(store cache.Store, DBFunc func() *gorp.DbMap) error {
 	log.Info("migrate>WorkflowNotifications> %d run to migrate", len(ids))
 	for _, id := range ids {
 		if err := migrateNotification(db, store, id); err != nil {
-			return err
+			log.Error("cannot migrate notification: %v", err)
+			continue
 		}
 	}
 
@@ -44,6 +45,9 @@ func migrateNotification(db *gorp.DbMap, store cache.Store, id int64) error {
 		project.LoadOptions.WithEnvironments,
 		project.LoadOptions.WithGroups,
 		project.LoadOptions.WithIntegrations)
+	if err != nil {
+		return err
+	}
 
 	wf, err := workflow.LoadAndLock(tx, id, store, proj, workflow.LoadOptions{}, nil)
 	if err != nil {
@@ -55,8 +59,7 @@ func migrateNotification(db *gorp.DbMap, store cache.Store, id int64) error {
 	}
 	for _, n := range wf.Notifications {
 		if err := workflow.InsertNotification(tx, wf, &n); err != nil {
-			log.Error("unable to migrate workflow notification %d/%d", wf.ID, n.ID)
-			continue
+			return sdk.WrapError(err, "unable to migrate workflow notification %d/%d", wf.ID, n.ID)
 		}
 	}
 

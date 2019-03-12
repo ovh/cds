@@ -17,7 +17,6 @@ func WorkflowRunOldModel(ctx context.Context, DBFunc func() *gorp.DbMap) error {
 	log.Info("migrate>WorkflowRunOldModel> Start migration")
 
 	for {
-		var ids []int64
 		ids, err := workflow.LoadRunIDsWithOldModel(db)
 		if err != nil {
 			return err
