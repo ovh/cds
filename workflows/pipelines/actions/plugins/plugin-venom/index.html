@@ -649,6 +649,11 @@
           <span>action</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/actionbuiltin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/actionbuiltin/">
+          <span>actionBuiltin</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/admin/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/admin/">
           <span>admin</span>
@@ -820,6 +825,23 @@
         <span>action</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/cli/cdsctl/action/builtin/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/">
+        <span>builtin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/action/builtin/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/builtin/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/cdsctl/action/delete/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/action/delete/">
           <span>delete</span>
@@ -2308,13 +2330,13 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>loglevel</strong>: Log Level: debug, info, warn or error</li>
-<li><strong>vars</strong>: Empty: all {{.cds&hellip;}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty</li>
-<li><strong>vars-from-file</strong>: filename.yaml or filename.json. See <a href="https://github.com/ovh/venom#run-venom-with-file-var">https://github.com/ovh/venom#run-venom-with-file-var</a></li>
 <li><strong>path</strong>: Path containers yml venom files. Format: adirectory/, ./<em>aTest.yml, ./foo/b</em>/*<em>/z</em>.yml</li>
 <li><strong>exclude</strong>: Exclude some files, one file per line</li>
 <li><strong>output</strong>: Directory where output xunit result file</li>
 <li><strong>parallel</strong>: Launch Test Suites in parallel. Enter here number of routines</li>
+<li><strong>loglevel</strong>: Log Level: debug, info, warn or error</li>
+<li><strong>vars</strong>: Empty: all {{.cds&hellip;}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty</li>
+<li><strong>vars-from-file</strong>: filename.yaml or filename.json. See <a href="https://github.com/ovh/venom#run-venom-with-file-var">https://github.com/ovh/venom#run-venom-with-file-var</a></li>
 </ul>
 
 

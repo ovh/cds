@@ -466,6 +466,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/actionbuiltin/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/keys/add/</loc>
   </url>
   
@@ -547,6 +551,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/action/builtin/</loc>
   </url>
   
   <url>
@@ -1014,6 +1022,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/action/builtin/list/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/action/list/</loc>
   </url>
   
@@ -1335,6 +1347,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/shell/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/action/builtin/show/</loc>
   </url>
   
   <url>

@@ -647,6 +647,11 @@
           <span>action</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/actionbuiltin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/actionbuiltin/">
+          <span>actionBuiltin</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/admin/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/admin/">
           <span>admin</span>
@@ -818,6 +823,23 @@
         <span>action</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/cli/cdsctl/action/builtin/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/">
+        <span>builtin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/action/builtin/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/builtin/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/cdsctl/action/delete/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/action/delete/">
           <span>delete</span>
@@ -2268,14 +2290,14 @@
 <ul>
 <li>
 <ul>
-<li><a href="#list-all-public-actions">List all public actions</a></li>
-<li><a href="#get-action-actionid-audit">GET <code>/action/&lt;actionID&gt;/audit</code></a></li>
-<li><a href="#get-action-actionname-using">GET <code>/action/&lt;actionName&gt;/using</code></a></li>
-<li><a href="#put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#get-action-permactionname-export">GET <code>/action/&lt;permActionName&gt;/export</code></a></li>
+<li><a href="#get-action">GET <code>/action</code></a></li>
+<li><a href="#post-action">POST <code>/action</code></a></li>
+<li><a href="#get-action-group-name-permactionname">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></a></li>
+<li><a href="#delete-action-group-name-permactionname">DELETE <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></a></li>
+<li><a href="#put-action-group-name-permactionname">PUT <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></a></li>
+<li><a href="#get-action-group-name-permactionname-audit">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/audit</code></a></li>
+<li><a href="#get-action-group-name-permactionname-export">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/export</code></a></li>
+<li><a href="#get-action-group-name-permactionname-usage">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/usage</code></a></li>
 <li><a href="#importaction-insert-or-update-an-existing-action">importAction insert OR update an existing action.</a></li>
 <li><a href="#get-action-requirement">GET <code>/action/requirement</code></a></li>
 </ul></li>
@@ -2301,7 +2323,7 @@
 
 
 
-<h3 id="list-all-public-actions">List all public actions</h3>
+<h3 id="get-action">GET <code>/action</code></h3>
 
 <table>
 <thead>
@@ -2329,97 +2351,13 @@
 </tbody>
 </table>
 
-<h3 id="get-action-actionid-audit">GET <code>/action/&lt;actionID&gt;/audit</code></h3>
+<h3 id="post-action">POST <code>/action</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/action/&lt;actionID&gt;/audit</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionAuditHandler%22">getActionAuditHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-action-actionname-using">GET <code>/action/&lt;actionName&gt;/using</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;actionName&gt;/using</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPipelinesUsingActionHandler%22">getPipelinesUsingActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22">updateActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
+<th><strong><code>/action</code></strong></th>
 </tr>
 </thead>
 
@@ -2436,46 +2374,18 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22">addActionHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postActionHandler%22">postActionHandler</a></td>
 </tr>
 </tbody>
 </table>
 
-<h3 id="delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></h3>
+<h3 id="get-action-group-name-permactionname">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
+<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></strong></th>
 </tr>
 </thead>
 
@@ -2497,13 +2407,97 @@
 </tbody>
 </table>
 
-<h3 id="get-action-permactionname-export">GET <code>/action/&lt;permActionName&gt;/export</code></h3>
+<h3 id="delete-action-group-name-permactionname">DELETE <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;/export</code></strong></th>
+<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-action-group-name-permactionname">PUT <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putActionHandler%22">putActionHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-action-group-name-permactionname-audit">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/audit</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/audit</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionAuditHandler%22">getActionAuditHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-action-group-name-permactionname-export">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/export</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/export</code></strong></th>
 </tr>
 </thead>
 
@@ -2521,6 +2515,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionExportHandler%22">getActionExportHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-action-group-name-permactionname-usage">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/usage</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/usage</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionUsageHandler%22">getActionUsageHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2543,7 +2565,7 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
+<td>Auth: true</td>
 </tr>
 
 <tr>
@@ -2600,7 +2622,7 @@
 
     <div id="navigation">
         <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/api/accesstoken/" title="accesstoken"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/admin/" title="admin" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/actionbuiltin/" title="actionBuiltin" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

@@ -649,6 +649,11 @@
           <span>action</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/actionbuiltin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/actionbuiltin/">
+          <span>actionBuiltin</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/admin/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/admin/">
           <span>admin</span>
@@ -820,6 +825,23 @@
         <span>action</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/cli/cdsctl/action/builtin/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/">
+        <span>builtin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/action/builtin/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/builtin/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/builtin/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/cdsctl/action/delete/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/action/delete/">
           <span>delete</span>
@@ -2308,20 +2330,15 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>insecureSkipVerify</strong>: Skip SSL Verify if you want to use self-signed certificate</li>
+<li><strong>timeout</strong>: Marathon deployment timeout (seconds). Used only if &ldquo;waitForDeployment&rdquo; is true.</li>
+<li><strong>url</strong>: Marathon URL <a href="http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083">http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083</a></li>
+<li><strong>user</strong>: Marathon User (please use project, application or environment variables)</li>
 <li><strong>password</strong>: Marathon Password (please use project, application or environment variables)</li>
 <li><strong>configuration</strong>: Marathon application configuration file (json format)</li>
-
-<li><p><strong>waitForDeployment</strong>: Wait for instances deployment.
+<li><strong>waitForDeployment</strong>: Wait for instances deployment.
 If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result.
-If not set, CDS will consider a successful result if marathon accepts the provided configuration.</p></li>
-
-<li><p><strong>insecureSkipVerify</strong>: Skip SSL Verify if you want to use self-signed certificate</p></li>
-
-<li><p><strong>timeout</strong>: Marathon deployment timeout (seconds). Used only if &ldquo;waitForDeployment&rdquo; is true.</p></li>
-
-<li><p><strong>url</strong>: Marathon URL <a href="http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083">http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083</a></p></li>
-
-<li><p><strong>user</strong>: Marathon User (please use project, application or environment variables)</p></li>
+If not set, CDS will consider a successful result if marathon accepts the provided configuration.</li>
 </ul>
 
 
