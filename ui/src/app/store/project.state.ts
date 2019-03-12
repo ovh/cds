@@ -309,6 +309,23 @@ export class ProjectState {
 
 
     //  ------- Label --------- //
+    @Action(ProjectAction.SaveLabelsInProject)
+    saveLabels(ctx: StateContext<ProjectStateModel>, action: ProjectAction.SaveLabelsInProject) {
+        const state = ctx.getState();
+        return this._http.put<Project>(
+            '/project/' + action.payload.projectKey + '/labels',
+            action.payload.labels
+        ).pipe(tap((proj: Project) => {
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{
+                    workflow_names: proj.workflow_names,
+                    labels: proj.labels
+                }),
+            });
+        }));
+    }
+
     @Action(ProjectAction.AddLabelWorkflowInProject)
     addLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddLabelWorkflowInProject) {
         const state = ctx.getState();

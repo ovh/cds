@@ -141,6 +141,10 @@ export class DeleteGroupInProject {
 }
 
 //  ------- Label --------- //
+export class SaveLabelsInProject {
+    static readonly type = '[Project] Save Labels in Project';
+    constructor(public payload: { projectKey: string, labels: Label[] }) { }
+}
 export class AddLabelInProject {
     static readonly type = '[Project] Add Label in Project';
     constructor(public payload: { projectKey: string, label: Label }) { }
