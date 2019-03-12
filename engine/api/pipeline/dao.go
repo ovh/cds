@@ -26,3 +26,8 @@ func deletePipelineActionsByIDs(db gorp.SqlExecutor, ids []int64) error {
 	)
 	return sdk.WithStack(err)
 }
+
+func deletePipelineActionByActionID(db gorp.SqlExecutor, actionID int64) error {
+	_, err := db.Exec("DELETE FROM pipeline_action WHERE action_id = $1", actionID)
+	return sdk.WithStack(err)
+}

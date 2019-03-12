@@ -20,11 +20,16 @@ func DeletePipelineActionByStage(db gorp.SqlExecutor, stageID int64) error {
 	}
 
 	actionIDs := pipelineActionsToActionIDs(pas)
+
+	if err := deletePipelineActionsByIDs(db, pipelineActionsToIDs(pas)); err != nil {
+		return err
+	}
+
 	if err := action.DeleteAllTypeJoinedByIDs(db, actionIDs); err != nil {
 		return err
 	}
 
-	return deletePipelineActionsByIDs(db, pipelineActionsToIDs(pas))
+	return nil
 }
 
 // InsertJob  Insert a new Job ( pipeline_action + joinedAction )
@@ -85,7 +90,7 @@ func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
 
 // DeleteJob Delete a job ( action + pipeline_action )
 func DeleteJob(db gorp.SqlExecutor, job sdk.Job) error {
-	if err := DeletePipelineActionByActionID(db, job.Action.ID); err != nil {
+	if err := deletePipelineActionByActionID(db, job.Action.ID); err != nil {
 		return err
 	}
 	return action.DeleteTypeJoinedByID(db, job.Action.ID)
@@ -95,13 +100,6 @@ func DeleteJob(db gorp.SqlExecutor, job sdk.Job) error {
 func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$3 WHERE id=$4`
 	_, err := db.Exec(query, job.Action.ID, job.PipelineStageID, job.Enabled, job.PipelineActionID)
-	return sdk.WithStack(err)
-}
-
-// DeletePipelineActionByActionID removes a pipeline_action from database for given action id.
-func DeletePipelineActionByActionID(db gorp.SqlExecutor, actionID int64) error {
-	query := `DELETE FROM pipeline_action WHERE action_id = $1`
-	_, err := db.Exec(query, actionID)
 	return sdk.WithStack(err)
 }
 

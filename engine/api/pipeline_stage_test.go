@@ -490,7 +490,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	test.NoError(t, err)
 }
 
-func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
+func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
