@@ -5,17 +5,36 @@ $head-submenu-height: 44px
   ul.global-nav
     display: inline-block
 
+    li
+      display: inline-block
+      margin-right: 14px
+
   #headSubMenu
     height: $head-submenu-height
     line-height: $head-submenu-height
 
   #home
     #hero
+      padding-top: 120px;
+
       #headSubMenu
         display: block
 
+  .nav-buttons
+    float: right
+    margin-top: -100px
+    padding-right: 86px
+    font-size: 1rem;
+    
+  #tocburger
+    display: none
+
   #docs
     #hero
+      padding-top: 120px
+      
+      
+      
       h1, h5
         text-align: left
 
@@ -47,6 +66,7 @@ $head-submenu-height: 44px
     left: 0
     width: 350px
     z-index: auto
+    display: block
 
   #docsContent
     width: calc(100% - 400px)
@@ -174,27 +194,8 @@ $head-submenu-height: 44px
     main
       padding: 20px 0
 
-  #searchbox
-    display: none
-
-  .fa-search
-    cursor: pointer    
-
   #search
-    background-color: transparent
-    padding: 10px
-    font-size: 16px
-    font-weight: 100
-    color: white
-    border: 1px solid white
-    transition: 0.3s
-    width: 100%
-    top: -30px;
-    position: relative;
-
-    &:focus
-      background-color: $light-grey
-      color: $dark-grey
+    top: 20px;
 
 @media screen and (min-width: 1300px)
   #headSubMenu

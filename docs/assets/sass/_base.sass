@@ -64,6 +64,14 @@ header
 .nav-buttons
   height: $header-height
   line-height: $header-height
+  float: none
+  padding-right: 0px
+  line-height: 20px;
+  padding-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 30px;
+  background-color: #333;
+  font-size: 1.2rem;
 
   .button + *
     margin-left: 30px
@@ -90,9 +98,6 @@ header
     height: 50px
     line-height: 50px
     font-size: 18px
-
-#hero
-  padding-top: 120px
 
 #docs
   #hero
@@ -202,7 +207,6 @@ header
   top: -26px
   left: 0
   transform: none
-  background-image: url(/images/logo-background.png)
   background-size: contain
   background-position: center center
   background-repeat: no-repeat
@@ -215,12 +219,7 @@ header
     transform: translate(-50%, -50%)
     display: block
     width: 45px
-    height: 44px
-
-.nav-buttons
-  float: right
-  margin-top: -115px
-  padding-right: 86px
+    height: 44px  
 
 #mainNav
   h5
@@ -242,7 +241,7 @@ header
       text-decoration: none
 
 ul.global-nav
-  display: none
+  display: block
 
   li
     display: inline-block
@@ -285,6 +284,15 @@ ul.global-nav
   li:hover
     ul
       display: block
+
+#tocburger
+  display: block
+  position: absolute
+  float: left
+  left: 10px;
+  top: 10px;
+  font-size: 2.25rem
+  
 
 #hero
   background-color: $dark-grey
@@ -332,6 +340,28 @@ footer
 section
   background-color: white
 
+#searchbox
+  display: none
+
+.fa-search
+  cursor: pointer    
+
+#search
+  background-color: transparent
+  padding: 10px
+  font-size: 16px
+  font-weight: 100
+  color: white
+  border: 1px solid white
+  transition: 0.3s
+  width: 100%
+  top: 10px;
+  position: relative;
+
+  &:focus
+    background-color: $light-grey
+    color: $dark-grey
+    
 #hero
   background-color: $dark-grey
 
@@ -348,6 +378,7 @@ section
   li
     display: inline-block
     height: 100%
+    font-size: .85rem;
 
   a
     display: block
@@ -388,12 +419,13 @@ section
   background-color: white
   top: 0
   left: 0
-  width: 0
+  width: 80%
   height: 100vh
   overflow: hidden
   padding: 50px 0
   z-index: 999999
   transition: 0.3s
+  display: none
 
   .menuSelected
     & > .title
