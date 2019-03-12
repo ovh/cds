@@ -1548,8 +1548,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		log.Debug("Push> Parsing %s", filename)
 		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: opts.FromRepository})
 		if err != nil {
-			err = fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)
-			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
+			return nil, nil, sdk.NewErrorWithStack(err, sdk.NewError(sdk.ErrWrongRequest,
+				fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)))
 		}
 		allMsg = append(allMsg, msgList...)
 

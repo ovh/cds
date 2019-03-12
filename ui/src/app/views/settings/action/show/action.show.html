@@ -1,0 +1,34 @@
+<div class="wrapper">
+    <app-breadcrumb [path]="path"></app-breadcrumb>
+    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+    <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
+        <div *ngSwitchCase="'action'" class="ui grid">
+            <div class="thirteen wide column">
+                <app-action [action]="action" [edit]="false"></app-action>
+            </div>
+            <div class="three wide column">
+                <app-action-help></app-action-help>
+                <ng-container *ngIf="action">
+                    <br />
+                    <div class="field" *ngIf="action.first_audit">
+                        <h3>{{ "common_created_by" | translate }}</h3>
+                        {{ action.first_audit.triggered_by }}
+                    </div>
+                    <br />
+                    <div class="field" *ngIf="action.last_audit">
+                        <h3>{{ "common_last_modified" | translate }}</h3>
+                        {{ action.last_audit.created }}
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+        <div *ngSwitchCase="'usage'" class="ui grid">
+            <div class="sixteen wide column">
+                <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
+                <ng-container *ngIf="!loadingUsage">
+                    <app-action-usage [usage]="usage"></app-action-usage>
+                </ng-container>
+            </div>
+        </div>
+    </app-scrollview>
+</div>

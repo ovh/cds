@@ -1,4 +1,4 @@
-import { Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -27,7 +27,7 @@ import { WorkflowSaveAsCodeComponent } from '../../shared/workflow/modal/save-as
     styleUrls: ['./workflow.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowComponent implements OnInit {
+export class WorkflowComponent {
     @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
@@ -183,10 +183,6 @@ export class WorkflowComponent implements OnInit {
         // Mode of sidebar
         this.sideBarModeSubscription = this._sidebarStore.sidebarMode()
             .subscribe(m => this.sidebarMode = m);
-    }
-
-    ngOnInit() {
-
     }
 
     updateFav() {

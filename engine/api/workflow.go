@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -97,7 +96,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 					return err
 				}
 				if w1.TemplateInstance.Template != nil {
-					if err := group.AggregateOnWorkflowTemplate(api.mustDB(), w1.TemplateInstance.Template); err != nil {
+					if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), w1.TemplateInstance.Template); err != nil {
 						return err
 					}
 					w1.FromTemplate = fmt.Sprintf("%s/%s", w1.TemplateInstance.Template.Group.Name, w1.TemplateInstance.Template.Slug)

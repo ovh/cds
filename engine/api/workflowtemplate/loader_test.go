@@ -1,13 +1,11 @@
-package group_test
+package workflowtemplate
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAggregateOnWorkflowTemplate(t *testing.T) {
@@ -28,7 +26,7 @@ func TestAggregateOnWorkflowTemplate(t *testing.T) {
 		{GroupID: 2},
 	}
 
-	assert.Nil(t, group.AggregateOnWorkflowTemplate(db, wts...))
+	assert.Nil(t, AggregateOnWorkflowTemplate(db, wts...))
 
 	assert.NotNil(t, wts[0].Group)
 	assert.Equal(t, "grp-1", wts[0].Group.Name)

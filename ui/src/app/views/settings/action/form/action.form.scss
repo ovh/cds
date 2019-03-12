@@ -1,0 +1,71 @@
+@import '../../../../../common';
+.requirementForm {
+  margin-top: 10px;
+  h3 {
+    margin-top: 10px;
+  }
+}
+
+.mt10 {
+  margin-top: 10px;
+}
+
+.paramName {
+  font-weight: 600;
+}
+
+.dragula-container {
+  .gu-transit {
+    opacity: 0.3;
+  }
+  .step.off {
+    border-radius: 3px;
+    background-color: rgba(189, 189, 189, 0.3);
+  }
+  .step hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+}
+
+.inline.field input {
+  width: 80%;
+}
+
+.inline.field textarea {
+  width: 80%;
+}
+
+.labelPadding {
+  padding-top: 8px;
+}
+
+.subtitle {
+  height: 40px;
+  line-height: 40px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  vertical-align: middle;
+}
+
+.ui.segment.off {
+  background-color: rgba(189, 189, 189, 0.3);
+  .step.off {
+    background-color: transparent;
+  }
+}
+
+.bottomBtnsWrapper {
+  background-color: #f9f9f9;
+  position: fixed;
+  bottom: 0;
+  z-index: 30;
+  right: 0;
+  width: 430px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  .column {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+}

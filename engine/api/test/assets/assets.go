@@ -16,6 +16,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -356,4 +357,31 @@ func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u
 
 	xsrf := accesstoken.StoreXSRFToken(store, token)
 	return jwt, xsrf, err
+}
+
+// GetBuiltinOrPluginActionByName returns a builtin or plugin action for given name if exists.
+func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Action {
+	a, err := action.LoadByTypesAndName(db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
+		action.LoadOptions.WithRequirements,
+		action.LoadOptions.WithParameters,
+		action.LoadOptions.WithGroup,
+	)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if a == nil {
+		t.Errorf("cannot find builtin or plugin action with name %s", name)
+		t.FailNow()
+	}
+	return a
+}
+
+// NewAction returns an enabled action.
+func NewAction(id int64, ps ...sdk.Parameter) sdk.Action {
+	return sdk.Action{
+		ID:         id,
+		Enabled:    true,
+		Parameters: ps,
+	}
 }

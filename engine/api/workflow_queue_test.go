@@ -65,6 +65,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
@@ -74,7 +76,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Action: sdk.Action{
 			Enabled: true,
 			Actions: []sdk.Action{
-				sdk.NewScriptAction("echo lol"),
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}
@@ -881,21 +883,16 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	assert.NoError(t, pipeline.InsertStage(db, &s))
 
+	// get script action
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	j := sdk.Job{
 		Enabled:         true,
 		PipelineStageID: s.ID,
 		Action: sdk.Action{
 			Name: "script",
 			Actions: []sdk.Action{
-				{
-					Name: "Script",
-					Parameters: []sdk.Parameter{
-						{
-							Name:  "script",
-							Value: "echo lol",
-						},
-					},
-				},
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}
@@ -1026,21 +1023,16 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 
 	assert.NoError(t, pipeline.InsertStage(db, &s))
 
+	// get script action
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	j := sdk.Job{
 		Enabled:         true,
 		PipelineStageID: s.ID,
 		Action: sdk.Action{
 			Name: "script",
 			Actions: []sdk.Action{
-				{
-					Name: "Script",
-					Parameters: []sdk.Parameter{
-						{
-							Name:  "script",
-							Value: "echo lol",
-						},
-					},
-				},
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}

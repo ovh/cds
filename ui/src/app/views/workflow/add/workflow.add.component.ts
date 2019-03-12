@@ -150,8 +150,25 @@ workflow:
         if (!query || query.length < 3) {
             return options.slice(0, 100);
         }
-        let results = options.filter(repo => repo.fullname.toLowerCase().indexOf(query.toLowerCase()) !== -1);
-        return results;
+        let lowerQuery = query.toLowerCase();
+        return options.filter(repo => repo.fullname.toLowerCase().indexOf(lowerQuery) !== -1);
+    }
+
+    filterTemplate(options: Array<WorkflowTemplate>, query: string): Array<WorkflowTemplate> | false {
+        if (!options) {
+            return false;
+        }
+        if (!query) {
+            return options.sort();
+        }
+
+        let lowerQuery = query.toLowerCase();
+        return options.filter(wt => {
+            return wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1;
+        }).sort();
     }
 
     createWorkflowFromRepo() {

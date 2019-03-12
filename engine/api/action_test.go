@@ -8,8 +8,10 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,9 +22,19 @@ func Test_getActionExportHandler(t *testing.T) {
 
 	u, pass := assets.InsertAdminUser(db)
 
+	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	err := action.Insert(db, &sdk.Action{
+		GroupID: &grp.ID,
+		Type:    sdk.DefaultAction,
+		Name:    "myAction",
+	})
+	assert.NoError(t, err)
+
 	//Prepare request
 	vars := map[string]string{
-		"permActionName": "GitClone",
+		"groupName":      grp.Name,
+		"permActionName": "myAction",
 	}
 	uri := api.Router.GetRoute("GET", api.getActionExportHandler, vars)
 	test.NotEmpty(t, uri)
