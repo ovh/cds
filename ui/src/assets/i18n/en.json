@@ -41,6 +41,8 @@
   "action_usage_warning_action": "The parent action will not be able to run this action because they are not in the same group.",
   "action_custom": "Custom",
   "action_builtin": "Builtin",
+  "action_btn_init_from_job": "Init a new action from job",
+  "action_help_add_from": "Current action was initialized with data from \"{{jobName}}\" job of \"{{pipelineName}}\" pipeline in \"{{projectKey}}\" project. The data will not be stored until you save the action.",
 
   "admin_migration_not_started": "Not started",
   "admin_migration_started": "Started",
@@ -468,7 +470,6 @@
   "home_title": "Welcome to CDS",
 
   "job_add_step": "Add a step",
-  "job_add_step_final": "Add a final step",
   "job_delete": "Delete job",
   "job_save": "Save job",
   "job_spawn_title": "Information",
@@ -1122,7 +1123,7 @@
   "workflow_template_detach": "Detach",
   "workflow_template_apply_detach": "Detach the generated workflow from the template.",
   "workflow_template_init_from_workflow": "Init a template",
-  "workflow_template_help_add_from": "Current workflow template was initialized with data from {{workflowName}} workflow in {{projectKey}} project. The data will not be stored until you save the template.",
+  "workflow_template_help_add_from": "Current workflow template was initialized with data from \"{{workflowName}}\" workflow in \"{{projectKey}}\" project. The data will not be stored until you save the template.",
   "workflow_template_help_edit_from": "Current workflow template is synchronized from URL. You can't edit it.",
   "workflow_template_import_from_url": "Import from URL",
   "workflow_template_imported_from_url": "Imported from URL",

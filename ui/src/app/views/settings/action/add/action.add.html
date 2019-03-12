@@ -3,7 +3,11 @@
     <app-scrollview class="scrollview">
         <div class="ui grid">
             <div class="thirteen wide column">
-                <app-action-form [groups]="groups" [action]="action" (save)="actionSave($event)" [loading]="loading"></app-action-form>
+                <div *ngIf="job" class="ui blue message">
+                    {{'action_help_add_from' | translate: {projectKey: projectKey, pipelineName: pipeline.name, jobName: job.action.name} }}
+                </div>
+                <app-action-form [groups]="groups" [action]="action" (save)="actionSave($event)" [loading]="loading">
+                </app-action-form>
             </div>
             <div class="three wide column">
                 <app-action-help></app-action-help>
