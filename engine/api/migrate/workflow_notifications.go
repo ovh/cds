@@ -4,6 +4,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -38,7 +39,13 @@ func migrateNotification(db *gorp.DbMap, store cache.Store, id int64) error {
 	}
 	defer tx.Rollback() // nolint
 
-	wf, err := workflow.LoadAndLock(tx, id, store, &sdk.Project{}, workflow.LoadOptions{}, nil)
+	proj, err := project.LoadProjectByWorkflowID(db, store, nil, id, project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+		project.LoadOptions.WithIntegrations)
+
+	wf, err := workflow.LoadAndLock(tx, id, store, proj, workflow.LoadOptions{}, nil)
 	if err != nil {
 		return err
 	}
