@@ -85,6 +85,9 @@ func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
 
 // DeleteJob Delete a job ( action + pipeline_action )
 func DeleteJob(db gorp.SqlExecutor, job sdk.Job) error {
+	if err := DeletePipelineActionByActionID(db, job.Action.ID); err != nil {
+		return err
+	}
 	return action.DeleteTypeJoinedByID(db, job.Action.ID)
 }
 
@@ -95,11 +98,10 @@ func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 	return sdk.WithStack(err)
 }
 
-// DeletePipelineAction Delete an action in a pipeline
-func DeletePipelineAction(db gorp.SqlExecutor, pipelineActionID int64) error {
-	// Delete pipelineAction by buildOrder
-	query := `DELETE FROM pipeline_action WHERE id = $1`
-	_, err := db.Exec(query, pipelineActionID)
+// DeletePipelineActionByActionID removes a pipeline_action from database for given action id.
+func DeletePipelineActionByActionID(db gorp.SqlExecutor, actionID int64) error {
+	query := `DELETE FROM pipeline_action WHERE action_id = $1`
+	_, err := db.Exec(query, actionID)
 	return sdk.WithStack(err)
 }
 

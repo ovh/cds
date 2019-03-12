@@ -27,15 +27,11 @@ ALTER TABLE "action" ALTER COLUMN "description" SET NOT NULL;
 ALTER TABLE action_parameter DROP CONSTRAINT IF EXISTS "fk_action_parameter_action";
 ALTER TABLE action_requirement DROP CONSTRAINT IF EXISTS "fk_action_requirement_action";
 ALTER TABLE action_edge DROP CONSTRAINT IF EXISTS "fk_action_edge_parent_action";
-ALTER TABLE action_edge DROP CONSTRAINT IF EXISTS "fk_action_edge_child_action";
 ALTER TABLE action_edge_parameter DROP CONSTRAINT IF EXISTS "fk_action_edge_parameter_action_edge";
-ALTER TABLE pipeline_action DROP CONSTRAINT IF EXISTS "fk_pipeline_action_action";
 SELECT create_foreign_key_idx_cascade('FK_ACTION_PARAMETER_ACTION', 'action_parameter', 'action', 'action_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_REQUIREMENT_ACTION', 'action_requirement', 'action', 'action_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_PARENT_ACTION', 'action_edge', 'action', 'parent_id', 'id');
-SELECT create_foreign_key('FK_ACTION_EDGE_CHILD_ACTION', 'action_edge', 'action', 'child_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_PARAMETER_ACTION_EDGE', 'action_edge_parameter', 'action_edge', 'action_edge_id', 'id');
-SELECT create_foreign_key('FK_PIPELINE_ACTION_ACTION', 'pipeline_action', 'action', 'action_id', 'id');
 
 -- change type for column name and type and add indexes (usefull to check if action exists)
 ALTER TABLE "action" ALTER COLUMN "name" TYPE VARCHAR(100) USING "name"::VARCHAR(100);
@@ -83,12 +79,10 @@ ALTER TABLE action_parameter DROP CONSTRAINT "fk_action_parameter_action";
 ALTER TABLE action_requirement DROP CONSTRAINT "fk_action_requirement_action";
 ALTER TABLE action_edge DROP CONSTRAINT "fk_action_edge_parent_action";
 ALTER TABLE action_edge_parameter DROP CONSTRAINT "fk_action_edge_parameter_action_edge";
-ALTER TABLE pipeline_action DROP CONSTRAINT "fk_pipeline_action_action";
 select create_foreign_key('FK_ACTION_PARAMETER_ACTION', 'action_parameter', 'action', 'action_id', 'id');
 select create_foreign_key('FK_ACTION_REQUIREMENT_ACTION', 'action_requirement', 'action', 'action_id', 'id');
 select create_foreign_key('FK_ACTION_EDGE_PARENT_ACTION', 'action_edge', 'action', 'parent_id', 'id');
 select create_foreign_key('FK_ACTION_EDGE_PARAMETER_ACTION_EDGE', 'action_edge_parameter', 'action_edge', 'action_edge_id', 'id');
-select create_foreign_key('FK_PIPELINE_ACTION_ACTION', 'pipeline_action', 'action', 'action_id', 'id');
 
 -- restore type for column name and type and remove indexes
 ALTER TABLE "action" ALTER COLUMN "name" TYPE TEXT USING "name"::TEXT;
