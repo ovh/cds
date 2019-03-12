@@ -120,10 +120,10 @@ section, header, footer
 
     .land
       height: 650px
-      margin-left: 200px
-      margin-right: 200px
       margin-bottom: 0px
       text-align: center
+      img
+        max-width: 80%
 
       h3
         padding-top: 20px
@@ -372,7 +372,7 @@ section
 
 #page-content
   .asciinema-terminal .line span
-    font-family: Consolas, Menlo, 'Bitstream Vera Sans Mono', monospace, 'Powerline Symbols';  
+    font-family: Consolas, Menlo, 'Bitstream Vera Sans Mono', monospace, 'Powerline Symbols'  
 
 #page-content-with-menu
   position: relative
@@ -550,7 +550,7 @@ dd
     padding: 0
 
   .asciinema-terminal .line span
-    font-family: Consolas, Menlo, 'Bitstream Vera Sans Mono', monospace, 'Powerline Symbols';
+    font-family: Consolas, Menlo, 'Bitstream Vera Sans Mono', monospace, 'Powerline Symbols'
 
   .asciinema-player-wrapper
     pre
@@ -697,10 +697,10 @@ $feature-box-div-margin-bottom: 40px
 
   .content
     display: inline-block
-    width: 75%;
+    width: 100%
 
   .image-wrapper
-    max-width: 75%
+    max-width: 20%
     margin: 0 auto 20px
     text-align: center
 
@@ -713,78 +713,76 @@ $feature-box-div-margin-bottom: 40px
 
 #home-contribution
   font-size: 1.2rem
-  background-color: #fff;
-  padding-top: 200px;
-  padding-bottom: 200px;
-  padding-left: 30px
-  padding-right: 30px
+  background-color: #fff
+  padding-top: 20px
+  padding-bottom: 20px
   vertical-align: top
   text-align: center
   color: #000
-  
+
   h4
     color: #de3e7b
+    padding-top: 20px
 
   div:first-child
-    display: inline-block;
-    vertical-align: top;
+    vertical-align: top
     width: 100%
+    text-align: center
 
   div
-    display: inline-block;
-    vertical-align: top;
-    width: 31%
+    vertical-align: top
+    width: 100%
 
     p
       padding-top: 10px
       font-size: 1.2rem
 
-
-
 #intuitiveui
+  text-align: center
   font-size: 1.2rem
-  background-color: #92c455;
-  padding-top: 100px;
-  padding-bottom: 140px;
-  padding-left: 10%
-  padding-right: 5%
+  background-color: #92c455
+  padding-top: 70px
+  padding-bottom: 100px
   
-  div:first-child
-    width: 60%
-
   div
-    display: inline-block;
+    display: inline-block
     color: #fff
-    vertical-align: top;
-    width: 30%
+    vertical-align: top
+    width: 100%
+    text-align: center
     
     h2
-      color: black  
+      color: black
+      text-align: center
       padding-bottom: 50px
 
 #powerfulcli
   font-size: 1.2rem
-  background-color: #fff;
-  padding-top: 100px;
-  padding-bottom: 140px;
-  padding-left: 10%
-  padding-right: 5%
+  background-color: #fff
+  padding-bottom: 20px
+  text-align: center
   
   .section-text
-    width: 45%
+    width: 100%
     padding-right: 10%
 
     h2
-      color: black  
-      padding-bottom: 50px
+      color: black
+      text-align: center
+      padding-bottom: 0px
+  
+  .player
+    width: 100%
+    max-width: 100%
+    
 
   div
-    display: inline-block;
-    vertical-align: top;
+    display: grid
+    vertical-align: top
 
 #matrix-home
   h2
-    color:#fff
+    color:#eee
     padding-top: 40px
 
   background-color: #de3e7bad
@@ -792,33 +790,55 @@ $feature-box-div-margin-bottom: 40px
 
   table
     border: 0
+    border: 1px solid #de3e7b
+    th:first-child
+      width: 5%
+      text-align: left
     th
-      font-size: 1.2rem
-      color: #fff
-      background-color: #941d4b
+      width: 10%
+      text-align: center
+      font-size: 0.5rem
+      color: #eee
+      background-color: #de3e7b
 
     tr:nth-child(odd)
-      background-color: #de3e7bad
+      background-color: #e882a8
       
     tr:nth-child(even)
-      background-color: #de3e7b;  
+      background-color: #e882a8
+
+    tr
+      td
+        font-size: 0.5rem
+        text-align: center
+        border-bottom: 1px solid
+        border-bottom-color: #de3e7b
     
     .fa-times
-      font-size: 2rem
-      color: #dddd
+      font-size: 1rem
+      color: #eee
 
     .fa-check
-      font-size: 2rem
+      font-size: 1rem
       color: #8bcb16
 
     td:first-child
+      text-align: left
       a
-        font-size: 1.2rem
-        color: #eeee
+        font-size: 0.5rem
+        color: #eee
     td
+      sub
+        position: absolute
+        margin-left: 5px
+        a
+          text-decoration: none
+        
       a
-        font-size: 0.9rem
-        color: #eeee
+        font-size: 0.5rem
+        color: #eee
+        text-decoration: underline
+        
 
 .page
   display: flex
