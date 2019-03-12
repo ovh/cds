@@ -29,12 +29,6 @@ jQuery(document).ready(function () {
     var CSS_BROWSER_HACK_DELAY = 25;
 
     $(document).ready(function(){
-        if (navigator.userAgent.indexOf('Chrome') == -1 && navigator.userAgent.indexOf('Safari') != -1){
-            var hackStyle = newElement('style');
-            hackStyle.innerHTML = '.toc-container .wrapper{transition: none}';
-            body.append(hackStyle);
-        }
-
         $('.toc-container').each(function () {
             var toc = this;
             var content = this.innerHTML;
