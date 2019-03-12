@@ -33,9 +33,9 @@ ALTER TABLE pipeline_action DROP CONSTRAINT IF EXISTS "fk_pipeline_action_action
 SELECT create_foreign_key_idx_cascade('FK_ACTION_PARAMETER_ACTION', 'action_parameter', 'action', 'action_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_REQUIREMENT_ACTION', 'action_requirement', 'action', 'action_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_PARENT_ACTION', 'action_edge', 'action', 'parent_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_CHILD_ACTION', 'action_edge', 'action', 'child_id', 'id');
+SELECT create_foreign_key('FK_ACTION_EDGE_CHILD_ACTION', 'action_edge', 'action', 'child_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_PARAMETER_ACTION_EDGE', 'action_edge_parameter', 'action_edge', 'action_edge_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_PIPELINE_ACTION_ACTION', 'pipeline_action', 'action', 'action_id', 'id');
+SELECT create_foreign_key('FK_PIPELINE_ACTION_ACTION', 'pipeline_action', 'action', 'action_id', 'id');
 
 -- change type for column name and type and add indexes (usefull to check if action exists)
 ALTER TABLE "action" ALTER COLUMN "name" TYPE VARCHAR(100) USING "name"::VARCHAR(100);

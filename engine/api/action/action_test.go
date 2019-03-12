@@ -222,6 +222,9 @@ func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
 	if !assert.Nil(t, action.Insert(db, &two), "No err should be returned when inserting an action") {
 		t.FailNow()
 	}
+	defer func() {
+		assert.Nil(t, action.Delete(db, &two))
+	}()
 
 	// test valid use case
 	assert.Nil(t, action.CheckChildrenForGroupIDsWithLoop(db, &two, []int64{grp1.ID}))
