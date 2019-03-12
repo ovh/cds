@@ -43,6 +43,10 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load pipeline %s", name)
 		}
 
+		if pipelineDB.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
+
 		tx, errB := api.mustDB().Begin()
 		if errB != nil {
 			sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")

@@ -16,8 +16,9 @@ type pipeliner interface {
 
 // ImportOptions are options to import pipeline
 type ImportOptions struct {
-	Force        bool
-	PipelineName string
+	Force          bool
+	PipelineName   string
+	FromRepository string
 }
 
 // ParseAndImport parse an exportentities.pipeline and insert or update the pipeline in database
@@ -27,6 +28,8 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	if errP != nil {
 		return pip, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, errP), "ParseAndImport> Unable to parse pipeline")
 	}
+
+	pip.FromRepository = opts.FromRepository
 
 	if opts.PipelineName != "" && pip.Name != opts.PipelineName {
 		return nil, nil, sdk.ErrPipelineNameImport

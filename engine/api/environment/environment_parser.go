@@ -6,16 +6,21 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
+// ImportOptions are options to import environment
+type ImportOptions struct {
+	Force          bool
+	FromRepository string
+}
+
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eenv *exportentities.Environment, force bool, decryptFunc keys.DecryptFunc, u *sdk.User) (*sdk.Environment, []sdk.Message, error) {
-	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, force)
+func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u *sdk.User) (*sdk.Environment, []sdk.Message, error) {
+	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
 	//Check valid application name
@@ -32,16 +37,20 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	//If the environment exists and we don't want to force, raise an error
 	var exist bool
-	if oldEnv != nil && !force {
+	if oldEnv != nil && !opts.Force {
 		return nil, nil, sdk.ErrEnvironmentExist
 	}
 	if oldEnv != nil {
 		exist = true
 	}
 
+	if oldEnv.FromRepository != "" && (opts.FromRepository == "" || opts.FromRepository != oldEnv.FromRepository) {
+		return nil, nil, sdk.ErrForbidden
+	}
+
 	env := new(sdk.Environment)
 	env.Name = eenv.Name
-
+	env.FromRepository = opts.FromRepository
 	if exist {
 		env.ID = oldEnv.ID
 	}

@@ -24,6 +24,10 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		return sdk.WrapError(err, "Unable to load pipeline %s %s", proj.Key, pip.Name)
 	}
 
+	if oldPipeline.FromRepository != "" && (oldPipeline.FromRepository == "" || pip.FromRepository != oldPipeline.FromRepository) {
+		return sdk.WrapError(sdk.ErrForbidden, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
+	}
+
 	pip.ID = oldPipeline.ID
 	for i := range pip.Stages {
 		s := &pip.Stages[i]

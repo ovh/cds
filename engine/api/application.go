@@ -402,6 +402,10 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WrapError(errloadbyname, "updateApplicationHandler> Cannot load application %s", applicationName)
 		}
 
+		if app.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
+
 		var appPost sdk.Application
 		if err := service.UnmarshalBody(r, &appPost); err != nil {
 			return err
