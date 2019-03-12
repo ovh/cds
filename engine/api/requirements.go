@@ -25,16 +25,15 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 
 		switch reqType {
 		case sdk.BinaryRequirement:
-			req, err := action.LoadAllBinaryRequirements(api.mustDB())
+			rs, err := action.GetRequirementsDistinctBinary(api.mustDB())
 			if err != nil {
-				return sdk.WrapError(err, "Cannot load binary requirements")
+				return sdk.WrapError(err, "cannot load binary requirements")
 			}
-			return service.WriteJSON(w, req.Values(), http.StatusOK)
-
+			return service.WriteJSON(w, rs.Values(), http.StatusOK)
 		case sdk.ModelRequirement:
 			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), nil)
 			if err != nil {
-				return sdk.WrapError(err, "Cannot load worker models")
+				return sdk.WrapError(err, "cannot load worker models")
 			}
 			modelsAsRequirements := make(sdk.RequirementList, len(models))
 			for i, m := range models {
@@ -45,13 +44,10 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 				}
 			}
 			return service.WriteJSON(w, modelsAsRequirements.Values(), http.StatusOK)
-
 		case sdk.OSArchRequirement:
 			return service.WriteJSON(w, sdk.OSArchRequirementValues.Values(), http.StatusOK)
-
 		default:
-			return nil
-
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given requirement type")
 		}
 	}
 }

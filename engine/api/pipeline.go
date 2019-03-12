@@ -85,7 +85,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		db := api.mustDB()
 		u := deprecatedGetUser(ctx)
 
-		proj, errP := project.Load(db, api.Cache, key, u)
+		proj, errP := project.Load(db, api.Cache, key, u, project.LoadOptions.WithGroups)
 		if errP != nil {
 			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
 		}
@@ -215,7 +215,7 @@ func (api *API) getPipelineHandler() service.Handler {
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
 
 		p.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))

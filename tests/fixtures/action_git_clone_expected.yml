@@ -1,5 +1,6 @@
 version: v1.0
 name: CDS_TestIT_GitClone
+group: shared.infra
 parameters:
   name:
     type: string

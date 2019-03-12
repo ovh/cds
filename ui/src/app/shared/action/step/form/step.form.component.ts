@@ -1,49 +1,44 @@
-import {Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import {Action} from '../../../../model/action.model';
-import {StepEvent} from '../step.event';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Action } from '../../../../model/action.model';
+import { StepEvent } from '../step.event';
 
 @Component({
     selector: 'app-action-step-form',
     templateUrl: './step.form.html',
     styleUrls: ['./step.form.scss']
 })
-export class ActionStepFormComponent implements OnInit {
-    @Input() publicActions: Array<Action>;
-    showAddStep: boolean;
-    @Output() create = new EventEmitter<StepEvent>();
-    step: Action;
+export class ActionStepFormComponent implements OnChanges {
+    @Input() actions: Array<Action>;
+    @Output() onEvent = new EventEmitter<StepEvent>();
 
-    constructor() { }
+    expended: boolean;
+    selectedID: number;
+    selected: Action;
 
-    ngOnInit(): void {
-        this.step = this.publicActions.find(a => a.name === 'Script');
+    ngOnChanges(): void {
+        let script = this.actions.find(a => a.name === 'Script' && a.type === 'Builtin');
+        if (script) {
+            this.selectedID = script.id;
+            this.selected = script;
+        }
     }
 
-    selectPublicAction(name: string): void {
-        let step = this.publicActions.find(a => a.name === name);
-        if (step) {
-            this.step = step;
-        }
+    selectAction(id: number): void {
+        this.selected = this.actions.find(a => a.id === Number(id));
     };
 
-    addStep(optional: boolean, always_executed: boolean): void {
-        if (this.step) {
-            this.step.optional = optional;
-            this.step.always_executed = always_executed;
-            this.step.enabled = true;
-            this.step.step_name = this.step.name;
-            this.showAddStep = false;
-            this.create.emit(new StepEvent('add', this.step));
-        }
+    clickAddStep(): void {
+        this.expended = false;
+        this.onEvent.emit(new StepEvent('add', this.selected));
     }
 
-    cancel(): void {
-        this.showAddStep = false;
-        this.create.emit(new StepEvent('cancel', null));
+    clickCancel(): void {
+        this.expended = false;
+        this.onEvent.emit(new StepEvent('cancel', null));
     }
 
-    displayChoice(): void {
-        this.showAddStep = true;
-        this.create.emit(new StepEvent('displayChoice', null));
+    showActions(): void {
+        this.expended = true;
+        this.onEvent.emit(new StepEvent('expend', null));
     }
 }

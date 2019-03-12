@@ -132,19 +132,19 @@ func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*s
 	wms := []dbResultWMS{}
 	if _, err := db.Select(&wms, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoWorkerModel
+			return nil, sdk.WithStack(sdk.ErrNoWorkerModel)
 		}
 		return nil, err
 	}
 	if len(wms) == 0 {
-		return nil, sdk.ErrNoWorkerModel
+		return nil, sdk.WithStack(sdk.ErrNoWorkerModel)
 	}
 	r, err := scanWorkerModels(db, wms)
 	if err != nil {
 		return nil, err
 	}
 	if len(r) != 1 {
-		return nil, fmt.Errorf("worker model not unique")
+		return nil, sdk.WithStack(fmt.Errorf("worker model not unique"))
 	}
 	return &r[0], nil
 }

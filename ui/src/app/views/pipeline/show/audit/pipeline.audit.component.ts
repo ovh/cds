@@ -173,7 +173,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
         delete j.pipeline_stage_id;
 
         delete j.action.hasChanged;
-        delete j.action.last_modified;
         delete j.action.type;
         delete j.action.id;
         delete j.action.loading;
@@ -190,7 +189,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
                 delete steps[i].description;
                 delete steps[i].type;
                 delete steps[i].actions;
-                delete steps[i].last_modified;
                 if (steps[i].parameters) {
                     for (let k = 0; k < steps[i].parameters.length; k++) {
                         delete steps[i].parameters[k].id;

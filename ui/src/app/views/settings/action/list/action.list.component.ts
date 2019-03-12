@@ -1,37 +1,80 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
+import { finalize } from 'rxjs/internal/operators/finalize';
 import { Action } from '../../../../model/action.model';
-import { User } from '../../../../model/user.model';
 import { ActionService } from '../../../../service/action/action.service';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Table } from '../../../../shared/table/table';
+import { Column, ColumnType } from '../../../../shared/table/data-table.component';
+import { Tab } from '../../../../shared/tabs/tabs.component';
 
 @Component({
     selector: 'app-action-list',
     templateUrl: './action.list.html',
     styleUrls: ['./action.list.scss']
 })
-export class ActionListComponent extends Table<Action> {
-    @Input('maxPerPage')
-    set maxPerPage(data: number) {
-        this.nbElementsByPage = data;
-    };
-
-    filter: string;
+export class ActionListComponent {
+    loading: boolean;
+    loadingBuiltin: boolean;
+    columns: Array<Column<Action>>;
+    columnsBuiltin: Array<Column<Action>>;
     actions: Array<Action>;
-    currentUser: User;
+    actionsBuiltin: Array<Action>;
     path: Array<PathItem>;
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     constructor(
-        private _actionService: ActionService,
-        private _authentificationStore: AuthentificationStore
+        private _actionService: ActionService
     ) {
-        super();
+        this.tabs = [<Tab>{
+            translate: 'action_custom',
+            icon: '',
+            key: 'custom',
+            default: true
+        }, <Tab>{
+            translate: 'action_builtin',
+            icon: '',
+            key: 'builtin'
+        }];
 
-        this.currentUser = this._authentificationStore.getUser();
-        this._actionService.getActions().subscribe(actions => {
-            this.actions = actions;
-        });
+        this.columns = [
+            <Column<Action>>{
+                type: ColumnType.ROUTER_LINK,
+                name: 'common_name',
+                selector: (a: Action) => {
+                    return {
+                        link: `/settings/action/${a.group.name}/${a.name}`,
+                        value: a.name
+                    };
+                }
+            },
+            <Column<Action>>{
+                name: 'common_group',
+                selector: (a: Action) => a.group.name
+            },
+            <Column<Action>>{
+                type: ColumnType.MARKDOWN,
+                name: 'common_description',
+                selector: (a: Action) => a.description
+            }
+        ];
+
+        this.columnsBuiltin = [
+            <Column<Action>>{
+                type: ColumnType.ROUTER_LINK,
+                name: 'common_name',
+                selector: (a: Action) => {
+                    return {
+                        link: `/settings/action-builtin/${a.name}`,
+                        value: a.name
+                    };
+                }
+            },
+            <Column<Action>>{
+                type: ColumnType.MARKDOWN,
+                name: 'common_description',
+                selector: (a: Action) => a.description
+            }
+        ];
 
         this.path = [<PathItem>{
             translate: 'common_settings'
@@ -41,10 +84,45 @@ export class ActionListComponent extends Table<Action> {
         }];
     }
 
-    getData(): Array<Action> {
-        if (!this.filter) {
-            return this.actions;
+    getActions() {
+        this.loading = true;
+        this._actionService.getAll()
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(as => { this.actions = as; });
+    }
+
+    getActionBuiltins() {
+        this.loadingBuiltin = true;
+        this._actionService.getAllBuiltin()
+            .pipe(finalize(() => this.loadingBuiltin = false))
+            .subscribe(as => { this.actionsBuiltin = as; });
+    }
+
+    filter(f: string) {
+        const lowerFilter = f.toLowerCase();
+        return (d: Action) => {
+            let s = `${d.group.name}/${d.name}`.toLowerCase();
+            return s.indexOf(lowerFilter) !== -1;
         }
-        return this.actions.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
+    }
+
+    filterBuiltin(f: string) {
+        const lowerFilter = f.toLowerCase();
+        return (d: Action) => {
+            let s = d.name.toLowerCase();
+            return s.indexOf(lowerFilter) !== -1;
+        }
+    }
+
+    selectTab(tab: Tab): void {
+        switch (tab.key) {
+            case 'custom':
+                this.getActions();
+                break;
+            case 'builtin':
+                this.getActionBuiltins();
+                break;
+        }
+        this.selectedTab = tab;
     }
 }

@@ -121,7 +121,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 			tsPointers[i] = &ts[i]
 		}
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
@@ -201,7 +201,7 @@ func (api *API) postTemplateHandler() service.Handler {
 
 		event.PublishWorkflowTemplateAdd(data, u)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &data); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), &data); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &data); err != nil {
@@ -222,7 +222,7 @@ func (api *API) getTemplateHandler() service.Handler {
 
 		t := getWorkflowTemplate(ctx)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), t); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), t); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), t); err != nil {
@@ -311,7 +311,7 @@ func (api *API) putTemplateHandler() service.Handler {
 
 		event.PublishWorkflowTemplateUpdate(*old, new, data.ChangeMessage, u)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
 			return err
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &new); err != nil {
@@ -460,7 +460,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 		wt := getWorkflowTemplate(ctx)
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 			return err
 		}
 
@@ -480,8 +480,10 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			if !withImport && !checkProjectReadPermission(ctx, req.ProjectKey) {
 				return sdk.WithStack(sdk.ErrNoProject)
 			}
-			if withImport && !api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionReadWriteExecute, nil) {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission on project required to import generated workflow.")
+			if withImport {
+				if err := api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionReadWriteExecute, nil); err != nil {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
+				}
 			}
 		}
 
@@ -512,7 +514,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 
 			msgs, wkf, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, u, project.DecryptWithBuiltinKey)
 			if err != nil {
-				return sdk.WrapError(err, "Cannot push generated workflow")
+				return sdk.WrapError(err, "cannot push generated workflow")
 			}
 			msgStrings := translate(r, msgs)
 
@@ -535,7 +537,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 		wt := getWorkflowTemplate(ctx)
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 			return err
 		}
 
@@ -549,7 +551,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			// check for duplicated request
 			key := fmt.Sprintf("%s-%s", o.Request.ProjectKey, o.Request.WorkflowName)
 			if _, ok := m[key]; ok {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Request should be unique for a given project key and workflow name")
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "request should be unique for a given project key and workflow name")
 			}
 			m[key] = struct{}{}
 
@@ -564,8 +566,8 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 		// non admin user should have read/write access to all given project
 		if !u.Admin {
 			for i := range req.Operations {
-				if !api.checkProjectPermissions(ctx, req.Operations[i].Request.ProjectKey, permission.PermissionReadWriteExecute, nil) {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission on project required to import generated workflow.")
+				if err := api.checkProjectPermissions(ctx, req.Operations[i].Request.ProjectKey, permission.PermissionReadWriteExecute, nil); err != nil {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
 				}
 			}
 		}
@@ -818,7 +820,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 
 		wt := getWorkflowTemplate(ctx)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 			return err
 		}
 
@@ -851,7 +853,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 		}
 
 		if wt != nil {
-			if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+			if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 				return err
 			}
 			w.Header().Add(sdk.ResponseTemplateGroupNameHeader, wt.Group.Name)

@@ -13,60 +13,23 @@ import (
 )
 
 // DeletePipelineActionByStage Delete all action from a stage
-func DeletePipelineActionByStage(db gorp.SqlExecutor, stageID int64, userID int64) error {
-	pipelineActionsID, errSelect := selectAllPipelineActionID(db, stageID)
-	if errSelect != nil {
-		return errSelect
+func DeletePipelineActionByStage(db gorp.SqlExecutor, stageID int64) error {
+	pas, err := getPipelineActionsByStageID(db, stageID)
+	if err != nil {
+		return err
 	}
 
-	// For all pipeline_action in stage
-	for i := range pipelineActionsID {
-		var id int64
-		var actionType string
-		// Fetch id and type of action linked to pipeline_action so we can delete it if it's a joined action
-		query := `SELECT action.id, action.type FROM action JOIN pipeline_action ON pipeline_action.action_id = action.id WHERE pipeline_action.id = $1`
-		if err := db.QueryRow(query, pipelineActionsID[i]).Scan(&id, &actionType); err != nil {
-			return err
-		}
+	actionIDs := pipelineActionsToActionIDs(pas)
 
-		// Delete pipeline_action
-		query = `DELETE FROM pipeline_action WHERE id = $1`
-		if _, err := db.Exec(query, pipelineActionsID[i]); err != nil {
-			return err
-		}
+	if err := deletePipelineActionsByIDs(db, pipelineActionsToIDs(pas)); err != nil {
+		return err
+	}
 
-		// Then if action is a Joined Action delete action as well
-		if actionType != sdk.JoinedAction {
-			continue
-		}
-		log.Debug("DeletePipelineActionByStage> Deleting action %d\n", id)
-		if err := action.DeleteAction(db, id, userID); err != nil {
-			return err
-		}
+	if err := action.DeleteAllTypeJoinedByIDs(db, actionIDs); err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func selectAllPipelineActionID(db gorp.SqlExecutor, pipelineStageID int64) ([]int64, error) {
-	var pipelineActionIDs []int64
-	query := `SELECT id FROM "pipeline_action"
-	 		  WHERE pipeline_stage_id = $1`
-	rows, err := db.Query(query, pipelineStageID)
-	if err != nil {
-		return pipelineActionIDs, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var pipelineActionID int64
-		err = rows.Scan(&pipelineActionID)
-		if err != nil {
-			return pipelineActionIDs, err
-		}
-		pipelineActionIDs = append(pipelineActionIDs, pipelineActionID)
-	}
-	return pipelineActionIDs, nil
 }
 
 // InsertJob  Insert a new Job ( pipeline_action + joinedAction )
@@ -74,7 +37,7 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 	// Insert Joined Action
 	job.Action.Type = sdk.JoinedAction
 	log.Debug("InsertJob> Insert Action %s on pipeline %s with %d children", job.Action.Name, pip.Name, len(job.Action.Actions))
-	if err := action.InsertAction(db, &job.Action, false); err != nil {
+	if err := action.Insert(db, &job.Action); err != nil {
 		return err
 	}
 
@@ -89,7 +52,7 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 		}
 		log.Debug("InsertJob> Creating stage %s on pipeline %s", stage.Name, pip.Name)
 		if err := InsertStage(db, stage); err != nil {
-			return fmt.Errorf("Cannot InsertStage on pipeline %d> %s", pip.ID, err)
+			return sdk.WrapError(err, "cannot insert stage on pipeline %d", pip.ID)
 		}
 	} else {
 		//Else load the stage
@@ -104,53 +67,40 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 
 	// Create pipeline action
 	query := `INSERT INTO pipeline_action (pipeline_stage_id, action_id, enabled) VALUES ($1, $2, $3) RETURNING id`
-	return db.QueryRow(query, job.PipelineStageID, job.Action.ID, job.Enabled).Scan(&job.PipelineActionID)
+	return sdk.WithStack(db.QueryRow(query, job.PipelineStageID, job.Action.ID, job.Enabled).Scan(&job.PipelineActionID))
 }
 
 // UpdateJob  updates the job by actionData.PipelineActionID and actionData.ID
 func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
-	clearJoinedAction, err := action.LoadActionByID(db, job.Action.ID)
+	clearJoinedAction, err := action.LoadByID(db, job.Action.ID, action.LoadOptions.Default)
 	if err != nil {
 		return err
 	}
 
 	if clearJoinedAction.Type != sdk.JoinedAction {
-		return sdk.ErrForbidden
+		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
 	if err := UpdatePipelineAction(db, *job); err != nil {
 		return err
 	}
 	job.Action.Enabled = job.Enabled
-	return action.UpdateActionDB(db, &job.Action, userID)
+	return action.Update(db, &job.Action)
 }
 
 // DeleteJob Delete a job ( action + pipeline_action )
-func DeleteJob(db gorp.SqlExecutor, job sdk.Job, userID int64) error {
-	return action.DeleteAction(db, job.Action.ID, userID)
+func DeleteJob(db gorp.SqlExecutor, job sdk.Job) error {
+	if err := deletePipelineActionByActionID(db, job.Action.ID); err != nil {
+		return err
+	}
+	return action.DeleteTypeJoinedByID(db, job.Action.ID)
 }
 
 // UpdatePipelineAction Update an action in a pipeline
 func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$3 WHERE id=$4`
-	if _, err := db.Exec(query, job.Action.ID, job.PipelineStageID, job.Enabled, job.PipelineActionID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// DeletePipelineAction Delete an action in a pipeline
-func DeletePipelineAction(db gorp.SqlExecutor, pipelineActionID int64) error {
-
-	// Delete pipelineAction by buildOrder
-	query := `DELETE FROM pipeline_action WHERE id = $1`
-	_, err := db.Exec(query, pipelineActionID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := db.Exec(query, job.Action.ID, job.PipelineStageID, job.Enabled, job.PipelineActionID)
+	return sdk.WithStack(err)
 }
 
 //CheckJob validate a job
@@ -163,20 +113,18 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 	for i := range job.Action.Actions {
 		step := &job.Action.Actions[i]
 		log.Debug("CheckJob> Checking step %s", step.Name)
-		a, err := action.LoadPublicAction(db, step.Name)
+
+		a, err := action.RetrieveForGroupAndName(db, step.Group, step.Name)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNoAction) {
 				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
 				continue
 			}
-			return sdk.WrapError(err, "Unable to load public action %s", step.Name)
+			return err
 		}
+		job.Action.Actions[i].ID = a.ID
 
-		a.Parameters, err = action.LoadActionParameters(db, a.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to load public action %s parameters", step.Name)
-		}
-
+		// FIXME better check for params
 		for x := range step.Parameters {
 			sp := &step.Parameters[x]
 			log.Debug("CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
@@ -196,48 +144,12 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		if len(errs) > 0 {
 			return sdk.MessagesToError(errs)
 		}
-
-		//Set default values
-		for y := range a.Parameters {
-			ap := a.Parameters[y]
-			var found bool
-			for x := range step.Parameters {
-				sp := &step.Parameters[x]
-				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
-					found = true
-					break
-				}
-			}
-			if !found {
-				step.Parameters = append(step.Parameters, sdk.Parameter{
-					Name:  ap.Name,
-					Type:  ap.Type,
-					Value: ap.Value,
-				})
-			}
-		}
-
 	}
 
 	return nil
 }
 
-// GetPipelineIDFromJoinedActionID returns the pipeline id from any joined action
-func GetPipelineIDFromJoinedActionID(db gorp.SqlExecutor, id int64) (int64, error) {
-	query := `
-	SELECT 	pipeline_stage.pipeline_id
-	FROM 	pipeline_action, pipeline_stage
-	WHERE 	pipeline_action.pipeline_stage_id = pipeline_stage.id
-	AND 	pipeline_action.action_id = $1
-	`
-	id, err := db.SelectInt(query, id)
-	if err != nil {
-		return 0, sdk.WrapError(err, "GetPipelineIDFromJoinedActionID")
-	}
-	return id, nil
-}
-
-// CountInValueVarData represents the result of CountInVarValue function
+// CountInPipelineData represents the result of CountInVarValue function
 type CountInPipelineData struct {
 	PipName   string
 	StageName string
@@ -274,7 +186,7 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 	`
 	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", element))
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to count usage")
+		return nil, sdk.WrapError(err, "unable to count usage")
 	}
 	defer rows.Close()
 
@@ -283,7 +195,7 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 		var d CountInPipelineData
 		var id, childID int64
 		if err := rows.Scan(&d.PipName, &d.StageName, &d.JobName, &id, &childID, &d.Count); err != nil {
-			return nil, sdk.WrapError(err, "Unable to scan")
+			return nil, sdk.WrapError(err, "unable to scan")
 		}
 		results = append(results, d)
 	}
