@@ -11,13 +11,13 @@ This integration enables the [RabbitMQ Hook feature]({{<relref "/docs/concepts/w
 
 You can add a RabbitMQ Integration on your CDS Project.
 
-![Platform](../images/rabbitmq-integration-webui.png)
+![Integration](../images/rabbitmq-integration-webui.png)
 
 ## Configure with cdsctl
 
 ### Import a RabbitMQ Integration on your CDS Project
 
-Create a file project-configuration.yaml:
+Create a file project-configuration.yml:
 
 ```yml
 project integration export DEMO your-rabbitmq-integration
@@ -42,7 +42,7 @@ config:
 Import the integration on your CDS Project with:
 
 ```bash
-cdsctl project integration import PROJECT_KEY project-configuration.yaml
+cdsctl project integration import PROJECT_KEY project-configuration.yml
 ```
 
 Then, as a standard user, you can add a [rabbitMQ Hook]({{<relref "/docs/concepts/workflow/hooks/rabbitmq-hook.md">}}) on your workflow.
@@ -53,21 +53,48 @@ Then, as a standard user, you can add a [rabbitMQ Hook]({{<relref "/docs/concept
 You can also add a RabbitMQ Integration with cdsctl. As a CDS Administrator,
 this allows you to propose a Public RabbitMQ Integration, available on all CDS Projects.
 
-Create a file public-configuration.yaml:
+Create a file public-configuration.yml:
 
 ```yml
 name: your-rabbitmq-integration
+identifier: github.com/ovh/cds/integration/builtin/rabbitmq
 hook: true
 public: true
 public_configurations:
-
-incoming TODO YESNAULT
+  name-of-integration:
+    "uri":
+      type: string
+      value: "your-topic.events"
+    "username":
+      type: string
+      value: "your-topic.cds-reader"
+    "password":
+      type: password
+      value: xxxxxxxx
+    "binding_key":
+        type: string
+        value: "test-key"
+    "consumer_tag":
+        type: string
+        value: "simple-consumer"
+    "exchange_name":
+        type: string
+        value: "test-exchange"
+    "exchange_type":
+        type: string
+        value: "direct"
+    "integration":
+        type: string
+        value: "RabbitMQ"
+    "queue":
+        type: string
+        value: "test-queue"
 ```
 
 Import the integration with :
 
 ```bash
-cdsctl admin integration-model import public-configuration.yaml
+cdsctl admin integration-model import public-configuration.yml
 ```
 
 Then, as a standard user, you can add a [rabbitMQ Hook]({{<relref "/docs/concepts/workflow/hooks/rabbitmq-hook.md">}}) on your workflow.

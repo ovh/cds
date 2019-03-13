@@ -91,7 +91,7 @@ Expand configuration, select 'https'. If your repository is public, you can keep
 ## 4 - Add a variable on your application
 
 You've got an application, let's create an application [variable]({{< relref "/docs/concepts/variables.md" >}}).
-We will use it further in a [Job]({{< relref "/docs/concepts/job/_index.md" >}}).
+We will use it further in a [Job]({{< relref "/docs/concepts/job.md" >}}).
 
 * Select the variables tab, name 'my-variable', type 'string', value 'my-value'
 * Then click on 'Save'

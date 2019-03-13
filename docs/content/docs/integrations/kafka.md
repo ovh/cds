@@ -17,7 +17,7 @@ You can add a Kafka Integration on your CDS Project.
 
 ### Import a Kafka Integration on your CDS Project
 
-Create a file project-configuration.yaml:
+Create a file project-configuration.yml:
 
 ```yml
 project integration export DEMO your-kafka-integration
@@ -42,7 +42,7 @@ config:
 Import the integration on your CDS Project with:
 
 ```bash
-cdsctl project integration import PROJECT_KEY project-configuration.yaml
+cdsctl project integration import PROJECT_KEY project-configuration.yml
 ```
 
 Then, as a standard user, you can add a [Kafka Hook]({{<relref "/docs/concepts/workflow/hooks/kafka-hook.md">}}) on your workflow.
@@ -53,7 +53,7 @@ Then, as a standard user, you can add a [Kafka Hook]({{<relref "/docs/concepts/w
 You can also add a Kafka Integration with cdsctl. As a CDS Administrator,
 this allows you to propose a Public Kafka Integration, available on all CDS Projects.
 
-Create a file public-configuration.yaml:
+Create a file public-configuration.yml:
 
 ```yml
 name: your-kafka-integration
@@ -78,7 +78,7 @@ public_configurations:
 Import the integration with :
 
 ```bash
-cdsctl admin integration-model import public-configuration.yaml
+cdsctl admin integration-model import public-configuration.yml
 ```
 
 Then, as a standard user, you can add a [Kafka Hook]({{<relref "/docs/concepts/workflow/hooks/kafka-hook.md">}}) on your workflow.

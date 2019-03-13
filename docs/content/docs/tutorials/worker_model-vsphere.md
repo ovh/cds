@@ -18,7 +18,7 @@ We will create a worker model called debian8-docker:
 
  You need to configure:
 
-   * **The image** is the name of your virtual machine that you have created before on your host to clone (See [Advanced]({{< relref "/docs/components/hatchery/vsphere.md" >}}))
+   * **The image** is the name of your virtual machine that you have created before on your host to clone (See [Advanced]({{< relref "/docs/integrations/vsphere.md" >}}))
    * **Pattern** If you aren't an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a [pattern that an administrator have already fill for you]({{< relref "/docs/concepts/worker-model/patterns.md" >}}).
    * If you are an administrator:
      * **pre worker command**: all scripts that need to be run before execute the worker binary (for example: set the right environment variables, install curl and other tools you need like Docker, ...)

@@ -3,7 +3,6 @@ title: GitLab
 main_menu: true
 ---
 
-
 The GitLab Integration have to be configured on your CDS by a CDS Administrator.
 
 This integration allows you to link a Git Repository hosted by GitLab

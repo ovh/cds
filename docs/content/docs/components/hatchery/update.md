@@ -3,8 +3,6 @@ title: "Update your hatchery"
 weight: 6
 ---
 
-### Manual Update
-
 If you run manually a Hatchery, you probably want to update it when CDS Engine is updated with a new release.
 
 Update your hatchery from CDS API:

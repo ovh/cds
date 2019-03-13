@@ -22,8 +22,12 @@ You can download it from [latest release on GitHub](https://github.com/ovh/cds/r
 Generate a token for group:
 
 ```bash
-$ cds generate token -g shared.infra -e persistent
-fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
+$ cdsctl token generate shared.infra persistent
+expiration  persistent
+created     2019-03-13 18:47:56.715104 +0100 CET
+group_name  shared.infra
+token       xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx
+creator     yesnault
 ```
 
 Edit the [CDS Configuration]({{< relref "/hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated.
