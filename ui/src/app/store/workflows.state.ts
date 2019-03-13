@@ -1,6 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
-import { AuditWorkflow } from 'app/model/audit.model';
 import { GroupPermission } from 'app/model/group.model';
 import { Label } from 'app/model/project.model';
 import { WNode, WNodeTrigger, Workflow } from 'app/model/workflow.model';
@@ -457,29 +456,27 @@ export class WorkflowsState {
     //  ------- Audit --------- //
     @Action(actionWorkflow.FetchWorkflowAudits)
     fetchAudits(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.FetchWorkflowAudits) {
-        return this._http.get<AuditWorkflow[]>(
-            `/project/${action.payload.projectKey}/workflow/${action.payload.workflowName}/audits`
-        ).pipe(tap((audits: AuditWorkflow[]) => {
-            const state = ctx.getState();
-            let wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+        const state = ctx.getState();
+        const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
 
-            ctx.dispatch(new actionWorkflow.LoadWorkflow({
+        if (!state.workflows[wfKey].audits) {
+            return ctx.dispatch(new actionWorkflow.ResyncWorkflow({
                 projectKey: action.payload.projectKey,
-                workflow: Object.assign({}, state.workflows[wfKey], { audits })
+                workflowName: action.payload.workflowName,
             }));
-        }));
+        }
     }
 
     @Action(actionWorkflow.RollbackWorkflow)
     rollback(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.RollbackWorkflow) {
         let auditId = action.payload.auditId;
         return this._http.post<Workflow>(
-            `/project/${action.payload.projectKey}/workflow/${action.payload.workflowName}/rollback/${auditId}`,
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/rollback/${auditId}`,
             {}
-        ).pipe(tap((pip: Workflow) => {
+        ).pipe(tap((workflow: Workflow) => {
             ctx.dispatch(new actionWorkflow.LoadWorkflow({
                 projectKey: action.payload.projectKey,
-                workflow: pip
+                workflow
             }));
         }));
     }

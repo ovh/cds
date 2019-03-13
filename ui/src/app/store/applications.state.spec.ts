@@ -1,18 +1,21 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { async, TestBed } from '@angular/core/testing';
+import { XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
-import { SharedModule } from 'app/shared/shared.module';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import * as ActionApplication from './applications.action';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
+import { WorkflowsState } from './workflows.state';
 
 describe('Applications', () => {
     let store: Store;
@@ -20,9 +23,12 @@ describe('Applications', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
+            providers: [
+                { provide: XHRBackend, useClass: MockBackend },
+                NavbarService
+            ],
             imports: [
-                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState]),
-                SharedModule,
+                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowsState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();

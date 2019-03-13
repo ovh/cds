@@ -14,7 +14,6 @@ import { Observable } from 'rxjs/Observable';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
 import { PipelineService } from '../../../../service/pipeline/pipeline.service';
-import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ToastService } from '../../../../shared/toast/ToastService';
 import { PipelineModule } from '../../pipeline.module';
@@ -32,7 +31,6 @@ describe('CDS: Pipeline Admin Component', () => {
                 MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 PipelineService,
-                PipelineStore,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },
                 { provide: Router, useClass: MockRouter },

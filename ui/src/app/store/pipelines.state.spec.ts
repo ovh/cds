@@ -9,12 +9,13 @@ import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { User } from 'app/model/user.model';
-import { SharedModule } from 'app/shared/shared.module';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ApplicationsState } from './applications.state';
 import * as pipelinesActions from './pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
+import { WorkflowsState } from './workflows.state';
 
 describe('Pipelines', () => {
     let store: Store;
@@ -22,9 +23,9 @@ describe('Pipelines', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
+            providers: [NavbarService],
             imports: [
-                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState]),
-                SharedModule,
+                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowsState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();
