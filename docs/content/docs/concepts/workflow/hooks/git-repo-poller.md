@@ -1,5 +1,5 @@
 ---
-title: "Git Poller hook"
+title: "Git Repository Poller"
 weight: 4
 ---
 

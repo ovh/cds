@@ -9,8 +9,8 @@ On the root pipeline only, you can add hooks:
 
 * [webhook]({{< relref "/docs/concepts/workflow/hooks/webhook.md" >}})
 * [scheduler]({{< relref "/docs/concepts/workflow/hooks/scheduler.md" >}})
-* [repository webhooks]({{< relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
-* [git poller]({{< relref "/docs/concepts/workflow/hooks/git-poller.md" >}})
+* [git repository webhooks]({{< relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
+* [git repository poller]({{< relref "/docs/concepts/workflow/hooks/git-repo-poller.md" >}})
 * [kafka hook] ({{< relref "/docs/concepts/workflow/hooks/kafka-hook.md" >}})
 * [RabbitMQ hook] ({{< relref "/docs/concepts/workflow/hooks/rabbitmq-hook.md" >}})
 
