@@ -13,7 +13,7 @@ The Kafka message have to be a JSON message, it in will be used as a payload for
 
 On your CDS Project, select the platforms section then add a Kafka platform.
 
-![Platform](/images/workflows.design.hooks.kafka-hook.platform.png)
+![Integration](/images/workflows.design.hooks.kafka-hook.platform.png)
 
 ## Add a Kafka hook on the root pipeline of your workflow
 

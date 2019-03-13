@@ -18,7 +18,7 @@ Here are the extensions available:
 ## Infrastructure used by CDS Workers
 
 - [Docker Swarm]({{< relref "swarm.md" >}})
-- [Kubernetes]({{< relref "kubernetes.md" >}})
+- [Kubernetes]({{< relref "kubernetes/kubernetes_compute.md" >}})
 - [Openstack]({{< relref "openstack/openstack_compute.md" >}})
 - [Mesos/Marathon]({{< relref "marathon.md" >}})
 - [vSphere]({{< relref "vsphere.md" >}})
@@ -27,6 +27,10 @@ Here are the extensions available:
 
 - [Kafka]({{< relref "kafka.md" >}})
 - [RabbitMQ]({{< relref "rabbitmq.md" >}})
+
+## Application Deployement
+
+- [Kubernetes]({{< relref "kubernetes/kubernetes_deployment.md" >}})
 
 ## Repositories Managers
 

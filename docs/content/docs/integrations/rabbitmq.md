@@ -20,11 +20,9 @@ You can add a RabbitMQ Integration on your CDS Project.
 Create a file project-configuration.yml:
 
 ```yml
-project integration export DEMO your-rabbitmq-integration
 name: my-rabbitmq-integration
 model:
   name: RabbitMQ
-  author: CDS
   identifier: github.com/ovh/cds/integration/builtin/rabbitmq
   hook: true
 config:

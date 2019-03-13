@@ -14,7 +14,7 @@ The RabbitMQ message have to be a JSON message, it in will be used as a payload 
 
 On your CDS Project, select the platforms section then add a RabbitMQ platform.
 
-![Platform](/images/workflows.design.hooks.rabbitmq-hook.platform.png)
+![Integration](/images/workflows.design.hooks.rabbitmq-hook.platform.png)
 
 ## Add a RabbitMQ hook on the root pipeline of your workflow
 

@@ -11,7 +11,7 @@ This integration enables the [Kafka Hook feature]({{<relref "/docs/concepts/work
 
 You can add a Kafka Integration on your CDS Project.
 
-![Platform](../images/kafka-integration-webui.png)
+![Integration](../images/kafka-integration-webui.png)
 
 ## Configure with cdsctl
 
@@ -20,11 +20,9 @@ You can add a Kafka Integration on your CDS Project.
 Create a file project-configuration.yml:
 
 ```yml
-project integration export DEMO your-kafka-integration
 name: your-kafka-integration
 model:
   name: Kafka
-  author: CDS
   identifier: github.com/ovh/cds/integration/builtin/kafka
   hook: true
 config:
