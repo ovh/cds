@@ -7,6 +7,9 @@
 		<section id="hero" class="light-text no-sub">
 			{{- if ne .Params.cid "home" }}
 			<a href="{{ site.Home.RelPermalink }}" class="logo"></a>
+			{{- end -}}
+
+			{{- if ne .Params.cid "docsHome" }}
 			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i>
 			{{- end -}}
 

@@ -1,9 +1,10 @@
-<i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> <a class="item" data-title="{{ .LinkTitle }}" href="{{ .RelPermalink }}"></a>
+<i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="{{ .LinkTitle }}" href="{{ .RelPermalink }}"></a>
 {{ template "section-tree-nav" (dict "ctx" . "section" .) }}
 {{ define "section-tree-nav" }}
 	{{ $pages :=  (union .section.Pages .section.Sections) }}
 	{{ with site.Params.language_alternatives }}
-		{{ range . }}	
+		{{ range . }}
 			{{ with (where $.section.Translations ".Lang" . ) }}
 			{{ $p := index . 0 }}
 			{{ $pages =  $pages | lang.Merge (union $p.Pages $p.Sections) }}
