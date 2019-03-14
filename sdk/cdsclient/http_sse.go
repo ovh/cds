@@ -101,7 +101,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 			continue
 		}
 
-		spl := bytes.Split(bs, delim)
+		spl := bytes.SplitN(bs, delim, 2)
 
 		if len(spl) < 2 {
 			continue
@@ -112,11 +112,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 		case sseEvent:
 			currEvent.Type = string(bytes.TrimSpace(spl[1]))
 		case sseData:
-			var data []byte
-			for _, d := range spl[1:] {
-				data = append(data, d...)
-			}
-			currEvent.Data = bytes.NewBuffer(bytes.TrimSpace(data))
+			currEvent.Data = bytes.NewBuffer(bytes.TrimSpace(spl[1]))
 			evCh <- *currEvent
 		}
 
