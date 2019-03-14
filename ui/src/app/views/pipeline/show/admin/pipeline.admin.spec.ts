@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
@@ -34,6 +35,7 @@ describe('CDS: Pipeline Admin Component', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },
                 { provide: Router, useClass: MockRouter },
+                NavbarService,
                 TranslateService,
                 TranslateLoader,
                 TranslateParser
