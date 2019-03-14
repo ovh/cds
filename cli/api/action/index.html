@@ -2290,11 +2290,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-action">POST <code>/action</code></a></li>
 <li><a href="#get-action">GET <code>/action</code></a></li>
+<li><a href="#post-action">POST <code>/action</code></a></li>
 <li><a href="#put-action-group-name-permactionname">PUT <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></a></li>
-<li><a href="#get-action-group-name-permactionname">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></a></li>
 <li><a href="#delete-action-group-name-permactionname">DELETE <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></a></li>
+<li><a href="#get-action-group-name-permactionname">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></a></li>
 <li><a href="#get-action-group-name-permactionname-audit">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/audit</code></a></li>
 <li><a href="#get-action-group-name-permactionname-export">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/export</code></a></li>
 <li><a href="#get-action-group-name-permactionname-usage">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;/usage</code></a></li>
@@ -2323,34 +2323,6 @@
 
 
 
-<h3 id="post-action">POST <code>/action</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postActionHandler%22">postActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-action">GET <code>/action</code></h3>
 
 <table>
@@ -2375,6 +2347,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionsHandler%22">getActionsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-action">POST <code>/action</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postActionHandler%22">postActionHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2407,34 +2407,6 @@
 </tbody>
 </table>
 
-<h3 id="get-action-group-name-permactionname">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22">getActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="delete-action-group-name-permactionname">DELETE <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></h3>
 
 <table>
@@ -2459,6 +2431,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-action-group-name-permactionname">GET <code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;group-name&gt;/&lt;permActionName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22">getActionHandler</a></td>
 </tr>
 </tbody>
 </table>
