@@ -159,6 +159,10 @@ export class PipelinesState {
                     previousPipName: action.payload.pipelineName,
                     changes: pip
                 }));
+                return ctx.dispatch(new actionPipeline.ResyncPipeline({
+                    projectKey: action.payload.projectKey,
+                    pipelineName: pip.name
+                }));
             } else {
                 let pipUpdated: Pipeline = {
                     ...state.pipelines[pipKey],

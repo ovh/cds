@@ -66,6 +66,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 
 		event.PublishPipelineUpdate(key, p.Name, oldName, deprecatedGetUser(ctx))
+		pipelineDB.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
