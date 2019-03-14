@@ -79,6 +79,7 @@ type EventRunWorkflowNode struct {
 	StagesSummary         []StageSummary            `json:"stages_summary"`
 	HookUUID              string                    `json:"hook_uuid"`
 	HookLog               string                    `json:"log,omitempty"`
+	NodeType              string                    `json:"node_type,omitempty"`
 }
 
 // EventRunWorkflowOutgoingHook contains event data for a workflow outgoing hook run
