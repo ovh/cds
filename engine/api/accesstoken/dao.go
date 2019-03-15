@@ -115,7 +115,12 @@ func Delete(db gorp.SqlExecutor, token *sdk.AccessToken) error {
 // PostGet load all the groups for an access token
 func (a *accessToken) PostGet(db gorp.SqlExecutor) error {
 	// Load the user
-	u, err := user.LoadUserWithoutAuthByID(db, a.UserID)
+	au, err := user.LoadByOldUserID(db, a.UserID)
+	if err != nil {
+		return err
+	}
+
+	u, err := user.GetDeprecatedUser(db, au)
 	if err != nil {
 		return err
 	}

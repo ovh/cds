@@ -1,18 +1,14 @@
 package gorpmapping
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/ovh/symmecrypt"
-	"github.com/ovh/symmecrypt/keyloader"
-
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	_ "github.com/ovh/symmecrypt/ciphers/hmac"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -24,14 +20,6 @@ const (
 	// StringDataRightTruncation is raisedalue is too long for varchar.
 	StringDataRightTruncation = "22001"
 )
-
-func Init(signatureKeys []keyloader.KeyConfig) error {
-
-	// Push the keys in the keyloader
-	keyloader.LoadKey
-
-	return nil
-}
 
 // IDsToQueryString returns a comma separated list of given ids.
 func IDsToQueryString(ids []int64) string {
@@ -76,112 +64,41 @@ func Delete(db gorp.SqlExecutor, i interface{}) error {
 	return sdk.WithStack(err)
 }
 
-const keySignIdentifier = "db-sign"
-
-func InsertAndSign(db gorp.SqlExecutor, i interface{}) error {
-	if err := Insert(db, i); err != nil {
-		return err
+func reflectFindValueByTag(i interface{}, tagKey, tagValue string) interface{} {
+	val := reflect.ValueOf(i)
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		val = val.Elem()
 	}
-	return sdk.WithStack(dbSign(db, i))
-}
-
-func UpdatetAndSign(db gorp.SqlExecutor, i interface{}) error {
-	if err := Update(db, i); err != nil {
-		return err
-	}
-	return sdk.WithStack(dbSign(db, i))
-}
-
-func CheckSignature(db gorp.SqlExecutor, i interface{}) (bool, error) {
-	k, err := keyloader.LoadKey(keySignIdentifier)
-	if err != nil {
-		return false, err
-	}
-
-	table, key, id := dbMappingPKey(i)
-	if id == nil {
-		return false, sdk.WithStack(fmt.Errorf("primary key field %s not found", table, key))
-	}
-
-	clearContent, err := json.Marshal(i)
-	if err != nil {
-		return false, sdk.WithStack(err)
-	}
-
-	query := fmt.Sprintf("SELECT sig FROM %s WHERE %s = $1", table, key)
-	sig, err := db.SelectNullStr(query, id)
-	if err != nil {
-		return false, sdk.WithStack(err)
-	}
-
-	if !sig.Valid {
-		return false, sdk.WithStack(errors.New("database signature not found"))
-	}
-
-	decryptedSig, err := k.Decrypt([]byte(sig.String))
-	if err != nil {
-		return false, sdk.WithStack(err)
-	}
-
-	return string(clearContent) == string(decryptedSig), nil
-}
-
-func dbMappingPKey(i interface{}) (string, string, interface{}) {
-	mapping, has := getTabbleMapping(i)
-	if !has {
-		return "", "", sdk.WithStack(fmt.Errorf("unkown entity %T", i))
-	}
-
-	if len(mapping.Keys) > 0 {
-		return "", "", sdk.WithStack(errors.New("multiple primary key not supported"))
-	}
-
-	val := reflect.ValueOf(i).Elem()
-	var id interface{}
+	var res interface{}
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
+		if typeField.Anonymous {
+			res = reflectFindValueByTag(valueField.Interface(), tagKey, tagValue)
+			if res != nil {
+				return res
+			}
+		}
 		tag := typeField.Tag
-		column := tag.Get("db")
-		if column == mapping.Keys[0] {
-			id = valueField.Interface()
-			break
+		column := tag.Get(tagKey)
+		if column == tagValue {
+			return valueField.Interface()
 		}
 	}
-	return mapping.Name, mapping.Keys[0], id
+	return res
 }
 
-func dbSign(db gorp.SqlExecutor, i interface{}) error {
-	k, err := keyloader.LoadKey(keySignIdentifier)
-	if err != nil {
-		return sdk.WithStack(err)
+func dbMappingPKey(i interface{}) (string, string, interface{}, error) {
+	mapping, has := getTabbleMapping(i)
+	if !has {
+		return "", "", nil, sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
 
-	table, key, id := dbMappingPKey(i)
-	if id == nil {
-		return sdk.WithStack(fmt.Errorf("primary key field %s not found", table, key))
+	if len(mapping.Keys) > 1 {
+		return "", "", nil, sdk.WithStack(errors.New("multiple primary key not supported"))
 	}
 
-	b := new(bytes.Buffer)
-	w := symmecrypt.NewWriter(b, k)
-	jsonEncoder := json.NewEncoder(w)
-	if err := jsonEncoder.Encode(i); err != nil {
-		return sdk.WithStack(err)
-	}
-	if err := w.Close(); err != nil {
-		return sdk.WithStack(err)
-	}
-	sig := b.Bytes()
+	id := reflectFindValueByTag(i, "db", mapping.Keys[0])
 
-	query := fmt.Sprintf("UPDATE %s SET sig = $2 WHERE %s = $1", table, key)
-	res, err := db.Exec(query, id, sig)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-
-	n, _ := res.RowsAffected()
-	if n != 1 {
-		return sdk.WithStack(fmt.Errorf("%d number of rows affected", n))
-	}
-	return nil
+	return mapping.Name, mapping.Keys[0], id, nil
 }

@@ -69,8 +69,8 @@ func IsAllowedDomain(allowedDomains string, email string) bool {
 	return true
 }
 
-// LoadUserWithoutAuthByID load user information without secret
-func LoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, error) {
+// loadUserWithoutAuthByID load user information without secret
+func loadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, error) {
 	query := `SELECT username, admin, data, origin FROM "user" WHERE id = $1`
 
 	var jsonUser []byte
@@ -93,8 +93,8 @@ func LoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, erro
 	return u, nil
 }
 
-// LoadUserWithoutAuth load user without auth information
-func LoadUserWithoutAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
+// loadUserWithoutAuth load user without auth information
+func loadUserWithoutAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	query := `SELECT id, admin, data, origin FROM "user" WHERE username = $1`
 
 	var jsonUser []byte
@@ -118,8 +118,8 @@ func LoadUserWithoutAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	return u, nil
 }
 
-// LoadUserAndAuth Load user with auth information
-func LoadUserAndAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
+// loadUserAndAuth Load user with auth information
+func loadUserAndAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	query := `SELECT id, admin, data, auth, origin FROM "user" WHERE username = $1`
 
 	var jsonUser []byte
@@ -152,7 +152,7 @@ func LoadUserAndAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 }
 
 // FindUserIDByName retrieves only user ID in database
-func FindUserIDByName(db gorp.SqlExecutor, name string) (int64, error) {
+func findUserIDByName(db gorp.SqlExecutor, name string) (int64, error) {
 	query := `SELECT id FROM "user" WHERE username = $1`
 
 	var id int64
@@ -217,7 +217,7 @@ func CountUser(db gorp.SqlExecutor) (int64, error) {
 }
 
 // UpdateUser update given user
-func UpdateUser(db gorp.SqlExecutor, u sdk.User) error {
+func updateUser(db gorp.SqlExecutor, u sdk.User) error {
 	u.Groups = nil
 	su, err := json.Marshal(u)
 	if err != nil {
@@ -246,7 +246,7 @@ func UpdateUserAndAuth(db gorp.SqlExecutor, u sdk.User) error {
 
 // DeleteUserWithDependenciesByName Delete user and all his dependencies
 func DeleteUserWithDependenciesByName(db gorp.SqlExecutor, s string) error {
-	u, err := LoadUserWithoutAuth(db, s)
+	u, err := loadUserWithoutAuth(db, s)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func deleteUser(db gorp.SqlExecutor, u *sdk.User) error {
 }
 
 // InsertUser Insert new user
-func InsertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
+func insertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
 	su, err := json.Marshal(u)
 	if err != nil {
 		return err

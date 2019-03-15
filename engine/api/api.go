@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
@@ -569,6 +570,13 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Database.MaxConn)
 	if errDB != nil {
 		return fmt.Errorf("cannot connect to database: %v", errDB)
+	}
+
+	log.Info("Setting up database keys...")
+	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapping.KeyEcnryptionIdentifier)
+	signatureKeyConfig := a.Config.Database.SignatureKey.GetKeys(gorpmapping.KeySignIdentifier)
+	if err := gorpmapping.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
 
 	log.Info("Bootstrapping database...")

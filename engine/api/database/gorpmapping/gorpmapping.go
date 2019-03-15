@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sync"
 )
 
@@ -37,6 +38,9 @@ func Register(m ...TableMapping) {
 }
 
 func getTabbleMapping(i interface{}) (TableMapping, bool) {
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		i = reflect.ValueOf(i).Elem().Interface()
+	}
 	mappingMutex.Lock()
 	defer mappingMutex.Unlock()
 	k := fmt.Sprintf("%T", i)

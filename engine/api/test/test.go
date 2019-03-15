@@ -10,8 +10,10 @@ import (
 	"path"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 
 	"github.com/go-gorp/gorp"
 
@@ -94,6 +96,33 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 	accesstoken.Init("cds_test", TestKey) // nolint
+
+	sigKeys := database.RollingKeyConfig{
+		Cipher: "hmac",
+		Keys: []database.KeyConfig{
+			{
+				Timestamp: time.Now().Unix(),
+				Key:       "8f17c90d5306028bdf6ef66cc6da387aca9dd57a11f44e5e2752228398b7d165",
+			},
+		},
+	}
+
+	encryptKeys := database.RollingKeyConfig{
+		Cipher: "xchacha20-poly1305",
+		Keys: []database.KeyConfig{
+			{
+				Timestamp: time.Now().Unix(),
+				Key:       "fd27b8872bdefeb207bbefc1a82e94039b85d3ec68d891e22a5dcaa81542fc6b",
+			},
+		},
+	}
+
+	signatureKeyConfig := sigKeys.GetKeys(gorpmapping.KeySignIdentifier)
+	encryptionKeyConfig := encryptKeys.GetKeys(gorpmapping.KeyEcnryptionIdentifier)
+	if err := gorpmapping.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+		t.Fatalf("cannot setup database keys: %v", err)
+		return nil, nil, func() {}
+	}
 
 	if DBDriver == "" {
 		t.Fatalf("This should be run with a database")

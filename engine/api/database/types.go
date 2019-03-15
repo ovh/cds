@@ -1,6 +1,8 @@
 package database
 
-import "github.com/ovh/symmecrypt/keyloader"
+import (
+	"github.com/ovh/symmecrypt/keyloader"
+)
 
 const (
 	// ViolateUniqueKeyPGCode is the pg code when duplicating unique key
@@ -19,26 +21,29 @@ type DBConfiguration struct {
 	MaxConn        int              `toml:"maxconn" default:"20" comment:"DB Max connection" json:"maxconn"`
 	ConnectTimeout int              `toml:"connectTimeout" default:"10" comment:"Maximum wait for connection, in seconds" json:"connectTimeout"`
 	Timeout        int              `toml:"timeout" default:"3000" comment:"Statement timeout value in milliseconds" json:"timeout"`
-	SignatureKey   RollingKeyConfig `json:"-" toml:"signatureRollingKeys" comment:"Signature rolling keys"`
+	SignatureKey   RollingKeyConfig `json:"-" toml:"signatureRollingKeys" comment:"Signature rolling keys" mapstructure:"signatureRollingKeys"`
+	EncryptionKey  RollingKeyConfig `json:"-" toml:"encryptionRollingKeys" comment:"Encryption rolling keys" mapstructure:"encryptionRollingKeys"`
 }
 
-type RollingKeyConfig []KeyConfig
+type RollingKeyConfig struct {
+	Cipher string      `toml:"cipher" mapstructure:"cipher"`
+	Keys   []KeyConfig `toml:"keys" mapstructure:"keys"`
+}
 
 type KeyConfig struct {
-	Cipher    string `toml:"cipher"`
-	Timestamp int64  `toml:"timestamp,omitempty"`
-	Key       string `toml:"key"`
+	Timestamp int64  `toml:"timestamp,omitempty" mapstructure:"timestamp"`
+	Key       string `toml:"key" mapstructure:"key"`
 }
 
 func (k RollingKeyConfig) GetKeys(identifier string) []keyloader.KeyConfig {
-	var res = make([]keyloader.KeyConfig, len(k))
-	for i := range k {
-		res[i] = keyloader.KeyConfig{
+	var res = []keyloader.KeyConfig{}
+	for _, key := range k.Keys {
+		res = append(res, keyloader.KeyConfig{
 			Identifier: identifier,
-			Cipher:     k[i].Cipher,
-			Key:        k[i].Key,
-			Timestamp:  k[i].Timestamp,
-		}
+			Cipher:     k.Cipher,
+			Key:        key.Key,
+			Timestamp:  key.Timestamp,
+		})
 	}
 	return res
 }

@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/symmecrypt/keyloader"
 
 	"github.com/fsamin/go-dump"
 	defaults "github.com/mcuadros/go-defaults"
@@ -87,6 +92,24 @@ func configBootstrap(args []string) {
 		case "api":
 			if conf.API == nil {
 				conf.API = &api.Configuration{}
+				key, _ := keyloader.GenerateKey("hmac", gorpmapping.KeySignIdentifier, false, time.Now())
+				conf.API.Database.SignatureKey = database.RollingKeyConfig{
+					Cipher: "hmac",
+				}
+				conf.API.Database.SignatureKey.Keys = append(conf.API.Database.SignatureKey.Keys, database.KeyConfig{
+					Key:       key.Key,
+					Timestamp: key.Timestamp,
+				})
+
+				key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapping.KeyEcnryptionIdentifier, false, time.Now())
+				conf.API.Database.EncryptionKey = database.RollingKeyConfig{
+					Cipher: "xchacha20-poly1305",
+				}
+				conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys,
+					database.KeyConfig{
+						Key:       key.Key,
+						Timestamp: key.Timestamp,
+					})
 			}
 		case "migrate":
 			if conf.DatabaseMigrate == nil {
@@ -142,6 +165,24 @@ func configBootstrap(args []string) {
 		conf.Debug = &DebugConfiguration{}
 		conf.Tracing = &observability.Configuration{}
 		conf.API = &api.Configuration{}
+		key, _ := keyloader.GenerateKey("hmac", gorpmapping.KeySignIdentifier, false, time.Now())
+		conf.API.Database.SignatureKey = database.RollingKeyConfig{
+			Cipher: "hmac",
+		}
+		conf.API.Database.SignatureKey.Keys = append(conf.API.Database.SignatureKey.Keys,
+			database.KeyConfig{
+				Key:       key.Key,
+				Timestamp: key.Timestamp,
+			})
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapping.KeyEcnryptionIdentifier, false, time.Now())
+		conf.API.Database.EncryptionKey = database.RollingKeyConfig{
+			Cipher: "xchacha20-poly1305",
+		}
+		conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys,
+			database.KeyConfig{
+				Key:       key.Key,
+				Timestamp: key.Timestamp,
+			})
 		conf.DatabaseMigrate = &migrateservice.Configuration{}
 		conf.Hatchery = &HatcheryConfiguration{}
 		conf.Hatchery.Local = &local.HatcheryConfiguration{}

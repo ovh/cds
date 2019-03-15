@@ -303,7 +303,15 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 		return nil, fmt.Errorf("LDAP Search error %s: multiple values", search)
 	}
 
-	u, err := user.LoadUserAndAuth(db, username)
+	au, err := user.LoadUserByUsername(db, username)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := user.GetDeprecatedUser(db, au)
+	if err != nil {
+		return nil, err
+	}
 
 	//If user exists in database and is set as "local"
 	if u != nil && u.Origin == "local" {

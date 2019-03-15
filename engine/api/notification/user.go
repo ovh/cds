@@ -90,7 +90,13 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 					if email, ok := params["cds.author.email"]; ok {
 						jn.Recipients = append(jn.Recipients, email)
 					} else if author, okA := params["cds.author"]; okA && author != "" {
-						u, err := user.LoadUserWithoutAuth(db, author)
+						// Load the user
+						au, err := user.LoadUserByUsername(db, author)
+						if err != nil {
+							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
+							continue
+						}
+						u, err := user.GetDeprecatedUser(db, au)
 						if err != nil {
 							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue

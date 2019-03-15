@@ -30,6 +30,11 @@ type AuthentifiedUser struct {
 	Ring     string `json:"ring" yaml:"ring,omitempty" db:"ring"`
 }
 
+type UserLocalAuthentication struct {
+	UserID        string `json:"user_id" db:"user_id"`
+	ClearPassword string `json:"clear_password" db:"-"`
+}
+
 // Favorite represent the favorites workflow or project of the user
 type Favorite struct {
 	ProjectIDs  []int64 `json:"project_ids" yaml:"project_ids"`
