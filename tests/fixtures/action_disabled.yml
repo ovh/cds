@@ -9,4 +9,3 @@ steps:
   - '#!/bin/bash'
   - set -e
   - ""
-

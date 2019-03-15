@@ -1,6 +1,8 @@
 version: v1.0
 name: CDS_TestIT_Disabled
-enabled: false
+group: shared.infra
+requirements:
+- binary: bash
 steps:
 - name: my empty script
   script:

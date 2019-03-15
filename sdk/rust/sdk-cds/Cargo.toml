@@ -1,8 +1,14 @@
 [package]
 name = "sdk-cds"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Benjamin Coenen <benjamin.coenen@corp.ovh.com>"]
 edition = "2018"
+description = "SDK in Rust to use CDS API"
+repository = "https://github.com/ovh/cds"
+readme = "README.md"
+keywords = ["cds", "sdk", "cd", "ci"]
+license = "BSD-3-Clause"
+categories = ["api-bindings", "development-tools"]
 
 [dependencies]
 reqwest = "0.9.8"

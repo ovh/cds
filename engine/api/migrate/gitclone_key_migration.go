@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"database/sql"
 	"regexp"
 	"strings"
 
@@ -19,6 +20,85 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+type pipelineUsingAction struct {
+	ActionID         int
+	ActionType       string
+	ActionName       string
+	PipName          string
+	AppName          string
+	EnvID            int64
+	ProjName         string
+	ProjKey          string
+	StageID          int64
+	WorkflowName     string
+	WorkflowNodeName string
+	WorkflowNodeID   int64
+}
+
+func getPipelineUsingAction(db gorp.SqlExecutor, name string) ([]pipelineUsingAction, error) {
+	query := `
+		SELECT
+			action.type, action.name as actionName, action.id as actionId,
+			pipeline_stage.id as stageId,
+			pipeline.name as pipName, project.name, project.projectkey,
+			workflow.name as wName, workflow_node.id as nodeId,  workflow_node.name as nodeName
+		FROM action_edge
+		LEFT JOIN action on action.id = parent_id
+		LEFT OUTER JOIN pipeline_action ON pipeline_action.action_id = action.id
+		LEFT OUTER JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
+		LEFT OUTER JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+		LEFT OUTER JOIN project ON pipeline.project_id = project.id
+		LEFT OUTER JOIN workflow_node ON workflow_node.pipeline_id = pipeline.id
+		LEFT OUTER JOIN workflow ON workflow_node.workflow_id = workflow.id
+		LEFT JOIN action as actionChild ON  actionChild.id = child_id
+		WHERE actionChild.name = $1 and actionChild.public = true AND pipeline.name IS NOT NULL
+		ORDER BY projectkey, pipName, actionName;
+	`
+	rows, errq := db.Query(query, name)
+	if errq != nil {
+		return nil, sdk.WrapError(errq, "getPipelineUsingAction> Cannot load pipelines using action %s", name)
+	}
+	defer rows.Close()
+
+	response := []pipelineUsingAction{}
+	for rows.Next() {
+		var a pipelineUsingAction
+		var pipName, projName, projKey, wName, wnodeName sql.NullString
+		var stageID, nodeID sql.NullInt64
+		if err := rows.Scan(&a.ActionType, &a.ActionName, &a.ActionID, &stageID,
+			&pipName, &projName, &projKey,
+			&wName, &nodeID, &wnodeName,
+		); err != nil {
+			return nil, sdk.WrapError(err, "Cannot read sql response")
+		}
+		if stageID.Valid {
+			a.StageID = stageID.Int64
+		}
+		if pipName.Valid {
+			a.PipName = pipName.String
+		}
+		if projName.Valid {
+			a.ProjName = projName.String
+		}
+		if projKey.Valid {
+			a.ProjKey = projKey.String
+		}
+		if wName.Valid {
+			a.WorkflowName = wName.String
+		}
+		if wnodeName.Valid {
+			a.WorkflowNodeName = wnodeName.String
+		}
+		if nodeID.Valid {
+			a.WorkflowNodeID = nodeID.Int64
+		}
+
+		response = append(response, a)
+	}
+
+	return response, nil
+}
+
 var badKey int64
 
 // GitClonePrivateKey is temporary code
@@ -34,7 +114,7 @@ func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) err
 	log.Info("GitClonePrivateKey> Begin")
 	defer log.Info("GitClonePrivateKey> End with key errors %d", badKey)
 
-	pipelines, err := action.GetPipelineUsingAction(db, sdk.GitCloneAction)
+	pipelines, err := getPipelineUsingAction(db, sdk.GitCloneAction)
 	if err != nil {
 		return err
 	}
@@ -82,7 +162,7 @@ func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) err
 }
 
 // migrateActionGitClonePipeline is the unitary function
-func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p action.PipelineUsingAction) error {
+func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p pipelineUsingAction) error {
 	pip, err := pipeline.LoadPipeline(db, p.ProjKey, p.PipName, true)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load pipeline project %s and pipeline name %s: %+v", p.ProjKey, p.PipName, p)
@@ -232,5 +312,5 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 	}
 
 	//Update in database
-	return action.UpdateActionDB(db, &j.Action, anAdminID)
+	return action.Update(db, &j.Action)
 }

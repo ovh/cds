@@ -13,7 +13,7 @@ import (
 
 	"github.com/mholt/archiver"
 	"github.com/olekukonko/tablewriter"
-	"github.com/rubenv/sql-migrate"
+	migrate "github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/api/database"
@@ -179,7 +179,7 @@ func databaseDownloadSQLTarGz(currentVersion string, artifactName string, migrat
 	}
 
 	dest := tmpfile.Name() + "extract"
-	if err := archiver.TarGz.Open(tmpfile.Name(), dest); err != nil {
+	if err := archiver.DefaultTarGz.Unarchive(tmpfile.Name(), dest); err != nil {
 		return fmt.Errorf("Unarchive %s failed: %v", artifactName, err)
 	}
 	// the directory dest/sql/ -> contains all sql files

@@ -130,6 +130,12 @@ type EnvironmentVariableClient interface {
 	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 }
 
+// EventsClient listen SSE Events from CDS API
+type EventsClient interface {
+	// Must be  run in a go routine
+	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)
+}
+
 // DownloadClient exposes download related functions
 type DownloadClient interface {
 	Download() ([]sdk.Download, error)
@@ -139,11 +145,13 @@ type DownloadClient interface {
 
 // ActionClient exposes actions related functions
 type ActionClient interface {
-	ActionDelete(actionName string) error
-	ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error)
+	ActionDelete(groupName, name string) error
+	ActionGet(groupName, name string, mods ...RequestModifier) (*sdk.Action, error)
 	ActionList() ([]sdk.Action, error)
 	ActionImport(content io.Reader, format string) error
-	ActionExport(name string, format string) ([]byte, error)
+	ActionExport(groupName, name string, format string) ([]byte, error)
+	ActionBuiltinList() ([]sdk.Action, error)
+	ActionBuiltinGet(name string, mods ...RequestModifier) (*sdk.Action, error)
 }
 
 // GroupClient exposes groups related functions
@@ -336,6 +344,7 @@ type Interface interface {
 	ConfigUser() (map[string]string, error)
 	DownloadClient
 	EnvironmentClient
+	EventsClient
 	ExportImportInterface
 	GroupClient
 	GRPCPluginsClient

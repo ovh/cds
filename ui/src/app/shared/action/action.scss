@@ -1,9 +1,6 @@
 @import '../../../common';
-
-
 .requirementForm {
   margin-top: 10px;
-
   h3 {
     margin-top: 10px;
   }
@@ -18,22 +15,18 @@
 }
 
 .dragula-container {
-
   .gu-transit {
     opacity: 0.3;
   }
-
   .step.off {
     border-radius: 3px;
     background-color: rgba(189, 189, 189, 0.3);
   }
-
   .step hr {
     margin-top: 20px;
     margin-bottom: 20px;
   }
 }
-
 
 .inline.field input {
   width: 80%;
@@ -49,7 +42,7 @@
 
 .subtitle {
   height: 40px;
-  line-height:40px;
+  line-height: 40px;
   margin-top: 10px;
   margin-bottom: 5px;
   vertical-align: middle;
@@ -57,7 +50,6 @@
 
 .ui.segment.off {
   background-color: rgba(189, 189, 189, 0.3);
-
   .step.off {
     background-color: transparent;
   }
@@ -66,15 +58,27 @@
 .bottomBtnsWrapper {
   background-color: #f9f9f9;
   position: fixed;
-  bottom:0;
+  bottom: 0;
   z-index: 30;
   right: 0;
   width: 430px;
   padding-top: 20px;
   padding-bottom: 20px;
-
+  padding-left: 21px;
+  padding-right: 21px;
   .column {
     padding-top: 5px;
     padding-bottom: 5px;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+}
+
+.buttonOptions {
+  .menu {
+    padding: 3px 6px;
+    .item {
+      padding: 3px 0 !important;
+    }
   }
 }

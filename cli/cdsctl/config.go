@@ -8,6 +8,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/fsamin/go-repo"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -192,11 +193,11 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		if needConfirmation {
 			fetchURL, err := r.FetchURL()
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot get url from local git repository")
 			}
 			name, err := r.Name()
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot get name from local git repository")
 			}
 			repoExists = cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
 		}
@@ -227,7 +228,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		if repoExists {
 			name, err := r.Name()
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot get name from current repository")
 			}
 			ps, err := client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
 			if err != nil {
@@ -264,10 +265,10 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		// if given project key not valid ask for a project
 		if project == nil {
 			if len(projects) == 1 {
-				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
+				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project '%s - %s'. Is it correct?", projects[0].Key, projects[0].Name)) {
 					// there is no filter on repo so there was only one choice possible
 					if !repoExists {
-						return nil, fmt.Errorf("Can't find a project to use")
+						return nil, errors.New("can't find a project to use")
 					}
 				} else {
 					project = &projects[0]
@@ -296,7 +297,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		projectKey = project.Key
 		if repoExists {
 			if err := r.LocalConfigSet("cds", "project", projectKey); err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot set local git configuration")
 			}
 		}
 
@@ -308,7 +309,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var application *sdk.Application
 			if len(applications) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", applications[0].Name)) {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application '%s'. Is it correct?", applications[0].Name)) {
 					application = &applications[0]
 				}
 			} else if len(applications) > 1 {
@@ -325,7 +326,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				}
 			}
 			if application == nil && !mctx[_ApplicationName].AllowEmpty {
-				return nil, fmt.Errorf("Can't find an application to use")
+				return nil, errors.New("can't find an application to use")
 			}
 
 			// set application name and override repository config if exists
@@ -333,7 +334,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 			if application != nil {
 				if repoExists {
 					if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
-						return nil, err
+						return nil, errors.Wrap(err, "cannot set local git configuration")
 					}
 				}
 			}
@@ -347,7 +348,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var workflow *sdk.Workflow
 			if len(workflows) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", workflows[0].Name)) {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow '%s'. Is it correct?", workflows[0].Name)) {
 					workflow = &workflows[0]
 				}
 			} else if len(workflows) > 1 {
@@ -364,7 +365,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				}
 			}
 			if workflow == nil && !mctx[_WorkflowName].AllowEmpty {
-				return nil, fmt.Errorf("Can't find a workflow to use")
+				return nil, errors.New("can't find a workflow to use")
 			}
 
 			// set workflow name and override repository config if exists
@@ -372,7 +373,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				workflowName = workflow.Name
 				if repoExists {
 					if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
-						return nil, err
+						return nil, errors.Wrap(err, "cannot set local git configuration")
 					}
 				}
 			}

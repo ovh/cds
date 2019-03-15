@@ -4,95 +4,121 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 )
 
-// TarGz is for TarGz format
-var TarGz tarGzFormat
+// TarGz facilitates gzip compression
+// (RFC 1952) of tarball archives.
+type TarGz struct {
+	*Tar
 
-func init() {
-	RegisterFormat("TarGz", TarGz)
+	// The compression level to use, as described
+	// in the compress/gzip package.
+	CompressionLevel int
 }
 
-type tarGzFormat struct{}
-
-func (tarGzFormat) Match(filename string) bool {
-	return strings.HasSuffix(strings.ToLower(filename), ".tar.gz") ||
-		strings.HasSuffix(strings.ToLower(filename), ".tgz") ||
-		isTarGz(filename)
+// CheckExt ensures the file extension matches the format.
+func (*TarGz) CheckExt(filename string) error {
+	if !strings.HasSuffix(filename, ".tar.gz") &&
+		!strings.HasSuffix(filename, ".tgz") {
+		return fmt.Errorf("filename must have a .tar.gz or .tgz extension")
+	}
+	return nil
 }
 
-// isTarGz checks the file has the gzip compressed Tar format header by reading
-// its beginning block.
-func isTarGz(targzPath string) bool {
-	f, err := os.Open(targzPath)
+// Archive creates a compressed tar file at destination
+// containing the files listed in sources. The destination
+// must end with ".tar.gz" or ".tgz". File paths can be
+// those of regular files or directories; directories will
+// be recursively added.
+func (tgz *TarGz) Archive(sources []string, destination string) error {
+	err := tgz.CheckExt(destination)
 	if err != nil {
-		return false
+		return fmt.Errorf("output %s", err.Error())
 	}
-	defer f.Close()
-
-	gzr, err := gzip.NewReader(f)
-	if err != nil {
-		return false
-	}
-	defer gzr.Close()
-
-	buf := make([]byte, tarBlockSize)
-	n, err := gzr.Read(buf)
-	if err != nil || n < tarBlockSize {
-		return false
-	}
-
-	return hasTarHeader(buf)
+	tgz.wrapWriter()
+	return tgz.Tar.Archive(sources, destination)
 }
 
-// Write outputs a .tar.gz file to a Writer containing
-// the contents of files listed in filePaths. It works
-// the same way Tar does, but with gzip compression.
-func (tarGzFormat) Write(output io.Writer, filePaths []string) error {
-	return writeTarGz(filePaths, output, "")
+// Unarchive unpacks the compressed tarball at
+// source to destination. Destination will be
+// treated as a folder name.
+func (tgz *TarGz) Unarchive(source, destination string) error {
+	tgz.wrapReader()
+	return tgz.Tar.Unarchive(source, destination)
 }
 
-// Make creates a .tar.gz file at targzPath containing
-// the contents of files listed in filePaths. It works
-// the same way Tar does, but with gzip compression.
-func (tarGzFormat) Make(targzPath string, filePaths []string) error {
-	out, err := os.Create(targzPath)
-	if err != nil {
-		return fmt.Errorf("error creating %s: %v", targzPath, err)
+// Walk calls walkFn for each visited item in archive.
+func (tgz *TarGz) Walk(archive string, walkFn WalkFunc) error {
+	tgz.wrapReader()
+	return tgz.Tar.Walk(archive, walkFn)
+}
+
+// Create opens txz for writing a compressed
+// tar archive to out.
+func (tgz *TarGz) Create(out io.Writer) error {
+	tgz.wrapWriter()
+	return tgz.Tar.Create(out)
+}
+
+// Open opens t for reading a compressed archive from
+// in. The size parameter is not used.
+func (tgz *TarGz) Open(in io.Reader, size int64) error {
+	tgz.wrapReader()
+	return tgz.Tar.Open(in, size)
+}
+
+// Extract extracts a single file from the tar archive.
+// If the target is a directory, the entire folder will
+// be extracted into destination.
+func (tgz *TarGz) Extract(source, target, destination string) error {
+	tgz.wrapReader()
+	return tgz.Tar.Extract(source, target, destination)
+}
+
+func (tgz *TarGz) wrapWriter() {
+	var gzw *gzip.Writer
+	tgz.Tar.writerWrapFn = func(w io.Writer) (io.Writer, error) {
+		var err error
+		gzw, err = gzip.NewWriterLevel(w, tgz.CompressionLevel)
+		return gzw, err
 	}
-	defer out.Close()
-
-	return writeTarGz(filePaths, out, targzPath)
-}
-
-func writeTarGz(filePaths []string, output io.Writer, dest string) error {
-	gzw := gzip.NewWriter(output)
-	defer gzw.Close()
-
-	return writeTar(filePaths, gzw, dest)
-}
-
-// Read untars a .tar.gz file read from a Reader and decompresses
-// the contents into destination.
-func (tarGzFormat) Read(input io.Reader, destination string) error {
-	gzr, err := gzip.NewReader(input)
-	if err != nil {
-		return fmt.Errorf("error decompressing: %v", err)
+	tgz.Tar.cleanupWrapFn = func() {
+		gzw.Close()
 	}
-	defer gzr.Close()
-
-	return Tar.Read(gzr, destination)
 }
 
-// Open untars source and decompresses the contents into destination.
-func (tarGzFormat) Open(source, destination string) error {
-	f, err := os.Open(source)
-	if err != nil {
-		return fmt.Errorf("%s: failed to open archive: %v", source, err)
+func (tgz *TarGz) wrapReader() {
+	var gzr *gzip.Reader
+	tgz.Tar.readerWrapFn = func(r io.Reader) (io.Reader, error) {
+		var err error
+		gzr, err = gzip.NewReader(r)
+		return gzr, err
 	}
-	defer f.Close()
-
-	return TarGz.Read(f, destination)
+	tgz.Tar.cleanupWrapFn = func() {
+		gzr.Close()
+	}
 }
+
+func (tgz *TarGz) String() string { return "tar.gz" }
+
+// NewTarGz returns a new, default instance ready to be customized and used.
+func NewTarGz() *TarGz {
+	return &TarGz{
+		CompressionLevel: gzip.DefaultCompression,
+		Tar:              NewTar(),
+	}
+}
+
+// Compile-time checks to ensure type implements desired interfaces.
+var (
+	_ = Reader(new(TarGz))
+	_ = Writer(new(TarGz))
+	_ = Archiver(new(TarGz))
+	_ = Unarchiver(new(TarGz))
+	_ = Walker(new(TarGz))
+	_ = Extractor(new(TarGz))
+)
+
+// DefaultTarGz is a convenient archiver ready to use.
+var DefaultTarGz = NewTarGz()

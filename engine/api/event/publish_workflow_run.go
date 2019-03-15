@@ -102,6 +102,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		if wnode.Context != nil && wnode.Context.EnvironmentID != 0 {
 			env = w.Environments[wnode.Context.EnvironmentID]
 		}
+		e.NodeType = wnode.Type
 	} else {
 		nodeName = n.Name
 		pipName = w.Pipelines[n.PipelineID].Name

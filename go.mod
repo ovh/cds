@@ -161,7 +161,7 @@ require (
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 	github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
 	github.com/mgutz/logxi v0.0.0-20161027140823-aebf8a7d67ab // indirect
-	github.com/mholt/archiver v2.1.0+incompatible
+	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/miekg/dns v1.0.13 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747 // indirect
@@ -193,8 +193,7 @@ require (
 	github.com/pelletier/go-toml v0.0.0-20171222114548-0131db6d737c
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/phayes/permbits v0.0.0-20160816172359-32459f104210
-	github.com/pierrec/lz4 v0.0.0-20161206202305-5c9560bfa9ac // indirect
-	github.com/pierrec/xxHash v0.0.0-20160112165351-5a004441f897 // indirect
+	github.com/pierrec/lz4 v0.0.0-20190222153722-062282ea0dcf // indirect
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.0.0-20171216070316-e881fd58d78e
 	github.com/pkg/sftp v0.0.0-20160930220758-4d0e916071f6 // indirect
@@ -237,6 +236,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20161231055540-f06f290571ce
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18 // indirect
 	github.com/xordataexchange/crypt v0.0.0-20150523230031-749e360c8f23 // indirect
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b // indirect

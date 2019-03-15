@@ -10,19 +10,19 @@ testcases:
       - result.code ShouldEqual 0
 - name: test unknowned action
   steps:
-  - script: {{.cds.build.cdsctl}} action delete --force CDS_TestIT_unknowned
+  - script: {{.cds.build.cdsctl}} action delete --force shared.infra/CDS_TestIT_unknowned
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "action does not exist"
-  - script: {{.cds.build.cdsctl}} action delete CDS_TestIT_unknowned
+  - script: {{.cds.build.cdsctl}} action delete shared.infra/CDS_TestIT_unknowned
     assertions:
       - result.code ShouldEqual 50
       - result.systemout ShouldContainSubstring "action does not exist"
 - name: prepare test
   steps:
-  - script: {{.cds.build.cdsctl}} action delete --force CDS_TestIT_Enabled
-  - script: {{.cds.build.cdsctl}} action delete --force CDS_TestIT_Disabled
-  - script: {{.cds.build.cdsctl}} action delete --force CDS_TestIT_GitClone
+  - script: {{.cds.build.cdsctl}} action delete --force shared.infra/CDS_TestIT_Enabled
+  - script: {{.cds.build.cdsctl}} action delete --force shared.infra/CDS_TestIT_Disabled
+  - script: {{.cds.build.cdsctl}} action delete --force shared.infra/CDS_TestIT_GitClone
 - name: action import
   steps:
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_enabled.yml
@@ -39,12 +39,14 @@ testcases:
       - result.systemout ShouldContainSubstring successfully
 - name: action export
   steps:
-  - script: {{.cds.build.cdsctl}} action export CDS_TestIT_Disabled > ./tests/fixtures/clictl_action_CDS_TestIT_Disabled.exported
-  - script: {{.cds.build.cdsctl}} action export CDS_TestIT_Enabled > ./tests/fixtures/clictl_action_CDS_TestIT_Enabled.exported
-  - script: {{.cds.build.cdsctl}} action export CDS_TestIT_GitClone > ./tests/fixtures/clictl_action_CDS_TestIT_GitClone.exported
+  - script: {{.cds.build.cdsctl}} action export shared.infra/CDS_TestIT_Disabled > ./tests/fixtures/clictl_action_CDS_TestIT_Disabled.exported
+  - script: {{.cds.build.cdsctl}} action export shared.infra/CDS_TestIT_Enabled > ./tests/fixtures/clictl_action_CDS_TestIT_Enabled.exported
+  - script: {{.cds.build.cdsctl}} action export shared.infra/CDS_TestIT_GitClone > ./tests/fixtures/clictl_action_CDS_TestIT_GitClone.exported
   - script: diff ./tests/fixtures/clictl_action_CDS_TestIT_Disabled.exported ./tests/fixtures/action_disabled_expected.yml
-  - script: diff ./tests/fixtures/clictl_action_CDS_TestIT_Enabled.exported ./tests/fixtures/action_enabled.yml
-  - script: diff ./tests/fixtures/clictl_action_CDS_TestIT_GitClone.exported ./tests/fixtures/action_git_clone_default.yml
+  - script: diff ./tests/fixtures/clictl_action_CDS_TestIT_Enabled.exported ./tests/fixtures/action_enabled_expected.yml
+  - script: diff ./tests/fixtures/clictl_action_CDS_TestIT_GitClone.exported ./tests/fixtures/action_git_clone_expected.yml
 - name: action list
   steps:
   - script: {{.cds.build.cdsctl}} action list
+    assertions:
+      - result.code ShouldEqual 0

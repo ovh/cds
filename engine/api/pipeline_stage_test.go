@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
@@ -331,10 +330,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
 	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 
-	//Insert Action
-	script, err := action.LoadPublicAction(api.mustDB(), "Script")
-	test.NoError(t, err)
-	t.Logf("Insert Action %s(%d) on Stage %s(%d) for Pipeline %s(%d) of Project %s", script.Name, script.ID, stage.Name, stage.ID, pip.Name, pip.ID, proj.Name)
+	t.Logf("Insert action on Stage %s(%d) for Pipeline %s(%d) of Project %s", stage.Name, stage.ID, pip.Name, pip.ID, proj.Name)
 	job := &sdk.Job{
 		Action: sdk.Action{
 			Name:    "NewAction1",
@@ -367,8 +363,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	pip.Stages = append(pip.Stages, *stage1)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage1.Name, pip.Name, proj.Name)
-	err = pipeline.InsertStage(api.mustDB(), stage1)
-	test.NoError(t, err)
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage1))
 	assert.NotZero(t, stage1.ID)
 
 	//Insert Action
@@ -495,7 +490,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	test.NoError(t, err)
 }
 
-func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
+func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 

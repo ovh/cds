@@ -4,6 +4,7 @@ import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
 import { ActionAddComponent } from './action/add/action.add.component';
 import { ActionEditComponent } from './action/edit/action.edit.component';
 import { ActionListComponent } from './action/list/action.list.component';
+import { ActionShowComponent } from './action/show/action.show.component';
 import { CdsctlComponent } from './cdsctl/cdsctl.component';
 import { DownloadComponent } from './download/download.component';
 import { GroupEditComponent } from './group/edit/group.edit.component';
@@ -41,7 +42,16 @@ const routes: Routes = [
             { path: 'user/:username', component: UserEditComponent, data: { title: '{username} • User' } },
             { path: 'action', component: ActionListComponent, data: { title: 'Actions' } },
             { path: 'action/add', component: ActionAddComponent, data: { title: 'Add • Action' } },
-            { path: 'action/:name', component: ActionEditComponent, data: { title: '{name} • Action' } },
+            {
+                path: 'action/:groupName/:actionName',
+                component: ActionEditComponent,
+                data: { title: 'Edit • Action' }
+            },
+            {
+                path: 'action-builtin/:actionName',
+                component: ActionShowComponent,
+                data: { title: 'Show • Action' }
+            },
             { path: 'queue', component: QueueComponent, data: { title: 'Queue' } },
             { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } },
             { path: 'workflow-template', component: WorkflowTemplateListComponent, data: { title: 'Workflow template' } },

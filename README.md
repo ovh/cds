@@ -16,9 +16,12 @@ CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform writ
 ## Intuitive UI
 CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
 
-<kbd>
-  <img src="./docs/static/images/capture-start.gif" alt="CDS Demonstration">
-</kbd>
+<p align="center">
+  <kbd>
+    <img src="./docs/static/images/capture-start.gif" alt="create and run workflow with CDS ui" title="create and run workflow with CDS ui"> 
+  </kbd>
+  <i>Create and run workflow with CDS ui.</i>
+</p>
 
 ## The most powerful Command Line for a CI/CD Platform
 
@@ -26,6 +29,10 @@ cdsctl is the CDS Command Line - you can script everything with it, cdsctl also 
 
 [See all cdsctl commands](https://ovh.github.io/cds/cli/cdsctl/#see-also)
 
+<p align="center">
+  <img src="./docs/static/images/init_template_as_code.gif" alt="create workflow as code with CDS command line" title="create workflow as code with CDS command line">
+  <i>Create workflow as code with CDS command line.</i>
+</p>
 
 ## Want a try?
 
@@ -76,7 +83,7 @@ All the features of the table are detailed below.
 | Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins |
 | --- | --- | --- | --- | --- | --- |
 | [Pipeline](#pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: |
+| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: <sub><sup>[*17](#some-explanations-on-the-comparison-matrix) | :x: |
 | [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparison-matrix)</sub></sup> |
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*2](#some-explanations-on-the-comparison-matrix)</sub></sup> |
@@ -128,7 +135,7 @@ You can configure everything with the web UI. Even if you have complex use cases
 
 #### Configuration on Git Repository
 
-Pipeline as code is a well-known concept of CI / CD tools. CDS, goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is partucularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
+Pipeline as code is a well-known concept of CI / CD tools. CDS, goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is particularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
 
 
 #### Configuration as code on UI
@@ -299,7 +306,7 @@ Several types of hatchery are available:
 - *14 it's a plugin
 - *15 K8s, Docker machine & GKE only
 - *16 limited to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
-
+- *17 Only in Silver and Premimum Gitlab Edition https://docs.gitlab.com/ee/ci/yaml/#trigger-premium
 
 ## License
 

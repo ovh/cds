@@ -37,17 +37,9 @@ func (actPlugin *archiveActionPlugin) Run(ctx context.Context, q *actionplugin.A
 	var err error
 	switch action {
 	case "compress":
-		ff := archiver.MatchingFormat(destination)
-		if ff == nil {
-			return fail("Unsupported file extension for: %s", destination)
-		}
-		err = ff.Make(destination, []string{source})
+		err = archiver.Archive([]string{source}, destination)
 	case "uncompress":
-		ff := archiver.MatchingFormat(source)
-		if ff == nil {
-			return fail("Unsupported file extension for: %s", source)
-		}
-		err = ff.Open(source, destination)
+		err = archiver.Unarchive(source, destination)
 	default:
 		return fail("Invalid action: %s", action)
 	}

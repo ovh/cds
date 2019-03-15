@@ -13,7 +13,7 @@ import { TimelineFilter } from './model/timeline.model';
 import { WorkflowNodeRun, WorkflowRun } from './model/workflow.run.model';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { BroadcastStore } from './service/broadcast/broadcast.store';
-import { ActionStore, RouterService, TimelineStore } from './service/services.module';
+import { RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { WorkflowEventStore } from './service/workflow/workflow.event.store';
 import { ToastService } from './shared/toast/ToastService';
@@ -39,7 +39,6 @@ export class AppService {
         private _routerService: RouterService,
         private _routeActivated: ActivatedRoute,
         private _authStore: AuthentificationStore,
-        private _actionStore: ActionStore,
         private _translate: TranslateService,
         private _workflowEventStore: WorkflowEventStore,
         private _broadcastStore: BroadcastStore,
@@ -64,7 +63,7 @@ export class AppService {
             return
         }
         if (event.type_event.indexOf(EventType.ACTION_PREFIX) === 0) {
-            this._actionStore.resync();
+            // this._actionStore.resync(); TODO invalidate cache
         }
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
             event.type_event === EventType.APPLICATION_ADD || event.type_event === EventType.APPLICATION_UPDATE ||

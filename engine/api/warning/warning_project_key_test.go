@@ -159,6 +159,9 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 		},
 	}
 
+	// get git clone action
+	gitClone := assets.GetBuiltinOrPluginActionByName(t, db, sdk.GitCloneAction)
+
 	// Create pipeline
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
@@ -171,7 +174,7 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 		Name: "MyJob",
 		Actions: []sdk.Action{
 			{
-				Name: "GitClone",
+				ID: gitClone.ID,
 				Parameters: []sdk.Parameter{
 					{
 						Name:  "privateKey",

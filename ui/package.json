@@ -88,6 +88,7 @@
     "rxjs-compat": "6.3.3",
     "sanitize-html": "1.20.0",
     "semantic-ui": "2.2.13",
+    "spinkit": "1.2.5",
     "string-format-obj": "1.1.1",
     "ts-helpers": "1.1.2",
     "zone.js": "0.8.29"

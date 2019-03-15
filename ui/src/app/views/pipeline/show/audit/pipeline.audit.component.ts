@@ -23,7 +23,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
     @Input() project: Project;
     @Input() pipeline: Pipeline;
 
-    audits: Array<PipelineAudit>;
     currentCompare: Array<PipelineAuditDiff>;
     items: Array<Item>;
 
@@ -62,12 +61,12 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
         this.indexSelected = i;
         let indexToCompare = (this.currentPage - 1) * this.nbElementsByPage + i;
 
-        let pipFrom = cloneDeep(this.audits[indexToCompare].pipeline);
+        let pipFrom = cloneDeep(this.pipeline.audits[indexToCompare].pipeline);
         let pipTo: Pipeline;
         if (indexToCompare === 0) {
             pipTo = cloneDeep(this.pipeline);
         } else {
-            pipTo = cloneDeep(this.audits[indexToCompare - 1].pipeline);
+            pipTo = cloneDeep(this.pipeline.audits[indexToCompare - 1].pipeline);
         }
 
         pipFrom = this.cleanPipeline(pipFrom);
@@ -79,7 +78,7 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
             let path = c.path;
             let pathSplitted = path.split('/').filter(p => p !== '');
 
-            switch (this.audits[indexToCompare].action) {
+            switch (this.pipeline.audits[indexToCompare].action) {
                 case 'addStage':
                     diff = this.getAddStageDiff(pathSplitted, pipTo);
                     break;
@@ -173,7 +172,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
         delete j.pipeline_stage_id;
 
         delete j.action.hasChanged;
-        delete j.action.last_modified;
         delete j.action.type;
         delete j.action.id;
         delete j.action.loading;
@@ -190,7 +188,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
                 delete steps[i].description;
                 delete steps[i].type;
                 delete steps[i].actions;
-                delete steps[i].last_modified;
                 if (steps[i].parameters) {
                     for (let k = 0; k < steps[i].parameters.length; k++) {
                         delete steps[i].parameters[k].id;

@@ -236,6 +236,8 @@ import { ZoneComponent } from './zone/zone.component';
     exports: [
         ActionComponent,
         AuditListComponent,
+        ActionStepComponent,
+        ActionStepFormComponent,
         BreadcrumbComponent,
         ProjectBreadcrumbComponent,
         ChartComponentComponent,
@@ -274,6 +276,8 @@ import { ZoneComponent } from './zone/zone.component';
         PrerequisitesFormComponent,
         ReactiveFormsModule,
         RepoManagerFormComponent,
+        RequirementsFormComponent,
+        RequirementsListComponent,
         StatusIconComponent,
         SuiModule,
         TranslateModule,

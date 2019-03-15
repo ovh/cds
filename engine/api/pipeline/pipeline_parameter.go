@@ -42,21 +42,20 @@ func GetAllParametersInPipeline(ctx context.Context, db gorp.SqlExecutor, pipeli
 	          ORDER BY name`
 	rows, err := db.Query(query, pipelineID)
 	if err != nil {
-		return parameters, err
+		return parameters, sdk.WithStack(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var p sdk.Parameter
 		var typeParam, val string
-		err = rows.Scan(&p.ID, &p.Name, &val, &typeParam, &p.Description)
-		if err != nil {
-			return nil, err
+		if err := rows.Scan(&p.ID, &p.Name, &val, &typeParam, &p.Description); err != nil {
+			return nil, sdk.WithStack(err)
 		}
 		p.Type = typeParam
 		p.Value = val
 		parameters = append(parameters, p)
 	}
-	return parameters, err
+	return parameters, nil
 }
 
 // InsertParameterInPipeline Insert a new parameter in the given pipeline

@@ -1,6 +1,6 @@
 <div class="ui grid">
     <div class="ui twelve wide column">
-        <ng-container *ngIf="ready && dashboards && dashboards.length > 0">
+        <ng-container *ngIf="dashboards && dashboards.length > 0">
             <ng-container *ngFor="let d of dashboards">
                 <div class="dashboard">
                     <h4>{{d.title}}</h4>
@@ -9,14 +9,13 @@
                     </div>
                 </div>
             </ng-container>
-
         </ng-container>
-        <ng-container *ngIf="ready && dashboards && dashboards.length === 0">
+        <ng-container *ngIf="dashboards && dashboards.length === 0">
             <div class="ui info message">
                 {{ 'application_home_no_graph' | translate }}
             </div>
         </ng-container>
-        <ng-container *ngIf="!ready">
+        <ng-container *ngIf="!dashboards">
             <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
         </ng-container>
     </div>
@@ -25,13 +24,20 @@
             <h4>{{ 'application_home_repo' | translate }}</h4>
             <ng-container *ngIf="application.vcs_server">
                 <ul>
-                    <li><a [href]="overview?.git_url" target="_blank">{{application.vcs_server + ' - ' +
-                            application.repository_fullname}}</a></li>
+                    <li *ngIf="overview">
+                        <a [href]="overview?.git_url" target="_blank">
+                            {{application.vcs_server + ' - ' + application.repository_fullname}}
+                        </a>
+                    </li>
+                    <li *ngIf="!overview">
+                        {{application.vcs_server + ' - ' + application.repository_fullname}}
+                    </li>
                 </ul>
             </ng-container>
             <ng-container *ngIf="!application.vcs_server">
                 <div class="ui info message">
-                    <a [routerLink]="['/project', project.key, 'application', application.name]" [queryParams]="{tab: 'advanced'}">{{
+                    <a [routerLink]="['/project', project.key, 'application', application.name]"
+                        [queryParams]="{tab: 'advanced'}">{{
                         'application_home_no_repo' | translate }}</a>
                 </div>
             </ng-container>
@@ -42,7 +48,8 @@
                 </li>
             </ul>
             <div class="ui info message" *ngIf="!application.deployment_strategies">
-                <a [routerLink]="['/project', project.key,'application', application.name]" [queryParams]="{tab: 'advanced'}">{{
+                <a [routerLink]="['/project', project.key,'application', application.name]"
+                    [queryParams]="{tab: 'advanced'}">{{
                     'application_home_no_integration' | translate }}</a>
             </div>
             <h4>{{ 'common_usage' | translate}}</h4>
@@ -53,7 +60,8 @@
                     </li>
                 </ul>
             </ng-container>
-            <ng-container *ngIf="!application.usage || !application.usage.workflows || application.usage.workflows.length === 0">
+            <ng-container
+                *ngIf="!application.usage || !application.usage.workflows || application.usage.workflows.length === 0">
                 <div class="ui info message">
                     {{ 'application_home_no_usage' | translate }}
                 </div>
