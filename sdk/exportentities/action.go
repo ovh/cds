@@ -310,7 +310,14 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 
 	bS, ok := bI.(string)
 	if !ok {
-		asScriptString, ok := bI.([]string)
+		asScript, ok := bI.([]interface{})
+		asScriptString := make([]string, len(asScript))
+		for i := range asScript {
+			asScriptString[i], ok = asScript[i].(string)
+			if !ok {
+				break
+			}
+		}
 		if !ok {
 			return nil, true, sdk.NewErrorFrom(sdk.ErrMalformattedStep, "script must be a string or a string array")
 		}
