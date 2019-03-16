@@ -7,43 +7,112 @@ $polar_grey_3: #B5B7BD;
 $polar_grey_4: #E1E2E5;
 $polar_grey_5: #FCFCFC;
 $polar_grey_6: #212121;
+$polar_grey_7: #282828;
+$polar_grey_8: #303030;
 .night {
-    color: white;
-    background-color: $darkBackground;
+  color: white;
+  background-color: $darkBackground;
 }
 
 .ui.card {
+  .meta {
     .night & {
-        background-color: $polar_grey_6;
+      color: rgba(255, 255, 255, 0.4)
     }
+  }
+  .night & {
+    background-color: $polar_grey_6;
+    box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
+  }
+}
+
+.ui.cards a.card:hover,
+.ui.link.cards .card:hover,
+a.ui.card:hover,
+.ui.link.card:hover {
+  .night & {
+    background-color: $darkBackground;
+    box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
+  }
+}
+
+.ui.card>.content>.header {
+  .night & {
+    color: white;
+  }
 }
 
 .ui.selection.dropdown {
-    .night & {
-        background-color: $polar_grey_6;
-    }
+  .night & {
+    background-color: $polar_grey_6;
+  }
 }
 
 .ui.menu .item {
-    .night & {
-        color: white;
-    }
+  .night & {
+    color: white;
+  }
 }
 
 .ui.secondary.pointing.menu .active.item {
-    .night & {
-        color: white;
-    }
+  .night & {
+    color: white;
+  }
 }
 
 .ui.breadcrumb .divider {
-    .night & {
-        color: white;
-    }
+  .night & {
+    color: white;
+  }
 }
 
 .ui.segment {
-    .night & {
-        background-color: $polar_grey_6;
-    }
+  .night & {
+    background-color: $polar_grey_6;
+  }
+}
+
+.ui.form .field>label {
+  .night & {
+    color: white;
+  }
+}
+
+.ui.form input,
+.ui.form textarea {
+  .night & {
+    color: white;
+    background-color: $polar_grey_6;
+    border-color: $polar_grey_0;
+  }
+}
+
+.ui.form input:focus,
+.ui.form textarea:focus {
+  .night & {
+    color: white;
+    background-color: $darkBackground;
+    border-color: $polar_grey_0;
+  }
+}
+
+.ui.header,
+.ui.attached.block.header,
+.ui.attached.top.segment {
+  .night & {
+    color: white;
+    background-color: $polar_grey_7 !important;
+    border-color: $polar_grey_7;
+  }
+}
+
+.ui.attached.segment {
+  .night & {
+    border-color: $polar_grey_7;
+  }
+}
+
+.ui.label,
+.ui.basic.green.label {
+  background-color: transparent !important;
 }
