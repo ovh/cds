@@ -1,12 +1,16 @@
-import { Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { WorkflowTemplateError } from '../../../../model/workflow-template.model';
+import { ThemeStore } from '../../../../service/services.module';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-template-editor',
     templateUrl: './workflow-template.editor.html',
     styleUrls: ['./workflow-template.editor.scss']
 })
-export class WorkflowTemplateEditorComponent implements OnChanges {
+@AutoUnsubscribe()
+export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
     @ViewChild('code') code: any;
 
     @Input() editable: boolean;
@@ -17,16 +21,29 @@ export class WorkflowTemplateEditorComponent implements OnChanges {
     @Output() remove = new EventEmitter();
 
     codeMirrorConfig: any;
+    themeSubscription: Subscription;
 
-    constructor() {
+    constructor(
+        private _theme: ThemeStore
+    ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
             mode: 'text/x-yaml',
             lineWrapping: true,
             autoRefresh: true,
-            lineNumbers: true,
+            lineNumbers: true
         };
+    }
+
+    ngOnInit() {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'seti' : 'default';
+
+            if (this.code && this.code.instance) {
+                this.code.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     ngOnChanges() {

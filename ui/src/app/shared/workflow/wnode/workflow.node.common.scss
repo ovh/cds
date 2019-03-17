@@ -6,9 +6,15 @@
   border-radius: 3px;
   color: $polar_grey_1;
   padding: 2px;
-  :host-context(.night) & {
-    border: 2px solid $polar_grey_5;
+  :host-context(.night) &:not(.success):not(.fail):not(.building):not(.inactive) {
+    border-color: $polar_grey_5;
     color: $polar_grey_5;
+    a {
+      color: $polar_grey_4;
+    }
+    &.active {
+      border-color: $cds_color_teal;
+    }
   }
   .icon {
     display: unset;
@@ -21,9 +27,6 @@
   }
   a {
     color: $polar_grey_1;
-    :host-context(.night) & {
-      color: $polar_grey_4;
-    }
     &:hover {
       color: $cds_color_teal;
     }

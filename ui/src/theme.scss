@@ -54,6 +54,10 @@ a.ui.card:hover,
   }
 }
 
+.ui.vertical.menu {
+  background-color: transparent !important;
+}
+
 .ui.secondary.pointing.menu .active.item {
   .night & {
     color: white;
@@ -79,7 +83,8 @@ a.ui.card:hover,
 }
 
 .ui.form input,
-.ui.form textarea {
+.ui.form textarea,
+.ui.input input {
   .night & {
     color: white;
     background-color: $polar_grey_6;
@@ -115,4 +120,29 @@ a.ui.card:hover,
 .ui.label,
 .ui.basic.green.label {
   background-color: transparent !important;
+}
+
+.ui.steps .step {
+  .night & {
+    color: white;
+    background-color: transparent !important;
+  }
+}
+
+.table {
+  background-color: transparent !important;
+  .night &,
+  :host-context(.night) & {
+    color: white;
+  }
+}
+
+.table thead th,
+.ui.table thead th {
+  color: grey;
+  background-color: transparent !important;
+  .night &,
+  :host-context(.night) & {
+    color: white;
+  }
 }

@@ -1,31 +1,32 @@
 @import '../../../../../../common';
-
 ul {
   list-style: none;
-
   li.stage {
     width: 10%;
     float: left;
     position: relative;
-
-
     .stageItem {
       width: 60%;
       margin-left: auto;
       margin-right: auto;
-
       ul {
         list-style: none;
         padding: 0px;
         position: relative;
-
         li {
           margin-bottom: 10px;
           margin-top: 10px;
           padding-top: 5px;
           padding-bottom: 5px;
           position: relative;
-
+          :host-context(.night) & {
+            .success,
+            .fail,
+            .inactive,
+            .building {
+              color: $polar_grey_1;
+            }
+          }
           .success.segment {
             background-color: $cds_color_light_green;
           }
@@ -38,12 +39,10 @@ ul {
           .building.segment {
             background-color: $cds_color_light_teal;
           }
-
           .newspaper .icon {
             float: right;
           }
         }
-
         li:first-child::before {
           width: 50%;
           left: -50%;
@@ -52,9 +51,8 @@ ul {
           width: 50%;
           right: -50%;
         }
-
         li::before {
-          content : '';
+          content: '';
           top: -42px;
           border-bottom: 4px solid $cds_color_teal;
           border-left: 4px solid $cds_color_teal;
@@ -64,7 +62,7 @@ ul {
           height: calc(100% + 14px);
         }
         li::after {
-          content : '';
+          content: '';
           top: -42px;
           border-bottom: 4px solid $cds_color_teal;
           border-right: 4px solid $cds_color_teal;
@@ -74,16 +72,13 @@ ul {
           height: calc(100% + 14px);
         }
       }
-
       .job.ui.segment {
         height: 51px;
-
         .truncate {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
-
         .duration {
           position: absolute;
           right: 4px;
@@ -99,29 +94,23 @@ ul {
           font-size: 1rem;
         }
       }
-
       .job.ui.segment {
         border: 2px solid transparent;
       }
       .job.ui.segment.active {
         border: 2px solid $cds_color_teal;
       }
-
     }
   }
-
   li.one.stage {
     width: 100%;
   }
-
   li.two.stage {
     width: 50%;
   }
-
   li.three.stage {
     width: 33%;
   }
-
   li.four.stage {
     width: 25%;
   }
@@ -146,7 +135,6 @@ ul {
       }
     }
   }
-
   li.stage {
     .stageItem {
       ul {
@@ -159,7 +147,6 @@ ul {
       }
     }
   }
-
   li.stage:last-child {
     .stageItem {
       ul {

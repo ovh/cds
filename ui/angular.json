@@ -24,6 +24,7 @@
               "node_modules/dragula/dist/dragula.css",
               "node_modules/codemirror/lib/codemirror.css",
               "node_modules/codemirror/addon/hint/show-hint.css",
+              "node_modules/codemirror/theme/seti.css",
               "node_modules/semantic-ui/dist/semantic.css",
               "node_modules/angular2-toaster/toaster.css",
               "node_modules/font-awesome/css/font-awesome.css",

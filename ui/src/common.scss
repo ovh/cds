@@ -1,5 +1,4 @@
 @import "theme";
-
 $darkBackground: #1b1c1d;
 $greyBackground: rgba(249, 249, 249, 1);
 $darkGreyColor: rgba(34, 36, 38, 0.15);
@@ -81,13 +80,8 @@ pre {
 // Table
 .table {
   border: none;
-  thead {
-    background-color: white;
-  }
   thead th {
     border: none;
-    color: grey;
-    background-color: white;
   }
   tbody tr td:first-child {
     border-left: 1px solid $darkGreyColor;
