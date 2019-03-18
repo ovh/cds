@@ -279,7 +279,8 @@ func deleteEdgesByParentID(db gorp.SqlExecutor, parentID int64) error {
 	return sdk.WithStack(err)
 }
 
-func insertAudit(db gorp.SqlExecutor, aa *sdk.AuditAction) error {
+// InsertAudit in database.
+func InsertAudit(db gorp.SqlExecutor, aa *sdk.AuditAction) error {
 	return sdk.WrapError(gorpmapping.Insert(db, aa), "unable to insert audit for action %d", aa.ActionID)
 }
 
