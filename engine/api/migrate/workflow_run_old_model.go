@@ -28,7 +28,7 @@ func WorkflowRunOldModel(ctx context.Context, DBFunc func() *gorp.DbMap) error {
 
 		log.Info("migrate>WorkflowRunOldModel> %d run to migrate", len(ids))
 		for _, id := range ids {
-			if err := migrateRun(ctx, db, id); err != nil {
+			if err := migrateRun(ctx, db, id); err != nil && sdk.Cause(err) != sdk.ErrLocked {
 				return err
 			}
 		}

@@ -59,13 +59,13 @@ var (
 	MsgPipelineJobUpdated                  = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil}
 	MsgPipelineJobAdded                    = &Message{"MsgPipelineJobAdded", trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil}
 	MsgPipelineJobDeleted                  = &Message{"MsgPipelineJobDeleted", trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil}
-	MsgSpawnInfoDeprecatedModel            = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "Attention vous utilisez un worker model (%s) déprécié", EN: "Pay attention you are using a deprecated worker model (%s)"}, nil}
 	MsgSpawnInfoHatcheryStarts             = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s (%s) a démarré le lancement du worker avec le modèle %s", EN: "Hatchery %s (%s) starts spawn worker with model %s"}, nil}
+	MsgSpawnInfoHatcheryErrorSpawn         = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s (%s) a démarré un worker avec le modèle %s après %s, err:%s", EN: "Error while Hatchery %s (%s) spawn worker with model %s after %s, err:%s"}, nil}
+	MsgSpawnInfoHatcheryStartsSuccessfully = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s (%s) a démarré le worker %s avec succès en %s", EN: "Hatchery %s (%s) spawn worker %s successfully in %s"}, nil}
 	MsgSpawnInfoHatcheryStartDockerPull    = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s (%s) a démarré le docker pull de l'image %s...", EN: "Hatchery %s (%s) starts docker pull %s..."}, nil}
 	MsgSpawnInfoHatcheryEndDockerPull      = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s (%s) a terminé le docker pull de l'image %s", EN: "Hatchery %s (%s) docker pull %s done"}, nil}
 	MsgSpawnInfoHatcheryEndDockerPullErr   = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "⚠ La Hatchery %s (%s) a terminé le docker pull de l'image %s en erreur: %s", EN: "⚠ Hatchery %s (%s) - docker pull %s done with error: %v"}, nil}
-	MsgSpawnInfoHatcheryErrorSpawn         = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s (%s) a démarré un worker avec le modèle %s après %s, err:%s", EN: "Error while Hatchery %s (%s) spawn worker with model %s after %s, err:%s"}, nil}
-	MsgSpawnInfoHatcheryStartsSuccessfully = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s (%s) a démarré le worker %s avec succès en %s", EN: "Hatchery %s (%s) spawn worker %s successfully in %s"}, nil}
+	MsgSpawnInfoDeprecatedModel            = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "Attention vous utilisez un worker model (%s) déprécié", EN: "Pay attention you are using a deprecated worker model (%s)"}, nil}
 	MsgSpawnInfoWorkerEnd                  = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "✓ Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "✓ Worker %s finished working on this job and took %s to work on the steps"}, nil}
 	MsgSpawnInfoJobInQueue                 = &Message{"MsgSpawnInfoJobInQueue", trad{FR: "✓ Le job a été mis en file d'attente", EN: "✓ Job has been queued"}, nil}
 	MsgSpawnInfoJobTaken                   = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job %s a été pris par le worker %s", EN: "Job %s was taken by worker %s"}, nil}
@@ -75,6 +75,7 @@ var (
 	MsgSpawnInfoJobError                   = &Message{"MsgSpawnInfoJobError", trad{FR: "⚠ Impossible de lancer ce job : %s", EN: "⚠ Unable to run this job: %s"}, nil}
 	MsgWorkflowStarting                    = &Message{"MsgWorkflowStarting", trad{FR: "Le workflow %s#%s a été démarré", EN: "Workflow %s#%s has been started"}, nil}
 	MsgWorkflowError                       = &Message{"MsgWorkflowError", trad{FR: "⚠ Une erreur est survenue: %v", EN: "⚠ An error has occured: %v"}, nil}
+	MsgWorkflowConditionError              = &Message{"MsgWorkflowConditionError", trad{FR: "Les conditions de lancement ne sont pas respectées.", EN: "Run conditions aren't ok."}, nil}
 	MsgWorkflowNodeStop                    = &Message{"MsgWorkflowNodeStop", trad{FR: "Le pipeline a été arrété par %s", EN: "The pipeline has been stopped by %s"}, nil}
 	MsgWorkflowNodeMutex                   = &Message{"MsgWorkflowNodeMutex", trad{FR: "Le pipeline %s est mis en attente tant qu'il est en cours sur un autre run", EN: "The pipeline %s is waiting while it's running on another run"}, nil}
 	MsgWorkflowNodeMutexRelease            = &Message{"MsgWorkflowNodeMutexRelease", trad{FR: "Lancement du pipeline %s", EN: "Triggering pipeline %s"}, nil}
@@ -133,6 +134,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoHatcheryStartDockerPull.ID:    MsgSpawnInfoHatcheryStartDockerPull,
 	MsgSpawnInfoHatcheryEndDockerPull.ID:      MsgSpawnInfoHatcheryEndDockerPull,
 	MsgSpawnInfoHatcheryEndDockerPullErr.ID:   MsgSpawnInfoHatcheryEndDockerPullErr,
+	MsgSpawnInfoDeprecatedModel.ID:            MsgSpawnInfoDeprecatedModel,
 	MsgSpawnInfoWorkerEnd.ID:                  MsgSpawnInfoWorkerEnd,
 	MsgSpawnInfoJobInQueue.ID:                 MsgSpawnInfoJobInQueue,
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,
@@ -142,14 +144,16 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoJobError.ID:                   MsgSpawnInfoJobError,
 	MsgWorkflowStarting.ID:                    MsgWorkflowStarting,
 	MsgWorkflowError.ID:                       MsgWorkflowError,
+	MsgWorkflowConditionError.ID:              MsgWorkflowConditionError,
 	MsgWorkflowNodeStop.ID:                    MsgWorkflowNodeStop,
-	MsgWorkflowImportedUpdated.ID:             MsgWorkflowImportedUpdated,
-	MsgWorkflowImportedInserted.ID:            MsgWorkflowImportedInserted,
 	MsgWorkflowNodeMutex.ID:                   MsgWorkflowNodeMutex,
 	MsgWorkflowNodeMutexRelease.ID:            MsgWorkflowNodeMutexRelease,
+	MsgWorkflowImportedUpdated.ID:             MsgWorkflowImportedUpdated,
+	MsgWorkflowImportedInserted.ID:            MsgWorkflowImportedInserted,
 	MsgSpawnInfoHatcheryCannotStartJob.ID:     MsgSpawnInfoHatcheryCannotStartJob,
 	MsgWorkflowRunBranchDeleted.ID:            MsgWorkflowRunBranchDeleted,
-	MsgSpawnInfoDeprecatedModel.ID:            MsgSpawnInfoDeprecatedModel,
+	MsgWorkflowTemplateImportedInserted.ID:    MsgWorkflowTemplateImportedInserted,
+	MsgWorkflowTemplateImportedUpdated.ID:     MsgWorkflowTemplateImportedUpdated,
 }
 
 //Message represent a struc format translated messages
