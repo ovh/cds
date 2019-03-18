@@ -1,6 +1,9 @@
 ---
 title: "Workflow Template"
 weight: 9
+card: 
+  name: workflow
+  weight: 10
 ---
 
 ## What is a workflow template?

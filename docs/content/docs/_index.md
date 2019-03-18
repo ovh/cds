@@ -2,7 +2,7 @@
 title: CDS Documentation
 cid: docsHome
 layout: docs_home
-class: gridPage
+class: grid
 linkTitle: "Documentation"
 main_menu: true
 weight: 1

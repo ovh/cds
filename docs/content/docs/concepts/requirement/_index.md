@@ -1,6 +1,9 @@
 ---
 title: "Requirement"
 weight: 8
+card: 
+  name: worker-model
+  weight: 10
 ---
 
 Type of requirements:

@@ -15,7 +15,9 @@
 		<ul>
 			{{ if $p.IsDescendant . }}
 			{{ end }}
+			{{ if eq .Params.cid "docsHome"}}
 			<li><a href="{{ relref . "/docs/_index.md" }}"{{ if eq $p.Params.cid "docsHome" }} class="menuSelected"{{ end }}>Home</a></li>
+			{{ end }}
 			{{ range $menuSections }}
 				{{ $menuSelected := $p.IsDescendant . }}
 				<li><a href="{{ .RelPermalink }}"{{ if $menuSelected }} class="menuSelected"{{ end }}>{{ .LinkTitle }}</a></li>

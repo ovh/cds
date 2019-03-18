@@ -2,6 +2,9 @@
 title: "Variables"
 weight: 6
 tag: ["variables"]
+card: 
+  name: pipeline
+  weight: 12
 ---
 
 In CDS, it is possible to define variables at different levels:
