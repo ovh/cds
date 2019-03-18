@@ -5,11 +5,12 @@ import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { IdName, LoadOpts, Project } from 'app/model/project.model';
+import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
-import { AddGroupInAllWorkflows } from './workflows.action';
+import { AddGroupInAllWorkflows, ClearCacheWorkflow, DeleteFromCacheWorkflow } from './workflows.action';
 
 export class ProjectStateModel {
     public project: Project;
@@ -627,6 +628,8 @@ export class ProjectState {
                 let groups = state.project.groups ? state.project.groups.concat([]) : [];
                 groups = groups.filter((group) => group.group.name !== action.payload.group.group.name);
 
+                ctx.dispatch(new ClearCacheWorkflow());
+
                 ctx.setState({
                     ...state,
                     project: Object.assign({}, state.project, <Project>{ groups }),
@@ -864,7 +867,21 @@ export class ProjectState {
         return this._http.put<Project>(
             '/project/' + action.payload.projectKey + '/environment/' + action.payload.environmentName,
             action.payload.changes
-        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+        ).pipe(tap((project: Project) => {
+            const state = ctx.getState();
+            if (action.payload.environmentName !== action.payload.changes.name) {
+                const currentEnv = state.project.environments.find((env) => env.name === action.payload.environmentName);
+                if (currentEnv && currentEnv.usage && Array.isArray(currentEnv.usage.workflows)) {
+                    currentEnv.usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+            }
+            ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments));
+        }));
     }
 
     @Action(ProjectAction.AddEnvironmentVariableInProject)
@@ -891,6 +908,22 @@ export class ProjectState {
             action.payload.environmentName + '/variable/' + action.payload.variableName,
             action.payload.changes
         ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+    }
+
+    @Action(ProjectAction.FetchEnvironmentUsageInProject)
+    fetchEnvironmentUsage(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchEnvironmentUsageInProject) {
+        return this._http
+            .get<Usage>(`/project/${action.payload.projectKey}/environment/${action.payload.environmentName}/usage`)
+            .pipe(tap((usage: Usage) => {
+                const state = ctx.getState();
+                const environments = state.project.environments.map((env) => {
+                    if (env.name === action.payload.environmentName) {
+                        return { ...env, usage };
+                    }
+                    return env;
+                });
+                return ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(environments));
+            }));
     }
 
     //  ------- Repository Manager --------- //

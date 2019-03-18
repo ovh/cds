@@ -130,6 +130,10 @@ export class WorkflowComponent {
                     .pipe(finalize(() => this.loading = false))
                     .subscribe(null, () => this._router.navigate(['/project', key]));
 
+                if (this.workflowSubscription) {
+                    this.workflowSubscription.unsubscribe();
+                }
+
                 this.workflowSubscription = this.store.select(WorkflowsState.selectWorkflow(key, workflowName))
                     .pipe(filter((wf) => wf != null && !wf.externalChange))
                     .subscribe((wf) => {

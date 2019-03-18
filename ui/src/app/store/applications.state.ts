@@ -6,6 +6,7 @@ import { Key } from 'app/model/keys.model';
 import { tap } from 'rxjs/operators';
 import * as ActionApplication from './applications.action';
 import * as ActionProject from './project.action';
+import { DeleteFromCacheWorkflow } from './workflows.action';
 
 export class ApplicationsStateModel {
     public applications: { [key: string]: Application };
@@ -149,6 +150,16 @@ export class ApplicationsState {
                     ...state,
                     applications,
                 });
+
+                if (state.applications[appKey].usage && Array.isArray(state.applications[appKey].usage.workflows)) {
+                    state.applications[appKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+
                 ctx.dispatch(new ActionProject.UpdateApplicationInProject({
                     previousAppName: action.payload.applicationName,
                     changes: app
@@ -448,5 +459,10 @@ export class ApplicationsState {
             }
             ctx.dispatch(new ActionApplication.LoadApplication(app));
         }));
+    }
+
+    @Action(ActionApplication.ClearCacheApplication)
+    clearCache(ctx: StateContext<ApplicationsStateModel>, _: ActionApplication.ClearCacheApplication) {
+        ctx.setState(getInitialApplicationsState());
     }
 }

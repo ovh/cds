@@ -12,7 +12,6 @@ import { Project } from '../../../../../../model/project.model';
 import { User } from '../../../../../../model/user.model';
 import { Workflow } from '../../../../../../model/workflow.model';
 import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
-import { EnvironmentService } from '../../../../../../service/environment/environment.service';
 import { ToastService } from '../../../../../../shared/toast/ToastService';
 import { VariableEvent } from '../../../../../../shared/variable/variable.event.model';
 
@@ -42,8 +41,17 @@ export class ProjectEnvironmentComponent implements OnInit {
         if (!data) {
             return;
         }
+        let oldName = this.oldEnvName;
         this.oldEnvName = data.name;
         this.editableEnvironment = cloneDeep(data);
+        if (oldName !== data.name) {
+            this.fetchUsage();
+        }
+        if (data.usage) {
+            this.attachedWorkflows = data.usage.workflows || [];
+            this.attachedApplications = data.usage.applications || [];
+            this.attachedPipelines = data.usage.pipelines || [];
+        }
     }
     get environment() {
         return this.editableEnvironment;
@@ -57,23 +65,25 @@ export class ProjectEnvironmentComponent implements OnInit {
         private _router: Router,
         private _translate: TranslateService,
         private _authenticationStore: AuthentificationStore,
-        private _environmentService: EnvironmentService,
         private store: Store
     ) {
         this.currentUser = this._authenticationStore.getUser();
     }
 
-    ngOnInit() {
+    fetchUsage() {
+        if (!this.project) {
+            return;
+        }
         this.loadingUsage = true;
-        this._environmentService.getUsage(this.project.key, this.oldEnvName)
-            .pipe(finalize(() => this.loadingUsage = false))
-            .subscribe((usage) => {
-                if (usage) {
-                    this.attachedWorkflows = usage.workflows || [];
-                    this.attachedApplications = usage.applications || [];
-                    this.attachedPipelines = usage.pipelines || [];
-                }
-            });
+        this.store.dispatch(new projectActions.FetchEnvironmentUsageInProject({
+            projectKey: this.project.key,
+            environmentName: this.environment.name
+        })).pipe(finalize(() => this.loadingUsage = false))
+            .subscribe();
+    }
+
+    ngOnInit() {
+        this.fetchUsage();
     }
 
     renameEnvironment(): void {

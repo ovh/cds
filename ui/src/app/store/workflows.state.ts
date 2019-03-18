@@ -648,4 +648,9 @@ export class WorkflowsState {
             // TODO: move this one on user state and just update state here, not XHR
         }));
     }
+
+    @Action(actionWorkflow.ClearCacheWorkflow)
+    clearCache(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.ClearCacheWorkflow) {
+        ctx.setState(getInitialWorkflowsState());
+    }
 }

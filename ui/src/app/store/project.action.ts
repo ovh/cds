@@ -251,6 +251,10 @@ export class DeleteEnvironmentVariableInProject {
     static readonly type = '[Project] Delete Environment Variable in Project';
     constructor(public payload: { projectKey: string, environmentName: string, variable: Variable }) { }
 }
+export class FetchEnvironmentUsageInProject {
+    static readonly type = '[Project] Fetch Environment usage in Project';
+    constructor(public payload: { projectKey: string, environmentName: string }) { }
+}
 //  ------- Repository Manager --------- //
 export class ConnectRepositoryManagerInProject {
     static readonly type = '[Project] Connect Repository Manager in Project';

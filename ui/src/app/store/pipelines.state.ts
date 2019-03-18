@@ -510,4 +510,9 @@ export class PipelinesState {
             }));
         }));
     }
+
+    @Action(actionPipeline.ClearCachePipeline)
+    clearCache(ctx: StateContext<PipelinesStateModel>, _: actionPipeline.ClearCachePipeline) {
+        ctx.setState(getInitialPipelinesState());
+    }
 }

@@ -154,4 +154,8 @@ export class UpdateFavoriteWorkflow {
     constructor(public payload: { projectKey: string, workflowName: string }) { }
 }
 
+export class ClearCacheWorkflow {
+    static readonly type = '[Workflow] Clear cache Workflow';
+    constructor() { }
+}
 
