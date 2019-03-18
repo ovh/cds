@@ -155,6 +155,15 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 		w.WorkflowData = data
 	}
 
+	nodes := w.WorkflowData.Array()
+	for i := range nodes {
+		var err error
+		nodes[i].Groups, err = group.LoadGroupsByNode(db, nodes[i].ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load node groups")
+		}
+	}
+
 	return nil
 }
 
