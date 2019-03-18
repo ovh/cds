@@ -101,6 +101,9 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
+		if app.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -153,6 +156,9 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
+		if app.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		variableBefore, err := application.LoadVariableByID(api.mustDB(), app.ID, newVar.ID, application.WithClearPassword())
 		if err != nil {
@@ -203,6 +209,9 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s ", appName)
+		}
+		if app.FromRepository != "" {
+			return sdk.ErrForbidden
 		}
 
 		tx, err := api.mustDB().Begin()

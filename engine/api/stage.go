@@ -30,6 +30,9 @@ func (api *API) addStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "addStageHandler")
 		}
+		if pipelineData.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		stageData.BuildOrder = len(pipelineData.Stages) + 1
 		stageData.PipelineID = pipelineData.ID
@@ -116,6 +119,9 @@ func (api *API) moveStageHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+		if pipelineData.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		// count stage for this pipeline
 		nbStage, err := pipeline.CountStageByPipelineID(api.mustDB(), pipelineData.ID)
@@ -190,6 +196,9 @@ func (api *API) updateStageHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+		if pipelineData.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		// check if stage exist
 		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageData.ID)
@@ -242,6 +251,9 @@ func (api *API) deleteStageHandler() service.Handler {
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineKey)
+		}
+		if pipelineData.FromRepository != "" {
+			return sdk.ErrForbidden
 		}
 
 		stageID, err := strconv.ParseInt(stageIDString, 10, 60)

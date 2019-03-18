@@ -43,6 +43,9 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load %s", pipelineName)
 		}
+		if p.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -83,6 +86,9 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
+		}
+		if p.FromRepository != "" {
+			return sdk.ErrForbidden
 		}
 
 		oldParam := sdk.ParameterFind(&p.Parameter, paramName)
@@ -133,6 +139,9 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot load %s", pipelineName)
+		}
+		if p.FromRepository != "" {
+			return sdk.ErrForbidden
 		}
 
 		paramInProject, err := pipeline.CheckParameterInPipeline(api.mustDB(), p.ID, paramName)

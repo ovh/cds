@@ -73,6 +73,9 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
+		if app.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		oldPfConfig, has := app.DeploymentStrategies[pfName]
 		if !has {
@@ -143,6 +146,9 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		app, err := application.LoadByName(tx, api.Cache, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
+		}
+		if app.FromRepository != "" {
+			return sdk.ErrForbidden
 		}
 
 		isUsed, err := workflow.IsDeploymentIntegrationUsed(tx, proj.ID, app.ID, pfName)

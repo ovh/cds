@@ -470,6 +470,9 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationMetadataHandler")
 		}
+		if app.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 		oldApp := *app
 
 		m := vars["metadata"]

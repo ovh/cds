@@ -44,6 +44,9 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 		if errE != nil {
 			return sdk.WrapError(errE, "deleteKeyInEnvironmentHandler> Cannot load environment")
 		}
+		if env.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
@@ -92,6 +95,10 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errE, "addKeyInEnvironmentHandler> Cannot load environment")
 		}
 		newKey.EnvironmentID = env.ID
+
+		if env.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 
 		if !strings.HasPrefix(newKey.Name, "env-") {
 			newKey.Name = "env-" + newKey.Name

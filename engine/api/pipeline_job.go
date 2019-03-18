@@ -43,6 +43,10 @@ func (api *API) addJobToStageHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
+		if pip.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
+
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pip); err != nil {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
@@ -152,6 +156,9 @@ func (api *API) updateJobHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipName)
 		}
+		if pipelineData.FromRepository != "" {
+			return sdk.ErrForbidden
+		}
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "cannot load pipeline stages")
 		}
@@ -244,6 +251,9 @@ func (api *API) deleteJobHandler() service.Handler {
 		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
+		}
+		if pipelineData.FromRepository != "" {
+			return sdk.ErrForbidden
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
