@@ -23,6 +23,6 @@ cards:
   description: A plugin is a cross platform action. <a href="../../development/contribute/plugin/">How to write a plugin</a>
   title: Plugin Action
 - name: user-action
-  descriptoin: Any user can create a user-action with the Web UI or with <a href="../components/cdsctl/action/">cdsctl</a>
+  description: Any user can create a user-action with the Web UI or with <a href="../components/cdsctl/action/">cdsctl</a>
   title: User Action
 ---
