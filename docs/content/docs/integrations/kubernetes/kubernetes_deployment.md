@@ -220,7 +220,7 @@ cdsctl admin integration-model import public-configuration.yml
 
 Add the deployment configuration on your application.
 
-Parameters `deployement_files`, `helm_chart` and `helm_values` contains
+Parameters `deployement_files`, `helm_chart` and `helm_values` contain
 path of the files in your CDS Job.
 
 `contrib/helm/cds/` is the same as `{{.cds.workspace}}/contrib/helm/cds/`

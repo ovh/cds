@@ -13,11 +13,12 @@
 
 		{{ if eq .Section $.Section }}
 		<ul>
-			{{ range $menuSections }}
 			{{ if $p.IsDescendant . }}
 			{{ end }}
-			{{ $menuSelected := $p.IsDescendant . }}
-			<li><a href="{{ .RelPermalink }}"{{ if $menuSelected }} class="menuSelected"{{ end }}>{{ .LinkTitle }}</a></li>
+			<li><a href="{{ relref . "/docs/_index.md" }}"{{ if eq $p.Params.cid "docsHome" }} class="menuSelected"{{ end }}>Home</a></li>
+			{{ range $menuSections }}
+				{{ $menuSelected := $p.IsDescendant . }}
+				<li><a href="{{ .RelPermalink }}"{{ if $menuSelected }} class="menuSelected"{{ end }}>{{ .LinkTitle }}</a></li>
 			{{ end }}
 		</ul>
 		{{ end }}
