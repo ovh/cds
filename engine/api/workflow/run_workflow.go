@@ -175,7 +175,7 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 
 	r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, nil)
 	if errWR != nil {
-		return report, sdk.WrapError(errWR, "ManualRun")
+		return report, errWR
 	}
 	_, _ = report.Merge(r1, nil)
 	if !hasRun {
