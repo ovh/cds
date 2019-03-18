@@ -144,14 +144,8 @@ export class ApplicationsState {
                 let applications = Object.assign({}, state.applications, {
                     [action.payload.projectKey + '/' + app.name]: app,
                 });
-                delete applications[appKey];
-
-                ctx.setState({
-                    ...state,
-                    applications,
-                });
-
-                if (state.applications[appKey].usage && Array.isArray(state.applications[appKey].usage.workflows)) {
+                if (state.applications[appKey] && state.applications[appKey].usage &&
+                    Array.isArray(state.applications[appKey].usage.workflows)) {
                     state.applications[appKey].usage.workflows.forEach((wf) => {
                         ctx.dispatch(new DeleteFromCacheWorkflow({
                             projectKey: action.payload.projectKey,
@@ -159,6 +153,12 @@ export class ApplicationsState {
                         }));
                     });
                 }
+                delete applications[appKey];
+
+                ctx.setState({
+                    ...state,
+                    applications,
+                });
 
                 ctx.dispatch(new ActionProject.UpdateApplicationInProject({
                     previousAppName: action.payload.applicationName,
