@@ -101,7 +101,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 			continue
 		}
 
-		spl := bytes.Split(bs, delim)
+		spl := bytes.SplitN(bs, delim, 2)
 
 		if len(spl) < 2 {
 			continue

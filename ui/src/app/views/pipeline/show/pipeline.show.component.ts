@@ -118,7 +118,16 @@ export class PipelineShowComponent implements OnInit {
     }
 
     ngOnInit() {
+        this.projectKey = this._routeActivated.snapshot.params['key'];
+        this.pipName = this._routeActivated.snapshot.params['pipName'];
+
         this._routeActivated.params.subscribe(params => {
+            if (!this.pipeline || this.projectKey !== params['key'] || this.pipName !== params['pipName']) {
+                this.projectKey = params['key'];
+                this.pipName = params['pipName'];
+                this.refreshListener();
+            }
+
             this.projectKey = params['key'];
             this.pipName = params['pipName'];
             this.refreshDatas(this.projectKey, this.pipName);
@@ -135,18 +144,25 @@ export class PipelineShowComponent implements OnInit {
         this._keyService.getAllKeys(this.project.key).pipe(first()).subscribe(k => {
             this.keys = k;
         });
+    }
 
-        this.projectKey = this._routeActivated.snapshot.params['key'];
-        this.pipName = this._routeActivated.snapshot.params['pipName'];
+    refreshListener() {
+        if (this.pipelineSubscriber) {
+            this.pipelineSubscriber.unsubscribe();
+        }
+
         this.pipelineSubscriber = this.store.select(PipelinesState.selectPipeline(this.projectKey, this.pipName))
             .pipe(
                 filter((pip) => pip != null)
             )
             .subscribe((pip) => {
                 this.pipeline = cloneDeep(pip);
-                this.applications = pip.usage.applications || [];
-                this.workflows = pip.usage.workflows || [];
-                this.environments = pip.usage.environments || [];
+                if (pip.usage) {
+                    this.applications = pip.usage.applications || [];
+                    this.workflows = pip.usage.workflows || [];
+                    this.environments = pip.usage.environments || [];
+                }
+
                 this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
             }, () => {
                 this._router.navigate(['/project', this.projectKey], { queryParams: { tab: 'pipelines' } });
