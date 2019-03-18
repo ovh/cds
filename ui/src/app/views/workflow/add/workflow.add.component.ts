@@ -143,7 +143,7 @@ workflow:
         this.loading = true;
         this.store.dispatch(new ImportWorkflow({
             projectKey: this.project.key,
-            wfName: this.workflow.name,
+            wfName: null,
             workflowCode: this.wfToImport
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
