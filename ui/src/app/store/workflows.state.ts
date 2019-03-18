@@ -150,13 +150,14 @@ export class WorkflowsState {
 
             let wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
             if (wf.name !== action.payload.workflowName) {
+                const newWfKey = action.payload.projectKey + '/' + wf.name;
                 let workflows = Object.assign({}, state.workflows, {
-                    [action.payload.projectKey + '/' + wf.name]: wf,
+                    [newWfKey]: wf,
                 });
-                workflows[action.payload.projectKey + '/' + wf.name].audits = workflows[wfKey].audits;
-                workflows[action.payload.projectKey + '/' + wf.name].from_template = workflows[wfKey].from_template;
-                workflows[action.payload.projectKey + '/' + wf.name].template_up_to_date = workflows[wfKey].template_up_to_date;
-                workflows[action.payload.projectKey + '/' + wf.name].as_code_events = workflows[wfKey].as_code_events;
+                workflows[newWfKey].audits = workflows[wfKey].audits;
+                workflows[newWfKey].from_template = workflows[wfKey].from_template;
+                workflows[newWfKey].template_up_to_date = workflows[wfKey].template_up_to_date;
+                workflows[newWfKey].as_code_events = workflows[wfKey].as_code_events;
                 delete workflows[wfKey];
 
                 ctx.setState({
@@ -459,7 +460,7 @@ export class WorkflowsState {
         const state = ctx.getState();
         const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
 
-        if (!state.workflows[wfKey].audits) {
+        if (!state.workflows[wfKey] || !state.workflows[wfKey].audits) {
             return ctx.dispatch(new actionWorkflow.ResyncWorkflow({
                 projectKey: action.payload.projectKey,
                 workflowName: action.payload.workflowName,

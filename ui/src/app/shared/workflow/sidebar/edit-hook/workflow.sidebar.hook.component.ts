@@ -98,7 +98,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
         }
     }
 
-    deleteHook() {
+    deleteHook(modal: ActiveModal<boolean, boolean, void>) {
         this.loading = true;
         this.store.dispatch(new DeleteHookWorkflow({
             projectKey: this.project.key,
@@ -108,8 +108,8 @@ export class WorkflowSidebarHookComponent implements OnInit {
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_updated'));
                 this._workflowEventStore.unselectAll();
-                this.deleteHookModal.modal.approve(null);
-            })
+                modal.approve(null);
+            });
     }
 
     updateHook(hook: WNodeHook, modal: ActiveModal<boolean, boolean, void>) {

@@ -23,6 +23,7 @@ export class WorkflowHookModalComponent {
     @Input() hook: WNodeHook;
 
     @Output() hookEvent = new EventEmitter<WNodeHook>();
+    @Output() deleteHookEvent = new EventEmitter<WNodeHook>();
 
     @ViewChild('hookModalComponent')
     public hookModalComponent: ModalTemplate<boolean, boolean, void>;
@@ -46,7 +47,7 @@ export class WorkflowHookModalComponent {
     }
 
     deleteHook(): void {
-        this.hookEvent.emit(this.hook);
+        this.deleteHookEvent.emit(this.hook);
     }
 
     saveHook(): void {

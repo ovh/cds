@@ -52,11 +52,11 @@
 </div>
 <div class="ui text active loader" *ngIf="!hook">{{ 'workflow_loading' | translate }}</div>
 <app-hook-modal [project]="project" [workflow]="workflow" [node]="node" [hook]="hook" [loading]="loading" (hookEvent)="updateHook($event, workflowEditHook.modal)"
-    #workflowEditHook>
+    (deleteHookEvent)="deleteHook(workflowEditHook.modal)" #workflowEditHook>
 
 </app-hook-modal>
 <app-delete-modal [title]="'workflow_hook_delete_title' | translate" [msg]="'workflow_hook_delete_msg' | translate"
-    (event)="deleteHook()" #deleteHookModal>
+    [autoclose]="false" (event)="deleteHook(deleteHookModal.modal)" #deleteHookModal>
 </app-delete-modal>
 <app-workflow-node-hook-details #workflowDetailsHook>
 </app-workflow-node-hook-details>
