@@ -1,6 +1,8 @@
 ---
 title: GitHub
 main_menu: true
+card: 
+  name: repository-manager
 ---
 
 

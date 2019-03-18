@@ -1,6 +1,8 @@
 ---
 title: RabbitMQ
 main_menu: true
+card: 
+  name: hooks
 ---
 
 The RabbitMQ Integration is a Self-Service integration that can be configured on a CDS Project.

@@ -1,5 +1,7 @@
 ---
 title: "cds-sonar-scanner"
+card: 
+  name: user-action
 ---
 
 Run Sonar analysis. You must have a file sonar-project.properties in your source directory.

@@ -1,6 +1,8 @@
 ---
 title: GitLab
 main_menu: true
+card: 
+  name: repository-manager
 ---
 
 The GitLab Integration have to be configured on your CDS by a CDS Administrator.

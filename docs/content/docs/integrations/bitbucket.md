@@ -1,6 +1,8 @@
 ---
 title: Bitbucket Server
 main_menu: true
+card: 
+  name: repository-manager
 ---
 
 The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.

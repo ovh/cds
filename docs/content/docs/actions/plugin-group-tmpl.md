@@ -1,5 +1,7 @@
 ---
 title: "plugin-group-tmpl"
+card: 
+  name: plugin
 ---
 
 This actions helps you generate a marathon group application file.

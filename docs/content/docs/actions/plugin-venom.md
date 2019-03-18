@@ -1,5 +1,7 @@
 ---
 title: "plugin-venom"
+card: 
+  name: plugin
 ---
 
 This plugin helps you to run venom. Venom: https://github.com/ovh/venom.

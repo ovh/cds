@@ -1,6 +1,8 @@
 ---
 title: OpenStack Swift
 main_menu: true
+card: 
+  name: storage
 ---
 
 The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.

@@ -1,8 +1,8 @@
-+++
-title = "DeployApplication"
-chapter = true
-
-+++
+---
+title: "DeployApplication"
+card: 
+  name: builtin
+---
 
 **DeployApplication** is a builtin action, you can't modify it.
 

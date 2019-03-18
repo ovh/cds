@@ -1,8 +1,8 @@
-+++
-title = "Release"
-chapter = true
-
-+++
+---
+title: "Release"
+card: 
+  name: builtin
+---
 
 **Release** is a builtin action, you can't modify it.
 

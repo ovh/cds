@@ -1,6 +1,8 @@
 ---
 title: Kafka
 main_menu: true
+card: 
+  name: hooks
 ---
 
 The Kafka Integration is a Self-Service integration that can be configured on a CDS Project.

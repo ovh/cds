@@ -1,5 +1,7 @@
 ---
 title: "plugin-tmpl"
+card: 
+  name: plugin
 ---
 
 This action helps you generates a file using a template file and text/template golang package.

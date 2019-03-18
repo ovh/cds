@@ -1,5 +1,7 @@
 ---
 title: "plugin-npm-audit-parser"
+card: 
+  name: plugin
 ---
 
 This is a plugin to parse npm audit report

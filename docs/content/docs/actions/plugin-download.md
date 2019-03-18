@@ -1,5 +1,7 @@
 ---
 title: "plugin-download"
+card: 
+  name: plugin
 ---
 
 This is a plugin to download file from URL

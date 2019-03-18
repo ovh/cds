@@ -1,5 +1,7 @@
 ---
 title: "plugin-kafka-publish"
+card: 
+  name: plugin
 ---
 
 This action helps you to send data through Kafka across every network.

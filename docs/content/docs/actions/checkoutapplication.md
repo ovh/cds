@@ -1,8 +1,8 @@
-+++
-title = "CheckoutApplication"
-chapter = true
-
-+++
+---
+title: "CheckoutApplication"
+card: 
+  name: builtin
+---
 
 **CheckoutApplication** is a builtin action, you can't modify it.
 

@@ -1,7 +1,8 @@
-+++
-title = "Serve Static Files"
-chapter = true
-+++
+---
+title: "Serve Static Files"
+card: 
+  name: builtin
+---
 
 **Serve Static Files Action** is a builtin action, you can't modify it.
 

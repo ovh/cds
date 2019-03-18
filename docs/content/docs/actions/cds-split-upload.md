@@ -1,5 +1,7 @@
 ---
 title: "cds-split-upload"
+card: 
+  name: user-action
 ---
 
 Split and Upload Artifact with size greater than 500 MB.

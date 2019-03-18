@@ -1,5 +1,7 @@
 ---
 title: "plugin-ssh-cmd"
+card: 
+  name: plugin
 ---
 
 This plugin helps you to run cmd on remote server over ssh.

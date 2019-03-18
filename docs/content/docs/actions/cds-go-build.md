@@ -1,5 +1,7 @@
 ---
 title: "cds-go-build"
+card: 
+  name: user-action
 ---
 
 Go Build: compile a go program

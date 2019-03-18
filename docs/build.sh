@@ -17,6 +17,8 @@ function generateUserActionsDocumentation {
 cat << EOF > ${ACTION_FILE}
 ---
 title: "${actionName}"
+card: 
+  name: user-action
 ---
 EOF
 
@@ -39,6 +41,8 @@ function generatePluginsDocumentation {
 cat << EOF > ${PLUGIN_FILE}
 ---
 title: "plugin-${pluginName}"
+card: 
+  name: plugin
 ---
 EOF
 

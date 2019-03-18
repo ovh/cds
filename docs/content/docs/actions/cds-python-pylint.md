@@ -1,5 +1,7 @@
 ---
 title: "cds-python-pylint"
+card: 
+  name: user-action
 ---
 
 Run pylint.

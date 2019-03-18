@@ -1,6 +1,8 @@
 ---
 title: Kubernetes Deployment
 main_menu: true
+card: 
+  name: deployment
 ---
 
 

@@ -1,8 +1,8 @@
-+++
-title = "GitTag"
-chapter = true
-
-+++
+---
+title: "GitTag"
+card: 
+  name: builtin
+---
 
 **GitTag** is a builtin action, you can't modify it.
 

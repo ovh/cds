@@ -1,5 +1,7 @@
 ---
 title: "cds-docker-package"
+card: 
+  name: user-action
 ---
 
 Build image and push it to docker repository

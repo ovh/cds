@@ -1,8 +1,8 @@
-+++
-title = "Script"
-chapter = true
-
-+++
+---
+title: "Script"
+card: 
+  name: builtin
+---
 
 **Script** is a builtin action, you can't modify it.
 

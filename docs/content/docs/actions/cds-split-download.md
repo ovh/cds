@@ -1,5 +1,7 @@
 ---
 title: "cds-split-download"
+card: 
+  name: user-action
 ---
 
 Download Artifacts which were uploaded using CDS_SplitUploadArtifact action.

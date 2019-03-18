@@ -1,6 +1,8 @@
 ---
 title: Kubernetes Compute
 main_menu: true
+card: 
+  name: compute
 ---
 
 ![Hatchery Kubernetes](/images/hatchery.kubernetes.png)

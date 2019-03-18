@@ -1,5 +1,7 @@
 ---
 title: "plugin-marathon"
+card: 
+  name: plugin
 ---
 
 This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.

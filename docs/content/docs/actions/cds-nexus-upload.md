@@ -1,5 +1,7 @@
 ---
 title: "cds-nexus-upload"
+card: 
+  name: user-action
 ---
 
 Upload file on Nexus

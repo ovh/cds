@@ -1,6 +1,8 @@
 ---
 title: vSphere
 main_menu: true
+card: 
+  name: compute
 ---
 
 

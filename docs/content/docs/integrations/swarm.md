@@ -1,6 +1,8 @@
 ---
 title: Docker Swarm
 main_menu: true
+card: 
+  name: compute
 ---
 
 The Docker Swarm integration have to be configured by CDS administrator.

@@ -1,8 +1,8 @@
-+++
-title = "Artifact Upload"
-chapter = true
-
-+++
+---
+title: "Artifact Upload"
+card: 
+  name: builtin
+---
 
 **Artifact Upload Action** is a builtin action, you can't modify it.
 

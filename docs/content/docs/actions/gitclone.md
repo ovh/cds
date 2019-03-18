@@ -1,8 +1,8 @@
-+++
-title = "GitClone"
-chapter = true
-
-+++
+---
+title: "GitClone"
+card: 
+  name: builtin
+---
 
 **GitClone** is a builtin action, you can't modify it.
 

@@ -1,8 +1,8 @@
-+++
-title = "Artifact Download"
-chapter = true
-
-+++
+---
+title: "Artifact Download"
+card: 
+  name: builtin
+---
 
 
 **Artifact Download Action** is a builtin action, you can't modify it.
