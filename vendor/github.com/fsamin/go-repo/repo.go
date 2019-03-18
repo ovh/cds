@@ -3,12 +3,14 @@ package repo
 import (
 	"bufio"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"os/user"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -39,18 +41,47 @@ func Clone(path, url string, opts ...Option) (Repo, error) {
 }
 
 // New instanciance a repo instance from the path assuming the repo has already been cloned in.
-func New(path string, opts ...Option) (Repo, error) {
-	r := Repo{path: path}
+func New(path string, opts ...Option) (r Repo, err error) {
+	r = Repo{path: path}
+	r.path, err = findDotGitDirectory(path)
+	if err != nil {
+		return r, err
+	}
+
 	for _, f := range opts {
 		if err := f(&r); err != nil {
 			return r, err
 		}
 	}
+
+	return r, nil
+}
+
+func checkDotGitDirectory(path string) bool {
 	dotGit := filepath.Join(path, ".git")
 	if _, err := os.Stat(dotGit); err != nil || os.IsNotExist(err) {
-		return r, err
+		return false
 	}
-	return r, nil
+	return true
+}
+
+func findDotGitDirectory(p string) (string, error) {
+	p = path.Join(p)
+	p, err := filepath.Abs(p)
+	if err != nil {
+		return "", err
+	}
+
+	if p == string(filepath.Separator) {
+		return "", errors.New(".git directory not found")
+	}
+
+	if checkDotGitDirectory(p) {
+		return p, nil
+	}
+
+	parent := filepath.Dir(p)
+	return findDotGitDirectory(parent)
 }
 
 // FetchURL returns the git URL the the remote origin
@@ -155,15 +186,119 @@ func trimURL(fetchURL string) (string, error) {
 	return repoName, nil
 }
 
-// LatestCommit returns the latest commit of the current branch
-func (r Repo) LatestCommit() (Commit, error) {
-	c := Commit{}
-	hash, err := r.runCmd("git", "rev-parse", "HEAD")
+// Commits returns all the commit between
+func (r Repo) Commits(from, to string) ([]Commit, error) {
+	if from == "0000000000000000000000000000000000000000" {
+		from = ""
+	}
+	if from != "" {
+		from = from + ".."
+	}
+	s, err := r.runCmd("git", "rev-list", from+to)
 	if err != nil {
-		return c, err
+		return nil, err
+	}
+	var commitsString []string
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	for scanner.Scan() {
+		s := scanner.Text()
+		commitsString = append(commitsString, s)
+	}
+	err = scanner.Err()
+	if err != nil {
+		return nil, err
 	}
 
-	details, err := r.runCmd("git", "show", hash[:7], "--quiet", "--pretty=%at||%an||%s||%b")
+	var commits []Commit
+	for _, c := range commitsString {
+		comm, err := r.GetCommit(c)
+		if err != nil {
+			return nil, err
+		}
+		commits = append(commits, comm)
+	}
+
+	return commits, err
+}
+
+func (r Repo) parseDiff(hash, diff string) (map[string]File, error) {
+	Files := make(map[string]File)
+
+	// Read line per line the last item
+	scanner := bufio.NewScanner(strings.NewReader(diff))
+	for scanner.Scan() {
+		s := scanner.Text()
+		var tuple []string
+		if strings.Contains(s, "\t") {
+			tuple = strings.SplitN(s, "\t", 2)
+		} else {
+
+		}
+		fmt.Println(s, tuple, len(tuple))
+		filename := strings.TrimSpace(tuple[1])
+		status := strings.TrimSpace(tuple[0])
+		diff, err := r.Diff(hash, filename)
+		if err != nil {
+			return nil, fmt.Errorf("unable to compute diff on file %s for commit %s: %v", filename, hash, err)
+		}
+
+		f := File{
+			Filename: filename,
+			Status:   status,
+			Diff:     diff,
+		}
+
+		//Scan the diff output
+		diffScanner := bufio.NewScanner(strings.NewReader(diff))
+		var currentHunk *Hunk
+		for diffScanner.Scan() {
+			line := diffScanner.Text()
+			switch {
+			case strings.HasPrefix(line, "@@ "):
+				line := strings.TrimPrefix(line, "@@ ")
+				if currentHunk != nil {
+					f.DiffDetail.Hunks = append(f.DiffDetail.Hunks, *currentHunk)
+					currentHunk = nil
+				}
+				currentHunk = new(Hunk)
+				currentHunk.Header = strings.TrimSpace(strings.Split(line, "@@")[0])
+				currentHunk.Content = strings.Join(strings.Split(line, "@@")[1:], "")
+			case currentHunk != nil && strings.HasPrefix(line, "-"):
+				currentHunk.RemovedLines = append(currentHunk.RemovedLines, strings.TrimPrefix(line, "-"))
+				currentHunk.Content += "\n" + line
+			case currentHunk != nil && strings.HasPrefix(line, "+"):
+				currentHunk.AddedLines = append(currentHunk.AddedLines, strings.TrimPrefix(line, "+"))
+				currentHunk.Content += "\n" + line
+			case currentHunk != nil:
+				currentHunk.Content += "\n" + line
+			}
+		}
+
+		if currentHunk != nil {
+			f.DiffDetail.Hunks = append(f.DiffDetail.Hunks, *currentHunk)
+		}
+
+		err = diffScanner.Err()
+		if err != nil {
+			return nil, err
+		}
+		Files[filename] = f
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return Files, nil
+}
+
+// GetCommit returns a commit
+func (r Repo) GetCommit(hash string) (Commit, error) {
+	hash = strings.TrimFunc(hash, func(r rune) bool {
+		return r == '\n' || r == ' ' || r == '\t'
+	})
+	c := Commit{}
+	details, err := r.runCmd("git", "show", hash, "--pretty=%at||%an||%s||%b||", "--name-status")
 	if err != nil {
 		return c, err
 	}
@@ -171,7 +306,7 @@ func (r Repo) LatestCommit() (Commit, error) {
 	c.LongHash = hash[:len(hash)-1]
 	c.Hash = hash[:7]
 
-	splittedDetails := strings.SplitN(details, "||", 4)
+	splittedDetails := strings.SplitN(details, "||", 5)
 
 	ts, err := strconv.ParseInt(splittedDetails[0], 10, 64)
 	if err != nil {
@@ -182,7 +317,26 @@ func (r Repo) LatestCommit() (Commit, error) {
 	c.Subject = splittedDetails[2]
 	c.Body = splittedDetails[3]
 
-	return c, nil
+	fileList := strings.TrimSpace(splittedDetails[4])
+	c.Files, err = r.parseDiff(hash, fileList)
+	return c, err
+}
+
+func (r Repo) Diff(hash string, filename string) (string, error) {
+	if hash == "" {
+		return r.runCmd("git", "diff", "--pretty=", "--", filename)
+	}
+	return r.runCmd("git", "show", hash, "--pretty=", "--", filename)
+}
+
+// LatestCommit returns the latest commit of the current branch
+func (r Repo) LatestCommit() (Commit, error) {
+	c := Commit{}
+	hash, err := r.runCmd("git", "rev-parse", "HEAD")
+	if err != nil {
+		return c, err
+	}
+	return r.GetCommit(hash)
 }
 
 // CurrentBranch returns the current branch
@@ -368,12 +522,20 @@ func (r Repo) Push(remote, branch string) error {
 
 // Status run the git status command
 func (r Repo) Status() (string, error) {
-	args := append([]string{"status"})
+	args := append([]string{"status", "-s", "-uall"})
 	out, err := r.runCmd("git", args...)
 	if err != nil {
 		return "", fmt.Errorf("command 'git status' failed: %v (%s)", err, out)
 	}
 	return out, nil
+}
+
+func (r Repo) CurrentSnapshot() (map[string]File, error) {
+	diffFileList, err := r.Status()
+	if err != nil {
+		return nil, err
+	}
+	return r.parseDiff("", diffFileList)
 }
 
 func (r Repo) HasDiverged() (bool, error) {
@@ -385,6 +547,28 @@ func (r Repo) HasDiverged() (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (r Repo) HookList() ([]string, error) {
+	hooksPath := filepath.Join(r.path, ".git", "hooks")
+	var files []string
+	err := filepath.Walk(hooksPath, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() && !strings.HasSuffix(path, ".sample") {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, err
+}
+
+func (r Repo) DeleteHook(name string) error {
+	hookPath := filepath.Join(r.path, ".git", "hooks", name)
+	return os.Remove(hookPath)
+}
+
+func (r Repo) WriteHook(name string, content []byte) error {
+	hookPath := filepath.Join(r.path, ".git", "hooks", name)
+	return ioutil.WriteFile(hookPath, content, os.FileMode(0755))
 }
 
 // Option is a function option
