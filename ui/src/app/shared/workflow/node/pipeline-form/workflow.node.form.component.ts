@@ -1,10 +1,10 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import { ApplicationStore } from 'app/service/services.module';
-import {cloneDeep} from 'lodash';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ApplicationService } from 'app/service/application/application.service';
+import { cloneDeep } from 'lodash';
 import { finalize, first } from 'rxjs/operators';
-import {Environment} from '../../../../model/environment.model';
-import {IdName, Project} from '../../../../model/project.model';
-import {WNode, Workflow} from '../../../../model/workflow.model';
+import { Environment } from '../../../../model/environment.model';
+import { IdName, Project } from '../../../../model/project.model';
+import { WNode, Workflow } from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-form',
@@ -22,7 +22,7 @@ export class WorkflowNodeFormComponent implements OnInit {
     applications: IdName[];
     integrations: Array<IdName>;
 
-    constructor(private _appStore: ApplicationStore) { }
+    constructor(private _appService: ApplicationService) { }
 
     ngOnInit() {
         let voidEnv = new Environment();
@@ -53,7 +53,7 @@ export class WorkflowNodeFormComponent implements OnInit {
 
         let appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name
         if (appName && appName !== ' ') {
-            this._appStore.getDeploymentStrategies(this.project.key, appName).pipe(
+            this._appService.getDeploymentStrategies(this.project.key, appName).pipe(
                 first(),
                 finalize(() => this.initIntegrationList())
             ).subscribe(

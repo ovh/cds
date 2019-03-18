@@ -106,6 +106,8 @@ func StatusFromString(in string) Status {
 		return StatusWaiting
 	case StatusBuilding.String():
 		return StatusBuilding
+	case StatusPending.String():
+		return StatusPending
 	case StatusChecking.String():
 		return StatusChecking
 	case StatusSuccess.String():
@@ -142,6 +144,7 @@ func StatusToStrings(ss []Status) []string {
 
 // Action status in queue
 const (
+	StatusPending           Status = "Pending"
 	StatusWaiting           Status = "Waiting"
 	StatusChecking          Status = "Checking" // DEPRECATED, to remove when removing pipelineBuild
 	StatusBuilding          Status = "Building"

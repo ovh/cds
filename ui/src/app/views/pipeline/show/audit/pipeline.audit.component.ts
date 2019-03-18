@@ -1,5 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { FetchPipelineAudits, RollbackPipeline } from 'app/store/pipelines.action';
 import { compare } from 'fast-json-patch';
 import { cloneDeep } from 'lodash';
 import { finalize, first } from 'rxjs/operators';
@@ -8,8 +10,6 @@ import { Job } from '../../../../model/job.model';
 import { Pipeline, PipelineAudit, PipelineAuditDiff } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
 import { Stage } from '../../../../model/stage.model';
-import { PipelineAuditService } from '../../../../service/pipeline/pipeline.audit.service';
-import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
 import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { Table } from '../../../../shared/table/table';
 import { ToastService } from '../../../../shared/toast/ToastService';
@@ -23,7 +23,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
     @Input() project: Project;
     @Input() pipeline: Pipeline;
 
-    audits: Array<PipelineAudit>;
     currentCompare: Array<PipelineAuditDiff>;
     items: Array<Item>;
 
@@ -32,8 +31,7 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
     loading = false;
 
     constructor(
-        private _auditService: PipelineAuditService,
-        private _pipStore: PipelineStore,
+        private store: Store,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
@@ -49,25 +47,26 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
     }
 
     getData(): Array<PipelineAudit> {
-        return this.audits;
+        return this.pipeline.audits;
     }
 
     ngOnInit(): void {
-        this._auditService.getAudit(this.project, this.pipeline).pipe(first()).subscribe(as => {
-            this.audits = as;
-        });
+        this.store.dispatch(new FetchPipelineAudits({
+            projectKey: this.project.key,
+            pipelineName: this.pipeline.name
+        }));
     }
 
     compareIndex(i): void {
         this.indexSelected = i;
         let indexToCompare = (this.currentPage - 1) * this.nbElementsByPage + i;
 
-        let pipFrom = cloneDeep(this.audits[indexToCompare].pipeline);
+        let pipFrom = cloneDeep(this.pipeline.audits[indexToCompare].pipeline);
         let pipTo: Pipeline;
         if (indexToCompare === 0) {
             pipTo = cloneDeep(this.pipeline);
         } else {
-            pipTo = cloneDeep(this.audits[indexToCompare - 1].pipeline);
+            pipTo = cloneDeep(this.pipeline.audits[indexToCompare - 1].pipeline);
         }
 
         pipFrom = this.cleanPipeline(pipFrom);
@@ -79,7 +78,7 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
             let path = c.path;
             let pathSplitted = path.split('/').filter(p => p !== '');
 
-            switch (this.audits[indexToCompare].action) {
+            switch (this.pipeline.audits[indexToCompare].action) {
                 case 'addStage':
                     diff = this.getAddStageDiff(pathSplitted, pipTo);
                     break;
@@ -173,7 +172,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
         delete j.pipeline_stage_id;
 
         delete j.action.hasChanged;
-        delete j.action.last_modified;
         delete j.action.type;
         delete j.action.id;
         delete j.action.loading;
@@ -190,7 +188,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
                 delete steps[i].description;
                 delete steps[i].type;
                 delete steps[i].actions;
-                delete steps[i].last_modified;
                 if (steps[i].parameters) {
                     for (let k = 0; k < steps[i].parameters.length; k++) {
                         delete steps[i].parameters[k].id;
@@ -304,14 +301,13 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
 
     rollback(auditId: number): void {
         this.loading = true;
-        this._pipStore.rollbackPipeline(this.project.key, this.pipeline.name, auditId)
-            .pipe(
-                first(),
-                finalize(() => this.loading = false)
-            )
-            .subscribe((pip) => {
-                this.pipeline = pip;
-                this._toast.success('', this._translate.instant('pipeline_updated'));
-            });
+        this.store.dispatch(new RollbackPipeline({
+            projectKey: this.project.key,
+            pipelineName: this.pipeline.name,
+            auditId
+        })).pipe(
+            first(),
+            finalize(() => this.loading = false)
+        ).subscribe(() => this._toast.success('', this._translate.instant('pipeline_updated')));
     }
 }

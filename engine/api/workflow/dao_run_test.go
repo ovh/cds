@@ -5,6 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/event"
@@ -17,12 +25,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func TestCanBeRun(t *testing.T) {
@@ -220,13 +222,18 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-			User: *u,
-			Payload: map[string]string{
-				"git.branch": "master",
-				"git.author": "test",
+		wr, errWR := workflow.CreateRun(db, w1, nil, u)
+		assert.NoError(t, errWR)
+		wr.Workflow = *w1
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+				Payload: map[string]string{
+					"git.branch": "master",
+					"git.author": "test",
+				},
 			},
-		}, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -311,15 +318,19 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-			User: *u,
-			Payload: map[string]string{
-				"git.branch": "master",
-				"git.author": "test",
+		wfr, errWR := workflow.CreateRun(db, w1, nil, u)
+		assert.NoError(t, errWR)
+		wfr.Workflow = *w1
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+				Payload: map[string]string{
+					"git.branch": "master",
+					"git.author": "test",
+				},
 			},
-		}, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
-
 		wfr.Status = sdk.StatusBuilding.String()
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
@@ -484,23 +495,33 @@ vcs_ssh_key: proj-blabla
 	})
 	test.NoError(t, err)
 
-	_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-		User: *u,
-		Payload: map[string]string{
-			"git.branch": "master",
-			"git.author": "test",
-		},
-	}, nil)
-	test.NoError(t, errWr)
-
-	for i := 0; i < 5; i++ {
-		wfr, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	wr, errWR := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, errWR)
+	wr.Workflow = *w1
+	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
 				"git.author": "test",
 			},
-		}, nil)
+		},
+	}, u, nil)
+	test.NoError(t, errWr)
+
+	for i := 0; i < 5; i++ {
+		wfr, errWR := workflow.CreateRun(db, w1, nil, u)
+		assert.NoError(t, errWR)
+		wfr.Workflow = *w1
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+				Payload: map[string]string{
+					"git.branch": "master",
+					"git.author": "test",
+				},
+			},
+		}, u, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail.String()
@@ -672,13 +693,18 @@ vcs_ssh_key: proj-blabla
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-			User: *u,
-			Payload: map[string]string{
-				"git.branch": "master",
-				"git.author": "test",
+		wfr, errWR := workflow.CreateRun(db, w1, nil, u)
+		assert.NoError(t, errWR)
+		wfr.Workflow = *w1
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+				Payload: map[string]string{
+					"git.branch": "master",
+					"git.author": "test",
+				},
 			},
-		}, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail.String()
@@ -764,13 +790,18 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-			User: *u,
-			Payload: map[string]string{
-				"git.branch": branches[i],
-				"git.author": "test",
+		wr, errWR := workflow.CreateRun(db, w1, nil, u)
+		assert.NoError(t, errWR)
+		wr.Workflow = *w1
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+				Payload: map[string]string{
+					"git.branch": branches[i],
+					"git.author": "test",
+				},
 			},
-		}, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -853,13 +884,18 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
-			User: *u,
-			Payload: map[string]string{
-				"git.branch": branches[i],
-				"git.author": "test",
+		wr, errWR := workflow.CreateRun(db, w1, nil, u)
+		assert.NoError(t, errWR)
+		wr.Workflow = *w1
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{
+				User: *u,
+				Payload: map[string]string{
+					"git.branch": branches[i],
+					"git.author": "test",
+				},
 			},
-		}, nil)
+		}, u, nil)
 		test.NoError(t, errWr)
 	}
 

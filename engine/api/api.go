@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -77,6 +78,7 @@ type Configuration struct {
 	Auth struct {
 		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory." json:"-"`
+		RSAPrivateKey    string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		LDAP             struct {
 			Enable   bool   `toml:"enable" default:"false" json:"enable"`
 			Host     string `toml:"host" json:"host"`
@@ -485,6 +487,13 @@ func (a *API) Serve(ctx context.Context) error {
 	//Initialize secret driver
 	secret.Init(a.Config.Secrets.Key)
 
+	//Initialize the jwt layer
+	if a.Config.Auth.RSAPrivateKey != "" { // Temporary condition...
+		if err := accesstoken.Init(a.Name, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
+			return fmt.Errorf("unable to initialize the JWT Layer: %v", err)
+		}
+	}
+
 	//Initialize mail package
 	log.Info("Initializing mail driver...")
 	mail.Init(a.Config.SMTP.User,
@@ -499,7 +508,7 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
 	if a.Config.Features.Izanami.APIURL != "" {
 		if err := feature.Init(a.Config.Features.Izanami.APIURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
-			return fmt.Errorf("Feature flipping not enabled with izanami: %s", err)
+			return fmt.Errorf("Feature flipping not enabled with izanami: %v", err)
 		}
 	}
 
@@ -672,6 +681,9 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Error("error while initializing workers routine: %s", err)
 		}
 	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
+		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
@@ -686,9 +698,6 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
-		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
@@ -706,11 +715,14 @@ func (a *API) Serve(ctx context.Context) error {
 		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	}, a.PanicDump())
 
-	migrate.Add(sdk.Migration{Name: "WorkflowData", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
-	}})
 	migrate.Add(sdk.Migration{Name: "Permissions", Release: "0.37.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.Permissions(a.DBConnectionFactory.GetDBMap, a.Cache)
+	}})
+	migrate.Add(sdk.Migration{Name: "WorkflowOldStruct", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.WorkflowRunOldModel(ctx, a.DBConnectionFactory.GetDBMap)
+	}})
+	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {

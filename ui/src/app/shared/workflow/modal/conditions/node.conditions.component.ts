@@ -1,13 +1,13 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {finalize, first} from 'rxjs/operators';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Project} from '../../../../model/project.model';
-import {WNode, Workflow, WorkflowNodeConditions} from '../../../../model/workflow.model';
-import {VariableService} from '../../../../service/variable/variable.service';
-import {WorkflowStore} from '../../../../service/workflow/workflow.store';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { cloneDeep } from 'lodash';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { finalize, first } from 'rxjs/operators';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, Workflow, WorkflowNodeConditions } from '../../../../model/workflow.model';
+import { VariableService } from '../../../../service/variable/variable.service';
 
 @Component({
     selector: 'app-workflow-node-conditions',
@@ -29,7 +29,7 @@ export class WorkflowNodeConditionsComponent {
             if (data.context.conditions.lua_script) {
                 this.mode = 'advanced';
             } else {
-              this.mode = 'basic';
+                this.mode = 'basic';
             }
         }
     }
@@ -46,14 +46,18 @@ export class WorkflowNodeConditionsComponent {
     conditionNames: Array<string>;
     suggest: Array<string> = [];
     loadingConditions = false;
-    mode: 'advanced'|'basic' = 'basic';
+    mode: 'advanced' | 'basic' = 'basic';
 
     @ViewChild('nodeConditionsModal')
     public nodeConditionModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
-    constructor(private _workflowStore: WorkflowStore, private _suiService: SuiModalService, private _variableService: VariableService) { }
+    constructor(
+        private _workflowService: WorkflowService,
+        private _suiService: SuiModalService,
+        private _variableService: VariableService
+    ) { }
 
     conditionsChange(conditions: WorkflowNodeConditions): void {
         this.node.context.conditions = conditions;
@@ -65,7 +69,7 @@ export class WorkflowNodeConditionsComponent {
         this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
             .subscribe((suggest) => this.suggest = suggest);
 
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
+        this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
             .pipe(
                 first(),
                 finalize(() => this.loadingConditions = false)

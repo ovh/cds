@@ -1,14 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -20,6 +19,11 @@ var actionCmd = cli.Command{
 	Short: "Manage CDS action",
 }
 
+var actionBuiltinCmd = cli.Command{
+	Name:  "builtin",
+	Short: "Manage CDS builtin action",
+}
+
 func action() *cobra.Command {
 	return cli.NewCommand(actionCmd, nil, []*cobra.Command{
 		cli.NewListCommand(actionListCmd, actionListRun, nil),
@@ -28,42 +32,87 @@ func action() *cobra.Command {
 		cli.NewCommand(actionDocCmd, actionDocRun, nil),
 		cli.NewCommand(actionImportCmd, actionImportRun, nil),
 		cli.NewCommand(actionExportCmd, actionExportRun, nil),
+		cli.NewCommand(actionBuiltinCmd, nil, []*cobra.Command{
+			cli.NewListCommand(actionBuiltinListCmd, actionBuiltinListRun, nil),
+			cli.NewGetCommand(actionBuiltinShowCmd, actionBuiltinShowRun, nil),
+		}),
 	})
+}
+
+func newActionDisplay(a sdk.Action) actionDisplay {
+	name := a.Name
+	if a.Group != nil {
+		name = fmt.Sprintf("%s/%s", a.Group.Name, a.Name)
+	}
+
+	ad := actionDisplay{
+		Fullname: name,
+		Type:     a.Type,
+	}
+
+	if a.FirstAudit != nil {
+		ad.Created = fmt.Sprintf("On %s by %s", a.FirstAudit.Created.Format(time.RFC3339),
+			a.FirstAudit.AuditCommon.TriggeredBy)
+	} else {
+		ad.Created = "No audit found"
+	}
+
+	return ad
+}
+
+type actionDisplay struct {
+	Created  string `cli:"Created"`
+	Fullname string `cli:"Fullname,Key"`
+	Type     string `cli:"Type"`
+}
+
+func actionParsePath(path string) (string, string, error) {
+	pathSplitted := strings.Split(path, "/")
+	if len(pathSplitted) != 2 {
+		return "", "", fmt.Errorf("invalid given action path")
+	}
+	return pathSplitted[0], pathSplitted[1], nil
 }
 
 var actionListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS actions",
-	Long: `Useful list CDS actions
-
-cdsctl action list`,
 }
 
 func actionListRun(v cli.Values) (cli.ListResult, error) {
-	actions, err := client.ActionList()
+	as, err := client.ActionList()
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(actions), nil
+
+	ads := make([]actionDisplay, len(as))
+	for i := range as {
+		ads[i] = newActionDisplay(as[i])
+	}
+
+	return cli.AsListResult(ads), nil
 }
 
 var actionShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS action",
 	Args: []cli.Arg{
-		{Name: "action-name"},
+		{Name: "action-path"},
 	},
-	Long: `Useful to show a CDS action
-
-cdsctl action show myAction`,
 }
 
 func actionShowRun(v cli.Values) (interface{}, error) {
-	action, err := client.ActionGet(v.GetString("action-name"))
+	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
 	if err != nil {
 		return nil, err
 	}
-	return *action, nil
+
+	action, err := client.ActionGet(groupName, actionName)
+	if err != nil {
+		return nil, err
+	}
+
+	return newActionDisplay(*action), nil
 }
 
 var actionDeleteCmd = cli.Command{
@@ -77,17 +126,14 @@ var actionDeleteCmd = cli.Command{
 	cdsctl action delete myActionNotExist --force
 `,
 	Args: []cli.Arg{
-		{Name: "action-name"},
+		{Name: "action-path"},
 	},
 	Flags: []cli.Flag{
 		{
 			Name:  "force",
 			Usage: "if true, do not fail if action does not exist",
 			IsValid: func(s string) bool {
-				if s != "true" && s != "false" {
-					return false
-				}
-				return true
+				return s == "true" || s == "false"
 			},
 			Default: "false",
 			Type:    cli.FlagBool,
@@ -96,11 +142,17 @@ var actionDeleteCmd = cli.Command{
 }
 
 func actionDeleteRun(v cli.Values) error {
-	err := client.ActionDelete(v.GetString("action-name"))
+	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
+	if err != nil {
+		return err
+	}
+
+	err = client.ActionDelete(groupName, actionName)
 	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoAction) {
 		fmt.Println(err)
 		return nil
 	}
+
 	return err
 }
 
@@ -113,23 +165,22 @@ var actionDocCmd = cli.Command{
 }
 
 func actionDocRun(v cli.Values) error {
-	btes, errRead := ioutil.ReadFile(v.GetString("path"))
-	if errRead != nil {
-		return fmt.Errorf("Error while reading file: %s", errRead)
+	p := v.GetString("path")
+
+	contentFile, format, err := exportentities.OpenPath(p)
+	if err != nil {
+		return err
+	}
+	defer contentFile.Close()
+
+	body, err := ioutil.ReadAll(contentFile)
+	if err != nil {
+		return err
 	}
 
-	var ea = new(exportentities.Action)
-	var errapp error
-	if strings.HasSuffix(path.Base(v.GetString("path")), ".json") {
-		errapp = json.Unmarshal(btes, ea)
-	} else if strings.HasSuffix(path.Base(v.GetString("path")), ".yml") || strings.HasSuffix(path.Base(v.GetString("path")), ".yaml") {
-		errapp = yaml.Unmarshal(btes, ea)
-	} else {
-		return fmt.Errorf("unsupported extension on %s", path.Base(v.GetString("path")))
-	}
-
-	if errapp != nil {
-		return errapp
+	var ea exportentities.Action
+	if err := exportentities.Unmarshal(body, format, &ea); err != nil {
+		return err
 	}
 
 	act, errapp := ea.Action()
@@ -137,7 +188,7 @@ func actionDocRun(v cli.Values) error {
 		return errapp
 	}
 
-	fmt.Println(sdk.ActionInfoMarkdown(act, path.Base(v.GetString("path"))))
+	fmt.Println(sdk.ActionInfoMarkdown(act, path.Base(p)))
 	return nil
 }
 
@@ -147,9 +198,6 @@ var actionImportCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "path"},
 	},
-	Long: `Useful to import a CDS action from a file
-
-cdsctl action import myAction.yml`,
 }
 
 func actionImportRun(v cli.Values) error {
@@ -161,8 +209,8 @@ func actionImportRun(v cli.Values) error {
 	defer contentFile.Close() //nolint
 	formatStr, _ := exportentities.GetFormatStr(format)
 
-	if errImport := client.ActionImport(contentFile, formatStr); errImport != nil {
-		return errImport
+	if err := client.ActionImport(contentFile, formatStr); err != nil {
+		return err
 	}
 
 	fmt.Printf("%s successfully imported\n", path)
@@ -172,11 +220,8 @@ func actionImportRun(v cli.Values) error {
 var actionExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export a CDS action",
-	Long: `Useful to export a CDS action
-
-cdsctl action export myAction`,
 	Args: []cli.Arg{
-		{Name: "action-name"},
+		{Name: "action-path"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -188,10 +233,53 @@ cdsctl action export myAction`,
 }
 
 func actionExportRun(v cli.Values) error {
-	b, err := client.ActionExport(v.GetString("action-name"), v.GetString("format"))
+	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
 	if err != nil {
 		return err
 	}
+
+	b, err := client.ActionExport(groupName, actionName, v.GetString("format"))
+	if err != nil {
+		return err
+	}
+
 	fmt.Println(string(b))
+
 	return nil
+}
+
+var actionBuiltinListCmd = cli.Command{
+	Name:  "list",
+	Short: "List CDS builtin actions",
+}
+
+func actionBuiltinListRun(v cli.Values) (cli.ListResult, error) {
+	as, err := client.ActionBuiltinList()
+	if err != nil {
+		return nil, err
+	}
+
+	ads := make([]actionDisplay, len(as))
+	for i := range as {
+		ads[i] = newActionDisplay(as[i])
+	}
+
+	return cli.AsListResult(ads), nil
+}
+
+var actionBuiltinShowCmd = cli.Command{
+	Name:  "show",
+	Short: "Show a CDS builtin action",
+	Args: []cli.Arg{
+		{Name: "action-name"},
+	},
+}
+
+func actionBuiltinShowRun(v cli.Values) (interface{}, error) {
+	action, err := client.ActionBuiltinGet(v.GetString("action-name"))
+	if err != nil {
+		return nil, err
+	}
+
+	return newActionDisplay(*action), nil
 }

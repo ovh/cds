@@ -35,13 +35,14 @@ func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName
 // PublishWorkflowRun publish event on a workflow run
 func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 	e := sdk.EventRunWorkflow{
-		ID:            wr.ID,
-		Number:        wr.Number,
-		Status:        wr.Status,
-		Start:         wr.Start.Unix(),
-		LastExecution: wr.LastExecution.Unix(),
-		LastModified:  wr.LastModified.Unix(),
-		Tags:          wr.Tags,
+		ID:               wr.ID,
+		Number:           wr.Number,
+		Status:           wr.Status,
+		Start:            wr.Start.Unix(),
+		LastExecution:    wr.LastExecution.Unix(),
+		LastModified:     wr.LastModified.Unix(),
+		LastModifiedNano: wr.LastModified.UnixNano(),
+		Tags:             wr.Tags,
 	}
 	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, wr.Tags)
 }
@@ -102,6 +103,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		if wnode.Context != nil && wnode.Context.EnvironmentID != 0 {
 			env = w.Environments[wnode.Context.EnvironmentID]
 		}
+		e.NodeType = wnode.Type
 	} else {
 		nodeName = n.Name
 		pipName = w.Pipelines[n.PipelineID].Name

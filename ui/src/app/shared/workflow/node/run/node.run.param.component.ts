@@ -366,6 +366,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
                 { queryParams: { subnum: wr.last_subnumber } });
             wr.force_update = true;
             this._workflowEventStore.setSelectedRun(wr);
+            this._workflowEventStore.broadcastWorkflowRun(this.project.key, this.workflow.name, wr);
         });
     }
 

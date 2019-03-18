@@ -8,6 +8,8 @@ import { MockBackend } from '@angular/http/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddPipeline } from 'app/store/pipelines.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
@@ -18,7 +20,6 @@ import { AuthentificationStore } from '../../../service/auth/authentification.st
 import { EnvironmentService } from '../../../service/environment/environment.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
-import { PipelineStore } from '../../../service/pipeline/pipeline.store';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
 import { VariableService } from '../../../service/variable/variable.service';
@@ -29,7 +30,7 @@ import { PipelineAddComponent } from './pipeline.add.component';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
-    let pipStore: PipelineStore;
+    let store: Store;
     let backend: MockBackend;
     let router: Router;
 
@@ -49,7 +50,6 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                PipelineStore,
                 NavbarService,
                 PipelineService,
                 EnvironmentService,
@@ -67,13 +67,13 @@ describe('CDS: Pipeline Add Component', () => {
 
         injector = getTestBed();
         backend = injector.get(MockBackend);
-        pipStore = injector.get(PipelineStore);
+        store = injector.get(Store);
         router = injector.get(Router);
     });
 
     afterEach(() => {
         injector = undefined;
-        pipStore = undefined;
+        store = undefined;
         backend = undefined;
         router = undefined;
     });
@@ -98,13 +98,15 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline = new Pipeline();
         fixture.componentInstance.newPipeline.name = 'myPip';
 
-        spyOn(pipStore, 'createPipeline').and.callFake(() => {
-            return of(fixture.componentInstance.newPipeline);
+        spyOn(store, 'dispatch').and.callFake(() => {
+            return of(null);
         });
 
         fixture.componentInstance.createPipeline();
-        expect(pipStore.createPipeline).toHaveBeenCalledWith(project.key, fixture.componentInstance.newPipeline);
-
+        expect(store.dispatch).toHaveBeenCalledWith(new AddPipeline({
+            projectKey: 'key1',
+            pipeline: fixture.componentInstance.newPipeline
+        }));
     }));
 });
 

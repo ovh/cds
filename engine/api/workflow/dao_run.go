@@ -9,7 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -58,7 +60,6 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 	defer end()
 
 	wr.LastModified = time.Now()
-
 	for _, info := range wr.Infos {
 		if info.IsError && info.SubNumber == wr.LastSubNumber {
 			wr.Status = string(sdk.StatusFail)
@@ -165,15 +166,6 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	for i := range w.Joins {
 		w.Joins[i].Ref = fmt.Sprintf("%d", w.Joins[i].ID)
 	}
-	// This is usefull for oldserialized workflows...
-	//TODO: delete this after a while
-	if len(w.Pipelines) == 0 {
-		w.Pipelines = map[int64]sdk.Pipeline{}
-		w.Visit(func(n *sdk.WorkflowNode) {
-			w.Pipelines[n.PipelineID] = n.DeprecatedPipeline
-			n.PipelineName = n.DeprecatedPipeline.Name
-		})
-	}
 	r.Workflow = w
 
 	i := []sdk.WorkflowRunInfo{}
@@ -233,7 +225,6 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
 		return sdk.WrapError(err, "Unable to store tags")
 	}
-
 	return InsertWorkflowRunTags(db, r.ID, r.Tags)
 }
 
@@ -247,6 +238,22 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 	and workflow.name = $2
 	order by workflow_run.num desc limit 1`, wfRunfields)
 	return loadRun(db, loadOpts, query, projectkey, workflowname)
+}
+
+// LockRun locks a workflow run
+func LockRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`SELECT %s
+	FROM workflow_run
+	WHERE id = $1 FOR UPDATE NOWAIT`, wfRunfields)
+	return loadRun(db, LoadRunOptions{}, query, id)
+}
+
+// LoadRunIDsWithOldModel loads all ids for run that use old workflow model
+func LoadRunIDsWithOldModel(db gorp.SqlExecutor) ([]int64, error) {
+	query := "SELECT id FROM workflow_run WHERE workflow->'workflow_data' IS NULL LIMIT 100"
+	var ids []int64
+	_, err := db.Select(&ids, query)
+	return ids, sdk.WithStack(err)
 }
 
 // LoadRun returns a specific run
@@ -409,7 +416,7 @@ func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 }
 
 func MigrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
-	if run != nil && run.Workflow.WorkflowData == nil {
+	if run != nil && run.Workflow.WorkflowData == nil && run.Status != sdk.StatusPending.String() {
 		data := run.Workflow.Migrate(true)
 		run.Workflow.WorkflowData = &data
 
@@ -456,6 +463,9 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 	if err := db.SelectOne(runDB, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
+		}
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.RowLockedPGCode {
+			return nil, sdk.ErrLocked
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow run. query:%s args:%v", query, args)
 	}
@@ -579,10 +589,74 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
+// CreateRun creates a new workflow run and insert it
+func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) (*sdk.WorkflowRun, error) {
+	number, err := NextRunNumber(db, wf.ID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get next run number")
+	}
+
+	wr := &sdk.WorkflowRun{
+		Number:        number,
+		WorkflowID:    wf.ID,
+		Start:         time.Now(),
+		LastModified:  time.Now(),
+		ProjectID:     wf.ProjectID,
+		Status:        sdk.StatusPending.String(),
+		LastExecution: time.Now(),
+		Tags:          make([]sdk.WorkflowRunTag, 0),
+	}
+
+	if opts != nil && opts.Hook != nil {
+		if trigg, ok := opts.Hook.Payload["cds.triggered_by.username"]; ok {
+			wr.Tag(tagTriggeredBy, trigg)
+		} else {
+			wr.Tag(tagTriggeredBy, "cds.hook")
+		}
+	} else {
+		wr.Tag(tagTriggeredBy, u.Username)
+	}
+
+	tags := wf.Metadata["default_tags"]
+	var payload map[string]string
+	if opts != nil && opts.Hook != nil {
+		payload = opts.Hook.Payload
+	}
+	if opts != nil && opts.Manual != nil {
+		e := dump.NewDefaultEncoder()
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+		m1, errm1 := e.ToStringMap(opts.Manual)
+		if errm1 != nil {
+			return nil, sdk.WrapError(errm1, "unable to compute manual payload")
+		}
+		payload = m1
+	}
+	if tags != "" {
+		tagsSplited := strings.Split(tags, ",")
+		for _, t := range tagsSplited {
+			if pTag, hash := payload[t]; hash {
+				wr.Tags = append(wr.Tags, sdk.WorkflowRunTag{
+					Tag:   t,
+					Value: pTag,
+				})
+			}
+		}
+	}
+
+	if err := insertWorkflowRun(db, wr); err != nil {
+		return nil, sdk.WrapError(err, "unable to create workflow run")
+	}
+	return wr, nil
+}
+
 // UpdateRunNum Update run number for the given workflow
 func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	if num == 1 {
-		if _, err := nextRunNumber(db, w); err != nil {
+		if _, err := NextRunNumber(db, w.ID); err != nil {
 			return sdk.WrapError(err, "Cannot create run number")
 		}
 		return nil
@@ -597,8 +671,8 @@ func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
-func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
-	i, err := db.SelectInt("select workflow_sequences_nextval($1)", w.ID)
+func NextRunNumber(db gorp.SqlExecutor, workflowID int64) (int64, error) {
+	i, err := db.SelectInt("select workflow_sequences_nextval($1)", workflowID)
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}

@@ -642,7 +642,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	wfLoaded.HistoryLength = 300
 	wfLoaded.WorkflowData.Node.Groups = []sdk.GroupPermission{
-		sdk.GroupPermission{
+		{
 			Group:      proj.ProjectGroups[0].Group,
 			Permission: permission.PermissionReadExecute,
 		},

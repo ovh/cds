@@ -8,7 +8,8 @@
         [scrollWindow]="false" (scrolled)="scroll()">
         <ng-container *ngIf="workflowRuns.length > 0">
             <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)" [class.active]="selectedWorkfowRun?.num === r.num"
-                [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+                [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+                 [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
                 [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
                 [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">
                 <div class="content">
@@ -16,7 +17,7 @@
                         <div class="number">
                             <span class="hash">#</span>
                             <span class="count" [class.success]="r.status === pipelineStatusEnum.SUCCESS"
-                                [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+                                [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
                                 [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
                                 [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.num}}</span>
                         </div>

@@ -185,14 +185,14 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 
 func (api *API) updateWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		workerModelID, errr := requestVarInt(r, "permModelID")
-		if errr != nil {
-			return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
+		workerModelID, err := requestVarInt(r, "permModelID")
+		if err != nil {
+			return err
 		}
 
 		old, errLoad := worker.LoadWorkerModelByID(api.mustDB(), workerModelID)
 		if errLoad != nil {
-			return sdk.WrapError(errLoad, "updateWorkerModel> cannot load worker model by id")
+			return sdk.WrapError(errLoad, "cannot load worker model by id")
 		}
 
 		// Unmarshal body
@@ -238,7 +238,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 
 		// we can't select the default group
 		if group.IsDefaultGroupID(model.GroupID) {
-			return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> this group can't be owner of a worker model")
+			return sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
 		}
 
 		//If the model Type has not been set, keep the old Type
@@ -251,7 +251,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 			var errP error
 			modelPattern, errP = worker.LoadWorkerModelPatternByName(api.mustDB(), model.Type, model.PatternName)
 			if errP != nil {
-				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Cannot load worker model pattern %s : %v", model.PatternName, errP)
+				return sdk.WrapError(sdk.ErrWrongRequest, "cannot load worker model pattern %s : %v", model.PatternName, errP)
 			}
 		}
 
@@ -278,12 +278,12 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		switch model.Type {
 		case sdk.Docker:
 			if model.ModelDocker.Image == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker image")
+				return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker image")
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
 					if old.Type != sdk.Docker { // Forbidden because we can't fetch previous user data
-						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "updateWorkerModel> We can't fetch previous user data because type is different")
+						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type is different")
 					}
 					model.ModelDocker.Cmd = old.ModelDocker.Cmd
 					model.ModelDocker.Shell = old.ModelDocker.Shell
@@ -295,16 +295,16 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 				}
 			}
 			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
+				return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker command or invalid shell command")
 			}
 		default:
 			if model.ModelVirtualMachine.Image == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid image")
+				return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker command or invalid image")
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
 					if old.Type == sdk.Docker { // Forbidden because we can't fetch previous user data
-						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "updateWorkerModel> We can't fetch previous user data because type is different")
+						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type is different")
 					}
 					model.ModelVirtualMachine.PreCmd = old.ModelVirtualMachine.PreCmd
 					model.ModelVirtualMachine.Cmd = old.ModelVirtualMachine.Cmd
@@ -329,12 +329,12 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		}
 
 		if workerModelID != model.ID {
-			return sdk.WrapError(sdk.ErrInvalidID, "updateWorkerModel> wrong ID")
+			return sdk.WrapError(sdk.ErrInvalidID, "wrong ID")
 		}
 
 		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
-			return sdk.WrapError(errtx, "updateWorkerModel> unable to start transaction")
+			return sdk.WrapError(errtx, "unable to start transaction")
 		}
 
 		defer tx.Rollback()
@@ -346,29 +346,11 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 
 		// update requirements if needed
 		if renamed {
-			actionsID, erru := action.UpdateAllRequirements(tx, old.Name, model.Name, sdk.ModelRequirement)
+			actionsID, erru := action.UpdateRequirementsValue(tx, old.Name, model.Name, sdk.ModelRequirement)
 			if erru != nil {
-				return sdk.WrapError(erru, "updateWorkerModel> cannot update action requirements")
+				return sdk.WrapError(erru, "cannot update action requirements")
 			}
-
 			log.Debug("updateWorkerModel> Update action %v", actionsID)
-
-			//update all the pipelines using this action
-			actions, erra := action.LoadJoinedActionsByActionID(tx, actionsID)
-			if erra != nil {
-				return sdk.WrapError(erra, "updateWorkerModel> cannot load joined actions")
-			}
-
-			log.Debug("updateWorkerModel> Loaded action %v", actions)
-
-			for _, a := range actions {
-				log.Debug("updateWorkerModel> Loading pipeline for action %d", a.ID)
-				id, err := pipeline.GetPipelineIDFromJoinedActionID(tx, a.ID)
-				if err != nil {
-					return sdk.WrapError(err, "cannot get pipeline")
-				}
-				log.Debug("updateWorkerModel> Updating pipeline %d", id)
-			}
 		}
 
 		if err := tx.Commit(); err != nil {

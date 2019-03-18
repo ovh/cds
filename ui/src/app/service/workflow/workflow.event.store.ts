@@ -36,12 +36,28 @@ export class WorkflowEventStore {
         let w = store.get(wr.id);
 
         // Update workflow runs list
-        if (!w || (w && (new Date(wr.last_modified).getTime() > (new Date(w.last_modified)).getTime())) ) {
+        let dNew: number;
+        if (wr.last_modified_nano) {
+            dNew = wr.last_modified_nano / 1000000;
+        } else {
+            dNew = new Date(wr.last_modified).getTime();
+        }
+
+        let dOld: number;
+        if (w) {
+            if (w.last_modified_nano) {
+                dOld = w.last_modified_nano / 1000000;
+            } else {
+                dOld = new Date(w.last_modified).getTime();
+            }
+        }
+        if (!w || (w && dNew > dOld)) {
             this._currentWorkflowRuns.next(store.set(wr.id, wr));
         }
 
         let sRun = this._currentWorkflowRun.getValue();
-        if (sRun && sRun.id === wr.id && new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime()) {
+        if (sRun && sRun.id === wr.id && (sRun.status !== wr.status ||
+            new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime())) {
             // Call get workflow run to get workflow
             this._workflowRunService.getWorkflowRun(key, name, wr.num).subscribe(wrUpdated => {
                 wr = wrUpdated;

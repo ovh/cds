@@ -3,7 +3,7 @@ module github.com/ovh/cds
 require (
 	cloud.google.com/go v0.30.0 // indirect
 	git.apache.org/thrift.git v0.0.0-20180514124809-e59b73d3c2bf // indirect
-	github.com/Azure/azure-sdk-for-go v21.2.0+incompatible // indirect
+	github.com/Azure/azure-sdk-for-go v26.0.0+incompatible // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-autorest v11.1.1+incompatible // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
@@ -73,8 +73,8 @@ require (
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
-	github.com/fsamin/go-dump v0.0.0-20180223131834-7ae1b0fe42eb
-	github.com/fsamin/go-repo v0.0.0-20190121184737-9644d36a55f4
+	github.com/fsamin/go-dump v1.0.8
+	github.com/fsamin/go-repo v0.0.0-20190227101938-952eab8f1609
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
@@ -106,7 +106,7 @@ require (
 	github.com/gorilla/mux v0.0.0-20160920230813-757bef944d0f
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/gotestyourself/gotestyourself v2.1.0+incompatible // indirect
-	github.com/gregjones/httpcache v0.0.0-20171119193500-2bcd89a1743f // indirect
+	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.5.1 // indirect
@@ -135,9 +135,8 @@ require (
 	github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
-	github.com/json-iterator/go v0.0.0-20171115153421-f7279a603ede // indirect
+	github.com/json-iterator/go v1.1.5 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
-	github.com/juju/ratelimit v1.0.1 // indirect
 	github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
@@ -163,7 +162,7 @@ require (
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 	github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
 	github.com/mgutz/logxi v0.0.0-20161027140823-aebf8a7d67ab // indirect
-	github.com/mholt/archiver v2.1.0+incompatible
+	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/miekg/dns v1.0.13 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747 // indirect
@@ -172,6 +171,8 @@ require (
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v0.0.0-20161020161836-f3009df150da
 	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
 	github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
 	github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace // indirect
@@ -185,7 +186,7 @@ require (
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
-	github.com/ovh/venom v0.24.0
+	github.com/ovh/venom v0.25.0
 	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -193,8 +194,7 @@ require (
 	github.com/pelletier/go-toml v0.0.0-20171222114548-0131db6d737c
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/phayes/permbits v0.0.0-20160816172359-32459f104210
-	github.com/pierrec/lz4 v0.0.0-20161206202305-5c9560bfa9ac // indirect
-	github.com/pierrec/xxHash v0.0.0-20160112165351-5a004441f897 // indirect
+	github.com/pierrec/lz4 v0.0.0-20190222153722-062282ea0dcf // indirect
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.0.0-20171216070316-e881fd58d78e
 	github.com/pkg/sftp v0.0.0-20160930220758-4d0e916071f6 // indirect
@@ -237,6 +237,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20161231055540-f06f290571ce
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18 // indirect
 	github.com/xordataexchange/crypt v0.0.0-20150523230031-749e360c8f23 // indirect
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b // indirect
@@ -269,15 +270,19 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/olivere/elastic.v5 v5.0.69
 	gopkg.in/ory-am/dockertest.v2 v2.2.3 // indirect
+	gopkg.in/square/go-jose.v2 v2.3.0
 	gopkg.in/stomp.v1 v1.0.1 // indirect
 	gopkg.in/testfixtures.v2 v2.4.2 // indirect
 	gopkg.in/urfave/cli.v1 v1.18.1
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.1
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20180126130815-dc0dd48d5a5c
-	k8s.io/apimachinery v0.0.0-20180126010535-b621949a1923
-	k8s.io/client-go v6.0.0+incompatible
+	k8s.io/api v0.0.0-20181204000039-89a74a8d264d
+	k8s.io/apimachinery v0.0.0-20190223094358-dcb391cde5ca
+	k8s.io/client-go v10.0.0+incompatible
+	k8s.io/klog v0.2.0 // indirect
+	sigs.k8s.io/yaml v1.1.0 // indirect
+
 )
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f

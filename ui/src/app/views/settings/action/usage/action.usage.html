@@ -1,0 +1,28 @@
+<div *ngIf="usage">
+    <ng-container *ngIf="usage.pipelines.length > 0">
+        <h3>{{ 'action_usage_pipelines_using' | translate }}</h3>
+        <ul>
+            <li *ngFor="let p of usage.pipelines">
+                <a [routerLink]="['/project', p.project_key, 'pipeline', p.pipeline_name]">
+                    {{p.project_name}} - {{p.pipeline_name}} - {{p.action_name}}
+                </a>
+                <i *ngIf="p.warning" suiPopup [popupText]="'action_usage_warning_pipeline' | translate"
+                    class="red exclamation triangle icon"></i>
+            </li>
+        </ul>
+    </ng-container>
+    <ng-container *ngIf="usage.actions.length > 0">
+        <h3>{{ 'action_usage_actions_using' | translate }}</h3>
+        <ul>
+            <li *ngFor="let a of usage.actions">
+                <a [routerLink]="['/settings/action', a.group_name, a.parent_action_name]">
+                    {{a.group_name ? a.group_name+'/' : ''}}{{a.parent_action_name}}</a>
+                <i *ngIf="a.warning" suiPopup [popupText]="'action_usage_warning_action' | translate"
+                    class="red exclamation triangle icon"></i>
+            </li>
+        </ul>
+    </ng-container>
+    <ng-container *ngIf="usage.pipelines.length === 0 && usage.actions.length === 0">
+        {{ 'action_usage_not_used' | translate }}
+    </ng-container>
+</div>

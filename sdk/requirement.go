@@ -33,6 +33,37 @@ func (l RequirementList) Values() []string {
 	return values
 }
 
+// IsValid returns requirement list validity.
+func (l RequirementList) IsValid() error {
+	// check requirement unicity
+	for i := range l {
+		for j := range l {
+			if l[i].Name == l[j].Name && l[i].Type == l[j].Type && i != j {
+				return WrapError(ErrInvalidJobRequirement, "duplicate requirement name %s and type %s", l[i].Name, l[i].Type)
+			}
+		}
+	}
+
+	// check that only one model requirement and hostname exists
+	nbModel, nbHostname := 0, 0
+	for i := range l {
+		switch l[i].Type {
+		case ModelRequirement:
+			nbModel++
+		case HostnameRequirement:
+			nbHostname++
+		}
+	}
+	if nbModel > 1 {
+		return WithStack(ErrInvalidJobRequirementDuplicateModel)
+	}
+	if nbHostname > 1 {
+		return WithStack(ErrInvalidJobRequirementDuplicateHostname)
+	}
+
+	return nil
+}
+
 var (
 	// AvailableRequirementsType List of all requirements
 	AvailableRequirementsType = []string{
@@ -95,10 +126,11 @@ var (
 // - a network access "telnet google.com 443"
 //easyjson:json
 type Requirement struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name" yaml:"name"`
-	Type  string `json:"type" yaml:"type"`
-	Value string `json:"value" yaml:"value"`
+	ID       int64  `json:"id" db:"id"`
+	ActionID int64  `json:"action_id" db:"action_id"`
+	Name     string `json:"name" yaml:"name" db:"name"`
+	Type     string `json:"type" yaml:"type" db:"type"`
+	Value    string `json:"value" yaml:"value" db:"value"`
 }
 
 // AddRequirement append a requirement in a requirement array

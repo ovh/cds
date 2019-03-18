@@ -1,20 +1,23 @@
-import { Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { FetchWorkflow, UpdateFavoriteWorkflow } from 'app/store/workflows.action';
+import { WorkflowsState } from 'app/store/workflows.state';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
 import { Workflow } from '../../model/workflow.model';
 import { WorkflowRun } from '../../model/workflow.run.model';
-import { ProjectStore } from '../../service/project/project.store';
 import { RouterService } from '../../service/router/router.service';
 import { WorkflowRunService } from '../../service/workflow/run/workflow.run.service';
 import { WorkflowCoreService } from '../../service/workflow/workflow.core.service';
 import { WorkflowEventStore } from '../../service/workflow/workflow.event.store';
+import { WorkflowService } from '../../service/workflow/workflow.service';
 import { WorkflowSidebarMode, WorkflowSidebarStore } from '../../service/workflow/workflow.sidebar.store';
-import { WorkflowStore } from '../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from '../../shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
@@ -26,7 +29,7 @@ import { WorkflowSaveAsCodeComponent } from '../../shared/workflow/modal/save-as
     styleUrls: ['./workflow.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowComponent implements OnInit {
+export class WorkflowComponent {
     @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
@@ -34,6 +37,10 @@ export class WorkflowComponent implements OnInit {
     workflow: Workflow;
     workflowSubscription: Subscription;
     projectSubscription: Subscription;
+    dataRouteSubscription: Subscription;
+    qpRouteSubscription: Subscription;
+    paramsRouteSubscription: Subscription;
+    eventsRouteSubscription: Subscription;
 
     loading = true;
     loadingFav = false;
@@ -65,20 +72,26 @@ export class WorkflowComponent implements OnInit {
     showButtons = false;
     loadingPopupButton = false;
 
-    constructor(private _activatedRoute: ActivatedRoute,
-        private _workflowStore: WorkflowStore,
+    constructor(
+        private _activatedRoute: ActivatedRoute,
+        private _workflowService: WorkflowService,
         private _workflowRunService: WorkflowRunService,
         private _workflowEventStore: WorkflowEventStore,
         private _router: Router,
         private _routerService: RouterService,
-        private _projectStore: ProjectStore,
         public _sidebarStore: WorkflowSidebarStore,
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
-        private _translate: TranslateService) {
-        this._activatedRoute.data.subscribe(datas => {
+        private _translate: TranslateService,
+        private store: Store
+    ) {
+        this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
+
+        this.projectSubscription = this.store.select(ProjectState)
+            .pipe(filter((projState) => projState.project && projState.project.key))
+            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
             .subscribe((state) => {
@@ -89,7 +102,7 @@ export class WorkflowComponent implements OnInit {
 
         this.initSidebar();
 
-        this._activatedRoute.queryParams.subscribe(qps => {
+        this.qpRouteSubscription = this._activatedRoute.queryParams.subscribe(qps => {
             if (qps['node_id']) {
                 this.selectedNodeID = Number(qps['node_id']);
                 delete this.selectecHookRef;
@@ -105,44 +118,44 @@ export class WorkflowComponent implements OnInit {
             }
         });
 
+
         // Workflow subscription
-        this._activatedRoute.params.subscribe(params => {
+        this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
             let key = params['key'];
 
             if (key && workflowName) {
+                this.loading = true;
+                this.store.dispatch(new FetchWorkflow({ projectKey: key, workflowName }))
+                    .pipe(finalize(() => this.loading = false))
+                    .subscribe(null, () => this._router.navigate(['/project', key]));
+
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
-                this.loading = true;
-                this.workflowSubscription = this._workflowStore.getWorkflows(key, workflowName)
-                    .subscribe(ws => {
-                        if (ws) {
-                            let updatedWorkflow = ws.get(key + '-' + workflowName);
-                            if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                                if (!this.workflow || (this.workflow && updatedWorkflow.id !== this.workflow.id)) {
-                                    this.initRuns(key, workflowName);
-                                }
-                                this.workflow = updatedWorkflow;
 
-                                if (this.selectecHookRef) {
-                                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
-                                    if (h) {
-                                        this._workflowEventStore.setSelectedHook(h);
-                                    }
-                                }
+                this.workflowSubscription = this.store.select(WorkflowsState.selectWorkflow(key, workflowName))
+                    .pipe(filter((wf) => wf != null && !wf.externalChange))
+                    .subscribe((wf) => {
+                        if (!this.workflow || (this.workflow && wf.id !== this.workflow.id)) {
+                            this.initRuns(key, workflowName);
+                        }
+                        this.workflow = wf;
+
+                        if (this.selectecHookRef) {
+                            let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                            if (h) {
+                                this._workflowEventStore.setSelectedHook(h);
                             }
                         }
-                        this.loading = false;
-                    }, () => {
-                        this.loading = false;
-                        this._router.navigate(['/project', key]);
                     });
             }
         });
 
+
+
         // unselect all when returning on workflow main page
-        this._router.events.subscribe(e => {
+        this.eventsRouteSubscription = this._router.events.subscribe(e => {
             if (e instanceof NavigationStart && this.workflow) {
                 if (e.url.indexOf('/project/' + this.project.key + '/workflow/') === 0 && e.url.indexOf('/run/') === -1) {
                     this._workflowEventStore.setSelectedRun(null);
@@ -174,23 +187,15 @@ export class WorkflowComponent implements OnInit {
             .subscribe(m => this.sidebarMode = m);
     }
 
-    ngOnInit() {
-        this.projectSubscription = this._projectStore.getProjects(this.project.key)
-            .subscribe((proj) => {
-                if (!this.project || !proj || !proj.get(this.project.key)) {
-                    return;
-                }
-                this.project = proj.get(this.project.key);
-            });
-    }
-
     updateFav() {
-        if (this.loading) {
+        if (this.loading || !this.workflow) {
             return;
         }
         this.loadingFav = true;
-        this._workflowStore.updateFavorite(this.project.key, this.workflow.name)
-            .pipe(finalize(() => this.loadingFav = false))
+        this.store.dispatch(new UpdateFavoriteWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name
+        })).pipe(finalize(() => this.loadingFav = false))
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
     }
 
@@ -227,7 +232,7 @@ export class WorkflowComponent implements OnInit {
 
     migrateAsCode(): void {
         this.loadingPopupButton = true;
-        this._workflowStore.migrateAsCode(this.project.key, this.workflow.name)
+        this._workflowService.migrateAsCode(this.project.key, this.workflow.name)
             .pipe(finalize(() => this.loadingPopupButton = false))
             .subscribe((ope) => {
                 this.showButtons = false;

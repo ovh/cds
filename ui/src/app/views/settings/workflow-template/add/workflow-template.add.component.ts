@@ -54,7 +54,9 @@ export class WorkflowTemplateAddComponent implements OnInit {
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
             if (params['from']) {
                 let path = params['from'].split('/');
-                this.initFromWorkflow(path[0], path[1]);
+                if (path.length === 2) {
+                    this.initFromWorkflow(path[0], path[1]);
+                }
             }
         });
     }

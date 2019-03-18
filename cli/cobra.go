@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -60,27 +59,29 @@ func OSExit(code int) {
 	}
 }
 
+type SubCommands []*cobra.Command
+
 // NewCommand creates a new cobra command with or without a RunFunc and eventually subCommands
-func NewCommand(c Command, run RunFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
+func NewCommand(c Command, run RunFunc, subCommands SubCommands, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
 }
 
 // NewGetCommand creates a new cobra command with a RunGetFunc and eventually subCommands
-func NewGetCommand(c Command, run RunGetFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
+func NewGetCommand(c Command, run RunGetFunc, subCommands SubCommands, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
 }
 
 // NewDeleteCommand creates a new cobra command with a RunDeleteFunc and eventually subCommands
-func NewDeleteCommand(c Command, run RunDeleteFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
+func NewDeleteCommand(c Command, run RunDeleteFunc, subCommands SubCommands, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
 }
 
 // NewListCommand creates a new cobra command with a RunListFunc and eventually subCommands
-func NewListCommand(c Command, run RunListFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
+func NewListCommand(c Command, run RunListFunc, subCommands SubCommands, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
 }
 
-func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods ...CommandModifier) *cobra.Command {
+func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...CommandModifier) *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.SetOutput(os.Stdout)
 	cmd.Use = c.Name
@@ -207,7 +208,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		if c.PreRun != nil {
 			if err := c.PreRun(&c, &args); err != nil {
-				ExitOnError(ErrWrongUsage, cmd.Help)
+				ExitOnError(err)
 				return
 			}
 		}
@@ -275,7 +276,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				}
 			default:
 				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
-				e := dump.NewDefaultEncoder(new(bytes.Buffer))
+				e := dump.NewDefaultEncoder()
 				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 				e.ExtraFields.DetailedMap = false
 				e.ExtraFields.DetailedStruct = false

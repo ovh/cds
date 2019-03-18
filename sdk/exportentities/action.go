@@ -14,6 +14,7 @@ import (
 type Action struct {
 	Version      string                    `json:"version,omitempty" yaml:"version,omitempty"`
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Group        string                    `json:"group,omitempty" yaml:"group,omitempty"`
 	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
 	Enabled      *bool                     `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -30,12 +31,19 @@ const (
 )
 
 // NewAction returns a ready to export action
-func NewAction(act sdk.Action) (a Action) {
-	a.Name = act.Name
-	a.Version = ActionVersion1
-	a.Description = act.Description
-	a.Parameters = make(map[string]ParameterValue, len(act.Parameters))
-	for k, v := range act.Parameters {
+func NewAction(a sdk.Action) Action {
+	var ea Action
+
+	ea.Name = a.Name
+
+	if a.Group != nil {
+		ea.Group = a.Group.Name
+	}
+
+	ea.Version = ActionVersion1
+	ea.Description = a.Description
+	ea.Parameters = make(map[string]ParameterValue, len(a.Parameters))
+	for k, v := range a.Parameters {
 		param := ParameterValue{
 			Type:         string(v.Type),
 			DefaultValue: v.Value,
@@ -43,19 +51,20 @@ func NewAction(act sdk.Action) (a Action) {
 		}
 		// no need to export it if "Advanced" is false
 		if v.Advanced {
-			param.Advanced = &act.Parameters[k].Advanced
+			param.Advanced = &a.Parameters[k].Advanced
 		}
-		a.Parameters[v.Name] = param
+		ea.Parameters[v.Name] = param
 	}
-	a.Steps = newSteps(act)
-	a.Requirements = newRequirements(act.Requirements)
+	ea.Steps = newSteps(a)
+	ea.Requirements = newRequirements(a.Requirements)
 	// enabled is the default value
 	// set enable attribute only if it's disabled
 	// no need to export it if action is enabled
-	if !act.Enabled {
-		a.Enabled = &act.Enabled
+	if !a.Enabled {
+		ea.Enabled = &a.Enabled
 	}
-	return a
+
+	return ea
 }
 
 func newSteps(a sdk.Action) []Step {
@@ -273,7 +282,14 @@ func newSteps(a sdk.Action) []Step {
 					args[p.Name] = p.Value
 				}
 			}
-			s[act.Name] = args
+
+			name := act.Name
+			if act.Group != nil {
+				name = fmt.Sprintf("%s/%s", act.Group.Name, act.Name)
+			}
+
+			s[name] = args
+
 		}
 		res[i] = s
 	}
@@ -729,47 +745,41 @@ func (s Step) Name() (string, error) {
 }
 
 // Action returns an sdk.Action
-func (act *Action) Action() (*sdk.Action, error) {
-	a := new(sdk.Action)
-	a.Name = act.Name
-	a.Type = sdk.DefaultAction
-	a.Description = act.Description
+func (ea *Action) Action() (sdk.Action, error) {
+	a := sdk.Action{
+		Name:        ea.Name,
+		Group:       &sdk.Group{Name: ea.Group},
+		Type:        sdk.DefaultAction,
+		Enabled:     true,
+		Description: ea.Description,
+		Parameters:  make([]sdk.Parameter, len(ea.Parameters)),
+	}
+	if ea.Group == "" {
+		a.Group.Name = sdk.SharedInfraGroupName
+	}
 
-	//Compute parameters
-	a.Parameters = make([]sdk.Parameter, len(act.Parameters))
 	var i int
-	for p, v := range act.Parameters {
-		param := sdk.Parameter{
+	for p, v := range ea.Parameters {
+		a.Parameters[i] = sdk.Parameter{
 			Name:        p,
 			Type:        v.Type,
 			Value:       v.DefaultValue,
 			Description: v.Description,
+			Advanced:    v.Advanced != nil && *v.Advanced,
 		}
-		if param.Type == "" {
-			param.Type = sdk.StringParameter
+		if v.Type == "" {
+			a.Parameters[i].Type = sdk.StringParameter
 		}
-		if v.Advanced != nil && *v.Advanced {
-			param.Advanced = true
-		}
-		a.Parameters[i] = param
 		i++
 	}
 
-	a.Requirements = computeJobRequirements(act.Requirements)
+	a.Requirements = computeJobRequirements(ea.Requirements)
 
-	//Compute steps for the jobs
-	children, err := computeSteps(act.Steps)
+	children, err := computeSteps(ea.Steps)
 	if err != nil {
-		return nil, err
+		return a, err
 	}
-
 	a.Actions = children
 
-	// if no flag enabled: the default value is true
-	if act.Enabled == nil {
-		a.Enabled = true
-	} else {
-		a.Enabled = *act.Enabled
-	}
 	return a, nil
 }

@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,7 +9,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/fsamin/go-dump"
-	"gopkg.in/bsm/sarama-cluster.v2"
+	cluster "gopkg.in/bsm/sarama-cluster.v2"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -147,7 +146,7 @@ func (s *Service) doKafkaTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeR
 	}
 
 	//Go Dump
-	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e := dump.NewDefaultEncoder()
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
 	e.ExtraFields.DetailedStruct = false

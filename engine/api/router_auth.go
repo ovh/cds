@@ -132,6 +132,17 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 		if err := loadUserPermissions(api.mustDB(), api.Cache, deprecatedGetUser(ctx)); err != nil {
 			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", deprecatedGetUser(ctx).ID, err)
 		}
+
+		// TEMPORARY CODE, IT SHOULD BE REMOVED WHEN ALL WILL BE MIGRATED TO JWT TOKENS
+		u := deprecatedGetUser(ctx)
+		var grantedUser = sdk.GrantedUser{
+			Fullname:   u.Fullname,
+			OnBehalfOf: *u,
+			Groups:     u.Groups,
+		}
+		ctx = context.WithValue(ctx, ContextGrantedUser, &grantedUser)
+		// TEMPORARY CODE - END
+
 	}
 
 	if rc.Options["auth"] != "true" {
@@ -170,9 +181,8 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 	}
 
 	if rc.Options["needAdmin"] != "true" {
-		permissionOk := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true"))
-		if !permissionOk {
-			return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
+		if err := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true")); err != nil {
+			return ctx, false, err
 		}
 	} else {
 		return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized (needAdmin)")

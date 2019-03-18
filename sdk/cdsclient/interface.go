@@ -130,6 +130,12 @@ type EnvironmentVariableClient interface {
 	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 }
 
+// EventsClient listen SSE Events from CDS API
+type EventsClient interface {
+	// Must be  run in a go routine
+	EventsListen(ctx context.Context, chanSSEvt chan<- SSEvent)
+}
+
 // DownloadClient exposes download related functions
 type DownloadClient interface {
 	Download() ([]sdk.Download, error)
@@ -139,11 +145,13 @@ type DownloadClient interface {
 
 // ActionClient exposes actions related functions
 type ActionClient interface {
-	ActionDelete(actionName string) error
-	ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error)
+	ActionDelete(groupName, name string) error
+	ActionGet(groupName, name string, mods ...RequestModifier) (*sdk.Action, error)
 	ActionList() ([]sdk.Action, error)
 	ActionImport(content io.Reader, format string) error
-	ActionExport(name string, format string) ([]byte, error)
+	ActionExport(groupName, name string, format string) ([]byte, error)
+	ActionBuiltinList() ([]sdk.Action, error)
+	ActionBuiltinGet(name string, mods ...RequestModifier) (*sdk.Action, error)
 }
 
 // GroupClient exposes groups related functions
@@ -246,6 +254,7 @@ type UserClient interface {
 	UserGet(username string) (*sdk.User, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UserLogin(username, password string) (bool, string, error)
+	UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error)
 	UserReset(username, email, callback string) error
 	UserSignup(username, fullname, email, callback string) error
 	ListAllTokens() ([]sdk.Token, error)
@@ -328,6 +337,7 @@ type IntegrationClient interface {
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
+	AccessTokenClient
 	ActionClient
 	AdminService
 	APIURL() string
@@ -335,6 +345,7 @@ type Interface interface {
 	ConfigUser() (map[string]string, error)
 	DownloadClient
 	EnvironmentClient
+	EventsClient
 	ExportImportInterface
 	GroupClient
 	GRPCPluginsClient
@@ -426,4 +437,13 @@ func WithUsage() RequestModifier {
 		q.Set("withUsage", "true")
 		r.URL.RawQuery = q.Encode()
 	}
+}
+
+// AccessTokenClient is the interface for access token management
+type AccessTokenClient interface {
+	AccessTokenListByUser(username string) ([]sdk.AccessToken, error)
+	AccessTokenListByGroup(groups ...string) ([]sdk.AccessToken, error)
+	AccessTokenDelete(id string) error
+	AccessTokenCreate(request sdk.AccessTokenRequest) (sdk.AccessToken, string, error)
+	AccessTokenRegen(id string) (sdk.AccessToken, string, error)
 }

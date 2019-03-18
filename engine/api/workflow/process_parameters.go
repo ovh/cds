@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -91,7 +90,8 @@ func GetBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runCon
 	}
 
 	// COMPUTE PAYLOAD
-	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e := dump.NewDefaultEncoder()
+
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
 	e.ExtraFields.DetailedStruct = false

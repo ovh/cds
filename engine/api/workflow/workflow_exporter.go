@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -82,7 +81,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		if err != nil {
 			return wp, err
 		}
-		if err := group.AggregateOnWorkflowTemplate(db, wf.Template); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(db, wf.Template); err != nil {
 			return wp, err
 		}
 	}

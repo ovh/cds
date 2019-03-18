@@ -49,10 +49,30 @@ type Parameter struct {
 	Advanced    bool   `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 }
 
+// IsValid returns parameter validity.
+func (p Parameter) IsValid() error {
+	found := false
+	for _, t := range AvailableParameterType {
+		if t == p.Type {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return NewErrorFrom(ErrWrongRequest, "invalid given parameter type")
+	}
+
+	if p.Name == "" && p.Value == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given parameter name or value")
+	}
+
+	return nil
+}
+
 // CheckFunc is a function to check key of a map for map merge
 type CheckFunc func(string) bool
 
-// MMapMergeOptions options for mapMerge functions
+// MapMergeOptions options for mapMerge functions
 var MapMergeOptions = struct {
 	// Function to exclude git parameters
 	ExcludeGitParams CheckFunc

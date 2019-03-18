@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { Bookmark } from '../../model/bookmark.model';
 import { Groups } from '../../model/group.model';
 import { Token } from '../../model/token.model';
-import { User } from '../../model/user.model';
+import { User, UserLoginRequest } from '../../model/user.model';
 import { AuthentificationStore } from '../auth/authentification.store';
 
 @Injectable()
@@ -28,7 +28,7 @@ export class UserService {
      * @param user User to login
      * @returns {Observable<User>}
      */
-    login(user: User): Observable<User> {
+    login(user: UserLoginRequest): Observable<User> {
         return this._http.post<any>('/login', user, {observe: 'response'}).pipe(map(res => {
             let u = res.body.user;
             let headers: HttpHeaders = res.headers;

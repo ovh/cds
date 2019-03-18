@@ -1,8 +1,11 @@
-import {Parameter} from './parameter.model';
-import {Requirement} from './requirement.model';
+import { AuditAction } from './audit.model';
+import { Group } from './group.model';
+import { Parameter } from './parameter.model';
+import { Requirement } from './requirement.model';
 
 export class Action {
     id: number;
+    group_id: number;
     name: string;
     step_name: string;
     type: string;
@@ -12,9 +15,13 @@ export class Action {
     actions: Array<Action>;
     optional: boolean;
     always_executed: boolean;
-    last_modified: boolean;
     enabled: boolean;
     deprecated: boolean;
+    group: Group;
+    first_audit: AuditAction;
+    last_audit: AuditAction;
+    editable: boolean;
+    import_url: string;
 
     // UI parameter
     hasChanged: boolean;
@@ -22,18 +29,37 @@ export class Action {
     showAddStep: boolean;
 }
 
-export class PipelineUsingAction {
-    action_id: number;
-    type: string;
-    action_name: string;
-    pipeline_name: string;
-    application_name: string;
+export class Usage {
+    pipelines: Array<UsagePipeline>;
+    actions: Array<UsageAction>;
+}
+
+export class UsagePipeline {
+    project_id: number;
+    project_key: string;
     project_name: string;
-    key: string;
+    pipeline_id: number;
+    pipeline_name: string;
     stage_id: number;
+    stage_name: string;
+    job_id: number;
+    job_name: string;
+    action_id: number;
+    action_name: string;
+    warning: boolean;
+}
+
+export class UsageAction {
+    group_id: number;
+    group_name: string;
+    parent_action_id: number;
+    parent_action_name: string;
+    action_id: number;
+    action_name: string;
+    warning: boolean;
 }
 
 export class ActionWarning {
-  type: string;
-  action: Action;
+    type: string;
+    action: Action;
 }

@@ -245,7 +245,7 @@
                                                                     <sui-select class="selection" name="selectedTemplatePath"
                                                                         [(ngModel)]="selectedTemplatePath"
                                                                         (selectedOptionChange)="showTemplateForm($event)"
-                                                                        [options]="templates" [isSearchable]="true"
+                                                                        [optionsFilter]="filterTemplate" [options]="templates" [isSearchable]="true"
                                                                         #select>
                                                                         <sui-select-option *ngFor="let t of select.filteredOptions"
                                                                             [value]="t.group.name + '/' + t.slug">

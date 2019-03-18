@@ -16,6 +16,8 @@ testcases:
   - script: {{.cds.build.cdsctl}} project add ITCLIPFARSENAL1 ITCLIPFARSENAL1
   - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/arsenal.yml
   - script: {{.cds.build.cdsctl}} project integration list ITCLIPFARSENAL1
+    retry: 10
+    delay: 2
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "arsenal-dev"

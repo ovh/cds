@@ -197,7 +197,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 		var payloadInt interface{}
 		if err := json.Unmarshal([]byte(payloadstr), &payloadInt); err == nil {
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e := dump.NewDefaultEncoder()
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 			e.ExtraFields.DetailedMap = false
 			e.ExtraFields.DetailedStruct = false

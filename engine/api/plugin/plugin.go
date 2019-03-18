@@ -22,9 +22,9 @@ func AddBinary(db gorp.SqlExecutor, storage objectstore.Driver, p *sdk.GRPCPlugi
 	p.Binaries = append(p.Binaries, *b)
 
 	if p.Type == sdk.GRPCPluginAction {
-		act, errA := action.LoadPublicAction(db, p.Name)
+		act, errA := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
 		if errA != nil {
-			return sdk.WrapError(errA, "AddBinary> Cannot load public action for plugin type action")
+			return sdk.WrapError(errA, "cannot load public action for plugin type action")
 		}
 
 		// Add action requirement
@@ -37,8 +37,9 @@ func AddBinary(db gorp.SqlExecutor, storage objectstore.Driver, p *sdk.GRPCPlugi
 				}
 			}
 			if !found {
-				if err := action.InsertActionRequirement(db, act.ID, req); err != nil {
-					return sdk.WrapError(err, "Cannot insert action requirement %s", req.Name)
+				req.ActionID = act.ID
+				if err := action.InsertRequirement(db, &req); err != nil {
+					return sdk.WrapError(err, "cannot insert action requirement %s", req.Name)
 				}
 			}
 		}
@@ -76,27 +77,29 @@ func UpdateBinary(db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.
 	p.Binaries[index] = *b
 
 	if p.Type == sdk.GRPCPluginAction {
-		act, errA := action.LoadPublicAction(db, p.Name)
+		act, errA := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
 		if errA != nil {
-			return sdk.WrapError(errA, "AddBinary> Cannot load public action for plugin type action")
+			return sdk.WrapError(errA, "cannot load public action for plugin type action")
 		}
 
-		if err := action.DeleteActionRequirements(db, act.ID); err != nil {
-			return sdk.WrapError(err, "Cannot delete requirements for action of plugin type action")
+		if err := action.DeleteRequirementsByActionID(db, act.ID); err != nil {
+			return sdk.WrapError(err, "cannot delete requirements for action of plugin type action")
 		}
 
-		plgReq := sdk.Requirement{
-			Name:  p.Name,
-			Type:  sdk.PluginRequirement,
-			Value: p.Name,
+		if err := action.InsertRequirement(db, &sdk.Requirement{
+			ActionID: act.ID,
+			Name:     p.Name,
+			Type:     sdk.PluginRequirement,
+			Value:    p.Name,
+		}); err != nil {
+			return sdk.WrapError(err, "cannot insert plugin action requirement %s", p.Name)
 		}
-		if err := action.InsertActionRequirement(db, act.ID, plgReq); err != nil {
-			return sdk.WrapError(err, "Cannot insert plugin action requirement %s", plgReq.Name)
-		}
-		// Add action requirement
+
+		// add action requirement
 		for _, req := range b.Requirements {
-			if err := action.InsertActionRequirement(db, act.ID, req); err != nil {
-				return sdk.WrapError(err, "Cannot insert action requirement %s", req.Name)
+			req.ActionID = act.ID
+			if err := action.InsertRequirement(db, &req); err != nil {
+				return sdk.WrapError(err, "cannot insert action requirement %s", req.Name)
 			}
 		}
 	}

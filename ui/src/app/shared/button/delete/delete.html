@@ -1,13 +1,17 @@
-<button class="ui red button {{class}}" [class.loading]="loading" [class.disabled]="loading" (click)="showConfirmation = true"
-    *ngIf="!showConfirmation && buttonType === 'normal'" [disabled]="disabled">
-    <i class="trash icon"></i>
-    <span *ngIf="title">{{title | translate}}</span>
-    <span *ngIf="!title">{{ 'btn_delete' | translate }}</span>
-</button>
-<button class="ui red icon button {{class}}" [class.loading]="loading" [class.disabled]="loading" (click)="showConfirmation = true"
-    *ngIf="!showConfirmation && buttonType === 'icon'" [disabled]="disabled"><i class="trash icon"></i></button>
-<div class="ui buttons {{class}}" *ngIf="showConfirmation">
-    <button class="ui grey button" [class.disabled]="loading" (click)="showConfirmation = false"><i class="ban icon"></i></button>
-    <div class="or"></div>
-    <button class="ui red button active" [class.disabled]="loading" (click)="deleteEvent()"><i class="check icon"></i></button>
+<div class="ui buttons {{class}}">
+    <button class="ui button" [class.icon]="!showConfirmation && buttonType === 'icon'" [class.red]="!showConfirmation" [class.grey]="showConfirmation"
+        [class.loading]="loading" [class.disabled]="loading" (click)="$event.stopPropagation(); showConfirmation = !showConfirmation"
+        [disabled]="disabled">
+        <i class="trash icon" [class.trash]="!showConfirmation" [class.ban]="showConfirmation"></i>
+        <ng-container *ngIf="!showConfirmation && buttonType === 'normal'">
+            <span *ngIf="title">{{title | translate}}</span>
+            <span *ngIf="!title">{{ 'btn_delete' | translate }}</span>
+        </ng-container>
+    </button>
+    <ng-container *ngIf="showConfirmation">
+        <div class="or"></div>
+        <button class="ui red button active" [class.disabled]="loading" (click)="deleteEvent()">
+            <i class="check icon"></i>
+        </button>
+    </ng-container>
 </div>

@@ -1,36 +1,38 @@
 
 import { Injectable } from '@angular/core';
 import { List, Map } from 'immutable';
-import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Environment } from '../../model/environment.model';
-import { GroupPermission } from '../../model/group.model';
-import { ProjectIntegration } from '../../model/integration.model';
-import { Key } from '../../model/keys.model';
-import { Label, LoadOpts, Project } from '../../model/project.model';
-import { Variable } from '../../model/variable.model';
-import { EnvironmentService } from '../environment/environment.service';
+import { LoadOpts, Project } from '../../model/project.model';
 import { NavbarService } from '../navbar/navbar.service';
-import { VariableService } from '../variable/variable.service';
 import { ProjectService } from './project.service';
 
 
 @Injectable()
 export class ProjectStore {
     private WORKFLOW_VIEW_MODE = 'CDS-WORKFLOW-VIEW-MODE';
-    // List of all project. Use by Navbar
-    private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(null);
 
     // List of all project + dependencies:  List of variables, List of Env, List of App, List of Pipeline.
     private _projectCache: BehaviorSubject<Map<string, Project>> = new BehaviorSubject(Map<string, Project>());
+    // List of all project. Use by Navbar
+    private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(null);
 
     constructor(
         private _projectService: ProjectService,
-        private _environmentService: EnvironmentService,
-        private _variableService: VariableService,
         private _navbarService: NavbarService
     ) {
 
+    }
+
+    getProjectsList(): Observable<List<Project>> {
+        // If Store not empty, get from it
+        if (!this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
+            // Get from API
+            this._projectService.getProjects().subscribe(res => {
+                this._projectNav.next(List(res));
+            });
+        }
+        return new Observable<List<Project>>(fn => this._projectNav.subscribe(fn));
     }
 
     getWorkflowViewMode(key: string): 'blocs' | 'labels' | 'lines' {
@@ -55,221 +57,6 @@ export class ProjectStore {
     }
 
     /**
-     * Get a Project Observable
-     * @returns {Observable<List<Project>>}
-     */
-    getProjectsList(): Observable<List<Project>> {
-        // If Store not empty, get from it
-        if (!this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
-            // Get from API
-            this._projectService.getProjects().subscribe(res => {
-                this._projectNav.next(List(res));
-            });
-        }
-        return new Observable<List<Project>>(fn => this._projectNav.subscribe(fn));
-    }
-
-    /**
-     * Use by router to preload project
-     * @param key
-     * @returns {Observable<Project>}
-     */
-    getProjectResolver(key: string, opts: LoadOpts[]): Observable<Project> {
-        let store = this._projectCache.getValue();
-        if (store.size === 0 || !store.get(key)) {
-            return this.resync(key, opts);
-        }
-
-        if (Array.isArray(opts) && store.get(key)) {
-            let funcs = opts.filter((opt) => store.get(key)[opt.fieldName] == null);
-
-            if (!funcs.length) {
-                return observableOf(store.get(key));
-            }
-
-            return this.resync(key, funcs);
-        }
-        return observableOf(store.get(key));
-    }
-
-    /**
-     * Get project from API and store result
-     * @param key
-     * @returns {Observable<R>}
-     */
-    resync(key: string, opts: LoadOpts[]): Observable<Project> {
-        return this._projectService.getProject(key, opts).pipe(map(res => {
-            let store = this._projectCache.getValue();
-            let proj = store.get(key);
-            if (proj) {
-                proj = Object.assign({}, proj, res);
-                if (opts) {
-                    opts.forEach(o => {
-                        switch (o.fieldName) {
-                            case 'workflow_names':
-                                if (!res.workflow_names) {
-                                    proj.workflow_names = [];
-                                }
-                                break;
-                            case 'pipeline_names':
-                                if (!res.pipeline_names) {
-                                    proj.pipeline_names = [];
-                                }
-                                break;
-                            case 'application_names':
-                                if (!res.application_names) {
-                                    proj.application_names = [];
-                                }
-                                break;
-                            case 'environments':
-                                if (!res.environments) {
-                                    proj.environments = [];
-                                }
-                                break;
-                            case 'integrations':
-                                if (!res.integrations) {
-                                    proj.integrations = [];
-                                }
-                                break;
-                            case 'keys':
-                                if (!res.keys) {
-                                    proj.keys = [];
-                                }
-                                break;
-                            case 'labels':
-                                if (!res.labels) {
-                                    proj.labels = [];
-                                }
-                                break;
-                        }
-                    });
-                }
-            } else {
-                proj = res;
-            }
-            this._projectCache.next(store.set(key, proj));
-            return proj;
-        }));
-    }
-
-    /**
-     * Use by router to preload project
-     * @param key
-     * @returns {Observable<Project>}
-     */
-    getProjectEnvironmentsResolver(key: string): Observable<Project> {
-        let store = this._projectCache.getValue();
-        let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).environments || !store.get(key).environments.length;
-
-        if (missingEnv) {
-            return this.resyncEnvironments(key);
-        } else {
-            return observableOf(store.get(key));
-        }
-    }
-
-    /**
-     * Get project from API and store result
-     * @param key
-     * @returns {Observable<R>}
-     */
-    resyncEnvironments(key: string): Observable<Project> {
-        return this._environmentService.get(key).pipe(
-            map((res) => {
-                let store = this._projectCache.getValue();
-                let proj = store.get(key);
-                proj.environments = res;
-                this._projectCache.next(store.set(key, proj));
-                return proj;
-            }));
-    }
-
-    /**
-     * Use by router to preload project
-     * @param key
-     * @returns {Observable<Project>}
-     */
-    getProjectApplicationsResolver(key: string): Observable<Project> {
-        let store = this._projectCache.getValue();
-        let missingApps = store.size === 0 || !store.get(key) || !store.get(key).applications || !store.get(key).applications.length;
-
-        if (missingApps) {
-            return this.resyncApplications(key);
-        } else {
-            return observableOf(store.get(key));
-        }
-    }
-
-    /**
-     * Get project applications from API and store result
-     * @param key
-     * @returns {Observable<R>}
-     */
-    resyncApplications(key: string): Observable<Project> {
-        return this._projectService.getApplications(key).pipe(
-            map((res) => {
-                let store = this._projectCache.getValue();
-                let proj = store.get(key);
-                proj.applications = res;
-                this._projectCache.next(store.set(key, proj));
-                return proj;
-            }));
-    }
-
-    getProjectKeysResolver(key: string): Observable<Project> {
-        let store = this._projectCache.getValue();
-        let missingKeys = store.size === 0 || !store.get(key) || !store.get(key).keys || !store.get(key).keys.length;
-        if (missingKeys) {
-            return this.resyncKeys(key);
-        } else {
-            return observableOf(store.get(key));
-        }
-    }
-
-    /**
-     * Use by router to preload project
-     * @param key
-     * @returns {Observable<Project>}
-     */
-    getProjectVariablesResolver(key: string): Observable<Project> {
-        let store = this._projectCache.getValue();
-        let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).variables || !store.get(key).variables.length;
-
-        if (missingEnv) {
-            return this.resyncVariables(key);
-        } else {
-            return observableOf(store.get(key));
-        }
-    }
-
-    resyncKeys(key: string): Observable<Project> {
-        return this._projectService.getKeys(key).pipe(
-            map((res) => {
-                let store = this._projectCache.getValue();
-                let proj = store.get(key);
-                proj.keys = res;
-                this._projectCache.next(store.set(key, proj));
-                return proj;
-            }));
-    }
-
-    /**
-     * Get project from API and store result
-     * @param key
-     * @returns {Observable<R>}
-     */
-    resyncVariables(key: string): Observable<Project> {
-        return this._variableService.get(key).pipe(
-            map((res) => {
-                let store = this._projectCache.getValue();
-                let proj = store.get(key);
-                proj.variables = res;
-                this._projectCache.next(store.set(key, proj));
-                return proj;
-            }));
-    }
-
-    /**
      * Get all projects
      * @param key Project unique key you want to fetch
      * @returns {Project}
@@ -286,51 +73,6 @@ export class ProjectStore {
             });
         }
         return new Observable<Map<string, Project>>(fn => this._projectCache.subscribe(fn));
-    }
-
-    /**
-     * Create a new Project
-     * @param project Project to create
-     * @returns {Project}
-     */
-    createProject(project: Project): Observable<Project> {
-        return this._projectService.addProject(project).pipe(map(res => {
-            let projects = this._projectNav.getValue();
-            if (!projects) {
-                projects = List();
-            }
-            this._projectNav.next(projects.push(project));
-            return res;
-        }));
-    }
-
-    /**
-     * Update a project
-     * @param project Project to Update
-     * @returns {Project}
-     */
-    updateProject(project: Project): Observable<Project> {
-        return this._projectService.updateProject(project).pipe(map(res => {
-            // update store for navigation
-            let projects = this._projectNav.getValue();
-            let index = projects.findIndex(prj => prj.key === res.key);
-            if (index >= 0) {
-                this._projectNav.next(projects.remove(index).insert(index, res));
-            } else {
-                this._projectNav.next(projects.push(res));
-            }
-
-
-            // update project cache
-            let cache = this._projectCache.getValue();
-            if (cache.get(res.key)) {
-                let pToUpdate = cache.get(res.key);
-                pToUpdate.last_modified = res.last_modified;
-                pToUpdate.name = res.name;
-                this._projectCache.next(cache.set(res.key, pToUpdate));
-            }
-            return res;
-        }));
     }
 
     /**
@@ -866,5 +608,4 @@ export class ProjectStore {
                 })
             );
     }
-
 }

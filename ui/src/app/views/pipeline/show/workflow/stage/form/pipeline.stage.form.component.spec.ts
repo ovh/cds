@@ -4,6 +4,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
@@ -22,6 +23,7 @@ describe('CDS: Stage From component', () => {
             declarations: [],
             providers: [
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
+                NavbarService,
                 TranslateService,
                 TranslateLoader,
                 TranslateParser

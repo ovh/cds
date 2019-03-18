@@ -50,9 +50,12 @@ func (s *Service) processPush(op *sdk.Operation) error {
 	}
 
 	// Erase cds directory
-	if err := gitRepo.Remove(".cds"); err != nil {
-		log.Error("Repositories> processPush> Remove old .cds directory> [%s] error %v", op.UUID, err)
-		return err
+	_, errStat := os.Stat(path + "/.cds")
+	if errStat == nil {
+		if err := gitRepo.Remove(".cds"); err != nil {
+			log.Error("Repositories> processPush> Remove old .cds directory> [%s] error %v", op.UUID, err)
+			return err
+		}
 	}
 
 	// Create files

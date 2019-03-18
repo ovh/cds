@@ -13,7 +13,7 @@
         </div>
     </div>
     <div class="thirteen wide stretched detailed column">
-        <ng-container *ngIf="selectedEnvIndex != null && selectedEnvIndex != -1 && project.environments[selectedEnvIndex]">
+        <ng-container *ngIf="selectedEnvIndex != null && selectedEnvIndex != -1 && project.environments && project.environments[selectedEnvIndex]">
             <app-environment [environment]="project.environments[selectedEnvIndex]" [project]="project" (deletedEnv)="deleteEnv($event)"></app-environment>
         </ng-container>
     </div>

@@ -1,14 +1,18 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { FetchPipeline } from 'app/store/pipelines.action';
+import { PipelinesState } from 'app/store/pipelines.state';
+import { AddHookWorkflow, AddJoinWorkflow, AddNodeTriggerWorkflow, UpdateHookWorkflow, UpdateWorkflow } from 'app/store/workflows.action';
 import { cloneDeep } from 'lodash';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { finalize, flatMap } from 'rxjs/operators';
 import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
-import { WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow, WorkflowPipelineNameImpact } from '../../../../model/workflow.model';
-import { PipelineStore, WorkflowCoreService, WorkflowEventStore, WorkflowStore } from '../../../../service/services.module';
+import * as workflowModel from '../../../../model/workflow.model';
+import { WorkflowCoreService, WorkflowEventStore } from '../../../../service/services.module';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { ToastService } from '../../../toast/ToastService';
 import { WorkflowNodeConditionsComponent } from '../../modal/conditions/node.conditions.component';
@@ -29,9 +33,9 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
 
     // Project that contains the workflow
     @Input() project: Project;
-    @Input() workflow: Workflow;
+    @Input() workflow: workflowModel.Workflow;
 
-    node: WNode;
+    node: workflowModel.WNode;
     nodeSub: Subscription;
 
     displayInputName = false;
@@ -60,11 +64,16 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
 
     // Subscription
     pipelineSubscription: Subscription;
-    nameWarning: WorkflowPipelineNameImpact;
+    nameWarning: workflowModel.WorkflowPipelineNameImpact;
 
-    constructor(private _workflowEventStore: WorkflowEventStore, private _pipelineStore: PipelineStore,
-                private _workflowCoreService: WorkflowCoreService, private _workflowStore: WorkflowStore, private _toast: ToastService,
-                private _translate: TranslateService, private _modalService: SuiModalService) {
+    constructor(
+        private store: Store,
+        private _workflowEventStore: WorkflowEventStore,
+        private _workflowCoreService: WorkflowCoreService,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _modalService: SuiModalService
+    ) {
 
     }
 
@@ -87,8 +96,8 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
         if (!this.canEdit()) {
             return;
         }
-        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let node = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        let clonedWorkflow: workflowModel.Workflow = cloneDeep(this.workflow);
+        let node = workflowModel.Workflow.getNodeByID(this.node.id, clonedWorkflow);
         if (!node) {
             return;
         }
@@ -96,7 +105,7 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
         node.ref = this.node.name;
         // Update join
         if (clonedWorkflow.workflow_data.joins) {
-            clonedWorkflow.workflow_data.joins.forEach( j => {
+            clonedWorkflow.workflow_data.joins.forEach(j => {
                 for (let i = 0; i < j.parents.length; i++) {
                     if (j.parents[i].parent_id === node.id) {
                         j.parents[i].parent_name = node.name;
@@ -113,7 +122,7 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
         if (!this.canEdit()) {
             return;
         }
-        this.nameWarning = Workflow.getNodeNameImpact(this.workflow, this.node.name);
+        this.nameWarning = workflowModel.Workflow.getNodeNameImpact(this.workflow, this.node.name);
         this.displayInputName = true;
     }
 
@@ -132,18 +141,20 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
     }
 
     openEditContextModal(): void {
-       this.pipelineSubscription =
-            this._pipelineStore.getPipelines(this.project.key,
-                this.workflow.pipelines[this.node.context.pipeline_id].name)
-                .pipe(first())
-                .subscribe(pips => {
-                if (pips.get(this.project.key + '-' + this.workflow.pipelines[this.node.context.pipeline_id].name)) {
-                    setTimeout(() => {
-                        this.workflowContext.show();
-                        this.pipelineSubscription.unsubscribe();
-                    }, 100);
-                }
-            });
+        this.store.dispatch(new FetchPipeline({
+            projectKey: this.project.key,
+            pipelineName: this.workflow.pipelines[this.node.context.pipeline_id].name
+        })).pipe(
+            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(
+                this.project.key, this.workflow.pipelines[this.node.context.pipeline_id].name
+            )))
+        ).subscribe((pip) => {
+            if (pip) {
+                setTimeout(() => {
+                    this.workflowContext.show();
+                }, 100);
+            }
+        });
     }
 
     openEditRunConditions(): void {
@@ -179,53 +190,87 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
     }
 
     createFork(): void {
-        let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
-        if (!n.triggers) {
-            n.triggers = new Array<WNodeTrigger>();
-        }
-        let fork = new WNode();
-        fork.type = WNodeType.FORK;
-        let t = new WNodeTrigger();
+        let n = workflowModel.Workflow.getNodeByID(this.node.id, this.workflow);
+        let fork = new workflowModel.WNode();
+        fork.type = workflowModel.WNodeType.FORK;
+        let t = new workflowModel.WNodeTrigger();
         t.child_node = fork;
         t.parent_node_id = n.id;
         t.parent_node_name = n.ref;
-        n.triggers.push(t);
-        this.updateWorkflow(clonedWorkflow, null);
+
+        this.loading = true;
+        this.store.dispatch(new AddNodeTriggerWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            parentId: this.node.id,
+            trigger: t
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe();
     }
 
     createJoin(): void {
-        let clonedWorkflow = cloneDeep(this.workflow);
-        let join = new WNode();
-        join.type = WNodeType.JOIN;
-        join.parents = new Array<WNodeJoin>();
-        let p = new WNodeJoin();
+        let join = new workflowModel.WNode();
+        join.type = workflowModel.WNodeType.JOIN;
+        join.parents = new Array<workflowModel.WNodeJoin>();
+        let p = new workflowModel.WNodeJoin();
         p.parent_id = this.node.id;
         p.parent_name = this.node.ref;
         join.parents.push(p);
 
-        if (!clonedWorkflow.workflow_data.joins) {
-            clonedWorkflow.workflow_data.joins = new Array<WNode>();
-        }
-        clonedWorkflow.workflow_data.joins.push(join);
-        this.updateWorkflow(clonedWorkflow, null);
+        this.loading = true;
+        this.store.dispatch(new AddJoinWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            join
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe();
     }
 
-    updateWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>): void {
+    updateWorkflow(w: workflowModel.Workflow, modal: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
-        this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('workflow_updated'));
-            this._workflowEventStore.unselectAll();
-            if (modal) {
-                modal.approve(null);
-            }
-        }, () => {
-            if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
-                this.node.hooks.pop();
-            }
-            this.loading = false;
+        this.store.dispatch(new UpdateWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            changes: w
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+                this._workflowEventStore.unselectAll();
+                if (modal) {
+                    modal.approve(null);
+                }
+            }, () => {
+                if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
+                    this.node.hooks.pop();
+                }
+            });
+    }
+
+    updateHook(hook: workflowModel.WNodeHook, modal: ActiveModal<boolean, boolean, void>): void {
+        this.loading = true;
+
+        let action = new UpdateHookWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            hook
         });
+
+        if (!hook.uuid) {
+            action = new AddHookWorkflow({
+                projectKey: this.project.key,
+                workflowName: this.workflow.name,
+                hook
+            });
+        }
+
+        this.store.dispatch(action).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+                this._workflowEventStore.unselectAll();
+                if (modal) {
+                    modal.approve(null);
+                }
+            });
     }
 
     linkJoin(): void {

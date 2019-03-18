@@ -15,7 +15,7 @@ import (
 type pipelineTestCase struct {
 	name     string
 	arg      sdk.Pipeline
-	expected Pipeline
+	expected PipelineV1
 }
 
 var (
@@ -151,7 +151,7 @@ var (
 				},
 			},
 		},
-		expected: Pipeline{
+		expected: PipelineV1{
 			Name:        "MyPipeline",
 			Description: "my description",
 		},
@@ -239,7 +239,7 @@ var (
 				},
 			},
 		},
-		expected: Pipeline{
+		expected: PipelineV1{
 			Name: "MyPipeline",
 		},
 	}
@@ -408,7 +408,7 @@ var (
 				},
 			},
 		},
-		expected: Pipeline{
+		expected: PipelineV1{
 			Name: "MyPipeline",
 		},
 	}
@@ -418,12 +418,12 @@ var (
 
 func TestExportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(tc.arg)
+		p := NewPipelineV1(tc.arg)
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := Pipeline{}
+		p1 := PipelineV1{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
@@ -432,12 +432,12 @@ func TestExportPipeline_YAML(t *testing.T) {
 
 func TestExportPipeline_JSON(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(tc.arg)
+		p := NewPipelineV1(tc.arg)
 		b, err := Marshal(p, FormatJSON)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := Pipeline{}
+		p1 := PipelineV1{}
 		test.NoError(t, json.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
@@ -447,12 +447,12 @@ func TestExportPipeline_JSON(t *testing.T) {
 func TestExportAndImportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		t.Log(tc.name)
-		p := NewPipeline(tc.arg)
+		p := NewPipelineV1(tc.arg)
 
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 
-		importedP := Pipeline{}
+		importedP := PipelineV1{}
 
 		test.NoError(t, yaml.Unmarshal(b, &importedP))
 		transformedP, err := importedP.Pipeline()
@@ -464,11 +464,12 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
 		assert.Equal(t, tc.arg.Description, transformedP.Description)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
+		test.Equal(t, len(tc.arg.Stages), len(transformedP.Stages))
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool
 
 			for _, s1 := range transformedP.Stages {
-				if stage.Name != s1.Name {
+				if stage.Name != s1.Name && len(tc.arg.Stages) != 1 {
 					continue
 				}
 
@@ -513,54 +514,56 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 
 func Test_ImportPipelineWithRequirements(t *testing.T) {
 	in := `name: build-all-images
-type: build
-requirements:
-- hostname: buildbot_image
-- binary: git
-steps:
-- script: |-
-    #!/bin/bash
+jobs:
+- job: build
+  requirements:
+  - hostname: buildbot_image
+  - binary: git
+  steps:
+  - script: |-
+      #!/bin/bash
 
-    echo "I'm just a decoy allowing you to rebuild the images."
+      echo "I'm just a decoy allowing you to rebuild the images."
 
-    exit 0;
+      exit 0;
 `
 
-	payload := &Pipeline{}
+	payload := &PipelineV1{}
 	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
 
 	p, err := payload.Pipeline()
 	test.NoError(t, err)
 
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Requirements, 2)
-
 }
 
 func Test_ImportPipelineWithGitClone(t *testing.T) {
 	in := `name: build-all-images
-requirements:
-- binary: git
-steps:
-- gitClone:
-    branch: '{{.git.branch}}'
-    commit: '{{.git.hash}}'
-    directory: '{{.cds.workspace}}'
-    password: ""
-    privateKey: '{{.cds.app.key}}'
-    url: '{{.git.http_url}}'
-    user: ""
-    depth: '12'
-- artifactUpload:
-    path: arti.tar.gz
-    tag: '{{.cds.version}}'
-- artifactUpload: arti.tar.gz
-- serveStaticFiles:
-      entrypoint: index.html
-      name: my awesome website
-      path: website/*
+jobs:
+- job: build
+  requirements:
+  - binary: git
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: '{{.cds.workspace}}'
+      password: ""
+      privateKey: '{{.cds.app.key}}'
+      url: '{{.git.http_url}}'
+      user: ""
+      depth: '12'
+  - artifactUpload:
+      path: arti.tar.gz
+      tag: '{{.cds.version}}'
+  - artifactUpload: arti.tar.gz
+  - serveStaticFiles:
+        entrypoint: index.html
+        name: my awesome website
+        path: website/*
 `
 
-	payload := &Pipeline{}
+	payload := &PipelineV1{}
 	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
 
 	p, err := payload.Pipeline()
@@ -578,11 +581,13 @@ steps:
 
 func Test_ImportPipelineWithCheckout(t *testing.T) {
 	in := `name: build-all-images
-steps:
-- checkout: '.'
+jobs:
+- job: build
+  steps:
+  - checkout: '.'
 `
 
-	payload := &Pipeline{}
+	payload := &PipelineV1{}
 	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
 
 	p, err := payload.Pipeline()

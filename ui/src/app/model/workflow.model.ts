@@ -1,5 +1,6 @@
 import { notificationTypes, UserNotificationSettings } from 'app/model/notification.model';
 import { Application } from './application.model';
+import { AuditWorkflow } from './audit.model';
 import { Environment } from './environment.model';
 import { GroupPermission } from './group.model';
 import { ProjectIntegration } from './integration.model';
@@ -47,6 +48,10 @@ export class Workflow {
     labels: Label[];
     workflow_data: WorkflowData;
     as_code_events: Array<AsCodeEvents>;
+
+    preview: Workflow;
+    asCode: string;
+    audits: AuditWorkflow[];
 
     // UI params
     externalChange: boolean;

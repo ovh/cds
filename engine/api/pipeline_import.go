@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -50,6 +51,7 @@ func (api *API) postPipelinePreviewHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "Unable to parse pipeline")
 		}
+		pip.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
@@ -63,7 +65,10 @@ func (api *API) importPipelineHandler() service.Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+			project.LoadOptions.Default,
+			project.LoadOptions.WithGroups,
+		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
@@ -74,53 +79,9 @@ func (api *API) importPipelineHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
 		}
 
-		// Compute format
-		f, errF := exportentities.GetFormat(format)
-		if errF != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errF)
-		}
-
-		rawPayload := map[string]interface{}{}
-		var errorParse error
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, &rawPayload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, &rawPayload)
-		default:
-			errorParse = sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Given data format not supported")
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
-		}
-
-		// parse the data once to retrieve the version
-		var pipelineV1Format bool
-		if v, ok := rawPayload["version"]; ok {
-			pipelineV1Format = v.(string) == exportentities.PipelineVersion1
-		}
-
-		// depending on the version, we will use different struct
-		type pipeliner interface {
-			Pipeline() (*sdk.Pipeline, error)
-		}
-
-		var payload pipeliner
-		if pipelineV1Format {
-			payload = &exportentities.PipelineV1{}
-		} else {
-			payload = &exportentities.Pipeline{}
-		}
-
-		// parse the pipeline
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, payload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, payload)
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
+		payload, err := exportentities.ParsePipeline(format, data)
+		if err != nil {
+			return err
 		}
 
 		tx, errBegin := api.mustDB().Begin()
@@ -158,7 +119,10 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		format := r.FormValue("format")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+			project.LoadOptions.Default,
+			project.LoadOptions.WithGroups,
+		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
@@ -173,53 +137,9 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
 		}
 
-		// Compute format
-		f, errF := exportentities.GetFormat(format)
-		if errF != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errF)
-		}
-
-		rawPayload := map[string]interface{}{}
-		var errorParse error
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, &rawPayload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, &rawPayload)
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
-		}
-
-		//Parse the data once to retrieve the version
-		var pipelineV1Format bool
-		if v, ok := rawPayload["version"]; ok {
-			if v.(string) == exportentities.PipelineVersion1 {
-				pipelineV1Format = true
-			}
-		}
-
-		//Depending on the version, we will use different struct
-		type pipeliner interface {
-			Pipeline() (*sdk.Pipeline, error)
-		}
-
-		var payload pipeliner
-		// Parse the pipeline
-		if pipelineV1Format {
-			payload = &exportentities.PipelineV1{}
-		} else {
-			payload = &exportentities.Pipeline{}
-		}
-
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, payload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, payload)
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
+		payload, err := exportentities.ParsePipeline(format, data)
+		if err != nil {
+			return err
 		}
 
 		tx, errBegin := api.mustDB().Begin()

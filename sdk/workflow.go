@@ -140,6 +140,7 @@ type WorkflowNotification struct {
 	WorkflowID     int64                    `json:"workflow_id,omitempty" db:"workflow_id"`
 	SourceNodeRefs []string                 `json:"source_node_ref,omitempty" db:"-"`
 	SourceNodeIDs  []int64                  `json:"source_node_id,omitempty" db:"-"`
+	NodeIDs        []int64                  `json:"node_id,omitempty" db:"-"`
 	Type           string                   `json:"type" db:"type"`
 	Settings       UserNotificationSettings `json:"settings" db:"-"`
 }
@@ -1516,7 +1517,7 @@ func (c *WorkflowNodeContext) HasDefaultPayload() bool {
 	if c.DefaultPayload == nil {
 		return false
 	}
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false
@@ -1533,7 +1534,7 @@ func (c *WorkflowNodeContext) DefaultPayloadToMap() (map[string]string, error) {
 	if c.DefaultPayload == nil {
 		return map[string]string{}, nil
 	}
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false
@@ -1559,7 +1560,7 @@ func IsWorkflowNodeContextDefaultPayloadVCS(i interface{}) bool {
 		return true
 	}
 
-	dumper := dump.NewDefaultEncoder(nil)
+	dumper := dump.NewDefaultEncoder()
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false

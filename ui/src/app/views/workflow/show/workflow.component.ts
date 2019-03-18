@@ -1,8 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import * as actionsWorkflow from 'app/store/workflows.action';
+import { WorkflowsState } from 'app/store/workflows.state';
+import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
-import { finalize, first } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../model/permission.model';
 import { Project } from '../../../model/project.model';
 import { WNode, Workflow } from '../../../model/workflow.model';
@@ -55,9 +59,16 @@ export class WorkflowShowComponent implements OnInit {
     // For usage
     usageCount = 0;
 
-    constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService,
-                private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {
+    constructor(
+        private store: Store,
+        private activatedRoute: ActivatedRoute,
+        private _workflowStore: WorkflowStore,
+        private _router: Router,
+        private _translate: TranslateService,
+        private _toast: ToastService,
+        private _workflowCoreService: WorkflowCoreService,
+        private _workflowEventStore: WorkflowEventStore
+    ) {
     }
 
     ngOnInit(): void {
@@ -71,7 +82,7 @@ export class WorkflowShowComponent implements OnInit {
             let workflowName = params['workflowName'];
             let projkey = params['key'];
 
-            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+            this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
             this._workflowCoreService.setWorkflowPreview(null);
 
             if (!this.activatedRoute.snapshot.queryParams['node_id'] && !this.activatedRoute.snapshot.queryParams['node_ref']) {
@@ -81,33 +92,29 @@ export class WorkflowShowComponent implements OnInit {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
+                this.store.dispatch(new actionsWorkflow.FetchWorkflow({
+                    projectKey: projkey,
+                    workflowName
+                })).subscribe(null, () => this._router.navigate(['/project', projkey]));
 
-                this.workflowSubscription = this._workflowStore.getWorkflows(projkey, workflowName).subscribe(ws => {
-                    if (ws) {
-                        let updatedWorkflow = ws.get(projkey + '-' + workflowName);
-                        if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                            if (this.detailedWorkflow && this.detailedWorkflow.last_modified === updatedWorkflow.last_modified) {
-                                return;
-                            }
-                            this.detailedWorkflow = updatedWorkflow;
+                this.workflowSubscription = this.store.select(WorkflowsState.selectWorkflow(projkey, workflowName))
+                    .pipe(filter((wf) => wf != null && !wf.externalChange))
+                    .subscribe((wf) => {
+                        // TODO: delete cloneDeep
+                        this.detailedWorkflow = cloneDeep(wf);
+                        this.previewWorkflow = wf.preview;
+                        // If a node is selected, update it
+                        this.direction = this._workflowStore.getDirection(projkey, this.detailedWorkflow.name);
+                        this._workflowStore.updateRecentWorkflow(projkey, wf);
 
-                            // If a node is selected, update it
-                            this.direction = this._workflowStore.getDirection(projkey, this.detailedWorkflow.name);
-                            this._workflowStore.updateRecentWorkflow(projkey, updatedWorkflow);
-
-                            if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
-                                return;
-                            }
-
-                            this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
-                                return total + this.detailedWorkflow.usage[key].length;
-                            }, 0);
+                        if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
+                            return;
                         }
-                    }
-                }, () => {
-                    this._router.navigate(['/project', projkey]);
 
-                });
+                        this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
+                            return total + this.detailedWorkflow.usage[key].length;
+                        }, 0);
+                    }, () => this._router.navigate(['/project', projkey]));
             }
         });
 
@@ -135,9 +142,8 @@ export class WorkflowShowComponent implements OnInit {
 
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
-                this.previewWorkflow = wfPreview;
                 if (wfPreview != null) {
-                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+                    this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
                 }
             });
     }
@@ -173,7 +179,7 @@ export class WorkflowShowComponent implements OnInit {
     }
 
     savePreview() {
-        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
+        this._workflowCoreService.toggleAsCodeEditor({ open: false, save: true });
     }
 
     changeDirection() {
@@ -185,7 +191,7 @@ export class WorkflowShowComponent implements OnInit {
     }
 
     showAsCodeEditor() {
-      this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
+        this._workflowCoreService.toggleAsCodeEditor({ open: true, save: false });
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {
@@ -195,22 +201,27 @@ export class WorkflowShowComponent implements OnInit {
             switch (event.type) {
                 case 'add':
                     this.permFormLoading = true;
-                    this._workflowStore.addPermission(this.project.key, this.detailedWorkflow, event.gp).pipe(finalize(() => {
-                        this.permFormLoading = false;
-                    })).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_added'));
+                    this.store.dispatch(new actionsWorkflow.AddGroupInWorkflow({
+                        projectKey: this.project.key,
+                        workflowName: this.detailedWorkflow.name,
+                        group: event.gp
+                    })).pipe(finalize(() => this.permFormLoading = false))
+                        .subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
 
-                    });
                     break;
                 case 'update':
-                    this._workflowStore.updatePermission(this.project.key, this.detailedWorkflow, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_updated'));
-                    });
+                    this.store.dispatch(new actionsWorkflow.UpdateGroupInWorkflow({
+                        projectKey: this.project.key,
+                        workflowName: this.detailedWorkflow.name,
+                        group: event.gp
+                    })).subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
                     break;
                 case 'delete':
-                    this._workflowStore.deletePermission(this.project.key, this.detailedWorkflow, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_deleted'));
-                    });
+                    this.store.dispatch(new actionsWorkflow.DeleteGroupInWorkflow({
+                        projectKey: this.project.key,
+                        workflowName: this.detailedWorkflow.name,
+                        group: event.gp
+                    })).subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
                     break;
             }
         }
@@ -223,15 +234,15 @@ export class WorkflowShowComponent implements OnInit {
     }
 
     rollback(auditId: number): void {
-      this.loading = true;
-      this._workflowStore.rollbackWorkflow(this.project.key, this.detailedWorkflow.name, auditId)
-        .pipe(
-          finalize(() => this.loading = false),
-          first()
-        )
-        .subscribe((wf) => {
-          this._toast.success('', this._translate.instant('workflow_updated'));
-          this._router.navigate(['/project', this.project.key, 'workflow', wf.name]);
-        });
+        this.loading = true;
+        this.store.dispatch(new actionsWorkflow.RollbackWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.detailedWorkflow.name,
+            auditId
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+                this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name]);
+            });
     }
 }

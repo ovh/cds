@@ -1,54 +1,44 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
-    <app-scrollview class="scrollview">
-        <div *ngIf="action;then showAction;else loadAction"></div>
-        <ng-template #showAction>
-            <div id="ActionEdit">
-                <div class="ui info message" *ngIf="action.type === 'Builtin'">
-                    {{ 'action_edit_builtin' | translate }}
-                    <a class="item" href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/{{actionDoc}}">
-                        <i class="book icon"></i> {{ 'common_documentation' | translate }} {{action.name}}</a>
-                </div>
-                <div class="ui info message" *ngIf="action.type === 'Plugin'">
-                    {{ 'action_edit_plugin' | translate }}
-                </div>
-                <form class="ui form">
-                    <div class="ui grid">
-                        <div class="thirteen wide column">
-                            <app-action [edit]="isAdmin && action.type !== 'Builtin' && action.type !== 'Plugin'"
-                                [action]="action" (actionEvent)="actionEvent($event)"></app-action>
-                            <div *ngIf="isAdmin && pipelinesUsingAction">
-                                <h3>{{ 'pipelines_using_action' | translate }}</h3>
-                                <ul>
-                                    <li *ngFor="let p of pipelinesUsingAction">
-                                        <a [routerLink]="['/project/', p.key, 'pipeline', p.pipeline_name]">{{p.project_name}}
-                                            -
-                                            {{p.pipeline_name}} - {{p.action_name}}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="three wide column">
-                            <div class="ui segment">
-                                <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
-                                <div class="ui list">
-                                    <a class="item" href="https://ovh.github.io/cds/workflows/pipelines/actions/">{{'action_help_line_1'
-                                        | translate}}</a>
-                                    <a class="item" href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/">Built-in</a>
-                                    <a class="item" href="https://ovh.github.io/cds/workflows/pipelines/actions/user/">User-Actions</a>
-                                    <a class="item" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/">Plugins
-                                        Actions</a>
-                                </div>
-                                <a class="circular ui blue button" href="https://ovh.github.io/cds" target="_blank">{{
-                                    'common_see_documentation' | translate }}</a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+    <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
+        <div *ngSwitchCase="'action'" class="ui grid">
+            <div class="thirteen wide column">
+                <app-action-form *ngIf="action" [groups]="groups" [action]="action" (save)="actionSave($event)"
+                    (delete)="actionDelete()" [loading]="loading"></app-action-form>
             </div>
-        </ng-template>
-        <ng-template #loadAction>
-            <div class="ui text active loader">{{ 'action_load_action' | translate }}</div>
-        </ng-template>
+            <div class="three wide column">
+                <app-action-help></app-action-help>
+                <ng-container *ngIf="action">
+                    <br />
+                    <div class="field" *ngIf="action.first_audit">
+                        <h3>{{ "common_created_by" | translate }}</h3>
+                        {{ action.first_audit.triggered_by }}
+                    </div>
+                    <br />
+                    <div class="field" *ngIf="action.last_audit">
+                        <h3>{{ "common_last_modified" | translate }}</h3>
+                        {{ action.last_audit.created }}
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+        <div *ngSwitchCase="'audits'" class="ui grid">
+            <div class="sixteen wide column">
+                <app-data-table [withPagination]="10" [columns]="columnsAudits" [data]="audits" [loading]="loadingAudits"
+                    [withLineClick]="true" (clickLine)="clickAudit($event)"></app-data-table>
+            </div>
+            <div class="sixteen wide column">
+                <app-diff-list *ngIf="diffItems" [items]="diffItems"></app-diff-list>
+            </div>
+        </div>
+        <div *ngSwitchCase="'usage'" class="ui grid">
+            <div class="sixteen wide column">
+                <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
+                <ng-container *ngIf="!loadingUsage">
+                    <app-action-usage [usage]="usage"></app-action-usage>
+                </ng-container>
+            </div>
+        </div>
     </app-scrollview>
 </div>
