@@ -193,7 +193,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		ProjectKey:    proj.Key,
 		HistoryLength: 25,
 		Groups: []sdk.GroupPermission{
-			sdk.GroupPermission{
+			{
 				Group:      *group2,
 				Permission: 7,
 			},

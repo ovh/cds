@@ -100,11 +100,11 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.ProjectKey = proj.Key
 			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip, nil))
 			args.pip.Stages = []sdk.Stage{
-				sdk.Stage{
+				{
 					BuildOrder: 1,
 					Enabled:    true,
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: false,
 							Action: sdk.Action{
 								Name:        "Job 1",
@@ -156,7 +156,7 @@ func TestImportUpdate(t *testing.T) {
 					BuildOrder: 2,
 					Enabled:    true,
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: false,
 							Action: sdk.Action{
 								Name:        "Job 1",
@@ -281,13 +281,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the first stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",
@@ -301,13 +301,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the second stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",
@@ -370,13 +370,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the first stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",
@@ -390,13 +390,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the second stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",
@@ -454,13 +454,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the first stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",
@@ -474,13 +474,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the second stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",
@@ -531,13 +531,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the first stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",
@@ -551,13 +551,13 @@ func TestImportUpdate(t *testing.T) {
 					PipelineID: args.pip.ID,
 					Name:       "This is the second stage. It has 2 jobs",
 					Jobs: []sdk.Job{
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°1",
 							},
 						},
-						sdk.Job{
+						{
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "Job n°2",

@@ -22,15 +22,15 @@ func Test_mergeAndDiffHook(t *testing.T) {
 			name: "one to update",
 			args: args{
 				oldHooks: map[string]sdk.WorkflowNodeHook{
-					"my-uuid-a": sdk.WorkflowNodeHook{Ref: "AAA", UUID: "my-uuid-a"},
+					"my-uuid-a": {Ref: "AAA", UUID: "my-uuid-a"},
 				},
 				newHooks: map[string]sdk.WorkflowNodeHook{
-					"my-uuid-b": sdk.WorkflowNodeHook{Ref: "BBB"},
-					"my-uuid-a": sdk.WorkflowNodeHook{Ref: "AAA", UUID: "my-uuid-a"},
+					"my-uuid-b": {Ref: "BBB"},
+					"my-uuid-a": {Ref: "AAA", UUID: "my-uuid-a"},
 				},
 			},
 			wantHookToUpdate: map[string]sdk.WorkflowNodeHook{
-				"my-uuid-b": sdk.WorkflowNodeHook{Ref: "BBB"},
+				"my-uuid-b": {Ref: "BBB"},
 			},
 			wantHookToDelete: map[string]sdk.WorkflowNodeHook{},
 		},
@@ -38,13 +38,13 @@ func Test_mergeAndDiffHook(t *testing.T) {
 			name: "one delete",
 			args: args{
 				oldHooks: map[string]sdk.WorkflowNodeHook{
-					"my-uuid-a": sdk.WorkflowNodeHook{Ref: "AAA", UUID: "my-uuid-a"},
+					"my-uuid-a": {Ref: "AAA", UUID: "my-uuid-a"},
 				},
 				newHooks: map[string]sdk.WorkflowNodeHook{},
 			},
 			wantHookToUpdate: map[string]sdk.WorkflowNodeHook{},
 			wantHookToDelete: map[string]sdk.WorkflowNodeHook{
-				"my-uuid-a": sdk.WorkflowNodeHook{Ref: "AAA", UUID: "my-uuid-a"},
+				"my-uuid-a": {Ref: "AAA", UUID: "my-uuid-a"},
 			},
 		},
 	}
