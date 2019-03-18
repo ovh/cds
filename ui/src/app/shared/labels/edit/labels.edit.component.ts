@@ -1,11 +1,12 @@
-import {Component, Input, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {finalize} from 'rxjs/operators';
-import {PermissionValue} from '../../../model/permission.model';
-import {Label, Project} from '../../../model/project.model';
-import {ProjectStore} from '../../../service/project/project.store';
+import { Component, Input, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { SaveLabelsInProject } from 'app/store/project.action';
+import { cloneDeep } from 'lodash';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { finalize } from 'rxjs/operators';
+import { PermissionValue } from '../../../model/permission.model';
+import { Label, Project } from '../../../model/project.model';
 
 @Component({
     selector: 'app-labels-edit',
@@ -25,7 +26,10 @@ export class LabelsEditComponent {
     permission = PermissionValue;
     loading = false;
 
-    constructor(private _suiService: SuiModalService, private _projectStore: ProjectStore) {
+    constructor(
+        private store: Store,
+        private _suiService: SuiModalService
+    ) {
 
     }
 
@@ -54,16 +58,16 @@ export class LabelsEditComponent {
 
     saveLabels(close?: boolean) {
         this.loading = true;
-        this._projectStore.updateLabels(this.project.key, this.labels)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this.newLabel = new Label();
-            }))
-            .subscribe((proj) => {
-                this.project.labels = proj.labels;
-                if (close) {
-                    this.modal.approve(true);
-                }
-            });
+        this.store.dispatch(new SaveLabelsInProject({
+            projectKey: this.project.key,
+            labels: this.labels
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this.newLabel = new Label();
+        })).subscribe(() => {
+            if (close) {
+                this.modal.approve(true);
+            }
+        });
     }
 }

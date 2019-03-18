@@ -12,19 +12,22 @@ import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { RepositoriesManager } from 'app/model/repositories.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import * as ProjectAction from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
+import { WorkflowsState } from './workflows.state';
 
 describe('Project', () => {
     let store: Store;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
+            providers: [NavbarService],
             imports: [
-                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState]),
-                HttpClientTestingModule
+                HttpClientTestingModule,
+                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowsState])
             ],
         }).compileComponents();
 

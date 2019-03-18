@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AddKeyInProject } from 'app/store/project.action';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
-import { finalize, first } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { AllKeys } from '../../model/keys.model';
 import { Project } from '../../model/project.model';
 import { VCSConnections, VCSStrategy } from '../../model/vcs.model';
 import { KeyService } from '../../service/keys/keys.service';
-import { ProjectStore } from '../../service/project/project.store';
 import { KeyEvent } from '../keys/key.event';
 import { ToastService } from '../toast/ToastService';
 
@@ -51,11 +52,11 @@ export class VCSStrategyComponent implements OnInit {
     sshModal: ActiveModal<boolean, boolean, void>;
 
     constructor(
+        private store: Store,
         private _keyService: KeyService,
         private _modalService: SuiModalService,
         private _toast: ToastService,
-        private _translate: TranslateService,
-        private _projectStore: ProjectStore
+        private _translate: TranslateService
     ) { }
 
     ngOnInit() {
@@ -69,11 +70,11 @@ export class VCSStrategyComponent implements OnInit {
         if (this.projectKeysOnly) {
             this._keyService.getProjectKeys(this.project.key).subscribe(k => {
                 this.keys = k;
-            })
+            });
         } else {
             this._keyService.getAllKeys(this.project.key, this.appName).subscribe(k => {
                 this.keys = k;
-            })
+            });
         }
     }
 
@@ -91,7 +92,10 @@ export class VCSStrategyComponent implements OnInit {
 
     addKey(event: KeyEvent): void {
         this.loading = true;
-        this._projectStore.addKey(this.project.key, event.key).pipe(first(), finalize(() => {
+        this.store.dispatch(new AddKeyInProject({
+            projectKey: this.project.key,
+            key: event.key
+        })).pipe(finalize(() => {
             this.loading = false;
             this.sshModal.approve(true);
             this.loadKeys();

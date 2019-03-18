@@ -1,13 +1,16 @@
-import {Component, Input} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
-import {IdName, LoadOpts, Project} from '../../../model/project.model';
-import {ProjectFilter, TimelineFilter} from '../../../model/timeline.model';
-import {ProjectStore} from '../../../service/project/project.store';
-import {TimelineStore} from '../../../service/timeline/timeline.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../shared/toast/ToastService';
+import { Component, Input } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ResyncProject } from 'app/store/project.action';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { cloneDeep } from 'lodash';
+import { finalize, flatMap } from 'rxjs/operators';
+import { IdName, LoadOpts, Project } from '../../../model/project.model';
+import { ProjectFilter, TimelineFilter } from '../../../model/timeline.model';
+import { ProjectStore } from '../../../service/project/project.store';
+import { TimelineStore } from '../../../service/timeline/timeline.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-home-filter',
@@ -39,8 +42,13 @@ export class HomeFilterComponent {
 
     loading = false;
 
-    constructor(private _projectStore: ProjectStore, private _timelineStore: TimelineStore, private _translate: TranslateService,
-                private _toast: ToastService) {
+    constructor(
+        private store: Store,
+        private _projectStore: ProjectStore,
+        private _timelineStore: TimelineStore,
+        private _translate: TranslateService,
+        private _toast: ToastService
+    ) {
         this._projectStore.getProjectsList().subscribe(ps => {
             if (ps) {
                 this.projects = ps.toArray();
@@ -53,7 +61,7 @@ export class HomeFilterComponent {
             return;
         }
         if (this.filter.projects) {
-            let exist = this._filter.projects.find(p => p.key === this.selectedProjectKey);
+            let exist = this.filter.projects.find(p => p.key === this.selectedProjectKey);
             if (exist) {
                 return;
             }
@@ -71,7 +79,7 @@ export class HomeFilterComponent {
     }
 
     removeProject(pf: ProjectFilter): void {
-       this.filter.projects = this._filter.projects.filter(p => p.key !== pf.key);
+        this.filter.projects = this.filter.projects.filter(p => p.key !== pf.key);
     }
 
     // load workflow when opening dropdown
@@ -83,8 +91,15 @@ export class HomeFilterComponent {
 
         let opts = new Array<LoadOpts>();
         opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
-        this._projectStore.resync(projFilter.key, opts).pipe(first(), finalize(() => projFilter.loading = false)).subscribe(proj => {
-            projFilter.project = proj;
+
+        this.store.dispatch(new ResyncProject({
+            projectKey: projFilter.key,
+            opts
+        })).pipe(
+            finalize(() => projFilter.loading = false),
+            flatMap(() => this.store.selectOnce(ProjectState))
+        ).subscribe((proj: ProjectStateModel) => {
+            projFilter.project = cloneDeep(proj.project);
             if (projFilter.project && projFilter.project.workflow_names) {
                 projFilter.project.workflow_names.forEach(wn => {
                     if (mute) {
@@ -126,9 +141,10 @@ export class HomeFilterComponent {
 
     saveFilter(): void {
         this.loading = true;
-        this._timelineStore.saveFilter(this.filter).pipe(finalize(() => this.loading = false)).subscribe(() => {
-            this._toast.success('', this._translate.instant('timeline_filter_updated'));
-        });
+        this._timelineStore.saveFilter(this.filter)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('timeline_filter_updated'));
+            });
     }
-
 }
