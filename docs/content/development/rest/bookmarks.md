@@ -3,7 +3,7 @@ title = "bookmarks"
 +++
 
 
-### GET `/bookmarks`
+## GET `/bookmarks`
 
 URL         | **`/bookmarks`**
 ----------- |----------

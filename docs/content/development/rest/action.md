@@ -3,9 +3,9 @@ title = "action"
 +++
 
 
-### DELETE `/action/<permActionName>`
+## DELETE `/action/<group-name>/<permActionName>`
 
-URL         | **`/action/<permActionName>`**
+URL         | **`/action/<group-name>/<permActionName>`**
 ----------- |----------
 Method      | DELETE     
 Permissions |  Auth: true
@@ -20,12 +20,12 @@ Code        | [deleteActionHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### GET `/action/<actionID>/audit`
+## GET `/action/<group-name>/<permActionName>/audit`
 
-URL         | **`/action/<actionID>/audit`**
+URL         | **`/action/<group-name>/<permActionName>/audit`**
 ----------- |----------
 Method      | GET     
-Permissions |  NeedAdmin: true -  Auth: true
+Permissions |  Auth: true
 Code        | [getActionAuditHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionAuditHandler%22)
     
 
@@ -37,26 +37,9 @@ Code        | [getActionAuditHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### GET `/action/<actionName>/using`
+## GET `/action/<group-name>/<permActionName>/export`
 
-URL         | **`/action/<actionName>/using`**
------------ |----------
-Method      | GET     
-Permissions |  NeedAdmin: true -  Auth: true
-Code        | [getPipelinesUsingActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPipelinesUsingActionHandler%22)
-    
-
-
-
-
-
-
-
-
-
-### GET `/action/<permActionName>/export`
-
-URL         | **`/action/<permActionName>/export`**
+URL         | **`/action/<group-name>/<permActionName>/export`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -71,9 +54,26 @@ Code        | [getActionExportHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/action/<permActionName>`
+## GET `/action/<group-name>/<permActionName>/usage`
 
-URL         | **`/action/<permActionName>`**
+URL         | **`/action/<group-name>/<permActionName>/usage`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getActionUsageHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionUsageHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## GET `/action/<group-name>/<permActionName>`
+
+URL         | **`/action/<group-name>/<permActionName>`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -88,7 +88,7 @@ Code        | [getActionHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### GET `/action/requirement`
+## GET `/action/requirement`
 
 URL         | **`/action/requirement`**
 ----------- |----------
@@ -105,7 +105,7 @@ Code        | [getActionsRequirements](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### List all public actions
+## GET `/action`
 
 URL         | **`/action`**
 ----------- |----------
@@ -122,13 +122,13 @@ Code        | [getActionsHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
-### POST `/action/<permActionName>`
+## POST `/action`
 
-URL         | **`/action/<permActionName>`**
+URL         | **`/action`**
 ----------- |----------
 Method      | POST     
 Permissions |  Auth: true
-Code        | [addActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22)
+Code        | [postActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postActionHandler%22)
     
 
 
@@ -139,13 +139,13 @@ Code        | [addActionHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### PUT `/action/<permActionName>`
+## PUT `/action/<group-name>/<permActionName>`
 
-URL         | **`/action/<permActionName>`**
+URL         | **`/action/<group-name>/<permActionName>`**
 ----------- |----------
 Method      | PUT     
 Permissions |  Auth: true
-Code        | [updateActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22)
+Code        | [putActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putActionHandler%22)
     
 
 
@@ -156,12 +156,12 @@ Code        | [updateActionHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### importAction insert OR update an existing action.
+## importAction insert OR update an existing action.
 
 URL         | **`/action/import`**
 ----------- |----------
 Method      | POST     
-Permissions |  NeedAdmin: true -  Auth: true
+Permissions |  Auth: true
 Code        | [importActionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+importActionHandler%22)
     
 

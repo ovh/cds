@@ -3,7 +3,7 @@ title = "services"
 +++
 
 
-### GET `/services/<type>`
+## GET `/services/<type>`
 
 URL         | **`/services/<type>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [getExternalServiceHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-### POST `/services/register`
+## POST `/services/register`
 
 URL         | **`/services/register`**
 ----------- |----------

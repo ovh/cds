@@ -60,6 +60,7 @@ cdsctl [flags]
 * [cdsctl application](/docs/components/cdsctl/application/)	 - `Manage CDS application`
 * [cdsctl encrypt](/docs/components/cdsctl/encrypt/)	 - `Encrypt variable into your CDS project`
 * [cdsctl environment](/docs/components/cdsctl/environment/)	 - `Manage CDS environment`
+* [cdsctl events](/docs/components/cdsctl/events/)	 - `Listen CDS Events`
 * [cdsctl group](/docs/components/cdsctl/group/)	 - `Manage CDS group`
 * [cdsctl health](/docs/components/cdsctl/health/)	 - `Check CDS health`
 * [cdsctl login](/docs/components/cdsctl/login/)	 - `Login to CDS`
@@ -75,4 +76,6 @@ cdsctl [flags]
 * [cdsctl version](/docs/components/cdsctl/version/)	 - `show cdsctl version`
 * [cdsctl worker](/docs/components/cdsctl/worker/)	 - `Manage CDS worker`
 * [cdsctl workflow](/docs/components/cdsctl/workflow/)	 - `Manage CDS workflow`
+* [cdsctl xlogin](/docs/components/cdsctl/xlogin/)	 - `Login to CDS [EXPERIMENTAL]`
+* [cdsctl xtoken](/docs/components/cdsctl/xtoken/)	 - `Manage CDS access tokens [EXPERIMENTAL]`
 

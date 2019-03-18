@@ -3,7 +3,7 @@ title = "integration"
 +++
 
 
-### DELETE `/integration/models/<name>`
+## DELETE `/integration/models/<name>`
 
 URL         | **`/integration/models/<name>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [deleteIntegrationModelHandler](https://github.com/ovh/cds/search?
 
 
 
-### GET `/integration/models/<name>`
+## GET `/integration/models/<name>`
 
 URL         | **`/integration/models/<name>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [getIntegrationModelHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### GET `/integration/models`
+## GET `/integration/models`
 
 URL         | **`/integration/models`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [getIntegrationModelsHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### POST `/integration/models`
+## POST `/integration/models`
 
 URL         | **`/integration/models`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [postIntegrationModelHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### PUT `/integration/models/<name>`
+## PUT `/integration/models/<name>`
 
 URL         | **`/integration/models/<name>`**
 ----------- |----------

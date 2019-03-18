@@ -3,7 +3,7 @@ title = "warning"
 +++
 
 
-### GET `/warning/<project-key>`
+## GET `/warning/<project-key>`
 
 URL         | **`/warning/<project-key>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [getWarningsHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### PUT `/warning/<project-key>/<hash>`
+## PUT `/warning/<project-key>/<hash>`
 
 URL         | **`/warning/<project-key>/<hash>`**
 ----------- |----------

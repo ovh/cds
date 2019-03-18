@@ -1,19 +1,15 @@
 ---
-title: "import"
+title: "events"
 notitle: true
 notoc: true
 ---
-# cdsctl action import
+# cdsctl events
 
-`Import a CDS action`
+`Listen CDS Events`
 
 ## Synopsis
 
-`Import a CDS action`
-
-```
-cdsctl action import PATH
-```
+`Listen CDS Events`
 
 ## Options inherited from parent commands
 
@@ -26,5 +22,6 @@ cdsctl action import PATH
 
 ## SEE ALSO
 
-* [cdsctl action](/docs/components/cdsctl/action/)	 - `Manage CDS action`
+* [cdsctl](/docs/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl events listen](/docs/components/cdsctl/events/listen/)	 - `Listen CDS events`
 

@@ -3,16 +3,16 @@ title: "list"
 notitle: true
 notoc: true
 ---
-# cdsctl project keys list
+# cdsctl action builtin list
 
-`List CDS project keys`
+`List CDS builtin actions`
 
 ## Synopsis
 
-`List CDS project keys`
+`List CDS builtin actions`
 
 ```
-cdsctl project keys list [ PROJECT-KEY ] [flags]
+cdsctl action builtin list [flags]
 ```
 
 ## Options
@@ -35,5 +35,5 @@ cdsctl project keys list [ PROJECT-KEY ] [flags]
 
 ## SEE ALSO
 
-* [cdsctl project keys](/docs/components/cdsctl/project/keys/)	 - `Manage CDS project keys`
+* [cdsctl action builtin](/docs/components/cdsctl/action/builtin/)	 - `Manage CDS builtin action`
 

@@ -9,12 +9,10 @@ notoc: true
 
 ## Synopsis
 
-Useful to show a CDS action
-
-cdsctl action show myAction
+`Show a CDS action`
 
 ```
-cdsctl action show ACTION-NAME [flags]
+cdsctl action show ACTION-PATH [flags]
 ```
 
 ## Options

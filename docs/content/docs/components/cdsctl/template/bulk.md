@@ -26,6 +26,7 @@ cdsctl template bulk group-name/template-slug -i PROJ1/workflow1 -i PROJ1/workfl
 ```
       --detach stringArray      Set to generate a workflow detached from the template like --detach PROJ1/workflow1
   -i, --instances stringArray   Specify instances path
+      --instances-file string   Specify path|url of a json|yaml file that contains instances with params
   -n, --no-interactive          Set to not ask interactively for params
   -p, --params stringArray      Specify parameters for template like --params PROJ1/workflow1:paramKey=paramValue
       --track                   Wait the bulk to be over

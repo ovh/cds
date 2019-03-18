@@ -9,9 +9,7 @@ notoc: true
 
 ## Synopsis
 
-Useful list CDS actions
-
-cdsctl action list
+`List CDS actions`
 
 ```
 cdsctl action list [flags]

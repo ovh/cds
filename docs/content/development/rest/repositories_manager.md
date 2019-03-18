@@ -3,7 +3,7 @@ title = "repositories_manager"
 +++
 
 
-### GET `/repositories_manager/oauth2/callback`
+## GET `/repositories_manager/oauth2/callback`
 
 URL         | **`/repositories_manager/oauth2/callback`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [repositoriesManagerOAuthCallbackHandler](https://github.com/ovh/c
 
 
 
-### GET `/repositories_manager`
+## GET `/repositories_manager`
 
 URL         | **`/repositories_manager`**
 ----------- |----------

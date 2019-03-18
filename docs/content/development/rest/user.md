@@ -3,7 +3,7 @@ title = "user"
 +++
 
 
-### AddUser creates a new user and generate verification email
+## AddUser creates a new user and generate verification email
 
 URL         | **`/user/signup`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [addUserHandler](https://github.com/ovh/cds/search?q=%22func+%28ap
 
 
 
-### ConfirmUser verify token send via email and mark user as verified
+## ConfirmUser verify token send via email and mark user as verified
 
 URL         | **`/user/<username>/confirm/<token>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [confirmUserHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### DeleteUser removes a user
+## DeleteUser removes a user
 
 URL         | **`/user/<username>`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [deleteUserHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
-### GET `/user/timeline/filter`
+## GET `/user/timeline/filter`
 
 URL         | **`/user/timeline/filter`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [getTimelineFilterHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### GET `/user/timeline`
+## GET `/user/timeline`
 
 URL         | **`/user/timeline`**
 ----------- |----------
@@ -88,7 +88,7 @@ Code        | [getTimelineHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### GET `/user/token/<token>`
+## GET `/user/token/<token>`
 
 URL         | **`/user/token/<token>`**
 ----------- |----------
@@ -105,7 +105,7 @@ Code        | [getUserTokenHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### GET `/user/token`
+## GET `/user/token`
 
 URL         | **`/user/token`**
 ----------- |----------
@@ -122,7 +122,7 @@ Code        | [getUserTokenListHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### GetUser returns a specific user's information
+## GetUser returns a specific user's information
 
 URL         | **`/user/<username>`**
 ----------- |----------
@@ -139,7 +139,7 @@ Code        | [getUserHandler](https://github.com/ovh/cds/search?q=%22func+%28ap
 
 
 
-### GetUsers fetches all users from databases
+## GetUsers fetches all users from databases
 
 URL         | **`/user`**
 ----------- |----------
@@ -156,7 +156,7 @@ Code        | [getUsersHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
-### POST `/user/<username>/reset`
+## POST `/user/<username>/reset`
 
 URL         | **`/user/<username>/reset`**
 ----------- |----------
@@ -173,7 +173,7 @@ Code        | [resetUserHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### POST `/user/import`
+## POST `/user/import`
 
 URL         | **`/user/import`**
 ----------- |----------
@@ -190,7 +190,7 @@ Code        | [importUsersHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### POST `/user/timeline/filter`
+## POST `/user/timeline/filter`
 
 URL         | **`/user/timeline/filter`**
 ----------- |----------
@@ -207,7 +207,7 @@ Code        | [postTimelineFilterHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-### UpdateUser modifies user informations
+## UpdateUser modifies user informations
 
 URL         | **`/user/<username>`**
 ----------- |----------
@@ -224,7 +224,7 @@ Code        | [updateUserHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
-### getUserGroups returns groups of the user
+## getUserGroups returns groups of the user
 
 URL         | **`/user/<username>/groups`**
 ----------- |----------
@@ -241,7 +241,7 @@ Code        | [getUserGroupsHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### getUserLogged check if the current user is connected
+## getUserLogged check if the current user is connected
 
 URL         | **`/user/me`**
 ----------- |----------
@@ -258,7 +258,7 @@ Code        | [getUserLoggedHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### postUserFavorite post favorite user for workflow or project
+## postUserFavorite post favorite user for workflow or project
 
 URL         | **`/user/favorite`**
 ----------- |----------

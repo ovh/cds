@@ -3,7 +3,7 @@ title = "notification"
 +++
 
 
-### GET `/notification/state`
+## GET `/notification/state`
 
 URL         | **`/notification/state`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [getUserNotificationStateValueHandler](https://github.com/ovh/cds/
 
 
 
-### GET `/notification/type`
+## GET `/notification/type`
 
 URL         | **`/notification/type`**
 ----------- |----------

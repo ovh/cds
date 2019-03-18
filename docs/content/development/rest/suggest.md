@@ -3,7 +3,7 @@ title = "suggest"
 +++
 
 
-### GET `/suggest/variable/<project-key>`
+## GET `/suggest/variable/<project-key>`
 
 URL         | **`/suggest/variable/<project-key>`**
 ----------- |----------

@@ -3,7 +3,7 @@ title = "requirement"
 +++
 
 
-### GET `/requirement/types/<type>`
+## GET `/requirement/types/<type>`
 
 URL         | **`/requirement/types/<type>`**
 ----------- |----------

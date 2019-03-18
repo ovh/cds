@@ -3,7 +3,7 @@ title = "worker"
 +++
 
 
-### DELETE `/worker/model/<permModelID>`
+## DELETE `/worker/model/<permModelID>`
 
 URL         | **`/worker/model/<permModelID>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [deleteWorkerModelHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### DELETE `/worker/model/pattern/<type>/<name>`
+## DELETE `/worker/model/pattern/<type>/<name>`
 
 URL         | **`/worker/model/pattern/<type>/<name>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [deleteWorkerModelPatternHandler](https://github.com/ovh/cds/searc
 
 
 
-### GET `/worker/model/<modelID>/usage`
+## GET `/worker/model/<modelID>/usage`
 
 URL         | **`/worker/model/<modelID>/usage`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [getWorkerModelUsageHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### GET `/worker/model/<permModelID>/export`
+## GET `/worker/model/<permModelID>/export`
 
 URL         | **`/worker/model/<permModelID>/export`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [getWorkerModelExportHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### GET `/worker/model/capability/type`
+## GET `/worker/model/capability/type`
 
 URL         | **`/worker/model/capability/type`**
 ----------- |----------
@@ -88,7 +88,7 @@ Code        | [getRequirementTypesHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### GET `/worker/model/communication`
+## GET `/worker/model/communication`
 
 URL         | **`/worker/model/communication`**
 ----------- |----------
@@ -105,7 +105,7 @@ Code        | [getWorkerModelCommunicationsHandler](https://github.com/ovh/cds/s
 
 
 
-### GET `/worker/model/enabled`
+## GET `/worker/model/enabled`
 
 URL         | **`/worker/model/enabled`**
 ----------- |----------
@@ -122,7 +122,7 @@ Code        | [getWorkerModelsEnabledHandler](https://github.com/ovh/cds/search?
 
 
 
-### GET `/worker/model/pattern/<type>/<name>`
+## GET `/worker/model/pattern/<type>/<name>`
 
 URL         | **`/worker/model/pattern/<type>/<name>`**
 ----------- |----------
@@ -139,7 +139,7 @@ Code        | [getWorkerModelPatternHandler](https://github.com/ovh/cds/search?q
 
 
 
-### GET `/worker/model/pattern`
+## GET `/worker/model/pattern`
 
 URL         | **`/worker/model/pattern`**
 ----------- |----------
@@ -156,7 +156,7 @@ Code        | [getWorkerModelPatternsHandler](https://github.com/ovh/cds/search?
 
 
 
-### GET `/worker/model/type`
+## GET `/worker/model/type`
 
 URL         | **`/worker/model/type`**
 ----------- |----------
@@ -173,7 +173,7 @@ Code        | [getWorkerModelTypesHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### GET `/worker/model`
+## GET `/worker/model`
 
 URL         | **`/worker/model`**
 ----------- |----------
@@ -190,7 +190,7 @@ Code        | [getWorkerModelsHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/worker`
+## GET `/worker`
 
 URL         | **`/worker`**
 ----------- |----------
@@ -207,7 +207,7 @@ Code        | [getWorkersHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
-### POST `/worker/<id>/disable`
+## POST `/worker/<id>/disable`
 
 URL         | **`/worker/<id>/disable`**
 ----------- |----------
@@ -224,7 +224,7 @@ Code        | [disableWorkerHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### POST `/worker/checking`
+## POST `/worker/checking`
 
 URL         | **`/worker/checking`**
 ----------- |----------
@@ -241,7 +241,7 @@ Code        | [workerCheckingHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### POST `/worker/model/pattern`
+## POST `/worker/model/pattern`
 
 URL         | **`/worker/model/pattern`**
 ----------- |----------
@@ -258,7 +258,7 @@ Code        | [postAddWorkerModelPatternHandler](https://github.com/ovh/cds/sear
 
 
 
-### POST `/worker/model`
+## POST `/worker/model`
 
 URL         | **`/worker/model`**
 ----------- |----------
@@ -275,7 +275,7 @@ Code        | [addWorkerModelHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### POST `/worker/refresh`
+## POST `/worker/refresh`
 
 URL         | **`/worker/refresh`**
 ----------- |----------
@@ -292,7 +292,7 @@ Code        | [refreshWorkerHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### POST `/worker/unregister`
+## POST `/worker/unregister`
 
 URL         | **`/worker/unregister`**
 ----------- |----------
@@ -309,7 +309,7 @@ Code        | [unregisterWorkerHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/worker/waiting`
+## POST `/worker/waiting`
 
 URL         | **`/worker/waiting`**
 ----------- |----------
@@ -326,7 +326,7 @@ Code        | [workerWaitingHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### POST `/worker`
+## POST `/worker`
 
 URL         | **`/worker`**
 ----------- |----------
@@ -343,7 +343,7 @@ Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### PUT `/worker/model/<permModelID>`
+## PUT `/worker/model/<permModelID>`
 
 URL         | **`/worker/model/<permModelID>`**
 ----------- |----------
@@ -360,7 +360,7 @@ Code        | [updateWorkerModelHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### PUT `/worker/model/book/<permModelID>`
+## PUT `/worker/model/book/<permModelID>`
 
 URL         | **`/worker/model/book/<permModelID>`**
 ----------- |----------
@@ -377,7 +377,7 @@ Code        | [bookWorkerModelHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### PUT `/worker/model/error/<permModelID>`
+## PUT `/worker/model/error/<permModelID>`
 
 URL         | **`/worker/model/error/<permModelID>`**
 ----------- |----------
@@ -394,7 +394,7 @@ Code        | [spawnErrorWorkerModelHandler](https://github.com/ovh/cds/search?q
 
 
 
-### PUT `/worker/model/pattern/<type>/<name>`
+## PUT `/worker/model/pattern/<type>/<name>`
 
 URL         | **`/worker/model/pattern/<type>/<name>`**
 ----------- |----------
@@ -411,7 +411,7 @@ Code        | [putWorkerModelPatternHandler](https://github.com/ovh/cds/search?q
 
 
 
-### import a worker model yml/json file
+## import a worker model yml/json file
 
 URL         | **`/worker/model/import`**
 ----------- |----------
@@ -421,7 +421,7 @@ Permissions |  Auth: true
 Code        | [postWorkerModelImportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkerModelImportHandler%22)
     
 
-#### Description
+### Description
 import a worker model yml/json file with `cdsctl worker model import mywm.yml`
 
 

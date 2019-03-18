@@ -3,7 +3,7 @@ title = "workflow"
 +++
 
 
-### GET `/workflow/artifact/<hash>`
+## GET `/workflow/artifact/<hash>`
 
 URL         | **`/workflow/artifact/<hash>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [downloadworkflowArtifactDirectHandler](https://github.com/ovh/cds
 
 
 
-### GET `/workflow/hook/model/<model>`
+## GET `/workflow/hook/model/<model>`
 
 URL         | **`/workflow/hook/model/<model>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [getWorkflowHookModelHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### GET `/workflow/hook`
+## GET `/workflow/hook`
 
 URL         | **`/workflow/hook`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [getWorkflowHooksHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### GET `/workflow/outgoinghook/model`
+## GET `/workflow/outgoinghook/model`
 
 URL         | **`/workflow/outgoinghook/model`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [getWorkflowOutgoingHookModelsHandler](https://github.com/ovh/cds/
 
 
 
-### POST `/workflow/hook/model/<model>`
+## POST `/workflow/hook/model/<model>`
 
 URL         | **`/workflow/hook/model/<model>`**
 ----------- |----------
@@ -88,7 +88,7 @@ Code        | [postWorkflowHookModelHandler](https://github.com/ovh/cds/search?q
 
 
 
-### PUT `/workflow/hook/model/<model>`
+## PUT `/workflow/hook/model/<model>`
 
 URL         | **`/workflow/hook/model/<model>`**
 ----------- |----------

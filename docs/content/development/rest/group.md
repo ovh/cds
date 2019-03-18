@@ -3,7 +3,7 @@ title = "group"
 +++
 
 
-### DELETE `/group/<group-name>/token/<tokenid>`
+## DELETE `/group/<group-name>/token/<tokenid>`
 
 URL         | **`/group/<group-name>/token/<tokenid>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [deleteTokenHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### DELETE `/group/<group-name>/user/<user-name>/admin`
+## DELETE `/group/<group-name>/user/<user-name>/admin`
 
 URL         | **`/group/<group-name>/user/<user-name>/admin`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [removeUserGroupAdminHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### DELETE `/group/<group-name>/user/<user-name>`
+## DELETE `/group/<group-name>/user/<user-name>`
 
 URL         | **`/group/<group-name>/user/<user-name>`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [removeUserFromGroupHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### DELETE `/group/<group-name>`
+## DELETE `/group/<group-name>`
 
 URL         | **`/group/<group-name>`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [deleteGroupHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### GET `/group/<group-name>/token`
+## GET `/group/<group-name>/token`
 
 URL         | **`/group/<group-name>/token`**
 ----------- |----------
@@ -88,7 +88,7 @@ Code        | [getGroupTokenListHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### GET `/group/<group-name>`
+## GET `/group/<group-name>`
 
 URL         | **`/group/<group-name>`**
 ----------- |----------
@@ -105,7 +105,24 @@ Code        | [getGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
-### GET `/group/public`
+## GET `/group/<groupID>/action`
+
+URL         | **`/group/<groupID>/action`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getActionsForGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionsForGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## GET `/group/public`
 
 URL         | **`/group/public`**
 ----------- |----------
@@ -122,7 +139,7 @@ Code        | [getPublicGroupsHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/group`
+## GET `/group`
 
 URL         | **`/group`**
 ----------- |----------
@@ -139,7 +156,7 @@ Code        | [getGroupsHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### POST `/group/<group-name>/user/<user-name>/admin`
+## POST `/group/<group-name>/user/<user-name>/admin`
 
 URL         | **`/group/<group-name>/user/<user-name>/admin`**
 ----------- |----------
@@ -156,7 +173,7 @@ Code        | [setUserGroupAdminHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### POST `/group/<group-name>/user`
+## POST `/group/<group-name>/user`
 
 URL         | **`/group/<group-name>/user`**
 ----------- |----------
@@ -173,7 +190,7 @@ Code        | [addUserInGroupHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### POST `/group`
+## POST `/group`
 
 URL         | **`/group`**
 ----------- |----------
@@ -190,7 +207,7 @@ Code        | [addGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
-### PUT `/group/<group-name>`
+## PUT `/group/<group-name>`
 
 URL         | **`/group/<group-name>`**
 ----------- |----------
@@ -207,7 +224,7 @@ Code        | [updateGroupHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### generateToken allows a user to generate a token associated to a group permission
+## generateToken allows a user to generate a token associated to a group permission
 
 URL         | **`/group/<group-name>/token`**
 ----------- |----------

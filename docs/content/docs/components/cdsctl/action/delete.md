@@ -18,7 +18,7 @@ Useful to delete a CDS action
 
 
 ```
-cdsctl action delete ACTION-NAME [flags]
+cdsctl action delete ACTION-PATH [flags]
 ```
 
 ## Options

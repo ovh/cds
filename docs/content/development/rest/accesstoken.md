@@ -3,7 +3,24 @@ title = "accesstoken"
 +++
 
 
-### GET `/accesstoken/group/<id>`
+## DELETE `/accesstoken/<id>`
+
+URL         | **`/accesstoken/<id>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteAccessTokenHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAccessTokenHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## GET `/accesstoken/group/<id>`
 
 URL         | **`/accesstoken/group/<id>`**
 ----------- |----------
@@ -20,7 +37,7 @@ Code        | [getAccessTokenByGroupHandler](https://github.com/ovh/cds/search?q
 
 
 
-### GET `/accesstoken/user/<id>`
+## GET `/accesstoken/user/<id>`
 
 URL         | **`/accesstoken/user/<id>`**
 ----------- |----------
@@ -37,7 +54,7 @@ Code        | [getAccessTokenByUserHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### postNewAccessToken create a new specific accesstoken with a specific scope (list of groups)
+## postNewAccessToken create a new specific accesstoken with a specific scope (list of groups)
 
 URL         | **`/accesstoken`**
 ----------- |----------
@@ -54,7 +71,7 @@ Code        | [postNewAccessTokenHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-### putRegenAccessToken create a new specific accesstoken with a specific scope (list of groups)
+## putRegenAccessToken create a new specific accesstoken with a specific scope (list of groups)
 
 URL         | **`/accesstoken/<id>`**
 ----------- |----------

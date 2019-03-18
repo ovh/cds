@@ -1,18 +1,18 @@
 ---
-title: "import"
+title: "delete"
 notitle: true
 notoc: true
 ---
-# cdsctl action import
+# cdsctl xtoken delete
 
-`Import a CDS action`
+`Delete access token`
 
 ## Synopsis
 
-`Import a CDS action`
+`Delete access token`
 
 ```
-cdsctl action import PATH
+cdsctl xtoken delete TOKEN-ID ...
 ```
 
 ## Options inherited from parent commands
@@ -26,5 +26,5 @@ cdsctl action import PATH
 
 ## SEE ALSO
 
-* [cdsctl action](/docs/components/cdsctl/action/)	 - `Manage CDS action`
+* [cdsctl xtoken](/docs/components/cdsctl/xtoken/)	 - `Manage CDS access tokens [EXPERIMENTAL]`
 

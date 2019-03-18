@@ -3,7 +3,7 @@ title = "download"
 +++
 
 
-### GET `/download/<name>/<os>/<arch>`
+## GET `/download/<name>/<os>/<arch>`
 
 URL         | **`/download/<name>/<os>/<arch>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [downloadHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
-### GET `/download`
+## GET `/download`
 
 URL         | **`/download`**
 ----------- |----------

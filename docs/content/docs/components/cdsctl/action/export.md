@@ -9,12 +9,10 @@ notoc: true
 
 ## Synopsis
 
-Useful to export a CDS action
-
-cdsctl action export myAction
+`Export a CDS action`
 
 ```
-cdsctl action export ACTION-NAME [flags]
+cdsctl action export ACTION-PATH [flags]
 ```
 
 ## Options

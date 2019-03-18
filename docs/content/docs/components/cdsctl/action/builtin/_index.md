@@ -1,19 +1,15 @@
 ---
-title: "import"
+title: "builtin"
 notitle: true
 notoc: true
 ---
-# cdsctl action import
+# cdsctl action builtin
 
-`Import a CDS action`
+`Manage CDS builtin action`
 
 ## Synopsis
 
-`Import a CDS action`
-
-```
-cdsctl action import PATH
-```
+`Manage CDS builtin action`
 
 ## Options inherited from parent commands
 
@@ -27,4 +23,6 @@ cdsctl action import PATH
 ## SEE ALSO
 
 * [cdsctl action](/docs/components/cdsctl/action/)	 - `Manage CDS action`
+* [cdsctl action builtin list](/docs/components/cdsctl/action/builtin/list/)	 - `List CDS builtin actions`
+* [cdsctl action builtin show](/docs/components/cdsctl/action/builtin/show/)	 - `Show a CDS builtin action`
 

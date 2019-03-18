@@ -3,7 +3,7 @@ title = "mon"
 +++
 
 
-### GET `/mon/db/migrate`
+## GET `/mon/db/migrate`
 
 URL         | **`/mon/db/migrate`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [getMonDBStatusMigrateHandler](https://github.com/ovh/cds/search?q
 
 
 
-### GET `/mon/errors/<uuid>`
+## GET `/mon/errors/<uuid>`
 
 URL         | **`/mon/errors/<uuid>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [getErrorHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
-### GET `/mon/panic/<uuid>`
+## GET `/mon/panic/<uuid>`
 
 URL         | **`/mon/panic/<uuid>`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [getPanicDumpHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### GET `/mon/smtp/ping`
+## GET `/mon/smtp/ping`
 
 URL         | **`/mon/smtp/ping`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [smtpPingHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
-### GET `/mon/status`
+## GET `/mon/status`
 
 URL         | **`/mon/status`**
 ----------- |----------

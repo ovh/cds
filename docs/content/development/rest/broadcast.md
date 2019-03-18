@@ -3,7 +3,7 @@ title = "broadcast"
 +++
 
 
-### DELETE `/broadcast/<id>`
+## DELETE `/broadcast/<id>`
 
 URL         | **`/broadcast/<id>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [deleteBroadcastHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/broadcast/<id>`
+## GET `/broadcast/<id>`
 
 URL         | **`/broadcast/<id>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [getBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### GET `/broadcast`
+## GET `/broadcast`
 
 URL         | **`/broadcast`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [getBroadcastsHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### POST `/broadcast/<id>/mark`
+## POST `/broadcast/<id>/mark`
 
 URL         | **`/broadcast/<id>/mark`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [postMarkAsReadBroadcastHandler](https://github.com/ovh/cds/search
 
 
 
-### POST `/broadcast`
+## POST `/broadcast`
 
 URL         | **`/broadcast`**
 ----------- |----------
@@ -88,7 +88,7 @@ Code        | [addBroadcastHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### PUT `/broadcast/<id>`
+## PUT `/broadcast/<id>`
 
 URL         | **`/broadcast/<id>`**
 ----------- |----------

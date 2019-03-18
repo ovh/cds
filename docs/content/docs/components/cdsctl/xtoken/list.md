@@ -3,16 +3,16 @@ title: "list"
 notitle: true
 notoc: true
 ---
-# cdsctl project keys list
+# cdsctl xtoken list
 
-`List CDS project keys`
+`List your access tokens`
 
 ## Synopsis
 
-`List CDS project keys`
+`List your access tokens`
 
 ```
-cdsctl project keys list [ PROJECT-KEY ] [flags]
+cdsctl xtoken list [flags]
 ```
 
 ## Options
@@ -21,6 +21,7 @@ cdsctl project keys list [ PROJECT-KEY ] [flags]
       --fields string   Only display specified object fields. 'empty' will display all fields, 'all' will display all object fields, 'field1,field2' to select multiple fields
       --filter string   Filter output based on conditions provided
       --format string   Output format: table|json|yaml (default "table")
+  -g, --group strings   filter by group
   -q, --quiet           Only display object's key
 ```
 
@@ -35,5 +36,5 @@ cdsctl project keys list [ PROJECT-KEY ] [flags]
 
 ## SEE ALSO
 
-* [cdsctl project keys](/docs/components/cdsctl/project/keys/)	 - `Manage CDS project keys`
+* [cdsctl xtoken](/docs/components/cdsctl/xtoken/)	 - `Manage CDS access tokens [EXPERIMENTAL]`
 

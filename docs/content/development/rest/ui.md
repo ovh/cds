@@ -3,7 +3,7 @@ title = "ui"
 +++
 
 
-### GET `/ui/navbar`
+## GET `/ui/navbar`
 
 URL         | **`/ui/navbar`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [getNavbarHandler](https://github.com/ovh/cds/search?q=%22func+%28
 
 
 
-### GET `/ui/project/<project-key>/application/<applicationName>/overview`
+## GET `/ui/project/<project-key>/application/<applicationName>/overview`
 
 URL         | **`/ui/project/<project-key>/application/<applicationName>/overview`**
 ----------- |----------

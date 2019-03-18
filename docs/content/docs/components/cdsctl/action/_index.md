@@ -23,6 +23,7 @@ notoc: true
 ## SEE ALSO
 
 * [cdsctl](/docs/components/cdsctl/cdsctl/)	 - CDS Command line utility
+* [cdsctl action builtin](/docs/components/cdsctl/action/builtin/)	 - `Manage CDS builtin action`
 * [cdsctl action delete](/docs/components/cdsctl/action/delete/)	 - `Delete a CDS action`
 * [cdsctl action doc](/docs/components/cdsctl/action/doc/)	 - `Generate Action Documentation: cdsctl action doc <path-to-file>`
 * [cdsctl action export](/docs/components/cdsctl/action/export/)	 - `Export a CDS action`

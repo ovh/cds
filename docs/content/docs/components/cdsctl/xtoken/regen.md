@@ -1,18 +1,18 @@
 ---
-title: "import"
+title: "regen"
 notitle: true
 notoc: true
 ---
-# cdsctl action import
+# cdsctl xtoken regen
 
-`Import a CDS action`
+`Regenerate access token`
 
 ## Synopsis
 
-`Import a CDS action`
+`Regenerate access token`
 
 ```
-cdsctl action import PATH
+cdsctl xtoken regen TOKEN-ID ...
 ```
 
 ## Options inherited from parent commands
@@ -26,5 +26,5 @@ cdsctl action import PATH
 
 ## SEE ALSO
 
-* [cdsctl action](/docs/components/cdsctl/action/)	 - `Manage CDS action`
+* [cdsctl xtoken](/docs/components/cdsctl/xtoken/)	 - `Manage CDS access tokens [EXPERIMENTAL]`
 

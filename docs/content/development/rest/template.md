@@ -3,7 +3,7 @@ title = "template"
 +++
 
 
-### DELETE `/template/<group-name>/<templateSlug>/instance/<instanceID>`
+## DELETE `/template/<group-name>/<templateSlug>/instance/<instanceID>`
 
 URL         | **`/template/<group-name>/<templateSlug>/instance/<instanceID>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [deleteTemplateInstanceHandler](https://github.com/ovh/cds/search?
 
 
 
-### DELETE `/template/<group-name>/<templateSlug>`
+## DELETE `/template/<group-name>/<templateSlug>`
 
 URL         | **`/template/<group-name>/<templateSlug>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [deleteTemplateHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### GET `/template/<group-name>/<templateSlug>/audit`
+## GET `/template/<group-name>/<templateSlug>/audit`
 
 URL         | **`/template/<group-name>/<templateSlug>/audit`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [getTemplateAuditsHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### GET `/template/<group-name>/<templateSlug>/bulk/<bulkID>`
+## GET `/template/<group-name>/<templateSlug>/bulk/<bulkID>`
 
 URL         | **`/template/<group-name>/<templateSlug>/bulk/<bulkID>`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [getTemplateBulkHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/template/<group-name>/<templateSlug>/instance`
+## GET `/template/<group-name>/<templateSlug>/instance`
 
 URL         | **`/template/<group-name>/<templateSlug>/instance`**
 ----------- |----------
@@ -88,7 +88,7 @@ Code        | [getTemplateInstancesHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### GET `/template/<group-name>/<templateSlug>/usage`
+## GET `/template/<group-name>/<templateSlug>/usage`
 
 URL         | **`/template/<group-name>/<templateSlug>/usage`**
 ----------- |----------
@@ -105,7 +105,7 @@ Code        | [getTemplateUsageHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### GET `/template/<group-name>/<templateSlug>`
+## GET `/template/<group-name>/<templateSlug>`
 
 URL         | **`/template/<group-name>/<templateSlug>`**
 ----------- |----------
@@ -122,7 +122,7 @@ Code        | [getTemplateHandler](https://github.com/ovh/cds/search?q=%22func+%
 
 
 
-### GET `/template`
+## GET `/template`
 
 URL         | **`/template`**
 ----------- |----------
@@ -139,7 +139,7 @@ Code        | [getTemplatesHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### POST `/template/<group-name>/<templateSlug>/apply`
+## POST `/template/<group-name>/<templateSlug>/apply`
 
 URL         | **`/template/<group-name>/<templateSlug>/apply`**
 ----------- |----------
@@ -156,7 +156,7 @@ Code        | [postTemplateApplyHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-### POST `/template/<group-name>/<templateSlug>/bulk`
+## POST `/template/<group-name>/<templateSlug>/bulk`
 
 URL         | **`/template/<group-name>/<templateSlug>/bulk`**
 ----------- |----------
@@ -173,7 +173,7 @@ Code        | [postTemplateBulkHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/template/<group-name>/<templateSlug>/pull`
+## POST `/template/<group-name>/<templateSlug>/pull`
 
 URL         | **`/template/<group-name>/<templateSlug>/pull`**
 ----------- |----------
@@ -190,7 +190,7 @@ Code        | [postTemplatePullHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/template/push`
+## POST `/template/push`
 
 URL         | **`/template/push`**
 ----------- |----------
@@ -207,7 +207,7 @@ Code        | [postTemplatePushHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/template`
+## POST `/template`
 
 URL         | **`/template`**
 ----------- |----------
@@ -224,7 +224,7 @@ Code        | [postTemplateHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### PUT `/template/<group-name>/<templateSlug>`
+## PUT `/template/<group-name>/<templateSlug>`
 
 URL         | **`/template/<group-name>/<templateSlug>`**
 ----------- |----------

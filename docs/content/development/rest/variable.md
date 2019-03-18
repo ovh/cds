@@ -3,7 +3,7 @@ title = "variable"
 +++
 
 
-### GET `/variable/type`
+## GET `/variable/type`
 
 URL         | **`/variable/type`**
 ----------- |----------

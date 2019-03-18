@@ -3,7 +3,7 @@ title = "admin"
 +++
 
 
-### DELETE `/admin/database/migration/delete/<id>`
+## DELETE `/admin/database/migration/delete/<id>`
 
 URL         | **`/admin/database/migration/delete/<id>`**
 ----------- |----------
@@ -20,7 +20,7 @@ Code        | [deleteDatabaseMigrationHandler](https://github.com/ovh/cds/search
 
 
 
-### DELETE `/admin/plugin/<name>/binary/<os>/<arch>`
+## DELETE `/admin/plugin/<name>/binary/<os>/<arch>`
 
 URL         | **`/admin/plugin/<name>/binary/<os>/<arch>`**
 ----------- |----------
@@ -37,7 +37,7 @@ Code        | [deleteGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q
 
 
 
-### DELETE `/admin/plugin/<name>`
+## DELETE `/admin/plugin/<name>`
 
 URL         | **`/admin/plugin/<name>`**
 ----------- |----------
@@ -54,7 +54,7 @@ Code        | [deleteGRPCluginHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### DELETE `/admin/service/<name>`
+## DELETE `/admin/service/<name>`
 
 URL         | **`/admin/service/<name>`**
 ----------- |----------
@@ -71,7 +71,7 @@ Code        | [deleteAdminServiceHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-### DELETE `/admin/services/call`
+## DELETE `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
@@ -88,7 +88,7 @@ Code        | [deleteAdminServiceCallHandler](https://github.com/ovh/cds/search?
 
 
 
-### DELETE `/admin/warning`
+## DELETE `/admin/warning`
 
 URL         | **`/admin/warning`**
 ----------- |----------
@@ -105,7 +105,7 @@ Code        | [adminTruncateWarningsHandler](https://github.com/ovh/cds/search?q
 
 
 
-### GET `/admin/cds/migration`
+## GET `/admin/cds/migration`
 
 URL         | **`/admin/cds/migration`**
 ----------- |----------
@@ -122,7 +122,7 @@ Code        | [getAdminMigrationsHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-### GET `/admin/database/migration`
+## GET `/admin/database/migration`
 
 URL         | **`/admin/database/migration`**
 ----------- |----------
@@ -139,7 +139,7 @@ Code        | [getDatabaseMigrationHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### GET `/admin/plugin/<name>/binary/<os>/<arch>/infos`
+## GET `/admin/plugin/<name>/binary/<os>/<arch>/infos`
 
 URL         | **`/admin/plugin/<name>/binary/<os>/<arch>/infos`**
 ----------- |----------
@@ -156,7 +156,7 @@ Code        | [getGRPCluginBinaryInfosHandler](https://github.com/ovh/cds/search
 
 
 
-### GET `/admin/plugin/<name>/binary/<os>/<arch>`
+## GET `/admin/plugin/<name>/binary/<os>/<arch>`
 
 URL         | **`/admin/plugin/<name>/binary/<os>/<arch>`**
 ----------- |----------
@@ -173,7 +173,7 @@ Code        | [getGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-### GET `/admin/plugin/<name>`
+## GET `/admin/plugin/<name>`
 
 URL         | **`/admin/plugin/<name>`**
 ----------- |----------
@@ -190,7 +190,7 @@ Code        | [getGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### GET `/admin/plugin`
+## GET `/admin/plugin`
 
 URL         | **`/admin/plugin`**
 ----------- |----------
@@ -207,7 +207,7 @@ Code        | [getAllGRPCluginHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/admin/service/<name>`
+## GET `/admin/service/<name>`
 
 URL         | **`/admin/service/<name>`**
 ----------- |----------
@@ -224,7 +224,7 @@ Code        | [getAdminServiceHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### GET `/admin/services/call`
+## GET `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
@@ -241,7 +241,7 @@ Code        | [getAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### GET `/admin/services`
+## GET `/admin/services`
 
 URL         | **`/admin/services`**
 ----------- |----------
@@ -258,7 +258,7 @@ Code        | [getAdminServicesHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-### POST `/admin/cds/migration/<id>/cancel`
+## POST `/admin/cds/migration/<id>/cancel`
 
 URL         | **`/admin/cds/migration/<id>/cancel`**
 ----------- |----------
@@ -275,7 +275,7 @@ Code        | [postAdminMigrationCancelHandler](https://github.com/ovh/cds/searc
 
 
 
-### POST `/admin/cds/migration/<id>/todo`
+## POST `/admin/cds/migration/<id>/todo`
 
 URL         | **`/admin/cds/migration/<id>/todo`**
 ----------- |----------
@@ -292,7 +292,7 @@ Code        | [postAdminMigrationTodoHandler](https://github.com/ovh/cds/search?
 
 
 
-### POST `/admin/database/migration/unlock/<id>`
+## POST `/admin/database/migration/unlock/<id>`
 
 URL         | **`/admin/database/migration/unlock/<id>`**
 ----------- |----------
@@ -309,7 +309,7 @@ Code        | [postDatabaseMigrationUnlockedHandler](https://github.com/ovh/cds/
 
 
 
-### POST `/admin/maintenance`
+## POST `/admin/maintenance`
 
 URL         | **`/admin/maintenance`**
 ----------- |----------
@@ -326,7 +326,7 @@ Code        | [postMaintenanceHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### POST `/admin/plugin/<name>/binary`
+## POST `/admin/plugin/<name>/binary`
 
 URL         | **`/admin/plugin/<name>/binary`**
 ----------- |----------
@@ -343,7 +343,7 @@ Code        | [postGRPCluginBinaryHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### POST `/admin/plugin`
+## POST `/admin/plugin`
 
 URL         | **`/admin/plugin`**
 ----------- |----------
@@ -360,7 +360,7 @@ Code        | [postPGRPCluginHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-### POST `/admin/services/call`
+## POST `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
@@ -377,7 +377,7 @@ Code        | [postAdminServiceCallHandler](https://github.com/ovh/cds/search?q=
 
 
 
-### PUT `/admin/plugin/<name>`
+## PUT `/admin/plugin/<name>`
 
 URL         | **`/admin/plugin/<name>`**
 ----------- |----------
@@ -394,7 +394,7 @@ Code        | [putGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-### PUT `/admin/services/call`
+## PUT `/admin/services/call`
 
 URL         | **`/admin/services/call`**
 ----------- |----------
@@ -411,7 +411,7 @@ Code        | [putAdminServiceCallHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-### getCPUProfile responds with the pprof-formatted cpu profile.
+## getCPUProfile responds with the pprof-formatted cpu profile.
 
 URL         | **`/admin/debug/cpu`**
 ----------- |----------
@@ -428,7 +428,7 @@ Code        | [getCPUProfileHandler](https://github.com/ovh/cds/search?q=%22func
 
 
 
-### getProfile responds with the pprof-formatted profile named by the request.
+## getProfile responds with the pprof-formatted profile named by the request.
 
 URL         | **`/admin/debug/<name>`**
 ----------- |----------
@@ -445,7 +445,7 @@ Code        | [getProfileHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
-### getProfileIndex returns the profiles index
+## getProfileIndex returns the profiles index
 
 URL         | **`/admin/debug`**
 ----------- |----------
@@ -462,7 +462,7 @@ Code        | [getProfileIndexHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-### getTrace responds with the execution trace in binary form.
+## getTrace responds with the execution trace in binary form.
 
 URL         | **`/admin/debug/trace`**
 ----------- |----------

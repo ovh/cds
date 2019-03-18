@@ -3,7 +3,7 @@ title = "parameter"
 +++
 
 
-### GET `/parameter/type`
+## GET `/parameter/type`
 
 URL         | **`/parameter/type`**
 ----------- |----------
