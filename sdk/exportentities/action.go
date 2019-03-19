@@ -308,8 +308,8 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 		return nil, false, nil
 	}
 
-	bS, ok := bI.(string)
-	if !ok {
+	bS, isString := bI.(string)
+	if !isString {
 		asScript, ok := bI.([]interface{})
 		asScriptString := make([]string, len(asScript))
 		for i := range asScript {
