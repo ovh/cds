@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -127,7 +126,7 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 
 	payload["payload"] = string(e.GerritEvent.Message)
 
-	d := dump.NewDefaultEncoder(&bytes.Buffer{})
+	d := dump.NewDefaultEncoder()
 	d.ExtraFields.Type = false
 	d.ExtraFields.Len = false
 	d.ExtraFields.DetailedMap = false
