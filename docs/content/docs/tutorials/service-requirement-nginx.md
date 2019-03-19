@@ -1,6 +1,8 @@
 ---
 title: "Service Requirement NGINX"
 weight: 2
+card: 
+  name: tutorial_requirements
 ---
 
 ## Add the service requirement

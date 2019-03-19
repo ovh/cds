@@ -1,6 +1,8 @@
 ---
 title: "Worker Model Docker"
 weight: 5
+card: 
+  name: worker-model
 ---
 
 A worker model of type `docker` can be spawned by a Hatchery Docker Swarm or a Hatchery Marathon.

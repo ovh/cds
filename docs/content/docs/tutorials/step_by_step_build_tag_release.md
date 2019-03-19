@@ -1,6 +1,8 @@
 ---
 title: "Build, tag and release an application"
 weight: 4
+card: 
+  name: tutorial_workflow
 ---
 
 {{% notice note %}}

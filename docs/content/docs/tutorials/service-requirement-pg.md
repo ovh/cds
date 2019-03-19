@@ -1,6 +1,8 @@
 ---
 title: "Service Requirement PostgreSQL"
 weight: 3
+card: 
+  name: tutorial_requirements
 ---
 
 ## Add the service requirement

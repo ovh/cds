@@ -1,7 +1,9 @@
-+++
-title = "Import a CDS Workflow from a repository"
-weight = 2
-+++
+---
+title: "Import a CDS Workflow from a repository"
+weight: 2
+card: 
+  name: tutorial_workflow
+---
 
 {{% notice note %}}
 

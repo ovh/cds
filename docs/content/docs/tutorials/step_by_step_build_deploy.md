@@ -1,6 +1,8 @@
 ---
 title: "Build & Deploy a standard application"
 weight: 3
+card: 
+  name: tutorial_workflow
 ---
 
 {{% notice note %}}

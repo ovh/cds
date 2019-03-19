@@ -1,6 +1,8 @@
 ---
 title: "With your own image"
 weight: 2
+card: 
+  name: tutorial_worker-model
 ---
 
 A worker model of type `docker` can be spawned by a Hatchery Docker Swarm
