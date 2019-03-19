@@ -14,8 +14,7 @@ In this tutorial, you will create a CDS Workflow from an existing git repository
 ## Prerequisites
 
  * Have an account on your CDS instance
- * Have a CDS project and a [Repository manager]({{< relref "/hosting/repositories-manager/_index.md" >}}) has been set up on your CDS Instance
- 
+* Have a Repository manager as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}) setted up on your CDS Instance. 
 ## Prepare your git repository
 
 The easiest way to initialize cds files in your repository is to follow [first tutorial]({{< relref "init_workflow_with_cdsctl.md" >}})

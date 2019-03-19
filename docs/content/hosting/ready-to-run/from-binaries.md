@@ -24,7 +24,7 @@ cd cds
 
 LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '"' -f 4)
 OS=linux # could be linux, darwin, windows
-ARCH=amd64 # could be 386, arm, amd64
+ARCH=amd64 # could be 386, arm, amd64, arm64
 
 # GET Binaries from GitHub
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH
@@ -134,5 +134,5 @@ Then, start the local hatchery
 ## Go further
 
 - How to use OpenStack infrastructure to spawn CDS container [read more]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}})
-- Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
+* Link CDS to a Repository Manager as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}) setted up on your CDS Instance.
 - Learn more about CDS variables [read more]({{< relref "/docs/concepts/variables.md" >}})

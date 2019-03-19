@@ -196,7 +196,7 @@ If you want to launch vcs & hooks uServices, you have to:
 
 - set name in sections `[vcs]` and `[hooks]`
 - uncomment API URL in sections `[vcs.api.http]` and `[hooks.api.http]`
-- for vcs uService, please read [repositories-manager]({{< relref "/hosting/repositories-manager/_index.md" >}})
+- for vcs uService, please read tutorial on [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}).
 
 Of course, you have to do the same thing with other uServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
 

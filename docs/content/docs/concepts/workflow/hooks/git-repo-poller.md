@@ -9,7 +9,7 @@ This kind of hook will poll periodically the GitHub API to know the push and pul
 
 You have to:
 
-* link your project to a Repository Manager, on Advanced Section. [See how to setup repository manager on your CDS instance]({{< relref "/hosting/repositories-manager/_index.md" >}}).
+* link your project to a Repository Manager, on Advanced Section.
 * link an application to a git repository
 * add a Git Poller on the root pipeline, this pipeline have the application linked in the [context]({{< relref "/docs/concepts/workflow/pipeline-context.md" >}})
 
