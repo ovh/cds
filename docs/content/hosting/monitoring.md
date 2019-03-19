@@ -1,6 +1,8 @@
 ---
 title: "Monitoring"
 weight: 8
+card: 
+  name: operate
 ---
 
 ## Status Handler on API

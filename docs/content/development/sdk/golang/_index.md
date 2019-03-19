@@ -1,5 +1,7 @@
 ---
 title: "SDK Golang"
+card: 
+  name: rest-sdk
 ---
 
 ## Generate a persistent token

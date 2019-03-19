@@ -1,8 +1,9 @@
 ---
 title: "Upgrade your CDS Instance"
 weight: 9
+card: 
+  name: operate
 ---
-
 
 ## Upgrade Binary
 

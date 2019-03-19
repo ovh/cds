@@ -1,9 +1,9 @@
 ---
 title: "Run with binaries"
 weight: 3
+card: 
+  name: ready-to-run
 ---
-
-## Run from binaries
 
 This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
 
@@ -130,6 +130,66 @@ Then, start the local hatchery
 # notice that you can run api and hatchery with one common only:
 # ./cds-engine-linux-amd64 start api hatchery:local --config $HOME/cds/conf.toml
 ```
+
+## Note about CDS Engine
+
+It is possible to start all services as a single process `$ engine start api hooks hatchery:local --config config.toml`.
+
+```bash
+$ engine start api hooks hatchery:local --config config.toml
+Reading configuration file config.toml
+Starting service api
+...
+Starting service hooks
+...
+Starting service vcs
+...
+Starting service hatchery:local
+...
+```
+
+For serious deployment, we strongly suggest to run each service as a dedicated process.
+
+```bash
+
+$ engine start api --config config.toml
+
+$ engine start hooks --config config.toml
+
+$ engine start vcs --config config.toml
+
+$ engine start hatchery:local --config config.toml
+$ engine start hatchery:docker --config config.toml
+$ engine start hatchery:swarm --config config.toml
+$ engine start hatchery:marathon --config config.toml
+$ engine start hatchery:openstack --config config.toml
+$ engine start hatchery:vsphere --config config.toml
+
+```
+
+You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.
+
+```bash
+$ engine config new > config.api.toml # All API instance can share the same configuration.
+
+$ cp config.api.toml config.hatchery.swarm-1.toml
+$ cp config.api.toml config.hatchery.swarm-2.toml
+$ cp config.api.toml config.hatchery.swarm-3.toml
+$ cp config.api.toml config.hooks.toml
+$ cp config.api.toml config.vcs.toml
+
+$ vi config.hatchery.local.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.local] sections
+$ vi config.hatchery.docker.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.docker] sections
+$ vi config.hatchery.swarm-1.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hatchery.swarm-2.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hatchery.swarm-3.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hooks.toml # Edit the file and keep only the [logs] and [hooks] sections
+$ vi config.vcs.toml # Edit the file and keep only the [logs] and [vcs] sections
+
+...
+```
+
+If you decide to use consul or vault to store your configuration, you will have to use different key/secrets to store each piece of the configuration
 
 ## Go further
 

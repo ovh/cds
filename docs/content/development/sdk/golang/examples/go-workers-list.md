@@ -1,5 +1,7 @@
 ---
-title: "Workers List"
+title: "Example of Code - Workers List"
+card: 
+  name: rest-sdk
 ---
 
 Create a file `main.go` with this content:

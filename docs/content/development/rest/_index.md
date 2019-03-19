@@ -2,6 +2,8 @@
 title: "REST API"
 main_menu: true
 weight: 6
+card: 
+  name: rest-sdk
 ---
 
 ## How to request CDS API?

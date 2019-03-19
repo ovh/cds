@@ -1,6 +1,8 @@
 ---
 title: "Develop a hatchery"
 weight: 3
+card: 
+  name: contribute
 ---
 
 ## Example with a creation of a vSphere hatchery

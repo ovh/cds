@@ -1,6 +1,8 @@
 ---
 title: "Database Management"
 weight: 6
+card: 
+  name: operate
 ---
 
 

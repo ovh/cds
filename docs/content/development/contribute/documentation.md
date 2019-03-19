@@ -1,6 +1,8 @@
 ---
 title: "Write documentation"
 weight: 2
+card: 
+  name: contribute
 ---
 
 Documentation https://ovh.github.io/cds is generated with Hugo. Source are under https://github.com/ovh/cds/tree/master/docs/content

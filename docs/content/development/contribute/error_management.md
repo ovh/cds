@@ -1,6 +1,8 @@
 ---
 title: "Error management"
 weight: 6
+card: 
+  name: develop
 ---
 
 This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.

@@ -1,6 +1,8 @@
 ---
 title: "Develop a plugin"
 weight: 5
+card: 
+  name: contribute
 ---
 
 A CDS worker executes job, and job is composed of steps.

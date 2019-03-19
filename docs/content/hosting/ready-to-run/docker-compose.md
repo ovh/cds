@@ -1,6 +1,8 @@
 ---
 title: "Docker Compose"
 weight: 1
+card: 
+  name: ready-to-run
 ---
 
 ## Run with Docker-Compose

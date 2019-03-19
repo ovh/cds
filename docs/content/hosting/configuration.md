@@ -1,6 +1,8 @@
 ---
 title: "Configuration"
 weight: 5
+card: 
+  name: operate
 ---
 
 The toml configuration can be provided by a file, via [consul k/v store](https://www.consul.io) or via [vault](https://www.vaultproject.io/).
