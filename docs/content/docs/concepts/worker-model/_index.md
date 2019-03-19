@@ -1,6 +1,8 @@
 ---
 title: "Worker Model"
 weight: 9
+card: 
+  name: worker-model
 ---
 
 ## Purpose

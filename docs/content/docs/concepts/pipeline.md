@@ -1,6 +1,8 @@
 ---
 title: "Pipeline"
 weight: 3
+card: 
+  name: pipeline
 ---
 
 ![Pipeline](../images/pipeline.png?width=500px)

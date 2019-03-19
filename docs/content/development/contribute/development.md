@@ -2,7 +2,7 @@
 title: "Development Environment"
 weight: 3
 card: 
-  name: develop
+  name: contribute
 ---
 
 Before contributing to CDS, you'll need to install your

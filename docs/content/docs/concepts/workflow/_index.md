@@ -1,6 +1,8 @@
 ---
 title: "Workflow"
 weight: 7
+card: 
+  name: workflow
 ---
 
 The workflow concept is a key feature, and widely considered a native, manageable and feature-rich entity in CDS. A CDS Workflow allows you to chain pipelines with manual or automatic gates, using conditional branching. A workflow can be stored as code, designed on CDS UI, or both, depending on what best suits you. 

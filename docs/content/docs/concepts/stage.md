@@ -3,7 +3,6 @@ title: "Stage"
 weight: 4
 card: 
   name: pipeline
-  weight: 11
 ---
 
 

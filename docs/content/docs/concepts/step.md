@@ -3,7 +3,6 @@ title: "Step"
 weight: 5
 card: 
   name: pipeline
-  weight: 9
 ---
 
 The steps of a job is the list of the different operations performed by the CDS worker. Each step is based on an **Action** pre-defined by CDS. The list of all actions is defined on `*<your cds url ui>/#/action*`. When a step fails, its parent job is stopped and marked as `failed`.
