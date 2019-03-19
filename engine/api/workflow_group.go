@@ -22,8 +22,9 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 		groupName := vars["groupName"]
+		u := deprecatedGetUser(ctx)
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -31,7 +32,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, u, options)
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
