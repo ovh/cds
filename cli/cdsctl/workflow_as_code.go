@@ -214,6 +214,7 @@ func workflowInitRun(c cli.Values) error {
 	for _, r := range repos {
 		// r.Fullname = CDS/demo
 		if strings.ToLower(r.Fullname) == repoName {
+			repoName = r.Fullname
 			repoFound = true
 		}
 	}
@@ -233,8 +234,8 @@ func workflowInitRun(c cli.Values) error {
 			existingApp = &apps[i]
 			break
 		} else if a.Name == name {
-			fmt.Printf("application %s/%s found in CDS. ", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
-			fmt.Printf(cli.Red("But it's not linked to repository")+"\"%s\". ", cli.Red(repoName))
+			fmt.Printf("application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
+			fmt.Println(cli.Red("But it's not linked to repository"), cli.Red(repoName))
 			if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
 				return fmt.Errorf("operation aborted")
 			}
