@@ -5,6 +5,10 @@
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
+			<div id="btn-gh">
+				<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+				<script async defer src="https://buttons.github.io/buttons.js"></script>
+			</div>
 			{{- if ne .Params.cid "home" }}
 			<a href="{{ site.Home.RelPermalink }}" class="logo"></a>
 			{{- end -}}
