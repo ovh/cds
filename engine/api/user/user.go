@@ -291,8 +291,8 @@ func insertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
 	return db.QueryRow(query, u.Username, u.Admin, su, sa, time.Now(), u.Origin).Scan(&u.ID)
 }
 
-// NewPersistentSession creates a new persistent session token in database
-func NewPersistentSession(db gorp.SqlExecutor, u *sdk.User) (sessionstore.SessionKey, error) {
+// NewPersistentSession_DEPRECATED creates a new persistent session token in database
+func NewPersistentSession_DEPRECATED(db gorp.SqlExecutor, u *sdk.User) (sessionstore.SessionKey, error) {
 	t, errSession := sessionstore.NewSessionKey()
 	if errSession != nil {
 		return "", errSession

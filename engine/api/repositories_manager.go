@@ -75,9 +75,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":           url,
-			"request_token": token,
-			"username":      deprecatedGetUser(ctx).Username,
+			"url":                  url,
+			"request_token":        token,
+			"username":             deprecatedGetUser(ctx).Username,
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -108,9 +108,14 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		rmName := data["repositories_manager"]
 		username := data["username"]
 
-		u, errU := user.LoadUserWithoutAuth(api.mustDB(), username)
-		if errU != nil {
-			return sdk.WrapError(errU, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		if err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		}
+
+		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
+		if err != nil {
+			return err
 		}
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, u)

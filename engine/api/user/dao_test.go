@@ -2,6 +2,7 @@ package user_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
@@ -11,11 +12,10 @@ import (
 
 func TestAuthenticatedUserDAO(t *testing.T) {
 	var u = sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-		Email:    sdk.RandomString(10),
-		Fullname: sdk.RandomString(10),
-		Origin:   sdk.RandomString(10),
-		Ring:     sdk.UserRingAdmin,
+		Username:     sdk.RandomString(10),
+		Fullname:     sdk.RandomString(10),
+		Ring:         sdk.UserRingAdmin,
+		DateCreation: time.Now(),
 	}
 
 	db, _, _ := test.SetupPG(t)

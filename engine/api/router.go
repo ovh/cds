@@ -33,8 +33,8 @@ const nbPanicsBeforeFail = 50
 
 // Router is a wrapper around mux.Router
 type Router struct {
-	Background             context.Context
-	AuthDriver             auth.Driver
+	Background context.Context
+	//	AuthDriver             auth.Driver
 	Mux                    *mux.Router
 	SetHeaderFunc          func() map[string]string
 	Prefix                 string
@@ -61,9 +61,8 @@ func NewHandlerConfig() *service.HandlerConfig {
 	}
 }
 
-func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
+func newRouter(m *mux.Router, p string) *Router {
 	r := &Router{
-		AuthDriver:             a,
 		Mux:                    m,
 		Prefix:                 p,
 		URL:                    "",

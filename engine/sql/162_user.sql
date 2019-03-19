@@ -29,8 +29,21 @@ CREATE TABLE IF NOT EXISTS "user_local_authentication" (
 SELECT create_foreign_key_idx_cascade('FK_LOCAL_AUTH_AUTHENTIFIED', 'user_local_authentication', 'authentified_user', 'user_id', 'id');
 
 
+CREATE TABLE IF NOT EXISTS "user_contact" (
+  id BIGSERIAL PRIMARY KEY,
+  user_id VARCHAR(36),
+  type TEXT NOT NULL,
+  value TEXT NOT NULL,
+  primary_contact BOOLEAN NOT NULL DEFAULT FALSE,
+  sig BYTEA
+);
+
+SELECT create_foreign_key_idx_cascade('FK_USER_CONTACT_AUTHENTIFIED', 'user_contact', 'authentified_user', 'user_id', 'id');
+
+
 -- +migrate Down
 
 DROP TABLE  "authentified_user";
 DROP TABLE  "authentified_user_migration";
 DROP TABLE  "user_local_authentication";
+DROP TABLE  "user_contact";

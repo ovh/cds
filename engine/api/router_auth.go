@@ -77,7 +77,7 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 			}
 		default:
 			var err error
-			ctx, err = api.Router.AuthDriver.CheckAuth(ctx, w, req)
+			ctx, err = auth.CheckAuth_DEPRECATED(ctx, w, req, api.mustDB())
 			if err != nil {
 				return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
@@ -258,7 +258,7 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 
 	// TEMPORARY CODE
 	// SHOULD BE REMOVED WITH REFACTO OF PERMISSIONS
-	ctx, err = api.Router.AuthDriver.DeprecatedSession(ctx, token.ID, token.User.Username)
+	ctx, err = auth.DeprecatedSession(ctx, api.mustDB(), token.ID, token.User.Username)
 	if err != nil {
 		return ctx, false, sdk.WithStack(err)
 	}

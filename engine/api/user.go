@@ -1,6 +1,8 @@
 package api
 
 import (
+	"github.com/ovh/cds/engine/api/authentication/localauthentication"
+	"github.com/nbutton23/zxcvbn-go"
 	"context"
 	"database/sql"
 	"net/http"
@@ -33,9 +35,14 @@ func (api *API) deleteUserHandler() service.Handler {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		u, errLoad := user.LoadUserWithoutAuth(api.mustDB(), username)
-		if errLoad != nil {
-			return sdk.WrapError(errLoad, "Cannot load user from db")
+		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		if err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		}
+
+		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
+		if err != nil {
+			return err
 		}
 
 		tx, errb := api.mustDB().Begin()
@@ -66,9 +73,14 @@ func (api *API) getUserHandler() service.Handler {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		u, err := user.LoadUserWithoutAuth(api.mustDB(), username)
+		usr, err := user.LoadUserByUsername(api.mustDB(), username)
 		if err != nil {
-			return sdk.WrapError(err, "getUserHandler: Cannot load user from db")
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		}
+
+		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
+		if err != nil {
+			return err
 		}
 
 		if err = loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
@@ -89,9 +101,14 @@ func (api *API) getUserGroupsHandler() service.Handler {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		u, errl := user.LoadUserWithoutAuth(api.mustDB(), username)
-		if errl != nil {
-			return sdk.WrapError(errl, "getUserHandler: Cannot load user from db")
+		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		if err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		}
+
+		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
+		if err != nil {
+			return err
 		}
 
 		var groups, groupsAdmin []sdk.Group
@@ -118,34 +135,40 @@ func (api *API) getUserGroupsHandler() service.Handler {
 // UpdateUserHandler modifies user informations
 func (api *API) updateUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		username := vars["username"]
-
-		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
-			return service.WriteJSON(w, nil, http.StatusForbidden)
-		}
-
-		userDB, errload := user.LoadUserWithoutAuth(api.mustDB(), username)
-		if errload != nil {
-			return sdk.WrapError(errload, "getUserHandler: Cannot load user from db")
-		}
-
-		var userBody sdk.User
-		if err := service.UnmarshalBody(r, &userBody); err != nil {
-			return err
-		}
-
-		userBody.ID = userDB.ID
-
-		if !user.IsValidEmail(userBody.Email) {
-			return sdk.WrapError(sdk.ErrWrongRequest, "updateUserHandler: Email address %s is not valid", userBody.Email)
-		}
-
-		if err := user.UpdateUser(api.mustDB(), userBody); err != nil {
-			return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
-		}
-
-		return service.WriteJSON(w, userBody, http.StatusOK)
+		//vars := mux.Vars(r)
+		//username := vars["username"]
+		//
+		//if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
+		//	return service.WriteJSON(w, nil, http.StatusForbidden)
+		//}
+		//
+		//usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		//if err != nil {
+		//	return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		//}
+		//
+		//u, err := user.GetDeprecatedUser(api.mustDB(), usr)
+		//if err != nil {
+		//	return err
+		//}
+		//
+		//var userBody sdk.User
+		//if err := service.UnmarshalBody(r, &userBody); err != nil {
+		//	return err
+		//}
+		//
+		//userBody.ID = userDB.ID
+		//
+		//if !user.IsValidEmail(userBody.Email) {
+		//	return sdk.WrapError(sdk.ErrWrongRequest, "updateUserHandler: Email address %s is not valid", userBody.Email)
+		//}
+		//
+		//if err := user.UpdateUser(api.mustDB(), userBody); err != nil {
+		//	return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
+		//}
+		//
+		//return service.WriteJSON(w, userBody, http.StatusOK)
+		return nil
 	}
 }
 
@@ -168,9 +191,8 @@ func (api *API) getUserLoggedHandler() service.Handler {
 			return sdk.ErrUnauthorized
 		}
 
-		store := api.Router.AuthDriver.Store()
 		key := sessionstore.SessionKey(h)
-		if ok, _ := store.Exists(key); !ok {
+		if ok, _ := auth.Store.Exists(key); !ok {
 			return sdk.ErrUnauthorized
 		}
 
@@ -257,68 +279,77 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 // AddUser creates a new user and generate verification email
 func (api *API) addUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		//returns forbidden if LDAP mode is activated
-		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
-			return sdk.ErrForbidden
+		// TODO: check if local auth is activated
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
 		}
 
-		createUserRequest := sdk.UserAPIRequest{}
+		defer tx.Rollback() // nolint
+
+		createUserRequest := sdk.UserRequest{}
 		if err := service.UnmarshalBody(r, &createUserRequest); err != nil {
 			return err
 		}
 
-		if createUserRequest.User.Username == "" {
+		passwordStrength := zxcvbn.PasswordStrength(createUserRequest.Password, nil).Score
+		if passwordStrength < 3 {
+			return sdk.ErrWrongRequest
+		}
+
+		if createUserRequest.Username == "" {
 			return sdk.WrapError(sdk.ErrInvalidUsername, "AddUser: Empty username is invalid")
 		}
 
-		if !user.IsValidEmail(createUserRequest.User.Email) {
-			return sdk.WrapError(sdk.ErrInvalidEmail, "AddUser: Email address %s is not valid", createUserRequest.User.Email)
+		if !user.IsValidEmail(createUserRequest.Email) {
+			return sdk.WrapError(sdk.ErrInvalidEmail, "AddUser: Email address %s is not valid", createUserRequest.Email)
 		}
 
-		if !user.IsAllowedDomain(api.Config.Auth.Local.SignupAllowedDomains, createUserRequest.User.Email) {
-			return sdk.WrapError(sdk.ErrInvalidEmailDomain, "AddUser: Email address %s does not have a valid domain. Allowed domains:%v", createUserRequest.User.Email, api.Config.Auth.Local.SignupAllowedDomains)
+		if !user.IsAllowedDomain(api.Config.Auth.Local.SignupAllowedDomains, createUserRequest.Email) {
+			return sdk.WrapError(sdk.ErrInvalidEmailDomain, "AddUser: Email address %s does not have a valid domain. Allowed domains:%v", createUserRequest.Email, api.Config.Auth.Local.SignupAllowedDomains)
 		}
 
-		u := createUserRequest.User
-		u.Origin = "local"
+		var usr = sdk.AuthentifiedUser{
+			Ring:         sdk.UserRingUser,
+			Username:     createUserRequest.Username,
+			Fullname: createUserRequest.Fullname, 
+			DateCreation: time.Now(),
+		} 
 
-		// Check that user does not already exists
-		query := `SELECT * FROM "user" WHERE username = $1`
-		rows, err := api.mustDB().Query(query, u.Username)
-		if err != nil {
-			return sdk.WrapError(err, "AddUsers: Cannot check if user %s exist", u.Username)
-		}
-		defer rows.Close()
-		if rows.Next() {
-			return sdk.WrapError(sdk.ErrUserConflict, "AddUser: User %s already exists", u.Username)
-		}
-
-		tokenVerify, hashedToken, errg := user.GeneratePassword()
-		if errg != nil {
-			return sdk.WrapError(errg, "AddUser: Error while generate Token Verify for new user")
-		}
-
-		auth := sdk.NewAuth(hashedToken)
-
+		// The first user is set as ADMIN
 		nbUsers, errc := user.CountUser(api.mustDB())
 		if errc != nil {
 			return sdk.WrapError(errc, "AddUser: Cannot count user")
 		}
 		if nbUsers == 0 {
-			u.Admin = true
-		} else {
-			u.Admin = false
+			usr.Ring = sdk.UserRingAdmin
 		}
 
-		if err := user.InsertUser(api.mustDB(), &u, auth); err != nil {
-			return sdk.WrapError(err, "AddUser: Cannot insert user")
+		// Insert the user
+		if err := user.Insert(tx, &usr); err != nil {
+			return err
 		}
 
-		go func() {
-			if errM := mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback); errM != nil {
-				log.Warning("addUserHandler.SendMailVerifyToken> Cannot send verify token email for user %s : %v", u.Username, errM)
-			}
-		}()
+		// Insert the authentication
+		localAuth := sdk.UserLocalAuthentication{
+			UserID: usr.ID,
+			ClearPassword: createUserRequest.Password,
+		}
+
+		if err := localauthentication.Insert(tx, &localAuth); err != nil {
+			return err
+		}
+
+		// Generate password and verification token
+		//tokenVerify, hashedToken, errg := user.GeneratePassword()
+		//if errg != nil {
+		//	return sdk.WrapError(errg, "AddUser: Error while generate Token Verify for new user")
+		//}
+
+		if err := mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback); err != nil {
+			log.Warning("addUserHandler.SendMailVerifyToken> Cannot send verify token email for user %s : %v", u.Username, err)
+			return err
+		}
 
 		// If it's the first user, add him to shared.infra group
 		if nbUsers == 0 {
@@ -436,7 +467,7 @@ func (api *API) confirmUserHandler() service.Handler {
 		var sessionKey sessionstore.SessionKey
 		var errs error
 		if !logFromCLI {
-			sessionKey, errs = auth.NewSession(api.Router.AuthDriver, u)
+			sessionKey, errs = auth.NewSession(u)
 			if errs != nil {
 				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}
@@ -513,7 +544,7 @@ func (api *API) loginUserHandler() service.Handler {
 		var errs error
 		if !logFromCLI {
 			//Standard login, new session
-			sessionKey, errs = auth.NewSession(api.Router.AuthDriver, u)
+			sessionKey, errs = auth.NewSession(u)
 			if errs != nil {
 				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}

@@ -48,9 +48,9 @@ func (c *client) UserSignup(username, fullname, email, callback string) error {
 	u.Fullname = fullname
 	u.Email = email
 
-	request := sdk.UserAPIRequest{
-		User:     *u,
-		Callback: callback,
+	request := sdk.UserRequest{
+		//		User:     *u,
+		//		Callback: callback,
 	}
 
 	code, err := c.PostJSON(context.Background(), "/user/signup", request, nil)
@@ -80,11 +80,11 @@ func (c *client) UserGetGroups(username string) (map[string][]sdk.Group, error) 
 }
 
 func (c *client) UserReset(username, email, callback string) error {
-	req := sdk.UserAPIRequest{
-		User: sdk.User{
-			Email: email,
-		},
-		Callback: callback,
+	req := sdk.UserRequest{
+		//User: sdk.User{
+		//		Email: email,
+		//},
+		//Callback: callback,
 	}
 
 	code, err := c.PostJSON(context.Background(), "/user/"+url.QueryEscape(username)+"/reset", req, nil)

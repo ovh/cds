@@ -124,23 +124,33 @@ func (api *API) updateGroupHandler() service.Handler {
 		}
 
 		for _, a := range updatedGroup.Admins {
-			u, errlu := user.LoadUserWithoutAuth(tx, a.Username)
-			if errlu != nil {
-				return sdk.WrapError(errlu, "Cannot load user(admins) %s", a.Username)
+			u, err := user.LoadUserByUsername(tx, a.Username)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot load user(admins) %s", a.Username)
 			}
 
-			if err := group.InsertUserInGroup(tx, updatedGroup.ID, u.ID, true); err != nil {
+			oldUser, err := user.GetDeprecatedUser(tx, u)
+			if err != nil {
+				return err
+			}
+
+			if err := group.InsertUserInGroup(tx, updatedGroup.ID, oldUser.ID, true); err != nil {
 				return sdk.WrapError(err, "Cannot insert admin %s in group %s", a.Username, updatedGroup.Name)
 			}
 		}
 
 		for _, a := range updatedGroup.Users {
-			u, errlu := user.LoadUserWithoutAuth(tx, a.Username)
-			if errlu != nil {
-				return sdk.WrapError(errlu, "Cannot load user(members) %s", a.Username)
+			u, err := user.LoadUserByUsername(tx, a.Username)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot load user(members) %s", a.Username)
 			}
 
-			if err := group.InsertUserInGroup(tx, updatedGroup.ID, u.ID, false); err != nil {
+			oldUser, err := user.GetDeprecatedUser(tx, u)
+			if err != nil {
+				return err
+			}
+
+			if err := group.InsertUserInGroup(tx, updatedGroup.ID, oldUser.ID, false); err != nil {
 				return sdk.WrapError(err, "Cannot insert member %s in group %s", a.Username, updatedGroup.Name)
 			}
 		}
@@ -243,29 +253,36 @@ func (api *API) removeUserFromGroupHandler() service.Handler {
 		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
-		userName := vars["user"]
+		username := vars["user"]
 
-		g, errl := group.LoadGroup(api.mustDB(), name)
+		db := api.mustDB()
+
+		g, errl := group.LoadGroup(db, name)
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load %s", name)
 		}
 
-		userID, err := user.FindUserIDByName(api.mustDB(), userName)
+		u, err := user.LoadUserByUsername(db, username)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Unknown user %s", userName)
+			return err
 		}
 
-		userInGroup, errc := group.CheckUserInGroup(api.mustDB(), g.ID, userID)
+		oldUser, err := user.GetDeprecatedUser(db, u)
+		if err != nil {
+			return err
+		}
+
+		userInGroup, errc := group.CheckUserInGroup(db, g.ID, oldUser.ID)
 		if errc != nil {
-			return sdk.WrapError(errc, "Cannot check if user %s is already in the group %s", userName, g.Name)
+			return sdk.WrapError(errc, "Cannot check if user %s is already in the group %s", username, g.Name)
 		}
 
 		if !userInGroup {
-			return sdk.WrapError(sdk.ErrWrongRequest, "User %s is not in group %s", userName, name)
+			return sdk.WrapError(sdk.ErrWrongRequest, "User %s is not in group %s", username, name)
 		}
 
-		if err := group.DeleteUserFromGroup(api.mustDB(), g.ID, userID); err != nil {
-			return sdk.WrapError(err, "Cannot delete user %s from group %s", userName, g.Name)
+		if err := group.DeleteUserFromGroup(api.mustDB(), g.ID, oldUser.ID); err != nil {
+			return sdk.WrapError(err, "Cannot delete user %s from group %s", username, g.Name)
 		}
 
 		return nil
@@ -283,7 +300,9 @@ func (api *API) addUserInGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot unmarshal")
 		}
 
-		g, errl := group.LoadGroup(api.mustDB(), name)
+		db := api.mustDB()
+
+		g, errl := group.LoadGroup(db, name)
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load group %s", name)
 		}
@@ -294,17 +313,23 @@ func (api *API) addUserInGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		for _, u := range users {
-			userID, errf := user.FindUserIDByName(api.mustDB(), u)
-			if errf != nil {
-				return sdk.WrapError(errf, "Unknown user '%s'", u)
+		for _, username := range users {
+			u, err := user.LoadUserByUsername(db, username)
+			if err != nil {
+				return err
 			}
-			userInGroup, errc := group.CheckUserInGroup(api.mustDB(), g.ID, userID)
+
+			oldUser, err := user.GetDeprecatedUser(db, u)
+			if err != nil {
+				return err
+			}
+
+			userInGroup, errc := group.CheckUserInGroup(api.mustDB(), g.ID, oldUser.ID)
 			if errc != nil {
 				return sdk.WrapError(errc, "Cannot check if user %s is already in the group %s", u, g.Name)
 			}
 			if !userInGroup {
-				if err := group.InsertUserInGroup(api.mustDB(), g.ID, userID, false); err != nil {
+				if err := group.InsertUserInGroup(api.mustDB(), g.ID, oldUser.ID, false); err != nil {
 					return sdk.WrapError(err, "Cannot add user %s in group %s", u, g.Name)
 				}
 			}
@@ -319,19 +344,26 @@ func (api *API) setUserGroupAdminHandler() service.Handler {
 		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
-		userName := vars["user"]
+		username := vars["user"]
 
-		g, errl := group.LoadGroup(api.mustDB(), name)
+		db := api.mustDB()
+
+		u, err := user.LoadUserByUsername(db, username)
+		if err != nil {
+			return err
+		}
+
+		oldUser, err := user.GetDeprecatedUser(db, u)
+		if err != nil {
+			return err
+		}
+
+		g, errl := group.LoadGroup(db, name)
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load %s", name)
 		}
 
-		userID, errf := user.FindUserIDByName(api.mustDB(), userName)
-		if errf != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Unknown user %s: %s", userName, errf)
-		}
-
-		if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, userID); err != nil {
+		if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, oldUser.ID); err != nil {
 			return sdk.WrapError(err, "Cannot set user group admin")
 		}
 
@@ -344,19 +376,26 @@ func (api *API) removeUserGroupAdminHandler() service.Handler {
 		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
-		userName := vars["user"]
+		username := vars["user"]
 
-		g, errl := group.LoadGroup(api.mustDB(), name)
+		db := api.mustDB()
+
+		u, err := user.LoadUserByUsername(db, username)
+		if err != nil {
+			return err
+		}
+
+		oldUser, err := user.GetDeprecatedUser(db, u)
+		if err != nil {
+			return err
+		}
+
+		g, errl := group.LoadGroup(db, name)
 		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load group %s", name)
+			return sdk.WrapError(errl, "Cannot load %s", name)
 		}
 
-		userID, errf := user.FindUserIDByName(api.mustDB(), userName)
-		if errf != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Unknown user %s: %s", userName, errf)
-		}
-
-		if err := group.RemoveUserGroupAdmin(api.mustDB(), g.ID, userID); err != nil {
+		if err := group.RemoveUserGroupAdmin(db, g.ID, oldUser.ID); err != nil {
 			return sdk.WrapError(err, "Cannot remove user group admin privilege")
 		}
 

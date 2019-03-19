@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -28,61 +28,28 @@ const (
 	ContextService
 	ContextUserSession
 	ContextProvider
+	ContextUserAuthentified
 )
 
-//Driver is an interface to all auth method (local, ldap and beyond...)
-type Driver interface {
-	Open(options interface{}, store sessionstore.Store) error
-	Store() sessionstore.Store
-	CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error)
-	Authentify(username, password string) (bool, error)
-	DeprecatedSession(ctx context.Context, sessionToken, username string) (context.Context, error)
-}
-
-//GetDriver is a factory
-func GetDriver(c context.Context, mode string, options interface{}, storeOptions sessionstore.Options, DBFunc func() *gorp.DbMap) (Driver, error) {
-	log.Info("Auth> Initializing driver (%s)", mode)
-	store, err := sessionstore.Get(c, storeOptions.Cache, storeOptions.TTL)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get AuthDriver : %v", err)
-	}
-
-	var d Driver
-	switch mode {
-	case "ldap":
-		d = &LDAPClient{
-			dbFunc: DBFunc,
-		}
-	default:
-		d = &LocalClient{
-			dbFunc: DBFunc,
-		}
-	}
-
-	if d == nil {
-		return nil, errors.New("GetDriver> Unable to get AuthDriver (nil)")
-	}
-	if err := d.Open(options, store); err != nil {
-		return nil, sdk.WrapError(err, "Unable to get AuthDriver")
-	}
-	return d, nil
-}
+var (
+	Store sessionstore.Store
+)
 
 //NewSession inits a new session
-func NewSession(d Driver, u *sdk.User) (sessionstore.SessionKey, error) {
-	session, err := d.Store().New("")
+func NewSession(u *sdk.User) (sessionstore.SessionKey, error) {
+	session, err := Store.New("")
 	if err != nil {
 		return "", err
 	}
 	log.Info("Auth> New Session for %s", u.Username)
-	d.Store().Set(session, "username", u.Username)
+	Store.Set(session, "username", u.Username)
 	return session, err
 }
 
 //GetUsername retrieve the username from the token
-func GetUsername(store sessionstore.Store, token string) (string, error) {
+func GetUsername(token string) (string, error) {
 	var username string
-	err := store.Get(sessionstore.SessionKey(token), "username", &username)
+	err := Store.Get(sessionstore.SessionKey(token), "username", &username)
 	if err != nil {
 		return "", err
 	}
@@ -93,31 +60,31 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 }
 
 //GetWorker returns the worker instance from its id
-func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (*sdk.Worker, error) {
+func GetWorker(db *gorp.DbMap, Store cache.Store, workerID, workerName string) (*sdk.Worker, error) {
 	// Load worker
 	var w = &sdk.Worker{}
 
 	key := cache.Key("worker", workerID)
-	b := store.Get(key, w)
+	b := Store.Get(key, w)
 	if !b || w.ActionBuildID == 0 {
 		var err error
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load worker '%s': %s", workerName, err)
 		}
-		store.Set(key, w)
+		Store.Set(key, w)
 	}
 	return w, nil
 }
 
 //GetService returns the service instance from its hash
-func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, error) {
+func GetService(db *gorp.DbMap, Store cache.Store, hash string) (*sdk.Service, error) {
 	//Load the service from the cache
 	//TODO: this should be embeded in the repository layer
 	var srv = &sdk.Service{}
 	key := cache.Key("services", hash)
 	// Else load it from DB
-	if !store.Get(key, srv) {
+	if !Store.Get(key, srv) {
 		var err error
 		srv, err = services.FindByHash(db, hash)
 		if err != nil {
@@ -127,7 +94,7 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 			srv.IsSharedInfra = true
 			srv.Uptodate = srv.Version == sdk.VERSION
 		}
-		store.Set(key, srv)
+		Store.Set(key, srv)
 	}
 	return srv, nil
 }
@@ -143,7 +110,7 @@ func ContextValues(ctx context.Context) map[interface{}]interface{} {
 }
 
 // CheckWorkerAuth checks worker authentication
-func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
+func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, headers http.Header) (context.Context, error) {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
@@ -151,7 +118,7 @@ func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, hea
 	workerID := string(id)
 
 	name := headers.Get(cdsclient.RequestedNameHeader)
-	w, err := GetWorker(db, store, workerID, name)
+	w, err := GetWorker(db, Store, workerID, name)
 	if err != nil {
 		return ctx, err
 	}
@@ -162,7 +129,7 @@ func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, hea
 }
 
 // CheckServiceAuth checks services authentication
-func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
+func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, headers http.Header) (context.Context, error) {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return ctx, fmt.Errorf("bad service key syntax: %s", err)
@@ -173,7 +140,7 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 		return ctx, fmt.Errorf("missing service Hash")
 	}
 
-	srv, err := GetService(db, store, serviceHash)
+	srv, err := GetService(db, Store, serviceHash)
 	if err != nil {
 		return ctx, err
 	}
@@ -184,5 +151,67 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 	} else {
 		ctx = context.WithValue(ctx, ContextService, srv)
 	}
+	return ctx, nil
+}
+
+// DeprecatedSession have to be deprecated
+func DeprecatedSession(ctx context.Context, db gorp.SqlExecutor, sessionToken, username string) (context.Context, error) {
+	u, err := user.LoadUserByUsername(db, username)
+	if err != nil {
+		return ctx, err
+	}
+
+	oldUser, err := user.GetDeprecatedUser(db, u)
+	if err != nil {
+		return ctx, err
+	}
+
+	ctx = context.WithValue(ctx, ContextUser, oldUser)
+	ctx = context.WithValue(ctx, ContextUserSession, sessionToken)
+	ctx = context.WithValue(ctx, ContextUserAuthentified, u)
+	return ctx, nil
+}
+
+//CheckAuth checks the auth
+func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.Request, db gorp.SqlExecutor) (context.Context, error) {
+	//Check persistent session
+	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
+		var ok bool
+		ctx, ok = getUserPersistentSession_DEPRECATED(ctx, db, req.Header)
+		if ok {
+			return ctx, nil
+		}
+		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
+	}
+
+	//Check other session
+	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
+	if sessionToken == "" {
+		//Accept session in request
+		sessionToken = req.FormValue("session")
+	}
+	if sessionToken == "" {
+		return ctx, sdk.WithStack(fmt.Errorf("no session header"))
+	}
+
+	exists, err := Store.Exists(sessionstore.SessionKey(sessionToken))
+	if err != nil {
+		return ctx, sdk.WithStack(err)
+	}
+
+	username, err := GetUsername(sessionToken)
+	if err != nil {
+		return ctx, sdk.WithStack(err)
+	}
+
+	ctx, err = DeprecatedSession(ctx, db, sessionToken, username)
+	if err != nil {
+		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %v", username, err))
+	}
+
+	if !exists {
+		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
+	}
+
 	return ctx, nil
 }

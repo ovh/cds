@@ -135,3 +135,49 @@ func Delete(db gorp.SqlExecutor, id string) error {
 	_, err = db.Delete(&dbUser)
 	return sdk.WithStack(err)
 }
+
+func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
+	dbc := userContact(*c)
+	if err := gorpmapping.InsertAndSign(db, dbc); err != nil {
+		return err
+	}
+	c.ID = dbc.ID
+	return nil
+}
+
+func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
+	dbc := userContact(*c)
+	if err := gorpmapping.UpdatetAndSign(db, dbc); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
+	dbc := userContact(*c)
+	if err := gorpmapping.Delete(db, dbc); err != nil {
+		return err
+	}
+	return nil
+}
+
+func LoadContacts(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.UserContact, error) {
+	query := "select * from user_contact where user_id = $1 order by id asc"
+	var contacts []sdk.UserContact
+	var dbContacts []userContact
+	if _, err := db.Select(&dbContacts, query, u.ID); err != nil {
+		return nil, err
+	}
+	for i := range dbContacts {
+		// TODO do not return if any error
+		ok, err := gorpmapping.CheckSignature(db, dbContacts[i])
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("corrupted data")
+		}
+		contacts = append(contacts, sdk.UserContact(dbContacts[i]))
+	}
+	return contacts, nil
+}

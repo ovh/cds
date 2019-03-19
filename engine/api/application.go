@@ -41,13 +41,19 @@ func (api *API) getApplicationsHandler() service.Handler {
 		if getProvider(ctx) != nil && requestedUserName != "" {
 			var err error
 			//Load the specific user
-			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
+			usr, err := user.LoadUserByUsername(api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
 				}
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}
+
+			u, err = user.GetDeprecatedUser(api.mustDB(), usr)
+			if err != nil {
+				return err
+			}
+
 			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 				return sdk.WrapError(err, "unable to load user '%s' permissions", requestedUserName)
 			}

@@ -9,6 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication/localauthentication"
+
+	"github.com/ovh/cds/engine/api/authentication/ldapauthentication"
+
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/blang/semver"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -255,6 +261,7 @@ type API struct {
 		WorkflowRunsMarkToDelete *stats.Int64Measure
 		WorkflowRunsDeleted      *stats.Int64Measure
 	}
+	AuthenticationDrivers map[string]authentication.Driver
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -629,14 +636,11 @@ func (a *API) Serve(ctx context.Context) error {
 	//Intialize notification package
 	notification.Init(a.Config.URL.UI)
 
-	log.Info("Initializing Authentication driver...")
-	// Initialize the auth driver
-	var authMode string
-	var authOptions interface{}
-	switch a.Config.Auth.LDAP.Enable {
-	case true:
-		authMode = "ldap"
-		authOptions = auth.LDAPConfig{
+	log.Info("Initializing Authentication drivers...")
+
+	a.AuthenticationDrivers = map[string]authentication.Driver{}
+	if a.Config.Auth.LDAP.Enable {
+		cfg := ldapauthentication.LDAPConfig{
 			Host:         a.Config.Auth.LDAP.Host,
 			Port:         a.Config.Auth.LDAP.Port,
 			Base:         a.Config.Auth.LDAP.Base,
@@ -646,19 +650,17 @@ func (a *API) Serve(ctx context.Context) error {
 			BindDN:       a.Config.Auth.LDAP.BindDN,
 			BindPwd:      a.Config.Auth.LDAP.BindPwd,
 		}
-	default:
-		authMode = "local"
+		a.AuthenticationDrivers["ldap"] = ldapauthentication.New(cfg)
 	}
 
-	storeOptions := sessionstore.Options{
-		TTL:   a.Config.HTTP.SessionTTL * 60, // Second to minutes
-		Cache: a.Cache,
-	}
+	//if a.Config.Auth.Local {
+	a.AuthenticationDrivers["local"] = localauthentication.New()
+	//}
 
-	var errdriver error
-	a.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions, a.DBConnectionFactory.GetDBMap)
-	if errdriver != nil {
-		return fmt.Errorf("error: %v", errdriver)
+	var err error
+	auth.Store, err = sessionstore.Get(ctx, a.Cache, a.Config.HTTP.SessionTTL*60)
+	if err != nil {
+		return err
 	}
 
 	log.Info("Initializing event broker...")

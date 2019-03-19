@@ -1,5 +1,7 @@
 package sdk
 
+import "time"
+
 // User represent a CDS user.
 type User struct {
 	ID          int64           `json:"id" yaml:"-" cli:"-"`
@@ -22,17 +24,24 @@ const (
 )
 
 type AuthentifiedUser struct {
-	ID       string `json:"id" yaml:"id" cli:"id,key" db:"id"`
-	Username string `json:"username" yaml:"username" cli:"username,key" db:"username"`
-	Fullname string `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
-	Email    string `json:"email" yaml:"email,omitempty" cli:"email" db:"email"`
-	Origin   string `json:"origin" yaml:"origin,omitempty" db:"origin"`
-	Ring     string `json:"ring" yaml:"ring,omitempty" db:"ring"`
+	ID           string    `json:"id" yaml:"id" cli:"id,key" db:"id"`
+	Username     string    `json:"username" yaml:"username" cli:"username,key" db:"username"`
+	Fullname     string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
+	Ring         string    `json:"ring" yaml:"ring,omitempty" db:"ring"`
+	DateCreation time.Time `json:"date_creation" yaml:"date_creation" db:"date_creation"`
 }
 
 type UserLocalAuthentication struct {
 	UserID        string `json:"user_id" db:"user_id"`
 	ClearPassword string `json:"clear_password" db:"-"`
+}
+
+type UserContact struct {
+	ID             int    `json:"id" db:"id"`
+	UserID         string `json:"user_id" db:"user_id"`
+	Type           string `json:"type" db:"type"`
+	Value          string `json:"value" db:"value"`
+	PrimaryContact bool   `json:"primary_contact" db:"primary_contact"`
 }
 
 // Favorite represent the favorites workflow or project of the user
@@ -59,9 +68,12 @@ func UserPermissionKey(k, n string) string {
 	return k + "/" + n
 }
 
-// UserAPIRequest  request for rest API
-type UserAPIRequest struct {
-	User     User   `json:"user"`
+// UserRequest request new user creation
+type UserRequest struct {
+	Fullname string `json:"fullname"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 	Callback string `json:"callback"`
 }
 

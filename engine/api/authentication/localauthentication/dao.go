@@ -16,7 +16,7 @@ func Insert(db gorp.SqlExecutor, u *sdk.UserLocalAuthentication) error {
 		EncryptedPassword:       nil,
 	}
 	dbUser.ClearPassword = ""
-	if err := gorpmapping.Encrypt(u.ClearPassword, &dbUser.EncryptedPassword); err != nil {
+	if err := gorpmapping.Encrypt(u.ClearPassword, &dbUser.EncryptedPassword, []byte(u.UserID)); err != nil {
 		return err
 	}
 	err := gorpmapping.InsertAndSign(db, &dbUser)
@@ -28,7 +28,7 @@ func Update(db gorp.SqlExecutor, u *sdk.UserLocalAuthentication) error {
 		UserLocalAuthentication: *u,
 		EncryptedPassword:       nil,
 	}
-	if err := gorpmapping.Encrypt(u.ClearPassword, &dbUser.EncryptedPassword); err != nil {
+	if err := gorpmapping.Encrypt(u.ClearPassword, &dbUser.EncryptedPassword, []byte(u.UserID)); err != nil {
 		return err
 	}
 	err := gorpmapping.UpdatetAndSign(db, &dbUser)
@@ -54,7 +54,7 @@ func Authentify(db gorp.SqlExecutor, username, password string) (bool, error) {
 		return false, fmt.Errorf("corrupted data")
 	}
 
-	if err := gorpmapping.Decrypt(dbLocalAuth.EncryptedPassword, &dbLocalAuth.ClearPassword); err != nil {
+	if err := gorpmapping.Decrypt(dbLocalAuth.EncryptedPassword, &dbLocalAuth.ClearPassword, []byte(u.ID)); err != nil {
 		return false, err
 	}
 
