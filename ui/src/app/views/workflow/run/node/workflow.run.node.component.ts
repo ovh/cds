@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
+import { Store } from '@ngxs/store';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { PipelineStatus } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
 import { WNode, Workflow } from '../../../../model/workflow.model';
@@ -28,6 +30,7 @@ export class WorkflowNodeRunComponent {
 
     // Context info
     project: Project;
+    project$: Subscription;
     workflowName: string;
 
     duration: string;
@@ -45,6 +48,7 @@ export class WorkflowNodeRunComponent {
     deltaVul = 0;
 
     constructor(
+        private store: Store,
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _routerService: RouterService,
@@ -58,6 +62,12 @@ export class WorkflowNodeRunComponent {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
+
+        this.project$ = this.store.select(ProjectState)
+            .pipe(filter((prj) => prj != null))
+            .subscribe((projState: ProjectStateModel) => {
+                this.project = projState.project;
+            });
 
         this.isAdmin = this._authStore.getUser().admin;
 
@@ -94,29 +104,29 @@ export class WorkflowNodeRunComponent {
             let historyChecked = false;
             this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
                 .pipe(first()).subscribe(nodeRun => {
-                this.nodeRun = nodeRun;
-                this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow);
-                if (!historyChecked) {
-                    historyChecked = true;
-                    this._workflowRunService.nodeRunHistory(
-                        this.project.key, this.workflowName,
-                        number, this.nodeRun.workflow_node_id)
-                        .pipe(first())
-                        .subscribe(nrs => this.nodeRunsHistory = nrs);
-                }
-                this.initVulnerabilitySummary();
-
-                this._workflowEventStore.setSelectedNode(this.node, false);
-                this._workflowEventStore.setSelectedNodeRun(this.nodeRun, true);
-
-                this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
-                    this.nodeRun = wnr;
-                    if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
-                        this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+                    this.nodeRun = nodeRun;
+                    this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow);
+                    if (!historyChecked) {
+                        historyChecked = true;
+                        this._workflowRunService.nodeRunHistory(
+                            this.project.key, this.workflowName,
+                            number, this.nodeRun.workflow_node_id)
+                            .pipe(first())
+                            .subscribe(nrs => this.nodeRunsHistory = nrs);
                     }
-                    this.updateTitle();
+                    this.initVulnerabilitySummary();
+
+                    this._workflowEventStore.setSelectedNode(this.node, false);
+                    this._workflowEventStore.setSelectedNodeRun(this.nodeRun, true);
+
+                    this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
+                        this.nodeRun = wnr;
+                        if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
+                            this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+                        }
+                        this.updateTitle();
+                    });
                 });
-            });
         });
     }
 
@@ -130,22 +140,22 @@ export class WorkflowNodeRunComponent {
     }
 
     updateTitle() {
-          if (!this.workflowRun || !Array.isArray(this.workflowRun.tags)) {
-              return;
-          }
-          let branch = this.workflowRun.tags.find((tag) => tag.tag === 'git.branch');
-          if (branch) {
-              this._titleService
+        if (!this.workflowRun || !Array.isArray(this.workflowRun.tags)) {
+            return;
+        }
+        let branch = this.workflowRun.tags.find((tag) => tag.tag === 'git.branch');
+        if (branch) {
+            this._titleService
                 .setTitle(`Pipeline ${this.pipelineName} • #${this.workflowRun.num} [${branch.value}] • ${this.workflowName}`);
-          }
-      }
+        }
+    }
 
     initVulnerabilitySummary(): void {
         if (this.nodeRun && this.nodeRun.vulnerabilities_report && this.nodeRun.vulnerabilities_report.report) {
             if (this.nodeRun.vulnerabilities_report.report.summary) {
-              Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
-                  this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
-              });
+                Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
+                    this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
+                });
             }
             let previousNb = 0;
             if (this.nodeRun.vulnerabilities_report.report.previous_run_summary) {

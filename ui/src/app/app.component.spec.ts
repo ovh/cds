@@ -15,12 +15,9 @@ import { Pipeline } from './model/pipeline.model';
 import { Project } from './model/project.model';
 import { User } from './model/user.model';
 import { ApplicationService } from './service/application/application.service';
-import { ApplicationStore } from './service/application/application.store';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { PipelineService } from './service/pipeline/pipeline.service';
-import { PipelineStore } from './service/pipeline/pipeline.store';
 import { ProjectService } from './service/project/project.service';
-import { ProjectStore } from './service/project/project.store';
 import { SharedModule } from './shared/shared.module';
 import { NgxsStoreModule } from './store/store.module';
 
@@ -28,9 +25,6 @@ describe('App: CDS', () => {
 
     let injector: Injector;
     let authStore: AuthentificationStore;
-    let projectStore: ProjectStore;
-    let applicationStore: ApplicationStore;
-    let pipelineStore: PipelineStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -55,17 +49,11 @@ describe('App: CDS', () => {
 
         injector = getTestBed();
         authStore = injector.get(AuthentificationStore);
-        projectStore = injector.get(ProjectStore);
-        applicationStore = injector.get(ApplicationStore);
-        pipelineStore = injector.get(PipelineStore);
     });
 
     afterEach(() => {
         injector = undefined;
         authStore = undefined;
-        projectStore = undefined;
-        applicationStore = undefined;
-        pipelineStore = undefined;
     });
 
 

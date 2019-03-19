@@ -179,6 +179,7 @@ var (
 	ErrWorkflowPermInsufficient               = Error{ID: 162, Status: http.StatusBadRequest}
 	ErrApplicationUsedByWorkflow              = Error{ID: 163, Status: http.StatusBadRequest}
 	ErrMalformattedStep                       = Error{ID: 164, Status: http.StatusBadRequest}
+	ErrLocked                                 = Error{ID: 165, Status: http.StatusConflict}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -340,6 +341,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowPermInsufficient.ID:               "Cannot add this permission group on your workflow because you can't have less rights than rights in your project when you are in RWX",
 	ErrApplicationUsedByWorkflow.ID:              "Application still used by a workflow",
 	ErrMalformattedStep.ID:                       "Malformatted step",
+	ErrLocked.ID:                                 "Resource locked",
 }
 
 var errorsFrench = map[int]string{
@@ -501,6 +503,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowPermInsufficient.ID:               "Impossible d'ajouter ce groupe dans vos permissions du workflow car ce groupe a des droits inférieurs (< RWX) à celui du workflow",
 	ErrApplicationUsedByWorkflow.ID:              "L'application est utilisée par un workflow",
 	ErrMalformattedStep.ID:                       "Étape malformée",
+	ErrLocked.ID:                                 "La ressource est verrouillée",
 }
 
 var errorsLanguages = []map[int]string{

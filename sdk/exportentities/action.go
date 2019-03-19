@@ -284,7 +284,8 @@ func newSteps(a sdk.Action) []Step {
 			}
 
 			name := act.Name
-			if act.Group != nil {
+			// Do not export "shared.infra" group name
+			if act.Group != nil && act.Group.Name != sdk.SharedInfraGroupName {
 				name = fmt.Sprintf("%s/%s", act.Group.Name, act.Name)
 			}
 

@@ -1,5 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { UpdateWorkflow } from 'app/store/workflows.action';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
 import { PipelineStatus } from '../../../../model/pipeline.model';
@@ -7,7 +9,6 @@ import { Project } from '../../../../model/project.model';
 import { WNode, WNodeJoin, Workflow } from '../../../../model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
 import { WorkflowCoreService } from '../../../../service/workflow/workflow.core.service';
-import { WorkflowStore } from '../../../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { ToastService } from '../../../toast/ToastService';
 
@@ -32,7 +33,7 @@ export class WorkflowWNodeJoinComponent {
 
     constructor(
         private _workflowCore: WorkflowCoreService,
-        private _workflowStore: WorkflowStore,
+        private store: Store,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
@@ -54,8 +55,10 @@ export class WorkflowWNodeJoinComponent {
     }
 
     updateWorkflow(w: Workflow): void {
-        this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_updated'));
-        });
+        this.store.dispatch(new UpdateWorkflow({
+            projectKey: this.project.key,
+            workflowName: w.name,
+            changes: w
+        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 }

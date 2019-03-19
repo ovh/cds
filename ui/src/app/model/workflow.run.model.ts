@@ -33,6 +33,7 @@ export class WorkflowRun {
     start: string;
     status: string;
     last_modified: string;
+    last_modified_nano: number;
     last_execution: string;
     nodes: { [key: string]: Array<WorkflowNodeRun>; };
     tags: Array<WorkflowRunTags>;
@@ -53,6 +54,7 @@ export class WorkflowRun {
         wr.start = new Date(event.payload['Start'] * 1000).toString();
         wr.last_execution = new Date(event.payload['LastExecution'] * 1000).toString();
         wr.last_modified = new Date(event.payload['LastModified'] * 1000).toString();
+        wr.last_modified_nano = event.payload['LastModifiedNano'];
         wr.tags = event.payload['Tags'].map(t => {
             return { tag: t.Tag, value: t.Value }
         });

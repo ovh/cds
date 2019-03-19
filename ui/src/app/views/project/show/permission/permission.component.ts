@@ -61,8 +61,11 @@ export class ProjectPermissionsComponent {
 
     confirmPermPropagation(propagate: boolean) {
         this.permFormLoading = true;
-        this.store.dispatch(new AddGroupInProject({ projectKey: this.project.key, group: this.currentPermEvent.gp }))
-            .pipe(finalize(() => this.permFormLoading = false))
+        this.store.dispatch(new AddGroupInProject({
+            projectKey: this.project.key,
+            group: this.currentPermEvent.gp,
+            onlyProject: !propagate
+        })).pipe(finalize(() => this.permFormLoading = false))
             .subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
     }
 }

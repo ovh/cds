@@ -11,6 +11,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -239,6 +240,22 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 	return loadRun(db, loadOpts, query, projectkey, workflowname)
 }
 
+// LockRun locks a workflow run
+func LockRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`SELECT %s
+	FROM workflow_run
+	WHERE id = $1 FOR UPDATE NOWAIT`, wfRunfields)
+	return loadRun(db, LoadRunOptions{}, query, id)
+}
+
+// LoadRunIDsWithOldModel loads all ids for run that use old workflow model
+func LoadRunIDsWithOldModel(db gorp.SqlExecutor) ([]int64, error) {
+	query := "SELECT id FROM workflow_run WHERE workflow->'workflow_data' IS NULL LIMIT 100"
+	var ids []int64
+	_, err := db.Select(&ids, query)
+	return ids, sdk.WithStack(err)
+}
+
 // LoadRun returns a specific run
 func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
@@ -446,6 +463,9 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 	if err := db.SelectOne(runDB, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
+		}
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.RowLockedPGCode {
+			return nil, sdk.ErrLocked
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow run. query:%s args:%v", query, args)
 	}

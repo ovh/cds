@@ -155,6 +155,15 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 		w.WorkflowData = data
 	}
 
+	nodes := w.WorkflowData.Array()
+	for i := range nodes {
+		var err error
+		nodes[i].Groups, err = group.LoadGroupsByNode(db, nodes[i].ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load node groups")
+		}
+	}
+
 	return nil
 }
 
@@ -300,6 +309,28 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		}
 	}
 
+	return res, nil
+}
+
+// LoadWorkflowIDsWithNotifications loads workflow id of workflow with notifications
+func LoadWorkflowIDsWithNotifications(db gorp.SqlExecutor) ([]int64, error) {
+	query := `
+    SELECT id from WORKFLOW
+    WHERE id IN (SELECT workflow_id FROM workflow_notification)`
+	var ids []int64
+	_, err := db.Select(&ids, query)
+	return ids, sdk.WrapError(err, "unable to select workflow with notification")
+}
+
+func LoadAndLock(db gorp.SqlExecutor, id int64, store cache.Store, proj *sdk.Project, opts LoadOptions, u *sdk.User) (*sdk.Workflow, error) {
+	query := `
+		select *
+		from workflow
+		where id = $1 FOR UPDATE NOWAIT`
+	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
+	}
 	return res, nil
 }
 
@@ -681,14 +712,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
-	// Insert notifications
-	for i := range w.Notifications {
-		n := &w.Notifications[i]
-		if err := insertNotification(db, store, w, n, u); err != nil {
-			return sdk.WrapError(err, "Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
-		}
-	}
-
 	// TODO Delete in last migration step
 	hooks := w.GetHooks()
 	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
@@ -704,6 +727,14 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 
 	if err := InsertWorkflowData(db, w); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert Workflow Data")
+	}
+
+	// Insert notifications
+	for i := range w.Notifications {
+		n := &w.Notifications[i]
+		if err := InsertNotification(db, w, n); err != nil {
+			return sdk.WrapError(err, "Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
+		}
 	}
 
 	dbWorkflow := Workflow(*w)
@@ -894,7 +925,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		}
 	}
 
-	if err := deleteNotifications(db, oldWorkflow.ID); err != nil {
+	if err := DeleteNotifications(db, oldWorkflow.ID); err != nil {
 		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d)", w.ID)
 	}
 
@@ -930,14 +961,6 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		}
 	}
 
-	// Insert notifications
-	for i := range w.Notifications {
-		n := &w.Notifications[i]
-		if err := insertNotification(db, store, w, n, u); err != nil {
-			return sdk.WrapError(err, "Unable to update workflow(%d) notification (%#v)", w.ID, n)
-		}
-	}
-
 	filteredPurgeTags := []string{}
 	for _, t := range w.PurgeTags {
 		if t != "" {
@@ -965,6 +988,14 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 
 	if err := InsertWorkflowData(db, w); err != nil {
 		return sdk.WrapError(err, "Update> Unable to insert workflow data")
+	}
+
+	// Insert notifications
+	for i := range w.Notifications {
+		n := &w.Notifications[i]
+		if err := InsertNotification(db, w, n); err != nil {
+			return sdk.WrapError(err, "Unable to update workflow(%d) notification (%#v)", w.ID, n)
+		}
 	}
 
 	w.LastModified = time.Now()
