@@ -52,7 +52,7 @@ func (api *API) registerWorkerHandler() service.Handler {
 		}
 
 		// Return worker info to worker itself
-		return service.WriteJSON(w, w, http.StatusOK)
+		return service.WriteJSON(w, wk, http.StatusOK)
 	}
 }
 
