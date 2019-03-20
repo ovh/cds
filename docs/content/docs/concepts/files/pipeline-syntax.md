@@ -1,6 +1,9 @@
 ---
-title: "Pipeline syntax"
+title: "Pipeline configuration file"
 weight: 2
+card: 
+  name: concept_pipeline
+  weight: 2
 ---
 
 

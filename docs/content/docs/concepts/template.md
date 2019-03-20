@@ -2,7 +2,7 @@
 title: "Workflow Template"
 weight: 9
 card: 
-  name: workflow
+  name: concept_workflow
 ---
 
 ## What is a workflow template?

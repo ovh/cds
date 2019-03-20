@@ -3,6 +3,7 @@ title: "Init a CDS Workflow from a repository"
 weight: 1
 card: 
   name: tutorial_workflow
+  weight: 2
 ---
 
 {{% notice note %}}

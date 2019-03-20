@@ -11,16 +11,16 @@ menu:
 overview: >
   
 cards:
-- name: pipeline
+- name: concept_pipeline
   title: "Pipeline Configuration"
   description: "A pipeline is structured in sequential stages containing one or multiple concurrent jobs."
-- name: workflow
+- name: concept_workflow
   title: "Workflow Configuration"
   description: "A CDS Workflow allows you to chain pipelines with manual or automatic gates, using conditional branching."
-- name: worker-model
+- name: concept_worker-model
   title: "Worker Model & Requirements"
   description: "Understand the Worker Model concept & requirement."
-- name: permissions
+- name: concept_permissions
   title: "Permissions & ACLs"
   description: "Understand the self-service permissions management."
 ---

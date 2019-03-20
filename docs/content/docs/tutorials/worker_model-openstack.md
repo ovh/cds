@@ -3,6 +3,7 @@ title: "Worker Model OpenStack"
 weight: 6
 card: 
   name: tutorial_worker-model
+  weight: 2
 ---
 
 CDS build using OVH.com OpenStack infrastructure

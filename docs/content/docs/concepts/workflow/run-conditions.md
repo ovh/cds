@@ -1,6 +1,8 @@
 ---
 title: "Run conditions on pipeline"
 weight: 4
+card: 
+  name: concept_workflow
 ---
 
 In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of `git.branch` is `master`.

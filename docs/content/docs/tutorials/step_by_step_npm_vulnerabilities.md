@@ -3,6 +3,7 @@ title: "Check npm vulnerabilities"
 weight: 1
 card: 
   name: tutorial_workflow
+  weight: 5
 ---
 
 {{% notice note %}}

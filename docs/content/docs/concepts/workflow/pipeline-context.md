@@ -1,6 +1,8 @@
 ---
 title: "Pipeline Context"
 weight: 2
+card: 
+  name: concept_workflow
 ---
 
 After adding the pipeline, you can "Edit the pipeline Context" (sidebar).

@@ -3,6 +3,7 @@ title: "Worker Model vSphere"
 weight: 7
 card: 
   name: tutorial_worker-model
+  weight: 3
 ---
 
 CDS build using vSphere infrastructure

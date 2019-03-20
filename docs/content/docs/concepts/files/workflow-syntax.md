@@ -1,6 +1,9 @@
 ---
-title: "Workflow syntax"
+title: "Workflow configuration file"
 weight: 1
+card: 
+  name: concept_workflow
+  weight: 2
 ---
 
 A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. 
