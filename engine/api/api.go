@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -483,6 +484,37 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info("Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
+
+	// Checking downloadable binaries
+	downloads := sdk.GetStaticDownloadsWithAvailability(a.Config.Directories.Download)
+	var hasWorker, hasCtl, hasEngine bool
+	for k, d := range downloads {
+		for ks := range downloads[k].OSArchs {
+			for _, a := range downloads[k].OSArchs[ks].Archs {
+				if a.Available {
+					switch d.Name {
+					case "worker":
+						hasWorker = true
+					case "cdsctl":
+						hasCtl = true
+					case "engine":
+						hasEngine = true
+					}
+				}
+			}
+		}
+	}
+	if !hasEngine {
+		log.Error("engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+	}
+	if !hasCtl {
+		log.Error("cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+	}
+	if !hasWorker {
+		// If no worker, let's exit because CDS for run anything
+		log.Error("cdsctl is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		return errors.New("worker binary unavailabe")
+	}
 
 	//Initialize secret driver
 	secret.Init(a.Config.Secrets.Key)
