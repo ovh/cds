@@ -178,6 +178,7 @@ var (
 	ErrGroupNotFoundInWorkflow                = Error{ID: 161, Status: http.StatusBadRequest}
 	ErrWorkflowPermInsufficient               = Error{ID: 162, Status: http.StatusBadRequest}
 	ErrApplicationUsedByWorkflow              = Error{ID: 163, Status: http.StatusBadRequest}
+	ErrLocked                                 = Error{ID: 164, Status: http.StatusConflict}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -338,6 +339,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrGroupNotFoundInWorkflow.ID:                "Cannot add this permission group on your workflow node because this group is not already your workflow's permissions",
 	ErrWorkflowPermInsufficient.ID:               "Cannot add this permission group on your workflow because you can't have less rights than rights in your project when you are in RWX",
 	ErrApplicationUsedByWorkflow.ID:              "Application still used by a workflow",
+	ErrLocked.ID:                                 "Resource locked",
 }
 
 var errorsFrench = map[int]string{
@@ -498,6 +500,7 @@ var errorsFrench = map[int]string{
 	ErrGroupNotFoundInWorkflow.ID:                "Impossible d'ajouter ce groupe dans vos permissions de noeud du workflow car ce groupe n'est pas présent dans les permissions de votre workflow",
 	ErrWorkflowPermInsufficient.ID:               "Impossible d'ajouter ce groupe dans vos permissions du workflow car ce groupe a des droits inférieurs (< RWX) à celui du workflow",
 	ErrApplicationUsedByWorkflow.ID:              "L'application est utilisée par un workflow",
+	ErrLocked.ID:                                 "La ressource est verrouillée",
 }
 
 var errorsLanguages = []map[int]string{

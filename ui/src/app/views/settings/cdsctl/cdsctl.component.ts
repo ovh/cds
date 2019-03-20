@@ -43,7 +43,7 @@ export class CdsctlComponent {
             };
 
             this.os = new Array<string>('windows', 'linux', 'darwin', 'freebsd');
-            this.arch = new Array<string>('amd64', '386');
+            this.arch = new Array<string>('amd64', '386', 'arm', 'arm64');
             this.osChoice = 'linux';
             this.archChoice = 'amd64'
             this.currentUser = this._authentificationStore.getUser();

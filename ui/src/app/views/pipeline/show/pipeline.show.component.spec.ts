@@ -18,7 +18,6 @@ import { KeyService } from '../../../service/keys/keys.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
-import { PipelineStore } from '../../../service/pipeline/pipeline.store';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
 import { ParameterEvent } from '../../../shared/parameter/parameter.event.model';
@@ -35,7 +34,6 @@ describe('CDS: Pipeline Show', () => {
                 KeyService,
                 PipelineCoreService,
                 PipelineService,
-                PipelineStore,
                 ProjectService,
                 ProjectStore,
                 NavbarService,

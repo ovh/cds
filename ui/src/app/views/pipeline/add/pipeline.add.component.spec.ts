@@ -20,7 +20,6 @@ import { AuthentificationStore } from '../../../service/auth/authentification.st
 import { EnvironmentService } from '../../../service/environment/environment.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
-import { PipelineStore } from '../../../service/pipeline/pipeline.store';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
 import { VariableService } from '../../../service/variable/variable.service';
@@ -51,7 +50,6 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                PipelineStore,
                 NavbarService,
                 PipelineService,
                 EnvironmentService,

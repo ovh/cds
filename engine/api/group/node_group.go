@@ -21,9 +21,9 @@ func LoadGroupsByNode(db gorp.SqlExecutor, nodeID int64) ([]sdk.GroupPermission,
 	rows, err := db.Query(query, nodeID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, err
+			return nil, nil
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -32,7 +32,7 @@ func LoadGroupsByNode(db gorp.SqlExecutor, nodeID int64) ([]sdk.GroupPermission,
 		var group sdk.Group
 		var perm int
 		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
-			return groups, err
+			return groups, sdk.WithStack(err)
 		}
 		groups = append(groups, sdk.GroupPermission{
 			Group:      group,
