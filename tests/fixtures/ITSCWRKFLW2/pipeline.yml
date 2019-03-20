@@ -33,7 +33,7 @@ jobs:
       tag: '{{.cds.version}}'
   requirements:
   - binary: git
-  - model: Go-official-1.9.1
+  - binary: go
 
 - job: Worker Build linux amd64
   stage: Build
@@ -63,7 +63,7 @@ jobs:
       tag: '{{.cds.version}}'
   requirements:
   - binary: git
-  - model: Go-official-1.9.1
+  - binary: go
 
 - job: Package Engine
   stage: Package

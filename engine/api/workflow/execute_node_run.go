@@ -375,8 +375,8 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			spawnErrs.Join(*err)
 		}
 
-		_, next = observability.Span(ctx, "workflow.getNodeJobRunRequirements")
-		jobRequirements, containsService, modelType, err := getNodeJobRunRequirements(db, *job, run)
+		_, next = observability.Span(ctx, "workflow.processNodeJobRunRequirements")
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(db, *job, run, sdk.GroupsToIDs(groups))
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -419,22 +419,22 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			skippedOrDisabledJobs++
 		}
 
+		// If there is any error in the previous operation, mark the job as failed
 		if !spawnErrs.IsEmpty() {
 			failedJobs++
 			wjob.Status = sdk.StatusFail.String()
-			spawnInfos := sdk.SpawnMsg{
-				ID: sdk.MsgSpawnInfoJobError.ID,
-			}
 
 			for _, e := range spawnErrs {
-				spawnInfos.Args = append(spawnInfos.Args, sdk.Cause(e).Error())
+				msg := sdk.SpawnMsg{
+					ID: sdk.MsgSpawnInfoJobError.ID,
+				}
+				msg.Args = []interface{}{sdk.Cause(e).Error()}
+				wjob.SpawnInfos = append(wjob.SpawnInfos, sdk.SpawnInfo{
+					APITime:    time.Now(),
+					Message:    msg,
+					RemoteTime: time.Now(),
+				})
 			}
-
-			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
-				APITime:    time.Now(),
-				Message:    spawnInfos,
-				RemoteTime: time.Now(),
-			}}
 		} else {
 			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
 				APITime:    time.Now(),
