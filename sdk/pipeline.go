@@ -16,7 +16,7 @@ type Pipeline struct {
 	Usage          *Usage      `json:"usage,omitempty"`
 	Permission     int         `json:"permission"`
 	LastModified   int64       `json:"last_modified" cli:"modified"`
-	FromRepository string      `json:"from_repository" cli:"modified"`
+	FromRepository string      `json:"from_repository" cli:"from_repository"`
 }
 
 // PipelineAudit represents pipeline audit
