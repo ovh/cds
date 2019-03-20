@@ -1425,6 +1425,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	apps := make(map[string]exportentities.Application)
 	pips := make(map[string]exportentities.PipelineV1)
 	envs := make(map[string]exportentities.Environment)
+
 	var wrkflw exportentities.Workflow
 
 	mError := new(sdk.MultiError)
@@ -1518,7 +1519,12 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	allMsg := []sdk.Message{}
 	for filename, app := range apps {
 		log.Debug("Push> Parsing %s", filename)
-		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: opts.FromRepository}, decryptFunc, u)
+
+		var fromRepo string
+		if opts != nil {
+			fromRepo = opts.FromRepository
+		}
+		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
 			return nil, nil, sdk.NewErrorWithStack(err,
 				sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unable to import application %s: %v", app.Name, err)))
@@ -1568,7 +1574,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	for filename, pip := range pips {
 		log.Debug("Push> Parsing %s", filename)
-		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: opts.FromRepository})
+		var fromRepo string
+		if opts != nil {
+			fromRepo = opts.FromRepository
+		}
+		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
 			return nil, nil, sdk.NewErrorWithStack(err, sdk.NewError(sdk.ErrWrongRequest,
 				fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)))

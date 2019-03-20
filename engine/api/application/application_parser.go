@@ -44,7 +44,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		return nil, nil, sdk.ErrApplicationExist
 	}
 
-	if oldApp.FromRepository != "" && (oldApp.FromRepository == "" || opts.FromRepository != oldApp.FromRepository) {
+	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
 		return nil, nil, sdk.WrapError(sdk.ErrForbidden, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
 	}
 

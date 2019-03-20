@@ -44,7 +44,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities
 		exist = true
 	}
 
-	if oldEnv.FromRepository != "" && (opts.FromRepository == "" || opts.FromRepository != oldEnv.FromRepository) {
+	if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
 		return nil, nil, sdk.ErrForbidden
 	}
 
