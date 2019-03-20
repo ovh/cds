@@ -490,6 +490,12 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.S
 	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "BookForRegister> worker model %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
+// UnbookForRegister release the book
+func UnbookForRegister(store cache.Store, id int64) {
+	k := keyBookWorkerModel(id)
+	store.Delete(k)
+}
+
 func mergeWithDefaultEnvs(envs map[string]string) map[string]string {
 	if envs == nil {
 		return defaultEnvs
