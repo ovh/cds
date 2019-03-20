@@ -442,7 +442,7 @@ func workflowInitRun(c cli.Values) error {
 		return err
 	}
 
-	if err := workflowTarReaderToFiles(dotCDS, tr, true, true); err != nil {
+	if err := workflowTarReaderToFiles(c, dotCDS, tr); err != nil {
 		return err
 	}
 
