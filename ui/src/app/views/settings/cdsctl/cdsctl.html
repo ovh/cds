@@ -45,6 +45,16 @@
                             </ng-container>
                         </div>
                     </div>
+                    <div class="four wide column">
+                        <div class="grouped fields">
+                            <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
+                            <div class="field">
+                                <sui-checkbox id="withKeychain" name="withKeychain" [(ngModel)]="withKeychain" (ngModelChange)="buildData()">
+                                    {{ 'cdsctl_choice_options_with_keychain' | translate }}
+                                </sui-checkbox>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             

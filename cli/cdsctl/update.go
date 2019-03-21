@@ -30,18 +30,21 @@ func update() *cobra.Command {
 
 func updateRun(v cli.Values) error {
 	fmt.Println(sdk.VersionString())
-
+	var variant string
+	if !keychainEnabled {
+		variant = "nokeychain"
+	}
 	var urlBinary string
 	if v.GetBool("from-github") {
 		// no need to have apiEndpoint here
 		var errGH error
-		urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("cdsctl", sdk.GOOS, sdk.GOARCH))
+		urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("cdsctl", sdk.GOOS, sdk.GOARCH, variant))
 		if errGH != nil {
 			return fmt.Errorf("Error while getting URL from Github url:%s err:%s", urlBinary, errGH)
 		}
 		fmt.Printf("Updating binary from Github on %s...\n", urlBinary)
 	} else {
-		urlBinary = client.DownloadURLFromAPI("cdsctl", sdk.GOOS, sdk.GOARCH)
+		urlBinary = client.DownloadURLFromAPI("cdsctl", sdk.GOOS, sdk.GOARCH, variant)
 		fmt.Printf("Updating binary from CDS API on %s...\n", urlBinary)
 	}
 

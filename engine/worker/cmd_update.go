@@ -51,7 +51,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			w.client = cdsclient.NewWorker("", "download", nil)
 
 			var errGH error
-			urlBinary, errGH = w.client.DownloadURLFromGithub(sdk.GetArtifactFilename("worker", sdk.GOOS, sdk.GOARCH))
+			urlBinary, errGH = w.client.DownloadURLFromGithub(sdk.GetArtifactFilename("worker", sdk.GOOS, sdk.GOARCH, ""))
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github: %s", errGH)
 			}
