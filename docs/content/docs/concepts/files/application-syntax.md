@@ -128,5 +128,49 @@ vcs_ssh_key: proj-ssh-key
 vcs_pgp_key: proj-pgp-key
 ```
 
-Now we this setup you will be able to use actions [CheckoutApplication]({{< relref "../../actions/checkoutapplication/" >}}) and [Release]({{< relref "../../actions/release/" >}}) .
+Now we this setup you will be able to use the actions [CheckoutApplication]({{< relref "../../actions/checkoutapplication/" >}}) and [Release]({{< relref "../../actions/release/" >}}) in your pipelines.
 
+## Deployment
+
+In this section, you can define the setup to deploy your application on a platform. To be able to setup it, you must have at least one [integration supporting deployment]({{< relref "../../integrations" >}}) properly configured on your CDS instance.
+
+The `deployments` section is the list of the settings you cant to use to deployment on several platform. For instance, if you want to be able to be deploy the same application, from the same helm chart with subtle changes in variables, depending on the cluster, you can set the following configuration.
+
+```yaml
+version: v1.0
+name: myapp
+
+deployments:
+
+  my-kubernetes-cluster-A:
+    namespace:
+      my-namespace-A
+    helm_chart:
+      value: deploy/helm/
+    helm_values:
+      type: deploy/helm/values-cluster-A.yaml
+
+  my-kubernetes-cluster-B:
+    namespace:
+      my-namespace-B
+    helm_chart:
+      value: deploy/helm/
+    helm_values:
+      type: deploy/helm/values-cluster-B.yaml
+```
+
+The list of the availabe deployment platform is available from the Web UI on the `project / integration` section, or with the command `cdsctl project integration list`
+
+```bash
+➜  ~ cdsctl project integration list MYPROJ
++-----------------------------+
+|            NAME             |
++-----------------------------+
+| my-kubernetes-cluster-A     |
+| my-kubernetes-cluster-B     |
++-----------------------------+
+```
+
+The settings depend on the integration. Please refer to the [integration documentation]({{< relref "../../integrations" >}}).
+
+Now you are ready to use the [DeployApplication]({{< relref "../../actions/deployapplication/" >}}) action in your pipelines.
