@@ -70,6 +70,7 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 						for _, cap := range wm.RegisteredCapabilities {
 							if cap.Value == req.Value {
 								hasCapa = true
+                break
 							}
 						}
 						if !hasCapa {
