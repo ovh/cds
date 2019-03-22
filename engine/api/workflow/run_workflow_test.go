@@ -479,7 +479,7 @@ func TestManualRun3(t *testing.T) {
 
 		//AddSpawnInfosNodeJobRun
 		err := workflow.AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
-			sdk.SpawnInfo{
+			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
 				Message: sdk.SpawnMsg{
@@ -495,7 +495,7 @@ func TestManualRun3(t *testing.T) {
 
 		//TakeNodeJobRun
 		j, _, _ = workflow.TakeNodeJobRun(context.TODO(), func() *gorp.DbMap { return db }, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
-			sdk.SpawnInfo{
+			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
 				Message: sdk.SpawnMsg{

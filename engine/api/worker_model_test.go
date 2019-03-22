@@ -178,7 +178,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 			Name:    "NewAction",
 			Enabled: true,
 			Requirements: []sdk.Requirement{
-				sdk.Requirement{
+				{
 					Name:  "Test1" + grName,
 					Type:  sdk.ModelRequirement,
 					Value: "Test1" + grName,

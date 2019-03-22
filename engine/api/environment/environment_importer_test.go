@@ -65,17 +65,17 @@ func TestImportInto_Variable(t *testing.T) {
 		Name:      "testenv2",
 		ProjectID: proj.ID,
 		Variable: []sdk.Variable{
-			sdk.Variable{
+			{
 				Name:  "v1",
 				Type:  sdk.TextVariable,
 				Value: "value1bis",
 			},
-			sdk.Variable{
+			{
 				Name:  "v2",
 				Type:  sdk.StringVariable,
 				Value: "value2bis",
 			},
-			sdk.Variable{
+			{
 				Name:  "v3",
 				Type:  sdk.StringVariable,
 				Value: "value3",

@@ -60,21 +60,21 @@ func TestParseAndImport(t *testing.T) {
 			input: &exportentities.Workflow{
 				Name: "test-1",
 				Workflow: map[string]exportentities.NodeEntry{
-					"root": exportentities.NodeEntry{
+					"root": {
 						PipelineName: "pipeline",
 					},
-					"first": exportentities.NodeEntry{
+					"first": {
 						PipelineName: "pipeline",
 						DependsOn:    []string{"root"},
 					},
-					"second": exportentities.NodeEntry{
+					"second": {
 						PipelineName: "pipeline",
 						DependsOn:    []string{"first"},
 					},
-					"fork": exportentities.NodeEntry{
+					"fork": {
 						DependsOn: []string{"root"},
 					},
-					"third": exportentities.NodeEntry{
+					"third": {
 						PipelineName: "pipeline",
 						DependsOn:    []string{"fork"},
 					},

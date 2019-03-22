@@ -436,7 +436,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 				})
 			}
 		} else {
-			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
+			wjob.SpawnInfos = []sdk.SpawnInfo{{
 				APITime:    time.Now(),
 				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
 				RemoteTime: time.Now(),

@@ -11,7 +11,7 @@ import (
 func (api *API) getUserNotificationTypeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return service.WriteJSON(w, map[string]sdk.UserNotificationSettings{
-			sdk.EmailUserNotification: sdk.UserNotificationSettings{
+			sdk.EmailUserNotification: {
 				OnSuccess:    sdk.UserNotificationChange,
 				OnFailure:    sdk.UserNotificationAlways,
 				OnStart:      &sdk.False,
@@ -19,7 +19,7 @@ func (api *API) getUserNotificationTypeHandler() service.Handler {
 				SendToGroups: &sdk.False,
 				Template:     &sdk.UserNotificationTemplateEmail,
 			},
-			sdk.JabberUserNotification: sdk.UserNotificationSettings{
+			sdk.JabberUserNotification: {
 				OnSuccess:    sdk.UserNotificationChange,
 				OnFailure:    sdk.UserNotificationAlways,
 				OnStart:      &sdk.False,

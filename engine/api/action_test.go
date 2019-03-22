@@ -67,7 +67,7 @@ func Test_postActionImportHandler(t *testing.T) {
 			},
 		},
 		Parameters: map[string]exportentities.ParameterValue{
-			"param1": exportentities.ParameterValue{
+			"param1": {
 				Description:  "this is my param",
 				DefaultValue: "default value",
 			},
