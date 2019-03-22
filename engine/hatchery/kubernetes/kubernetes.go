@@ -15,9 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-  _ "k8s.io/client-go/plugin/pkg/client/auth"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"

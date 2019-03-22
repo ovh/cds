@@ -75,9 +75,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":           url,
-			"request_token": token,
-			"username":      deprecatedGetUser(ctx).Username,
+			"url":                  url,
+			"request_token":        token,
+			"username":             deprecatedGetUser(ctx).Username,
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)

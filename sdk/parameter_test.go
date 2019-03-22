@@ -42,11 +42,11 @@ func TestParameterMapMerge_WithExcludeGitParams(t *testing.T) {
 
 func TestParametersMerge(t *testing.T) {
 	original := []Parameter{
-		Parameter{Name: "test", Value: "value1"},
-		Parameter{Name: "default", Value: "ok"},
+		{Name: "test", Value: "value1"},
+		{Name: "default", Value: "ok"},
 	}
 	override := []Parameter{
-		Parameter{Name: "test", Value: "override"},
+		{Name: "test", Value: "override"},
 	}
 
 	res := ParametersMerge(original, override)

@@ -65,7 +65,7 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 
 	// merge serialized message + serialized extra map
 	b[len(b)-1] = ','
-	return append(b, eb[1:len(eb)]...), nil
+	return append(b, eb[1:]...), nil
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {

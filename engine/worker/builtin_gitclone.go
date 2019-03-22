@@ -160,8 +160,8 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		var opts = &git.CloneOpts{
 			Recursive:               true,
 			NoStrictHostKeyChecking: true,
-			Depth: 50,
-			Tag:   tag,
+			Depth:                   50,
+			Tag:                     tag,
 		}
 		if branch != nil {
 			opts.Branch = branch.Value
