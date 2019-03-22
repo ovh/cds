@@ -18,7 +18,7 @@ github.com/Microsoft/go-winio
 github.com/Nvveen/Gotty
 # github.com/Shopify/sarama v1.17.0
 github.com/Shopify/sarama
-# github.com/aokoli/goutils v1.0.1
+# github.com/aokoli/goutils v1.1.0
 github.com/aokoli/goutils
 # github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05
 github.com/araddon/gou
@@ -295,7 +295,7 @@ github.com/hashicorp/vault/helper/jsonutil
 github.com/hashicorp/vault/helper/compressutil
 # github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288
 github.com/howeyc/gopass
-# github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1
+# github.com/huandu/xstrings v1.2.0
 github.com/huandu/xstrings
 # github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19
 github.com/imdario/mergo
@@ -390,6 +390,8 @@ github.com/opencontainers/runc/libcontainer/configs
 github.com/opencontainers/runc/libcontainer/devices
 # github.com/opencontainers/runtime-spec v1.0.1
 github.com/opencontainers/runtime-spec/specs-go
+# github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
+github.com/ovh/cds/sdk/interpolate
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
 # github.com/ovh/venom v0.25.0
