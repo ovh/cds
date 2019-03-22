@@ -118,10 +118,6 @@ func newSteps(a sdk.Action) []Step {
 				if tag != nil {
 					artifactDownloadArgs["tag"] = tag.Value
 				}
-				application := sdk.ParameterFind(&act.Parameters, "application")
-				if application != nil && application.Value != "" {
-					artifactDownloadArgs["application"] = application.Value
-				}
 				pattern := sdk.ParameterFind(&act.Parameters, "pattern")
 				if pattern != nil && pattern.Value != "" {
 					artifactDownloadArgs["pattern"] = pattern.Value
@@ -129,10 +125,6 @@ func newSteps(a sdk.Action) []Step {
 				enabled := sdk.ParameterFind(&act.Parameters, "enabled")
 				if enabled != nil && enabled.Value == "false" {
 					artifactDownloadArgs["enabled"] = enabled.Value
-				}
-				pipeline := sdk.ParameterFind(&act.Parameters, "pipeline")
-				if pipeline != nil && pipeline.Value != "" {
-					artifactDownloadArgs["pipeline"] = pipeline.Value
 				}
 				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
@@ -146,7 +138,7 @@ func newSteps(a sdk.Action) []Step {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				destination := sdk.ParameterFind(&act.Parameters, "destination")
-				if destination != nil {
+				if destination != nil && destination.Value != "" {
 					artifactUploadArgs["destination"] = destination.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
@@ -586,6 +578,8 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	if err := mapstructure.Decode(bI, &argss); err != nil {
 		return nil, true, sdk.WrapError(err, "malformatted Step")
 	}
+	delete(argss, "pipeline")    // we don't want to import these old values
+	delete(argss, "application") // we don't want to import these old values
 	a := sdk.NewStepArtifactDownload(argss)
 
 	var err error
