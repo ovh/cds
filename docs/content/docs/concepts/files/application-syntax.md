@@ -88,7 +88,7 @@ keys:
 
 Note that each time you want to import the application and *keep* the keypair as it, you *must* provide the exported value.
 
-If you want to keep your application in your git repository and let CDS configure ans reconfigure the application automatically, we suggest to use the `regen` option. With this option CDS will generate the SSH keypair if it doesn't exists, and won't touch it on each import.
+If you want to keep your application in your git repository and let CDS configure and reconfigure the application automatically, we suggest to use the `regen` option. With this option CDS will generate the SSH keypair if it doesn't exist, and won't touch it on each import.
 ```yaml
 name: myapp
 keys:
