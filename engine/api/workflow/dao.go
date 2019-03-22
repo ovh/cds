@@ -949,7 +949,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	w.ResetIDs()
 
 	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
-		return sdk.WrapError(sdk.ErrWorkflowNodeRootUpdate, "unable to update root node on workflow(%d) : %v", w.ID, err)
+		return sdk.WrapError(err, "unable to update root node on workflow(%d) : %v", w.ID, err)
 	}
 	w.RootID = w.Root.ID
 
