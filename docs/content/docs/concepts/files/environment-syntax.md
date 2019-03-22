@@ -79,3 +79,14 @@ While running a pipeline attached to this environment, you can manipulate those 
   * `MYSTRINGVARIABLE`, 
   * `MyStringVariable`
 
+Note that the variable names are exposed as following:
+
+| Name                  | Exposed variables                                                                                                                                     |
+| -------------         |-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| MyStringVariable      | `{{.cds.env.MyStringVariable}}`, `CDS_ENV_MYSTRINGVARIABLE`, `CDS_ENV_MyStringVariable`, `MYSTRINGVARIABLE`, `MyStringVariable`                       |
+| My.String.Variable      | `{{.cds.env.My.String.Variable}}`, `CDS_ENV_MY_STRING_VARIABLE`, `CDS_ENV_My.String.Variable`, `MY_STRING_VARIABLE`, `My.String.Variable`                       |
+| My-String-Variable      | `{{.cds.env.My-String-Variable}}`, `CDS_ENV_MY_STRING_VARIABLE`, `CDS_ENV_My-String-Variable`, `MY_STRING_VARIABLE`, `My-String-Variable`                       |
+| My_String_Variable      | `{{.cds.env.My_String_Variable}}`, `CDS_ENV_MY_STRING_VARIABLE`, `CDS_ENV_My_String_Variable`, `MY_STRING_VARIABLE`, `My_String_Variable`                       |
+
+
+
