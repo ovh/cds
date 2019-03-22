@@ -169,7 +169,6 @@
   "cdsctl_title_8": "8 - Scripting",
 
   "cdsctl_notice_1_1": "Binaries available on current installation:  ",
-  "cdsctl_notice_1_2": "By default, the command line cdsctl uses your keychain on your os, you can bypass it by using '386' instead of 'amd64'",
 
   "cdsctl_notice_2_1": "If you use many instances of CDS, you can use the -f flag, example: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u ",
   "cdsctl_notice_2_2": "ByPass Keychain or file configuration:",
