@@ -114,7 +114,7 @@ Defining your VCS setup on an application will allow to benefit for the deep int
 | vcs_password          | If you set `vcs_connection_type = http`, set the HTTP Password                               |
 | vcs_pgp_key           | If you want to commit and sign, you can choose here a PGP Key                                |
 
-Pleas note that you can use key at `project` or `application` level. Default `vcs_connection_type` is `https`. If your repository is public, you can omit `vcs_connection_type`, `vcs_user` and `vcs_password`.
+Please note that you can use key at `project` or `application` level. Default `vcs_connection_type` is `https`. If your repository is public, you can omit `vcs_connection_type`, `vcs_user` and `vcs_password`.
 
 ### Example
 
