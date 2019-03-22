@@ -8,9 +8,6 @@ import (
 )
 
 func Test_cdsEnvVartoENV(t *testing.T) {
-	type args struct {
-		p sdk.Parameter
-	}
 	tests := []struct {
 		name string
 		args sdk.Parameter
