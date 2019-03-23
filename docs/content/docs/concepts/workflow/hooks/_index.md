@@ -1,6 +1,9 @@
 ---
 title: "Hooks"
 weight: 3
+card: 
+  name: concept_workflow
+  weight: 8
 ---
 
 If you want to trigger the run of your workflow you need some hooks on your root pipeline inside the workflow.
