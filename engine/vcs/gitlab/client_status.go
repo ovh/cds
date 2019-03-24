@@ -81,11 +81,16 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		Description: &data.desc,
 	}
 
-	val, _, _ := c.client.Commits.GetCommitStatuses(data.repoFullName, data.hash, nil)
+	val, _, err := c.client.Commits.GetCommitStatuses(data.repoFullName, data.hash, nil)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to get commit statuses %s", data.hash)
+	}
+
 	found := false
 	for _, s := range val {
-		if (s.TargetURL == *opt.TargetURL && s.Status == string(opt.State) && s.Ref == *opt.Ref && s.SHA == data.hash && s.Name == *opt.Name && s.Description == *opt.Description) {
+		if (s.TargetURL == *opt.TargetURL && s.Status == string(opt.State) && s.SHA == data.hash) {
 			found = true
+			break
 		}
 	}
 	if (!found) {
