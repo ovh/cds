@@ -69,6 +69,21 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
+		// if the commit contains more than 500 files added/updated/removed
+		// we keep only the first 500 files, to avoid a payload
+		// unusable on worker
+		nFilesMax := 500
+		for i := range pushEvent.Commits {
+			if len(pushEvent.Commits[i].Added) > nFilesMax {
+				pushEvent.Commits[i].Added = pushEvent.Commits[i].Added[:nFilesMax]
+			}
+			if len(pushEvent.Commits[i].Removed) > nFilesMax {
+				pushEvent.Commits[i].Removed = pushEvent.Commits[i].Removed[:nFilesMax]
+			}
+			if len(pushEvent.Commits[i].Modified) > nFilesMax {
+				pushEvent.Commits[i].Modified = pushEvent.Commits[i].Modified[:nFilesMax]
+			}
+		}
 		payloadStr, err := json.Marshal(pushEvent)
 		if err != nil {
 			log.Error("Unable to marshal payload: %v", err)
