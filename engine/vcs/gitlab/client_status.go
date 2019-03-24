@@ -88,8 +88,8 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 	found := false
 	for _, s := range val {
-		if (s.TargetURL == *opt.TargetURL && s.Status == string(opt.State) && s.SHA == data.hash) {
-			found = true
+ 		if (s.TargetURL == *opt.TargetURL && s.Status == string(opt.State) && s.Ref == *opt.Ref && s.SHA == data.hash && s.Name == *opt.Name && s.Description == *opt.Description) {
+ 			found = true
 			break
 		}
 	}
