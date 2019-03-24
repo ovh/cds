@@ -389,25 +389,21 @@ func (h *HatcheryOpenstack) killErrorServers() {
 func (h *HatcheryOpenstack) killDisabledWorkers() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	workers, err := h.CDSClient().WorkerList(ctx)
+
+	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)
 	if err != nil {
-		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
+		log.Error("killDisabledWorkers> Pool> Error: %v", err)
 		return
 	}
 
 	srvs := h.getServers()
 
-	for _, w := range workers {
-		if w.Status != sdk.StatusDisabled {
-			continue
-		}
-
+	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
-			// if the wm was not created for registration, we can delete it, otherwise
-			// the wm will be deleted in killAwolServers func
-			if s.Name == w.Name && s.Metadata["register_only"] != "true" {
+			if s.Name == w.Name {
 				log.Info("killDisabledWorkers> killDisabledWorkers %v", s.Name)
 				_ = h.deleteServer(s)
+				break
 			}
 		}
 	}
