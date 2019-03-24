@@ -6,7 +6,7 @@ card:
 
 **GitTag** is a builtin action, you can't modify it.
 
-This action creates a tag. You can use a pgp key to sign it.
+This action creates a [semver](https://semver.org) comptabible tag. You can use a pgp key to sign it.
 
 ## Parameters
 

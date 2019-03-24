@@ -1,7 +1,7 @@
 ---
 title: "Variables"
 weight: 6
-tag: ["variables"]
+tags: ["variable", "variables", "helper", "helpers", "interpolate"]
 card: 
   name: concept_pipeline
   weight: 4

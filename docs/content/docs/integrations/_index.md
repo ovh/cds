@@ -9,7 +9,7 @@ menu:
   main:
     title: "What's an integration?"
 overview: >
-  <p>An integration enable some features on CDS.</p>
+  <p>An integration enables some features on CDS.</p>
   <p>It can concern the storage of the artifacts, the repositories manager, the hooks available to trigger workflows, the infrastructure used to spawn the workers.</p>
 
   <p>Here are the extensions available:</p>
