@@ -508,7 +508,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	if !hasWorker {
 		// If no worker, let's exit because CDS for run anything
-		log.Error("cdsctl is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error("worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 		return errors.New("worker binary unavailabe")
 	}
 
