@@ -1,0 +1,24 @@
+<div id="toc">
+     <div class="toc-container">
+        {{ $p := . }}
+        {{ .Scratch.Set "section" .CurrentSection }}
+        {{ .Scratch.Set "sectionFound" false }}
+        {{ $sections := slice "docs" "hosting" "development" "about" }}
+        {{ range $sections }}
+            {{ with site.GetPage "section" . }}
+                {{ if ne .CurrentSection .Section }}
+                    {{ range .Sections }}
+                        {{ if not ($.Scratch.Get "sectionFound") }}
+                            {{ if $p.IsDescendant . }}
+                                    {{ $.Scratch.Set "section" . }}
+                                    {{ $.Scratch.Set "sectionFound" true }}
+                            {{ end }}
+                        {{ end }}
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+        {{ end }}
+        {{ $section := (.Scratch.Get "section") }}
+        {{ partialCached "tree.html" $section $section.RelPermalink }}
+     </div>
+</div>
