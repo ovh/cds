@@ -163,7 +163,13 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	hookEvent.WorkflowNodeHookUUID = w.WorkflowData.Node.Hooks[0].UUID
 	hookEvent.Payload = nil
 
-	wr, _, errR := workflow.RunFromHook(context.TODO(), db, cache, proj, &w, &hookEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Hook: &hookEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -301,7 +307,13 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		"git.hash": "currentcommit",
 	}
 
-	wr, _, errR := workflow.RunFromHook(context.TODO(), db, cache, proj, &w, &hookEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Hook: &hookEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -431,7 +443,13 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	wr, _, errR := workflow.ManualRun(context.TODO(), db, cache, proj, &w, &manualEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -555,7 +573,13 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		"git.hash":   "currentcommit",
 	}
 
-	wr, _, errR := workflow.ManualRun(context.TODO(), db, cache, proj, &w, &manualEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -756,7 +780,13 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	wr, _, errR := workflow.ManualRun(context.TODO(), db, cache, proj, &w, &manualEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -918,7 +948,13 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	wr, _, errR := workflow.ManualRun(context.TODO(), db, cache, proj, &w, &manualEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
@@ -1077,7 +1113,13 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	wr, _, errR := workflow.ManualRun(context.TODO(), db, cache, proj, &w, &manualEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
@@ -1251,7 +1293,13 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		"git.branch": "feat/branch",
 	}
 
-	wr, _, errR := workflow.ManualRun(context.TODO(), db, cache, proj, &w, &manualEvent, nil)
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
