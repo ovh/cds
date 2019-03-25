@@ -44,7 +44,23 @@ spec:
         - name: CDS_VCS_API_GRPC_URL
           value: 'http://{{ template "cds.fullname" . }}-api:8082'
         - name: CDS_VCS_API_HTTP_URL
+        {{- if .Values.ingress.enabled }}
+          {{- if .Values.ingress.tls }}
+          {{- if .Values.ingress.port }}
+          value: 'https://{{.Values.ingress.hostname}}:{{.Values.ingress.port}}/api'
+          {{- else }}
+          value: 'https://{{.Values.ingress.hostname}}/api'
+          {{- end }}
+          {{- else }}
+          {{- if .Values.ingress.port }}
+          value: 'http://{{.Values.ingress.hostname}}:{{.Values.ingress.port}}/api'
+          {{- else }}
+          value: 'http://{{.Values.ingress.hostname}}/api'
+          {{- end }}
+          {{- end }}
+        {{- else }}
           value: 'http://{{ template "cds.fullname" . }}-api'
+        {{- end }}
         - name: CDS_VCS_CACHE_REDIS_HOST
           value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }}
         - name: CDS_VCS_CACHE_REDIS_PASSWORD
