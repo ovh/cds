@@ -64,7 +64,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if err != nil {
-		return sdk.WrapError(err, "Cannot process event %v", event)
+		return sdk.WrapError(err, "cannot process event %v", event)
 	}
 
 	if c.disableStatusDetail {
@@ -83,19 +83,26 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 	val, _, err := c.client.Commits.GetCommitStatuses(data.repoFullName, data.hash, nil)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to get commit statuses %s", data.hash)
+		return sdk.WrapError(err, "unable to get commit statuses - repo:%s hash:%s", data.repoFullName, data.hash)
 	}
 
 	found := false
 	for _, s := range val {
- 		if (s.TargetURL == *opt.TargetURL && s.Status == string(opt.State) && s.Ref == *opt.Ref && s.SHA == data.hash && s.Name == *opt.Name && s.Description == *opt.Description) {
- 			found = true
+		/*
+		Comparing TargetURL as there is the workflow run number inside
+		Comparing Status to avoid duplicate entries
+		Comparing commit SHA to match the right commit
+		Comparing Description as there are the pipelines names inside
+		*/
+		if (s.TargetURL == *opt.TargetURL && s.Status == string(opt.State) && s.Ref == *opt.Ref && s.SHA == data.hash && s.Name == *opt.Name && s.Description == *opt.Description) {
+			log.Debug("gitlabClient.SetStatus> Duplicate commit status, ignoring request - repo:%s hash:%s", data.repoFullName, data.hash)
+			found = true
 			break
 		}
 	}
-	if (!found) {
+	if !found {
 		if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
-			return sdk.WrapError(err, "Cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
+			return sdk.WrapError(err, "cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
 		}
 	}
 	return nil
@@ -104,7 +111,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 func (c *gitlabClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	ss, _, err := c.client.Commits.GetCommitStatuses(repo, ref, nil)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to get commit statuses %s", ref)
+		return nil, sdk.WrapError(err, "unable to get commit statuses hash:%s", ref)
 	}
 
 	vcsStatuses := []sdk.VCSCommitStatus{}
@@ -140,7 +147,7 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "Cannot read payload")
+		return data, sdk.WrapError(err, "cannot read payload")
 	}
 
 	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
