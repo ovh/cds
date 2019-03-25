@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 // URLGithubIssues contains a link to CDS Issues
@@ -13,73 +14,46 @@ const URLGithubIssues = "https://github.com/ovh/cds/issues"
 // URLGithubReleases contains a link to CDS Official Releases
 const URLGithubReleases = "https://github.com/ovh/cds/releases"
 
-// Download contains a association name of binary / arch-os available
-type Download struct {
-	Name    string   `json:"name"`
-	OSArchs []OSArch `json:"osArchs"`
-}
-
-// OSArch contains a association OS / Arch
-type OSArch struct {
+type DownloadableResource struct {
+	Name      string `json:"name"`
 	OS        string `json:"os"`
-	Archs     []Arch `json:"archs"`
-	Extension string `json:"extension"`
-}
-
-// Arch contains a association Arch / available
-type Arch struct {
 	Arch      string `json:"arch"`
-	Available bool   `json:"available"`
+	Variant   string `json:"variant,omitempty"`
+	Filename  string `json:"filename,omitempty"`
+	Available *bool  `json:"available,omitempty"`
 }
 
-// IsBinaryOSArchValid returns err if name (worker, engine, cdsctl..) is not
-// valid with os and arch. Returns "fixed Arch" 386 / amd64 or arm
-// example: if arch == i386 or i686, return 386
-func IsBinaryOSArchValid(directoriesDownload, name, osBinary, arch string) (string, string, error) {
-	v := GetStaticDownloads()
-	var fixedArch = getArchName(arch)
+var (
+	binaries      = []string{"engine", "worker", "cdsctl"}
+	supportedOS   = []string{"windows", "darwin", "linux", "freebsd"}
+	supportedARCH = []string{"amd64", "arm", "386", "arm64"}
+	cdsctlVariant = []string{"nokeychain"}
+)
 
-	var nameFound bool
-	var download Download
-	for _, n := range v {
-		if n.Name == name {
-			nameFound = true
-			download = n
-		}
-	}
-
-	if !nameFound {
-		return arch, "", ErrDownloadInvalidName
-	}
-
-	var osFound bool
-	for _, o := range download.OSArchs {
-		if osBinary == o.OS {
-			osFound = true
-			for _, a := range o.Archs {
-				if a.Arch == fixedArch {
-					// name, os, arch found, it's valid
-					if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("%s%s-%s-%s%s", DownloadGetPrefix(name), name, osBinary, fixedArch, o.Extension))); err == nil {
-						return fixedArch, o.Extension, nil
+func AllDownloadableResources() []DownloadableResource {
+	var all []DownloadableResource
+	for _, b := range binaries {
+		for _, os := range supportedOS {
+			for _, arch := range supportedARCH {
+				all = append(all, DownloadableResource{
+					Name: b,
+					OS:   os,
+					Arch: arch,
+				})
+				if b == "cdsctl" {
+					for _, v := range cdsctlVariant {
+						all = append(all, DownloadableResource{
+							Name:    b,
+							OS:      os,
+							Arch:    arch,
+							Variant: v,
+						})
 					}
-					return fixedArch, "", ErrDownloadDoesNotExist
 				}
 			}
 		}
 	}
-	if !osFound {
-		return fixedArch, "", ErrDownloadInvalidOS
-	}
-
-	return fixedArch, "", ErrDownloadInvalidArch
-}
-
-// DownloadGetPrefix returns "" for cdsctl name, "cds-" otherwise
-func DownloadGetPrefix(name string) string {
-	if name == "cdsctl" {
-		return ""
-	}
-	return "cds-"
+	return all
 }
 
 // getArchName returns 386 for "386", "i386", "i686"
@@ -94,55 +68,33 @@ func getArchName(a string) string {
 	return a
 }
 
-// GetArtifactFilename returns artifact name cds-name-os-arch
+// GetArtifactFilename returns artifact name cds-name-os-arch-variant
 // this name is used on Github Releases
-func GetArtifactFilename(name, os, arch string) string {
-	return fmt.Sprintf("cds-%s-%s-%s", name, os, getArchName(arch))
-}
-
-func getDefaultArch() []OSArch {
-	return []OSArch{
-		{OS: "windows", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}}, Extension: ".exe"},
-		{OS: "linux", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}, {Arch: "arm"}, {Arch: "arm64"}}},
-		{OS: "darwin", Archs: []Arch{{Arch: "amd64"}}},
-		{OS: "freebsd", Archs: []Arch{{Arch: "amd64"}}},
+func GetArtifactFilename(name, os, arch, variant string) string {
+	if variant != "" {
+		variant = "-" + variant
 	}
-}
-
-// GetStaticDownloads returns default builded CDS Binaries
-func GetStaticDownloads() []Download {
-	downloads := []Download{
-		{
-			Name:    "worker",
-			OSArchs: getDefaultArch(),
-		},
-		{
-			Name:    "engine",
-			OSArchs: getDefaultArch(),
-		},
-		{
-			Name:    "cdsctl",
-			OSArchs: getDefaultArch(),
-		},
+	var prefix = "cds-"
+	if name == "cdsctl" {
+		prefix = ""
 	}
-
-	return downloads
+	return fmt.Sprintf("%s%s-%s-%s%s", prefix, name, os, getArchName(arch), variant)
 }
 
-// GetStaticDownloadsWithAvailability set flag Available on downloads list
-func GetStaticDownloadsWithAvailability(directoriesDownload string) []Download {
-	downloads := GetStaticDownloads()
+// AllDownloadableResourcesWithAvailability set flag Available on downloads list
+func AllDownloadableResourcesWithAvailability(directoriesDownload string) []DownloadableResource {
+	resources := AllDownloadableResources()
 	// for each download, check if binary exists in directoriesDownload
-	for k, d := range downloads {
-		for ks, o := range downloads[k].OSArchs {
-			for ka, a := range downloads[k].OSArchs[ks].Archs {
-				if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("%s%s-%s-%s%s", DownloadGetPrefix(d.Name), d.Name, o.OS, a.Arch, o.Extension))); err == nil {
-					downloads[k].OSArchs[ks].Archs[ka].Available = true
-				}
-			}
+	for i := range resources {
+		filename := GetArtifactFilename(resources[i].Name, resources[i].OS, resources[i].Arch, resources[i].Variant)
+		if _, err := os.Stat(path.Join(directoriesDownload, filename)); err == nil {
+			resources[i].Filename = filepath.Base(filename)
+			resources[i].Available = &True
+		} else {
+			resources[i].Available = &False
 		}
 	}
-	return downloads
+	return resources
 }
 
 // CheckContentTypeBinary returns an error if Content-Type is not application/octet-stream

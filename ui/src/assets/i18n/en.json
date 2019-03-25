@@ -138,8 +138,12 @@
 
   "cdsctl_choice_os": "Choose your OS",
   "cdsctl_choice_arch": "Choose your architecture",
+  "cdsctl_choice_options": "Choose your options",
+  "cdsctl_choice_options_with_keychain": "With OS keychain enabled",
 
-  "cdsctl_part_1": "curl {{apiURL}}/download/cdsctl/{{osChoice}}/{{archChoice}} -o cdsctl\n\n# add execution rights on cdsctl\nchmod +x cdsctl\n\n# check if binary is ok, this command will display cdsctl version\n./cdsctl version",
+
+
+  "cdsctl_part_1": "curl {{apiURL}}/download/cdsctl/{{osChoice}}/{{archChoice}}{{variant}} -o cdsctl\n\n# add execution rights on cdsctl\nchmod +x cdsctl\n\n# check if binary is ok, this command will display cdsctl version\n./cdsctl version",
   "cdsctl_part_2": "# The cdsctl login command will store credentials in your keychain\n./cdsctl login --api-url {{apiURL}} -u {{username}}\n\n# this command will display your username, fullname, email\n# if you see them, cdsctl is well configured\n./cdsctl user me",
   "cdsctl_part_3": "# The cdsctl shell to browse your projects and workflows without the need to open a browser.\n# see https://ovh.github.io/cds/docs/components/cdsctl/shell/\ncdsctl shell\n\n# Display monitoring view\ncdsctl ui\n\n# help is available on each cdsctl command\ncdsctl --help",
   "cdsctl_part_4": "# Launch a workflow, consider running cdsctl from a directory containing a git repository known from CDS\ncdsctl workflow run\n\n# You can explicitly set a projet and workflow\ncdsctl workflow run PRJ_KEY WORKFLOW_NAME\n\n# flags --interactive or --open-web-browser may interest you, help for all details\ncdsctl workflow run --help",
@@ -165,7 +169,6 @@
   "cdsctl_title_8": "8 - Scripting",
 
   "cdsctl_notice_1_1": "Binaries available on current installation:  ",
-  "cdsctl_notice_1_2": "By default, the command line cdsctl uses your keychain on your os, you can bypass it by using '386' instead of 'amd64'",
 
   "cdsctl_notice_2_1": "If you use many instances of CDS, you can use the -f flag, example: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u ",
   "cdsctl_notice_2_2": "ByPass Keychain or file configuration:",
