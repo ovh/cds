@@ -347,7 +347,7 @@ func templateApplyRun(v cli.Values) error {
 		fmt.Println("Workflow successfully pushed !")
 	}
 
-	return workflowTarReaderToFiles(dir, tr, v.GetBool("force"), v.GetBool("quiet"))
+	return workflowTarReaderToFiles(v, dir, tr)
 }
 
 func teeTarReader(r *tar.Reader, buf io.Writer) (*tar.Reader, error) {

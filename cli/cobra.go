@@ -231,6 +231,10 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		}
 
 		vals := argsToVal(args)
+		b, _ := cmd.Flags().GetBool("insecure")
+		v, _ := cmd.Flags().GetBool("verbose")
+		vals["insecure"] = append(vals["insecure"], fmt.Sprintf("%v", b))
+		vals["verbose"] = append(vals["verbose"], fmt.Sprintf("%v", v))
 
 		format, _ := cmd.Flags().GetString("format")
 
