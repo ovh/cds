@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -188,10 +189,12 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 
 func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/release", projectKey, workflowName, runNumber, nodeRunID)
-	code, err := c.PostJSON(context.Background(), url, release, nil)
+	btes, _ := json.Marshal(release)
+	res, _, code, err := c.Stream(context.Background(), "POST", url, bytes.NewReader(btes), true)
 	if err != nil {
 		return err
 	}
+	defer res.Close()
 	if code >= 300 {
 		return fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code)
 	}
