@@ -21,9 +21,9 @@ import (
 
 //Github http var
 var (
-	RateLimitLimit     int
+	RateLimitLimit     = 5000
 	RateLimitRemaining = 5000
-	RateLimitReset     int
+	RateLimitReset     = int(time.Now().Unix())
 
 	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 )

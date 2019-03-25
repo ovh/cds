@@ -233,7 +233,6 @@ export class PipelineService {
     getPipelineExport(key: string, pipName: string): Observable<string> {
         let params = new HttpParams();
         params = params.append('format', 'yaml');
-        params = params.append('withPermissions', 'true');
 
         return this._http.get<string>('/project/' + key + '/export/pipeline/' + pipName, { params, responseType: <any>'text' });
     }

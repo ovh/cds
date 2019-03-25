@@ -44,14 +44,14 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("--api not provided, aborting update.")
 			}
 			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", cdsclient.NewHTTPClient(time.Second*360, FlagBool(cmd, flagInsecure)))
-			urlBinary = w.client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH)
+			urlBinary = w.client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH, "")
 			fmt.Printf("Updating worker binary from CDS API on %s...\n", urlBinary)
 		} else {
 			// no need to have apiEndpoint here
 			w.client = cdsclient.NewWorker("", "download", nil)
 
 			var errGH error
-			urlBinary, errGH = w.client.DownloadURLFromGithub(sdk.GetArtifactFilename("worker", sdk.GOOS, sdk.GOARCH))
+			urlBinary, errGH = w.client.DownloadURLFromGithub(sdk.GetArtifactFilename("worker", sdk.GOOS, sdk.GOARCH, ""))
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github: %s", errGH)
 			}

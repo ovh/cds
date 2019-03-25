@@ -1,3 +1,5 @@
+// +build !nokeychain
+
 package main
 
 import (

@@ -86,7 +86,7 @@ func templatePullRun(v cli.Values) error {
 		return err
 	}
 
-	return workflowTarReaderToFiles(dir, t, v.GetBool("force"), v.GetBool("quiet"))
+	return workflowTarReaderToFiles(v, dir, t)
 }
 
 var templatePushCmd = cli.Command{
@@ -168,7 +168,7 @@ func templatePushRun(v cli.Values) error {
 		return nil
 	}
 
-	return workflowTarReaderToFiles(dir, tr, false, false)
+	return workflowTarReaderToFiles(v, dir, tr)
 }
 
 var templateDeleteCmd = cli.Command{
