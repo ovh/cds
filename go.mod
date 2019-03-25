@@ -43,7 +43,6 @@ require (
 	github.com/coreos/go-semver v0.2.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d // indirect
 	github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea // indirect
-	github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf // indirect
 	github.com/dancannon/gorethink v4.0.0+incompatible // indirect
 	github.com/danieljoos/wincred v1.0.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
@@ -202,7 +201,6 @@ require (
 	github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
-	github.com/russross/blackfriday v0.0.0-20170728175326-4048872b16cc // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sclevine/agouti v0.0.0-20171003013254-8cf0313221cb // indirect
@@ -288,3 +286,5 @@ replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-2018083115000
 replace github.com/docker/docker-credential-helpers => github.com/yesnault/docker-credential-helpers v0.0.0-20180831150006-4dd7c3df8875
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
+
+replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate

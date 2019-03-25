@@ -68,8 +68,6 @@ github.com/coreos/clair/pkg/stopper
 github.com/coreos/go-etcd/etcd
 # github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea
 github.com/coreos/pkg/timeutil
-# github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf
-github.com/cpuguy83/go-md2man/md2man
 # github.com/danieljoos/wincred v1.0.1
 github.com/danieljoos/wincred
 # github.com/davecgh/go-spew v1.1.1
@@ -390,7 +388,7 @@ github.com/opencontainers/runc/libcontainer/configs
 github.com/opencontainers/runc/libcontainer/devices
 # github.com/opencontainers/runtime-spec v1.0.1
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
+# github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
 github.com/ovh/cds/sdk/interpolate
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
@@ -451,8 +449,6 @@ github.com/rcrowley/go-metrics
 # github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 github.com/rubenv/sql-migrate
 github.com/rubenv/sql-migrate/sqlparse
-# github.com/russross/blackfriday v0.0.0-20170728175326-4048872b16cc
-github.com/russross/blackfriday
 # github.com/sclevine/agouti v0.0.0-20171003013254-8cf0313221cb
 github.com/sclevine/agouti
 github.com/sclevine/agouti/api
@@ -483,7 +479,6 @@ github.com/spf13/afero/sftp
 github.com/spf13/cast
 # github.com/spf13/cobra v0.0.0-20171231101556-b95ab734e27d
 github.com/spf13/cobra
-github.com/spf13/cobra/doc
 # github.com/spf13/jwalterweatherman v0.0.0-20160311093646-33c24e77fb80
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v0.0.0-20171106142849-4c012f6dcd95
