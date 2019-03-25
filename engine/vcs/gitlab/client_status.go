@@ -88,13 +88,14 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 	found := false
 	for _, s := range val {
-		/*
-		Comparing TargetURL as there is the workflow run number inside
-		Comparing Status to avoid duplicate entries
-		Comparing commit SHA to match the right commit
-		Comparing Description as there are the pipelines names inside
-		*/
-		if (s.TargetURL == *opt.TargetURL && s.Status == string(opt.State) && s.Ref == *opt.Ref && s.SHA == data.hash && s.Name == *opt.Name && s.Description == *opt.Description) {
+		sameRequest := s.TargetURL == *opt.TargetURL && // Comparing TargetURL as there is the workflow run number inside
+			s.Status == string(opt.State) && // Comparing Status to avoid duplicate entries
+			s.Ref == *opt.Ref && // Comparing branches name
+			s.SHA == data.hash && // Comparing commit SHA to match the right commit
+			s.Name == *opt.Name && // Comparing app name (CDS)
+			s.Description == *opt.Description // Comparing Description as there are the pipelines names inside
+
+		if sameRequest {
 			log.Debug("gitlabClient.SetStatus> Duplicate commit status, ignoring request - repo:%s hash:%s", data.repoFullName, data.hash)
 			found = true
 			break
