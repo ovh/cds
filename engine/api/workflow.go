@@ -408,7 +408,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 
 		if oldW.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		var wf sdk.Workflow

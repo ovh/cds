@@ -210,7 +210,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 		}
 
 		if env.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))

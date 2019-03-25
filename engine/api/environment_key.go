@@ -45,7 +45,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errE, "deleteKeyInEnvironmentHandler> Cannot load environment")
 		}
 		if env.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -97,7 +97,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 		newKey.EnvironmentID = env.ID
 
 		if env.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		if !strings.HasPrefix(newKey.Name, "env-") {

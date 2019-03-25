@@ -44,7 +44,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 
 		if pipelineDB.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		tx, errB := api.mustDB().Begin()
@@ -95,7 +95,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load pipeline")
 		}
 		if pipDB.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		proj, errP := project.Load(db, api.Cache, key, u, project.LoadOptions.WithGroups)

@@ -403,7 +403,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 		}
 
 		if app.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		var appPost sdk.Application
@@ -471,7 +471,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 			return sdk.WrapError(err, "postApplicationMetadataHandler")
 		}
 		if app.FromRepository != "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 		oldApp := *app
 
