@@ -155,6 +155,9 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
 					continue
 				}
+
+				cmd.Env = append(cmd.Env, cdsEnvVartoENV(p)...)
+
 				envName := strings.Replace(p.Name, ".", "_", -1)
 				envName = strings.Replace(envName, "-", "_", -1)
 				envName = strings.ToUpper(envName)
