@@ -486,21 +486,17 @@ func (a *API) Serve(ctx context.Context) error {
 	a.StartupTime = time.Now()
 
 	// Checking downloadable binaries
-	downloads := sdk.GetStaticDownloadsWithAvailability(a.Config.Directories.Download)
+	resources := sdk.AllDownloadableResourcesWithAvailability(a.Config.Directories.Download)
 	var hasWorker, hasCtl, hasEngine bool
-	for k, d := range downloads {
-		for ks := range downloads[k].OSArchs {
-			for _, a := range downloads[k].OSArchs[ks].Archs {
-				if a.Available {
-					switch d.Name {
-					case "worker":
-						hasWorker = true
-					case "cdsctl":
-						hasCtl = true
-					case "engine":
-						hasEngine = true
-					}
-				}
+	for _, r := range resources {
+		if r.Available != nil && *r.Available {
+			switch r.Name {
+			case "worker":
+				hasWorker = true
+			case "cdsctl":
+				hasCtl = true
+			case "engine":
+				hasEngine = true
 			}
 		}
 	}
