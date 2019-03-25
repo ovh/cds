@@ -29,6 +29,9 @@ func (r Repo) runCmd(name string, args ...string) (stdOut string, err error) {
 		r.log("Running command %+v\n", cmd)
 	}
 
+	// set lang to english to be able to parse git messages
+	cmd.Env = append(cmd.Env, "LANG=en_US")
+
 	runErr := cmd.Run()
 
 	stdOut = buffOut.String()

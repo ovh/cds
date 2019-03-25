@@ -1,12 +1,13 @@
-+++
-title = "Configuration"
-weight = 5
-
-+++
+---
+title: "Configuration"
+weight: 5
+card: 
+  name: operate
+---
 
 The toml configuration can be provided by a file, via [consul k/v store](https://www.consul.io) or via [vault](https://www.vaultproject.io/).
 
-### Start CDS with local configuration file
+## Start CDS with local configuration file
 
 You can also generate a configuration file template with the following command.
 
@@ -39,7 +40,7 @@ Reading configuration file my_new_file.toml
 ...
 ```
 
-### Start CDS with Consul
+## Start CDS with Consul
 
 Upload your `toml` configuration to consul
 
@@ -59,7 +60,7 @@ Reading configuration from localhost:8500
 ...
 ```
 
-### Start CDS with Vault
+## Start CDS with Vault
 
 You have to put your configuration in a TOML format like above with good values into a secret named `/secret/cds/conf` in your vault.
 For example if you use the vault CLI:

@@ -100,7 +100,7 @@ func workflowPushRun(c cli.Values) error {
 		return nil
 	}
 
-	return workflowTarReaderToFiles(dir, tr, false, false)
+	return workflowTarReaderToFiles(c, dir, tr)
 }
 
 func workflowFilesToTarWriter(files []string, buf io.Writer) error {

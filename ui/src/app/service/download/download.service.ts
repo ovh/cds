@@ -1,7 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {Download} from '../../model/download.model';
+import {DownloadableResource} from '../../model/download.model';
 
 /**
  * Service to get downloads
@@ -14,9 +14,9 @@ export class DownloadService {
 
     /**
      * Get the list of available downloas
-     * @returns {Observable<Download[]>}
+     * @returns {Observable<DownloadableResource[]>}
      */
-    getDownloads(): Observable<Array<Download>> {
-        return this._http.get<Array<Download>>('/download');
+    getDownloads(): Observable<Array<DownloadableResource>> {
+        return this._http.get<Array<DownloadableResource>>('/download');
     }
 }

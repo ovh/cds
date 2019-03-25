@@ -10,16 +10,16 @@ function generateUserActionsDocumentation {
   filename=$(basename "$action")
   actionName=${filename/.yml/}
 
-  mkdir -p content/workflows/pipelines/actions/user
-  ACTION_FILE="content/workflows/pipelines/actions/user/${actionName}.md"
+  ACTION_FILE="content/docs/actions/${actionName}.md"
 
   echo "generate ${ACTION_FILE}"
 
 cat << EOF > ${ACTION_FILE}
-+++
-title = "${actionName}"
-
-+++
+---
+title: "${actionName}"
+card: 
+  name: user-action
+---
 EOF
 
   cdsctl action doc ${action} >> $ACTION_FILE
@@ -33,17 +33,17 @@ function generatePluginsDocumentation {
   filename=$(basename "$plugin")
   pluginName=${filename/.yml/}
 
-  mkdir -p content/workflows/pipelines/actions/plugins
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/workflows/pipelines/actions/plugins/plugin-${pluginName}.md"
+  PLUGIN_FILE="$OLD/content/docs/actions/plugin-${pluginName}.md"
 
   echo "generate ${PLUGIN_FILE}"
 
 cat << EOF > ${PLUGIN_FILE}
-+++
-title = "plugin-${pluginName}"
-
-+++
+---
+title: "plugin-${pluginName}"
+card: 
+  name: plugin
+---
 EOF
 
   cdsctl admin plugins doc ${plugin} >> $PLUGIN_FILE

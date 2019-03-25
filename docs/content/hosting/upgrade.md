@@ -1,11 +1,11 @@
-+++
-title = "Upgrade your CDS Instance"
-weight = 9
+---
+title: "Upgrade your CDS Instance"
+weight: 9
+card: 
+  name: operate
+---
 
-+++
-
-
-### Upgrade Binary
+## Upgrade Binary
 
 Update your CDS Engine binary from latest Release from GitHub:
 
@@ -13,7 +13,7 @@ Update your CDS Engine binary from latest Release from GitHub:
 ./engine update --from-github
 ```
 
-### Database Migration
+## Database Migration
 
 ```bash
 # get the file sql.tar.gz from latest release from https://github.com/ovh/cds/releases
@@ -21,7 +21,7 @@ Update your CDS Engine binary from latest Release from GitHub:
 ./engine database upgrade --db-password=cds --db-sslmode=disable --db-name=cds --migrate-dir=sql --db-connect-timeout=20
 ```
 
-### Restart your CDS API
+## Restart your CDS API
 
 ```bash
 ./engine start api ... 

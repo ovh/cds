@@ -33,4 +33,4 @@ jobs:
   requirements:
   - binary: git
   - memory: "6000"
-  - model: Node8.9.1
+  - binary: node

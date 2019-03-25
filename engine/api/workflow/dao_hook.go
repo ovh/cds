@@ -59,16 +59,12 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	}
 	hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 
-	errmu := sdk.MultiError{}
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
 		if _, ok := hook.Config[k]; !ok {
 			// Add missing conf
 			hook.Config[k] = hook.WorkflowHookModel.DefaultConfig[k]
 		}
-	}
-	if len(errmu) > 0 {
-		return sdk.WrapError(&errmu, "insertHook> Invalid hook configuration")
 	}
 
 	// if it's a new hook
@@ -303,9 +299,14 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	//Checks minimal configuration upon its model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
 		if configuredValue, has := hook.Config[k]; !has {
-			return sdk.NewError(sdk.ErrInvalidHookConfiguration, fmt.Errorf("hook %s invalid configuration. %s is missing", hook.Name, k))
+			return sdk.NewErrorFrom(sdk.ErrInvalidHookConfiguration, "hook %s invalid configuration. %s is missing", hook.Name, k)
 		} else if configuredValue.Value == "" {
-			return sdk.NewError(sdk.ErrInvalidHookConfiguration, fmt.Errorf("hook %s invalid configuration. %s is missing", hook.Name, k))
+			if k == "payload" { // Workaround to handle empty payload
+				configuredValue.Value = "{}"
+				hook.Config[k] = configuredValue
+			} else {
+				return sdk.NewErrorFrom(sdk.ErrInvalidHookConfiguration, "hook %s invalid configuration. %s is missing", hook.Name, k)
+			}
 		}
 	}
 

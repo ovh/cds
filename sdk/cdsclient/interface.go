@@ -138,8 +138,8 @@ type EventsClient interface {
 
 // DownloadClient exposes download related functions
 type DownloadClient interface {
-	Download() ([]sdk.Download, error)
-	DownloadURLFromAPI(name, os, arch string) string
+	Download() ([]sdk.DownloadableResource, error)
+	DownloadURLFromAPI(name, os, arch, variant string) string
 	DownloadURLFromGithub(filename string) (string, error)
 }
 

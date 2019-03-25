@@ -540,7 +540,6 @@ export class WorkflowsState {
     fetchAsCode(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.FetchAsCodeWorkflow) {
         let params = new HttpParams();
         params = params.append('format', 'yaml');
-        params = params.append('withPermissions', 'true');
 
         return this._http.get<string>(
             `/project/${action.payload.projectKey}/export/workflows/${action.payload.workflowName}`,

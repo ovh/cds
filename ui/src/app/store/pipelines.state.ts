@@ -430,7 +430,6 @@ export class PipelinesState {
     fetchAsCode(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.FetchAsCodePipeline) {
         let params = new HttpParams();
         params = params.append('format', 'yaml');
-        params = params.append('withPermissions', 'true');
 
         return this._http.get<string>(
             `/project/${action.payload.projectKey}/export/pipeline/${action.payload.pipelineName}`,

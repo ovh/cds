@@ -23,6 +23,7 @@ type Worker struct {
 
 // WorkerRegistrationForm represents the arguments needed to register a worker
 type WorkerRegistrationForm struct {
+	RegistrationOnly   bool
 	Name               string
 	Token              string
 	ModelID            int64
