@@ -168,6 +168,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -312,6 +313,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -448,6 +450,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -578,6 +581,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -785,6 +789,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -953,6 +958,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -1118,6 +1124,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -1298,6 +1305,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	}
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
+	wr.Workflow = w
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
