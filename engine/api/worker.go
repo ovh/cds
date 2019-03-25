@@ -36,18 +36,23 @@ func (api *API) registerWorkerHandler() service.Handler {
 		}
 
 		// Try to register worker
-		worker, err := worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.Token, params.ModelID, hatch, params.BinaryCapabilities, params.OS, params.Arch)
+		wk, err := worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.Token, params.ModelID, hatch, params.BinaryCapabilities, params.OS, params.Arch)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "[%s] Registering failed", params.Name)
 		}
 
-		worker.Uptodate = params.Version == sdk.VERSION
+		wk.Uptodate = params.Version == sdk.VERSION
 
-		log.Debug("New worker: [%s] - %s", worker.ID, worker.Name)
+		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
+
+		if params.RegistrationOnly {
+			log.Debug("removing book from cache : %+v", params)
+			worker.UnbookForRegister(api.Cache, params.ModelID)
+		}
 
 		// Return worker info to worker itself
-		return service.WriteJSON(w, worker, http.StatusOK)
+		return service.WriteJSON(w, wk, http.StatusOK)
 	}
 }
 
