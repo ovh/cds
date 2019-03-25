@@ -111,7 +111,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (!this.ready && this.workflow) {
             return;
         }
-        setTimeout(() => { this.initWorkflow(); });
+        setTimeout(() => { this.initWorkflow(); }, 1);
     }
 
     initWorkflow() {
