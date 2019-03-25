@@ -111,6 +111,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (!this.ready && this.workflow) {
             return;
         }
+        // FIXME add a delay for dom container to take good height, otherwise the workflow will not be centered
         setTimeout(() => { this.initWorkflow(); }, 1);
     }
 
