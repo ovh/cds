@@ -68,6 +68,7 @@
   "application_delete_label": "Suppression de l'application",
   "application_delete_description": "Une fois l'application supprimée, il n'y a pas de retour possible.",
   "application_name": "Nom de l'application",
+  "application_from_repository": "Application importée depuis {{repo}}",
   "application_icon": "Icône de l'application",
   "application_description": "Description de l'application",
   "application_name_error": "Le nom de l'application est invalide. Pattern autorisé : a-zA-Z0-9._-",
@@ -358,6 +359,7 @@
   "environment_title_clone": "Cloner l'environnement",
   "environment_clone_placeholder": "Nom du nouvel environnement",
   "environment_create_placeholder": "Nouvel environnement",
+  "environment_from_repository": "Environnement importé depuis {{repo}}",
   "environment_name": "Nom de l'environnement",
   "environment_no": "Il n'y a aucun environnement défini",
   "environment_renamed": "Environnement renommé",
@@ -559,6 +561,7 @@
   "pipeline_deleted": "Pipeline supprimé",
   "pipeline_delete_label": "Suppression du pipeline",
   "pipeline_delete_description": "Une fois le pipeline supprimé, il n'y a pas de retour possible.",
+  "pipeline_from_repository": "Pipeline importé depuis {{repo}}",
   "pipeline_job_variable_app": "Variables d'application",
   "pipeline_job_variable_build": "Variables de build",
   "pipeline_job_variable_cds": "Variables CDS",
@@ -1131,6 +1134,9 @@
   "workflow_template_import_from_url": "Importer depuis une URL",
   "workflow_template_imported_from_url": "Importé depuis une URL",
 
+  "application_repository_help_line_1": "Votre application n'a pas été importée depuis votre code.",
+  "pipeline_repository_help_line_1": "Votre pipeline n'a pas été importé depuis votre code.",
+  "environment_repository_help_line_1": "Votre environnement n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."
 }

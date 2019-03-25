@@ -407,6 +407,10 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
 
+		if oldW.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		var wf sdk.Workflow
 		if err := service.UnmarshalBody(r, &wf); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
