@@ -906,8 +906,6 @@
   "worker_model_help_error_openstack_2": "Check that you have the right to write on $TMPDIR or update 'basedir' parameter on your Openstack Hatchery",
   "worker_model_last_registration": "Last Registration",
   "worker_model_list_title": "Worker Models",
-  "worker_model_load_worker_models": "Loading worker models...",
-  "worker_model_load_worker_model": "Loading worker model...",
   "worker_model_name": "Name",
   "worker_model_need_register": "Need to be registered: ",
   "worker_model_none": "No worker model",

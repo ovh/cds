@@ -905,8 +905,6 @@
   "worker_model_image": "Image",
   "worker_model_last_registration": "Dernier enregistrement",
   "worker_model_list_title": "Modèles de worker",
-  "worker_model_load_worker_models": "Chargement des modèles de workers...",
-  "worker_model_load_worker_model": "Chargement du modèle de worker...",
   "worker_model_need_register": "Doit être rafraîchit par CDS :",
   "worker_model_name": "Nom",
   "worker_model_none": "Aucun modèle de worker",

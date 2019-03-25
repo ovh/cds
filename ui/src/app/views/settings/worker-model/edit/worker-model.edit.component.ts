@@ -14,7 +14,7 @@ import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { SharedService } from '../../../../shared/shared.service';
+import { Tab } from '../../../../shared/tabs/tabs.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -30,7 +30,6 @@ export class WorkerModelEditComponent implements OnInit {
     codeMirrorConfig: any;
 
     loading = false;
-    loadingAsCode = false;
     loadingUsage = false;
     deleteLoading = false;
     workerModel: WorkerModel;
@@ -41,7 +40,6 @@ export class WorkerModelEditComponent implements OnInit {
     workerModelPatternsFiltered: Array<ModelPattern> = [];
     patternSelected: ModelPattern;
     currentUser: User;
-    canEdit = false;
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
@@ -50,11 +48,10 @@ export class WorkerModelEditComponent implements OnInit {
     workerModelPatternError = false;
     path: Array<PathItem>;
     paramsSub: Subscription;
-    asCode = false;
-    workerModelAsCode: string;
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     constructor(
-        private sharedService: SharedService,
         private _workerModelService: WorkerModelService,
         private _groupService: GroupService,
         private _toast: ToastService,
@@ -63,6 +60,21 @@ export class WorkerModelEditComponent implements OnInit {
         private _router: Router,
         private _authentificationStore: AuthentificationStore
     ) {
+        this.tabs = [<Tab>{
+            translate: 'worker_model',
+            icon: '',
+            key: 'worker_model',
+            default: true
+        }, <Tab>{
+            translate: 'capabilities',
+            icon: 'file outline',
+            key: 'capabilities'
+        }, <Tab>{
+            translate: 'common_usage',
+            icon: 'map signs',
+            key: 'usage'
+        }];
+
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
             lineWrapping: true,
@@ -87,6 +99,18 @@ export class WorkerModelEditComponent implements OnInit {
             });
     }
 
+    selectTab(tab: Tab): void {
+        switch (tab.key) {
+            case 'capabilities':
+
+                break;
+            case 'usage':
+                this.loadUsage();
+                break;
+        }
+        this.selectedTab = tab;
+    }
+
     ngOnInit() {
         this.paramsSub = this._route.params.subscribe(params => {
             this._workerModelService.getWorkerModelTypes().subscribe(wmt => {
@@ -97,7 +121,7 @@ export class WorkerModelEditComponent implements OnInit {
             });
 
             if (params['workerModelName'] !== 'add') {
-                this.reloadData(params['workerModelName']);
+                this.getWorkerModel(params['workerModelName']);
             } else {
                 this.workerModel = new WorkerModel();
                 this.updatePath();
@@ -105,47 +129,38 @@ export class WorkerModelEditComponent implements OnInit {
         });
     }
 
-    loadAsCode() {
-        if (this.asCode) {
-            return;
-        }
-        this.asCode = true;
-        if (!this.workerModel.id) {
-            return;
-        }
-        this.loadingAsCode = true
-        this._workerModelService.exportWorkerModel(this.workerModel.id)
-            .pipe(finalize(() => this.loadingAsCode = false))
-            .subscribe((wmStr) => this.workerModelAsCode = wmStr);
-    }
-
-    reloadData(workerModelName: string): void {
+    getWorkerModel(workerModelName: string): void {
         this._workerModelService.getWorkerModelByName(workerModelName).subscribe(wm => {
             if (wm.model_docker.envs) {
                 this.envNames = Object.keys(wm.model_docker.envs);
             }
-            this.workerModel = wm;
+
             this.updatePath();
             this.workerModelPatternsFiltered = this.workerModelPatterns.filter((wmp) => wmp.type === wm.type);
+
             if (this.currentUser.admin) {
-                this.canEdit = true;
+                wm.editable = true;
+                this.workerModel = wm;
                 return;
             }
 
             if (!this.currentUser.admin && wm.group.name === 'shared.infra') {
-                this.canEdit = false;
+                wm.editable = false;
+                this.workerModel = wm;
                 return;
             }
+
             // here, check if user is admin of worker model group
             this._groupService.getGroupByName(wm.group.name).subscribe(gr => {
                 if (gr.admins) {
                     for (let i = 0; i < gr.admins.length; i++) {
                         if (gr.admins[i].username === this.currentUser.username) {
-                            this.canEdit = true;
+                            wm.editable = true;
                             break;
                         };
                     }
                 }
+                this.workerModel = wm;
             });
         });
     }
@@ -213,17 +228,13 @@ export class WorkerModelEditComponent implements OnInit {
     }
 
     clickSaveAsCodeButton(): void {
-        if (!this.workerModelAsCode) {
+        /*if (!this.workerModelAsCode) {
             return;
         }
         this.loading = true;
         this._workerModelService.importWorkerModel(this.workerModelAsCode, true)
             .pipe(finalize(() => this.loading = false))
-            .subscribe((wm) => this.workerModel = wm);
-    }
-
-    getDescriptionHeight(): number {
-        return this.sharedService.getTextAreaheight(this.workerModel.description);
+            .subscribe((wm) => this.workerModel = wm);*/
     }
 
     filterPatterns(type: string) {

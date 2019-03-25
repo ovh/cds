@@ -23,6 +23,7 @@ export class WorkerModel {
     is_official: boolean;
     is_deprecated: boolean;
     pattern_name: string;
+    editable: boolean;
 
     constructor() {
       this.model_docker = new ModelDocker();
