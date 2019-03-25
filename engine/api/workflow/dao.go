@@ -1561,7 +1561,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	for filename, env := range envs {
 		log.Debug("Push> Parsing %s", filename)
-		envDB, msgList, err := environment.ParseAndImport(tx, proj, &env, environment.ImportOptions{Force: true, FromRepository: opts.FromRepository}, decryptFunc, u)
+		var fromRepo string
+		if opts != nil {
+			fromRepo = opts.FromRepository
+		}
+		envDB, msgList, err := environment.ParseAndImport(tx, proj, &env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
 			err = fmt.Errorf("unable to import environment %s: %v", env.Name, err)
 			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
