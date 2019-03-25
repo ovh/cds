@@ -107,6 +107,10 @@ export class ApplicationShowComponent implements OnInit {
                     this.application = null;
                 }
                 if (!this.application) {
+                    if (this.applicationSubscription) {
+                        this.applicationSubscription.unsubscribe();
+                    }
+
                     this.applicationSubscription = this.store.select(ApplicationsState.selectApplication(key, appName))
                         .pipe(filter((app) => app != null))
                         .subscribe((app: Application) => {

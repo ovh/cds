@@ -45,6 +45,16 @@
                             </ng-container>
                         </div>
                     </div>
+                    <div class="four wide column">
+                        <div class="grouped fields">
+                            <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
+                            <div class="field">
+                                <sui-checkbox id="withKeychain" name="withKeychain" [(ngModel)]="withKeychain" (ngModelChange)="buildData()">
+                                    {{ 'cdsctl_choice_options_with_keychain' | translate }}
+                                </sui-checkbox>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -58,7 +68,6 @@
                 {{ 'cdsctl_notice' | translate }}
                 <ul>
                     <li>{{ 'cdsctl_notice_1_1' | translate }}<a href="" [routerLink]="['/settings', 'downloads']">{{ 'downloads_title' | translate }}</a>
-                    <li>{{ 'cdsctl_notice_1_2' | translate }}</li>
                 </ul>
             </div>
     
@@ -106,7 +115,7 @@
             <h1>{{ 'cdsctl_title_6' | translate }}</h1>
     
             {{ 'cdsctl_title_6_info_1' | translate }}
-            (<a href="https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/">Git Repository Webhook</a>).
+            (<a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/">Git Repository Webhook</a>).
             {{ 'cdsctl_title_6_info_2' | translate }}
     
             <codemirror

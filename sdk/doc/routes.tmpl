@@ -3,7 +3,7 @@ title = "{{.Title}}"
 +++
 
 {{range .Routes}}
-### {{.Title}}
+## {{.Title}}
 
 URL         | **`{{.URL}}`**
 ----------- |----------
@@ -13,20 +13,20 @@ Method      | {{.Method}}
 Code        | {{.Code}}    
 
 {{if .Description -}}
-#### Description
+### Description
 {{ .Description}}
 {{- end}}
 
 
 {{if .RequestBody -}}
-#### Request Body
+### Request Body
 ```
 {{ .RequestBody}}
 ```
 {{- end}}
 
 {{if .ResponseBody -}}
-#### Response Body
+### Response Body
 ```
 {{ .ResponseBody}}
 ```

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -38,17 +38,17 @@ func userHomeDir() string {
 	return os.Getenv(env)
 }
 
-func loadConfig(configFile string) (*cdsclient.Config, error) {
-	var verbose = os.Getenv("CDS_VERBOSE") == "true"
+func loadConfig(cmd *cobra.Command, configFile string) (*cdsclient.Config, error) {
+	var verbose, _ = cmd.Flags().GetBool("verbose")
+	verbose = verbose || os.Getenv("CDS_VERBOSE") == "true"
+	var insecureSkipVerifyTLS, _ = cmd.Flags().GetBool("insecure")
+	insecureSkipVerifyTLS = insecureSkipVerifyTLS || os.Getenv("CDS_INSECURE") == "true"
 
 	c := &config{}
 	c.Host = os.Getenv("CDS_API_URL")
 	c.User = os.Getenv("CDS_USER")
 	c.Token = os.Getenv("CDS_TOKEN")
-	c.InsecureSkipVerifyTLS, _ = strconv.ParseBool(os.Getenv("CDS_INSECURE"))
-	if insecureSkipVerifyTLS { // if set from command line
-		c.InsecureSkipVerifyTLS = true
-	}
+	c.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
 
 	if c.Host != "" && c.User != "" {
 		if verbose {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
@@ -28,15 +29,25 @@ func version() *cobra.Command {
 }
 
 func versionRun(v cli.Values) error {
-	version, err := client.Version()
-	if err != nil {
-		return err
+	var apiVersion *sdk.Version
+	var err error
+	if client != nil {
+		apiVersion, err = client.Version()
+	} else {
+		err = errors.New("no configuration file found")
 	}
 
 	m := map[string]interface{}{
-		"version":     sdk.VersionString(),
-		"api-version": version.Version,
-		"api-url":     client.APIURL(),
+		"version":  sdk.VersionString(),
+		"keychain": keychainEnabled,
+	}
+
+	if apiVersion != nil {
+		m["api-version"] = apiVersion.Version
+		m["api-url"] = client.APIURL()
+	} else if err != nil {
+		m["api-version"] = err.Error()
+		m["api-url"] = "-"
 	}
 
 	format := v.GetString("format")
@@ -44,6 +55,7 @@ func versionRun(v cli.Values) error {
 		fmt.Println(m["version"])
 		fmt.Printf("CDS api version: %s\n", m["api-version"])
 		fmt.Printf("CDS URL: %s\n", m["api-url"])
+		fmt.Printf("keychain support: %v\n", m["keychain"])
 		return nil
 	}
 

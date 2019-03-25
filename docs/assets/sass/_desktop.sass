@@ -1,0 +1,216 @@
+$main-max-width: 1200px
+$head-submenu-height: 44px
+
+@media screen and (min-width: 1025px)
+  ul.global-nav
+    display: inline-block
+
+    li
+      display: inline-block
+      margin-right: 14px
+      vertical-align: middle;
+
+  section, header, footer
+    main
+      .land
+        margin-top: 10px
+
+  #headSubMenu
+    height: $head-submenu-height
+    line-height: $head-submenu-height
+
+  #btn-gh
+    display: block
+    
+  #home
+    #hero
+      padding-top: 120px;
+
+      #headSubMenu
+        display: block
+
+  .nav-buttons
+    float: right
+    margin-top: -115px
+    padding-right: 30px
+    font-size: 1rem;
+    
+  #tocburger
+    display: none
+
+  #docs
+    #hero
+      padding-top: 120px
+
+      h1, h5
+        text-align: left
+
+      #headSubMenu
+        ul
+          float: left
+
+        #search-query
+          vertical-align: middle
+
+    .logo
+      float: left
+      display: block
+      width: 180px
+      height: 90px
+      top: 95px
+      left: 70px
+      transform: none
+      background-image: url(../images/cds-transparent.png)
+
+  #page-content-with-menu
+    padding: 50px 50px 100px 100px
+    clear: both
+
+  #toc
+    position: relative
+    float: left
+    padding: 0 20px
+    left: 0
+    width: 350px
+    z-index: auto
+    display: block
+
+  #docsContent
+    width: calc(100% - 400px)
+
+  section, header, footer
+    main
+      max-width: $main-max-width
+
+  header, #headSubMenu, #page-content-with-menu
+    padding-left: 100px
+    padding-right: 100px
+
+  #home
+    section, header, footer
+      main
+        max-width: 1000px
+
+  #homeGrid
+    main
+      position: relative
+      max-width: 830px
+
+      .image-wrapper
+        max-width: 75%
+        top: 50%
+        margin-left: 0
+
+      .content
+        width: 75%;
+
+  #intuitiveui
+    font-size: 1.2rem
+    background-color: #92c455;
+    padding-top: 100px;
+    padding-bottom: 140px;
+    padding-left: 10%
+    padding-right: 5%
+    
+    div:first-child
+      width: 60%
+
+    div
+      display: inline-block;
+      color: #fff
+      vertical-align: top;
+      width: 30%
+      
+      h2
+        color: black
+        padding-bottom: 50px
+        
+  #powerfulcli
+    font-size: 1.2rem
+    background-color: #fff
+    padding-top: 100px
+    padding-bottom: 140px
+    padding-left: 10%
+    padding-right: 5%
+    
+    .section-text
+      width: 45%
+      padding-right: 10%
+
+      h2
+        color: black  
+        padding-bottom: 50px
+
+    .player
+      width: 100%
+
+    div
+      display: inline-block;
+      vertical-align: top;
+
+  #matrix-home
+    h2
+      color:#eee
+      padding-top: 40px
+
+    padding-bottom: 40px
+
+    table
+      th:first-child
+        width: 50%
+      th
+        width: 10%
+        font-size: 1.2rem
+
+      tr
+        td
+          font-size: 0.8rem
+          
+          .fa-times
+            font-size: 2rem
+
+          .fa-check
+            font-size: 2rem
+
+        td:first-child
+          text-align: left
+          a
+            font-size: 1.2rem
+            color: #eee
+        td
+          sub
+            position: absolute
+            margin-left: 5px
+          a
+            font-size: 0.9rem
+
+  #home-contribution
+    padding-top: 200px;
+    padding-bottom: 200px
+    h4
+      color: #de3e7b
+      padding-top: 0px
+    div:first-child
+      display: inline-block
+    div
+      display: inline-block
+      width: 30%
+        
+  footer
+    width: 100%
+    background-color: $dark-grey
+
+    main
+      padding: 20px 0
+
+  #search-query
+    top: 20px;
+
+@media screen and (min-width: 1300px)
+  #headSubMenu
+    padding-right: 100px
+
+@media screen and (min-width: 456px)
+  #headSubMenu
+    li + li
+      margin-left: 20px

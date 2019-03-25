@@ -168,6 +168,10 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 			return err
 		}
 
+		if spawnErrorForm.Error == "" && len(spawnErrorForm.Logs) == 0 {
+			return nil
+		}
+
 		if err := worker.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm); err != nil {
 			return sdk.WrapError(err, "cannot update spawn error on worker model")
 		}
@@ -178,6 +182,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
+		worker.UnbookForRegister(api.Cache, workerModelID)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

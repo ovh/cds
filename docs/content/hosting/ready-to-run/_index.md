@@ -1,7 +1,4 @@
-+++
-title = "Ready to RUN"
-weight = 4
-
-+++
-
-{{%children style="h2"%}}
+---
+title: "Ready to RUN"
+weight: 4
+---

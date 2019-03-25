@@ -18,6 +18,9 @@ const (
 	// ViolateUniqueKeyPGCode is the pg code when duplicating unique key
 	ViolateUniqueKeyPGCode = "23505"
 
+	// RowLockedPGCode is the pg code when trying to access to a locked row
+	RowLockedPGCode = "55P03"
+
 	// StringDataRightTruncation is raisedalue is too long for varchar.
 	StringDataRightTruncation = "22001"
 )

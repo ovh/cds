@@ -189,7 +189,7 @@ github.com/fatih/structs
 github.com/fernet/fernet-go
 # github.com/fsamin/go-dump v1.0.8
 github.com/fsamin/go-dump
-# github.com/fsamin/go-repo v0.0.0-20190227101938-952eab8f1609
+# github.com/fsamin/go-repo v0.1.0
 github.com/fsamin/go-repo
 # github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 github.com/fsamin/go-shredder
@@ -569,7 +569,7 @@ go.opencensus.io/internal
 go.opencensus.io/internal/tagencoding
 go.opencensus.io/trace/internal
 go.opencensus.io
-# golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
+# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ssh
 golang.org/x/crypto/openpgp
@@ -586,7 +586,7 @@ golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
-# golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
+# golang.org/x/net v0.0.0-20190313220215-9f648a60d977
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http2
@@ -605,9 +605,10 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
+# golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+golang.org/x/sys/cpu
 golang.org/x/sys/windows/registry
 # golang.org/x/text v0.3.0
 golang.org/x/text/language

@@ -2,7 +2,7 @@ dependencies:
 - name: postgresql
   version: 0.13.1 #appVersion: 9.6.2
   repository: https://kubernetes-charts.storage.googleapis.com/
-  #condition: mariadb.enabled
+  condition: postgresql.enabled
 - name: redis
   version: 3.3.5 #tag: 4.0.9
   repository: https://kubernetes-charts.storage.googleapis.com/

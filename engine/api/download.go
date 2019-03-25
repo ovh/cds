@@ -10,12 +10,13 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) downloadsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		downloads := sdk.GetStaticDownloadsWithAvailability(api.Config.Directories.Download)
-		return service.WriteJSON(w, downloads, http.StatusAccepted)
+		resources := sdk.AllDownloadableResourcesWithAvailability(api.Config.Directories.Download)
+		return service.WriteJSON(w, resources, http.StatusAccepted)
 	}
 }
 
@@ -24,16 +25,16 @@ func (api *API) downloadHandler() service.Handler {
 		vars := mux.Vars(r)
 		name := vars["name"]
 		os := vars["os"]
+		arch := vars["arch"]
+		r.ParseForm() // nolint
+		variant := r.Form.Get("variant")
 
-		arch, extension, err := sdk.IsBinaryOSArchValid(api.Config.Directories.Download, name, os, vars["arch"])
-		if err != nil {
-			return err
-		}
-
+		filename := sdk.GetArtifactFilename(name, os, arch, variant)
 		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment;filename="%s%s"`, name, extension))
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, filename))
 
-		path := path.Join(api.Config.Directories.Download, fmt.Sprintf("%s%s-%s-%s%s", sdk.DownloadGetPrefix(name), name, os, arch, extension))
+		path := path.Join(api.Config.Directories.Download, filename)
+		log.Debug("downloading from %s", path)
 
 		http.ServeFile(w, r, path)
 		return nil

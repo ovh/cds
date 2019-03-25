@@ -113,4 +113,9 @@ export class DeleteFromCacheApplication {
     constructor(public payload: { projectKey: string, applicationName: string }) { }
 }
 
+export class ClearCacheApplication {
+    static readonly type = '[Application] Clear cache Application';
+    constructor() { }
+}
+
 

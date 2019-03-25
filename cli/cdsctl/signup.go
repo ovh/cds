@@ -46,6 +46,7 @@ func signupRun(v cli.Values) error {
 	username := v.GetString("username")
 	fullname := v.GetString("fullname")
 	email := v.GetString("email")
+	insecureSkipVerifyTLS := v.GetBool("insecure")
 
 	fmt.Println("CDS API URL:", url)
 
@@ -85,10 +86,10 @@ func signupRun(v cli.Values) error {
 
 	fmt.Println("Please check your mail box to activate your account...")
 
-	return doConfirm(username)
+	return doConfirm(username, insecureSkipVerifyTLS)
 }
 
-func doConfirm(username string) error {
+func doConfirm(username string, insecureSkipVerifyTLS bool) error {
 	fmt.Printf("Enter your verification code: ")
 	b, err := gopass.GetPasswd()
 	if err != nil {
@@ -107,5 +108,5 @@ func doConfirm(username string) error {
 	fmt.Println("All is fine. Here is your new password:")
 	fmt.Println(password)
 
-	return doLogin(client.APIURL(), username, password, false)
+	return doLogin(client.APIURL(), username, password, false, insecureSkipVerifyTLS)
 }

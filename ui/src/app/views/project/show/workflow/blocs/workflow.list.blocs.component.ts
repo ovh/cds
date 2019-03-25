@@ -1,15 +1,16 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {finalize} from 'rxjs/operators';
-import {IdName, Label, Project} from '../../../../../model/project.model';
-import {Warning} from '../../../../../model/warning.model';
-import {HelpersService} from '../../../../../service/helpers/helpers.service';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {LabelsEditComponent} from '../../../../../shared/labels/edit/labels.edit.component';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflows.action';
+import { finalize } from 'rxjs/operators';
+import { IdName, Label, Project } from '../../../../../model/project.model';
+import { Warning } from '../../../../../model/warning.model';
+import { HelpersService } from '../../../../../service/helpers/helpers.service';
+import { LabelsEditComponent } from '../../../../../shared/labels/edit/labels.edit.component';
 
 @Component({
-    selector: 'app-project-workflows-blocs',
-    templateUrl: './workflow.list.blocs.html',
-    styleUrls: ['./workflow.list.blocs.scss']
+  selector: 'app-project-workflows-blocs',
+  templateUrl: './workflow.list.blocs.html',
+  styleUrls: ['./workflow.list.blocs.scss']
 })
 export class ProjectWorkflowListBlocsComponent {
 
@@ -70,19 +71,28 @@ export class ProjectWorkflowListBlocsComponent {
   filteredLabels: Array<Label> = [];
   loadingLabel = false;
 
-  constructor(private _workflowStore: WorkflowStore, private _helpersService: HelpersService) { }
+  constructor(
+    private store: Store,
+    private _helpersService: HelpersService
+  ) { }
 
   linkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
-    this._workflowStore.linkLabel(this.project.key, wfName, label)
-      .pipe(finalize(() => this.loadingLabel = false))
+    this.store.dispatch(new LinkLabelOnWorkflow({
+      projectKey: this.project.key,
+      workflowName: wfName,
+      label
+    })).pipe(finalize(() => this.loadingLabel = false))
       .subscribe();
   }
 
   unlinkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
-    this._workflowStore.unlinkLabel(this.project.key, wfName, label.id)
-      .pipe(finalize(() => this.loadingLabel = false))
+    this.store.dispatch(new UnlinkLabelOnWorkflow({
+      projectKey: this.project.key,
+      workflowName: wfName,
+      label
+    })).pipe(finalize(() => this.loadingLabel = false))
       .subscribe();
   }
 
@@ -91,9 +101,12 @@ export class ProjectWorkflowListBlocsComponent {
     label.name = labelName;
 
     this.loadingLabel = true;
-    this._workflowStore.linkLabel(this.project.key, wfName, label)
-      .pipe(finalize(() => this.loadingLabel = false))
-      .subscribe(() => this.labelFilter = '');
+    this.store.dispatch(new LinkLabelOnWorkflow({
+      projectKey: this.project.key,
+      workflowName: wfName,
+      label
+    })).pipe(finalize(() => this.loadingLabel = false))
+      .subscribe();
   }
 
   editLabels() {

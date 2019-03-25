@@ -119,6 +119,10 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	}
 
 	buffw := new(bytes.Buffer)
+	// If the repository is "as-code", hide the hook
+	if wf.FromRepository != "" {
+		opts = append(opts, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+	}
 	if _, err := exportWorkflow(*wf, f, buffw, opts...); err != nil {
 		return wp, sdk.WrapError(err, "unable to export workflow")
 	}

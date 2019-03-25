@@ -1,0 +1,13 @@
+{{ define "shortcodes-blocks_getimage" }}
+{{- $cr := site.GetPage "/_common-resources" -}}
+{{- with $cr -}}
+{{- $image := $cr.Resources.GetMatch (printf "images/**%s*" $.name ) -}}
+{{- with $image -}}
+{{- $.ctx.Scratch.Set $.target $image -}}
+{{- else -}}
+{{- errorf "Image matching %q not found _common-resources" $.name -}}
+{{- end -}}
+{{- else -}}
+{{ errorf "[%s] No resource bundle found. Create an empty headless bundle; create content/%s/_common-resources/index.md with \"headless: true\" in front matter. See https://gohugo.io/content-management/page-bundles/#headless-bundle"  $.ctx.Page.Lang $.ctx.Page.Lang }}
+{{- end -}}
+{{- end -}}
