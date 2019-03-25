@@ -29,6 +29,7 @@ export class Column<T> {
     selector: Selector<T>;
     sortable: boolean;
     sortKey: string;
+    disabled: boolean;
 }
 
 @Pipe({ name: 'selector' })
@@ -92,6 +93,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     filter: string;
     filteredData: Array<T>;
     indexSelected: number;
+    columnsCount: number;
 
     ngOnChanges() {
         this.allData = this.data;
@@ -106,6 +108,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
 
         this.nbElementsByPage = this.withPagination;
         this.filterFunc = this.withFilter;
+        this.columnsCount = this.columns.filter(c => !c.disabled).length + (this.withSelect ? 1 : 0);
         this.getDataForCurrentPage();
     }
 
