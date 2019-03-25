@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>plugins-action on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/</link>
+    <description>Recent content in plugins-action on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>binary-add</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-add/</guid>
+      <description> cdsctl admin plugins-action binary-add Add a binary
+Synopsis Add a binary
+cdsctl admin plugins-action binary-add FILENAME [flags]  Options  -h, --help help for binary-add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl admin plugins-action - Manage CDS Plugins  </description>
+    </item>
+    
+    <item>
+      <title>binary-update</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-update/</guid>
+      <description> cdsctl admin plugins-action binary-update Update a binary
+Synopsis Update a binary
+cdsctl admin plugins-action binary-update FILENAME [flags]  Options  -h, --help help for binary-update  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl admin plugins-action - Manage CDS Plugins  </description>
+    </item>
+    
+  </channel>
+</rss>

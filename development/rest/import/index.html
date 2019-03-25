@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>import - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
+Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
+<meta property="og:description" content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
+Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
+<meta name="twitter:description" content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
+Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
+<meta property="og:url" content="https://ovh.github.io/cds/development/rest/import/">
+<meta property="og:title" content="import">
+<meta name="twitter:title" content="import">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="artifact" href="https://ovh.github.io/cds/development/rest/artifact/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="build" href="https://ovh.github.io/cds/development/rest/build/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hatchery" href="https://ovh.github.io/cds/development/rest/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="pipeline" href="https://ovh.github.io/cds/development/rest/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="platform" href="https://ovh.github.io/cds/development/rest/platform/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin" href="https://ovh.github.io/cds/development/rest/plugin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="staticfiles" href="https://ovh.github.io/cds/development/rest/staticfiles/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="warning" href="https://ovh.github.io/cds/development/rest/warning/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>import</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#get-import-workflow-as-code-operation-details">Get import workflow as code operation details</a>
+<ul>
+<li><a href="#description">Description</a></li>
+<li><a href="#request-body">Request Body</a></li>
+<li><a href="#response-body">Response Body</a></li>
+</ul></li>
+<li><a href="#import-workflow-as-code">Import workflow as code</a>
+<ul>
+<li><a href="#description-1">Description</a></li>
+<li><a href="#request-body-1">Request Body</a></li>
+<li><a href="#response-body-1">Response Body</a></li>
+</ul></li>
+<li><a href="#perform-workflow-as-code-import">Perform workflow as code import</a>
+<ul>
+<li><a href="#description-2">Description</a></li>
+<li><a href="#request-body-2">Request Body</a></li>
+<li><a href="#response-body-2">Response Body</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<h2 id="get-import-workflow-as-code-operation-details">Get import workflow as code operation details</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/import/&lt;project-key&gt;/&lt;uuid&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getImportAsCodeHandler%22">getImportAsCodeHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="description">Description</h3>
+
+<p>This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation</p>
+
+<h3 id="request-body">Request Body</h3>
+
+<pre><code>None
+</code></pre>
+
+<h3 id="response-body">Response Body</h3>
+
+<pre><code>{&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}
+</code></pre>
+
+<h2 id="import-workflow-as-code">Import workflow as code</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/import/&lt;project-key&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postImportAsCodeHandler%22">postImportAsCodeHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="description-1">Description</h3>
+
+<p>This the entrypoint to perform workflow as code. The first step is to post an operation leading to checkout application and scrapping files</p>
+
+<h3 id="request-body-1">Request Body</h3>
+
+<pre><code>{&quot;vcs_Server&quot;:&quot;github&quot;, &quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;https&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;master&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{&quot;branch&quot;:&quot;master&quot;}}}
+</code></pre>
+
+<h3 id="response-body-1">Response Body</h3>
+
+<pre><code>{&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;https&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;master&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{&quot;branch&quot;:&quot;master&quot;}}}
+</code></pre>
+
+<h2 id="perform-workflow-as-code-import">Perform workflow as code import</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/import/&lt;project-key&gt;/&lt;uuid&gt;/perform</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPerformImportAsCodeHandler%22">postPerformImportAsCodeHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="description-2">Description</h3>
+
+<p>This operation push the workflow as code into the project</p>
+
+<h3 id="request-body-2">Request Body</h3>
+
+<pre><code>None
+</code></pre>
+
+<h3 id="response-body-2">Response Body</h3>
+
+<pre><code>translated message list
+</code></pre>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ready to RUN on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/hosting/ready-to-run/</link>
+    <description>Recent content in Ready to RUN on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/hosting/ready-to-run/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Docker Compose</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</guid>
+      <description>Run with Docker-Compose The docker-compose.yml contains:
+ cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ mkdir /tmp/cdstest &amp;amp;&amp;amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up -d cds-api cds-ui   Create the first user with WebUI  Open a browser on http://localhost:2015/account/signup, then register a new user admin, with an email admin@localhost.</description>
+    </item>
+    
+    <item>
+      <title>Run with Helm on Kubernetes</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/helm/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/helm/</guid>
+      <description>Helm is the package manager for Kubernetes.
+You can find all informations to know how to run a CDS with Helm just here.</description>
+    </item>
+    
+    <item>
+      <title>Run with binaries</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</guid>
+      <description>This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&amp;quot;&#39; -f 4) OS=linux # could be linux, darwin, windows ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.</description>
+    </item>
+    
+  </channel>
+</rss>

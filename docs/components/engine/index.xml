@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>engine on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/engine/</link>
+    <description>Recent content in engine on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/engine/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>start</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/start/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/start/</guid>
+      <description>engine start Start CDS
+Synopsis Start CDS Engine Services
+API This is the core component of CDS.
+Hatcheries They are the components responsible for spawning workers. Supported integrations/orchestrators are:
+ Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
+Repositories This component operates CDS workflow repositories
+VCS This component operates CDS VCS connectivity
+Start all of this with a single command:
+$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]  All the services are using the same configuration file format.</description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/update/</guid>
+      <description> engine update Update engine binary
+Synopsis Update engine binary
+engine update [flags]  Examples engine update --from-github  Options  --api string Update binary from a CDS Engine API --from-github Update binary from latest github release  SEE ALSO  engine - CDS Engine  </description>
+    </item>
+    
+    <item>
+      <title>uptodate</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/uptodate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/uptodate/</guid>
+      <description> engine uptodate check if engine is uptodate
+Synopsis check if engine is uptodate with latest release on github (&amp;ndash;from-github) or from an existing API.
+This command exit 0 if current binary is uptodate.
+engine uptodate [flags]  Examples engine uptodate --from-github  Options  --api string Update binary from a CDS Engine API --from-github Update binary from latest github release  SEE ALSO  engine - CDS Engine  </description>
+    </item>
+    
+    <item>
+      <title>version</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/version/</guid>
+      <description> engine version Display CDS version
+Synopsis Display CDS version
+engine version  SEE ALSO  engine - CDS Engine  </description>
+    </item>
+    
+  </channel>
+</rss>

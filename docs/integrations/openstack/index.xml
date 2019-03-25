@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Openstack on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/integrations/openstack/</link>
+    <description>Recent content in Openstack on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/integrations/openstack/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>OpenStack Swift</title>
+      <link>https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/</guid>
+      <description>The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
+With this integration, you can use a dedicated OpenStack Swift Storage on :
+ action Artifact Upload action Artifact Downlaod action Serve Static Files worker cache command  Notice: per default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.</description>
+    </item>
+    
+    <item>
+      <title>Openstack Compute</title>
+      <link>https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/</guid>
+      <description>CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
+Start OpenStack hatchery Generate a token for group:
+$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 +0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.</description>
+    </item>
+    
+  </channel>
+</rss>

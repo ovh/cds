@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>hooks on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/</link>
+    <description>Recent content in hooks on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>executions</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/executions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/executions/</guid>
+      <description>cdsctl admin hooks executions List CDS Executions for one task
+Synopsis List CDS Executions for one task
+cdsctl admin hooks executions UUID [flags]  Examples cdsctl admin hooks executions 5178ce1f-2f76-45c5-a203-58c10c3e2c73  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/list/</guid>
+      <description>cdsctl admin hooks list List CDS Hooks Tasks
+Synopsis List CDS Hooks Tasks
+cdsctl admin hooks list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --sort string Sort task by nb_executions_total,nb_executions_todo  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>purge</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/purge/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/purge/</guid>
+      <description> cdsctl admin hooks purge Delete all executions for a task
+Synopsis Delete all executions for a task
+cdsctl admin hooks purge UUID  Examples cdsctl admin hooks purge 5178ce1f-2f76-45c5-a203-58c10c3e2c73  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin hooks - Manage CDS Hooks tasks  </description>
+    </item>
+    
+    <item>
+      <title>start</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/start/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/start/</guid>
+      <description> cdsctl admin hooks start Start a task
+Synopsis Start a task
+cdsctl admin hooks start UUID  Examples cdsctl admin hooks start 5178ce1f-2f76-45c5-a203-58c10c3e2c73  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin hooks - Manage CDS Hooks tasks  </description>
+    </item>
+    
+    <item>
+      <title>startall</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/startall/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/startall/</guid>
+      <description> cdsctl admin hooks startall Start all tasks
+Synopsis Start all tasks
+cdsctl admin hooks startall  Examples cdsctl admin hooks startall  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin hooks - Manage CDS Hooks tasks  </description>
+    </item>
+    
+    <item>
+      <title>stop</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/stop/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/stop/</guid>
+      <description> cdsctl admin hooks stop Stop a task
+Synopsis Stop a task
+cdsctl admin hooks stop UUID  Examples cdsctl admin hooks stop 5178ce1f-2f76-45c5-a203-58c10c3e2c73  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin hooks - Manage CDS Hooks tasks  </description>
+    </item>
+    
+    <item>
+      <title>stopall</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/stopall/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/stopall/</guid>
+      <description> cdsctl admin hooks stopall Stop all tasks
+Synopsis Stop all tasks
+cdsctl admin hooks stopall  Examples cdsctl admin hooks stopall  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin hooks - Manage CDS Hooks tasks  </description>
+    </item>
+    
+  </channel>
+</rss>

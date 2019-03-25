@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Contributing on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/development/contribute/</link>
+    <description>Recent content in Contributing on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/development/contribute/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Write documentation</title>
+      <link>https://ovh.github.io/cds/development/contribute/documentation/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/contribute/documentation/</guid>
+      <description>Documentation https://ovh.github.io/cds is generated with Hugo. Source are under https://github.com/ovh/cds/tree/master/docs/content
+Write / Generate / Test documentation:
+ Download release Hugo Version Extended v0.54.0 https://github.com/gohugoio/hugo/releases/tag/v0.54.0 - put hugo binary in your PATH Download CDS Binaries: cdsctl, engine, worker from https://github.com/ovh/cds/releases/latest Clone CDS repository: git clone https://github.com/ovh/cds.git inside ${CDS_SOURCES} Generate documentation with Hugo  cd ${CDS_SOURCES} make install # to recompile all CDS binaries GEN_PATH=${CDS_SOURCES}/docs/content/docs/components make doc cd ${CDS_SOURCES}/docs hugo server   go to http://localhost:1313/cds/  </description>
+    </item>
+    
+    <item>
+      <title>Develop a hatchery</title>
+      <link>https://ovh.github.io/cds/development/contribute/hatchery/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/contribute/hatchery/</guid>
+      <description>Example with a creation of a vSphere hatchery  First of all you need to create a new package like the other into the hatchery package. Let&amp;rsquo;s call this package vSphere for our example.
+ You have to implement the Service interface (see here) in order to configure launch this new hatchery mode via CDS engine CLI.
+ Your have to create a Configuration structure composed of the hatchery.CommonConfiguration and the variables you need to access to vSphere API.</description>
+    </item>
+    
+    <item>
+      <title>Development Environment</title>
+      <link>https://ovh.github.io/cds/development/contribute/development/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/contribute/development/</guid>
+      <description>Before contributing to CDS, you&amp;rsquo;ll need to install your development environment.
+ PostgreSQL Redis Node.js Golang CDS  if you are familiar with these different tools, you probably will not need to read this page :-)
+PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &amp;gt;= 9.5.
+You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
+Initialize DB by running:
+$ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data  Create user cds and database cds</description>
+    </item>
+    
+    <item>
+      <title>Develop a plugin</title>
+      <link>https://ovh.github.io/cds/development/contribute/plugin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/contribute/plugin/</guid>
+      <description>A CDS worker executes job, and job is composed of steps.
+A step is an action
+A Plugin is simply an executable which expose a GRPC server corresponding to the right proto file. You can use the programming language of your choice. The CDS worker will simply query the GRPC server of the plugin.
+In order to communicate with a CDS worker, a plugin MUST fill the following requirements:
+ Expose a GRPC server Implement methods and messages coming from this proto file Display this message at the launch of your plugin XXX is ready to accept new connection where XXX is your ip address with port or your Unix socket (example: 127.</description>
+    </item>
+    
+    <item>
+      <title>Error management</title>
+      <link>https://ovh.github.io/cds/development/contribute/error_management/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/contribute/error_management/</guid>
+      <description>This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
+Errors can be forwarded to a Graylog instance then retrieved directly from the ctl (see api.graylog and log.graylog sections in cds configuration file to setup).
+cdsctl admin errors get &amp;lt;error_uuid&amp;gt;  Usage in code All errors from lib should be wrapped like sdk.</description>
+    </item>
+    
+  </channel>
+</rss>

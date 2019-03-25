@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Permissions - ACLs - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="There are 3 types of permissions:
+ Read Read / Execute Read / Write / Execute  These permissions can be attached to different objects:
+ On project On workflow On workflow node      Project Workflow Workflow node     Create a workflow RWX - -   Edit a workflow (change run conditions, add nodes, edit payload, notifications, &hellip;) RO RWX -   Create/edit an environment/pipeline/application RWX - -   Manage permissions on project RWX - -   Manage permissions on a workflow RO RWX    Run a workflow RO RX / - OR RX (if there is some groups on node)    Permissions cannot be attached directly to users, they need to be attached to groups of users.">
+<meta property="og:description" content="There are 3 types of permissions:
+ Read Read / Execute Read / Write / Execute  These permissions can be attached to different objects:
+ On project On workflow On workflow node      Project Workflow Workflow node     Create a workflow RWX - -   Edit a workflow (change run conditions, add nodes, edit payload, notifications, &hellip;) RO RWX -   Create/edit an environment/pipeline/application RWX - -   Manage permissions on project RWX - -   Manage permissions on a workflow RO RWX    Run a workflow RO RX / - OR RX (if there is some groups on node)    Permissions cannot be attached directly to users, they need to be attached to groups of users.">
+<meta name="twitter:description" content="There are 3 types of permissions:
+ Read Read / Execute Read / Write / Execute  These permissions can be attached to different objects:
+ On project On workflow On workflow node      Project Workflow Workflow node     Create a workflow RWX - -   Edit a workflow (change run conditions, add nodes, edit payload, notifications, &hellip;) RO RWX -   Create/edit an environment/pipeline/application RWX - -   Manage permissions on project RWX - -   Manage permissions on a workflow RO RWX    Run a workflow RO RX / - OR RX (if there is some groups on node)    Permissions cannot be attached directly to users, they need to be attached to groups of users.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/permissions/">
+<meta property="og:title" content="Permissions - ACLs">
+<meta name="twitter:title" content="Permissions - ACLs">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/" class="menuSelected">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Concepts" href="https://ovh.github.io/cds/docs/concepts/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Job" href="https://ovh.github.io/cds/docs/concepts/job/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Permissions - ACLs" href="https://ovh.github.io/cds/docs/concepts/permissions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline" href="https://ovh.github.io/cds/docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Variables" href="https://ovh.github.io/cds/docs/concepts/variables/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Workflow">
+	<div class="container">
+		
+		<a class="item" data-title="Workflow" href="https://ovh.github.io/cds/docs/concepts/workflow/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Payload" href="https://ovh.github.io/cds/docs/concepts/workflow/payload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline Context" href="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Hooks">
+	<div class="container">
+		
+		<a class="item" data-title="Hooks" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Scheduler" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/scheduler/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Poller" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Run conditions on pipeline" href="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Join" href="https://ovh.github.io/cds/docs/concepts/workflow/join/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mutex" href="https://ovh.github.io/cds/docs/concepts/workflow/mutex/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Sidebar" href="https://ovh.github.io/cds/docs/concepts/workflow/sidebar/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run Number" href="https://ovh.github.io/cds/docs/concepts/workflow/run-number/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Requirement">
+	<div class="container">
+		
+		<a class="item" data-title="Requirement" href="https://ovh.github.io/cds/docs/concepts/requirement/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Network Access" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Link" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OS &amp; Architecture" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Configuration files">
+	<div class="container">
+		
+		<a class="item" data-title="Configuration files" href="https://ovh.github.io/cds/docs/concepts/files/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow configuration file" href="https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline configuration file" href="https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model configuration file" href="https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action configuration file" href="https://ovh.github.io/cds/docs/concepts/files/action-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Application configuration file" href="https://ovh.github.io/cds/docs/concepts/files/application-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Environment configuration file" href="https://ovh.github.io/cds/docs/concepts/files/environment-syntax/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model" href="https://ovh.github.io/cds/docs/concepts/worker-model/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Worker Model Variables" href="https://ovh.github.io/cds/docs/concepts/worker-model/variables/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model patterns" href="https://ovh.github.io/cds/docs/concepts/worker-model/patterns/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow Template" href="https://ovh.github.io/cds/docs/concepts/template/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Permissions - ACLs</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#tokens">Tokens</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<p>There are 3 types of permissions:</p>
+
+<ul>
+<li>Read</li>
+<li>Read / Execute</li>
+<li>Read / Write / Execute</li>
+</ul>
+
+<p>These permissions can be attached to different objects:</p>
+
+<ul>
+<li>On project</li>
+<li>On workflow</li>
+<li>On workflow node</li>
+</ul>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Project</th>
+<th>Workflow</th>
+<th>Workflow node</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Create a workflow</td>
+<td>RWX</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Edit a workflow  (change run conditions, add nodes, edit payload, notifications, &hellip;)</td>
+<td>RO</td>
+<td>RWX</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Create/edit an environment/pipeline/application</td>
+<td>RWX</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Manage permissions on project</td>
+<td>RWX</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>Manage permissions on a workflow</td>
+<td>RO</td>
+<td>RWX</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Run a workflow</td>
+<td>RO</td>
+<td>RX</td>
+<td>/ - OR RX (if there is some groups on node)</td>
+</tr>
+</tbody>
+</table>
+
+<p>Permissions cannot be attached directly to users, they need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.</p>
+
+<p>Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a <code>deploy-to-staging</code> node and a third group will be allowed to push it to a <code>deploy-to-production</code> node. You can have a fourth group responsible of editing the workflow if needed.</p>
+
+<p>A more common scenario consists in giving <code>Read / Execute</code> permissions on the node <code>deploy-to-staging</code> to everyone in your development team while restricting the <code>deploy-to-production</code> node and the project edition to a smaller group of users.</p>
+
+<p><strong>Warning:</strong> when you add a new group permission on a workflow node, <strong>only the groups linked on the node will be taken in account</strong>.</p>
+
+<h2 id="tokens">Tokens</h2>
+
+<p>A group permission is also attached to <a href="https://ovh.github.io/cds/docs/components/cdsctl/">CLI</a>, <a href="https://ovh.github.io/cds/docs/components/worker/">workers</a>, <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker models</a>, <a href="https://ovh.github.io/cds/docs/components/hatchery/">hatchery</a> and all different services in CDS.</p>
+
+<p>When using the CDS <a href="https://ovh.github.io/cds/docs/components/cdsctl/">CLI</a> in a script, instead of providing your own passwords, you want to generate and use an <a href="https://ovh.github.io/cds/docs/components/cdsctl/">CLI</a> <strong>authentication token</strong>. Similarly, when you start a <a href="https://ovh.github.io/cds/docs/components/hatchery/">hatchery</a> you will need an authentication token to contact the CDS API.</p>
+
+<p>The <code>cdsctl group token</code> command allows to list, generate and remove tokens linked to a group permission (<a href="https://ovh.github.io/cds/docs/components/cdsctl/token/">documentation available here</a>). Alternatively, you can do it via the user interface in the group administration view.</p>
+
+<p>Click on the <code>Groups</code> entry in the menu
+<img src="https://ovh.github.io/cds/images/groups_menu.png" alt="Job" /></p>
+
+<p>And then in the group edition view, you can manage all your generated tokens for this group and generate new ones.
+<img src="https://ovh.github.io/cds/images/group_view.png" alt="Job" /></p>
+
+<p>If you want to list all the tokens that you can use go to your profile page and you will find a list of all the tokens associated to your groups.</p>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

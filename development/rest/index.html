@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>REST API - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content=" How to request CDS API? You need two HTTP Headers to request CDS API:
+ Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
+You can generate it with:
+ cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin artifact auth bookmarks broadcast build config download group hatchery hook import integration login mon notification parameter pipeline platform plugin project queue repositories_manager requirement services staticfiles suggest template ui user variable warning worker workflow  ">
+<meta property="og:description" content=" How to request CDS API? You need two HTTP Headers to request CDS API:
+ Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
+You can generate it with:
+ cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin artifact auth bookmarks broadcast build config download group hatchery hook import integration login mon notification parameter pipeline platform plugin project queue repositories_manager requirement services staticfiles suggest template ui user variable warning worker workflow  ">
+<meta name="twitter:description" content=" How to request CDS API? You need two HTTP Headers to request CDS API:
+ Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
+You can generate it with:
+ cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin artifact auth bookmarks broadcast build config download group hatchery hook import integration login mon notification parameter pipeline platform plugin project queue repositories_manager requirement services staticfiles suggest template ui user variable warning worker workflow  ">
+<meta property="og:url" content="https://ovh.github.io/cds/development/rest/">
+<meta property="og:title" content="REST API">
+<meta name="twitter:title" content="REST API">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="artifact" href="https://ovh.github.io/cds/development/rest/artifact/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="build" href="https://ovh.github.io/cds/development/rest/build/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hatchery" href="https://ovh.github.io/cds/development/rest/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="pipeline" href="https://ovh.github.io/cds/development/rest/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="platform" href="https://ovh.github.io/cds/development/rest/platform/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin" href="https://ovh.github.io/cds/development/rest/plugin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="staticfiles" href="https://ovh.github.io/cds/development/rest/staticfiles/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="warning" href="https://ovh.github.io/cds/development/rest/warning/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+	 
+	 
+<h1>REST API</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#how-to-request-cds-api">How to request CDS API?</a></li>
+<li><a href="#about-cds-token">About CDS Token</a></li>
+<li><a href="#cds-http-routes">CDS HTTP Routes</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<h2 id="how-to-request-cds-api">How to request CDS API?</h2>
+
+<p>You need two HTTP Headers to request CDS API:</p>
+
+<ul>
+<li><code>Session-Token: your-cds-token</code></li>
+<li><code>X-Requested-With: X-CDS-SDK</code></li>
+</ul>
+
+<pre><code class="language-bash"># List CDS Project
+curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project
+</code></pre>
+
+<h2 id="about-cds-token">About CDS Token</h2>
+
+<p>The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.</p>
+
+<p>You can generate it with:</p>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/docs/components/cdsctl/login/">cdsctl login</a></li>
+<li>Code it with the <a href="https://ovh.github.io/cds/development/sdk/golang/">Go SDK</a></li>
+<li>Call CDS API: POST <code>/login</code> with body <code>{&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;}</code> and header <code>-H &quot;X-Requested-With: X-CDS-SDK&quot;</code></li>
+</ul>
+
+<h2 id="cds-http-routes">CDS HTTP Routes</h2>
+
+
+
+<ul class="children children-ul"><ul>
+	<a href="https://ovh.github.io/cds/development/rest/accesstoken/" >accesstoken</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/action/" >action</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/actionbuiltin/" >actionBuiltin</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/admin/" >admin</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/artifact/" >artifact</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/auth/" >auth</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/bookmarks/" >bookmarks</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/broadcast/" >broadcast</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/build/" >build</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/config/" >config</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/download/" >download</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/group/" >group</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/hatchery/" >hatchery</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/hook/" >hook</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/import/" >import</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/integration/" >integration</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/login/" >login</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/mon/" >mon</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/notification/" >notification</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/parameter/" >parameter</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/pipeline/" >pipeline</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/platform/" >platform</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/plugin/" >plugin</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/project/" >project</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/queue/" >queue</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/repositories_manager/" >repositories_manager</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/requirement/" >requirement</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/services/" >services</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/staticfiles/" >staticfiles</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/suggest/" >suggest</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/template/" >template</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/ui/" >ui</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/user/" >user</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/variable/" >variable</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/warning/" >warning</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/worker/" >worker</a></ul><ul>
+	<a href="https://ovh.github.io/cds/development/rest/workflow/" >workflow</a></ul>
+</ul>
+
+
+
+
+
+
+
+
+	 
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

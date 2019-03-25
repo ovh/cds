@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Configuration files on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/concepts/files/</link>
+    <description>Recent content in Configuration files on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/concepts/files/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Workflow configuration file</title>
+      <link>https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/</guid>
+      <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the folowwing workflow wich implements a basic two-stages workflow
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  Here there are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.</description>
+    </item>
+    
+    <item>
+      <title>Pipeline configuration file</title>
+      <link>https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/</guid>
+      <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stages continuous delivery pipeline.
+version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.</description>
+    </item>
+    
+    <item>
+      <title>Worker Model configuration file</title>
+      <link>https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/</guid>
+      <description>Example:
+name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model
+cdsctl worker model import ./go-official-1.11.4-stretch.yml  or with a remote file:
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml  </description>
+    </item>
+    
+    <item>
+      <title>Action configuration file</title>
+      <link>https://ovh.github.io/cds/docs/concepts/files/action-syntax/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/files/action-syntax/</guid>
+      <description>Hello World Action
+version: v1.0 name: CDS_HelloWorld description: Hello World Action steps: - name: Initialization script: - echo &amp;quot;Hello World&amp;quot;  With a real action CDS_SonarScanner: this action contains parameters with default values and some of them are advanced parameters. Two plugins are also used in the steps: plugin-download and plugin-archive
+version: v1.0 name: CDS_SonarScanner description: Run Sonar analysis. You must have a file sonar-project.properties in your source directory. parameters: sonar-project.</description>
+    </item>
+    
+    <item>
+      <title>Application configuration file</title>
+      <link>https://ovh.github.io/cds/docs/concepts/files/application-syntax/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/files/application-syntax/</guid>
+      <description>An Application allows you to enable some features of CDS within a workflow.
+ Variables Keys VCS Deployment  The application configuration format is as following:
+version: v1.0 name: my-application variables: variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionnary.</description>
+    </item>
+    
+    <item>
+      <title>Environment configuration file</title>
+      <link>https://ovh.github.io/cds/docs/concepts/files/environment-syntax/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/files/environment-syntax/</guid>
+      <description>Definition An environnement is a way to declare and manipulate sets of environment variables and attach them to pipelines within a workflow. It is also a way to organize your workflow and keep it clear and still readable.
+Format name: MyEnvironment values: myBooleanVariable: type: boolean value: true myNumberVariable: type: number value: 1 mySecretVariable: type: password value: f1a2b3dd756e4db381d7a88631c67355 myStringVariable: value: myStringValue myTextVariable: type: text value: | This Is a multiline text value with a project variable inside {{.</description>
+    </item>
+    
+  </channel>
+</rss>

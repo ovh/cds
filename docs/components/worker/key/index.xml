@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>key on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/worker/key/</link>
+    <description>Recent content in key on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/worker/key/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>install</title>
+      <link>https://ovh.github.io/cds/docs/components/worker/key/install/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/worker/key/install/</guid>
+      <description>worker key install worker key install [--env-git] [--env] [--file destination-file] &amp;lt;key-name&amp;gt;
+Synopsis Inside a step script you can install a SSH/PGP key generated in CDS in your ssh environment and return the PKEY variable (only for SSH)
+So if you want to update your PKEY variable, which is the variable with the path to the SSH private key you just can write PKEY=$(worker key install proj-mykey)` (only for SSH)</description>
+    </item>
+    
+  </channel>
+</rss>

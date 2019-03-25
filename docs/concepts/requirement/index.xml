@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Requirement on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/concepts/requirement/</link>
+    <description>Recent content in Requirement on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/concepts/requirement/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Network Access</title>
+      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/</guid>
+      <description>The Network Access prerequisite allow you to require a worker to have access to a specific server
+Example:
+golang.org:80  </description>
+    </item>
+    
+    <item>
+      <title>Service Link</title>
+      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/</guid>
+      <description>The Service Link prerequisite allow you to use any Docker image as a dependency of a job.
+This is pretty useful if you want to make some tests with a real database, or put your builded application as a job prerequisite for doing some tests.
+How to use service requirement When editing a pipeline job, choose your model as usual, then add a new service requirement, the name you set will be the service&amp;rsquo;s hostname, set the Docker image for the service as the value.</description>
+    </item>
+    
+    <item>
+      <title>OS &amp; Architecture</title>
+      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/</guid>
+      <description>The OS-Architecture prerequisite allow you to require a worker with a specific OS &amp;amp; Architecture.
+Beware about default value: there is a default value for OS &amp;amp; Architecture, it&amp;rsquo;s specified in CDS API Configuration.
+If user does not specify a prerequisite os-architecture, the default value is applied when the job is in CDS Queue.
+Then, a hatchery will spawn a worker compiled with the specified os-architecture prerequisite.
+Beware about launching job: if you put a prerequisite os-architecture with value linux/386, the job won&amp;rsquo;t be launched by a worker linux/amd64 even if technically speaking, the worker could launch this job without issue.</description>
+    </item>
+    
+  </channel>
+</rss>

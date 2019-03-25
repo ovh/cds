@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tutorials on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/tutorials/</link>
+    <description>Recent content in Tutorials on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/tutorials/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Check npm vulnerabilities</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/step_by_step_npm_vulnerabilities/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/step_by_step_npm_vulnerabilities/</guid>
+      <description>In this tutorial, you will create a CDS Workflow with the Web UI that check JavaScript vulnerabilities
+ Create a workflow using one pipeline You will discover the npm-audit-parser plugin action, which parse npm audit report   1 - Create your CDS project Let&amp;rsquo;s create a project. On the top navbar, click on &amp;lsquo;Create a project&amp;rsquo;.
+ Enter a Project Name The project key will be useful when you want to use cdsctl.</description>
+    </item>
+    
+    <item>
+      <title>Init a CDS Workflow from a repository</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/</guid>
+      <description>In this tutorial, you will create a CDS Workflow from an existing git repository.
+ This will creates you some files inside your local git repository. Then you&amp;rsquo;ll can push them to get a CDS workflow lives with his configuration &amp;lsquo;as code&amp;rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance. Have cdsctl command line, you can download it from here  To get started with CDS  In a terminal, go into your git repository and login with cdsctl  $ cd &amp;lt;path-to-repo&amp;gt; $ cdsctl login -H &amp;lt;cds-api-url&amp;gt; # you will be ask for your username and password   Create your first workflow  $ cdsctl workflow init  This will ask you to choose:</description>
+    </item>
+    
+    <item>
+      <title>Import a CDS Workflow from a repository</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/</guid>
+      <description>In this tutorial, you will create a CDS Workflow from an existing git repository.
+ The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &amp;lsquo;as code&amp;rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.
+Prepare your git repository  The easiest way to initialize cds files in your repository is to follow first tutorial</description>
+    </item>
+    
+    <item>
+      <title>Service Requirement NGINX</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/service-requirement-nginx/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/service-requirement-nginx/</guid>
+      <description>Add the service requirement  Name: mypg. This will be the service hostname Type: service Docker Image: nginx:1.11.1. This is the name of Docker image to link to current job  Add a step of type script Docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx
+curl -v -X GET http://mynginx  Execute Pipeline
+See output:</description>
+    </item>
+    
+    <item>
+      <title>Build &amp; Deploy a standard application</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/step_by_step_build_deploy/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/step_by_step_build_deploy/</guid>
+      <description>In this tutorial, you will create a CDS Workflow with the Web UI.
+ Create a workflow using two pipelines: one for building, another for deploying Discover application and environments concepts. Discover Run Conditions.   This tutorial seems very long, don&amp;rsquo;t worry, it&amp;rsquo;s very detailed and it will take you about 10-15 minutes to try it.
+You will play with many CDS Concepts, discover the reuse of pipelines, how to play with CDS Variables.</description>
+    </item>
+    
+    <item>
+      <title>Service Requirement PostgreSQL</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/service-requirement-pg/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/service-requirement-pg/</guid>
+      <description>Add the service requirement Requirement Service
+ Type: service Hostname: mypg. This will be the service hostname Docker Image: postgres:9.5.3. This is the name of Docker image to link to current job Options:  POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword  And a requirement model which allow you to execute apt-get install -y postgresql-client, see HowTo
+Add a step of type script Docker image postgres:9.5.3 start a PostgreSQL at startup. So, it&amp;rsquo;s now available on mypg</description>
+    </item>
+    
+    <item>
+      <title>Build, tag and release an application</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/step_by_step_build_tag_release/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/step_by_step_build_tag_release/</guid>
+      <description>In this tutorial, you will create a CDS Workflow with the Web UI.
+ Create a workflow using two pipelines: one for building, a second for tagging You will discover the GitTag action, which create tag compatible which Semantic Verstionning 2.0.0   1 - Create your CDS project Let&amp;rsquo;s create a project. On the top navbar, click on &amp;lsquo;Create a project&amp;rsquo;.
+ Enter a Project Name The project key will be useful when you want to use cdsctl.</description>
+    </item>
+    
+    <item>
+      <title>Worker Model OpenStack</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/</guid>
+      <description>CDS build using OVH.com OpenStack infrastructure
+Create OpenStack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;OpenStack item.
+You will be able to create a worker model OpenStack user, enter description (name and password will be generated).
+Add OpenStack worker model We need to define an OpenStack worker model to have OpenStack hatchery booting workers.
+We will create a model called testopenstack:
+ With low hardware capacity (vps-ssd-1) On Debian 8 With Docker ready to use Git installed  You need to configure:</description>
+    </item>
+    
+    <item>
+      <title>Worker Model vSphere</title>
+      <link>https://ovh.github.io/cds/docs/tutorials/worker_model-vsphere/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/tutorials/worker_model-vsphere/</guid>
+      <description>CDS build using vSphere infrastructure
+Add vSphere worker model We need to define a vSphere worker model to have vSphere hatchery booting workers.
+We will create a worker model called debian8-docker:
+ On Debian 8 With Docker ready to use Git installed  You need to configure:
+ The image is the name of your virtual machine that you have created before on your host to clone (See Advanced) Pattern If you aren&amp;rsquo;t an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a pattern that an administrator have already fill for you.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>template - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content=" DELETE /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;     Method DELETE   Permissions Auth: true   Code deleteTemplateInstanceHandler    DELETE /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method DELETE   Permissions Auth: true   Code deleteTemplateHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit     Method GET   Permissions Auth: true   Code getTemplateAuditsHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;     Method GET   Permissions Auth: true   Code getTemplateBulkHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance     Method GET   Permissions Auth: true   Code getTemplateInstancesHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage     Method GET   Permissions Auth: true   Code getTemplateUsageHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method GET   Permissions Auth: true   Code getTemplateHandler    GET /template    URL /template     Method GET   Permissions Auth: true   Code getTemplatesHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply     Method POST   Permissions Auth: true   Code postTemplateApplyHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk     Method POST   Permissions Auth: true   Code postTemplateBulkHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull     Method POST   Permissions Auth: true   Code postTemplatePullHandler    POST /template/push    URL /template/push     Method POST   Permissions Auth: true   Code postTemplatePushHandler    POST /template    URL /template     Method POST   Permissions Auth: true   Code postTemplateHandler    PUT /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method PUT   Permissions Auth: true   Code putTemplateHandler    ">
+<meta property="og:description" content=" DELETE /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;     Method DELETE   Permissions Auth: true   Code deleteTemplateInstanceHandler    DELETE /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method DELETE   Permissions Auth: true   Code deleteTemplateHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit     Method GET   Permissions Auth: true   Code getTemplateAuditsHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;     Method GET   Permissions Auth: true   Code getTemplateBulkHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance     Method GET   Permissions Auth: true   Code getTemplateInstancesHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage     Method GET   Permissions Auth: true   Code getTemplateUsageHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method GET   Permissions Auth: true   Code getTemplateHandler    GET /template    URL /template     Method GET   Permissions Auth: true   Code getTemplatesHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply     Method POST   Permissions Auth: true   Code postTemplateApplyHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk     Method POST   Permissions Auth: true   Code postTemplateBulkHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull     Method POST   Permissions Auth: true   Code postTemplatePullHandler    POST /template/push    URL /template/push     Method POST   Permissions Auth: true   Code postTemplatePushHandler    POST /template    URL /template     Method POST   Permissions Auth: true   Code postTemplateHandler    PUT /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method PUT   Permissions Auth: true   Code putTemplateHandler    ">
+<meta name="twitter:description" content=" DELETE /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;     Method DELETE   Permissions Auth: true   Code deleteTemplateInstanceHandler    DELETE /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method DELETE   Permissions Auth: true   Code deleteTemplateHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit     Method GET   Permissions Auth: true   Code getTemplateAuditsHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;     Method GET   Permissions Auth: true   Code getTemplateBulkHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance     Method GET   Permissions Auth: true   Code getTemplateInstancesHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage     Method GET   Permissions Auth: true   Code getTemplateUsageHandler    GET /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method GET   Permissions Auth: true   Code getTemplateHandler    GET /template    URL /template     Method GET   Permissions Auth: true   Code getTemplatesHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply     Method POST   Permissions Auth: true   Code postTemplateApplyHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk     Method POST   Permissions Auth: true   Code postTemplateBulkHandler    POST /template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull     Method POST   Permissions Auth: true   Code postTemplatePullHandler    POST /template/push    URL /template/push     Method POST   Permissions Auth: true   Code postTemplatePushHandler    POST /template    URL /template     Method POST   Permissions Auth: true   Code postTemplateHandler    PUT /template/&lt;group-name&gt;/&lt;templateSlug&gt;    URL /template/&lt;group-name&gt;/&lt;templateSlug&gt;     Method PUT   Permissions Auth: true   Code putTemplateHandler    ">
+<meta property="og:url" content="https://ovh.github.io/cds/development/rest/template/">
+<meta property="og:title" content="template">
+<meta name="twitter:title" content="template">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="artifact" href="https://ovh.github.io/cds/development/rest/artifact/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="build" href="https://ovh.github.io/cds/development/rest/build/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hatchery" href="https://ovh.github.io/cds/development/rest/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="pipeline" href="https://ovh.github.io/cds/development/rest/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="platform" href="https://ovh.github.io/cds/development/rest/platform/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin" href="https://ovh.github.io/cds/development/rest/plugin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="staticfiles" href="https://ovh.github.io/cds/development/rest/staticfiles/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="warning" href="https://ovh.github.io/cds/development/rest/warning/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>template</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#delete-template-group-name-templateslug-instance-instanceid">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;</code></a></li>
+<li><a href="#delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#get-template-group-name-templateslug-audit">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit</code></a></li>
+<li><a href="#get-template-group-name-templateslug-bulk-bulkid">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;</code></a></li>
+<li><a href="#get-template-group-name-templateslug-instance">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance</code></a></li>
+<li><a href="#get-template-group-name-templateslug-usage">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage</code></a></li>
+<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#get-template">GET <code>/template</code></a></li>
+<li><a href="#post-template-group-name-templateslug-apply">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply</code></a></li>
+<li><a href="#post-template-group-name-templateslug-bulk">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk</code></a></li>
+<li><a href="#post-template-group-name-templateslug-pull">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull</code></a></li>
+<li><a href="#post-template-push">POST <code>/template/push</code></a></li>
+<li><a href="#post-template">POST <code>/template</code></a></li>
+<li><a href="#put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<h2 id="delete-template-group-name-templateslug-instance-instanceid">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateInstanceHandler%22">deleteTemplateInstanceHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateHandler%22">deleteTemplateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-template-group-name-templateslug-audit">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateAuditsHandler%22">getTemplateAuditsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-template-group-name-templateslug-bulk-bulkid">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateBulkHandler%22">getTemplateBulkHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-template-group-name-templateslug-instance">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateInstancesHandler%22">getTemplateInstancesHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-template-group-name-templateslug-usage">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateUsageHandler%22">getTemplateUsageHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateHandler%22">getTemplateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-template">GET <code>/template</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplatesHandler%22">getTemplatesHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-template-group-name-templateslug-apply">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateApplyHandler%22">postTemplateApplyHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-template-group-name-templateslug-bulk">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateBulkHandler%22">postTemplateBulkHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-template-group-name-templateslug-pull">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplatePullHandler%22">postTemplatePullHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-template-push">POST <code>/template/push</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/push</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplatePushHandler%22">postTemplatePushHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-template">POST <code>/template</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateHandler%22">postTemplateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putTemplateHandler%22">putTemplateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

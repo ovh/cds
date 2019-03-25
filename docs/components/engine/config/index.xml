@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>config on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/engine/config/</link>
+    <description>Recent content in config on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/engine/config/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>check</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/config/check/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/config/check/</guid>
+      <description> engine config check Check CDS configuration file
+Synopsis $ engine config check 
+engine config check  SEE ALSO  engine config - Manage CDS Configuration  </description>
+    </item>
+    
+    <item>
+      <title>new</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/config/new/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/config/new/</guid>
+      <description> engine config new CDS configuration file assistant
+Synopsis generate the whole configuration file $ engine config new &amp;gt; conf.toml  you can compose your file configuration this will generate a file configuration containing api and hatchery:local µService $ engine config new api hatchery:local  For advanced usage, Debug and Tracing section can be generated as: $ engine config new debug tracing [µService(s)...]  All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]  engine config new [flags]  Options  --env Print configuration as environment variable  SEE ALSO  engine config - Manage CDS Configuration  </description>
+    </item>
+    
+  </channel>
+</rss>

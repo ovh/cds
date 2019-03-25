@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Concepts on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/concepts/</link>
+    <description>Recent content in Concepts on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/concepts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Job</title>
+      <link>https://ovh.github.io/cds/docs/concepts/job/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/job/</guid>
+      <description>A job is composed of steps, which will be run sequentially. A job is executed in a dedicated workspace (i.e. filesystem). A new workspace is assigned for each new run of a job.
+A standard build job looks like this:
+You can use « built-in » actions, such as checkoutApplication, script, jUnit, artifact upload/download.
+ The checkoutApplication action clones your Git repository The Script action executes your build command as “make build” The artifactUpload action uploads previously-built binaries The jUnit action parses a given Junit-formatted XML file to extract its test results  Notice: you cannot share a workspace between jobs or between two runs of the same job.</description>
+    </item>
+    
+    <item>
+      <title>Permissions - ACLs</title>
+      <link>https://ovh.github.io/cds/docs/concepts/permissions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/permissions/</guid>
+      <description>There are 3 types of permissions:
+ Read Read / Execute Read / Write / Execute  These permissions can be attached to different objects:
+ On project On workflow On workflow node      Project Workflow Workflow node     Create a workflow RWX - -   Edit a workflow (change run conditions, add nodes, edit payload, notifications, &amp;hellip;) RO RWX -   Create/edit an environment/pipeline/application RWX - -   Manage permissions on project RWX - -   Manage permissions on a workflow RO RWX    Run a workflow RO RX / - OR RX (if there is some groups on node)    Permissions cannot be attached directly to users, they need to be attached to groups of users.</description>
+    </item>
+    
+    <item>
+      <title>Pipeline</title>
+      <link>https://ovh.github.io/cds/docs/concepts/pipeline/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/pipeline/</guid>
+      <description>A pipeline describes how things need to be executed in order to obtain the expected result. In CDS, a pipeline belongs to a single project and can be used with the applications of that project.
+A pipeline is structured in sequential stages containing one or multiple concurrent jobs.
+CDS pipelines can be parametrized. This allows you to reuse the same pipeline when you have similar workloads. For example, you could use the same pipeline to deploy in your pre-production environment first and then to your production environment.</description>
+    </item>
+    
+    <item>
+      <title>Variables</title>
+      <link>https://ovh.github.io/cds/docs/concepts/variables/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/variables/</guid>
+      <description>In CDS, it is possible to define variables at different levels:
+ Project Environment Application  Variable types Existing variable types:
+ String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
+ Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.</description>
+    </item>
+    
+    <item>
+      <title>Workflow Template</title>
+      <link>https://ovh.github.io/cds/docs/concepts/template/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/template/</guid>
+      <description>What is a workflow template? A workflow template is useful to easily create a new workflow for a project. Also if you need to manage multiple workflows, you can use a template to create one unique and generic workflow then apply it on each workflow.
+Templates are versioned, so you can easily improve your template then re-apply it on a workflow.
+A template contains a workflow, pipelines, applications, environments in yaml format.</description>
+    </item>
+    
+  </channel>
+</rss>

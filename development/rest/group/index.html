@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>group - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content=" DELETE /group/&lt;group-name&gt;/token/&lt;tokenid&gt;    URL /group/&lt;group-name&gt;/token/&lt;tokenid&gt;     Method DELETE   Permissions Auth: true   Code deleteTokenHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method DELETE   Permissions Auth: true   Code removeUserGroupAdminHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;     Method DELETE   Permissions Auth: true   Code removeUserFromGroupHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/token    URL /group/&lt;group-name&gt;/token     Method GET   Permissions Auth: true   Code getGroupTokenListHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Code getGroupHandler    GET /group/&lt;groupID&gt;/action    URL /group/&lt;groupID&gt;/action     Method GET   Permissions Auth: true   Code getActionsForGroupHandler    GET /group/public    URL /group/public     Method GET   Permissions Auth: true   Code getPublicGroupsHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method POST   Permissions Auth: true   Code setUserGroupAdminHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Code addUserInGroupHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Code addGroupHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Code updateGroupHandler    generateToken allows a user to generate a token associated to a group permission    URL /group/&lt;group-name&gt;/token     Method POST   Permissions Auth: true   Code generateTokenHandler    ">
+<meta property="og:description" content=" DELETE /group/&lt;group-name&gt;/token/&lt;tokenid&gt;    URL /group/&lt;group-name&gt;/token/&lt;tokenid&gt;     Method DELETE   Permissions Auth: true   Code deleteTokenHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method DELETE   Permissions Auth: true   Code removeUserGroupAdminHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;     Method DELETE   Permissions Auth: true   Code removeUserFromGroupHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/token    URL /group/&lt;group-name&gt;/token     Method GET   Permissions Auth: true   Code getGroupTokenListHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Code getGroupHandler    GET /group/&lt;groupID&gt;/action    URL /group/&lt;groupID&gt;/action     Method GET   Permissions Auth: true   Code getActionsForGroupHandler    GET /group/public    URL /group/public     Method GET   Permissions Auth: true   Code getPublicGroupsHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method POST   Permissions Auth: true   Code setUserGroupAdminHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Code addUserInGroupHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Code addGroupHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Code updateGroupHandler    generateToken allows a user to generate a token associated to a group permission    URL /group/&lt;group-name&gt;/token     Method POST   Permissions Auth: true   Code generateTokenHandler    ">
+<meta name="twitter:description" content=" DELETE /group/&lt;group-name&gt;/token/&lt;tokenid&gt;    URL /group/&lt;group-name&gt;/token/&lt;tokenid&gt;     Method DELETE   Permissions Auth: true   Code deleteTokenHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method DELETE   Permissions Auth: true   Code removeUserGroupAdminHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;     Method DELETE   Permissions Auth: true   Code removeUserFromGroupHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/token    URL /group/&lt;group-name&gt;/token     Method GET   Permissions Auth: true   Code getGroupTokenListHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Code getGroupHandler    GET /group/&lt;groupID&gt;/action    URL /group/&lt;groupID&gt;/action     Method GET   Permissions Auth: true   Code getActionsForGroupHandler    GET /group/public    URL /group/public     Method GET   Permissions Auth: true   Code getPublicGroupsHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method POST   Permissions Auth: true   Code setUserGroupAdminHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Code addUserInGroupHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Code addGroupHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Code updateGroupHandler    generateToken allows a user to generate a token associated to a group permission    URL /group/&lt;group-name&gt;/token     Method POST   Permissions Auth: true   Code generateTokenHandler    ">
+<meta property="og:url" content="https://ovh.github.io/cds/development/rest/group/">
+<meta property="og:title" content="group">
+<meta name="twitter:title" content="group">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="artifact" href="https://ovh.github.io/cds/development/rest/artifact/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="build" href="https://ovh.github.io/cds/development/rest/build/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hatchery" href="https://ovh.github.io/cds/development/rest/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="pipeline" href="https://ovh.github.io/cds/development/rest/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="platform" href="https://ovh.github.io/cds/development/rest/platform/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin" href="https://ovh.github.io/cds/development/rest/plugin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="staticfiles" href="https://ovh.github.io/cds/development/rest/staticfiles/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="warning" href="https://ovh.github.io/cds/development/rest/warning/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>group</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#delete-group-group-name-token-tokenid">DELETE <code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></a></li>
+<li><a href="#delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
+<li><a href="#delete-group-group-name-user-user-name">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></a></li>
+<li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
+<li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#get-group-groupid-action">GET <code>/group/&lt;groupID&gt;/action</code></a></li>
+<li><a href="#get-group-public">GET <code>/group/public</code></a></li>
+<li><a href="#get-group">GET <code>/group</code></a></li>
+<li><a href="#post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
+<li><a href="#post-group-group-name-user">POST <code>/group/&lt;group-name&gt;/user</code></a></li>
+<li><a href="#post-group">POST <code>/group</code></a></li>
+<li><a href="#put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<h2 id="delete-group-group-name-token-tokenid">DELETE <code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTokenHandler%22">deleteTokenHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserGroupAdminHandler%22">removeUserGroupAdminHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="delete-group-group-name-user-user-name">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserFromGroupHandler%22">removeUserFromGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22">deleteGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupTokenListHandler%22">getGroupTokenListHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22">getGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-group-groupid-action">GET <code>/group/&lt;groupID&gt;/action</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;groupID&gt;/action</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionsForGroupHandler%22">getActionsForGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-group-public">GET <code>/group/public</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/public</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPublicGroupsHandler%22">getPublicGroupsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-group">GET <code>/group</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupsHandler%22">getGroupsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+setUserGroupAdminHandler%22">setUserGroupAdminHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-group-group-name-user">POST <code>/group/&lt;group-name&gt;/user</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/user</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addUserInGroupHandler%22">addUserInGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-group">POST <code>/group</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22">addGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupHandler%22">updateGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+generateTokenHandler%22">generateTokenHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

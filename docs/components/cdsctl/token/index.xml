@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>token on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/token/</link>
+    <description>Recent content in token on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/token/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/token/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/token/delete/</guid>
+      <description>cdsctl token delete Delete a token linked to a group
+Synopsis Delete a token from a group and so revoke it to unauthorize future connection.
+Pay attention you must be an administrator of the group to launch this command.
+cdsctl token delete GROUPNAME TOKENID [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>find</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/token/find/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/token/find/</guid>
+      <description>cdsctl token find Find an existing token
+Synopsis Find an existing token with his value to have his description, creation date and the name of the creator.
+cdsctl token find TOKEN [flags]  Examples cdsctl token find &amp;quot;myTokenValue&amp;quot;  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>generate</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/token/generate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/token/generate/</guid>
+      <description>cdsctl token generate Generate a new token
+Synopsis Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, uservices.
+The expiration must be [daily|persistent|session].
+Daily expirate after one day.
+Persistent doesn&amp;rsquo;t expirate until you revoke them.
+Pay attention you must be an administrator of the group to launch this command.
+cdsctl token generate GROUPNAME EXPIRATION [DESCRIPTION] [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/token/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/token/list/</guid>
+      <description>cdsctl token list List tokens from group
+Synopsis You can list tokens linked to a groups to know the id of a token to delete it or know the creator of this token.
+Pay attention, if you mention a group, you must be an administrator of the group to launch this command
+cdsctl token list [GROUPNAME] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

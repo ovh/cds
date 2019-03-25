@@ -1,4 +1,5 @@
 var lunrIndex, pagesIndex;
+var resultDetails = []; 
 
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
@@ -16,43 +17,42 @@ function initLunr() {
             pagesIndex =   index;
             // Set up lunrjs by declaring the fields we use
             // Also provide their boost level for the ranking
-            lunrIndex = new lunr.Index
-            lunrIndex.ref("uri");
-            lunrIndex.field('title', {
-                boost: 15
-            });
-            lunrIndex.field('tags', {
-                boost: 10
-            });
-            lunrIndex.field("content", {
-                boost: 5
+            //lunrIndex = new lunr.Index
+            lunrIndex = lunr(function () {
+                this.ref("uri");
+                this.field('title', {
+                    boost: 15
+                });
+                this.field('tags', {
+                    boost: 2000
+                });
+                this.field("content", {
+                    boost: 2
+                });
+                // Feed lunr with each file and let lunr actually index them
+                pagesIndex.forEach(function(page) {
+                    this.add(page);
+                }, this);
+                this.pipeline.remove(this.stemmer)
             });
 
-            // Feed lunr with each file and let lunr actually index them
-            pagesIndex.forEach(function(page) {
-                lunrIndex.add(page);
-            });
-            lunrIndex.pipeline.remove(lunrIndex.stemmer)
         })
         .fail(function(jqxhr, textStatus, error) {
             var err = textStatus + ", " + error;
-            console.error("Error getting Hugo index flie:", err);
+            console.error("Error getting index.json file:", err);
         });
 }
 
 /**
  * Trigger a search in lunr and transform the result
- *
- * @param  {String} query
- * @return {Array}  results
  */
 function search(query) {
     // Find the item in our index corresponding to the lunr one to have more info
     return lunrIndex.search(query).map(function(result) {
-            return pagesIndex.filter(function(page) {
-                return page.uri === result.ref;
-            })[0];
-        });
+        return pagesIndex.filter(function(page) {
+            return page.uri === result.ref;
+        })[0];
+    });
 }
 
 // Let's get started
@@ -60,7 +60,7 @@ initLunr();
 $( document ).ready(function() {
     var searchList = new autoComplete({
         /* selector for the search box element */
-        selector: $("#search-by").get(0),
+        selector: $("#search-query").get(0),
         /* source is the callback to perform the search */
         source: function(term, response) {
             response(search(term));
@@ -72,19 +72,27 @@ $( document ).ready(function() {
                 "(?:\\s?(?:[\\w]+)\\s?){0,"+numContextWords+"}" +
                     term+"(?:\\s?(?:[\\w]+)\\s?){0,"+numContextWords+"}");
             item.context = text;
+            
+            var pathItem = item.uri;
+            if (pathItem.startsWith(baseurl)) {
+                pathItem = pathItem.slice(baseurl.length);
+            }
+            if (endsWith(pathItem,"/")) {
+                pathItem = pathItem.substring(0, pathItem.length-1);
+            };
+
             return '<div class="autocomplete-suggestion" ' +
                 'data-term="' + term + '" ' +
                 'data-title="' + item.title + '" ' +
                 'data-uri="'+ item.uri + '" ' +
                 'data-context="' + item.context + '">' +
-                '» ' + item.title +
+                '» ' + item.title + " - " + pathItem +
                 '<div class="context">' +
                 (item.context || '') +'</div>' +
                 '</div>';
         },
         /* onSelect callback fires when a search suggestion is chosen */
         onSelect: function(e, term, item) {
-            console.log(item.getAttribute('data-val'));
             location.href = item.getAttribute('data-uri');
         }
     });

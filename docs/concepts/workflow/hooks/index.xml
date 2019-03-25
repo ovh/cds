@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hooks on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/concepts/workflow/hooks/</link>
+    <description>Recent content in Hooks on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Webhook</title>
+      <link>https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/</guid>
+      <description>On a Root Pipeline, you can add a &amp;ldquo;Webhook&amp;rdquo;. Click on the created icon to get the WebHook URL.
+In order to trigger this one you just have to make a HTTP call on the given URL with the selected method. If the selected method is POST you can also send a payload from your workflow inside the request body or if you use GET method you can write your payload using query parameters.</description>
+    </item>
+    
+    <item>
+      <title>Scheduler</title>
+      <link>https://ovh.github.io/cds/docs/concepts/workflow/hooks/scheduler/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/scheduler/</guid>
+      <description>On a Root Pipeline, you can add a &amp;ldquo;Hook Scheduler&amp;rdquo;. This kind of hook is useful when you want to launch a workflow periodically (for example each day at 1AM). You can use the Crontab Expression Format to configure your scheduler&amp;rsquo;s period. You can also configure a specific payload for your scheduler.</description>
+    </item>
+    
+    <item>
+      <title>Git Repository Webhook</title>
+      <link>https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/</guid>
+      <description>You want to run a workflow after a git push on a repository? This kind of hook is for you.
+You have to:
+ link your project to a Repository Manager, on Advanced Section link an application to a git repository add a Repository Webhook on the root pipeline, this pipeline have the application linked in the context  GitHub / Bitbucket / GitLab are supported by CDS.</description>
+    </item>
+    
+    <item>
+      <title>Git Repository Poller</title>
+      <link>https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/</guid>
+      <description>You want to run a workflow after a git push on a repository BUT your CDS instance isn&amp;rsquo;t accessible from the internet? This kind of hook is for you. (If your CDS instance is accessible from the internet please check the Git Repository Webhook).
+This kind of hook will poll periodically the GitHub API to know the push and pull-request events on your repository.
+You have to:
+ link your project to a Repository Manager, on Advanced Section.</description>
+    </item>
+    
+    <item>
+      <title>Kafka hook</title>
+      <link>https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/</guid>
+      <description>You want to run a workflow from a Kafka message? This kind of hook is for you.
+This kind of hook will connect to a Kafka topic and consume message. For each message, it will trigger your workflow.
+The Kafka message have to be a JSON message, it in will be used as a payload for your workflow See payload documentation.
+Link your project to a Kafka platform On your CDS Project, select the platforms section then add a Kafka platform.</description>
+    </item>
+    
+    <item>
+      <title>RabbitMQ hook</title>
+      <link>https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/</guid>
+      <description>You want to run a workflow from a RabbitMQ message? This kind of hook is for you.
+This kind of hook will connect to a RabbitMQ queue and consume message. For each message, it will trigger your workflow.
+The RabbitMQ message have to be a JSON message, it in will be used as a payload for your workflow See payload documentation.
+Link your project to a RabbitMQ platform On your CDS Project, select the platforms section then add a RabbitMQ platform.</description>
+    </item>
+    
+  </channel>
+</rss>

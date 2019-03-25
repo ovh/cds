@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>GitHub - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="The Github Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Github to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator">
+<meta property="og:description" content="The Github Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Github to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator">
+<meta name="twitter:description" content="The Github Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Github to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/github/">
+<meta property="og:title" content="GitHub">
+<meta name="twitter:title" content="GitHub">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/" class="menuSelected">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Integrations" href="https://ovh.github.io/cds/docs/integrations/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Bitbucket Server" href="https://ovh.github.io/cds/docs/integrations/bitbucket/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Docker Swarm" href="https://ovh.github.io/cds/docs/integrations/swarm/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitHub" href="https://ovh.github.io/cds/docs/integrations/github/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab" href="https://ovh.github.io/cds/docs/integrations/gitlab/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka" href="https://ovh.github.io/cds/docs/integrations/kafka/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Kubernetes">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Kubernetes Compute" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kubernetes Deployment" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Mesos/Marathon" href="https://ovh.github.io/cds/docs/integrations/marathon/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Openstack">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="OpenStack Swift" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Openstack Compute" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ" href="https://ovh.github.io/cds/docs/integrations/rabbitmq/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="vSphere" href="https://ovh.github.io/cds/docs/integrations/vsphere/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>GitHub</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#resume-on-what-you-have-to-do-before-using-the-github-integration">Resume on what you have to do before using the GitHub Integration</a></li>
+<li><a href="#how-to-configure-github-integration">How to configure GitHub integration</a>
+<ul>
+<li><a href="#create-a-cds-application-on-github">Create a CDS application on GitHub</a></li>
+<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a>
+<ul>
+<li><a href="#vcs-µservice-configuration">VCS µService Configuration</a></li>
+<li><a href="#hooks-µservice-configuration">hooks µService Configuration</a></li>
+</ul></li>
+<li><a href="#start-the-vcs-and-hooks-µservice">Start the vcs and hooks µService</a></li>
+<li><a href="#link-project-to-github">Link Project to GitHub</a></li>
+<li><a href="#link-a-cds-application-to-a-git-repository">Link a CDS Application to a Git repository</a></li>
+<li><a href="#add-a-repository-webhook-on-a-workflow">Add a repository webhook on a workflow</a></li>
+</ul></li>
+<li><a href="#what-s-next">What&rsquo;s next?</a></li>
+<li><a href="#faq">FAQ</a>
+<ul>
+<li><a href="#my-cds-is-not-accessible-since-github-how-can-i-do"><strong>My CDS is not accessible since GitHub, how can I do?</strong></a></li>
+<li><a href="#i-don-t-see-the-type-git-repository-poller-nor-repositorywebhook-when-i-add-a-hook"><strong>I don&rsquo;t see the type Git Repository Poller nor RepositoryWebhook when I add a Hook</strong></a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<p>The Github Integration have to be configured on your CDS by a CDS Administrator.</p>
+
+<p>This integration allows you to link a Git Repository hosted by Github to a CDS Application.</p>
+
+<p>This integration enables some features:</p>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/">Git Repository Webhook</a></li>
+<li><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/">Git Repository Poller</a></li>
+<li>Easy to use action <a href="https://ovh.github.io/cds/docs/actions/checkoutapplication/">CheckoutApplication</a> and <a href="https://ovh.github.io/cds/docs/actions/gitclone/">GitClone</a> for advanced usage</li>
+<li>Send build notifications on your Pull-Requests and Commits on GitHub</li>
+<li>Send comments on your Pull-Requests when a workflow is failed</li>
+</ul>
+
+<h2 id="resume-on-what-you-have-to-do-before-using-the-github-integration">Resume on what you have to do before using the GitHub Integration</h2>
+
+<ol>
+<li>As a CDS Administrator:
+
+<ol>
+<li>Create a CDS application on GitHub</li>
+<li>Complete CDS Configuration File</li>
+<li>Start the vcs µService</li>
+</ol></li>
+<li>As a user, which is admin on a CDS Project: link Project to GitHub</li>
+<li>As a user, with writing rights on a CDS project:
+
+<ol>
+<li>Link a CDS Application to a Git repository</li>
+<li>Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)</li>
+</ol></li>
+</ol>
+
+<h2 id="how-to-configure-github-integration">How to configure GitHub integration</h2>
+
+<h3 id="create-a-cds-application-on-github">Create a CDS application on GitHub</h3>
+
+<p><em>As a CDS Administrator</em></p>
+
+<p>Go to <a href="https://github.com/settings/developers">https://github.com/settings/developers</a> and <strong>Register a new OAuth application</strong>. Set :</p>
+
+<ul>
+<li>an <code>application name</code>, example: <code>CDS company name</code></li>
+<li>the <code>Homepage URL</code>: <code>http(s)://&lt;your-cds-webui&gt;</code> (with a local webui, it will be: <code>http://localhost:4200</code>)</li>
+<li>the <code>Authorization callback URL</code>: <code>http(s)://&lt;your-cds-api&gt;/repositories_manager/oauth2/callback</code></li>
+</ul>
+
+<p>Example for a local configuration:</p>
+
+<ul>
+<li>with WebUI default port (4200), Homepage URL will be <code>http://localhost:4200</code></li>
+<li>with API default port (8081), callback URL will be <code>http://localhost:8081/repositories_manager/oauth2/callback</code></li>
+</ul>
+
+<p><img src="../images/github-new-oauth-app.png?height=500px" alt="Integration Github New OAuth App" /></p>
+
+<p>Click on <strong>Register Application</strong>, then on the next page, GitHub give you a <strong>Client ID</strong> and a <strong>Client Secret</strong></p>
+
+<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
+
+<h4 id="vcs-µservice-configuration">VCS µService Configuration</h4>
+
+<p>The file configuration for the VCS µService can be retreived with:</p>
+
+<pre><code class="language-bash">$ engine config new vcs &gt; vcs-config.toml
+
+# or with all other configuration parts:
+$ engine config new &gt; config.toml
+</code></pre>
+
+<p>Edit the toml file:</p>
+
+<ul>
+<li>section <code>[vcs]</code>
+
+<ul>
+<li>the URL will be used by CDS API to reach this µService</li>
+<li>add a name, as <code>cds-vcs</code>. Without a name, the service VCS will not start
+<br /></li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">[vcs]
+  URL = &quot;http://localhost:8084&quot;
+
+  # Name of this CDS VCS Service
+  # Enter a name to enable this service
+  name = &quot;cds-vcs&quot;
+</code></pre>
+
+<ul>
+<li>section <code>[vcs.UI.http]</code>
+
+<ul>
+<li>URL of CDS UI. This URL will be used by GitHub as a callback on Oauth2. This url must be accessible by users&rsquo; browsers.
+<br /></li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">    [vcs.UI.http]
+      url = &quot;http://localhost:4200&quot;
+</code></pre>
+
+<ul>
+<li>section <code>[vcs.api]</code>
+
+<ul>
+<li>this section will be used to communicate with CDS API. Check the url and enter a shared.infra token.</li>
+<li>Token can be generated with cdsctl: <code>cdsctl token generate shared.infra persistent</code>.</li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">  [vcs.api]
+    maxHeartbeatFailures = 10
+    requestTimeout = 10
+    token = &quot;enter sharedInfraToken from section [api.auth] here&quot;
+
+    [vcs.api.grpc]
+      # insecure = false
+      url = &quot;http://localhost:8082&quot;
+
+    [vcs.api.http]
+      # insecure = false
+      url = &quot;http://localhost:8081&quot;
+</code></pre>
+
+<ul>
+<li>section <code>[vcs.servers.Github]</code>
+
+<ul>
+<li>Set a value to <code>clientId</code> and <code>clientSecret</code></li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">   [vcs.servers.Github]
+
+      # URL of this VCS Server
+      url = &quot;https://github.com&quot;
+
+      [vcs.servers.Github.github]
+
+        #######
+        # CDS &lt;-&gt; Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
+        ########
+        # Github OAuth Application Client ID
+        clientId = &quot;xxxx&quot;
+
+        # Github OAuth Application Client Secret
+        clientSecret = &quot;xxxx&quot;
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = &quot;&quot;
+
+        # optional, Github Token associated to username, used to add comment on Pull Request
+        token = &quot;&quot;
+
+        # optional. Github username, used to add comment on Pull Request on failed build.
+        username = &quot;&quot;
+
+        [vcs.servers.Github.github.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          # disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          # showDetail = false
+</code></pre>
+
+<h4 id="hooks-µservice-configuration">hooks µService Configuration</h4>
+
+<p>As the <code>vcs</code> µService, you have to configured the <code>hooks</code> µService</p>
+
+<pre><code class="language-bash">$ engine config new hooks &gt; hooks-config.toml
+</code></pre>
+
+<p>In the <code>[hooks]</code> section</p>
+
+<ul>
+<li>check the URL, this will be used by CDS API to call CDS Hooks</li>
+<li>configure <code>urlPublic</code> if you want to use <a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/">simple Webhook</a></li>
+<li>add a name, as <code>cds-hooks</code></li>
+</ul>
+
+<p>In the <code>[hooks.api]</code> section</p>
+
+<ul>
+<li>put the same token as the <code>[vcs.api]</code> section</li>
+</ul>
+
+<h3 id="start-the-vcs-and-hooks-µservice">Start the vcs and hooks µService</h3>
+
+<p><em>As a CDS Administrator</em></p>
+
+<pre><code class="language-bash">$ engine start vcs --config vcs-config.toml
+$ engine start hooks --config hooks-config.toml
+
+# you can also start CDS api and vcs in the same process:
+$ engine start api vcs hooks --config config.toml
+</code></pre>
+
+<h3 id="link-project-to-github">Link Project to GitHub</h3>
+
+<p><em>As a user, which is admin on a CDS Project</em></p>
+
+<p>Go on your <strong>CDS Project -&gt; Advanced -&gt; Link a repository manager</strong></p>
+
+<p>Select Github in the list, then click on <strong>Connect</strong></p>
+
+<p><img src="../images/github-add-on-prj.png?height=500px" alt="github-add-on-prj.png" /></p>
+
+<p>A confirmation page is now displayed, click on the link <strong>Click Here</strong></p>
+
+<p><img src="../images/github-modal-click-here.png?height=200px" alt="github-modal-click-here.png" /></p>
+
+<p>By clicking on <strong>Click Here</strong>, you call GitHub and you will be redirected on the same page.
+The Repository is now added on the CDS Project with a small warning
+ <em>Unused repository manager Github on ..</em> as you don&rsquo;t use the repository yet in your CDS Project.</p>
+
+<p><img src="../images/github-added.png?height=200px" alt="github-added.png" /></p>
+
+<h3 id="link-a-cds-application-to-a-git-repository">Link a CDS Application to a Git repository</h3>
+
+<p><em>As a user, with writing rights on a CDS project</em></p>
+
+<p>Go on your <strong>CDS Project -&gt; You Application -&gt; Advanced -&gt; Link application to a repository</strong></p>
+
+<p>Select GitHub, then select a Git Repository</p>
+
+<p><img src="../images/github-app-repo.png?height=500px" alt="github-app-repo.png" /></p>
+
+<p>The application is linked, you have now to choose a method to Git Clone your repository.</p>
+
+<p><img src="../images/github-app-freshly-added.png?height=200px" alt="github-app-freshly-added.png" /></p>
+
+<p>Example with <code>https</code> method, without authentication:</p>
+
+<p><img src="../images/github-app-repo-configured.png?height=200px" alt="github-app-repo-configured.png" /></p>
+
+<h3 id="add-a-repository-webhook-on-a-workflow">Add a repository webhook on a workflow</h3>
+
+<p><em>As a user, with writing rights on a CDS project</em></p>
+
+<p>Select the first pipeline, then click on <code>Add a hook</code> in the sidebar.</p>
+
+<p><img src="../images/github-wf-select-pipeline.png?height=500px" alt="github-wf-select-pipeline.png" /></p>
+
+<p>Select the <strong>RepositoryWebhook</strong>, then click on <strong>Save</strong>.</p>
+
+<p><img src="../images/github-wf-add-repowebhook.png?height=200px" alt="github-wf-add-repowebhook.png" /></p>
+
+<p>The webhook is automatically created on GitHub.</p>
+
+<h2 id="what-s-next">What&rsquo;s next?</h2>
+
+<ul>
+<li>Use <a href="https://ovh.github.io/cds/docs/actions/checkoutapplication/">CheckoutApplication</a> in your pipeline</li>
+<li><code>git push</code> on your Git Repository on GitHub</li>
+<li>See the build status on GitHub.</li>
+</ul>
+
+<h2 id="faq">FAQ</h2>
+
+<h3 id="my-cds-is-not-accessible-since-github-how-can-i-do"><strong>My CDS is not accessible since GitHub, how can I do?</strong></h3>
+
+<p>When someone git push on your Git Repository, GitHub have to call your CDS to run your CDS Workflow.
+This is the behaviour of the <a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/">RepositoryWebhook</a>. But if your CDS is not reacheable from GitHub, how can you do?</p>
+
+<p>By chance, you have two choices :)</p>
+
+<ul>
+<li>When you add a Hook on your workflow, select the <strong>Git Repository Poller</strong>. The µService Hooks
+will call regularly GitHub. With this way, GitHub doesn&rsquo;t need to call your CDS.</li>
+</ul>
+
+<p><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/">Git Repository Poller documentation</a></p>
+
+<ul>
+<li>But if you prefer use the WebHook, you can configure a Reverse Proxy and set the URL in the <code>[vcs.servers.Github.github]</code> section</li>
+</ul>
+
+<pre><code class="language-toml">    # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+    # proxyWebhook = &quot;&quot;
+</code></pre>
+
+<p>If you hesitate between the two: the <code>RepositoryWebhook</code> is more <em>reactive</em> than the <code>Git Repository Poller</code>.</p>
+
+<h3 id="i-don-t-see-the-type-git-repository-poller-nor-repositorywebhook-when-i-add-a-hook"><strong>I don&rsquo;t see the type Git Repository Poller nor RepositoryWebhook when I add a Hook</strong></h3>
+
+<p>Before adding a hook on your Workflow, you have to add the application in the Pipeline Context.
+Select the first pipeline, then click on <strong>Edit the pipeline context</strong> from the <a href="https://ovh.github.io/cds/docs/concepts/workflow/sidebar/">sidebar</a>.</p>
+
+<p><a href="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/">Pipeline Context Documentation</a></p>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

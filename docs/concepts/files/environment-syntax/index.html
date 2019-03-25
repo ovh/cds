@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Environment configuration file - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="Definition An environnement is a way to declare and manipulate sets of environment variables and attach them to pipelines within a workflow. It is also a way to organize your workflow and keep it clear and still readable.
+Format name: MyEnvironment values: myBooleanVariable: type: boolean value: true myNumberVariable: type: number value: 1 mySecretVariable: type: password value: f1a2b3dd756e4db381d7a88631c67355 myStringVariable: value: myStringValue myTextVariable: type: text value: | This Is a multiline text value with a project variable inside {{.">
+<meta property="og:description" content="Definition An environnement is a way to declare and manipulate sets of environment variables and attach them to pipelines within a workflow. It is also a way to organize your workflow and keep it clear and still readable.
+Format name: MyEnvironment values: myBooleanVariable: type: boolean value: true myNumberVariable: type: number value: 1 mySecretVariable: type: password value: f1a2b3dd756e4db381d7a88631c67355 myStringVariable: value: myStringValue myTextVariable: type: text value: | This Is a multiline text value with a project variable inside {{.">
+<meta name="twitter:description" content="Definition An environnement is a way to declare and manipulate sets of environment variables and attach them to pipelines within a workflow. It is also a way to organize your workflow and keep it clear and still readable.
+Format name: MyEnvironment values: myBooleanVariable: type: boolean value: true myNumberVariable: type: number value: 1 mySecretVariable: type: password value: f1a2b3dd756e4db381d7a88631c67355 myStringVariable: value: myStringValue myTextVariable: type: text value: | This Is a multiline text value with a project variable inside {{.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/environment-syntax/">
+<meta property="og:title" content="Environment configuration file">
+<meta name="twitter:title" content="Environment configuration file">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/" class="menuSelected">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Concepts" href="https://ovh.github.io/cds/docs/concepts/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Job" href="https://ovh.github.io/cds/docs/concepts/job/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Permissions - ACLs" href="https://ovh.github.io/cds/docs/concepts/permissions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline" href="https://ovh.github.io/cds/docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Variables" href="https://ovh.github.io/cds/docs/concepts/variables/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Workflow">
+	<div class="container">
+		
+		<a class="item" data-title="Workflow" href="https://ovh.github.io/cds/docs/concepts/workflow/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Payload" href="https://ovh.github.io/cds/docs/concepts/workflow/payload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline Context" href="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Hooks">
+	<div class="container">
+		
+		<a class="item" data-title="Hooks" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Scheduler" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/scheduler/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Poller" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Run conditions on pipeline" href="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Join" href="https://ovh.github.io/cds/docs/concepts/workflow/join/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mutex" href="https://ovh.github.io/cds/docs/concepts/workflow/mutex/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Sidebar" href="https://ovh.github.io/cds/docs/concepts/workflow/sidebar/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run Number" href="https://ovh.github.io/cds/docs/concepts/workflow/run-number/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Requirement">
+	<div class="container">
+		
+		<a class="item" data-title="Requirement" href="https://ovh.github.io/cds/docs/concepts/requirement/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Network Access" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Link" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OS &amp; Architecture" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Configuration files">
+	<div class="container">
+		
+		<a class="item" data-title="Configuration files" href="https://ovh.github.io/cds/docs/concepts/files/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow configuration file" href="https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline configuration file" href="https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model configuration file" href="https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action configuration file" href="https://ovh.github.io/cds/docs/concepts/files/action-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Application configuration file" href="https://ovh.github.io/cds/docs/concepts/files/application-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Environment configuration file" href="https://ovh.github.io/cds/docs/concepts/files/environment-syntax/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model" href="https://ovh.github.io/cds/docs/concepts/worker-model/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Worker Model Variables" href="https://ovh.github.io/cds/docs/concepts/worker-model/variables/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model patterns" href="https://ovh.github.io/cds/docs/concepts/worker-model/patterns/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow Template" href="https://ovh.github.io/cds/docs/concepts/template/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Environment configuration file</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#definition">Definition</a></li>
+<li><a href="#format">Format</a></li>
+<li><a href="#file-usage">File usage</a></li>
+<li><a href="#usage-in-a-pipeline">Usage in a pipeline</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<h2 id="definition">Definition</h2>
+
+<p>An environnement is a way to declare and manipulate sets of environment variables and attach them to pipelines within a workflow.
+It is also a way to organize your workflow and keep it clear and still readable.</p>
+
+<h2 id="format">Format</h2>
+
+<pre><code class="language-yaml">name: MyEnvironment
+
+values:
+  myBooleanVariable:
+    type: boolean
+    value: true
+
+  myNumberVariable:
+    type: number
+    value: 1
+
+  mySecretVariable:
+    type: password
+    value: f1a2b3dd756e4db381d7a88631c67355
+
+  myStringVariable:
+    value: myStringValue
+
+  myTextVariable:
+    type: text
+    value: |
+      This
+      Is a
+      multiline text value
+      with a project variable inside {{.cds.proj.var}}
+</code></pre>
+
+<p>All variables in CDS have a type: <code>string</code> is the default type and can be omitted, <code>number</code>, <code>boolean</code>, and <code>text</code>. You can also define <code>password</code>, the value in the file is encrypted. You can generated an encrypted value with the command <code>cdsctl encrypt MYPROJECT my-data my-super-secret-value</code>.</p>
+
+<p>All values can references other variables, thanks to the CDS interpolation engine:</p>
+
+<pre><code class="language-yaml">  myTextVariable:
+    type: text
+    value: |
+      This
+      Is a
+      multiline text value
+      with a project variable inside {{.cds.proj.var}}
+</code></pre>
+
+<h2 id="file-usage">File usage</h2>
+
+<p>The environment files can be exported and imported from CDS with the following command.</p>
+
+<pre><code>➜  ~ cdsctl environment export
+</code></pre>
+
+<pre><code>➜  ~ cdsctl environment import
+</code></pre>
+
+<p>The files can also relies in your git repositories if your workflow definition is <a href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">stored in your git repository</a>.</p>
+
+<h2 id="usage-in-a-pipeline">Usage in a pipeline</h2>
+
+<p>While running a pipeline attached to this environment, you can manipulate those variables in too ways.</p>
+
+<ul>
+<li>From the interpolation engine using <code>{{.cds.env.MyStringVariable}}</code></li>
+<li>From the environment variables using
+
+<ul>
+<li><code>CDS_ENV_MYSTRINGVARIABLE</code>,</li>
+<li><code>CDS_ENV_MyStringVariable</code>,</li>
+<li><code>MYSTRINGVARIABLE</code>,</li>
+<li><code>MyStringVariable</code></li>
+</ul></li>
+</ul>
+
+<p>Note that the variable names are exposed as following:</p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Exposed variables</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>MyStringVariable</td>
+<td><code>{{.cds.env.MyStringVariable}}</code>, <code>CDS_ENV_MYSTRINGVARIABLE</code>, <code>CDS_ENV_MyStringVariable</code>, <code>MYSTRINGVARIABLE</code>, <code>MyStringVariable</code></td>
+</tr>
+
+<tr>
+<td>My.String.Variable</td>
+<td><code>{{.cds.env.My.String.Variable}}</code>, <code>CDS_ENV_MY_STRING_VARIABLE</code>, <code>CDS_ENV_My.String.Variable</code>, <code>MY_STRING_VARIABLE</code>, <code>My.String.Variable</code></td>
+</tr>
+
+<tr>
+<td>My-String-Variable</td>
+<td><code>{{.cds.env.My-String-Variable}}</code>, <code>CDS_ENV_MY_STRING_VARIABLE</code>, <code>CDS_ENV_My-String-Variable</code>, <code>MY_STRING_VARIABLE</code>, <code>My-String-Variable</code></td>
+</tr>
+
+<tr>
+<td>My_String_Variable</td>
+<td><code>{{.cds.env.My_String_Variable}}</code>, <code>CDS_ENV_MY_STRING_VARIABLE</code>, <code>CDS_ENV_My_String_Variable</code>, <code>MY_STRING_VARIABLE</code>, <code>My_String_Variable</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

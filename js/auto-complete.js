@@ -35,7 +35,7 @@ var autoComplete = (function(){
             delay: 150,
             offsetLeft: 0,
             offsetTop: 1,
-            cache: 1,
+            cache: 0,
             menuClass: '',
             renderItem: function (item, search){
                 // escape special characters

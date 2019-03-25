@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>user - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content=" AddUser creates a new user and generate verification email    URL /user/signup     Method POST   Permissions Auth: false   Code addUserHandler    ConfirmUser verify token send via email and mark user as verified    URL /user/&lt;username&gt;/confirm/&lt;token&gt;     Method GET   Permissions Auth: false   Code confirmUserHandler    DeleteUser removes a user    URL /user/&lt;username&gt;     Method DELETE   Permissions NeedUsernameOrAdmin: true - Auth: true   Code deleteUserHandler    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Code getTimelineHandler    GET /user/token/&lt;token&gt;    URL /user/token/&lt;token&gt;     Method GET   Permissions Auth: true   Code getUserTokenHandler    GET /user/token    URL /user/token     Method GET   Permissions Auth: true   Code getUserTokenListHandler    GetUser returns a specific user&rsquo;s information    URL /user/&lt;username&gt;     Method GET   Permissions NeedUsernameOrAdmin: true - Auth: true   Code getUserHandler    GetUsers fetches all users from databases    URL /user     Method GET   Permissions Auth: true   Code getUsersHandler    POST /user/&lt;username&gt;/reset    URL /user/&lt;username&gt;/reset     Method POST   Permissions Auth: false   Code resetUserHandler    POST /user/import    URL /user/import     Method POST   Permissions NeedAdmin: true - Auth: true   Code importUsersHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Code postTimelineFilterHandler    UpdateUser modifies user informations    URL /user/&lt;username&gt;     Method PUT   Permissions NeedUsernameOrAdmin: true - Auth: true   Code updateUserHandler    getUserGroups returns groups of the user    URL /user/&lt;username&gt;/groups     Method GET   Permissions NeedUsernameOrAdmin: true - Auth: true   Code getUserGroupsHandler    getUserLogged check if the current user is connected    URL /user/me     Method GET   Permissions Auth: false   Code getUserLoggedHandler    postUserFavorite post favorite user for workflow or project    URL /user/favorite     Method POST   Permissions Auth: true   Code postUserFavoriteHandler    ">
+<meta property="og:description" content=" AddUser creates a new user and generate verification email    URL /user/signup     Method POST   Permissions Auth: false   Code addUserHandler    ConfirmUser verify token send via email and mark user as verified    URL /user/&lt;username&gt;/confirm/&lt;token&gt;     Method GET   Permissions Auth: false   Code confirmUserHandler    DeleteUser removes a user    URL /user/&lt;username&gt;     Method DELETE   Permissions NeedUsernameOrAdmin: true - Auth: true   Code deleteUserHandler    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Code getTimelineHandler    GET /user/token/&lt;token&gt;    URL /user/token/&lt;token&gt;     Method GET   Permissions Auth: true   Code getUserTokenHandler    GET /user/token    URL /user/token     Method GET   Permissions Auth: true   Code getUserTokenListHandler    GetUser returns a specific user&rsquo;s information    URL /user/&lt;username&gt;     Method GET   Permissions NeedUsernameOrAdmin: true - Auth: true   Code getUserHandler    GetUsers fetches all users from databases    URL /user     Method GET   Permissions Auth: true   Code getUsersHandler    POST /user/&lt;username&gt;/reset    URL /user/&lt;username&gt;/reset     Method POST   Permissions Auth: false   Code resetUserHandler    POST /user/import    URL /user/import     Method POST   Permissions NeedAdmin: true - Auth: true   Code importUsersHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Code postTimelineFilterHandler    UpdateUser modifies user informations    URL /user/&lt;username&gt;     Method PUT   Permissions NeedUsernameOrAdmin: true - Auth: true   Code updateUserHandler    getUserGroups returns groups of the user    URL /user/&lt;username&gt;/groups     Method GET   Permissions NeedUsernameOrAdmin: true - Auth: true   Code getUserGroupsHandler    getUserLogged check if the current user is connected    URL /user/me     Method GET   Permissions Auth: false   Code getUserLoggedHandler    postUserFavorite post favorite user for workflow or project    URL /user/favorite     Method POST   Permissions Auth: true   Code postUserFavoriteHandler    ">
+<meta name="twitter:description" content=" AddUser creates a new user and generate verification email    URL /user/signup     Method POST   Permissions Auth: false   Code addUserHandler    ConfirmUser verify token send via email and mark user as verified    URL /user/&lt;username&gt;/confirm/&lt;token&gt;     Method GET   Permissions Auth: false   Code confirmUserHandler    DeleteUser removes a user    URL /user/&lt;username&gt;     Method DELETE   Permissions NeedUsernameOrAdmin: true - Auth: true   Code deleteUserHandler    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Code getTimelineHandler    GET /user/token/&lt;token&gt;    URL /user/token/&lt;token&gt;     Method GET   Permissions Auth: true   Code getUserTokenHandler    GET /user/token    URL /user/token     Method GET   Permissions Auth: true   Code getUserTokenListHandler    GetUser returns a specific user&rsquo;s information    URL /user/&lt;username&gt;     Method GET   Permissions NeedUsernameOrAdmin: true - Auth: true   Code getUserHandler    GetUsers fetches all users from databases    URL /user     Method GET   Permissions Auth: true   Code getUsersHandler    POST /user/&lt;username&gt;/reset    URL /user/&lt;username&gt;/reset     Method POST   Permissions Auth: false   Code resetUserHandler    POST /user/import    URL /user/import     Method POST   Permissions NeedAdmin: true - Auth: true   Code importUsersHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Code postTimelineFilterHandler    UpdateUser modifies user informations    URL /user/&lt;username&gt;     Method PUT   Permissions NeedUsernameOrAdmin: true - Auth: true   Code updateUserHandler    getUserGroups returns groups of the user    URL /user/&lt;username&gt;/groups     Method GET   Permissions NeedUsernameOrAdmin: true - Auth: true   Code getUserGroupsHandler    getUserLogged check if the current user is connected    URL /user/me     Method GET   Permissions Auth: false   Code getUserLoggedHandler    postUserFavorite post favorite user for workflow or project    URL /user/favorite     Method POST   Permissions Auth: true   Code postUserFavoriteHandler    ">
+<meta property="og:url" content="https://ovh.github.io/cds/development/rest/user/">
+<meta property="og:title" content="user">
+<meta name="twitter:title" content="user">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="artifact" href="https://ovh.github.io/cds/development/rest/artifact/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="build" href="https://ovh.github.io/cds/development/rest/build/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hatchery" href="https://ovh.github.io/cds/development/rest/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="pipeline" href="https://ovh.github.io/cds/development/rest/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="platform" href="https://ovh.github.io/cds/development/rest/platform/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin" href="https://ovh.github.io/cds/development/rest/plugin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="staticfiles" href="https://ovh.github.io/cds/development/rest/staticfiles/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="warning" href="https://ovh.github.io/cds/development/rest/warning/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>user</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#adduser-creates-a-new-user-and-generate-verification-email">AddUser creates a new user and generate verification email</a></li>
+<li><a href="#confirmuser-verify-token-send-via-email-and-mark-user-as-verified">ConfirmUser verify token send via email and mark user as verified</a></li>
+<li><a href="#deleteuser-removes-a-user">DeleteUser removes a user</a></li>
+<li><a href="#get-user-timeline-filter">GET <code>/user/timeline/filter</code></a></li>
+<li><a href="#get-user-timeline">GET <code>/user/timeline</code></a></li>
+<li><a href="#get-user-token-token">GET <code>/user/token/&lt;token&gt;</code></a></li>
+<li><a href="#get-user-token">GET <code>/user/token</code></a></li>
+<li><a href="#getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</a></li>
+<li><a href="#getusers-fetches-all-users-from-databases">GetUsers fetches all users from databases</a></li>
+<li><a href="#post-user-username-reset">POST <code>/user/&lt;username&gt;/reset</code></a></li>
+<li><a href="#post-user-import">POST <code>/user/import</code></a></li>
+<li><a href="#post-user-timeline-filter">POST <code>/user/timeline/filter</code></a></li>
+<li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
+<li><a href="#getusergroups-returns-groups-of-the-user">getUserGroups returns groups of the user</a></li>
+<li><a href="#getuserlogged-check-if-the-current-user-is-connected">getUserLogged check if the current user is connected</a></li>
+<li><a href="#postuserfavorite-post-favorite-user-for-workflow-or-project">postUserFavorite post favorite user for workflow or project</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<h2 id="adduser-creates-a-new-user-and-generate-verification-email">AddUser creates a new user and generate verification email</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/signup</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addUserHandler%22">addUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="confirmuser-verify-token-send-via-email-and-mark-user-as-verified">ConfirmUser verify token send via email and mark user as verified</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;/confirm/&lt;token&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+confirmUserHandler%22">confirmUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="deleteuser-removes-a-user">DeleteUser removes a user</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedUsernameOrAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteUserHandler%22">deleteUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-user-timeline-filter">GET <code>/user/timeline/filter</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/timeline/filter</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22">getTimelineFilterHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-user-timeline">GET <code>/user/timeline</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/timeline</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineHandler%22">getTimelineHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-user-token-token">GET <code>/user/token/&lt;token&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/token/&lt;token&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserTokenHandler%22">getUserTokenHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-user-token">GET <code>/user/token</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/token</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserTokenListHandler%22">getUserTokenListHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedUsernameOrAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="getusers-fetches-all-users-from-databases">GetUsers fetches all users from databases</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUsersHandler%22">getUsersHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-user-username-reset">POST <code>/user/&lt;username&gt;/reset</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;/reset</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+resetUserHandler%22">resetUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-user-import">POST <code>/user/import</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/import</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+importUsersHandler%22">importUsersHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-user-timeline-filter">POST <code>/user/timeline/filter</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/timeline/filter</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22">postTimelineFilterHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="updateuser-modifies-user-informations">UpdateUser modifies user informations</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedUsernameOrAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserHandler%22">updateUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="getusergroups-returns-groups-of-the-user">getUserGroups returns groups of the user</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;/groups</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedUsernameOrAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserGroupsHandler%22">getUserGroupsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="getuserlogged-check-if-the-current-user-is-connected">getUserLogged check if the current user is connected</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/me</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserLoggedHandler%22">getUserLoggedHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="postuserfavorite-post-favorite-user-for-workflow-or-project">postUserFavorite post favorite user for workflow or project</h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/favorite</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postUserFavoriteHandler%22">postUserFavoriteHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

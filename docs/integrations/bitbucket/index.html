@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Bitbucket Server - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
+<meta property="og:description" content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
+<meta name="twitter:description" content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/bitbucket/">
+<meta property="og:title" content="Bitbucket Server">
+<meta name="twitter:title" content="Bitbucket Server">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/" class="menuSelected">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Integrations" href="https://ovh.github.io/cds/docs/integrations/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Bitbucket Server" href="https://ovh.github.io/cds/docs/integrations/bitbucket/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Docker Swarm" href="https://ovh.github.io/cds/docs/integrations/swarm/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitHub" href="https://ovh.github.io/cds/docs/integrations/github/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab" href="https://ovh.github.io/cds/docs/integrations/gitlab/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka" href="https://ovh.github.io/cds/docs/integrations/kafka/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Kubernetes">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Kubernetes Compute" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kubernetes Deployment" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Mesos/Marathon" href="https://ovh.github.io/cds/docs/integrations/marathon/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Openstack">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="OpenStack Swift" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Openstack Compute" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ" href="https://ovh.github.io/cds/docs/integrations/rabbitmq/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="vSphere" href="https://ovh.github.io/cds/docs/integrations/vsphere/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Bitbucket Server</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#how-to-configure-bitbucket-server-integration">How to configure Bitbucket Server integration</a>
+<ul>
+<li><a href="#generate-rsa-key-pair">Generate RSA Key Pair</a></li>
+<li><a href="#create-a-cds-application-in-bitbucket">Create a CDS application in Bitbucket</a></li>
+<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
+</ul></li>
+<li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<p>The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.</p>
+
+<p>This integration allows you to link a Git Repository hosted by your Bitbucket Server
+to a CDS Application.</p>
+
+<p>This integration enables some features:</p>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/">Git Repository Webhook</a></li>
+<li>Easy to use action <a href="https://ovh.github.io/cds/docs/actions/checkoutapplication/">CheckoutApplication</a> and <a href="https://ovh.github.io/cds/docs/actions/gitclone/">GitClone</a> for advanced usage</li>
+<li>Send <a href="https://developer.atlassian.com/server/bitbucket/how-tos/updating-build-status-for-commits/">build notifications</a> on your Pull-Requests and Commits on Bitbucket</li>
+<li>Send comments on your Pull-Requests when a workflow is failed</li>
+</ul>
+
+<h2 id="how-to-configure-bitbucket-server-integration">How to configure Bitbucket Server integration</h2>
+
+<p>You need to perform the following steps:</p>
+
+<ul>
+<li>Bitbucket admin privileges</li>
+<li>A RSA Key Pair</li>
+</ul>
+
+<h3 id="generate-rsa-key-pair">Generate RSA Key Pair</h3>
+
+<p>Create the private RSA certificate:</p>
+
+<pre><code>$ openssl genrsa -out key.pem 1024
+</code></pre>
+
+<p>The content of key.pem have to be used as <code>privateKey</code> below in CDS Configuration file.</p>
+
+<p>Generate the public RSA certificate:</p>
+
+<pre><code>$ openssl rsa -in key.pem -pubout
+</code></pre>
+
+<p>This will display the public key, you will have to copy-paste it inside <code>Public Key</code> field on Bitbucket.</p>
+
+<h3 id="create-a-cds-application-in-bitbucket">Create a CDS application in Bitbucket</h3>
+
+<p>In Bitbucket go to <em>Administration Settings</em> / <em>Application Links</em>. Create a new Application with:</p>
+
+<ul>
+<li>Name: <strong>CDS</strong></li>
+<li>Type: <strong>Generic Application</strong></li>
+<li>Application URL: <em>Your CDS URL</em></li>
+<li>Display URL: <em>Your CDS URL</em></li>
+</ul>
+
+<p>On this application, you just have to set up <em>OAuth Incoming Authentication</em>:</p>
+
+<ul>
+<li>Consumer Key: <strong>CDS</strong> (you can change it in your configuration file)</li>
+<li>Consumer Name: <strong>CDS</strong></li>
+<li>Public Key: <em>Your CDS RSA public key</em></li>
+<li>Consumer Callback URL: None</li>
+<li>Allow 2-Legged OAuth: false</li>
+<li>Execute as: None</li>
+<li>Allow user impersonation through 2-Legged OAuth: false</li>
+</ul>
+
+<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
+
+<p>Set value to <code>privateKey</code>. You can modify <code>consumerKey</code> if you want.</p>
+
+<pre><code class="language-yaml"> [vcs.servers]
+
+    [vcs.servers.Bitbucket]
+
+      # URL of this VCS Server
+      url = &quot;https://mybitbucket.com&quot;
+
+      [vcs.servers.Bitbucket.bitbucket]
+
+        #######
+        # CDS &lt;-&gt; Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/
+        ########
+        # You can change the consumeKey if you want
+        consumerKey = &quot;CDS&quot;
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+        privateKey = &quot;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&quot;
+
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = &quot;&quot;
+
+        # optional, Bitbucket Token associated to username, used to add comment on Pull Request
+        token = &quot;&quot;
+
+        # optional. Bitbucket username, used to add comment on Pull Request on failed build.
+        username = &quot;&quot;
+
+        [vcs.servers.Bitbucket.bitbucket.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          # disable = false
+</code></pre>
+
+<p>You can configure many instances of Bitbucket:</p>
+
+<pre><code class="language-yaml">
+[vcs.servers]
+
+    [vcs.servers.mybitbucket_instance1]
+
+      # URL of this VCS Server
+      url = &quot;https://mybitbucket-instance1.localhost&quot;
+
+      [vcs.servers.mybitbucket_instance1.bitbucket]
+        consumerKey = &quot;CDS_Instance1&quot;
+
+        # Does polling is supported by VCS Server
+        disablePolling = true
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        # Does webhooks creation are supported by VCS Server
+        disableWebHooksCreation = false
+        privateKey = &quot;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&quot;
+
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = &quot;https://myproxy.com&quot;
+
+        [vcs.servers.mybitbucket_instance1.bitbucket.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
+
+    [vcs.servers.mybitbucket_instance2]
+
+      # URL of this VCS Server
+      url = &quot;https://mybitbucket-instance2.localhost&quot;
+
+      [vcs.servers.mybitbucket_instance2.bitbucket]
+        consumerKey = &quot;CDS_Instance2&quot;
+
+        # Does polling is supported by VCS Server
+        disablePolling = true
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        # Does webhooks creation are supported by VCS Server
+        disableWebHooksCreation = false
+        privateKey = &quot;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&quot;
+
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = &quot;https://myproxy.com&quot;
+
+        [vcs.servers.mybitbucket_instance2.bitbucket.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
+
+</code></pre>
+
+<p>See how to generate <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
+
+<h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
+
+<pre><code class="language-bash">$ engine start vcs
+
+# you can also start CDS api and vcs in the same process:
+$ engine start api vcs
+</code></pre>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>group on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/group/</link>
+    <description>Recent content in group on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/group/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>create</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/group/create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/group/create/</guid>
+      <description> cdsctl group create Create a CDS group
+Synopsis Create a CDS group
+cdsctl group create GROUP-NAME  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/group/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/group/delete/</guid>
+      <description> cdsctl group delete Delete a CDS group
+Synopsis Delete a CDS group
+cdsctl group delete GROUP-NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+    <item>
+      <title>grant</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/group/grant/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/group/grant/</guid>
+      <description>cdsctl group grant Grant a CDS group in a project or workflow
+Synopsis Grant a CDS group in a project or workflow
+cdsctl group grant [ PROJECT-KEY ] GROUP-NAME PERMISSION [flags]  Options  -p, --only-project Indicate if the group must be added only on project or also on all workflows in project -n, --workflow string Workflow name  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/group/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/group/list/</guid>
+      <description>cdsctl group list List CDS groups
+Synopsis List CDS groups
+cdsctl group list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>rename</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/group/rename/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/group/rename/</guid>
+      <description> cdsctl group rename Rename a CDS group
+Synopsis Rename a CDS group
+cdsctl group rename OLD-GROUP-NAME NEW-GROUP-NAME  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+    <item>
+      <title>revoke</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/group/revoke/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/group/revoke/</guid>
+      <description> cdsctl group revoke Revoke a CDS group in a project or workflow
+Synopsis Revoke a CDS group in a project or workflow
+cdsctl group revoke [ PROJECT-KEY ] GROUP-NAME [flags]  Options  -n, --workflow string Workflow name  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/group/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/group/show/</guid>
+      <description> cdsctl group show Show a CDS group
+Synopsis Show a CDS group
+cdsctl group show GROUP-NAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+  </channel>
+</rss>

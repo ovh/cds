@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Examples on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/development/sdk/golang/examples/</link>
+    <description>Recent content in Examples on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/development/sdk/golang/examples/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Example of Code - Workers List</title>
+      <link>https://ovh.github.io/cds/development/sdk/golang/examples/go-workers-list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/sdk/golang/examples/go-workers-list/</guid>
+      <description>Create a file main.go with this content:
+package main import ( &amp;quot;flag&amp;quot; &amp;quot;fmt&amp;quot; &amp;quot;os&amp;quot; &amp;quot;github.com/ovh/cds/sdk/cdsclient&amp;quot; ) var host, token, username string func init() { flag.StringVar(&amp;amp;host, &amp;quot;api&amp;quot;, &amp;quot;http://localhost:8081&amp;quot;, &amp;quot;CDS API URL, ex: http://localhost:8081&amp;quot;) flag.StringVar(&amp;amp;token, &amp;quot;token&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;CDS Token&amp;quot;) flag.StringVar(&amp;amp;username, &amp;quot;username&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;CDS Username&amp;quot;) } func main() { flag.Parse() cfg := cdsclient.Config{ Host: host, Token: token, User: username, } client := cdsclient.New(cfg) workers, err := client.WorkerList() if err != nil { fmt.Fprintf(os.Stderr, &amp;quot;Error while getting workers:%s&amp;quot;, err) os.</description>
+    </item>
+    
+  </channel>
+</rss>

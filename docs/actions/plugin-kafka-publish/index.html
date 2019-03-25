@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>plugin-kafka-publish - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="This action helps you to send data through Kafka across every network.
+You are able to send a custom &ldquo;message&rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.
+This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.">
+<meta property="og:description" content="This action helps you to send data through Kafka across every network.
+You are able to send a custom &ldquo;message&rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.
+This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.">
+<meta name="twitter:description" content="This action helps you to send data through Kafka across every network.
+You are able to send a custom &ldquo;message&rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.
+This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/plugin-kafka-publish/">
+<meta property="og:title" content="plugin-kafka-publish">
+<meta name="twitter:title" content="plugin-kafka-publish">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/" class="menuSelected">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Actions" href="https://ovh.github.io/cds/docs/actions/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/artifact-download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/artifact-upload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/checkoutapplication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/deployapplication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/gitclone/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/gittag/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/junit/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/release/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/serve-static-files/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-docker-package" href="https://ovh.github.io/cds/docs/actions/cds-docker-package/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-go-build" href="https://ovh.github.io/cds/docs/actions/cds-go-build/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-nexus-upload" href="https://ovh.github.io/cds/docs/actions/cds-nexus-upload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-perl-test" href="https://ovh.github.io/cds/docs/actions/cds-perl-test/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-publish-ovh-metrics" href="https://ovh.github.io/cds/docs/actions/cds-publish-ovh-metrics/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-python-pylint" href="https://ovh.github.io/cds/docs/actions/cds-python-pylint/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-sonar-scanner" href="https://ovh.github.io/cds/docs/actions/cds-sonar-scanner/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-split-download" href="https://ovh.github.io/cds/docs/actions/cds-split-download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-split-upload" href="https://ovh.github.io/cds/docs/actions/cds-split-upload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-archive" href="https://ovh.github.io/cds/docs/actions/plugin-archive/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-clair" href="https://ovh.github.io/cds/docs/actions/plugin-clair/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-download" href="https://ovh.github.io/cds/docs/actions/plugin-download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-group-tmpl" href="https://ovh.github.io/cds/docs/actions/plugin-group-tmpl/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-kafka-publish" href="https://ovh.github.io/cds/docs/actions/plugin-kafka-publish/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-marathon" href="https://ovh.github.io/cds/docs/actions/plugin-marathon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-npm-audit-parser" href="https://ovh.github.io/cds/docs/actions/plugin-npm-audit-parser/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-ssh-cmd" href="https://ovh.github.io/cds/docs/actions/plugin-ssh-cmd/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-tmpl" href="https://ovh.github.io/cds/docs/actions/plugin-tmpl/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-venom" href="https://ovh.github.io/cds/docs/actions/plugin-venom/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>plugin-kafka-publish</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#parameters">Parameters</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<p>This action helps you to send data through Kafka across every network.</p>
+
+<p>You are able to send a custom &ldquo;message&rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.</p>
+
+<p>This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consumer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin.</p>
+
+<p>How to use: <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish">https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish</a></p>
+
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
+<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
+<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
+<li><strong>kafkaPassword</strong>: Kafka password</li>
+<li><strong>kafkaUser</strong>: Kafka user</li>
+<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
+<li><strong>message</strong>: Kafka Message</li>
+<li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
+<li><strong>topic</strong>: Kafka Topic</li>
+<li><strong>waitForAck</strong>: Wait for ACK</li>
+<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
+<li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
+</ul>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

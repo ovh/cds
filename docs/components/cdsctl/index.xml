@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>cdsctl on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/</link>
+    <description>Recent content in cdsctl on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>encrypt</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/encrypt/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/encrypt/</guid>
+      <description>cdsctl encrypt Encrypt variable into your CDS project
+Synopsis To be able to write secret in the CDS yaml files, you have to encrypt data with the project GPG key.
+Create a secret variable:
+$ cdsctl encrypt MYPROJECT my-data my-super-secret-value my-data: 01234567890987654321  The command returns the value: 01234567890987654321. You can use this value in a configuration file.
+Example of use case: Import an environment with a secret.
+Create an environment file to import :</description>
+    </item>
+    
+    <item>
+      <title>login</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/login/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/login/</guid>
+      <description>cdsctl login Login to CDS
+Synopsis Login to CDS
+cdsctl login [flags]  Options  -H, --api-url string CDS API URL --env Display the commands to set up the environment for the cds client -p, --password string CDS Password -u, --username string CDS Username  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>monitoring</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/monitoring/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/monitoring/</guid>
+      <description> cdsctl monitoring CDS monitoring
+Synopsis CDS monitoring
+cdsctl monitoring  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>shell</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/shell/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/shell/</guid>
+      <description>cdsctl shell cdsctl interactive shell
+Synopsis CDS Shell Mode. default commands:
+ cd: reset current position. cd : go to an object. Try cd /project/ and tabulation to autocomplete find : find a project / application / workflow. not case sensitive help: display this help ls: display current list, quiet format ll: display current list mode: display current mode. Choose mode with &amp;ldquo;mode vi&amp;rdquo; ou &amp;ldquo;mode emacs&amp;rdquo; open: open CDS WebUI with current context version: same as cdsctl version command  Other commands are available depending on your position.</description>
+    </item>
+    
+    <item>
+      <title>signup</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/signup/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/signup/</guid>
+      <description> cdsctl signup Signup on CDS
+Synopsis Signup on CDS
+cdsctl signup [flags]  Options  -H, --api-url string CDS API URL --email string Email --fullname string Fullname --username string CDS Username  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/update/</guid>
+      <description> cdsctl update Update cdsctl from CDS API or from CDS Release
+Synopsis Update cdsctl from CDS API or from CDS Release
+cdsctl update [flags]  Options  --from-github Update binary from latest github release  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>version</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/version/</guid>
+      <description> cdsctl version show cdsctl version
+Synopsis show cdsctl version
+cdsctl version [flags]  Options  --format string Specify out format (json or yaml)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>xlogin</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/xlogin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/xlogin/</guid>
+      <description>cdsctl xlogin Login to CDS [EXPERIMENTAL]
+Synopsis Login to CDS [EXPERIMENTAL]
+cdsctl xlogin [flags]  Options  -H, --api-url string CDS API URL --env Display the commands to set up the environment for the cds client -p, --password string CDS Password -u, --username string CDS Username  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>CDS - The origins - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="To build CDS, the development team took their inspiration from the Continuous Delivery principles:
+ The process for releasing/deploying software MUST be repeatable and reliable. Automate everything! If somethings difficult or painful, do it more often Keep everything in source control Dev Done means “released” Build quality in! Everybody has responsibility for the release process Improve continuously Build binaries only once Use precisely the same mechanism to deploy to every environment Smoke test your deployment If anything fails, stop the line  ref.">
+<meta property="og:description" content="To build CDS, the development team took their inspiration from the Continuous Delivery principles:
+ The process for releasing/deploying software MUST be repeatable and reliable. Automate everything! If somethings difficult or painful, do it more often Keep everything in source control Dev Done means “released” Build quality in! Everybody has responsibility for the release process Improve continuously Build binaries only once Use precisely the same mechanism to deploy to every environment Smoke test your deployment If anything fails, stop the line  ref.">
+<meta name="twitter:description" content="To build CDS, the development team took their inspiration from the Continuous Delivery principles:
+ The process for releasing/deploying software MUST be repeatable and reliable. Automate everything! If somethings difficult or painful, do it more often Keep everything in source control Dev Done means “released” Build quality in! Everybody has responsibility for the release process Improve continuously Build binaries only once Use precisely the same mechanism to deploy to every environment Smoke test your deployment If anything fails, stop the line  ref.">
+<meta property="og:url" content="https://ovh.github.io/cds/about/why_cds/">
+<meta property="og:title" content="CDS - The origins">
+<meta name="twitter:title" content="CDS - The origins">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/" class="active">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+		</ul>
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="About" href="https://ovh.github.io/cds/about/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="CDS - The origins" href="https://ovh.github.io/cds/about/why_cds/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Blog Posts and Podcasts" href="https://ovh.github.io/cds/about/articles/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Comparaison Matrix" href="https://ovh.github.io/cds/about/matrix/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Contact us" href="https://ovh.github.io/cds/about/contact/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Roadmap" href="https://ovh.github.io/cds/about/roadmap/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>CDS - The origins</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#1-self-service">1 - Self-Service</a></li>
+<li><a href="#2-horizontal-scalability">2 - Horizontal Scalability</a></li>
+<li><a href="#3-high-availability">3 - High Availability</a></li>
+<li><a href="#4-pipeline-reutilisability">4 - Pipeline Reutilisability</a></li>
+<li><a href="#5-rest-api">5 - REST API</a></li>
+<li><a href="#6-customizable">6 - Customizable</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<p>To build CDS, the development team took their inspiration from the Continuous Delivery principles:</p>
+
+<ul>
+<li>The process for releasing/deploying software MUST be repeatable and reliable.</li>
+<li>Automate everything!</li>
+<li>If somethings difficult or painful, do it more often</li>
+<li>Keep everything in source control</li>
+<li>Dev Done means “released”</li>
+<li>Build quality in!</li>
+<li>Everybody has responsibility for the release process</li>
+<li>Improve continuously</li>
+<li>Build binaries only once</li>
+<li>Use precisely the same mechanism to deploy to every environment</li>
+<li>Smoke test your deployment</li>
+<li>If anything fails, stop the line</li>
+</ul>
+
+<p>ref. <a href="http://devopsnet.com/2011/08/04/continuous-delivery/">http://devopsnet.com/2011/08/04/continuous-delivery/</a></p>
+
+<p>The team triggered the project after several dissatisfying attempts to integrate and use other open-source and commercial build tools at large scale.
+Even if most of the tested tools did not contradict the principles above, they were failing at the &ldquo;real world&rdquo; test. In fact, their limitations were quickly visible at scale. As the number of managed projects grew, these tools were showing signs of weakness of became hard or expensive to manage and maintain. Basic software updates of the tools themselves needed preparation and downtime. Basic configuration changes needed to be centralized on a single team thus creating an organizational bottleneck. etc.</p>
+
+<p>This is why, at the start of the project, the team knew exactly the requirements that would make CDS a suitable tool for their daily operation.
+These requirements later became the <strong><em>CDS Building Design Principles</em></strong> listed below.</p>
+
+<h2 id="1-self-service">1 - Self-Service</h2>
+
+<p>In massively distributed architectures, development teams work independently to improve and deploy applications and services.</p>
+
+<p>Growth in the number of teams and projects create some interesting dynamics where a handful of projects are launched every week. Some of them die at the proof-of concept stage while some others do survive and bring value. Of course, such a turnover rate comes with an ever-growing wishlist of build, test and deployment environments.</p>
+
+<p>Centralizing the creation and the configuration of these deployments on a single team is considered harmful. At best, it would create an organizational bottleneck where the Continuous Delivery is overwhelmed with requests and delays their execution. At worst, this multi-layered/multi-team process would look too heavy from the outside and push the developers to censor themselves putting a soft break to the innovation dynamics.</p>
+
+<p>CDS is built around a strong culture of self-service: Whenever it is possible, the control is delegated to the development teams and to the ops teams. Creation, configuration and deletion of CDS projects is completely decentralized. Moreover, project creators can re-delegate parts of their permissions to their teams through powerful built-in group ACLs.</p>
+
+<p>Users are also free to add their own workers to the system if the workers provided by the Continuous Delivery team do not suit their needs. This covers the specific cases where specific hardware or software is required to build or test a software. To do so, users just need to start the CDS worker binary from their own machines and give it the IP address and the credentials of the CDS API. A worker CDS is a simple binary, you do not need libraries or particular JVMs on your machine to run it. CDS workers are compatible with Linux, macOS, FreeBSD as well as Windows, in architectures 386, amd64, arm or arm64.</p>
+
+<p>To implement this strong <em>self-service culture</em> the team files an issue everytime a user needs the help of a CDS administrator to achieve a simple day-to-day task.</p>
+
+<h2 id="2-horizontal-scalability">2 - Horizontal Scalability</h2>
+
+<p>CDS is built to scale. And this capability is challenged everyday in a large-scale production environment. This ability to scale has been made possible thanks to a simple design principle: <strong>statelessness</strong></p>
+
+<p>CDS&rsquo;s API servers are completely stateless. They do not store anything on the fileSystem. With this &ldquo;share-nothing&rdquo; architecture, servers can be deployed as much times as required to support the load. Instances can be spawned and decommissioned dynamically to handle usage surges when required while keeping the cost at its lowest when the platform is underused. All you need to provide is a scalable and highly available database.</p>
+
+<h2 id="3-high-availability">3 - High Availability</h2>
+
+<p>When working with a continuous delivery tool on a daily basis using an actively maintained tool like CDS, updates are frequent.
+For example, it is frequent that OVH&rsquo;s main CDS instance gets updated and redeployed several times a day.</p>
+
+<p>This fast delivery and reactivity couldn&rsquo;t have been possible without CDS&rsquo;s High Availability architecture. The <strong>statelessnes</strong> property, described above, is again the property that allows to update API servers independently without interrupting any of the running jobs.</p>
+
+<p>« The loss of a CDS API server is a non-event ».</p>
+
+<h2 id="4-pipeline-reutilisability">4 - Pipeline Reutilisability</h2>
+
+<p>CDS&rsquo;s built-in don&rsquo;t-repeat-yourself features help you minimize your effort when you need to build, test and deploy hundreds (thousands?) of projects with a similar workflow. This is especially useful when you are managing a micro-services-based infrastructure where containers are usually built and deployed the same way.</p>
+
+<p>A system of templating allows to customize the build runs depending on the apps to be built and on the deployment environments.</p>
+
+<p>This feature is essential as it allows to quickly deploy new applications, provided that a similar one already exists in CDS.</p>
+
+<h2 id="5-rest-api">5 - REST API</h2>
+
+<p>CDS can be fully operated through its REST API. The API is used by the CDS&rsquo;s UI but also by the workers. All components speak the same language: REST.</p>
+
+<p>Both the UI and the CLI use exclusively the REST API to operate. Therefore, if you can do it through the UI or the CLI, then you can do it through the REST API.</p>
+
+<p>« Everything must be scriptable, automatable ».</p>
+
+<h2 id="6-customizable">6 - Customizable</h2>
+
+<p>CDS is shipped with a lot of built-in steps and hatcheries that should most users&rsquo; needs. But, power users will want to customize it to suit their own needs. This is why CDS has been designed to accept plug-ins for steps actions and the REST API-based hatchery operations allow and easy addition of customized hatcheries.</p>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

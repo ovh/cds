@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Build &amp; Deploy a standard application - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="In this tutorial, you will create a CDS Workflow with the Web UI.
+ Create a workflow using two pipelines: one for building, another for deploying Discover application and environments concepts. Discover Run Conditions.   This tutorial seems very long, don&rsquo;t worry, it&rsquo;s very detailed and it will take you about 10-15 minutes to try it.
+You will play with many CDS Concepts, discover the reuse of pipelines, how to play with CDS Variables.">
+<meta property="og:description" content="In this tutorial, you will create a CDS Workflow with the Web UI.
+ Create a workflow using two pipelines: one for building, another for deploying Discover application and environments concepts. Discover Run Conditions.   This tutorial seems very long, don&rsquo;t worry, it&rsquo;s very detailed and it will take you about 10-15 minutes to try it.
+You will play with many CDS Concepts, discover the reuse of pipelines, how to play with CDS Variables.">
+<meta name="twitter:description" content="In this tutorial, you will create a CDS Workflow with the Web UI.
+ Create a workflow using two pipelines: one for building, another for deploying Discover application and environments concepts. Discover Run Conditions.   This tutorial seems very long, don&rsquo;t worry, it&rsquo;s very detailed and it will take you about 10-15 minutes to try it.
+You will play with many CDS Concepts, discover the reuse of pipelines, how to play with CDS Variables.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_deploy/">
+<meta property="og:title" content="Build &amp; Deploy a standard application">
+<meta name="twitter:title" content="Build &amp; Deploy a standard application">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/" class="menuSelected">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Tutorials" href="https://ovh.github.io/cds/docs/tutorials/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Check npm vulnerabilities" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_npm_vulnerabilities/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Init a CDS Workflow from a repository" href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Import a CDS Workflow from a repository" href="https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Requirement NGINX" href="https://ovh.github.io/cds/docs/tutorials/service-requirement-nginx/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Build &amp; Deploy a standard application" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_deploy/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Requirement PostgreSQL" href="https://ovh.github.io/cds/docs/tutorials/service-requirement-pg/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Build, tag and release an application" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_tag_release/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model Docker">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model Docker" href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="With your own Docker image" href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/docker-customized/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model OpenStack" href="https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model vSphere" href="https://ovh.github.io/cds/docs/tutorials/worker_model-vsphere/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Build &amp; Deploy a standard application</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#1-create-your-cds-project">1 - Create your CDS project</a></li>
+<li><a href="#2-add-a-repository-manager-on-your-project">2 - Add a repository manager on your project</a></li>
+<li><a href="#3-create-an-application-link-it-to-a-git-repository">3 - Create an application, link it to a Git Repository</a></li>
+<li><a href="#4-add-a-variable-on-your-application">4 - Add a variable on your application</a></li>
+<li><a href="#5-create-the-workflow">5 - Create the workflow</a></li>
+<li><a href="#6-edit-your-first-pipeline-for-building-the-application">6 - Edit your first pipeline for building the application</a></li>
+<li><a href="#7-add-a-hook-on-your-workflow">7 - Add a Hook on your workflow</a></li>
+<li><a href="#8-run-your-workflow">8 - Run your workflow</a></li>
+<li><a href="#9-add-a-pipeline-for-deploying-your-application-on-staging">9 - Add a pipeline for deploying your application on staging</a></li>
+<li><a href="#10-add-a-pipeline-for-deploying-your-application-on-production">10 - Add a pipeline for deploying your application on production</a></li>
+<li><a href="#11-add-run-conditions-before-deploying">11 - Add run conditions before deploying</a></li>
+<li><a href="#12-add-run-conditions-before-deploying-in-production">12 - Add run conditions before deploying in production</a></li>
+<li><a href="#13-edit-the-name-of-the-pipelines-in-your-workflow">13 - Edit the name of the pipelines in your workflow</a></li>
+<li><a href="#14-edit-the-deploy-pipeline">14 - Edit the &lsquo;deploy-pipeline&rsquo;</a></li>
+<li><a href="#15-run-your-workflow">15 - Run your workflow</a></li>
+<li><a href="#16-run-the-deploy-in-production">16 - Run the deploy in production</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<div class="notices note" ><span></span><div><p>In this tutorial, you will create a CDS Workflow with the Web UI.</p>
+
+<ul>
+<li>Create a workflow using two pipelines: one for building, another for deploying</li>
+<li>Discover application and environments concepts.</li>
+<li>Discover Run Conditions.</li>
+</ul>
+</div></div>
+
+
+<div class="notices tip" ><span></span><div><p>This tutorial seems very long, don&rsquo;t worry, it&rsquo;s very detailed and it will take you about 10-15 minutes to try it.</p>
+
+<p>You will play with many CDS Concepts, discover the reuse of pipelines, how to play with
+CDS Variables.</p>
+</div></div>
+
+
+<h2 id="1-create-your-cds-project">1 - Create your CDS project</h2>
+
+<p>Let&rsquo;s create a project. On the top navbar, click on &lsquo;Create a project&rsquo;.</p>
+
+<ul>
+<li>Enter a Project Name</li>
+<li>The project key will be useful when you want to use <a href="https://ovh.github.io/cds/docs/components/cdsctl/">cdsctl</a>.</li>
+<li>Click on &lsquo;Create&rsquo; button.</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p><img src="https://ovh.github.io/cds/images/getting_started_standard_wf_1_create_prj.png?height=400px&amp;classes=shadow" alt="1_create_prj" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="2-add-a-repository-manager-on-your-project">2 - Add a repository manager on your project</h2>
+
+<p>The project is now create, you have to link a repository manager.
+Be sure to have a Repository manager as <a href="https://ovh.github.io/cds/docs/integrations/github/">GitHub</a>, <a href="https://ovh.github.io/cds/docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="https://ovh.github.io/cds/docs/integrations/gitlab/">GitLab</a> setted up on your CDS Instance.</p>
+
+<ul>
+<li>Select &lsquo;Advanced&rsquo; section</li>
+<li>In the section &lsquo;Link to a repository manager&rsquo;, select &lsquo;github&rsquo;, then click on &lsquo;Connect&rsquo;</li>
+<li>A popup is displayed, Click on &lsquo;Click here&rsquo; to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select &lsquo;Advanced&rsquo; section
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_2_admin_prj.png?height=400px&amp;classes=shadow" alt="2_admin_prj" /></p>
+
+<p>In the section &lsquo;Link to a repository manager&rsquo;, select &lsquo;github&rsquo;, then click on &lsquo;Connect&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_3_admin_prj_add_repo.png?height=400px&amp;classes=shadow" alt="3_admin_prj_add_repo" /></p>
+
+<p>A popup is displayed, Click on &lsquo;Click here&rsquo; to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_4_admin_prj_add_repo_popup.png?height=400px&amp;classes=shadow" alt="4_admin_prj_add_repo_popup" /></p>
+
+<p>Here, GitHub is well linked on your CDS project.</p>
+
+<p><img src="https://ovh.github.io/cds/images/getting_started_standard_wf_5_admin_repo_linked.png?height=400px&amp;classes=shadow" alt="5_admin_repo_linked" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="3-create-an-application-link-it-to-a-git-repository">3 - Create an application, link it to a Git Repository</h2>
+
+<p>You&rsquo;ve got a project, linked to GitHub. Let&rsquo;s create an application.</p>
+
+<p>A CDS Application is useful to have a link to a Git Repository.</p>
+
+<ul>
+<li>Go on Project -&gt; Applications tab, click on &lsquo;Create a new application&rsquo;</li>
+<li>Enter application name, here &lsquo;my-java-app&rsquo;</li>
+<li>Go on Advanced tab, select a Repository</li>
+<li>Expand configuration, select &lsquo;https&rsquo;. If your repository is public, you can keep empty fields, then click on &lsquo;Save&rsquo;</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Go on Project -&gt; Applications tab, click on &lsquo;Create a new application&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_6_app_tab.png?height=400px&amp;classes=shadow" alt="6_app_tab" /></p>
+
+<p>Enter application name, here &lsquo;my-java-app&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_7_create_app.png?height=400px&amp;classes=shadow" alt="7_create_app" /></p>
+
+<p>Go on Advanced tab, select a Repository
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_8_admin_app.png?height=400px&amp;classes=shadow" alt="8_admin_app" /></p>
+
+<p>Expand configuration, select &lsquo;https&rsquo;. If your repository is public, you can keep empty fields, then click on &lsquo;Save&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_9_app_link_repo.png?height=400px&amp;classes=shadow" alt="9_app_link_repo" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="4-add-a-variable-on-your-application">4 - Add a variable on your application</h2>
+
+<p>You&rsquo;ve got an application, let&rsquo;s create an application <a href="https://ovh.github.io/cds/docs/concepts/variables/">variable</a>.
+We will use it further in a <a href="https://ovh.github.io/cds/docs/concepts/job/">Job</a>.</p>
+
+<ul>
+<li>Select the variables tab, name &lsquo;my-variable&rsquo;, type &lsquo;string&rsquo;, value &lsquo;my-value&rsquo;</li>
+<li>Then click on &lsquo;Save&rsquo;</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the variables tab, name &lsquo;my-variable&rsquo;, type &lsquo;string&rsquo;, value &lsquo;my-value&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_10_app_create_var.png?height=400px&amp;classes=shadow" alt="10_app_create_var" /></p>
+
+<p>Then click on &lsquo;Save&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_11_app_var_created.png?height=400px&amp;classes=shadow" alt="11_app_var_created" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="5-create-the-workflow">5 - Create the workflow</h2>
+
+<p>Here we go, you will create your first workflow.</p>
+
+<ul>
+<li>Go to Project -&gt; Workflows tab</li>
+<li>Enter the Workflow name, then click on Next</li>
+<li>You have now to choose the first pipeline. As you don&rsquo;t have a pipeline yet, you will create a new one, named &lsquo;build-pipeline&rsquo;. Click on Next</li>
+<li>Now, you have to select an application. Choose your application &lsquo;my-java-app&rsquo;, then click on Next</li>
+<li>We don&rsquo;t need an environment for the build pipeline, Click on &lsquo;Finish&rsquo;</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Go to Project -&gt; Workflows tab
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_12_wf_tab.png?height=400px&amp;classes=shadow" alt="12_wf_tab" /></p>
+
+<p>Enter the Workflow name, then click on Next
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_13_create_wf.png?height=400px&amp;classes=shadow" alt="13_create_wf" /></p>
+
+<p>You have now to choose the first pipeline. As you don&rsquo;t have a pipeline yet, you will create a new one, named &lsquo;build-pipeline&rsquo;. Click on Next
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_14_create_wf.png?height=400px&amp;classes=shadow" alt="14_create_wf" /></p>
+
+<p>Now, you have to select an application. Choose your application &lsquo;my-java-app&rsquo;, then click on Next
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_15_create_wf.png?height=400px&amp;classes=shadow" alt="15_create_wf" /></p>
+
+<p>We don&rsquo;t need an environment for the build pipeline, Click on &lsquo;Finish&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_16_create_wf.png?height=400px&amp;classes=shadow" alt="16_create_wf" /></p>
+
+<p>The workflow is now created
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_17_wf_created.png?height=400px&amp;classes=shadow" alt="17_wf_created" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="6-edit-your-first-pipeline-for-building-the-application">6 - Edit your first pipeline for building the application</h2>
+
+<p>The workflow is initialized with an empty pipeline named &lsquo;build-pipeline&rsquo;. You have now to create your
+first job.</p>
+
+<ul>
+<li>In your workflow, select the pipeline &lsquo;build-pipeline&rsquo;, then click on &lsquo;Edit the pipeline&rsquo;.</li>
+<li>Click on &lsquo;Add job&rsquo;</li>
+<li>Add the first step &lsquo;CheckoutApplication&rsquo;</li>
+<li>Add a second step &lsquo;Script&rsquo;. The content of the script is <code>mvn package</code>`</li>
+<li>The third step is &lsquo;Artifact Upload&rsquo;, to upload your builded binary</li>
+<li>And the last step is &lsquo;JUnit&rsquo;. This step is &lsquo;always executed&rsquo; and let you to see test results on UI.</li>
+<li>Last thing about the &lsquo;build-pipeline&rsquo;: as you use mvn, you probably want to add <code>mvn</code> and <code>java</code>. Click
+on Requirements link then add binaries prerequisites.</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>In your workflow, select the pipeline &lsquo;build-pipeline&rsquo;, then click on &lsquo;Edit the pipeline&rsquo;. Click on &lsquo;Add job&rsquo;.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_18_edit_build_pipeline.png?height=400px&amp;classes=shadow" alt="18_edit_build_pipeline" /></p>
+
+<p>Add the first step &lsquo;CheckoutApplication&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_19_edit_build_pipeline.png?height=400px&amp;classes=shadow" alt="19_edit_build_pipeline" /></p>
+
+<p>Add the first step &lsquo;CheckoutApplication&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_20_edit_build_pipeline.png?height=400px&amp;classes=shadow" alt="20_edit_build_pipeline" /></p>
+
+<p>Add a second step &lsquo;Script&rsquo;. The content of the script is <code>mvn package</code>`
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_21_edit_build_pipeline.png?height=400px&amp;classes=shadow" alt="21_edit_build_pipeline" /></p>
+
+<p>The third step is &lsquo;Artifact Upload&rsquo;, to upload your builded binary
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_22_edit_build_pipeline.png?height=400px&amp;classes=shadow" alt="22_edit_build_pipeline" /></p>
+
+<p>And the last step is &lsquo;JUnit&rsquo;. This step is &lsquo;always executed&rsquo; and let you to see test results on UI.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_23_edit_build_pipeline.png?height=400px&amp;classes=shadow" alt="23_edit_build_pipeline" /></p>
+
+<p>Last thing about the &lsquo;build-pipeline&rsquo;: as you use mvn, you probably want to add <code>mvn</code> and <code>java</code>. Click
+on Requirements link then add binaries prerequisites.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_24_edit_build_pipeline_add_requirements.png?height=400px&amp;classes=shadow" alt="24_edit_build_pipeline_add_requirements" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="7-add-a-hook-on-your-workflow">7 - Add a Hook on your workflow</h2>
+
+<p>In this example, we create a Workflow to build &amp; deploy an application. This is a
+standard Continuous Integration &amp; Continuous Delivery Workflow.</p>
+
+<p>So, we have to trigger this workflow on each commit, on every git branches. This will be
+useful to compile code from all developers and deploy master branch if the build is Ok.</p>
+
+<p>The application is linked to a GitHub Git Repository, we have two choices to trigger automatically the workflow:</p>
+
+<ul>
+<li>add a Git Repository Webhook</li>
+<li>or add a Git Repository Poller.</li>
+</ul>
+
+<p>The difference between both is simple: a Git Repository Webhook does not work if your CDS Instance is not
+reachable from GitHub. So, we have to add a Git Repository Poller</p>
+
+<ul>
+<li>Select the pipeline root, then click on &lsquo;Add a hook&rsquo;</li>
+<li>Choose a Git Repository Poller</li>
+<li>The poller is added and linked to your first pipeline</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the pipeline root, then click on &lsquo;Add a hook&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_25_select_root.png?height=400px&amp;classes=shadow" alt="25_select_root" /></p>
+
+<p>Choose a Git Repository Poller
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_26_add_repo_poller.png?height=400px&amp;classes=shadow" alt="26_add_repo_poller" /></p>
+
+<p>The poller is added and linked to your first pipeline
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_27_hook_poller_added.png?height=400px&amp;classes=shadow" alt="27_hook_poller_added" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="8-run-your-workflow">8 - Run your workflow</h2>
+
+<p>It&rsquo;s time to launch your Workflow, click on the green button &lsquo;Run workflow&rsquo;.</p>
+
+<ul>
+<li>On the popup, you can choose the git branch, then click on green button &lsquo;OK&rsquo;</li>
+<li>The first pipeline is building (you can double-click on it, it&rsquo;s a shortcut), you can see logs.</li>
+<li>The pipeline is done, it&rsquo;s a success.</li>
+<li>Click on &lsquo;Test&rsquo; tab, you can see Unit Tests.</li>
+<li>Click on &lsquo;Artifact&rsquo;, you see the builded artifact.</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>On the popup, you can choose the git branch, then click on green button &lsquo;OK&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_28_run_wf.png?height=400px&amp;classes=shadow" alt="28_run_wf" /></p>
+
+<p>The first pipeline is building (you can double-click on it, it&rsquo;s a shortcut), you can see logs.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_29_wf_running.png?height=400px&amp;classes=shadow" alt="29_wf_running" /></p>
+
+<p>The pipeline is done, it&rsquo;s a success.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_30_wf_success.png?height=400px&amp;classes=shadow" alt="30_wf_success" /></p>
+
+<p>Click on &lsquo;Test&rsquo; tab, you can see Unit Tests.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_31_view_tests.png?height=400px&amp;classes=shadow" alt="31_view_tests" /></p>
+
+<p>Click on &lsquo;Artifact&rsquo;, you see the builded artifact.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_32_view_artifacts.png?height=400px&amp;classes=shadow" alt="32_view_artifacts" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="9-add-a-pipeline-for-deploying-your-application-on-staging">9 - Add a pipeline for deploying your application on staging</h2>
+
+<p>Ok, we have an artifact to deploy. Let&rsquo;s create a deploy pipeline and trigger it after the build pipeline.</p>
+
+<ul>
+<li>Select the &lsquo;build-pipeline&rsquo;</li>
+<li>Create a &lsquo;deploy-pipeline&rsquo;, then click on &lsquo;Next&rsquo;</li>
+<li>Select the application &lsquo;my-java-app&rsquo;, then click on &lsquo;Next&rsquo;</li>
+<li>Create a new environment named &lsquo;staging&rsquo;, then click on &lsquo;Finish&rsquo;</li>
+<li>The workflow contains now two pipelines</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the build pipeline
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_33_select_root.png?height=400px&amp;classes=shadow" alt="33_select_root" /></p>
+
+<p>Create a &lsquo;deploy-pipeline&rsquo;, then click on &lsquo;Next&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_34_add_pipeline.png?height=400px&amp;classes=shadow" alt="34_add_pipeline" /></p>
+
+<p>Select the application &lsquo;my-java-app&rsquo;, then click on &lsquo;Next&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_35_add_pipeline.png?height=400px&amp;classes=shadow" alt="35_add_pipeline" /></p>
+
+<p>Create a new environment named &lsquo;staging&rsquo;, then click on &lsquo;Finish&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_36_add_pipeline.png?height=400px&amp;classes=shadow" alt="36_add_pipeline" /></p>
+
+<p>The workflow contains now two pipelines
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_37_pipeline_added.png?height=400px&amp;classes=shadow" alt="37_pipeline_added" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="10-add-a-pipeline-for-deploying-your-application-on-production">10 - Add a pipeline for deploying your application on production</h2>
+
+<p>Same as previous, we will add a pipeline to deploy in production.</p>
+
+<ul>
+<li>Select the &lsquo;deploy-pipeline&rsquo;</li>
+<li>Select the &lsquo;deploy-pipeline&rsquo;, then click on &lsquo;Next&rsquo;</li>
+<li>Select the application &lsquo;my-java-app&rsquo;, then click on &lsquo;Next&rsquo;</li>
+<li>Create a new environment named &lsquo;production&rsquo;, then click on &lsquo;Finish&rsquo;</li>
+<li>The workflow contains now two pipelines</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the &lsquo;deploy-pipeline&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_38_pipeline_added.png?height=400px&amp;classes=shadow" alt="38_pipeline_added" /></p>
+
+<p>Select the &lsquo;deploy-pipeline&rsquo;, then click on &lsquo;Next&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_39_add_pipeline_prod.png?height=400px&amp;classes=shadow" alt="39_add_pipeline_prod" /></p>
+
+<p>Select the application &lsquo;my-java-app&rsquo;, then click on &lsquo;Next&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_40_add_pipeline_prod.png?height=400px&amp;classes=shadow" alt="40_add_pipeline_prod" /></p>
+
+<p>Create a new environment named &lsquo;production&rsquo;, then click on &lsquo;Finish&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_41_add_pipeline_prod.png?height=400px&amp;classes=shadow" alt="41_add_pipeline_prod" /></p>
+
+<p>The workflow contains now three pipelines
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_42_add_pipeline_prod.png?height=400px&amp;classes=shadow" alt="42_add_pipeline_prod" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="11-add-run-conditions-before-deploying">11 - Add run conditions before deploying</h2>
+
+<p>So, now, you have a workflow to build your application and deploy it on your staging environment.
+But, we don&rsquo;t want to deploy all builds, from all branches, we want to deploy only the
+master branch.
+Let&rsquo;s create a Run Condition on <code>git.branch</code>, to trigger automatically a deployment on staging if git branch is equals to <code>master</code>.</p>
+
+<ul>
+<li>Select the &lsquo;deploy-pipeline&rsquo;, then click on &lsquo;Edit run Conditions&rsquo;</li>
+<li>Add a run condition &lsquo;git.branch&rsquo;, with value &lsquo;master&rsquo;, click on &lsquo;Plus&rsquo; button</li>
+<li>Click on &lsquo;Save&rsquo;</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the &lsquo;deploy-pipeline&rsquo;, then click on &lsquo;Edit run Conditions&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_43_select_staging.png?height=400px&amp;classes=shadow" alt="43_select_staging" /></p>
+
+<p>Add a run condition &lsquo;git.branch&rsquo;, with value &lsquo;master&rsquo;, click on &lsquo;Plus&rsquo; button
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_44_edit_run_conditions.png?height=400px&amp;classes=shadow" alt="44_edit_run_conditions" /></p>
+
+<p>Click on &lsquo;Save&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_45_edit_run_conditions.png?height=400px&amp;classes=shadow" alt="45_edit_run_conditions" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="12-add-run-conditions-before-deploying-in-production">12 - Add run conditions before deploying in production</h2>
+
+<p>Same as &lsquo;deploy-pipeline&rsquo; on staging, we will add condition on the pipeline which deploy in &lsquo;production&rsquo;.</p>
+
+<ul>
+<li>Select the &lsquo;deploy-pipeline_2&rsquo;, then click on &lsquo;Edit run Conditions&rsquo;</li>
+<li>Add a run condition &lsquo;cds.manual&rsquo;, with value &lsquo;true&rsquo;, click on &lsquo;Plus&rsquo; button</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the &lsquo;deploy-pipeline_2&rsquo;, then click on &lsquo;Edit run Conditions&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_52_select_prod.png?height=400px&amp;classes=shadow" alt="52_select_prod" /></p>
+
+<p>Add a run condition &lsquo;cds.manual&rsquo;, with value &lsquo;true&rsquo;, click on &lsquo;Plus&rsquo; button
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_53_run_conditions_prod.png?height=400px&amp;classes=shadow" alt="53_run_conditions_prod" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="13-edit-the-name-of-the-pipelines-in-your-workflow">13 - Edit the name of the pipelines in your workflow</h2>
+
+<p>In your project, you&rsquo;ve got two pipelines: &lsquo;build-pipeline&rsquo; and &lsquo;deploy-pipeline&rsquo;.
+The &lsquo;deploy-pipeline&rsquo; is used twice: once for &lsquo;staging&rsquo; deploy, another for &lsquo;production&rsquo;.</p>
+
+<p>Let&rsquo;s rename the pipelines on your workflow.</p>
+
+<ul>
+<li>Select the &lsquo;deploy-pipeline&rsquo;, then on the top left, click on on the edit button. Rename to &lsquo;auto-deploy-pipeline&rsquo;</li>
+<li>Do the same for the second &lsquo;deploy-pipeline&rsquo;, rename it to &lsquo;manual-deploy-pipeline&rsquo;</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the &lsquo;deploy-pipeline&rsquo;, then on the top left, click on on the edit button. Rename to &lsquo;auto-deploy-pipeline&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_54_edit_node_name.png?height=400px&amp;classes=shadow" alt="54_edit_node_name" /></p>
+
+<p>Do the same for the second &lsquo;deploy-pipeline&rsquo;, rename it to &lsquo;manual-deploy-pipeline&rsquo;
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_55_names_edited.png?height=400px&amp;classes=shadow" alt="55_names_edited" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="14-edit-the-deploy-pipeline">14 - Edit the &lsquo;deploy-pipeline&rsquo;</h2>
+
+<p>The &lsquo;deploy-pipeline&rsquo; is empty for now. Let&rsquo;s add some stuff to simulate a deployment.
+We will use <a href="https://ovh.github.io/cds/docs/concepts/variables/">CDS Variable</a> from application.</p>
+
+<ul>
+<li>Select the &lsquo;auto-deploy-pipeline&rsquo;, then click on &lsquo;Edit the pipeline&rsquo; on the sidebar</li>
+<li>Add a step &lsquo;Artifact Download&rsquo; and a step &lsquo;script&rsquo;.</li>
+<li>The script contains <code>echo &quot;deploying {{.cds.application}} with variable {{.cds.app.my-variable}} on environment {{.cds.environment}}&quot;</code></li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the &lsquo;auto-deploy-pipeline&rsquo;, then click on &lsquo;Edit the pipeline&rsquo; on the sidebar
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_47_edit_pipeline_deploy.png?height=400px&amp;classes=shadow" alt="47_edit_pipeline_deploy" /></p>
+
+<p>Add a step &lsquo;Artifact Download&rsquo; and a step &lsquo;script&rsquo;.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_50_edit_pipeline_deploy.png?height=400px&amp;classes=shadow" alt="50_edit_pipeline_deploy" /></p>
+
+<p>The script contains <code>echo &quot;deploying {{.cds.application}} with variable {{.cds.app.my-variable}} on environment {{.cds.environment}}&quot;</code>
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_51_edit_pipeline_deploy.png?height=400px&amp;classes=shadow" alt="51_edit_pipeline_deploy" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="15-run-your-workflow">15 - Run your workflow</h2>
+
+<p>Let&rsquo;s Run the workflow.</p>
+
+<ul>
+<li>The pipeline &lsquo;auto-deploy-pipeline&rsquo; is automatically launched.</li>
+<li>The script step on this pipeline contains <code>deploying my-java-app with variable my-value on environment staging</code></li>
+<li>The pipeline deploy in production is not launched, as expected.</li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>The pipeline &lsquo;auto-deploy-pipeline&rsquo; is automatically launched.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_57_run.png?height=400px&amp;classes=shadow" alt="57_run" /></p>
+
+<p>The script step on this pipeline contains <code>deploying my-java-app with variable my-value on environment staging</code>
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_58_view_run_staging.png?height=400px&amp;classes=shadow" alt="58_view_run_staging" /></p>
+
+<p>The pipeline deploy in production is not launched, as expected.
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_59_view_run.png?height=400px&amp;classes=shadow" alt="59_view_run" /></p>
+
+    </div>
+</div>
+
+
+
+<h2 id="16-run-the-deploy-in-production">16 - Run the deploy in production</h2>
+
+<p>As you add a run condition on the &lsquo;manual-deploy-pipeline&rsquo;, with <code>cds.manual = true</code>, you have to
+click on Run to launch a deployment in production.</p>
+
+<ul>
+<li>Select the &lsquo;manual-deploy-pipeline&rsquo;, then click on the &lsquo;Play&rsquo; button on the top left</li>
+<li>The script step displays <code>deploying my-java-app with variable my-value on environment production</code></li>
+</ul>
+
+<div class="expand">
+    <div class="expand-label" style="cursor: pointer;" onclick="$h = $(this);$h.next('div').slideToggle(100,function () {$h.children('i').attr('class',function () {return $h.next('div').is(':visible') ? 'fa fa-chevron-down' : 'fa fa-chevron-right';});});">
+    	<i style="font-size:x-small;" class="fa fa-chevron-right"></i>
+    	<span style="font-weight: bold">
+    	
+		<strong>view screenshots...</strong>
+    	
+    	</span>
+    </div>
+    <div class="expand-content" style="display: none;">
+<p>Select the &lsquo;manual-deploy-pipeline&rsquo;, then click on the &lsquo;Play&rsquo; button on the top left
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_60_manual_run.png?height=400px&amp;classes=shadow" alt="60_manual_run" /></p>
+
+<p><img src="https://ovh.github.io/cds/images/getting_started_standard_wf_62_run_prod.png?height=400px&amp;classes=shadow" alt="62_run_prod" /></p>
+
+<p>The script step displays <code>deploying my-java-app with variable my-value on environment production</code>
+<img src="https://ovh.github.io/cds/images/getting_started_standard_wf_63_view_run_prod.png?height=400px&amp;classes=shadow" alt="63_view_run_prod" /></p>
+
+    </div>
+</div>
+
+
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

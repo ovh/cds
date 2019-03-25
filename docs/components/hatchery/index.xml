@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hatchery on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/hatchery/</link>
+    <description>Recent content in Hatchery on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/hatchery/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Hatchery Local</title>
+      <link>https://ovh.github.io/cds/docs/components/hatchery/local/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/hatchery/local/</guid>
+      <description>Use case If you are a CDS user, you can use shared.infra Worker to run your job.
+But, if you want to use your host for various good reasons as OS, Network, etc&amp;hellip; you can launch CDS Worker on your host.
+Two prerequisites:
+ your host must reach your CDS API on HTTP port or GRPC Port defined on your CDS Configuration you need the CDS Worker binary on your host.</description>
+    </item>
+    
+    <item>
+      <title>Update your hatchery</title>
+      <link>https://ovh.github.io/cds/docs/components/hatchery/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/hatchery/update/</guid>
+      <description>If you run manually a Hatchery, you probably want to update it when CDS Engine is updated with a new release.
+Update your hatchery from CDS API:
+./engine update --api https://your.cds.instance  Update your hatchery from latest Release from GitHub:
+./engine update --from-github  </description>
+    </item>
+    
+  </channel>
+</rss>

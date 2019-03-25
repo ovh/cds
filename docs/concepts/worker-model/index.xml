@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Worker Model on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/concepts/worker-model/</link>
+    <description>Recent content in Worker Model on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/concepts/worker-model/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Worker Model Variables</title>
+      <link>https://ovh.github.io/cds/docs/concepts/worker-model/variables/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/worker-model/variables/</guid>
+      <description>When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
+Here is the list of available variables:
+ API string &amp;ndash;&amp;gt; URI of the CDS API set in the hatchery configuration Token string &amp;ndash;&amp;gt; token set in the hatchery configuration Name string &amp;ndash;&amp;gt; Name of the worker BaseDir string &amp;ndash;&amp;gt; basedir configuration set in the hatchery configuration HTTPInsecure bool &amp;ndash;&amp;gt; http insecure configuration set in the hatchery configuration Model int64 &amp;ndash;&amp;gt; ID of the model that the hatchery want to spawn Hatchery int64 &amp;ndash;&amp;gt; ID of the hatchery HatcheryName string PipelineBuildJobID int64 WorkflowJobID int64 &amp;ndash;&amp;gt; Useful to know which workflow job the hatchery will launch spawning this worker TTL int FromWorkerImage bool</description>
+    </item>
+    
+    <item>
+      <title>Worker Model patterns</title>
+      <link>https://ovh.github.io/cds/docs/concepts/worker-model/patterns/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/worker-model/patterns/</guid>
+      <description>On CDS you can use worker model on any platform, distribution and arch you want. To permit that you need to indicate what will be executed on the worker vm or image before the execution of the worker binary itself. For example before launching the worker binary you need to download that binary with curl or wget ore anything else, depends on which OS you are.
+To not copy/paste each time the same script for each worker model on the same OS and also to give the ability for a no CDS administrator to create their own worker model you can create worker model patterns.</description>
+    </item>
+    
+  </channel>
+</rss>

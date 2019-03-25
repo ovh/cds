@@ -1,447 +1,454 @@
-
 <!DOCTYPE html>
-<html class="no-js" lang="en-us">
-  <head>
-	<meta name="generator" content="Hugo 0.32.2" />
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-     
-    <title>CDS - Continuous Delivery Service  | CDS - Continuous Delivery Service</title>
-    <meta name="HandheldFriendly" content="True">
-    <meta name="MobileOptimized" content="320">
-
-    <meta name="viewport" content="width=device-width,minimum-scale=1">
-    <META NAME="ROBOTS" CONTENT="INDEX, FOLLOW">
-
-    <link href='https://ovh.github.io/cds/css/homepage.css' rel='stylesheet' type="text/css" />
-  </head>
-  <body class="ma0 sans-serif bg-primary-color-light">
-    
-<nav class="bg-primary-color-dark pv4 w-100" role="navigation">
-
-  <div class="center flex-ns flex-wrap items-center mw9">
-
-    <h1 class="dim f3 lh-solid ml0-ns mr0 mr4-l mv0 pl3 pl4-ns">
-      <a href="https://ovh.github.io/cds" class="link white">
-         CDS
-      </a>
-    </h1>
-    <ul class="list ma0 pa0 dib-l">
-      
-        <li class="f5 dib mr4" role="menuitem">
-            
-            
-          <a href="https://ovh.github.io/cds/gettingstarted/" class="dim link light-silver">
-            Docs
-              
-            
-          </a>
-        </li>
-      
-        <li class="f5 dib mr4" role="menuitem">
-            
-            
-          <a href="https://gitter.im/ovh-cds/Lobby" target="_blank" class="dim link light-silver">
-            Community
-              
-            
-              <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10" viewBox="0 0 32 32" class="fill-current v-base" aria-label="External Link">
-<path d="M25.152 16.576v5.696q0 2.144-1.504 3.648t-3.648 1.504h-14.848q-2.144 0-3.648-1.504t-1.504-3.648v-14.848q0-2.112 1.504-3.616t3.648-1.536h12.576q0.224 0 0.384 0.16t0.16 0.416v1.152q0 0.256-0.16 0.416t-0.384 0.16h-12.576q-1.184 0-2.016 0.832t-0.864 2.016v14.848q0 1.184 0.864 2.016t2.016 0.864h14.848q1.184 0 2.016-0.864t0.832-2.016v-5.696q0-0.256 0.16-0.416t0.416-0.16h1.152q0.256 0 0.416 0.16t0.16 0.416zM32 1.152v9.12q0 0.48-0.352 0.8t-0.8 0.352-0.8-0.352l-3.136-3.136-11.648 11.648q-0.16 0.192-0.416 0.192t-0.384-0.192l-2.048-2.048q-0.192-0.16-0.192-0.384t0.192-0.416l11.648-11.648-3.136-3.136q-0.352-0.352-0.352-0.8t0.352-0.8 0.8-0.352h9.12q0.48 0 0.8 0.352t0.352 0.8z"></path>
-</svg>
-
-            
-          </a>
-        </li>
-      
-        <li class="f5 dib mr4" role="menuitem">
-            
-            
-          <a href="https://github.com/ovh/cds" target="_blank" class="dim link light-silver">
-            GitHub
-              
-            
-              <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10" viewBox="0 0 32 32" class="fill-current v-base" aria-label="External Link">
-<path d="M25.152 16.576v5.696q0 2.144-1.504 3.648t-3.648 1.504h-14.848q-2.144 0-3.648-1.504t-1.504-3.648v-14.848q0-2.112 1.504-3.616t3.648-1.536h12.576q0.224 0 0.384 0.16t0.16 0.416v1.152q0 0.256-0.16 0.416t-0.384 0.16h-12.576q-1.184 0-2.016 0.832t-0.864 2.016v14.848q0 1.184 0.864 2.016t2.016 0.864h14.848q1.184 0 2.016-0.864t0.832-2.016v-5.696q0-0.256 0.16-0.416t0.416-0.16h1.152q0.256 0 0.416 0.16t0.16 0.416zM32 1.152v9.12q0 0.48-0.352 0.8t-0.8 0.352-0.8-0.352l-3.136-3.136-11.648 11.648q-0.16 0.192-0.416 0.192t-0.384-0.192l-2.048-2.048q-0.192-0.16-0.192-0.384t0.192-0.416l11.648-11.648-3.136-3.136q-0.352-0.352-0.352-0.8t0.352-0.8 0.8-0.352h9.12q0.48 0 0.8 0.352t0.352 0.8z"></path>
-</svg>
-
-            
-          </a>
-        </li>
-      
-    </ul>
-    <a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
-    <script async defer src="https://buttons.github.io/buttons.js"></script>
-  </div>
-</nav>
-
-    
-    <main role="main" class="content-with-sidebar min-vh-100 pb0-ns">
-      
+<html id="docs" lang="en" class="">
+	<head>
+	<meta name="generator" content="Hugo 0.54.0" />
+	<meta charset="utf-8">
+<title>Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
 
-      <header class="bg-primary-color-dark ph4 tc" role="banner">
-  <section class="center pb4 pb5-l ph4-l pt3 pt5-ns w-90 w-60-l">
-    <div class="center w-100 w-50-ns">
-      <img src='images/cds-transparent.png'>
-    </div>
-    
-      <h2 class="f3 f1-l fw4 white-90 m0 lh-title pt2 pb3 pv0-ns">
-        Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform
-      </h2>
-    
-    <div class="lh-copy f4 w-90-ns center fw2 silver tc tc-ns">
-      
-    </div>
-    <div class="w1 mv4 center">
-        <a class="f5 db link tc v-mid bg-blue white ba b--blue ph3 pv2 br1 di w8" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/">Quick Install</a>
-        <a class="f5 db link tc v-mid bg-blue white ba b--blue ph3 pv2 br1 di w8" href="https://ovh.github.io/cds/gettingstarted/init_workflow_with_cdsctl/">Getting Started</a>
-    </div>
-  </section>
-</header>
 
 
-       <section class="w-100 ph4 ph5-ns pv4"><div class="w-90-l center">
-  
-    <div class=" flex-ns flex-wrap center mw9">
-      
-      
-        
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/028-superhero.png" alt="icon depicting Built with user empowerment in mind" class="h3 o-80 v-mid center w-100">
-              
-            </div>
+<meta name="description" content="Elastic CDS resources/workers are launched on demand, to guarantee low waiting times for users, with no over-consumption of idle resources
+    Extensible In CDS, any kind of action (Kubernetes and OpenStack deployments, pushing to Kafka, testing for CVEs…) can be captured in high-level plugins, to be used as building blocks by users. These plugins are straightforward to write and use, so it’s easy to meet the most exotic needs in an effective and stress-free way.">
+<meta property="og:description" content="Elastic CDS resources/workers are launched on demand, to guarantee low waiting times for users, with no over-consumption of idle resources
+    Extensible In CDS, any kind of action (Kubernetes and OpenStack deployments, pushing to Kafka, testing for CVEs…) can be captured in high-level plugins, to be used as building blocks by users. These plugins are straightforward to write and use, so it’s easy to meet the most exotic needs in an effective and stress-free way.">
+<meta name="twitter:description" content="Elastic CDS resources/workers are launched on demand, to guarantee low waiting times for users, with no over-consumption of idle resources
+    Extensible In CDS, any kind of action (Kubernetes and OpenStack deployments, pushing to Kafka, testing for CVEs…) can be captured in high-level plugins, to be used as building blocks by users. These plugins are straightforward to write and use, so it’s easy to meet the most exotic needs in an effective and stress-free way.">
+<meta property="og:url" content="https://ovh.github.io/cds/">
+<meta property="og:title" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
+<meta name="twitter:title" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
 
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Built with user empowerment in mind
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Self-service culture everywhere</p>
-                <div class="lh-copy">
-                  CDS has been designed to be used by thousands of projects simultaneously and independently. Project stakeholders are free to decide how to build, test and deploy their software. CDS guarantees project isolation and worker scalability.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-        
-
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/026-bars.png" alt="icon depicting Designed to grow with your needs" class="h3 o-80 v-mid center w-100">
-              
-            </div>
-
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Designed to grow with your needs
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Horizontal scalability in its DNA</p>
-                <div class="lh-copy">
-                  Need thousands of simultaneous workers to do the job? fear not! CDS will manage that for you! CDS servers are stateless. No shared state. Need more power? just add more servers.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-        
-
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/019-team.png" alt="icon depicting Best practices friendly" class="h3 o-80 v-mid center w-100">
-              
-            </div>
-
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Best practices friendly
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Assists you in your quest toward Continuous Delivery/Deployment</p>
-                <div class="lh-copy">
-                  We love the ideas behind Continuous Delivery and we&#39;ve created a tool that makes the right things easy to do. Build reproducibility, artifact management, feedback loops, etc. are at your fingertips.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-        
-
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/018-diagram.png" alt="icon depicting Microservices&#39; best friend" class="h3 o-80 v-mid center w-100">
-              
-            </div>
-
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Microservices&#39; best friend
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Build similar projects with the same workflow</p>
-                <div class="lh-copy">
-                  The built-in don&#39;t-repeat-yourself features help you minimize your effort when you need to build, test and deploy hundreds (thousands?) of projects with a similar workflow. This is especially useful when you are managing a micro-services-based infrastructure.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-        
-
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/artificial-intelligence.png" alt="icon depicting Highly automatable" class="h3 o-80 v-mid center w-100">
-              
-            </div>
-
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Highly automatable
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Full featured RESTful API</p>
-                <div class="lh-copy">
-                  CDS can be fully operated through its RESTful API. The API is used by the CDS&#39;s UI but also by the workers. All components speak the same language.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-        
-
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/ladder.png" alt="icon depicting Cloud native" class="h3 o-80 v-mid center w-100">
-              
-            </div>
-
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Cloud native
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Spawn on-demand VMs and containers in the cloud</p>
-                <div class="lh-copy">
-                  Unleash the power of the cloud by spawning as much OpenStack and Docker workers as you need.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-        
-
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/network.png" alt="icon depicting Built-in security" class="h3 o-80 v-mid center w-100">
-              
-            </div>
-
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Built-in security
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Fine-grained ACLs at every step</p>
-                <div class="lh-copy">
-                  In CDS, read and right access can be finely tuned to suit your needs. You can control who can view, edit, build, deploy in staging or deploy in prod.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-        
-
-        <div class="w-100 w-50-ns ph5-l pv5-l nested-copy-line-height">
-          
-          <div class="flex-l flex-wrap">
-            <div class="flex-auto tc w-100 w-20-ns pt1 ">
-              
-                <img src="images/solution.png" alt="icon depicting Easily customizable" class="h3 o-80 v-mid center w-100">
-              
-            </div>
-
-            <div class="flex-auto tc tl-ns w-100 w-80-ns">
-              <h3 class="lh-title gray o-80 f4 f5-ns mb2 fw8 bmt1 mt0-l">
-                 Easily customizable
-              </h3>
-              <div class="db v-mid w-100 gray measure-wide mb5 mb0-l">
-                <p class="f3 primary-color mt0 mb2">Make it yours through plug-ins and actions</p>
-                <div class="lh-copy">
-                  You feel like something is missing in CDS ? Just add it.
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      
-    </div>
-  
-</div>
-</section>
-  
-  
-
-    <section class="w-100  ph4 ph5-ns pv4 pv6-ns mid-gray bg-accent-color white">
-      <div class="flex-ns flex-wrap center mw9">
-
-        <div class="w-100 w-50-l order-0">
-          <div class="w-90-ns center">
-            <img src="images/capture-start.gif" alt="image depicting an example of Clearly visualize your workflow" class="img shadow-5">
-          </div>
-        </div>
-
-        <div class="w-100 w-50-l">
-          <div class="w-80-ns center tc">
-            <h3 class="f1 fw4 black ma0 pt4 lh-title pt0-l">Clearly visualize your workflow</h3>
-            <p class="f3 lh-copy">
-              CDS provides a super intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
-            </p>
-              <p class="f4 lh-copy nested-linksTK">
-                <a href="https://ovh.github.io/cds/workflows/design/" class="link black dim" target="_blank">
-                  Check out the UI tutorial <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="14" height="14" viewBox="0 0 32 32" class="fill-current v-base" aria-label="External Link">
-<path d="M25.152 16.576v5.696q0 2.144-1.504 3.648t-3.648 1.504h-14.848q-2.144 0-3.648-1.504t-1.504-3.648v-14.848q0-2.112 1.504-3.616t3.648-1.536h12.576q0.224 0 0.384 0.16t0.16 0.416v1.152q0 0.256-0.16 0.416t-0.384 0.16h-12.576q-1.184 0-2.016 0.832t-0.864 2.016v14.848q0 1.184 0.864 2.016t2.016 0.864h14.848q1.184 0 2.016-0.864t0.832-2.016v-5.696q0-0.256 0.16-0.416t0.416-0.16h1.152q0.256 0 0.416 0.16t0.16 0.416zM32 1.152v9.12q0 0.48-0.352 0.8t-0.8 0.352-0.8-0.352l-3.136-3.136-11.648 11.648q-0.16 0.192-0.416 0.192t-0.384-0.192l-2.048-2.048q-0.192-0.16-0.192-0.384t0.192-0.416l11.648-11.648-3.136-3.136q-0.352-0.352-0.352-0.8t0.352-0.8 0.8-0.352h9.12q0.48 0 0.8 0.352t0.352 0.8z"></path>
-</svg>
-
-                </a>
-              </p>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-  
-  
-
-    <section class="w-100  ph4 ph5-ns pv4 pv6-ns mid-gray bg-primary-color-light black">
-      <div class="flex-ns flex-wrap center mw9">
-
-        <div class="w-100 w-50-l order-1">
-          <div class="w-90-ns center">
-            <img src="images/workflows.pipelines.actions.builtin.junit-view-details.png" alt="image depicting an example of Testing data at your fingertips" class="img shadow-5">
-          </div>
-        </div>
-
-        <div class="w-100 w-50-l">
-          <div class="w-80-ns center tc">
-            <h3 class="f1 fw4 black ma0 pt4 lh-title pt0-l">Testing data at your fingertips</h3>
-            <p class="f3 lh-copy">
-              CDS parses the Junit files produced by your build and displays them in a friendly manner to help you analyse what went wrong.
-            </p>
-              <p class="f4 lh-copy nested-linksTK">
-                <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/junit/" class="link black dim" target="_blank">
-                  Learn more about the Junit step. <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="14" height="14" viewBox="0 0 32 32" class="fill-current v-base" aria-label="External Link">
-<path d="M25.152 16.576v5.696q0 2.144-1.504 3.648t-3.648 1.504h-14.848q-2.144 0-3.648-1.504t-1.504-3.648v-14.848q0-2.112 1.504-3.616t3.648-1.536h12.576q0.224 0 0.384 0.16t0.16 0.416v1.152q0 0.256-0.16 0.416t-0.384 0.16h-12.576q-1.184 0-2.016 0.832t-0.864 2.016v14.848q0 1.184 0.864 2.016t2.016 0.864h14.848q1.184 0 2.016-0.864t0.832-2.016v-5.696q0-0.256 0.16-0.416t0.416-0.16h1.152q0.256 0 0.416 0.16t0.16 0.416zM32 1.152v9.12q0 0.48-0.352 0.8t-0.8 0.352-0.8-0.352l-3.136-3.136-11.648 11.648q-0.16 0.192-0.416 0.192t-0.384-0.192l-2.048-2.048q-0.192-0.16-0.192-0.384t0.192-0.416l11.648-11.648-3.136-3.136q-0.352-0.352-0.352-0.8t0.352-0.8 0.8-0.352h9.12q0.48 0 0.8 0.352t0.352 0.8z"></path>
-</svg>
-
-                </a>
-              </p>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-  
-
-<section class="w-100 ph4 ph5-ns pt4 pb5 mid-gray bg-primary-color-light bb bt b--light-gray "><div class="w-100 center pt5">
-  <div class="w-100 w-40-l tc center">
-    <img src="https://ovh.github.io/cds/images/GitHub-Mark-64px.png" alt="Github Logo" class="tc center">
-  </div>
-</div>
-
-<div class="flex-ns flex-wrap center pb4 center mw9">
-  <div class="w-100 tc w-third-l">
-    <h3 class="f3 mv3 accent-color-light">We welcome all contributions</h3>
-    <ul class="list ma0 pa0">
-      <li class="mb3 f4">
-
-        <a href="https://github.com/ovh/cds/blob/master/CONTRIBUTING.md" class="link mid-gray dim" target="_blank">
-          Fork the repo and work on an issue <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="14" height="14" viewBox="0 0 32 32" class="fill-current v-base" aria-label="External Link">
-<path d="M25.152 16.576v5.696q0 2.144-1.504 3.648t-3.648 1.504h-14.848q-2.144 0-3.648-1.504t-1.504-3.648v-14.848q0-2.112 1.504-3.616t3.648-1.536h12.576q0.224 0 0.384 0.16t0.16 0.416v1.152q0 0.256-0.16 0.416t-0.384 0.16h-12.576q-1.184 0-2.016 0.832t-0.864 2.016v14.848q0 1.184 0.864 2.016t2.016 0.864h14.848q1.184 0 2.016-0.864t0.832-2.016v-5.696q0-0.256 0.16-0.416t0.416-0.16h1.152q0.256 0 0.416 0.16t0.16 0.416zM32 1.152v9.12q0 0.48-0.352 0.8t-0.8 0.352-0.8-0.352l-3.136-3.136-11.648 11.648q-0.16 0.192-0.416 0.192t-0.384-0.192l-2.048-2.048q-0.192-0.16-0.192-0.384t0.192-0.416l11.648-11.648-3.136-3.136q-0.352-0.352-0.352-0.8t0.352-0.8 0.8-0.352h9.12q0.48 0 0.8 0.352t0.352 0.8z"></path>
-</svg>
-
-        </a>
-      </li>
-    </ul>
-  </div>
-
-  <div class="w-100 w-third-l tc">
-    <div class="w-60-l center">
-      <p class="f4">CDS is open-source and completely free.</p>
-    </div>
-  </div>
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+			<main>
+				<div class="land">
+					<img src="https://ovh.github.io/cds/images/logo-background.png" />
+					<h3>CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform.</h3>
+					<div>
+						CDS is the third generation of CI/CD tools at OVH. It is the end-result of 12 years’ experience 
+						in the field of CI/CD. Familiar with most of the standard tools of the industry, we found that none 
+						completely matched our expectations regarding the four key aspects we identified. That is what CDS tries to solve.
+					</div>
+				</div>
+			</main>
 
 
-  <div class="w-100 tc w-third-l">
-    <h3 class="f3 mv3 accent-color-light">More ways to contribute</h3>
-    <ul class="list ma0 pa0">
-      <li class="mb3 f4">
-        <a href="contribute/" class="link mid-gray dim" target="_blank">
-          Help improve the docs <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="14" height="14" viewBox="0 0 32 32" class="fill-current v-base" aria-label="External Link">
-<path d="M25.152 16.576v5.696q0 2.144-1.504 3.648t-3.648 1.504h-14.848q-2.144 0-3.648-1.504t-1.504-3.648v-14.848q0-2.112 1.504-3.616t3.648-1.536h12.576q0.224 0 0.384 0.16t0.16 0.416v1.152q0 0.256-0.16 0.416t-0.384 0.16h-12.576q-1.184 0-2.016 0.832t-0.864 2.016v14.848q0 1.184 0.864 2.016t2.016 0.864h14.848q1.184 0 2.016-0.864t0.832-2.016v-5.696q0-0.256 0.16-0.416t0.416-0.16h1.152q0.256 0 0.416 0.16t0.16 0.416zM32 1.152v9.12q0 0.48-0.352 0.8t-0.8 0.352-0.8-0.352l-3.136-3.136-11.648 11.648q-0.16 0.192-0.416 0.192t-0.384-0.192l-2.048-2.048q-0.192-0.16-0.192-0.384t0.192-0.416l11.648-11.648-3.136-3.136q-0.352-0.352-0.352-0.8t0.352-0.8 0.8-0.352h9.12q0.48 0 0.8 0.352t0.352 0.8z"></path>
-</svg>
 
-        </a>
-      </li>
-    </ul>
-  </div>
-</div>
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+
+		</section>
+		<article class="page-content">
+			
+
+<section id="homeGrid" style="">
+	
+
+<main>
+	<div class="image-wrapper"><img src="https://ovh.github.io/cds/_common-resources/images/elastic.png" alt="images/elastic.png"></div>
+	<div class="content">
+		<h4 id="elastic">Elastic</h4>
+
+<p>CDS resources/workers are launched on demand, to guarantee low waiting times for users, with no over-consumption of idle resources</p>
+
+	</div>
+</main>
+
+
+<main>
+	<div class="image-wrapper"><img src="https://ovh.github.io/cds/_common-resources/images/extensible.png" alt="images/extensible.png"></div>
+	<div class="content">
+		<h4 id="extensible">Extensible</h4>
+
+<p>In CDS, any kind of action (Kubernetes and OpenStack deployments, pushing to Kafka, testing for CVEs…) can be captured in high-level plugins, to be used as building blocks by users. These plugins are straightforward to write and use, so it’s easy to meet the most exotic needs in an effective and stress-free way.</p>
+
+	</div>
+</main>
+
+
+<main>
+	<div class="image-wrapper"><img src="https://ovh.github.io/cds/_common-resources/images/flexible.png" alt="images/flexible.png"></div>
+	<div class="content">
+		<h4 id="flexible-but-easy">Flexible, but easy</h4>
+
+<p>CDS can run complex workflows, with all sorts of intermediary steps, including build, test, deploy 1/10/100, manual or automatic gates, rollback, conditional branches… These workflows can be stored as code in the git repository. CDS provides basic workflow templates for the Core team’s most common scenarios, in order to ease the adoption process. This way, building a functional CI/CD chain from nothing can be quick and easy.</p>
+
+	</div>
+</main>
+
+
+<main>
+	<div class="image-wrapper"><img src="https://ovh.github.io/cds/_common-resources/images/selfservice.png" alt="images/selfservice.png"></div>
+	<div class="content">
+		<h4 id="self-service">Self-service</h4>
+
+<p>Finally, a key aspect is the idea of self-service. Once a CDS project is created by users,
+they are completely autonomous within that space, with the freedom to manage pipelines,
+delegate access rights etc. All users are free to customise their space as they see fit,
+and build on what is provided out-of-the-box. Personalising workflow templates, plugins,
+running build and tests on custom VM flavors or custom hardware… all this can be done without
+any intervention from the CDS administrators.</p>
+
+	</div>
+</main>
+
+
+
 </section>
 
 
+<section id="intuitiveui">
+    <div class="section-gif">
+        <img src="./images/capture-start.gif" width="80%" alt="create and run workflow with CDS ui" title="create and run workflow with CDS ui"> 
+    </div>
+    <div class="section-text">
+        <h2>Clearly visualize your workflow</h2>
+        CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.    
+    </div>
+</section>
+
+<section id="powerfulcli">
+    <main>
+        <div class="section-text">
+            <h2>The most powerful Command Line for a CI/CD Platform</h2>
+            cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands such as cdsctl shell to browse your projects and workflows without the need to open a browser.
+        </div>
+        <div id="player">
+            <asciinema-player src="./images/init_template_as_code.cast" cols="80" rows="25" autoplay="true" loop="true"></asciinema-player>                
+        </div>
     </main>
-    <footer class="bg-primary-color-dark ph4-ns pt4 relative w-100" role="contentinfo">
-      <div class="b f3 center w4 light-gray mb3 tc">
-          <a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
-      </div>
-    <div class="f7 gray mb5 mb0-ns ph3 w-100"> 
-      <p class="dib mr4">The CDS logos are copyrighted.</p>
-      <p class="dib">Icons made by <a href="https://www.flaticon.com/authors/eucalyp"  class="dim link light-gray pv2" title="Eucalyp">Eucalyp</a> from <a class="dim link light-gray pv2" href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></p>
-    </div>
-</footer>
+</section>
 
+<section id="matrix-home">
+<main>
 
-  </body>
+	
+	<h2>Comparaison Matrix</h2>
+	
+	
+	<div id="matrix">
+			<table>
+					<thead>
+					<tr>
+					<th>Feature</th>
+					<th>CDS</th>
+					<th>Bamboo</th>
+					<th>Buildbot</th>
+					<th>Gitlab CI</th>
+					<th>Jenkins</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr>
+					<td><a href="about/matrix/#pipeline">Pipeline</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#workflow">Workflow</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*17</a></sup></sub></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#visual-configuration-with-web-ui">Visual configuration with Web UI</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*1</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#configuration-on-git-repository">Configuration on Git Repository</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#configuration-as-code-on-ui">Configuration as code on UI</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*2</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#native-git-branching">Native Git branching</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*3</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#jobs-services">Job's Services</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#secure-remote-caching">Secure Remote Caching</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*4</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#enterprise-notification-bus">Enterprise Notification Bus</a> &amp; <a href="about/matrix/#built-in-hooks">Built-in Hooks</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#continuous-deployment--environment-support">Continuous Deployment &amp; Environment Support</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*5</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#enterprise-grade-permissions--support-of-acls-delegation">Enterprise-grade permissions, Support of ACLs delegation</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*6</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#build-artifacts-cloud">Build Artifacts Cloud</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*7</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#tests--vulnerabilities-reports">Tests &amp; Vulnerabilities Reports</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*8</a></sup></sub></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#self-service-project-creation">Self-Service Project Creation - ability to create a tenant</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*9</a></sup></sub></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#execution-environment-customization">Execution Environment Customization</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*10</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#multi-tenancy">Multi-Tenancy</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*11</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#command-line-interface-cdsctl-100-features-supported">Command Line Interface (cdsctl): 100% features supported &amp; User Friendly</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*12</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#rest-api--sdk">REST API &amp; SDK</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#self-hosting">Self-Hosting</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#high-availability--scalability--upgrade-without-user-downtime">High Availability &amp; Scalability &amp; Upgrade without User Downtime</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-check"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*13</a></sup></sub></td>
+					<td><i class="fa fa-times"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#built-in-metrics">Built-in Metrics</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*14</a></sup></sub></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#extensibility-plugins">Extensibility Plugins</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#osarch-compatibility">OS/Arch Compatibility</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-check"></i></td>
+					</tr>
+					<tr>
+					<td><a href="about/matrix/#auto-scale-ondemand-multi-cloud">Auto-Scale OnDemand multi-cloud</a></td>
+					<td><i class="fa fa-check"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*15</a></sup></sub></td>
+					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*16</a></sup></sub></td>
+					</tr>
+					</tbody>
+					</table>
+					
+		
+	</div>
+</main>
+
+</section>
+
+<section id="home-contribution">    
+    <main>
+        <div>
+                <img src="./images/GitHub-Mark-64px.png">
+        </div>
+        <div>
+                <h4>We welcome all contributions</h4>
+                Fork the repo and work on an issue 
+                <a href="https://github.com/ovh/cds/blob/master/CONTRIBUTING.md"><i class="fa fa-external-link-alt"></i></a>
+        </div>
+        <div>
+                <p>CDS is open-source and completely free.</p>
+                <a href="https://github.com/ovh/cds"><i class="fa fa-external-link-alt"></i></a>
+        </div>
+        <div>
+                <h4>More ways to contribute</h4>
+                Help improve the docs 
+                <a href="./development/contribute/documentation/"><i class="fa fa-external-link-alt"></i></a>
+        </div>
+    </main>
+</section>
+
+		</article><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
 </html>
-
-

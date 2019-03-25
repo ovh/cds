@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kubernetes on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/integrations/kubernetes/</link>
+    <description>Recent content in Kubernetes on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/integrations/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Kubernetes Compute</title>
+      <link>https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/</guid>
+      <description>The Kubernetes integration have to be configured by CDS administrator.
+This integration allows you to run the Kubernetes Hatchery to start CDS Workers.
+As an end-users, this integration allows:
+ to use Worker Models of type &amp;ldquo;Docker&amp;rdquo; to use Service Prerequisite on your CDS Jobs.  Start Kubernetes hatchery Generate a token for group:
+$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 +0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS Configuration or set the dedicated environment variables.</description>
+    </item>
+    
+    <item>
+      <title>Kubernetes Deployment</title>
+      <link>https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/</guid>
+      <description>The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
+This integration enables the DeployApplication action
+Create Integration Model Create a file kubernetes-model-configuration.yml:
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &amp;quot;Keep empty if you don&#39;t use helm.</description>
+    </item>
+    
+  </channel>
+</rss>

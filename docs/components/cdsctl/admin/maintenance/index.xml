@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>maintenance on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/</link>
+    <description>Recent content in maintenance on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>disable</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/disable/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/disable/</guid>
+      <description> cdsctl admin maintenance disable Disable CDS maintenance
+Synopsis Disable CDS maintenance
+cdsctl admin maintenance disable  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin maintenance - Manage CDS maintenance  </description>
+    </item>
+    
+    <item>
+      <title>enable</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/enable/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/enable/</guid>
+      <description> cdsctl admin maintenance enable Enable CDS maintenance
+Synopsis Enable CDS maintenance
+cdsctl admin maintenance enable  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin maintenance - Manage CDS maintenance  </description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Integrations on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/integrations/</link>
+    <description>Recent content in Integrations on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/integrations/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Bitbucket Server</title>
+      <link>https://ovh.github.io/cds/docs/integrations/bitbucket/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/bitbucket/</guid>
+      <description>The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:</description>
+    </item>
+    
+    <item>
+      <title>Docker Swarm</title>
+      <link>https://ovh.github.io/cds/docs/integrations/swarm/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/swarm/</guid>
+      <description>The Docker Swarm integration have to be configured by CDS administrator.
+This integration allows you to run the Swarm Hatchery to start CDS Workers.
+As an end-users, this integration allows:
+ to use Worker Models of type &amp;ldquo;Docker&amp;rdquo; to use Service Prerequisite on your CDS Jobs.  Start Swarm hatchery Generate a token for group:
+$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 +0100 CET group_name shared.</description>
+    </item>
+    
+    <item>
+      <title>GitHub</title>
+      <link>https://ovh.github.io/cds/docs/integrations/github/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/github/</guid>
+      <description>The Github Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Github to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator</description>
+    </item>
+    
+    <item>
+      <title>GitLab</title>
+      <link>https://ovh.github.io/cds/docs/integrations/gitlab/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/gitlab/</guid>
+      <description>The GitLab Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab  How to configure GitLab integration What you need to perform the following steps:</description>
+    </item>
+    
+    <item>
+      <title>Kafka</title>
+      <link>https://ovh.github.io/cds/docs/integrations/kafka/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/kafka/</guid>
+      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project.
+This integration enables the Kafka Hook feature:
+Configure with WebUI You can add a Kafka Integration on your CDS Project.
+Configure with cdsctl Import a Kafka Integration on your CDS Project Create a file project-configuration.yml:
+name: your-kafka-integration model: name: Kafka identifier: github.com/ovh/cds/integration/builtin/kafka hook: true config: broker url: value: n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093 type: string password: value: &#39;**********&#39; type: password username: value: kafka-username type: string  Import the integration on your CDS Project with:</description>
+    </item>
+    
+    <item>
+      <title>Mesos/Marathon</title>
+      <link>https://ovh.github.io/cds/docs/integrations/marathon/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/marathon/</guid>
+      <description>The Mesos/Marathon integration have to be configured by CDS administrator.
+This integration allows you to run the Marathon Hatchery to start CDS Workers.
+As an end-users, this integration allows to use Worker Models of type &amp;ldquo;Docker&amp;rdquo;
+Start Marathon hatchery Generate a token for group:
+$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 +0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS Configuration or set the dedicated environment variables.</description>
+    </item>
+    
+    <item>
+      <title>RabbitMQ</title>
+      <link>https://ovh.github.io/cds/docs/integrations/rabbitmq/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/rabbitmq/</guid>
+      <description>The RabbitMQ Integration is a Self-Service integration that can be configured on a CDS Project.
+This integration enables the RabbitMQ Hook feature:
+Configure with WebUI You can add a RabbitMQ Integration on your CDS Project.
+Configure with cdsctl Import a RabbitMQ Integration on your CDS Project Create a file project-configuration.yml:
+name: my-rabbitmq-integration model: name: RabbitMQ identifier: github.com/ovh/cds/integration/builtin/rabbitmq hook: true config: password: value: &#39;**********&#39; type: password uri: value: your-rabbit:5672 type: string username: value: your-username type: string  Import the integration on your CDS Project with:</description>
+    </item>
+    
+    <item>
+      <title>vSphere</title>
+      <link>https://ovh.github.io/cds/docs/integrations/vsphere/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/vsphere/</guid>
+      <description>CDS build using VMware vSphere infrastructure to spawn each CDS Workers inside dedicated VM.
+Pre-requisites This hatchery spawns VM which obtains IP from DHCP. So first you have to create a DHCP server on your host with NAT if you want to access to the internet. In order to create you have multiple possibilities like create your own VM with a DHCP server configured or if you are comfortable with the VMware tools you can use the NSX system.</description>
+    </item>
+    
+  </channel>
+</rss>

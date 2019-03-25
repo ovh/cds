@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Run conditions on pipeline - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description" content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
+If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:">
+<meta property="og:description" content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
+If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:">
+<meta name="twitter:description" content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
+If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/">
+<meta property="og:title" content="Run conditions on pipeline">
+<meta name="twitter:title" content="Run conditions on pipeline">
+<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/" class="menuSelected">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Concepts" href="https://ovh.github.io/cds/docs/concepts/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Job" href="https://ovh.github.io/cds/docs/concepts/job/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Permissions - ACLs" href="https://ovh.github.io/cds/docs/concepts/permissions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline" href="https://ovh.github.io/cds/docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Variables" href="https://ovh.github.io/cds/docs/concepts/variables/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Workflow">
+	<div class="container">
+		
+		<a class="item" data-title="Workflow" href="https://ovh.github.io/cds/docs/concepts/workflow/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Payload" href="https://ovh.github.io/cds/docs/concepts/workflow/payload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline Context" href="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Hooks">
+	<div class="container">
+		
+		<a class="item" data-title="Hooks" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Scheduler" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/scheduler/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Poller" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Run conditions on pipeline" href="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Join" href="https://ovh.github.io/cds/docs/concepts/workflow/join/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mutex" href="https://ovh.github.io/cds/docs/concepts/workflow/mutex/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Sidebar" href="https://ovh.github.io/cds/docs/concepts/workflow/sidebar/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run Number" href="https://ovh.github.io/cds/docs/concepts/workflow/run-number/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Requirement">
+	<div class="container">
+		
+		<a class="item" data-title="Requirement" href="https://ovh.github.io/cds/docs/concepts/requirement/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Network Access" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Link" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OS &amp; Architecture" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Configuration files">
+	<div class="container">
+		
+		<a class="item" data-title="Configuration files" href="https://ovh.github.io/cds/docs/concepts/files/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow configuration file" href="https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline configuration file" href="https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model configuration file" href="https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action configuration file" href="https://ovh.github.io/cds/docs/concepts/files/action-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Application configuration file" href="https://ovh.github.io/cds/docs/concepts/files/application-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Environment configuration file" href="https://ovh.github.io/cds/docs/concepts/files/environment-syntax/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model" href="https://ovh.github.io/cds/docs/concepts/worker-model/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Worker Model Variables" href="https://ovh.github.io/cds/docs/concepts/worker-model/variables/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model patterns" href="https://ovh.github.io/cds/docs/concepts/worker-model/patterns/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow Template" href="https://ovh.github.io/cds/docs/concepts/template/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Run conditions on pipeline</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#basic-run-conditions">Basic run conditions</a></li>
+<li><a href="#advanced-run-conditions">Advanced run conditions</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<p>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of <code>git.branch</code> is <code>master</code>.</p>
+
+<p>If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on <code>Edit run conditions</code> like this:</p>
+
+<p><img src="https://ovh.github.io/cds/images/workflow_pipeline_run_conditions_link.png" alt="Pipeline run conditions link" /></p>
+
+<p>You have 2 types of conditions:</p>
+
+<h2 id="basic-run-conditions">Basic run conditions</h2>
+
+<p>With this type of conditions you can add multiple comparisons with a basic operators (<code>=</code>, <code>!=</code>, <code>match</code> for a regular expression, <code>&gt;=</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&lt;</code>). The variables syntax here are dotted syntax (example: <code>cds.dest.application</code>). Under the hood, if you use match operator it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.</p>
+
+<p>If you add multiple basic run conditions, all of these must be satisfied to run the pipeline. So with basic conditions you can&rsquo;t make an <code>OR</code> between multiple conditions, it&rsquo;s always an <code>AND</code>. If you want to make more specific or advanced run conditions you have to use the second type of conditions (<code>advanced</code>).</p>
+
+<p><img src="https://ovh.github.io/cds/images/workflow_pipeline_run_conditions_basic.png" alt="Pipeline basic run conditions" /></p>
+
+<h2 id="advanced-run-conditions">Advanced run conditions</h2>
+
+<p>If you want some advanced run conditions like for example make some compute over specific variables and then compare their values you have the ability to use advanced run conditions. In fact, you are free to make any compute or comparison because advanced condition is a script that you write in <a href="http://www.lua.org/">Lua</a> and MUST return a boolean (<code>true</code> if you want to run the pipeline or <code>false</code> if you don&rsquo;t). In this case the variables syntax is in Unix case (example: <code>cds_dest_application</code>) and prefixed with <code>cds_</code>, <code>git_</code> or <code>workflow_</code>. In general rules when you have a CDS variable containing <code>.</code> or <code>-</code> you must replace with <code>_</code>. For example if you have a variable named <code>cds.build.my-variable</code> then in lua you have to use it with <code>cds_build_my_variable</code>.</p>
+
+<p>Pay attention, <strong><em>all types of variables are string</em></strong>. Inside the Lua editor on CDS you have the autocompletion of your variables, you just have write <code>cds_</code>, <code>git_</code> or <code>workflow_</code> to see suggestions. Please be aware that you can&rsquo;t have at the same time basic conditions and advanced conditions. <strong><em>The behavior when you have both is that ONLY advanced run conditions will be effective</em></strong>.</p>
+
+<p>For example if you want to launch the pipeline if the value of <code>cds_status</code> is <code>Success</code> and <code>git_branch</code> is <code>master</code> OR if the value of <code>cds_manual</code> is <code>true</code> you have to write:</p>
+
+<pre><code class="language-lua">-- Pay attention! All variables value are string so you compare cds_manual with the string &quot;true&quot; and not true
+return cds_status == &quot;Success&quot; and (git_branch == &quot;master&quot; or cds_manual == &quot;true&quot;)
+</code></pre>
+
+<p>Another use case is to enable auto-prod only if you are in a work week day (not saturday and sunday):</p>
+
+<pre><code class="language-lua">return os.date(&quot;%w&quot;) &lt; &quot;5&quot;
+</code></pre>
+
+<p>Or if you also want to block deployment on your production after 6pm:</p>
+
+<pre><code class="language-lua">return os.date(&quot;%w&quot;) &lt; &quot;5&quot; and os.date(&quot;%H&quot;) &lt; &quot;18&quot;
+</code></pre>
+
+<p><img src="https://ovh.github.io/cds/images/workflow_pipeline_run_conditions_advanced.png" alt="Pipeline basic run conditions" /></p>
+
+<p>You can also use regular expression in your Lua condition, for instance:</p>
+
+<pre><code class="language-lua">-- this example checks if current application beginning with 'abc'
+-- don't forget to import the regular expression module
+local re = require(&quot;re&quot;)
+
+return re.match(cds_application, &quot;abc.*&quot;) == cds_application
+</code></pre>
+
+<p>Functions <code>re.find</code>, <code>re.gsub</code>, <code>re.match</code>, <code>re.gmatch</code> are available. These functions have the same API as Lua pattern match.</p>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>
