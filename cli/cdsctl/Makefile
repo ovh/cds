@@ -7,8 +7,6 @@ BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 TARGET_DIR = ./dist
 TARGET_BINARY = cdsctl
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_BINARY)"
-#TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-#TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
 split = $(word $2,$(subst /, ,$1))
 TARGET_OS := $(if ${OS},${OS}/%, linux/% darwin/% windows/% freebsd/% openbsd/%)
@@ -16,9 +14,7 @@ TARGET_ARCH := $(if ${ARCH}, %/${ARCH}, %/amd64 %/arm %/386 %/arm64)
 TARGET_DISTS := $(filter $(TARGET_OS), $(filter $(TARGET_ARCH), $(shell go tool dist list)))
 isWindows = $(filter $1,windows)
 TARGET_BINARIES := $(foreach DIST, $(filter-out darwin/arm% darwin/386,$(TARGET_DISTS)), $(TARGET_DIR)/cdsctl-$(call split,$(DIST),1)-$(call split,$(DIST),2)$(if $(call isWindows, $(call split,$(DIST),1)),.exe))
-
-test-dist:
-	$(info $(TARGET_BINARY))
+TARGET_BINARIES_VARIANT := $(addsuffix -nokeychain, $(TARGET_BINARIES))
 
 GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
@@ -66,25 +62,18 @@ clean:
 	done;
 
 $(TARGET_BINARIES):
-	$(info *** building core binary $@)
-	@$(MAKE) --no-print-directory  gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
+	$(info *** building binary $@)
+	@$(MAKE) --no-print-directory gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
+
+$(TARGET_BINARIES_VARIANT):
+	$(info *** building binary $@)
+	@$(MAKE) --no-print-directory gobuild GOOS=$(call get_os_from_binary_file,$(subst -nokeychain,,$@)) GOARCH=$(call get_arch_from_binary_file,$(subst -nokeychain,,$@)) OUTPUT=$@
 
 gobuild:
 	$(info ... OS:$(GOOS) ARCH:$(GOARCH) -> $(OUTPUT))
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) $(LDFLAGS) -o $(OUTPUT)
 
-build: $(TARGET_DIR) $(TARGET_BINARIES)
-	#$(MAKE) build-nokeychain
-
-build-nokeychain: $(TARGET_DIR)
-	@for GOOS in $(TARGET_OS); do \
-		for GOARCH in $(TARGET_ARCH); do \
-			EXTENSION=""; \
-			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
-			echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH-nokeychain$$EXTENSION $(VERSION); \
-			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) -tags='nokeychain' $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH-nokeychain$$EXTENSION; \
-		done; \
-	done
+build: $(TARGET_DIR) $(TARGET_BINARIES_VARIANT) $(TARGET_BINARIES)
 
 test: clean
 	@for PKG in $(TEST_PKGS); do \

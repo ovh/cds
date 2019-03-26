@@ -15,7 +15,6 @@ require (
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/Shopify/sarama v1.17.0
 	github.com/Shopify/toxiproxy v2.1.3+incompatible // indirect
-	github.com/aokoli/goutils v1.1.0
 	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect
 	github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
@@ -44,7 +43,6 @@ require (
 	github.com/coreos/go-semver v0.2.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d // indirect
 	github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea // indirect
-	github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf // indirect
 	github.com/dancannon/gorethink v4.0.0+incompatible // indirect
 	github.com/danieljoos/wincred v1.0.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
@@ -125,7 +123,6 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288
-	github.com/huandu/xstrings v1.2.0
 	github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19 // indirect
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -204,7 +201,6 @@ require (
 	github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
-	github.com/russross/blackfriday v0.0.0-20170728175326-4048872b16cc // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sclevine/agouti v0.0.0-20171003013254-8cf0313221cb // indirect
@@ -286,7 +282,5 @@ require (
 )
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
-
-replace github.com/docker/docker-credential-helpers => github.com/yesnault/docker-credential-helpers v0.0.0-20180831150006-4dd7c3df8875
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
