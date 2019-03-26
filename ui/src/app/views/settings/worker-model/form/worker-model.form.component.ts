@@ -143,7 +143,6 @@ pattern_name: basic_unix`;
         if (!this.workerModel.name) {
             return;
         }
-        console.log('ok')
         this.save.emit({
             ...this.workerModel,
             group_id: Number(this.workerModel.group_id)
