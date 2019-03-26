@@ -3,8 +3,11 @@
     <form class="ui form">
         <div class="ui grid">
             <div class="sixteen wide column">
+                <div *ngIf="workflowTemplate.editable && groups && groups.length === 0" class="ui orange message">
+                    {{'common_help_no_group' | translate}}
+                </div>
                 <div *ngIf="workflowTemplate.editable && importFromURL" class="ui blue message">
-                    {{'workflow_template_help_edit_from' | translate }}
+                    {{'workflow_template_help_edit_from' | translate}}
                 </div>
                 <div class="four fields">
                     <div class="field">

@@ -3,6 +3,10 @@
     <form class="ui form">
         <div class="ui grid">
             <div class="sixteen wide column">
+                <div *ngIf="workerModel.editable && groups && groups.length === 0" class="ui orange message">
+                    {{'common_help_no_group' | translate}}
+                </div>
+
                 <div class="field">
                     <div class="two ui buttons">
                         <button class="ui button" type="button" [class.active]="!asCode" [class.blue]="!asCode"
