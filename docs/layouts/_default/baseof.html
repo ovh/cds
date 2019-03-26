@@ -9,8 +9,10 @@
 			<a href="{{ site.Home.RelPermalink }}" class="logo"></a>
 			{{- end -}}
 
-			{{- if ne .Params.cid "docsHome" }}
-			<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i>
+			{{- if ne .Params.layout "docs_home"}}
+				{{- if ne .Params.cid "home"}}
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i>
+				{{- end -}}
 			{{- end -}}
 
 			<div class="nav-buttons" data-auto-burger="primary">
