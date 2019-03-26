@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"sync"
@@ -58,10 +59,11 @@ Theses two commands have the same result:
 }
 
 type workerDownloadArtifact struct {
-	Workflow string `json:"workflow"`
-	Number   int64  `json:"number"`
-	Pattern  string `json:"pattern" cli:"pattern"`
-	Tag      string `json:"tag" cli:"tag"`
+	Workflow    string `json:"workflow"`
+	Number      int64  `json:"number"`
+	Pattern     string `json:"pattern" cli:"pattern"`
+	Tag         string `json:"tag" cli:"tag"`
+	Destination string `json:"destination"`
 }
 
 func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
@@ -85,11 +87,13 @@ func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
+		wd, _ := os.Getwd()
 		a := workerDownloadArtifact{
-			Workflow: cmdDownloadWorkflowName,
-			Number:   number,
-			Pattern:  cmdDownloadArtefactName,
-			Tag:      cmdDownloadTag,
+			Workflow:    cmdDownloadWorkflowName,
+			Number:      number,
+			Pattern:     cmdDownloadArtefactName,
+			Tag:         cmdDownloadTag,
+			Destination: wd,
 		}
 
 		data, errMarshal := json.Marshal(a)
@@ -192,13 +196,14 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		go func(a *sdk.WorkflowNodeRunArtifact) {
 			defer wg.Done()
 
-			f, err := os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			path := path.Join(reqArgs.Destination, a.Name)
+			f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
 			if err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
 				isInError = true
 				return
 			}
-			sendLog(fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number))
+			sendLog(fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d (%s)...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number, path))
 			if err := wk.client.WorkflowNodeRunArtifactDownload(projectKey, reqArgs.Workflow, *a, f); err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
 				isInError = true
