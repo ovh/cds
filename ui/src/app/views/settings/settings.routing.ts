@@ -34,7 +34,7 @@ const routes: Routes = [
             {
                 path: 'worker-model/:workerModelName',
                 component: WorkerModelEditComponent,
-                data: { title: 'Worker model {workerModelName}' }
+                data: { title: 'Edit • Workflow model' }
             },
             { path: 'group', component: GroupListComponent, data: { title: 'Groups' } },
             { path: 'group/:groupname', component: GroupEditComponent, data: { title: '{groupname} • Group' } },

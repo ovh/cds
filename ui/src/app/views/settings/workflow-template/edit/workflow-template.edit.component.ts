@@ -293,9 +293,6 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     getUsage() {
-        if (this.workflowsLinked) {
-            return;
-        }
         this.loadingUsage = true;
         this._workflowTemplateService.getUsage(this.groupName, this.templateSlug)
             .pipe(first())

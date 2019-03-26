@@ -15,27 +15,29 @@
                         </button>
                     </div>
                 </div>
-                <!-- ######## Edit via UI -->
+
                 <ng-container *ngIf="!asCode">
                     <div class="four fields">
                         <div class="field">
-                            <label>{{'worker_model_name' | translate}} *</label>
+                            <label>{{'common_name' | translate}} *</label>
                             <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name"
-                                [disabled]="loading">
+                                [readonly]="!workerModel.editable">
                         </div>
                         <div class="field">
-                            <label>{{'worker_model_group' | translate}}</label>
-                            <sm-select class="fluid search" name="group" *ngIf="workerModelGroups" [disabled]="loading"
-                                [(model)]="workerModel.group_id" [options]="{'fullTextSearch': true}">
-                                <option *ngFor="let group of workerModelGroups" [value]="group.id">{{group.name}}
-                                </option>
+                            <label>{{'common_group' | translate}} *</label>
+                            <sm-select class="fluid search" name="group" *ngIf="groups && workerModel.editable"
+                                [disabled]="loading" [(model)]="workerModel.group_id"
+                                [options]="{'fullTextSearch': true}">
+                                <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
                             </sm-select>
+                            <input *ngIf="!workerModel.editable" class="ui input" type="text" name="group"
+                                [ngModel]="workerModel.group?.name" [readonly]="true">
                         </div>
                         <div class="field">
-                            <label>{{'worker_model_restricted' | translate}}</label>
+                            <label>{{ 'worker_model_restricted' | translate }}</label>
                             <div class="ui checkbox">
                                 <input type="checkbox" id="restricted" name="restricted"
-                                    [(ngModel)]="workerModel.restricted" [disabled]="loading">
+                                    [(ngModel)]="workerModel.restricted" [disabled]="!workerModel.editable">
                                 <label for="restricted">{{'worker_model_restricted_help' | translate}} <a
                                         target="_blank"
                                         href="https://ovh.github.io/cds/docs/concepts/worker-model/#what-s-a-restricted-worker-model">{{'common_see_documentation'
@@ -43,10 +45,10 @@
                             </div>
                         </div>
                         <div class="field">
-                            <label>{{'worker_model_is_deprecated' | translate}}</label>
+                            <label>{{ 'worker_model_is_deprecated' | translate }}</label>
                             <div class="ui checkbox">
                                 <input type="checkbox" id="deprecated" name="deprecated"
-                                    [(ngModel)]="workerModel.is_deprecated" [disabled]="loading">
+                                    [(ngModel)]="workerModel.is_deprecated" [disabled]="!workerModel.editable">
                                 <label for="deprecated">{{'worker_model_deprecated_help' | translate}}</label>
                             </div>
                         </div>
@@ -54,7 +56,8 @@
                     <div class="field">
                         <label>{{'common_description' | translate}}</label>
                         <textarea name="description" [(ngModel)]="workerModel.description"
-                            rows="{{getDescriptionHeight()}}"></textarea>
+                            (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
+                            [readonly]="!workerModel.editable"></textarea>
                     </div>
                     <div class="two fields">
                         <div class="field">
@@ -76,7 +79,7 @@
                                 <p>{{ 'worker_model_enabled' | translate }}</p>
                             </div>
                             <button *ngIf="workerModel.editable" class="ui right floated button"
-                                (click)="workerModel.disabled=true;clickSaveUIButton()">{{
+                                (click)="workerModel.disabled=true;clickSave()">{{
                 'worker_model_disable' | translate }}</button>
                         </div>
 
@@ -86,7 +89,7 @@
                                 <p>{{ 'worker_model_disabled' | translate }}</p>
                             </div>
                             <button *ngIf="workerModel.editable" class="ui right floated button"
-                                (click)="workerModel.disabled=false;clickSaveUIButton()">{{
+                                (click)="workerModel.disabled=false;clickSave()">{{
                 'worker_model_enable' | translate }}</button>
                         </div>
                         <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
@@ -122,43 +125,44 @@
                     <div class="three fields">
                         <div class="seven wide field">
                             <label>{{'worker_model_type' | translate}} *</label>
-                            <ng-container *ngIf="workerModelTypes">
-                                <sui-select class="selection" name="type" placeholder="{{'common_select' | translate}}"
-                                    [isDisabled]="loading" [options]="workerModelTypes" isSearchable="true"
-                                    [(ngModel)]="workerModel.type" (ngModelChange)="filterPatterns($event)" #selectType>
-                                    <sui-select-option *ngFor="let option of selectType.filteredOptions"
-                                        [value]="option">
-                                    </sui-select-option>
-                                </sui-select>
-                            </ng-container>
+                            <sm-select class="fluid search" name="type" *ngIf="types && workerModel.editable"
+                                [disabled]="loading" [(model)]="workerModel.type" [options]="{'fullTextSearch': true}"
+                                (onChange)="typeChange($event)">
+                                <option *ngFor="let type of types" [value]="type">{{type}}</option>
+                            </sm-select>
+                            <input *ngIf="!workerModel.editable" class="ui input" type="text" name="type"
+                                [ngModel]="workerModel.type" [readonly]="true">
                         </div>
                         <div class="five wide field">
-                            <label>{{'worker_model_communication' | translate}}</label>
-                            <sm-select class="fluid search" name="type" *ngIf="workerModelCommunications"
-                                [disabled]="loading" [(model)]="workerModel.communication"
-                                [options]="{'fullTextSearch': true}">
-                                <option *ngFor="let communication of workerModelCommunications" [value]="communication">
+                            <label>{{'worker_model_communication' | translate}} *</label>
+                            <sm-select class="fluid search" name="communication"
+                                *ngIf="communications && workerModel.editable" [disabled]="loading"
+                                [(model)]="workerModel.communication" [options]="{'fullTextSearch': true}">
+                                <option *ngFor="let communication of communications" [value]="communication">
                                     {{communication}}</option>
                             </sm-select>
+                            <input *ngIf="!workerModel.editable" class="ui input" type="text" name="communication"
+                                [ngModel]="workerModel.communication" [readonly]="true">
                         </div>
-                        <div class="four wide field" *ngIf="currentUser.admin || workerModel.restricted">
+                        <div class="four wide field">
                             <label>{{'worker_model_provision' | translate}}</label>
                             <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision"
-                                [disabled]="loading">
+                                [disabled]="!(currentUser.admin || workerModel.restricted)"
+                                [readonly]="!workerModel.editable">
                         </div>
                     </div>
-
                     <ng-container *ngIf="workerModel.type === 'docker'">
                         <div class="field">
                             <label>{{'worker_model_image' | translate}} *</label>
                             <input class="ui input" type="text" name="image"
-                                [(ngModel)]="workerModel.model_docker.image" [disabled]="loading">
+                                [(ngModel)]="workerModel.model_docker.image" [readonly]="!workerModel.editable">
                         </div>
-                        <div class="field">
+                        <div class="field" *ngIf="workerModel.editable">
                             <label>{{'worker_model_pattern_title' | translate}}</label>
                             <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}"
-                                labelField="name" [options]="workerModelPatternsFiltered" isSearchable="true"
-                                [(ngModel)]="patternSelected" (ngModelChange)="preFillModel($event)" #selectPattern>
+                                [options]="patternsFiltered" isSearchable="true" [(ngModel)]="patternSelected"
+                                (selectedOptionChange)="patternChange()" [optionFormatter]="formatPattern()"
+                                #selectPattern>
                                 <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
                                     [value]="option">
                                 </sui-select-option>
@@ -222,18 +226,21 @@
                         <div class="field">
                             <label>{{'worker_model_image' | translate}} *</label>
                             <input class="ui input" type="text" name="image"
-                                [(ngModel)]="workerModel.model_virtual_machine.image" [disabled]="loading">
+                                [(ngModel)]="workerModel.model_virtual_machine.image"
+                                [readonly]="!workerModel.editable">
                         </div>
                         <div class="field" *ngIf="workerModel.type === 'openstack'">
                             <label>Flavor</label>
                             <input class="ui input" type="text" name="flavor"
-                                [(ngModel)]="workerModel.model_virtual_machine.flavor" [disabled]="loading">
+                                [(ngModel)]="workerModel.model_virtual_machine.flavor"
+                                [readonly]="!workerModel.editable">
                         </div>
                         <div class="field">
                             <label>{{'worker_model_pattern_title' | translate}}</label>
                             <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}"
-                                labelField="name" [options]="workerModelPatternsFiltered" isSearchable="true"
-                                [(ngModel)]="patternSelected" (ngModelChange)="preFillModel($event)" #selectPattern>
+                                [options]="patternsFiltered" isSearchable="true" [(ngModel)]="patternSelected"
+                                (selectedOptionChange)="patternChange()" [optionFormatter]="formatPattern()"
+                                #selectPattern>
                                 <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
                                     [value]="option">
                                 </sui-select-option>
@@ -261,20 +268,18 @@
                             <textarea class="ui input" name="post_cmd"
                                 [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
                                 [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
-            </textarea>
+                            </textarea>
                         </div>
                     </ng-container>
-                    <!-- ######## Edit as code -->
                     <div *ngIf="workerModel.editable" class="field">
-                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDeleteButton()"
+                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"
                             [loading]="deleteLoading"></app-delete-button>
-                        <button class="ui green right floated button" [class.loading]="loading"
-                            (click)="clickSaveUIButton()">
+                        <button class="ui green right floated button" [class.loading]="loading" (click)="clickSave()">
                             <i class="save icon"></i>{{ 'btn_save' | translate }}
                         </button>
                     </div>
                 </ng-container>
-                <!-- ######## Edit as code -->
+
                 <ng-container *ngIf="asCode">
                     <div class="field">
                         <ng-container *ngIf="!loadingAsCode">
@@ -285,10 +290,10 @@
                         <div class="ui active centered inline loader" *ngIf="loadingAsCode"></div>
                     </div>
                     <div *ngIf="workerModel.editable" class="field">
-                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDeleteButton()"
+                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"
                             [loading]="deleteLoading"></app-delete-button>
                         <button class="ui green right floated button" [class.loading]="loading"
-                            (click)="clickSaveAsCodeButton()" [class.disabled]="!workerModel.editable">
+                            (click)="clickSaveAsCode()" [class.disabled]="!workerModel.editable">
                             <i class="save icon"></i>{{ 'btn_save' | translate }}
                         </button>
                     </div>

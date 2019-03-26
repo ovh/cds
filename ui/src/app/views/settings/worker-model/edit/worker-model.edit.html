@@ -5,7 +5,9 @@
         <div *ngSwitchCase="'worker_model'" class="ui grid">
             <div class="twelve wide column">
                 <app-worker-model-form mode="edit" [loading]="loading" [workerModel]="workerModel" [groups]="groups"
-                    [currentUser]="currentUser" (save)="saveWorkerModel($event)" (delete)="deleteWorkerModel()">
+                    [currentUser]="currentUser" [patterns]="patterns" [communications]="communications" [types]="types"
+                    (save)="saveWorkerModel($event)" (saveAsCode)="saveWorkerModelAsCode($event)"
+                    (delete)="deleteWorkerModel()">
                 </app-worker-model-form>
             </div>
             <div class="four wide column">
