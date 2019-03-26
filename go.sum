@@ -29,6 +29,8 @@ github.com/Shopify/toxiproxy v2.1.3+incompatible h1:awiJqUYH4q4OmoBiRccJykjd7B+w
 github.com/Shopify/toxiproxy v2.1.3+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/aokoli/goutils v1.0.1 h1:7fpzNGoJ3VA8qcrm++XEE1QUe0mIwNeLa02Nwq7RDkg=
 github.com/aokoli/goutils v1.0.1/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
+github.com/aokoli/goutils v1.1.0 h1:jy4ghdcYvs5EIoGssZNslIASX5m+KNMfyyKvRQ0TEVE=
+github.com/aokoli/goutils v1.1.0/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
 github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 h1:MbFvRvOzFRujpuBALUI/2ll9+8PYi23cEp/DSQFEBfU=
 github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05/go.mod h1:ikc1XA58M+Rx7SEbf0bLJCfBkwayZ8T5jBo5FXK8Uz8=
 github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53 h1:8pC6As6jhkrfhotKRkEYqlaSekpGFu1NzQbhutWHVFw=
@@ -268,6 +270,8 @@ github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1 h1:5sbhABS5wzLMXC69upO+ZpwdP3z+O9OszTijhBKLOh4=
 github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1/go.mod h1:4qWG/gcEcfX4z/mBDHJ++3ReCw9ibxbsNJbcucJdbSo=
+github.com/huandu/xstrings v1.2.0 h1:yPeWdRnmynF7p+lLYz0H2tthW9lqhMJrQV/U7yy4wX0=
+github.com/huandu/xstrings v1.2.0/go.mod h1:DvyZB1rfVYsBIigL8HwpZgxHwXozlTgGqn63UyNX5k4=
 github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19 h1:geJOJJZwkYI1yqxWrAMcgrwDvy4P1XyNNgIyN9d6UXc=
 github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf h1:WfD7VjIE6z8dIvMsI4/s+1qr5EL+zoIGev1BQj1eoJ8=
@@ -399,6 +403,8 @@ github.com/opentracing/opentracing-go v1.0.2 h1:3jA2P6O1F9UOrWVpwrIo17pu01KWvNWg
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/ory-am/common v0.4.0 h1:edGPoxYX4hno0IJHXh9TCMUPR6ZcJp+y6aClFYxeuUE=
 github.com/ory-am/common v0.4.0/go.mod h1:oCYGuwwM8FyYMKqh9vrhBaeUoyz/edx0bgJN6uS6/+k=
+github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25 h1:bBZds5R1vAoPsfTaQycKfwnV4JEvGwnhd9bKc6iu2Z0=
+github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25/go.mod h1:qrsz1nc0EPZnhuTLZpKK4Y7awUQdeKmkY5M6DbKi6Ws=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 h1:x9UmLJfoTojbsVpUh0sOpU42p7FqhlzaHKWj6Kcf6ew=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689/go.mod h1:joRatxRJaZBsY3JAOEMcoOp05CnZzsx4scTxi95DHyQ=
 github.com/ovh/venom v0.25.0 h1:q0NC8KHuG1UoWNYXqhZUM/VbOnS8ciQJr6Afn230OIw=
