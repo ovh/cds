@@ -322,6 +322,7 @@
   "common_edit_ui": "Edit with UI",
   "common_create_ui": "Create with UI",
   "common_migrate": "Migrate",
+  "common_capabilities": "Capabilities",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -863,6 +864,7 @@
   "wizard_app_empty": "Empty application",
   "wizard_ssh_key_name": "Ssh key name",
 
+  "worker_model": "Worker Model",
   "worker_model_type": "Type",
   "worker_model_env": "Environment variables",
   "worker_model_env_tooltip": "You can set environment variables to put in your worker. If you have no specific need, the default environment variables will be added automatically at the creation",

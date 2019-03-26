@@ -46,22 +46,20 @@
             </div>
         </div>
         <div *ngSwitchCase="'capabilities'" class="ui grid">
-            <div class="ui raised segment">
-                <h3 class="ui header">{{'worker_model_capabilities' | translate}}
-                    <i *ngIf="!workerModel.need_registration" class="fa fa-check" style="cursor:pointer"
-                        title="{{'worker_model_capabilities_up_to_date' | translate}}"></i>
-                    <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer"
-                        title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
-                </h3>
-                <p>
-                    {{'worker_model_help_capabilities' | translate}}
-                </p>
+            <div class="sixteen wide column">
+                <div class="ui raised segment">
+                    <h3 class="ui header">{{'worker_model_capabilities' | translate}}
+                        <i *ngIf="!workerModel.need_registration" class="fa fa-check" style="cursor:pointer"
+                            title="{{'worker_model_capabilities_up_to_date' | translate}}"></i>
+                        <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer"
+                            title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
+                    </h3>
+                    <p>
+                        {{'worker_model_help_capabilities' | translate}}
+                    </p>
+                </div>
             </div>
-            <div>
-                <i class="dropdown icon"></i>
-                {{'worker_model_binary_capability' | translate}}
-            </div>
-            <div>
+            <div class="sixteen wide column">
                 <table class="ui fixed celled table">
                     <tr *ngFor="let v of workerModel?.registered_capabilities">
                         <td>
@@ -72,21 +70,13 @@
             </div>
         </div>
         <div *ngSwitchCase="'usage'" class="ui grid">
-            <div>
-                <i class="dropdown icon"></i>
-                {{'common_usage' | translate}} <span *ngIf="!loadingUsage && usages">({{usages.length}})</span>
-            </div>
-            <div>
+            <div class="sixteen wide column">
                 <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
-                <span
-                    *ngIf="!loadingUsage && usages && usages.length === 0">{{'worker_model_no_usage' | translate}}</span>
-                <ul class="ui list" *ngIf="!loadingUsage && usages">
-                    <li *ngFor="let pip of usages">
-                        <a [routerLink]="['/project', pip.projectKey, 'pipeline', pip.name]">
-                            Pipeline {{pip.name}}
-                        </a>
-                    </li>
-                </ul>
+                <ng-container *ngIf="!loadingUsage">
+                    <app-usage [pipelines]="usages"></app-usage>
+                    <div class="centered" *ngIf="!usages || usages.length === 0">{{'worker_model_no_usage'
+                                | translate}}</div>
+                </ng-container>
             </div>
         </div>
     </app-scrollview>

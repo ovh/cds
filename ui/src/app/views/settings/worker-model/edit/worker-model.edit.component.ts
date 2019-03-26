@@ -64,7 +64,7 @@ export class WorkerModelEditComponent implements OnInit {
             key: 'worker_model',
             default: true
         }, <Tab>{
-            translate: 'capabilities',
+            translate: 'common_capabilities',
             icon: 'file outline',
             key: 'capabilities'
         }, <Tab>{
@@ -178,10 +178,22 @@ export class WorkerModelEditComponent implements OnInit {
     }
 
     loadUsage() {
+        // FIXME model endpoint should take path not id
+        if (!this.workerModel || !this.workerModel.id) {
+            this._router.navigate([], {
+                relativeTo: this._route,
+                queryParams: { tab: this.tabs[0].key },
+                queryParamsHandling: 'merge'
+            });
+            return;
+        }
+
         this.loadingUsage = true;
         this._workerModelService.getUsage(this.workerModel.id)
             .pipe(finalize(() => this.loadingUsage = false))
-            .subscribe((usages) => this.usages = usages);
+            .subscribe((usages) => {
+                this.usages = usages;
+            });
     }
 
     updatePath() {
