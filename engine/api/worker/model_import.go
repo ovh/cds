@@ -15,11 +15,7 @@ import (
 
 // ParseAndImport parse and import an exportentities.WorkerModel
 func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
-	sdkWm, err := eWorkerModel.GetWorkerModel()
-	if err != nil {
-		return nil, err
-	}
-
+	sdkWm, errInvalidModel := eWorkerModel.GetWorkerModel()
 	gr, err := group.LoadGroupByName(db, sdkWm.Group.Name)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to get group %s", sdkWm.Group.Name)
@@ -55,15 +51,12 @@ currentUGroup:
 		return nil, sdk.ErrWorkerModelNoAdmin
 	}
 
+	var badRequestError error
+	asSimpleUser := !u.Admin && !sdkWm.Restricted
 	switch sdkWm.Type {
 	case sdk.Docker:
 		if sdkWm.ModelDocker.Image == "" {
 			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker image")
-		}
-		if !u.Admin && !sdkWm.Restricted {
-			if modelPattern == nil {
-				return nil, sdk.ErrWorkerModelNoPattern
-			}
 		}
 		if modelPattern != nil {
 			sdkWm.ModelDocker.Cmd = modelPattern.Model.Cmd
@@ -71,16 +64,11 @@ currentUGroup:
 			sdkWm.ModelDocker.Envs = modelPattern.Model.Envs
 		}
 		if sdkWm.ModelDocker.Cmd == "" || sdkWm.ModelDocker.Shell == "" {
-			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker command or invalid shell command")
+			badRequestError = sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker command or invalid shell command")
 		}
 	default:
 		if sdkWm.ModelVirtualMachine.Image == "" {
 			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker image: cannot be empty")
-		}
-		if !u.Admin && !sdkWm.Restricted {
-			if modelPattern == nil {
-				return nil, sdk.ErrWorkerModelNoPattern
-			}
 		}
 		if modelPattern != nil {
 			sdkWm.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
@@ -89,7 +77,7 @@ currentUGroup:
 		}
 
 		if sdkWm.ModelVirtualMachine.Cmd == "" {
-			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker command: Cannot be empty")
+			badRequestError = sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker command: Cannot be empty")
 		}
 	}
 
@@ -103,13 +91,22 @@ currentUGroup:
 
 	// provision is allowed only for CDS Admin
 	// or by currentUser with a restricted model
-	if !u.Admin && !sdkWm.Restricted {
+	if asSimpleUser {
 		sdkWm.Provision = 0
 	}
 
 	if force {
 		if existingWm, err := LoadWorkerModelByName(db, sdkWm.Name); err != nil {
 			if sdk.Cause(err) == sql.ErrNoRows {
+				if asSimpleUser && modelPattern == nil {
+					return nil, sdk.ErrWorkerModelNoPattern
+				}
+				if errInvalidModel != nil {
+					return nil, errInvalidModel
+				}
+				if badRequestError != nil {
+					return nil, badRequestError
+				}
 				if errAdd := InsertWorkerModel(db, &sdkWm); errAdd != nil {
 					return nil, sdk.WrapError(errAdd, "cannot add worker model %s", sdkWm.Name)
 				}
@@ -118,6 +115,29 @@ currentUGroup:
 			}
 		} else {
 			sdkWm.ID = existingWm.ID
+			if asSimpleUser && modelPattern == nil {
+				switch sdkWm.Type {
+				case sdk.Docker:
+					img := sdkWm.ModelDocker.Image
+					sdkWm.ModelDocker = existingWm.ModelDocker
+					sdkWm.ModelDocker.Image = img
+				default:
+					img := sdkWm.ModelVirtualMachine.Image
+					flavor := sdkWm.ModelVirtualMachine.Flavor
+					sdkWm.ModelVirtualMachine = existingWm.ModelVirtualMachine
+					sdkWm.ModelVirtualMachine.Image = img
+					sdkWm.ModelVirtualMachine.Flavor = flavor
+				}
+			}
+			if !asSimpleUser {
+				if errInvalidModel != nil {
+					return nil, errInvalidModel
+				}
+				if badRequestError != nil {
+					return nil, badRequestError
+				}
+			}
+
 			if errU := UpdateWorkerModel(db, &sdkWm); errU != nil {
 				return nil, sdk.WrapError(errU, "cannot update worker model %s", sdkWm.Name)
 			}
@@ -125,6 +145,15 @@ currentUGroup:
 		return &sdkWm, nil
 	}
 
+	if asSimpleUser && modelPattern == nil {
+		return nil, sdk.ErrWorkerModelNoPattern
+	}
+	if errInvalidModel != nil {
+		return nil, errInvalidModel
+	}
+	if badRequestError != nil {
+		return nil, badRequestError
+	}
 	if errAdd := InsertWorkerModel(db, &sdkWm); errAdd != nil {
 		if errPG, ok := sdk.Cause(errAdd).(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
 			errAdd = sdk.ErrConflict

@@ -24,8 +24,25 @@ type WorkerModel struct {
 	IsDeprecated  bool              `json:"is_deprecated,omitempty" yaml:"is_deprecated,omitempty"`
 }
 
+type WorkerModelOption func(sdk.Model, *WorkerModel) error
+
+var WorkerModelLoadOptions = struct {
+	HideAdminFields WorkerModelOption
+}{
+	HideAdminFields: loadWorkerModelWithoutAdminFields,
+}
+
+func loadWorkerModelWithoutAdminFields(_ sdk.Model, wm *WorkerModel) error {
+	wm.PreCmd = ""
+	wm.Shell = ""
+	wm.Cmd = ""
+	wm.PostCmd = ""
+	wm.Envs = nil
+	return nil
+}
+
 // NewWorkerModel creates an exportentities WorkerModel from a struct sdk.Model
-func NewWorkerModel(wm sdk.Model) WorkerModel {
+func NewWorkerModel(wm sdk.Model, opts ...WorkerModelOption) WorkerModel {
 	model := WorkerModel{
 		Type:          wm.Type,
 		Name:          wm.Name,
@@ -53,15 +70,15 @@ func NewWorkerModel(wm sdk.Model) WorkerModel {
 		model.PostCmd = wm.ModelVirtualMachine.PostCmd
 	}
 
+	for _, opt := range opts {
+		opt(wm, &model)
+	}
+
 	return model
 }
 
 // GetWorkerModel convert an exportentities to a real sdk.Model
 func (wm WorkerModel) GetWorkerModel() (sdk.Model, error) {
-	if err := wm.IsValid(); err != nil {
-		return sdk.Model{}, err
-	}
-
 	model := sdk.Model{
 		Type:          wm.Type,
 		Name:          wm.Name,
@@ -92,7 +109,7 @@ func (wm WorkerModel) GetWorkerModel() (sdk.Model, error) {
 		}
 	}
 
-	return model, nil
+	return model, wm.IsValid()
 }
 
 // IsValid returns error if worker model is invalid
