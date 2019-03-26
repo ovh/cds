@@ -71,7 +71,7 @@ func NewWorkerModel(wm sdk.Model, opts ...WorkerModelOption) WorkerModel {
 	}
 
 	for _, opt := range opts {
-		opt(wm, &model)
+		_ = opt(wm, &model)
 	}
 
 	return model
