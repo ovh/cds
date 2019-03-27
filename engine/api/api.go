@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,6 +31,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
@@ -484,6 +486,33 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.StartupTime = time.Now()
 
+	// Checking downloadable binaries
+	resources := sdk.AllDownloadableResourcesWithAvailability(a.Config.Directories.Download)
+	var hasWorker, hasCtl, hasEngine bool
+	for _, r := range resources {
+		if r.Available != nil && *r.Available {
+			switch r.Name {
+			case "worker":
+				hasWorker = true
+			case "cdsctl":
+				hasCtl = true
+			case "engine":
+				hasEngine = true
+			}
+		}
+	}
+	if !hasEngine {
+		log.Error("engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+	}
+	if !hasCtl {
+		log.Error("cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+	}
+	if !hasWorker {
+		// If no worker, let's exit because CDS for run anything
+		log.Error("worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		return errors.New("worker binary unavailabe")
+	}
+
 	//Initialize secret driver
 	secret.Init(a.Config.Secrets.Key)
 
@@ -683,6 +712,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
 		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "pipeline.ComputeAudit", func(ctx context.Context) {
+		pipeline.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)

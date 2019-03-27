@@ -42,7 +42,7 @@ func insertNodeHookData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error
 
 		if model.Name == sdk.RepositoryWebHookModelName || model.Name == sdk.GitPollerModelName {
 			if n.Context.ApplicationID == 0 || w.Applications[n.Context.ApplicationID].RepositoryFullname == "" || w.Applications[n.Context.ApplicationID].VCSServer == "" {
-				return sdk.WrapError(sdk.ErrForbidden, "insertNodeHookData> Cannot create a git poller or repository webhook on an application without a repository")
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
 			}
 			h.Config["vcsServer"] = sdk.WorkflowNodeHookConfigValue{
 				Value:        w.Applications[n.Context.ApplicationID].VCSServer,

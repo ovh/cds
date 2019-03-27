@@ -1,10 +1,9 @@
-+++
-title = "Helm"
-weight = 2
-
-+++
-
-## Run with Helm on Kubernetes
+---
+title: "Run with Helm on Kubernetes"
+weight: 2
+card: 
+  name: ready-to-run
+---
 
 [Helm](https://helm.sh/) is the package manager for [Kubernetes](https://kubernetes.io/).
 

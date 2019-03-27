@@ -162,7 +162,7 @@ func loginJWTRun(v cli.Values) error {
 	fmt.Println("cdsctl: Login successful")
 	fmt.Println("cdsctl: Logged in as", newAccessToken.User.Username)
 
-	return doAfterLogin(apiURL, newAccessToken.User.Username, jwt, v.GetBool("env"))
+	return doAfterLogin(apiURL, newAccessToken.User.Username, jwt, v.GetBool("env"), v.GetBool("insecure"))
 }
 
 func loginRun(v cli.Values) error {
@@ -170,6 +170,7 @@ func loginRun(v cli.Values) error {
 	username := v.GetString("username")
 	password := v.GetString("password")
 	env := v.GetBool("env")
+	insecureSkipVerifyTLS := v.GetBool("insecure")
 
 	if env &&
 		(url == "" || username == "" || password == "") {
@@ -201,10 +202,10 @@ func loginRun(v cli.Values) error {
 		fmt.Println("Password: ********")
 	}
 
-	return doLogin(url, username, password, env)
+	return doLogin(url, username, password, env, insecureSkipVerifyTLS)
 }
 
-func doLogin(url, username, password string, env bool) error {
+func doLogin(url, username, password string, env, insecureSkipVerifyTLS bool) error {
 	conf := cdsclient.Config{
 		Host:    url,
 		Verbose: os.Getenv("CDS_VERBOSE") == "true",
@@ -225,10 +226,14 @@ func doLogin(url, username, password string, env bool) error {
 		return fmt.Errorf("login failed")
 	}
 
-	return doAfterLogin(url, username, token, env)
+	return doAfterLogin(url, username, token, env, insecureSkipVerifyTLS)
 }
 
-func doAfterLogin(url, username, token string, env bool) error {
+func doAfterLogin(url, username, token string, env bool, insecureSkipVerifyTLS bool) error {
+	if insecureSkipVerifyTLS {
+		fmt.Println("Using insecure TLS connection...")
+	}
+
 	if env && sdk.GOOS == "windows" {
 		fmt.Println("env option is not supported on windows yet")
 		os.Exit(1)

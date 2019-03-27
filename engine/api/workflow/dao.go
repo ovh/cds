@@ -155,6 +155,15 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 		w.WorkflowData = data
 	}
 
+	nodes := w.WorkflowData.Array()
+	for i := range nodes {
+		var err error
+		nodes[i].Groups, err = group.LoadGroupsByNode(db, nodes[i].ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load node groups")
+		}
+	}
+
 	return nil
 }
 
@@ -940,7 +949,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	w.ResetIDs()
 
 	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
-		return sdk.WrapError(sdk.ErrWorkflowNodeRootUpdate, "unable to update root node on workflow(%d) : %v", w.ID, err)
+		return sdk.WrapError(err, "unable to update root node on workflow(%d)", w.ID)
 	}
 	w.RootID = w.Root.ID
 
@@ -1425,6 +1434,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	apps := make(map[string]exportentities.Application)
 	pips := make(map[string]exportentities.PipelineV1)
 	envs := make(map[string]exportentities.Environment)
+
 	var wrkflw exportentities.Workflow
 
 	mError := new(sdk.MultiError)
@@ -1507,6 +1517,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if err != nil {
 			return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
 		}
+		if wf.FromRepository != "" && opts != nil && opts.FromRepository != wf.FromRepository {
+			return nil, nil, sdk.WrapError(sdk.ErrForbidden, "cannot overwrite ascode workflow")
+		}
 	}
 
 	tx, err := db.Begin()
@@ -1518,7 +1531,12 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	allMsg := []sdk.Message{}
 	for filename, app := range apps {
 		log.Debug("Push> Parsing %s", filename)
-		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, true, decryptFunc, u)
+
+		var fromRepo string
+		if opts != nil {
+			fromRepo = opts.FromRepository
+		}
+		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
 			return nil, nil, sdk.NewErrorWithStack(err,
 				sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unable to import application %s: %v", app.Name, err)))
@@ -1543,7 +1561,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	for filename, env := range envs {
 		log.Debug("Push> Parsing %s", filename)
-		envDB, msgList, err := environment.ParseAndImport(tx, store, proj, &env, true, decryptFunc, u)
+		var fromRepo string
+		if opts != nil {
+			fromRepo = opts.FromRepository
+		}
+		envDB, msgList, err := environment.ParseAndImport(tx, proj, &env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
 			err = fmt.Errorf("unable to import environment %s: %v", env.Name, err)
 			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
@@ -1568,7 +1590,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	for filename, pip := range pips {
 		log.Debug("Push> Parsing %s", filename)
-		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true})
+		var fromRepo string
+		if opts != nil {
+			fromRepo = opts.FromRepository
+		}
+		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
 			return nil, nil, sdk.NewErrorWithStack(err, sdk.NewError(sdk.ErrWrongRequest,
 				fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)))

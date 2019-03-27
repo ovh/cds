@@ -27,12 +27,12 @@ var applicationVariableCreateCmd = cli.Command{
 	Short: "Add a new variable on application. variable type can be one of password, text, string, key, boolean, number, repository",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
+		{Name: _ApplicationName},
 	},
 	Args: []cli.Arg{
-		{Name: _ApplicationName},
-		{Name: "variable-name"},
-		{Name: "variable-type"},
-		{Name: "variable-value"},
+		{Name: "variable-name", Weight: 1},
+		{Name: "variable-type", Weight: 2},
+		{Name: "variable-value", Weight: 3},
 	},
 }
 
@@ -102,10 +102,10 @@ var applicationVariableUpdateCmd = cli.Command{
 		{Name: _ApplicationName},
 	},
 	Args: []cli.Arg{
-		{Name: "variable-oldname"},
-		{Name: "variable-name"},
-		{Name: "variable-type"},
-		{Name: "variable-value"},
+		{Name: "variable-oldname", Weight: 1},
+		{Name: "variable-name", Weight: 2},
+		{Name: "variable-type", Weight: 3},
+		{Name: "variable-value", Weight: 4},
 	},
 }
 

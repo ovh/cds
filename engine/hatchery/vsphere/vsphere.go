@@ -239,24 +239,20 @@ func (h *HatcheryVSphere) updateServerList() {
 func (h *HatcheryVSphere) killDisabledWorkers() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	workers, err := h.CDSClient().WorkerList(ctx)
+
+	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)
 	if err != nil {
-		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
+		log.Error("killDisabledWorkers> Pool> Error: %v", err)
 		return
 	}
-	srvs := h.getServers()
-	for _, w := range workers {
-		if w.Status != sdk.StatusDisabled {
-			continue
-		}
 
+	srvs := h.getServers()
+	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
-				log.Info("Deleting disabled worker %s", w.Name)
-				if err := h.deleteServer(s); err != nil {
-					log.Warning("killDisabledWorkers> Cannot disabled worker %s: %s", s.Name, err)
-					continue
-				}
+				log.Info("killDisabledWorkers> killDisabledWorkers %v", s.Name)
+				_ = h.deleteServer(s)
+				break
 			}
 		}
 	}

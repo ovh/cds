@@ -29,12 +29,10 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 		op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
 	}
 
-	if currentBranch != op.Setup.Checkout.Branch {
-		log.Debug("Repositories> processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
-		if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
-			log.Error("Repositories> processCheckout> FetchRemoteBranch> [%s] error %v", op.UUID, err)
-			return err
-		}
+	log.Debug("Repositories> processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
+	if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
+		log.Error("Repositories> processCheckout> FetchRemoteBranch> [%s] error %v", op.UUID, err)
+		return err
 	}
 
 	//Check commit
@@ -53,9 +51,9 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 		if currentCommit.LongHash != op.Setup.Checkout.Commit {
 			//Not the same commit
 			//Pull and reset HARD the commit
-			log.Debug("Repositories> processCheckout> pulling branch %s", op.Setup.Checkout.Branch)
-			if err := gitRepo.Pull("origin", op.Setup.Checkout.Branch); err != nil {
-				log.Error("Repositories> processCheckout> Pull with commit > [%s] error %v", op.UUID, err)
+			log.Debug("Repositories> processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
+			if err := gitRepo.ResetHard("origin/" + op.Setup.Checkout.Branch); err != nil {
+				log.Error("Repositories> processCheckout> ResetHard> [%s] error %v", op.UUID, err)
 				return err
 			}
 

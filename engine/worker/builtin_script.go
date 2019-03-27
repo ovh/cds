@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -16,110 +17,129 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+type script struct {
+	shell   string
+	content []byte
+	opts    []string
+}
+
+func prepareScriptContent(parameters *[]sdk.Parameter) (*script, error) {
+	var script = script{
+		shell: "/bin/sh",
+	}
+
+	// Get script content
+	var scriptContent string
+	a := sdk.ParameterFind(parameters, "script")
+	scriptContent = a.Value
+
+	// Check that script content is there
+	if scriptContent == "" {
+		return nil, errors.New("script content not provided, aborting")
+	}
+
+	// except on windows where it's powershell
+	if sdk.GOOS == "windows" {
+		script.shell = "PowerShell"
+		script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
+		// on windows, we add ErrorActionPreference just below
+	} else if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
+		t := strings.SplitN(scriptContent, "\n", 2)
+		script.shell = strings.TrimPrefix(t[0], "#!")             // Find out the shebang
+		script.shell = strings.TrimRight(script.shell, " \t\r\n") // Remove all the trailing shit
+		splittedShell := strings.Split(script.shell, " ")         // Split it to find options
+		script.shell = splittedShell[0]
+		script.opts = splittedShell[1:]
+		// if it's a shell, we add set -e to failed job when a command is failed
+		if isShell(script.shell) && len(splittedShell) == 1 {
+			script.opts = append(script.opts, "-e")
+		}
+		scriptContent = t[1]
+	} else {
+		script.opts = []string{"-e"}
+	}
+
+	script.content = []byte(scriptContent)
+
+	return &script, nil
+}
+
+func writeScriptContent(script *script, basedir string) (func(), error) {
+	// Create a tmp file
+	tmpscript, errt := ioutil.TempFile(basedir, "cds-")
+	if errt != nil {
+		log.Warning("Cannot create tmp file: %s", errt)
+		return nil, errors.New("cannot create temporary file, aborting")
+	}
+
+	// Put script in file
+	n, errw := tmpscript.Write(script.content)
+	if errw != nil || n != len(script.content) {
+		if errw != nil {
+			log.Warning("cannot write script: %s", errw)
+		} else {
+			log.Warning("cannot write all script: %d/%d", n, len(script.content))
+		}
+		return nil, errors.New("cannot write script in temporary file, aborting")
+	}
+
+	oldPath := tmpscript.Name()
+	tmpscript.Close()
+	var scriptPath string
+	if sdk.GOOS == "windows" {
+		//Remove all .txt Extensions, there is not always a .txt extension
+		newPath := strings.Replace(oldPath, ".txt", "", -1)
+		//and add .PS1 extension
+		newPath = newPath + ".PS1"
+		if err := os.Rename(oldPath, newPath); err != nil {
+			return nil, errors.New("cannot rename script to add powershell Extension, aborting")
+		}
+		//This aims to stop a the very first error and return the right exit code
+		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
+		scriptPath = newPath
+		script.opts = append(script.opts, psCommand)
+	} else {
+		scriptPath = oldPath
+		script.opts = append(script.opts, scriptPath)
+	}
+	deferFunc := func() { os.Remove(scriptPath) }
+
+	// Chmod file
+	if err := os.Chmod(scriptPath, 0755); err != nil {
+		log.Warning("runScriptAction> cannot chmod script %s: %s", scriptPath, err)
+		return deferFunc, errors.New("cannot chmod script, aborting")
+	}
+
+	return deferFunc, nil
+}
+
 func runScriptAction(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		chanRes := make(chan sdk.Result)
 
 		go func() {
 			res := sdk.Result{Status: sdk.StatusSuccess.String()}
-
-			// Get script content
-			var scriptContent string
-			a := sdk.ParameterFind(&a.Parameters, "script")
-			scriptContent = a.Value
-
-			// Check that script content is there
-			if scriptContent == "" {
+			script, err := prepareScriptContent(&a.Parameters)
+			if err != nil {
 				res.Status = sdk.StatusFail.String()
-				res.Reason = fmt.Sprintf("script content not provided, aborting\n")
+				res.Reason = err.Error()
 				sendLog(res.Reason)
 				chanRes <- res
 			}
 
-			// Default shell is sh
-			shell := "/bin/sh"
-			var opts []string
-
-			// except on windows where it's powershell
-			if sdk.GOOS == "windows" {
-				shell = "PowerShell"
-				opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
-				// on windows, we add ErrorActionPreference just below
-			} else if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
-				t := strings.SplitN(scriptContent, "\n", 2)
-				shell = strings.TrimPrefix(t[0], "#!")
-				shell = strings.TrimRight(shell, " \t\r\n")
-
-				// if it's a shell, we add set -e to failed job when a command is failed
-				if isShell(shell) && len(t) >= 2 {
-					// there is a shebang, we add set -e add first line after shebang.
-					t[1] = fmt.Sprintf("set -e; \n%s", t[1])
-				}
-				scriptContent = strings.Join(t, "\n")
-			} else {
-				// no specified shebang, we add set -e; at the beginning
-				scriptContent = fmt.Sprintf("set -e; \n%s", scriptContent)
+			deferFunc, err := writeScriptContent(script, w.basedir)
+			if deferFunc != nil {
+				defer deferFunc()
 			}
-
-			// Create a tmp file
-			tmpscript, errt := ioutil.TempFile(w.basedir, "cds-")
-			if errt != nil {
-				log.Warning("Cannot create tmp file: %s", errt)
-				res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")
-				sendLog(res.Reason)
+			if err != nil {
 				res.Status = sdk.StatusFail.String()
+				res.Reason = err.Error()
+				sendLog(res.Reason)
 				chanRes <- res
 			}
 
-			// Put script in file
-			n, errw := tmpscript.Write([]byte(scriptContent))
-			if errw != nil || n != len(scriptContent) {
-				if errw != nil {
-					log.Warning("Cannot write script: %s", errw)
-				} else {
-					log.Warning("cannot write all script: %d/%d", n, len(scriptContent))
-				}
-				res.Reason = fmt.Sprintf("cannot write script in temporary file, aborting\n")
-				sendLog(res.Reason)
-				res.Status = sdk.StatusFail.String()
-				chanRes <- res
-			}
-
-			oldPath := tmpscript.Name()
-			tmpscript.Close()
-			var scriptPath string
-			if sdk.GOOS == "windows" {
-				//Remove all .txt Extensions, there is not always a .txt extension
-				newPath := strings.Replace(oldPath, ".txt", "", -1)
-				//and add .PS1 extension
-				newPath = newPath + ".PS1"
-				if err := os.Rename(oldPath, newPath); err != nil {
-					res.Status = sdk.StatusFail.String()
-					res.Reason = fmt.Sprintf("cannot rename script to add powershell Extension, aborting\n")
-					sendLog(res.Reason)
-					chanRes <- res
-				}
-				//This aims to stop a the very first error and return the right exit code
-				psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
-				scriptPath = newPath
-				opts = append(opts, psCommand)
-			} else {
-				scriptPath = oldPath
-				opts = append(opts, scriptPath)
-			}
-			defer os.Remove(scriptPath)
-
-			// Chmod file
-			if err := os.Chmod(scriptPath, 0755); err != nil {
-				log.Warning("runScriptAction> cannot chmod script %s: %s", scriptPath, err)
-				res.Reason = fmt.Sprintf("cannot chmod script, aborting")
-				sendLog(res.Reason)
-				res.Status = sdk.StatusFail.String()
-				chanRes <- res
-			}
-
-			log.Info("runScriptAction> %s %s", shell, strings.Trim(fmt.Sprint(opts), "[]"))
-			cmd := exec.CommandContext(ctx, shell, opts...)
+			log.Info("runScriptAction> %s %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"))
+			cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 			res.Status = sdk.StatusUnknown.String()
 
 			env := os.Environ()
@@ -155,6 +175,9 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
 					continue
 				}
+
+				cmd.Env = append(cmd.Env, cdsEnvVartoENV(p)...)
+
 				envName := strings.Replace(p.Name, ".", "_", -1)
 				envName = strings.Replace(envName, "-", "_", -1)
 				envName = strings.ToUpper(envName)

@@ -1,14 +1,8 @@
-export class Download {
+export class DownloadableResource {
     name: string;
-    osArchs: Array<OSArch>;
-}
-
-export class OSArch {
     os: string;
-    archs: Array<Arch>;
-}
-
-export class Arch {
     arch: string;
+    filename: string;
     available: boolean;
+    variant: string;
 }

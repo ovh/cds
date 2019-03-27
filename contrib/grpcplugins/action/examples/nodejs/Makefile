@@ -19,7 +19,7 @@ endef
 export PLUGIN_MANIFEST_BINARY
 
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 TARGET_TAR = plugin-$(TARGET_NAME).tar.gz
 
 build:

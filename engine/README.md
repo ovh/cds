@@ -7,11 +7,14 @@ This component is responsible and is the entry point to several µServices such 
 * API
 * VCS
 * Hooks
-* [Hatcheries](https://ovh.github.io/cds/hatchery/)
+* Repositories
+* ElasticSearch
+* Migrate
+* [Hatcheries](https://ovh.github.io/cds/docs/components/hatchery/)
 
 The API component is the core component and is mandatory in every setups.
 
-To start CDS API, the mandatory dependencies are a [PostgreSQL database](https://www.postgresql.org/), a [Redis Server](https://redis.io/) and a path to the directory containing other CDS binaries, for serious usages you may need other third parties [Read more](https://ovh.github.io/cds/installation/installation.requirements/)
+To start CDS API, the mandatory dependencies are a [PostgreSQL database](https://www.postgresql.org/), a [Redis Server](https://redis.io/) and a path to the directory containing other CDS binaries, for serious usages you may need other third parties [Read more](https://ovh.github.io/cds/hosting/requirements/)
 
 ## Configuration
 There are two ways to set up CDS:

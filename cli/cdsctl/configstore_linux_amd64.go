@@ -8,6 +8,8 @@ import (
 	"github.com/ovh/cds/sdk/keychain"
 )
 
+var keychainEnabled = true
+
 func storeSecret(configFile io.Writer, c *config) error {
 	storedConf := *c
 	storedConf.Token = "xxxxxxxx"

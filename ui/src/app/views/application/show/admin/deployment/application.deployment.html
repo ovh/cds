@@ -35,7 +35,7 @@
         </div>
         <div class="six wide right aligned field">
             <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="addIntegration()"
-                [disabled]="!selectedIntegration || loadingBtn">{{ 'btn_add' | translate }}</button>
+                [disabled]="!selectedIntegration || loadingBtn || application.from_repository">{{ 'btn_add' | translate }}</button>
             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')"
                 (event)="addIntegration()" #linkWarning></app-warning-modal>
         </div>
@@ -81,11 +81,11 @@
                             </td>
                             <td class="center aligned">
                                 <div>
-                                    <button class="ui green button mb5" [disabled]="loadingBtn" [class.loading]="loadingBtn"
+                                    <button class="ui green button mb5" [disabled]="loadingBtn || application.from_repository" [class.loading]="loadingBtn"
                                         type="button" (click)="updateIntegration(pf)">{{ 'btn_save' | translate }}</button>
                                 </div>
                                 <div>
-                                    <app-delete-button (event)="clickDeleteIntegration(pf)" [loading]="loadingBtn"></app-delete-button>
+                                    <app-delete-button (event)="clickDeleteIntegration(pf)" [loading]="loadingBtn" [disabled]="loadingBtn || application.from_repository"></app-delete-button>
                                 </div>
                             </td>
                         </tr>

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Download } from 'app/model/download.model';
+import { DownloadableResource } from 'app/model/download.model';
 import { environment } from '../../../../environments/environment';
 import { DownloadService } from '../../../service/download/download.service';
 import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
@@ -10,7 +10,7 @@ import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
     styleUrls: ['./download.scss']
 })
 export class DownloadComponent {
-    downloads: Array<Download>;
+    resources: Array<DownloadableResource>;
     loading = false;
     apiURL: string;
     path: Array<PathItem>;
@@ -19,7 +19,7 @@ export class DownloadComponent {
         this.loading = true;
 
         this._downloadService.getDownloads().subscribe(r => {
-            this.downloads = r;
+            this.resources = r;
             this.apiURL = environment.apiURL;
             this.loading = false;
         });

@@ -20,10 +20,9 @@ import (
 var workflowInitCmd = cli.Command{
 	Name:  "init",
 	Short: "Init a workflow",
-	Long: `[WARNING] THIS IS AN EXPERIMENTAL FEATURE
-Initialize a workflow from your current repository, this will create yml files and push them to CDS.
+	Long: `Initialize a workflow from your current repository, this will create yml files and push them to CDS.
 
-Documentation: https://ovh.github.io/cds/gettingstarted/firstworkflow/
+Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/
 
 `,
 	OptionalArgs: []cli.Arg{
@@ -214,6 +213,7 @@ func workflowInitRun(c cli.Values) error {
 	for _, r := range repos {
 		// r.Fullname = CDS/demo
 		if strings.ToLower(r.Fullname) == repoName {
+			repoName = r.Fullname
 			repoFound = true
 		}
 	}
@@ -233,8 +233,8 @@ func workflowInitRun(c cli.Values) error {
 			existingApp = &apps[i]
 			break
 		} else if a.Name == name {
-			fmt.Printf("application %s/%s found in CDS. ", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
-			fmt.Printf(cli.Red("But it's not linked to repository")+"\"%s\". ", cli.Red(repoName))
+			fmt.Printf("application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
+			fmt.Println(cli.Red("But it's not linked to repository"), cli.Red(repoName))
 			if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
 				return fmt.Errorf("operation aborted")
 			}
@@ -441,7 +441,7 @@ func workflowInitRun(c cli.Values) error {
 		return err
 	}
 
-	if err := workflowTarReaderToFiles(dotCDS, tr, true, true); err != nil {
+	if err := workflowTarReaderToFiles(c, dotCDS, tr); err != nil {
 		return err
 	}
 

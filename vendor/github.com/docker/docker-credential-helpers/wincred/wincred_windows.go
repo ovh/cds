@@ -13,11 +13,12 @@ type Wincred struct{}
 
 // Add adds new credentials to the windows credentials manager.
 func (h Wincred) Add(creds *credentials.Credentials) error {
+	credsLabels := []byte(credentials.CredsLabel)
 	g := winc.NewGenericCredential(creds.ServerURL)
 	g.UserName = creds.Username
 	g.CredentialBlob = []byte(creds.Secret)
 	g.Persist = winc.PersistLocalMachine
-	g.Attributes = []winc.CredentialAttribute{{"label", []byte(credentials.CredsLabel)}}
+	g.Attributes = []winc.CredentialAttribute{{Keyword: "label", Value: credsLabels}}
 
 	return g.Write()
 }
