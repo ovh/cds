@@ -1517,7 +1517,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if err != nil {
 			return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
 		}
-		if wf.FromRepository != "" {
+		if wf.FromRepository != "" && opts != nil && opts.FromRepository != wf.FromRepository {
 			return nil, nil, sdk.WrapError(sdk.ErrForbidden, "cannot overwrite ascode workflow")
 		}
 	}
