@@ -93,6 +93,7 @@ export class WorkerModelEditComponent implements OnInit {
     }
 
     getWorkerModelComponents() {
+        this.loading = true;
         forkJoin([
             this._workerModelService.getWorkerModelPatterns(),
             this._workerModelService.getWorkerModelTypes(),
@@ -108,10 +109,12 @@ export class WorkerModelEditComponent implements OnInit {
 
     getWorkerModel(workerModelName: string): void {
         this.loading = true;
-        this._workerModelService.getWorkerModelByName(workerModelName).subscribe(wm => {
-            this.getWorkerModelPermission(wm);
-            this.updatePath();
-        });
+        this._workerModelService.getWorkerModelByName(workerModelName)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(wm => {
+                this.getWorkerModelPermission(wm);
+                this.updatePath();
+            });
     }
 
     // FIXME calculate editable value, should be done by the api
@@ -148,7 +151,7 @@ export class WorkerModelEditComponent implements OnInit {
     deleteWorkerModel(): void {
         this.loading = true;
         this._workerModelService.deleteWorkerModel(this.workerModel)
-            .pipe(finalize(() => { this.loading = false; }))
+            .pipe(finalize(() => this.loading = false))
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('worker_model_deleted'));
                 this._router.navigate(['../'], { relativeTo: this._route });
@@ -158,7 +161,7 @@ export class WorkerModelEditComponent implements OnInit {
     saveWorkerModel(workerModel: WorkerModel) {
         this.loading = true;
         this._workerModelService.updateWorkerModel(workerModel)
-            .pipe(finalize(() => { this.loading = false; }))
+            .pipe(finalize(() => this.loading = false))
             .subscribe(wm => {
                 this.getWorkerModelPermission(wm);
                 this._toast.success('', this._translate.instant('worker_model_saved'));

@@ -64,6 +64,7 @@ export class WorkerModelAddComponent implements OnInit {
     }
 
     getWorkerModelComponents() {
+        this.loading = true;
         forkJoin([
             this._workerModelService.getWorkerModelPatterns(),
             this._workerModelService.getWorkerModelTypes(),
@@ -84,8 +85,6 @@ export class WorkerModelAddComponent implements OnInit {
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('worker_model_saved'));
                 this._router.navigate(['settings', 'worker-model', wm.name]);
-            }, () => {
-                this.loading = false;
             });
     }
 
