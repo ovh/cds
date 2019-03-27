@@ -890,8 +890,8 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 
 		// IF AS CODE - REBUILD Workflow
 		if wf.FromRepository != "" {
-			var errp error
-			p, errp = project.Load(db, cache, p.Key, u,
+			p1, errp := project.Load(db, cache, p.Key, u,
+				project.LoadOptions.WithVariables,
 				project.LoadOptions.WithGroups,
 				project.LoadOptions.WithApplicationVariables,
 				project.LoadOptions.WithApplicationWithDeploymentStrategies,
@@ -908,7 +908,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			}
 			// Get workflow from repository
 			var errCreate error
-			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p, wf, *opts, u, project.DecryptWithBuiltinKey)
+			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p1, wf, *opts, u, project.DecryptWithBuiltinKey)
 			if errCreate != nil {
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 				for i, msg := range asCodeInfosMsg {
