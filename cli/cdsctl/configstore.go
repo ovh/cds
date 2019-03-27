@@ -1,4 +1,4 @@
-// +build dragonfly freebsd netbsd openbsd linux,386 linux,arm windows,386 windows,arm nokeychain
+// +build freebsd openbsd linux,386 linux,arm windows,386 windows,arm nokeychain
 
 package main
 

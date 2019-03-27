@@ -278,13 +278,13 @@ export class WorkflowTemplateEditComponent implements OnInit {
         }
     }
 
-    clickAudit(a: AuditWorkflowTemplate) {
+    clickAudit(a: AuditWorkflowTemplate): void {
         let before = a.data_before ? a.data_before : null;
         let after = a.data_after ? a.data_after : null;
         this.diffItems = calculateWorkflowTemplateDiff(before, after);
     }
 
-    clickRollback(a: AuditWorkflowTemplate) {
+    clickRollback(a: AuditWorkflowTemplate): void {
         let wt = a.data_before ? a.data_before : null;
         if (!wt) {
             wt = a.data_after ? a.data_after : null;

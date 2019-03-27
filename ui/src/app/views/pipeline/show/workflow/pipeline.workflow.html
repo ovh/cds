@@ -9,7 +9,7 @@
                             [popupText]="'workflow_preview_mode' | translate" popupPlacement="top center">
                         </i>
                     </div>
-                    <div *ngIf="previewMode" class="ui green button" (click)="savePreview()">
+                    <div *ngIf="previewMode" class="ui green button" (click)="savePreview()" [class.disabled]="originalPipeline.from_repository">
                         <i class="save icon"></i> {{'btn_save' | translate}}
                     </div>
                 </div>
@@ -36,7 +36,7 @@
                                     </div>
                                 </li>
                                 <li class="new job">
-                                    <div class="new job ui segment pointing" (click)="addJob(stage)">
+                                    <div class="new job ui segment pointing" (click)="addJob(stage)" *ngIf="!pipeline.from_repository">
                                         {{ 'step_add_job' | translate }}
                                     </div>
                                 </li>
@@ -46,7 +46,8 @@
                     <li class="stage" [class.one]="pipeline.stages.length === 0"
                         [class.two]="pipeline.stages.length === 1" [class.three]="pipeline.stages.length === 2"
                         [class.four]="pipeline.stages.length === 3" [class.five]="pipeline.stages.length === 4"
-                        [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6">
+                        [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6"
+                        *ngIf="!pipeline.from_repository">
                         <div class="new stageItem">
                             <ul>
                                 <li class="job">
@@ -78,10 +79,10 @@
     <modal-actions>
         <button class="ui grey button" [disabled]="loadingStage"
             (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button class="ui green button" [disabled]="loadingStage" [class.loading]="loadingStage"
+        <button class="ui green button" [disabled]="loadingStage || pipeline.from_repository" [class.loading]="loadingStage"
             (click)="stageEvent('update')" *ngIf="selectedStage?.hasChanged">{{ 'btn_save' | translate }}
         </button>
-        <app-delete-button (event)="stageEvent('delete')"
+        <app-delete-button (event)="stageEvent('delete')" [disabled]="pipeline.from_repository"
             *ngIf="!selectedStage?.hasChanged && pipeline.permission === permissionValue.READ_WRITE_EXECUTE">
         </app-delete-button>
     </modal-actions>

@@ -66,7 +66,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		_, msgList, globalError := environment.ParseAndImport(tx, api.Cache, proj, eenv, force, project.DecryptWithBuiltinKey, deprecatedGetUser(ctx))
+		_, msgList, globalError := environment.ParseAndImport(tx, proj, eenv, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, deprecatedGetUser(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", eenv.Name)

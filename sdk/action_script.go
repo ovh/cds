@@ -188,7 +188,7 @@ func NewStepPlugin(v map[string]map[string]string) (*Action, error) {
 }
 
 // NewStepDefault returns an action (basically used as a step of a job) of default type
-func NewStepDefault(n string, args map[string]string) (*Action, error) {
+func NewStepDefault(n string, args map[string]string) *Action {
 	newAction := Action{
 		Name:       n,
 		Parameters: []Parameter{},
@@ -207,7 +207,7 @@ func NewStepDefault(n string, args map[string]string) (*Action, error) {
 		})
 	}
 
-	return &newAction, nil
+	return &newAction
 }
 
 // ActionInfoMarkdown returns string formatted with markdown

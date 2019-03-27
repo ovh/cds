@@ -70,6 +70,7 @@
   "application_name": "Application name",
   "application_icon": "Application icon",
   "application_description": "Application description",
+  "application_from_repository": "Application imported from {{repo}}",
   "application_name_error": "Invalid application name. Allowed pattern is: a-zA-Z0-9._-",
   "application_no_usage": "The application is not used",
   "application_permission_list_title": "List of application permissions: ",
@@ -361,6 +362,7 @@
   "environment_title_clone": "Clone the environment",
   "environment_clone_placeholder": "Name of the cloned environment",
   "environment_deleted": "Environment deleted",
+  "environment_from_repository": "Environment imported from {{repo}}",
   "environment_name": "Environment name",
   "environment_no": "There is no environment",
   "environment_renamed": "Environment renamed",
@@ -584,6 +586,7 @@
   "pipeline_loading": "Loading pipeline...",
   "pipeline_name": "Pipeline name",
   "pipeline_description": "Pipeline description",
+  "pipeline_from_repository": "Pipeline imported from {{repo}}",
   "pipeline_name_new": "New pipeline name",
   "pipeline_name_error": "Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-",
   "pipeline_parameters_list_title": "List of pipeline parameters: ",
@@ -1132,6 +1135,8 @@
   "workflow_template_import_from_url": "Import from URL",
   "workflow_template_imported_from_url": "Imported from URL",
 
-  "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
+  "application_repository_help_line_1": "Your application was not imported from your code.",
+  "environment_repository_help_line_1": "Your environment was not imported from your code.",
+  "pipeline_repository_help_line_1": "Your pipeline was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."
 }

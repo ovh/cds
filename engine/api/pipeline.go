@@ -43,6 +43,10 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load pipeline %s", name)
 		}
 
+		if pipelineDB.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		tx, errB := api.mustDB().Begin()
 		if errB != nil {
 			sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")
@@ -85,6 +89,14 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 
 		db := api.mustDB()
 		u := deprecatedGetUser(ctx)
+
+		pipDB, err := pipeline.LoadPipeline(db, key, name, false)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load pipeline")
+		}
+		if pipDB.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		proj, errP := project.Load(db, api.Cache, key, u, project.LoadOptions.WithGroups)
 		if errP != nil {
