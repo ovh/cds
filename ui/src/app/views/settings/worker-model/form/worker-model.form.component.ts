@@ -145,6 +145,7 @@ pattern_name: basic_unix`;
         }
         this.save.emit({
             ...this.workerModel,
+            pattern_name: this.patternSelected ? this.patternSelected.name : null,
             group_id: Number(this.workerModel.group_id)
         });
     }
