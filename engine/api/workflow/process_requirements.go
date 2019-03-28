@@ -42,6 +42,7 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 				errm.Append(sdk.ErrInvalidJobRequirementDuplicateModel)
 				break
 			}
+			value = strings.Split(value, " ")[0]
 			model = value
 		}
 
@@ -70,7 +71,7 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 						for _, cap := range wm.RegisteredCapabilities {
 							if cap.Value == req.Value {
 								hasCapa = true
-                break
+								break
 							}
 						}
 						if !hasCapa {

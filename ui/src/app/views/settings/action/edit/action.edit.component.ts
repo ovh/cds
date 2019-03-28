@@ -78,6 +78,18 @@ export class ActionEditComponent implements OnInit {
                 class: 'two',
                 selector: (a: AuditAction) => a.triggered_by
             },
+            <Column<AuditAction>>{
+                disabled: true,
+                type: ColumnType.CONFIRM_BUTTON,
+                name: 'common_action',
+                class: 'two right aligned',
+                selector: (aa: AuditAction) => {
+                    return {
+                        title: 'common_rollback',
+                        click: () => { this.clickRollback(aa) }
+                    };
+                }
+            }
         ];
 
         this.paramsSub = this._route.params.subscribe(params => {
@@ -117,6 +129,7 @@ export class ActionEditComponent implements OnInit {
             .pipe(finalize(() => this.loading = false))
             .pipe(first()).subscribe(a => {
                 this.action = a;
+                this.columnsAudits[3].disabled = !this.action.editable;
                 this.updatePath();
             });
     }
@@ -139,14 +152,29 @@ export class ActionEditComponent implements OnInit {
             });
     }
 
-    clickAudit(a: AuditAction) {
+    clickAudit(a: AuditAction): void {
         let before = a.data_before ? a.data_before : null;
         let after = a.data_after ? a.data_after : null;
         this.diffItems = [<Item>{
             before: before ? before : null,
             after: after ? after : null,
-            type: 'application/yaml'
-        }]
+            type: 'text/x-yaml'
+        }];
+    }
+
+    clickRollback(aa: AuditAction): void {
+        this._actionService.rollbackAudit(this.action.group.name, this.action.name, aa.id)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(a => {
+                this._toast.success('', this._translate.instant('action_saved'));
+                this.action = a;
+
+                if (this.groupName === a.group.name && this.actionName === a.name) {
+                    this.getAudits();
+                }
+
+                this._router.navigate(['settings', 'action', this.action.group.name, this.action.name]);
+            });
     }
 
     actionSave(action: Action): void {
@@ -193,7 +221,7 @@ export class ActionEditComponent implements OnInit {
             });
     }
 
-    updatePath() {
+    updatePath(): void {
         this.path = [<PathItem>{
             translate: 'common_settings'
         }, <PathItem>{
@@ -201,7 +229,7 @@ export class ActionEditComponent implements OnInit {
             routerLink: ['/', 'settings', 'action']
         }];
 
-        if (this.action && this.action.id) {
+        if (this.action && this.action.editable) {
             this.path.push(<PathItem>{
                 text: this.action.name,
                 routerLink: ['/', 'settings', 'action', this.action.name]
@@ -209,7 +237,7 @@ export class ActionEditComponent implements OnInit {
         }
     }
 
-    getGroups() {
+    getGroups(): void {
         this.loading = true;
         this._groupService.getGroups()
             .pipe(finalize(() => this.loading = false))

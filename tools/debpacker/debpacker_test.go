@@ -121,6 +121,7 @@ WantedBy=multi-user.target
 
 	// writePostinstFile
 	assert.Equal(t, file{"target/test/DEBIAN/postinst", `#!/bin/bash
+set -e
 echo "Create the test User, Group and Directories"
 adduser --system --group test
 mkdir -p /var/lib/test

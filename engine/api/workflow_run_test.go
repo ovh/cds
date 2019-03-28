@@ -1421,7 +1421,6 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
-	t.Logf(">>>>>>>>%s", w1.FromRepository)
 
 	//Prepare request
 	vars := map[string]string{

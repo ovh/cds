@@ -31,6 +31,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
@@ -508,7 +509,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	if !hasWorker {
 		// If no worker, let's exit because CDS for run anything
-		log.Error("cdsctl is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error("worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 		return errors.New("worker binary unavailabe")
 	}
 
@@ -711,6 +712,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
 		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "pipeline.ComputeAudit", func(ctx context.Context) {
+		pipeline.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
