@@ -364,7 +364,7 @@ export class WorkflowsState {
         const state = ctx.getState();
         const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
         let joins = state.workflows[wfKey].workflow_data.joins ? state.workflows[wfKey].workflow_data.joins : [];
-        joins.push(action.payload.join);
+        joins = joins.concat(action.payload.join);
 
         const workflow: Workflow = {
             ...state.workflows[wfKey],
