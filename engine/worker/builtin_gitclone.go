@@ -160,8 +160,8 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		var opts = &git.CloneOpts{
 			Recursive:               true,
 			NoStrictHostKeyChecking: true,
-			Depth: 50,
-			Tag:   tag,
+			Depth:                   50,
+			Tag:                     tag,
 		}
 		if branch != nil {
 			opts.Branch = branch.Value
@@ -377,13 +377,25 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 
 		if commit == "" || commit == "{{.git.hash}}" {
 			if info.Hash != "" {
-				gitHash := sdk.Variable{
-					Name:  "git.hash",
-					Type:  sdk.StringVariable,
-					Value: info.Hash,
+				if _, err := w.addVariableInPipelineBuild(
+					sdk.Variable{
+						Name:  "git.hash",
+						Type:  sdk.StringVariable,
+						Value: info.Hash,
+					},
+					params,
+				); err != nil {
+					return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
 				}
 
-				if _, err := w.addVariableInPipelineBuild(gitHash, params); err != nil {
+				if _, err := w.addVariableInPipelineBuild(
+					sdk.Variable{
+						Name:  "git.hash.short",
+						Type:  sdk.StringVariable,
+						Value: info.Hash[:7],
+					},
+					params,
+				); err != nil {
 					return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
 				}
 				sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
