@@ -263,6 +263,7 @@ func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow
 							entry := exportedWorkflow.Workflow[nodeName]
 							entry.Payload = nil
 							exportedWorkflow.Workflow[nodeName] = entry
+							break
 						}
 					}
 				}
