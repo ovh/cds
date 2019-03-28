@@ -143,7 +143,7 @@ func (p Packer) Build() (err error) {
 	fmt.Println(bufErr.String())
 	fmt.Println(bufOut.String())
 
-	if err != nil {
+	if err == nil {
 		fmt.Printf("your package is ready: %s.deb\n", filepath.Join(filepath.Dir(p.outputDirectory), p.config.PackageName))
 	}
 
