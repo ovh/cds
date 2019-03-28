@@ -5,6 +5,7 @@
 .vscode
 .DS_Store
 dump.rdb
+dist
 cli/cds/cds
 engine/engine
 engine/dist
