@@ -146,8 +146,8 @@ github.com/fortytw2/leaktest v1.2.0 h1:cj6GCiwJDH7l3tMHLjZDo0QqPtrXJiWSI9JgpeQKw
 github.com/fortytw2/leaktest v1.2.0/go.mod h1:jDsjWgpAGjm2CA7WthBh/CdZYEPF31XHquHwclZch5g=
 github.com/fsamin/go-dump v1.0.8 h1:xD9mGM+UZLwGIId73eNUTzHs0MQ6S+138plyw7c390g=
 github.com/fsamin/go-dump v1.0.8/go.mod h1:ZgKd2aOXAFFbbFuUgvQhu7mwTlI3d3qnTICMWdvAa9o=
-github.com/fsamin/go-repo v0.1.0 h1:5ZpaTfjaDQPUtZuMUJvGAw14rdRwWblqbhZ9nfosoBA=
-github.com/fsamin/go-repo v0.1.0/go.mod h1:FjkhUwT3u2bCq7HcT+3hfMxkQhiKlfdvw91+fDHNRxo=
+github.com/fsamin/go-repo v0.1.1 h1:m7x+yEPEXY+afNgdQ+gJMvEao3N5nJ6W9Tal6s0BYeg=
+github.com/fsamin/go-repo v0.1.1/go.mod h1:FjkhUwT3u2bCq7HcT+3hfMxkQhiKlfdvw91+fDHNRxo=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be h1:UhjSvwE1gxUYfekK9BXZ/LL55we9Avg+2Pt0PIlMYCk=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be/go.mod h1:kuiNcf1lKxl4isIY6bHxbBatpLD43c2RKWIV/AGlhXY=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
