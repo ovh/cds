@@ -158,24 +158,32 @@ func checkServiceRequirement(w *currentWorker, r sdk.Requirement) (bool, error) 
 }
 
 func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	// If we are in a docker and in a provisioned worker don't run job in this worker
-	if w.model.Type == sdk.Docker && w.bookedWJobID == 0 {
-		return false, nil
-	}
-
-	v, err := mem.VirtualMemory()
-	if err != nil {
-		return false, err
-	}
-	totalMemory := v.Total
-
+	var totalMemory int64
 	neededMemory, err := strconv.ParseInt(r.Value, 10, 64)
 	if err != nil {
 		return false, err
 	}
+
+	switch w.model.Type {
+	// Check env variables in a docker is safer than mem.VirtualMemory
+	case sdk.Docker:
+		var err error
+		memoryEnv := os.Getenv("CDS__MEMORY")
+		totalMemory, err = strconv.ParseInt(memoryEnv, 10, 64)
+		if err != nil {
+			return false, err
+		}
+		totalMemory = totalMemory * 1024 * 1024
+	default:
+		v, err := mem.VirtualMemory()
+		if err != nil {
+			return false, err
+		}
+		totalMemory = int64(v.Total)
+	}
 	//Assuming memory is in megabytes
 	//If we have more than 90% of neededMemory, lets do it
-	return int64(totalMemory) >= (neededMemory*1024*1024)*90/100, nil
+	return totalMemory >= (neededMemory*1024*1024)*90/100, nil
 }
 
 func checkVolumeRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
