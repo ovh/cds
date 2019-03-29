@@ -20,7 +20,7 @@ import (
 var InterpolateHelperFuncs template.FuncMap
 
 func init() {
-	temp := template.FuncMap{
+	InterpolateHelperFuncs = wrapHelpers(template.FuncMap{
 		"abbrev":     abbrev,
 		"abbrevboth": abbrevboth,
 		"trunc":      trunc,
@@ -63,9 +63,7 @@ func init() {
 		"b64enc":       base64encode,
 		"b64dec":       base64decode,
 		"escape":       escape,
-	}
-
-	InterpolateHelperFuncs = wrapHelpers(temp)
+	})
 }
 
 func wrapHelpers(fs template.FuncMap) template.FuncMap {
