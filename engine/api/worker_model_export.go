@@ -35,7 +35,6 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 		}
 
 		opts := []exportentities.WorkerModelOption{}
-
 		if u != nil && !u.Admin && !wm.Restricted {
 			opts = append(opts, exportentities.WorkerModelLoadOptions.HideAdminFields)
 		}

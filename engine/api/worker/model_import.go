@@ -116,6 +116,9 @@ currentUGroup:
 		} else {
 			sdkWm.ID = existingWm.ID
 			if asSimpleUser && modelPattern == nil {
+				if existingWm.Type != sdk.Docker || existingWm.Restricted != sdkWm.Restricted { // Forbidden because we can't fetch previous user data
+					return nil, sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
+				}
 				switch sdkWm.Type {
 				case sdk.Docker:
 					img := sdkWm.ModelDocker.Image
