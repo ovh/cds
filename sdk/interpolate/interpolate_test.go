@@ -468,6 +468,7 @@ func TestWrapHelpers(t *testing.T) {
 		name  string
 		input string
 		want  string
+		err   error
 		data  map[string]interface{}
 	}{
 		{
@@ -523,6 +524,11 @@ func TestWrapHelpers(t *testing.T) {
 			input: `{{.one}}`,
 			want:  `<no value>`,
 		},
+		{
+			name:  "with missing params",
+			input: `{{.one | trunc}}`,
+			err:   fmt.Errorf(`template: input:1:9: executing "input" at <trunc>: error calling trunc: missing params (expected: int, string)`),
+		},
 	}
 
 	for _, tt := range tests {
@@ -531,7 +537,12 @@ func TestWrapHelpers(t *testing.T) {
 			assert.NoError(t, err)
 
 			var buff bytes.Buffer
-			assert.NoError(t, tmp.Execute(&buff, tt.data))
+			errexec := tmp.Execute(&buff, tt.data)
+			if tt.err == nil {
+				assert.NoError(t, errexec)
+			} else {
+				assert.Error(t, errexec, tt.err)
+			}
 
 			if buff.String() != tt.want {
 				t.Errorf("Do() = %v, want %v", buff.String(), tt.want)

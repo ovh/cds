@@ -66,6 +66,7 @@ func init() {
 	})
 }
 
+// wrapHelpers to handle usage of val struct in interpolate.Do
 func wrapHelpers(fs template.FuncMap) template.FuncMap {
 	wrappedHelpers := make(template.FuncMap, len(fs))
 	for key, helper := range fs {
@@ -76,8 +77,21 @@ func wrapHelpers(fs template.FuncMap) template.FuncMap {
 			continue
 		}
 
+		helperT := helperV.Type()
+		paramsCount := helperT.NumIn()
+		paramsTypes := make([]string, paramsCount)
+		for i := 0; i < helperT.NumIn(); i++ {
+			paramsTypes[i] = helperT.In(i).Name()
+		}
+
 		// easy way but reflect at runtime
 		wrappedHelpers[key] = func(ps ...interface{}) interface{} {
+			// if the helper func need more params than ps length, throw an error
+			if len(ps) < paramsCount {
+				// panic will be catched be text/template executor
+				panic(fmt.Sprintf("missing params (expected: %s)", strings.Join(paramsTypes, ", ")))
+			}
+
 			// for all helper's params, forward values from wrapper
 			values := make([]reflect.Value, len(ps))
 			for i := 0; i < len(ps); i++ {
