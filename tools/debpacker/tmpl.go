@@ -50,6 +50,7 @@ echo "Service initialization"
 {{end -}}
 chmod +x {{.SystemdServiceConfig.ExecStart}}
 
+set +e
 echo "Service installed"
 systemctl enable {{.PackageName}}
 systemctl status {{.PackageName}}
