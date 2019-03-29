@@ -1,8 +1,7 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { omit } from 'lodash';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
@@ -14,7 +13,7 @@ import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { SharedService } from '../../../../shared/shared.service';
+import { Tab } from '../../../../shared/tabs/tabs.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -24,37 +23,22 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 })
 @AutoUnsubscribe()
 export class WorkerModelEditComponent implements OnInit {
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
-
-    codeMirrorConfig: any;
-
     loading = false;
-    loadingAsCode = false;
     loadingUsage = false;
-    deleteLoading = false;
     workerModel: WorkerModel;
-    workerModelTypes: Array<string>;
-    workerModelCommunications: Array<string>;
-    workerModelGroups: Array<Group>;
-    workerModelPatterns: Array<ModelPattern> = [];
-    workerModelPatternsFiltered: Array<ModelPattern> = [];
-    patternSelected: ModelPattern;
+    types: Array<string>;
+    communications: Array<string>;
+    groups: Array<Group>;
+    patterns: Array<ModelPattern>;
     currentUser: User;
-    canEdit = false;
-    envNames: Array<string> = [];
-    newEnvName: string;
-    newEnvValue: string;
     usages: Array<Pipeline>;
-    private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    workerModelPatternError = false;
     path: Array<PathItem>;
     paramsSub: Subscription;
-    asCode = false;
-    workerModelAsCode: string;
+    tabs: Array<Tab>;
+    selectedTab: Tab;
+    workerModelName: string;
 
     constructor(
-        private sharedService: SharedService,
         private _workerModelService: WorkerModelService,
         private _groupService: GroupService,
         private _toast: ToastService,
@@ -62,221 +46,157 @@ export class WorkerModelEditComponent implements OnInit {
         private _route: ActivatedRoute,
         private _router: Router,
         private _authentificationStore: AuthentificationStore
-    ) {
-        this.codeMirrorConfig = {
-            mode: 'text/x-yaml',
-            lineWrapping: true,
-            lineNumbers: true,
-            autoRefresh: true,
-        };
+    ) { }
 
-        this.currentUser = this._authentificationStore.getUser();
-        this._groupService.getGroups(true).subscribe(groups => {
-            this.workerModelGroups = groups;
-        });
-        this.loading = true;
-        this._workerModelService.getWorkerModelPatterns()
-            .pipe(finalize(() => this.loading = false))
-            .subscribe((patterns) => {
-                this.workerModelPatterns = patterns;
-                if (this.workerModel) {
-                    this.workerModelPatternsFiltered = patterns.filter((wmp) => wmp.type === this.workerModel.type);
-                } else {
-                    this.workerModelPatternsFiltered = patterns;
-                }
-            });
+    selectTab(tab: Tab): void {
+        switch (tab.key) {
+            case 'usage':
+                this.loadUsage();
+                break;
+        }
+        this.selectedTab = tab;
     }
 
     ngOnInit() {
+        this.tabs = [<Tab>{
+            translate: 'worker_model',
+            icon: '',
+            key: 'worker_model',
+            default: true
+        }, <Tab>{
+            translate: 'common_capabilities',
+            icon: 'file outline',
+            key: 'capabilities'
+        }, <Tab>{
+            translate: 'common_usage',
+            icon: 'map signs',
+            key: 'usage'
+        }];
+
+        this.currentUser = this._authentificationStore.getUser();
+        this.getGroups();
+        this.getWorkerModelComponents();
+
         this.paramsSub = this._route.params.subscribe(params => {
-            this._workerModelService.getWorkerModelTypes().subscribe(wmt => {
-                this.workerModelTypes = wmt;
-            });
-            this._workerModelService.getWorkerModelCommunications().subscribe(wmc => {
-                this.workerModelCommunications = wmc;
-            });
-
-            if (params['workerModelName'] !== 'add') {
-                this.reloadData(params['workerModelName']);
-            } else {
-                this.workerModel = new WorkerModel();
-                this.updatePath();
-            }
+            this.workerModelName = params['workerModelName'];
+            this.getWorkerModel(this.workerModelName);
         });
     }
 
-    loadAsCode() {
-        if (this.asCode) {
-            return;
-        }
-        this.asCode = true;
-        if (!this.workerModel.id) {
-            return;
-        }
-        this.loadingAsCode = true
-        this._workerModelService.exportWorkerModel(this.workerModel.id)
-            .pipe(finalize(() => this.loadingAsCode = false))
-            .subscribe((wmStr) => this.workerModelAsCode = wmStr);
-    }
-
-    reloadData(workerModelName: string): void {
-        this._workerModelService.getWorkerModelByName(workerModelName).subscribe(wm => {
-            if (wm.model_docker.envs) {
-                this.envNames = Object.keys(wm.model_docker.envs);
-            }
-            this.workerModel = wm;
-            this.updatePath();
-            this.workerModelPatternsFiltered = this.workerModelPatterns.filter((wmp) => wmp.type === wm.type);
-            if (this.currentUser.admin) {
-                this.canEdit = true;
-                return;
-            }
-
-            if (!this.currentUser.admin && wm.group.name === 'shared.infra') {
-                this.canEdit = false;
-                return;
-            }
-            // here, check if user is admin of worker model group
-            this._groupService.getGroupByName(wm.group.name).subscribe(gr => {
-                if (gr.admins) {
-                    for (let i = 0; i < gr.admins.length; i++) {
-                        if (gr.admins[i].username === this.currentUser.username) {
-                            this.canEdit = true;
-                            break;
-                        };
-                    }
-                }
-            });
-        });
-    }
-
-    clickDeleteButton(): void {
-        this.deleteLoading = true;
-        this._workerModelService.deleteWorkerModel(this.workerModel).subscribe(wm => {
-            this.deleteLoading = false;
-            this._toast.success('', this._translate.instant('worker_model_deleted'));
-            this._router.navigate(['../'], { relativeTo: this._route });
-        }, () => {
-            this.loading = false;
-        });
-    }
-
-    clickSaveUIButton(): void {
-        if (!this.workerModel.name) {
-            return;
-        }
-
-        if (!this.workerModelNamePattern.test(this.workerModel.name)) {
-            this.workerModelPatternError = true;
-            return;
-        }
-
-        // cast to int
-        this.workerModel.group_id = Number(this.workerModel.group_id);
-        this.workerModel.group = this.workerModelGroups.find(g => this.workerModel.group_id === g.id)
-
-        if (this.patternSelected) {
-            this.workerModel.pattern_name = this.patternSelected.name;
-        }
-
+    getGroups() {
         this.loading = true;
-        if (this.workerModel.id > 0) {
-            this._workerModelService.updateWorkerModel(this.workerModel)
-                .pipe(finalize(() => {
-                    this.loading = false;
-                    this.patternSelected = null
-                }))
-                .subscribe(wm => {
-                    this.workerModel = wm;
-                    if (this.workerModel.model_docker != null && this.workerModel.model_docker.envs) {
-                        this.envNames = Object.keys(this.workerModel.model_docker.envs);
-                    }
-                    this._toast.success('', this._translate.instant('worker_model_saved'));
-                    this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
-                });
-        } else {
-            this._workerModelService.createWorkerModel(this.workerModel)
-                .pipe(finalize(() => {
-                    this.loading = false;
-                    this.patternSelected = null
-                }))
-                .subscribe(wm => {
-                    this.workerModel = wm;
-                    if (this.workerModel.model_docker != null && this.workerModel.model_docker.envs) {
-                        this.envNames = Object.keys(this.workerModel.model_docker.envs);
-                    }
-                    this.loading = false;
-                    this._toast.success('', this._translate.instant('worker_model_saved'));
-                    this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
-                });
-        }
-    }
-
-    clickSaveAsCodeButton(): void {
-        if (!this.workerModelAsCode) {
-            return;
-        }
-        this.loading = true;
-        this._workerModelService.importWorkerModel(this.workerModelAsCode, true)
+        this._groupService.getGroups()
             .pipe(finalize(() => this.loading = false))
-            .subscribe((wm) => this.workerModel = wm);
+            .subscribe(gs => {
+                this.groups = gs;
+            });
     }
 
-    getDescriptionHeight(): number {
-        return this.sharedService.getTextAreaheight(this.workerModel.description);
+    getWorkerModelComponents() {
+        this.loading = true;
+        forkJoin([
+            this._workerModelService.getWorkerModelPatterns(),
+            this._workerModelService.getWorkerModelTypes(),
+            this._workerModelService.getWorkerModelCommunications()
+        ])
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(results => {
+                this.patterns = results[0];
+                this.types = results[1];
+                this.communications = results[2];
+            });
     }
 
-    filterPatterns(type: string) {
-        this.patternSelected = null;
-        this.workerModelPatternsFiltered = this.workerModelPatterns.filter((wmp) => wmp.type === type);
+    getWorkerModel(workerModelName: string): void {
+        this.loading = true;
+        this._workerModelService.getWorkerModelByName(workerModelName)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(wm => {
+                this.getWorkerModelPermission(wm);
+                this.updatePath();
+            });
     }
 
-    preFillModel(pattern: ModelPattern) {
-        if (!this.workerModel || !this.workerModel.type || !pattern) {
+    // FIXME calculate editable value, should be done by the api
+    getWorkerModelPermission(workerModel: WorkerModel): void {
+        if (this.currentUser.admin) {
+            workerModel.editable = true;
+            this.workerModel = workerModel;
+            this.updatePath();
             return;
         }
-        switch (this.workerModel.type) {
-            case 'docker':
-                this.workerModel.model_docker.cmd = pattern.model.cmd;
-                this.workerModel.model_docker.shell = pattern.model.shell;
-                this.workerModel.model_docker.envs = pattern.model.envs;
-                if (pattern.model.envs) {
-                    this.envNames = Object.keys(pattern.model.envs);
-                }
-                break
-            default:
-                this.workerModel.model_virtual_machine.pre_cmd = pattern.model.pre_cmd;
-                this.workerModel.model_virtual_machine.cmd = pattern.model.cmd;
-                this.workerModel.model_virtual_machine.post_cmd = pattern.model.post_cmd;
+
+        if (!this.currentUser.admin && workerModel.group.name === 'shared.infra') {
+            workerModel.editable = false;
+            this.workerModel = workerModel;
+            this.updatePath();
+            return;
         }
+
+        // here, check if user is admin of worker model group
+        this._groupService.getGroupByName(workerModel.group.name).subscribe(g => {
+            if (g.admins) {
+                for (let i = 0; i < g.admins.length; i++) {
+                    if (g.admins[i].username === this.currentUser.username) {
+                        workerModel.editable = true;
+                        break;
+                    };
+                }
+            }
+            this.workerModel = workerModel;
+            this.updatePath();
+        });
+    }
+
+    deleteWorkerModel(): void {
+        this.loading = true;
+        this._workerModelService.deleteWorkerModel(this.workerModel)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(wm => {
+                this._toast.success('', this._translate.instant('worker_model_deleted'));
+                this._router.navigate(['../'], { relativeTo: this._route });
+            });
+    }
+
+    saveWorkerModel(workerModel: WorkerModel) {
+        this.loading = true;
+        this._workerModelService.updateWorkerModel(workerModel)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(wm => {
+                this.getWorkerModelPermission(wm);
+                this._toast.success('', this._translate.instant('worker_model_saved'));
+                this._router.navigate(['settings', 'worker-model', wm.name]);
+            });
+    }
+
+    saveWorkerModelAsCode(workerModel: string): void {
+        this.loading = true;
+        this._workerModelService.importWorkerModel(workerModel, true)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe((wm) => {
+                this.getWorkerModelPermission(wm);
+                this._toast.success('', this._translate.instant('worker_model_saved'));
+                this._router.navigate(['settings', 'worker-model', wm.name]);
+            });
     }
 
     loadUsage() {
-        if (this.usages) {
+        // FIXME model endpoint should take path not id
+        if (!this.workerModel || !this.workerModel.id) {
+            this._router.navigate([], {
+                relativeTo: this._route,
+                queryParams: { tab: this.tabs[0].key },
+                queryParamsHandling: 'merge'
+            });
             return;
         }
+
         this.loadingUsage = true;
         this._workerModelService.getUsage(this.workerModel.id)
             .pipe(finalize(() => this.loadingUsage = false))
-            .subscribe((usages) => this.usages = usages);
-    }
-
-    addEnv(newEnvName: string, newEnvValue: string) {
-        if (!newEnvName) {
-            return;
-        }
-        if (!this.workerModel.model_docker.envs) {
-            this.workerModel.model_docker.envs = {};
-        }
-        this.workerModel.model_docker.envs[newEnvName] = newEnvValue;
-        this.envNames.push(newEnvName);
-        this.newEnvName = '';
-        this.newEnvValue = '';
-    }
-
-    deleteEnv(envName: string, index: number) {
-        this.envNames.splice(index, 1);
-        this.workerModel.model_docker.envs = omit(this.workerModel.model_docker.envs, envName);
+            .subscribe((usages) => {
+                this.usages = usages;
+            });
     }
 
     updatePath() {

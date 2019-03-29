@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var (
@@ -58,10 +60,11 @@ Theses two commands have the same result:
 }
 
 type workerDownloadArtifact struct {
-	Workflow string `json:"workflow"`
-	Number   int64  `json:"number"`
-	Pattern  string `json:"pattern" cli:"pattern"`
-	Tag      string `json:"tag" cli:"tag"`
+	Workflow    string `json:"workflow"`
+	Number      int64  `json:"number"`
+	Pattern     string `json:"pattern" cli:"pattern"`
+	Tag         string `json:"tag" cli:"tag"`
+	Destination string `json:"destination"`
 }
 
 func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
@@ -85,11 +88,13 @@ func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
+		wd, _ := os.Getwd()
 		a := workerDownloadArtifact{
-			Workflow: cmdDownloadWorkflowName,
-			Number:   number,
-			Pattern:  cmdDownloadArtefactName,
-			Tag:      cmdDownloadTag,
+			Workflow:    cmdDownloadWorkflowName,
+			Number:      number,
+			Pattern:     cmdDownloadArtefactName,
+			Tag:         cmdDownloadTag,
+			Destination: wd,
 		}
 
 		data, errMarshal := json.Marshal(a)
@@ -139,18 +144,40 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 
 	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
+	currentProject := sdk.ParameterValue(wk.currentJob.params, "cds.project")
+	currentWorkflow := sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
 	if reqArgs.Workflow == "" {
-		reqArgs.Workflow = sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
+		reqArgs.Workflow = currentWorkflow
 	}
 
+	// If the reqArgs.Number is empty and if the reqArgs.Workflow is the current workflow, take the current build number
 	if reqArgs.Number == 0 {
-		var errN error
-		buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
-		reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
-		if errN != nil {
-			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
-			writeError(w, r, newError)
-			return
+		if reqArgs.Workflow == currentWorkflow {
+			var errN error
+			buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
+			reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
+			if errN != nil {
+				newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
+				writeError(w, r, newError)
+				return
+			}
+		} else { // If this is another workflow, check the latest run
+			filters := []cdsclient.Filter{
+				{
+					Name:  "workflow",
+					Value: reqArgs.Workflow,
+				},
+			}
+			runs, err := wk.client.WorkflowRunSearch(currentProject, 0, 0, filters...)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			if len(runs) < 1 {
+				writeError(w, r, fmt.Errorf("workflow run not found"))
+				return
+			}
+			reqArgs.Number = runs[0].Number
 		}
 	}
 
@@ -192,13 +219,14 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		go func(a *sdk.WorkflowNodeRunArtifact) {
 			defer wg.Done()
 
-			f, err := os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			path := path.Join(reqArgs.Destination, a.Name)
+			f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
 			if err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
 				isInError = true
 				return
 			}
-			sendLog(fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number))
+			sendLog(fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d (%s)...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number, path))
 			if err := wk.client.WorkflowNodeRunArtifactDownload(projectKey, reqArgs.Workflow, *a, f); err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
 				isInError = true

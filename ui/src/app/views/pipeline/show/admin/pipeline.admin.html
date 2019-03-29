@@ -13,7 +13,7 @@
                 </div>
                 <div class="fields">
                     <div class="sixteen wide bottom right aligned field">
-                        <button class="ui button green button" [class.disabled]="loading" type="submit">{{ 'btn_save' |
+                        <button class="ui button green button" [class.disabled]="loading || editablePipeline.from_repository" type="submit">{{ 'btn_save' |
                             translate }}</button>
                     </div>
                 </div>

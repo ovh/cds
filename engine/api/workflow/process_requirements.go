@@ -51,7 +51,7 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 	var modelType string
 	if model != "" {
 		// Load the worker model
-		wm, err := worker.LoadWorkerModelByName(db, model)
+		wm, err := worker.LoadWorkerModelByName(db, strings.Split(model, " ")[0])
 		if err != nil {
 			log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
 			errm.Append(sdk.ErrNoWorkerModel)
@@ -70,7 +70,7 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 						for _, cap := range wm.RegisteredCapabilities {
 							if cap.Value == req.Value {
 								hasCapa = true
-                break
+								break
 							}
 						}
 						if !hasCapa {

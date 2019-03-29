@@ -421,6 +421,137 @@ func (api *API) getActionAuditHandler() service.Handler {
 	}
 }
 
+func (api *API) postActionAuditRollbackHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		actionName := vars["permActionName"]
+
+		auditID, err := requestVarInt(r, "auditID")
+		if err != nil {
+			return err
+		}
+
+		grp, err := group.LoadGroup(api.mustDB(), groupName)
+		if err != nil {
+			return err
+		}
+
+		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, grp.ID,
+			action.LoadOptions.Default,
+		)
+		if err != nil {
+			return err
+		}
+		if old == nil {
+			return sdk.WithStack(sdk.ErrNoAction)
+		}
+
+		aa, err := action.GetAuditByActionIDAndID(api.mustDB(), old.ID, auditID)
+		if err != nil {
+			return err
+		}
+		if aa == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+
+		var before sdk.Action
+		if err := json.Unmarshal([]byte(aa.DataBefore), &before); err != nil {
+			return sdk.WrapError(err, "cannot parse action audit")
+		}
+
+		ea := exportentities.NewAction(before)
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		// set group id on given action, if no group given use shared.infra fo backward compatibility
+		// current user should be admin if the group
+		var newGrp *sdk.Group
+		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
+			newGrp = group.SharedInfraGroup
+		} else if ea.Group == grp.Name {
+			newGrp = grp
+		} else {
+			newGrp, err = group.LoadGroupByName(tx, ea.Group)
+			if err != nil {
+				return err
+			}
+		}
+
+		u := deprecatedGetUser(ctx)
+
+		if grp.ID != newGrp.ID || old.Name != ea.Name {
+			// check that the group exists and user is admin for group id
+			if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
+				return err
+			}
+
+			// check that no action already exists for same group/name
+			current, err := action.LoadTypeDefaultByNameAndGroupID(tx, ea.Name, newGrp.ID)
+			if err != nil {
+				return err
+			}
+			if current != nil {
+				return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "an action already exists for given name on this group")
+			}
+		}
+
+		data, err := ea.Action()
+		if err != nil {
+			return err
+		}
+
+		data.GroupID = &newGrp.ID
+
+		// set action id for children based on action name and group name
+		// if no group name given for child, first search an action for shared.infra for backward compatibility
+		// else search a builtin or plugin action
+		for i := range data.Actions {
+			a, err := action.RetrieveForGroupAndName(tx, data.Actions[i].Group, data.Actions[i].Name)
+			if err != nil {
+				return err
+			}
+			data.Actions[i].ID = a.ID
+		}
+
+		// check data validity
+		if err := data.IsValidDefault(); err != nil {
+			return err
+		}
+
+		data.ID = old.ID
+
+		// check that given children exists and can be used, and no loop exists
+		if err := action.CheckChildrenForGroupIDsWithLoop(tx, &data, []int64{group.SharedInfraGroup.ID, newGrp.ID}); err != nil {
+			return err
+		}
+
+		if err = action.Update(tx, &data); err != nil {
+			return sdk.WrapError(err, "cannot update action")
+		}
+
+		new, err := action.LoadByID(tx, data.ID, action.LoadOptions.Default)
+		if err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		event.PublishActionUpdate(*old, *new, u)
+
+		new.Editable = true
+
+		return service.WriteJSON(w, new, http.StatusOK)
+	}
+}
+
 func (api *API) getActionUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -520,11 +651,6 @@ func (api *API) importActionHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 
-		data, err := ea.Action()
-		if err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, err)
-		}
-
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -534,10 +660,10 @@ func (api *API) importActionHandler() service.Handler {
 		// set group id on given action, if no group given use shared.infra fo backward compatibility
 		// current user should be admin if the group
 		var grp *sdk.Group
-		if data.Group.Name == sdk.SharedInfraGroupName {
+		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
 			grp = group.SharedInfraGroup
 		} else {
-			grp, err = group.LoadGroupByName(tx, data.Group.Name)
+			grp, err = group.LoadGroupByName(tx, ea.Group)
 			if err != nil {
 				return err
 			}
@@ -546,6 +672,11 @@ func (api *API) importActionHandler() service.Handler {
 		u := deprecatedGetUser(ctx)
 
 		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
+			return err
+		}
+
+		data, err := ea.Action()
+		if err != nil {
 			return err
 		}
 
@@ -568,10 +699,8 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		// check if action exists in database
-		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), data.Name, grp.ID,
-			action.LoadOptions.WithRequirements,
-			action.LoadOptions.WithParameters,
-			action.LoadOptions.WithGroup,
+		old, err := action.LoadTypeDefaultByNameAndGroupID(tx, data.Name, grp.ID,
+			action.LoadOptions.Default,
 		)
 		if err != nil {
 			return err
@@ -602,13 +731,13 @@ func (api *API) importActionHandler() service.Handler {
 			}
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		new, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		new, err := action.LoadByID(tx, data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		if exists {
@@ -616,6 +745,8 @@ func (api *API) importActionHandler() service.Handler {
 		} else {
 			event.PublishActionAdd(*new, u)
 		}
+
+		new.Editable = true
 
 		code := http.StatusCreated
 		if exists {

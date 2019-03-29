@@ -27,8 +27,8 @@ github.com/Shopify/sarama v1.17.0 h1:Y2/FBwElFVwt7aLKL3fDG6hh+rrlywR6uLgTgKObwTc
 github.com/Shopify/sarama v1.17.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.3+incompatible h1:awiJqUYH4q4OmoBiRccJykjd7B+w0loJi2keSna4X/M=
 github.com/Shopify/toxiproxy v2.1.3+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
-github.com/aokoli/goutils v1.0.1 h1:7fpzNGoJ3VA8qcrm++XEE1QUe0mIwNeLa02Nwq7RDkg=
-github.com/aokoli/goutils v1.0.1/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
+github.com/aokoli/goutils v1.1.0 h1:jy4ghdcYvs5EIoGssZNslIASX5m+KNMfyyKvRQ0TEVE=
+github.com/aokoli/goutils v1.1.0/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
 github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 h1:MbFvRvOzFRujpuBALUI/2ll9+8PYi23cEp/DSQFEBfU=
 github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05/go.mod h1:ikc1XA58M+Rx7SEbf0bLJCfBkwayZ8T5jBo5FXK8Uz8=
 github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53 h1:8pC6As6jhkrfhotKRkEYqlaSekpGFu1NzQbhutWHVFw=
@@ -88,8 +88,6 @@ github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d h1:t5Wuyh53qYyg9
 github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea h1:n2Ltr3SrfQlf/9nOna1DoGKxLx3qTSI8Ttl6Xrqp6mw=
 github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
-github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf h1:2OVtde5z28HeGTWK93Y1CHj1muXGOhBx05vWPMWwsrc=
-github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf/go.mod h1:N6JayAiVKtlHSnuTCeuLSQVs75hb8q+dYQLjr7cDsKY=
 github.com/dancannon/gorethink v4.0.0+incompatible h1:KFV7Gha3AuqT+gr0B/eKvGhbjmUv0qGF43aKCIKVE9A=
 github.com/dancannon/gorethink v4.0.0+incompatible/go.mod h1:BLvkat9KmZc1efyYwhz3WnybhRZtgF1K929FD8z1avU=
 github.com/danieljoos/wincred v1.0.1 h1:fcRTaj17zzROVqni2FiToKUVg3MmJ4NtMSGCySPIr/g=
@@ -104,6 +102,8 @@ github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31 h1:Dzuw9GtbmllUqEcoH
 github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
 github.com/docker/distribution v2.7.0-rc.0+incompatible h1:Nw9tozLpkMnG3IA1zLzsCuwKizII6havt4iIXWWzU2s=
 github.com/docker/distribution v2.7.0-rc.0+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
+github.com/docker/docker-credential-helpers v0.6.1 h1:Dq4iIfcM7cNtddhLVWe9h4QDjsi4OER3Z8voPu/I52g=
+github.com/docker/docker-credential-helpers v0.6.1/go.mod h1:WRaJzqw3CTB9bk10avuGsjVBZsD05qeibJ1/TYlvc0Y=
 github.com/docker/engine v0.0.0-20180816081446-320063a2ad06 h1:CcxlLWAS/9b46iqHDTBlALJZF9atXVNjeymdCNrUfnY=
 github.com/docker/engine v0.0.0-20180816081446-320063a2ad06/go.mod h1:3CPr2caMgTHxxIAZgEMd3uLYPDlRvPqCpyeRf6ncPcY=
 github.com/docker/go-connections v0.3.0 h1:3lOnM9cSzgGwx8VfK/NGOW5fLQ0GjIlCkaktF+n1M6o=
@@ -146,8 +146,8 @@ github.com/fortytw2/leaktest v1.2.0 h1:cj6GCiwJDH7l3tMHLjZDo0QqPtrXJiWSI9JgpeQKw
 github.com/fortytw2/leaktest v1.2.0/go.mod h1:jDsjWgpAGjm2CA7WthBh/CdZYEPF31XHquHwclZch5g=
 github.com/fsamin/go-dump v1.0.8 h1:xD9mGM+UZLwGIId73eNUTzHs0MQ6S+138plyw7c390g=
 github.com/fsamin/go-dump v1.0.8/go.mod h1:ZgKd2aOXAFFbbFuUgvQhu7mwTlI3d3qnTICMWdvAa9o=
-github.com/fsamin/go-repo v0.1.0 h1:5ZpaTfjaDQPUtZuMUJvGAw14rdRwWblqbhZ9nfosoBA=
-github.com/fsamin/go-repo v0.1.0/go.mod h1:FjkhUwT3u2bCq7HcT+3hfMxkQhiKlfdvw91+fDHNRxo=
+github.com/fsamin/go-repo v0.1.1 h1:m7x+yEPEXY+afNgdQ+gJMvEao3N5nJ6W9Tal6s0BYeg=
+github.com/fsamin/go-repo v0.1.1/go.mod h1:FjkhUwT3u2bCq7HcT+3hfMxkQhiKlfdvw91+fDHNRxo=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be h1:UhjSvwE1gxUYfekK9BXZ/LL55we9Avg+2Pt0PIlMYCk=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be/go.mod h1:kuiNcf1lKxl4isIY6bHxbBatpLD43c2RKWIV/AGlhXY=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
@@ -266,8 +266,8 @@ github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288 h1:oxyyMKe4Tdb237jLU
 github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288/go.mod h1:lADxMC39cJJqL93Duh1xhAs4I2Zs8mKS89XWXFGp9cs=
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
-github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1 h1:5sbhABS5wzLMXC69upO+ZpwdP3z+O9OszTijhBKLOh4=
-github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1/go.mod h1:4qWG/gcEcfX4z/mBDHJ++3ReCw9ibxbsNJbcucJdbSo=
+github.com/huandu/xstrings v1.2.0 h1:yPeWdRnmynF7p+lLYz0H2tthW9lqhMJrQV/U7yy4wX0=
+github.com/huandu/xstrings v1.2.0/go.mod h1:DvyZB1rfVYsBIigL8HwpZgxHwXozlTgGqn63UyNX5k4=
 github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19 h1:geJOJJZwkYI1yqxWrAMcgrwDvy4P1XyNNgIyN9d6UXc=
 github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf h1:WfD7VjIE6z8dIvMsI4/s+1qr5EL+zoIGev1BQj1eoJ8=
@@ -399,6 +399,8 @@ github.com/opentracing/opentracing-go v1.0.2 h1:3jA2P6O1F9UOrWVpwrIo17pu01KWvNWg
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/ory-am/common v0.4.0 h1:edGPoxYX4hno0IJHXh9TCMUPR6ZcJp+y6aClFYxeuUE=
 github.com/ory-am/common v0.4.0/go.mod h1:oCYGuwwM8FyYMKqh9vrhBaeUoyz/edx0bgJN6uS6/+k=
+github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25 h1:bBZds5R1vAoPsfTaQycKfwnV4JEvGwnhd9bKc6iu2Z0=
+github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25/go.mod h1:qrsz1nc0EPZnhuTLZpKK4Y7awUQdeKmkY5M6DbKi6Ws=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 h1:x9UmLJfoTojbsVpUh0sOpU42p7FqhlzaHKWj6Kcf6ew=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689/go.mod h1:joRatxRJaZBsY3JAOEMcoOp05CnZzsx4scTxi95DHyQ=
 github.com/ovh/venom v0.25.0 h1:q0NC8KHuG1UoWNYXqhZUM/VbOnS8ciQJr6Afn230OIw=
@@ -440,8 +442,6 @@ github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5 h1:gwcdIpH6NU2
 github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362 h1:lmOdpLt3XS6QyVoY6xNfOOTNWE2xtUBees+OAO+HFOg=
 github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362/go.mod h1:WS0rl9eEliYI8DPnr3TOwz4439pay+qNgzJoVya/DmY=
-github.com/russross/blackfriday v0.0.0-20170728175326-4048872b16cc h1:Ng688TEbTGosxh0B0IQ7NqUMYZiERtWbGGGEvRLKjh4=
-github.com/russross/blackfriday v0.0.0-20170728175326-4048872b16cc/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
 github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec h1:6ncX5ko6B9LntYM0YBRXkiSaZMmLYeZ/NWcmeB43mMY=
 github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec/go.mod h1:gi+0XIa01GRL2eRQVjQkKGqKF3SF9vZR/HnPullcV2E=
 github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=
@@ -514,8 +514,6 @@ github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18 h1:MPPkRncZLN9Kh4M
 github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.0-20150523230031-749e360c8f23 h1:Xzq4poG5ww7ejeab+AKVZhW2r+8j+9HSjaIMtqGQYIo=
 github.com/xordataexchange/crypt v0.0.0-20150523230031-749e360c8f23/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
-github.com/yesnault/docker-credential-helpers v0.0.0-20180831150006-4dd7c3df8875 h1:jFGqNE7rVLzAEHT3v3UWaGbvO87+qMKvx854jc9IvYQ=
-github.com/yesnault/docker-credential-helpers v0.0.0-20180831150006-4dd7c3df8875/go.mod h1:eZJcc5XJyeJb3n/b7dr4UkMNZLBOjcM+5GB9tm/IXVA=
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b h1:mvFk4C4VehqptP44jpYKCokoptnqgRg6TU3hNTtd134=
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b/go.mod h1:LH8s5iF2nb4JFQ1A9fAcvsdqzUGZttifagNxO5TOiPQ=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277 h1:5wm+TddKWEVUnNGFEYYThIVBAdJkZjNCnco5SJYo99Q=

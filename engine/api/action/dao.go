@@ -279,7 +279,8 @@ func deleteEdgesByParentID(db gorp.SqlExecutor, parentID int64) error {
 	return sdk.WithStack(err)
 }
 
-func insertAudit(db gorp.SqlExecutor, aa *sdk.AuditAction) error {
+// InsertAudit in database.
+func InsertAudit(db gorp.SqlExecutor, aa *sdk.AuditAction) error {
 	return sdk.WrapError(gorpmapping.Insert(db, aa), "unable to insert audit for action %d", aa.ActionID)
 }
 
@@ -299,6 +300,23 @@ func GetAuditsByActionID(db gorp.SqlExecutor, actionID int64) ([]sdk.AuditAction
 	return aas, nil
 }
 
+// GetAuditByActionIDAndID returns audit for given action id and audit id.
+func GetAuditByActionIDAndID(db gorp.SqlExecutor, actionID, auditID int64) (*sdk.AuditAction, error) {
+	var aa sdk.AuditAction
+
+	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 AND id = $2`).
+		Args(actionID, auditID)
+	found, err := gorpmapping.Get(db, query, &aa)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get action audit %d for action %d", auditID, actionID)
+	}
+	if !found {
+		return nil, nil
+	}
+
+	return &aa, nil
+}
+
 // GetAuditLatestByActionID returns action latest audit by action id.
 func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
 	var aa sdk.AuditAction
@@ -306,7 +324,7 @@ func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAc
 	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created DESC LIMIT 1`).Args(actionID)
 	found, err := gorpmapping.Get(db, query, &aa)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get action latest audit")
+		return nil, sdk.WrapError(err, "cannot get latest audit for action %d", actionID)
 	}
 	if !found {
 		return nil, nil
@@ -322,7 +340,7 @@ func GetAuditOldestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAc
 	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created ASC LIMIT 1`).Args(actionID)
 	found, err := gorpmapping.Get(db, query, &aa)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get action oldtest audit")
+		return nil, sdk.WrapError(err, "cannot get oldtest audit for action %d", actionID)
 	}
 	if !found {
 		return nil, nil

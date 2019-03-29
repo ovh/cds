@@ -59,6 +59,7 @@ export class Pipeline {
     audits: Array<PipelineAudit>;
     preview: Pipeline;
     asCode: string;
+    from_repository: string;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;

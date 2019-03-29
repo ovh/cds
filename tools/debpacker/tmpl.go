@@ -36,6 +36,7 @@ WantedBy={{.SystemdServiceConfig.WantedBy}}
 `
 
 	postinstTmpl = `#!/bin/bash
+set -e
 echo "Create the {{.SystemdServiceConfig.User}} User, Group and Directories"
 {{if not (eq .SystemdServiceConfig.User "root") -}}
 adduser --system --group {{.SystemdServiceConfig.User}}
@@ -49,6 +50,7 @@ echo "Service initialization"
 {{end -}}
 chmod +x {{.SystemdServiceConfig.ExecStart}}
 
+set +e
 echo "Service installed"
 systemctl enable {{.PackageName}}
 systemctl status {{.PackageName}}

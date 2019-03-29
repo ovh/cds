@@ -34,7 +34,7 @@ const routes: Routes = [
             {
                 path: 'worker-model/:workerModelName',
                 component: WorkerModelEditComponent,
-                data: { title: 'Worker model {workerModelName}' }
+                data: { title: '{workerModelName} • Worker model' }
             },
             { path: 'group', component: GroupListComponent, data: { title: 'Groups' } },
             { path: 'group/:groupname', component: GroupEditComponent, data: { title: '{groupname} • Group' } },
@@ -45,12 +45,12 @@ const routes: Routes = [
             {
                 path: 'action/:groupName/:actionName',
                 component: ActionEditComponent,
-                data: { title: 'Edit • Action' }
+                data: { title: '{actionName} • Action' }
             },
             {
                 path: 'action-builtin/:actionName',
                 component: ActionShowComponent,
-                data: { title: 'Show • Action' }
+                data: { title: '{actionName} • Action' }
             },
             { path: 'queue', component: QueueComponent, data: { title: 'Queue' } },
             { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } },
@@ -59,7 +59,7 @@ const routes: Routes = [
             {
                 path: 'workflow-template/:groupName/:templateSlug',
                 component: WorkflowTemplateEditComponent,
-                data: { title: 'Edit • Workflow template' }
+                data: { title: '{templateSlug} • Workflow template' }
             },
         ]
     }

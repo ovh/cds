@@ -48,6 +48,9 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteKeyInApplicationHandler> Cannot load application")
 		}
+		if app.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
@@ -100,6 +103,10 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
 		}
 		newKey.ApplicationID = app.ID
+
+		if app.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		if !strings.HasPrefix(newKey.Name, "app-") {
 			newKey.Name = "app-" + newKey.Name

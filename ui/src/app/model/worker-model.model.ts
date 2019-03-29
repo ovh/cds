@@ -1,6 +1,6 @@
-import {Group} from './group.model';
-import {Requirement} from './requirement.model';
-import {User} from './user.model';
+import { Group } from './group.model';
+import { Requirement } from './requirement.model';
+import { User } from './user.model';
 
 export class WorkerModel {
     id: number;
@@ -23,44 +23,45 @@ export class WorkerModel {
     is_official: boolean;
     is_deprecated: boolean;
     pattern_name: string;
+    editable: boolean;
 
     constructor() {
-      this.model_docker = new ModelDocker();
-      this.model_virtual_machine = new ModelVirtualMachine();
+        this.model_docker = new ModelDocker();
+        this.model_virtual_machine = new ModelVirtualMachine();
     }
 }
 
 export class ModelDocker {
-  image: string;
-  shell: string;
-  envs: {};
-  cmd: string;
-  memory: number;
+    image: string;
+    shell: string;
+    envs: {};
+    cmd: string;
+    memory: number;
 }
 
 export class ModelVirtualMachine {
-  image: string;
-  flavor: string;
-  pre_cmd: string;
-  cmd: string;
-  post_cmd: string;
+    image: string;
+    flavor: string;
+    pre_cmd: string;
+    cmd: string;
+    post_cmd: string;
 }
 
 export class ModelPattern {
-  id: number;
-  name: string;
-  type: string;
-  model: {
-    shell?: string;
-    envs?: {};
-    pre_cmd?: string;
-    cmd: string;
-    post_cmd?: string;
-  };
-
-  constructor() {
-    this.model = {
-      cmd: ''
+    id: number;
+    name: string;
+    type: string;
+    model: {
+        shell?: string;
+        envs?: {};
+        pre_cmd?: string;
+        cmd: string;
+        post_cmd?: string;
     };
-  }
+
+    constructor() {
+        this.model = {
+            cmd: ''
+        };
+    }
 }

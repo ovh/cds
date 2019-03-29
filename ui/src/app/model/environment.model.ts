@@ -8,6 +8,7 @@ export class Environment {
     permission: number;
     last_modified: number;
     usage: Usage;
+    from_repository: string;
 
     mute: boolean;
 }
