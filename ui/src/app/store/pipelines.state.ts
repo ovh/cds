@@ -219,6 +219,15 @@ export class PipelinesState {
                 let pipKey = pip.projectKey + '/' + pip.name;
                 let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
 
+                if (state.pipelines[pipKey].usage && Array.isArray(state.pipelines[pipKey].usage.workflows)) {
+                    state.pipelines[pipKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+
                 ctx.setState({
                     ...state,
                     pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipUpdated }),
@@ -239,6 +248,15 @@ export class PipelinesState {
                 let pipKey = pip.projectKey + '/' + pip.name;
                 let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
 
+                if (state.pipelines[pipKey].usage && Array.isArray(state.pipelines[pipKey].usage.workflows)) {
+                    state.pipelines[pipKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+
                 ctx.setState({
                     ...state,
                     pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipUpdated }),
@@ -255,6 +273,15 @@ export class PipelinesState {
                 const state = ctx.getState();
                 let pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
                 let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
+
+                if (state.pipelines[pipKey].usage && Array.isArray(state.pipelines[pipKey].usage.workflows)) {
+                    state.pipelines[pipKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
 
                 ctx.setState({
                     ...state,

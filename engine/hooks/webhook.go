@@ -72,6 +72,11 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
+		for i := range pushEvent.Commits {
+			pushEvent.Commits[i].Added = nil
+			pushEvent.Commits[i].Removed = nil
+			pushEvent.Commits[i].Modified = nil
+		}
 		payloadStr, err := json.Marshal(pushEvent)
 		if err != nil {
 			log.Error("Unable to marshal payload: %v", err)

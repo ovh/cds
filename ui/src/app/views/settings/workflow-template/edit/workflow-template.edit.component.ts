@@ -45,7 +45,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     groups: Array<Group>;
     audits: Array<AuditWorkflowTemplate>;
     instances: Array<WorkflowTemplateInstance>;
-    workflowsLinked: Array<Workflow>;
+    usages: Array<Workflow>;
     loading: boolean;
     loadingInstances: boolean;
     loadingAudits: boolean;
@@ -293,14 +293,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     getUsage() {
-        if (this.workflowsLinked) {
-            return;
-        }
         this.loadingUsage = true;
         this._workflowTemplateService.getUsage(this.groupName, this.templateSlug)
             .pipe(first())
             .pipe(finalize(() => this.loadingUsage = false))
-            .subscribe((workflows) => this.workflowsLinked = workflows);
+            .subscribe((workflows) => this.usages = workflows);
     }
 
     getInstances() {

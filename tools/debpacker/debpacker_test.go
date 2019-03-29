@@ -129,6 +129,7 @@ chown -R test:test /var/lib/test
 chmod 770 /var/lib/test
 chmod +x /usr/bin/sh
 
+set +e
 echo "Service installed"
 systemctl enable test
 systemctl status test
