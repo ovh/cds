@@ -80,7 +80,7 @@ func wrapHelpers(fs template.FuncMap) template.FuncMap {
 		helperT := helperV.Type()
 		paramsCount := helperT.NumIn()
 		paramsTypes := make([]string, paramsCount)
-		for i := 0; i < helperT.NumIn(); i++ {
+		for i := 0; i < paramsCount; i++ {
 			paramsTypes[i] = helperT.In(i).Name()
 		}
 
@@ -95,15 +95,13 @@ func wrapHelpers(fs template.FuncMap) template.FuncMap {
 			// for all helper's params, forward values from wrapper
 			values := make([]reflect.Value, len(ps))
 			for i := 0; i < len(ps); i++ {
-				v := reflect.ValueOf(ps[i])
-
 				if value, ok := ps[i].(*val); ok {
 					// if the value is a pointer to val, we should return its internal value
 					values[i] = reflect.ValueOf((*value)["_"])
 				} else if value, ok := ps[i].(val); ok {
 					// if the value is a val, we should return its internal value
 					values[i] = reflect.ValueOf(value["_"])
-				} else if v.IsValid() {
+				} else if v := reflect.ValueOf(ps[i]); v.IsValid() {
 					// for all params that are not val (string, integer...) use it directly
 					values[i] = v
 				} else {
@@ -114,6 +112,10 @@ func wrapHelpers(fs template.FuncMap) template.FuncMap {
 			}
 
 			results := helperV.Call(values)
+			if len(results) == 0 {
+				return nil
+			}
+
 			return results[0].Interface()
 		}
 	}
