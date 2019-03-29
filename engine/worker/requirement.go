@@ -169,7 +169,7 @@ func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	case sdk.Docker:
 		var err error
 		// Useful for provisioned worker
-		memoryEnv := os.Getenv("CDS__MEMORY")
+		memoryEnv := os.Getenv("CDS_MODEL_MEMORY")
 		totalMemory, err = strconv.ParseInt(memoryEnv, 10, 64)
 		if err != nil {
 			return false, err

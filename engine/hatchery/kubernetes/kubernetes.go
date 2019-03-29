@@ -294,7 +294,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	}
 	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "1"
-	envsWm["CDS__MEMORY"] = fmt.Sprintf("%d", memory)
+	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
