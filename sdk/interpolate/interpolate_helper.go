@@ -20,7 +20,7 @@ import (
 var InterpolateHelperFuncs template.FuncMap
 
 func init() {
-	InterpolateHelperFuncs = template.FuncMap{
+	temp := template.FuncMap{
 		"abbrev":     abbrev,
 		"abbrevboth": abbrevboth,
 		"trunc":      trunc,
@@ -64,6 +64,48 @@ func init() {
 		"b64dec":       base64decode,
 		"escape":       escape,
 	}
+
+	InterpolateHelperFuncs = wrapHelpers(temp)
+}
+
+func wrapHelpers(fs template.FuncMap) template.FuncMap {
+	wrappedHelpers := make(template.FuncMap, len(fs))
+	for key, helper := range fs {
+		helperV := reflect.ValueOf(helper)
+
+		// ignore if current helper is not a func
+		if helperV.Kind() != reflect.Func {
+			continue
+		}
+
+		// easy way but reflect at runtime
+		wrappedHelpers[key] = func(ps ...interface{}) interface{} {
+			// for all helper's params, forward values from wrapper
+			values := make([]reflect.Value, len(ps))
+			for i := 0; i < len(ps); i++ {
+				v := reflect.ValueOf(ps[i])
+
+				if value, ok := ps[i].(*val); ok {
+					// if the value is a pointer to val, we should return its internal value
+					values[i] = reflect.ValueOf((*value)["_"])
+				} else if value, ok := ps[i].(val); ok {
+					// if the value is a val, we should return its internal value
+					values[i] = reflect.ValueOf(value["_"])
+				} else if v.IsValid() {
+					// for all params that are not val (string, integer...) use it directly
+					values[i] = v
+				} else {
+					// if the value is not valid (means that given value is nil with unknown type), convert to nil void pointer
+					var v *void
+					values[i] = reflect.ValueOf(v)
+				}
+			}
+
+			results := helperV.Call(values)
+			return results[0].Interface()
+		}
+	}
+	return wrappedHelpers
 }
 
 // Switch order so that "$foo" | trimall "$"
