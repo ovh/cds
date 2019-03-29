@@ -98,6 +98,7 @@ echo $CDS_PARENT_APPLICATION
 Here is the list of git variables:
 
 - `{{.git.hash}}`
+- `{{.git.hash.short}}`
 - `{{.git.url}}`
 - `{{.git.http_url}}`
 - `{{.git.branch}}`
