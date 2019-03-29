@@ -168,6 +168,7 @@ func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	// Check env variables in a docker is safer than mem.VirtualMemory
 	case sdk.Docker:
 		var err error
+		// Useful for provisioned worker
 		memoryEnv := os.Getenv("CDS__MEMORY")
 		totalMemory, err = strconv.ParseInt(memoryEnv, 10, 64)
 		if err != nil {
