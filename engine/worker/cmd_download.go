@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var (
@@ -139,18 +140,40 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 
 	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
+	currentProject := sdk.ParameterValue(wk.currentJob.params, "cds.project")
+	currentWorkflow := sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
 	if reqArgs.Workflow == "" {
-		reqArgs.Workflow = sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
+		reqArgs.Workflow = currentWorkflow
 	}
 
+	// If the reqArgs.Number is empty and if the reqArgs.Workflow is the current workflow, take the current build number
 	if reqArgs.Number == 0 {
-		var errN error
-		buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
-		reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
-		if errN != nil {
-			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
-			writeError(w, r, newError)
-			return
+		if reqArgs.Workflow == currentWorkflow {
+			var errN error
+			buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
+			reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
+			if errN != nil {
+				newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
+				writeError(w, r, newError)
+				return
+			}
+		} else { // If this is another workflow, check the latest run
+			filters := []cdsclient.Filter{
+				{
+					Name:  "workflow",
+					Value: reqArgs.Workflow,
+				},
+			}
+			runs, err := wk.client.WorkflowRunSearch(currentProject, 0, 0, filters...)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			if len(runs) < 1 {
+				writeError(w, r, fmt.Errorf("workflow run not found"))
+				return
+			}
+			reqArgs.Number = runs[0].Number
 		}
 	}
 
