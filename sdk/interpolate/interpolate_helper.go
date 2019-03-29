@@ -84,7 +84,7 @@ func wrapHelpers(fs template.FuncMap) template.FuncMap {
 			paramsTypes[i] = helperT.In(i).Name()
 		}
 
-		// easy way but reflect at runtime
+		// create the wrapper func
 		wrappedHelpers[key] = func(ps ...interface{}) interface{} {
 			// if the helper func need more params than ps length, throw an error
 			if len(ps) < paramsCount {
