@@ -17,8 +17,10 @@ func fillPayload(pushEvent sdk.VCSPushEvent) map[string]string {
 	payload["git.author"] = pushEvent.Commit.Author.Name
 	payload["git.author.email"] = pushEvent.Commit.Author.Email
 	payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Branch.DisplayID, "refs/heads/"), "refs/tags/")
-	payload["git.hash.short"] = pushEvent.Commit.Hash[:7]
 	payload["git.hash"] = pushEvent.Commit.Hash
+	if len(pushEvent.Commit.Hash) >= 7 {
+		payload["git.hash.short"] = pushEvent.Commit.Hash[:7]
+	}
 	payload["git.repository"] = pushEvent.Repo
 	payload["cds.triggered_by.username"] = pushEvent.Commit.Author.DisplayName
 	payload["cds.triggered_by.fullname"] = pushEvent.Commit.Author.Name
