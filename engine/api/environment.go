@@ -209,6 +209,10 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnv, "updateEnvironmentHandler> Cannot load environment %s", environmentName)
 		}
 
+		if env.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)

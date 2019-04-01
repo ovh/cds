@@ -6,7 +6,7 @@
                 <label>{{'repoman_name' | translate}}</label>
                 <sm-select class="fluid search"
                     name="repomanname"
-                    [disabled]="loadingRepos"
+                    [disabled]="loadingRepos || application.from_repository"
                     [(model)]="selectedRepoManager"
                     [options]="{'fullTextSearch': true}"
                     (onChange)="updateListRepo(false)">
@@ -21,7 +21,7 @@
                     [(model)]="selectedRepo"
                     [options]="{'fullTextSearch': true}"
                     (onSearchChange)="filterRepositories($event)"
-                    [disabled]="loadingRepos">
+                    [disabled]="loadingRepos || application.from_repository">
                     <option *ngFor="let r of reposFiltered"  value="{{r.fullname}}">{{r.fullname}}</option>
                 </sm-select>
             </div>
@@ -31,7 +31,7 @@
                 >{{ 'btn_resync_repo' | translate }}</button>
             </div>
             <div class="four wide right aligned field">
-                <button name="addrepobtn" class="ui green button" [class.loading]="loadingBtn" type="submit">{{ 'btn_link' | translate }}</button>
+                <button name="addrepobtn" class="ui green button" [class.loading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" type="submit">{{ 'btn_link' | translate }}</button>
                 <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="linkRepository(true)" #linkWarning></app-warning-modal>
             </div>
         </div>
@@ -45,7 +45,7 @@
                     <span>{{application.repository_fullname}}</span>
                 </div>
                 <div class="eight wide right aligned field">
-                    <app-delete-button [loading]="loadingBtn" (event)="removeRepository()"></app-delete-button>
+                    <app-delete-button [loading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" (event)="removeRepository()"></app-delete-button>
                     <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="removeRepository(true)" #removeWarning></app-warning-modal>
                 </div>
             </div>
@@ -66,7 +66,7 @@
                 {{ 'application_repo_strat_title' | translate }}
             </h4>
             <div class="detail" [class.active]="displayVCSStrategy">
-                <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
+                <app-vcs-strategy [hideButton]="application.from_repository" [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
             </div>
         </div>
     </div>

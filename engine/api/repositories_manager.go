@@ -257,6 +257,17 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
+		// Check that the VCS is not used by an application before removing it
+		apps, err := application.LoadAll(tx, api.Cache, projectKey)
+		if err != nil {
+			return err
+		}
+		for _, app := range apps {
+			if app.VCSServer == rmName {
+				return sdk.WithStack(sdk.ErrVCSUsedByApplication)
+			}
+		}
+
 		if err := repositoriesmanager.DeleteForProject(tx, p, vcsServer); err != nil {
 			return sdk.WrapError(err, "error deleting %s-%s", projectKey, rmName)
 		}

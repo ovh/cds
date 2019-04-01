@@ -24,8 +24,6 @@ export class WorkerModelPatternEditComponent implements OnInit {
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
-    private workerModelPatternNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    workerModelPatternError = false;
     path: Array<PathItem>;
 
     constructor(
@@ -60,11 +58,6 @@ export class WorkerModelPatternEditComponent implements OnInit {
 
     clickSaveButton(): void {
         if (!this.pattern || !this.pattern.name) {
-            return;
-        }
-
-        if (!this.workerModelPatternNamePattern.test(this.pattern.name)) {
-            this.workerModelPatternError = true;
             return;
         }
 

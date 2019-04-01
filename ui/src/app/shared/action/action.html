@@ -110,7 +110,7 @@
         {{ 'step_nonfinal_no' | translate }}
     </div>
 
-    <div class="ui bottomBtnsWrapper segment" *ngIf="edit && (!pipeline || !pipeline.previewMode)">
+    <div class="ui bottomBtnsWrapper segment" *ngIf="edit && !(pipeline && pipeline.previewMode) && !(pipeline && pipeline.from_repository)">
         <div class="ui grid">
             <div [ngClass]="editableAction.showAddStep ? 'sixteen wide column' : (editableAction.id ? 'seven wide column' : 'eight wide column')"
                 *ngIf="publicActions.length > 0">

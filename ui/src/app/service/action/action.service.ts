@@ -44,6 +44,10 @@ export class ActionService {
         return this._http.get<Array<AuditAction>>(`/action/${groupName}/${name}/audit`);
     }
 
+    rollbackAudit(groupName: string, actionName: string, auditID: number): Observable<Action> {
+        return this._http.post<Action>(`/action/${groupName}/${actionName}/audit/${auditID}/rollback`, null);
+    }
+
     add(action: Action): Observable<Action> {
         return this._http.post<Action>('/action', action);
     }

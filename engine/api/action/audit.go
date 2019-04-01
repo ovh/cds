@@ -61,7 +61,7 @@ func (a addActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		return sdk.WrapError(err, "unable to marshal action")
 	}
 
-	return insertAudit(db, &sdk.AuditAction{
+	return InsertAudit(db, &sdk.AuditAction{
 		AuditCommon: sdk.AuditCommon{
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
@@ -91,7 +91,7 @@ func (a updateActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		return sdk.WrapError(err, "unable to marshal action")
 	}
 
-	return insertAudit(db, &sdk.AuditAction{
+	return InsertAudit(db, &sdk.AuditAction{
 		AuditCommon: sdk.AuditCommon{
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,

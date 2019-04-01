@@ -134,7 +134,7 @@ export class WorkflowRunComponent implements OnInit {
     }
 
     selectNode() {
-        if (!this.workflowRun) {
+        if (!this.workflowRun || !this.workflowRun.workflow || !this.workflowRun.workflow.workflow_data) {
             return;
         }
         if (this.selectedNodeID) {

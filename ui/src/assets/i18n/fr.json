@@ -68,6 +68,7 @@
   "application_delete_label": "Suppression de l'application",
   "application_delete_description": "Une fois l'application supprimée, il n'y a pas de retour possible.",
   "application_name": "Nom de l'application",
+  "application_from_repository": "Application importée depuis {{repo}}",
   "application_icon": "Icône de l'application",
   "application_description": "Description de l'application",
   "application_name_error": "Le nom de l'application est invalide. Pattern autorisé : a-zA-Z0-9._-",
@@ -321,6 +322,8 @@
   "common_edit_ui": "Editer avec l'interface",
   "common_create_ui": "Créer avec l'interface",
   "common_migrate": "Migrer",
+  "common_capabilities": "Capacités",
+  "common_help_no_group": "Aucun groupe n'a été trouvé, vous ne pourrez pas sauvegarder la ressource en cours d'édition.",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -358,6 +361,7 @@
   "environment_title_clone": "Cloner l'environnement",
   "environment_clone_placeholder": "Nom du nouvel environnement",
   "environment_create_placeholder": "Nouvel environnement",
+  "environment_from_repository": "Environnement importé depuis {{repo}}",
   "environment_name": "Nom de l'environnement",
   "environment_no": "Il n'y a aucun environnement défini",
   "environment_renamed": "Environnement renommé",
@@ -559,6 +563,7 @@
   "pipeline_deleted": "Pipeline supprimé",
   "pipeline_delete_label": "Suppression du pipeline",
   "pipeline_delete_description": "Une fois le pipeline supprimé, il n'y a pas de retour possible.",
+  "pipeline_from_repository": "Pipeline importé depuis {{repo}}",
   "pipeline_job_variable_app": "Variables d'application",
   "pipeline_job_variable_build": "Variables de build",
   "pipeline_job_variable_cds": "Variables CDS",
@@ -862,6 +867,7 @@
   "wizard_app_empty": "Application vide",
   "wizard_ssh_key_name": "Nom de la clé ssh",
 
+  "worker_model": "Modèle de worker",
   "worker_model_type": "Type",
   "worker_model_env": "Variables d'environnement",
   "worker_model_env_tooltip": "Les variables d'environnement ajoutées ici seront valorisées dans votre worker. Si vous n'avez pas de besoin spécifiques, les valeurs par défauts s'ajouteront automatiquement à la création",
@@ -884,7 +890,7 @@
   "worker_model_deprecated_tooltip": "Ce modèle de worker est déprécié",
   "worker_model_official_tooltip": "Modèle de worker officiel maintenu par les administrateurs de CDS",
   "worker_model_spawn_error_tooltip": "Modèle en erreur",
-  "worker_model_state": "État du worker model",
+  "worker_model_state": "État du modèle de worker",
   "worker_model_disable": "Désactiver",
   "worker_model_disabled": "Ce modèle de worker est désactivé",
   "worker_model_group": "Groupe",
@@ -905,8 +911,6 @@
   "worker_model_image": "Image",
   "worker_model_last_registration": "Dernier enregistrement",
   "worker_model_list_title": "Modèles de worker",
-  "worker_model_load_worker_models": "Chargement des modèles de workers...",
-  "worker_model_load_worker_model": "Chargement du modèle de worker...",
   "worker_model_need_register": "Doit être rafraîchit par CDS :",
   "worker_model_name": "Nom",
   "worker_model_none": "Aucun modèle de worker",
@@ -1131,6 +1135,9 @@
   "workflow_template_import_from_url": "Importer depuis une URL",
   "workflow_template_imported_from_url": "Importé depuis une URL",
 
+  "application_repository_help_line_1": "Votre application n'a pas été importée depuis votre code.",
+  "pipeline_repository_help_line_1": "Votre pipeline n'a pas été importé depuis votre code.",
+  "environment_repository_help_line_1": "Votre environnement n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."
 }

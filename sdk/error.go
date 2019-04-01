@@ -181,6 +181,8 @@ var (
 	ErrLocked                                        = Error{ID: 164, Status: http.StatusConflict}
 	ErrInvalidJobRequirementWorkerModelPermission    = Error{ID: 165, Status: http.StatusBadRequest}
 	ErrInvalidJobRequirementWorkerModelCapabilitites = Error{ID: 166, Status: http.StatusBadRequest}
+	ErrMalformattedStep                              = Error{ID: 167, Status: http.StatusBadRequest}
+	ErrVCSUsedByApplication                          = Error{ID: 168, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -344,6 +346,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrLocked.ID:                                        "Resource locked",
 	ErrInvalidJobRequirementWorkerModelPermission.ID:    "Invalid job requirements: unable to use worker model due to permissions",
 	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Invalid job requirements: the worker model does't match with the binary requirements",
+	ErrMalformattedStep.ID:                              "Malformatted step",
+	ErrVCSUsedByApplication.ID:                          "Repository manager still used by an application",
 }
 
 var errorsFrench = map[int]string{
@@ -507,6 +511,8 @@ var errorsFrench = map[int]string{
 	ErrLocked.ID:                                        "La ressource est verrouillée",
 	ErrInvalidJobRequirementWorkerModelPermission.ID:    "Pré-requis de job invalide: Modèle de worker inutilisable en raison des permissions",
 	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Pré-requis de job invalide: Le modèle de worker ne dispose pas de binaires suffisants",
+	ErrMalformattedStep.ID:                              "Étape malformée",
+	ErrVCSUsedByApplication.ID:                          "Le gestionnaire de dépot est encore utilisé par une application",
 }
 
 var errorsLanguages = []map[int]string{

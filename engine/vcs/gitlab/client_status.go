@@ -64,7 +64,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if err != nil {
-		return sdk.WrapError(err, "Cannot process event %v", event)
+		return sdk.WrapError(err, "cannot process event %v", event)
 	}
 
 	if c.disableStatusDetail {
@@ -81,17 +81,38 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		Description: &data.desc,
 	}
 
-	if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
-		return sdk.WrapError(err, "Cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
+	val, _, err := c.client.Commits.GetCommitStatuses(data.repoFullName, data.hash, nil)
+	if err != nil {
+		return sdk.WrapError(err, "unable to get commit statuses - repo:%s hash:%s", data.repoFullName, data.hash)
 	}
 
+	found := false
+	for _, s := range val {
+		sameRequest := s.TargetURL == *opt.TargetURL && // Comparing TargetURL as there is the workflow run number inside
+			s.Status == string(opt.State) && // Comparing Status to avoid duplicate entries
+			s.Ref == *opt.Ref && // Comparing branches name
+			s.SHA == data.hash && // Comparing commit SHA to match the right commit
+			s.Name == *opt.Name && // Comparing app name (CDS)
+			s.Description == *opt.Description // Comparing Description as there are the pipelines names inside
+
+		if sameRequest {
+			log.Debug("gitlabClient.SetStatus> Duplicate commit status, ignoring request - repo:%s hash:%s", data.repoFullName, data.hash)
+			found = true
+			break
+		}
+	}
+	if !found {
+		if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
+			return sdk.WrapError(err, "cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
+		}
+	}
 	return nil
 }
 
 func (c *gitlabClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	ss, _, err := c.client.Commits.GetCommitStatuses(repo, ref, nil)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to get comit statuses %s", ref)
+		return nil, sdk.WrapError(err, "unable to get commit statuses hash:%s", ref)
 	}
 
 	vcsStatuses := []sdk.VCSCommitStatus{}

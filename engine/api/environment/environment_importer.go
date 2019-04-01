@@ -108,6 +108,10 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 		}
 	}
 
+	if err := UpdateEnvironment(db, env); err != nil {
+		return sdk.WrapError(err, "unable to update environment")
+	}
+
 	log.Debug("ImportInto> Done")
 
 	return nil
