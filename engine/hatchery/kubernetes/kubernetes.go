@@ -15,9 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-  _ "k8s.io/client-go/plugin/pkg/client/auth"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
@@ -233,6 +233,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		label = "register"
 	}
 
+	// Kubernetes pod name must not be > 63 chars
+	if len(name) > 63 {
+		name = name[:60]
+	}
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s", name)
 
 	var logJob string
@@ -290,6 +294,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	}
 	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "1"
+	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name

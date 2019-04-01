@@ -231,10 +231,7 @@ func (r Repo) parseDiff(hash, diff string) (map[string]File, error) {
 		var tuple []string
 		if strings.Contains(s, "\t") {
 			tuple = strings.SplitN(s, "\t", 2)
-		} else {
-
 		}
-		fmt.Println(s, tuple, len(tuple))
 		filename := strings.TrimSpace(tuple[1])
 		status := strings.TrimSpace(tuple[0])
 		diff, err := r.Diff(hash, filename)

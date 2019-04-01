@@ -20,7 +20,7 @@ import (
 var InterpolateHelperFuncs template.FuncMap
 
 func init() {
-	InterpolateHelperFuncs = template.FuncMap{
+	InterpolateHelperFuncs = wrapHelpers(template.FuncMap{
 		"abbrev":     abbrev,
 		"abbrevboth": abbrevboth,
 		"trunc":      trunc,
@@ -63,7 +63,63 @@ func init() {
 		"b64enc":       base64encode,
 		"b64dec":       base64decode,
 		"escape":       escape,
+	})
+}
+
+// wrapHelpers to handle usage of val struct in interpolate.Do
+func wrapHelpers(fs template.FuncMap) template.FuncMap {
+	wrappedHelpers := make(template.FuncMap, len(fs))
+	for key, helper := range fs {
+		helperV := reflect.ValueOf(helper)
+
+		// ignore if current helper is not a func
+		if helperV.Kind() != reflect.Func {
+			continue
+		}
+
+		helperT := helperV.Type()
+		paramsCount := helperT.NumIn()
+		paramsTypes := make([]string, paramsCount)
+		for i := 0; i < paramsCount; i++ {
+			paramsTypes[i] = helperT.In(i).Name()
+		}
+
+		// create the wrapper func
+		wrappedHelpers[key] = func(ps ...interface{}) interface{} {
+			// if the helper func need more params than ps length, throw an error
+			if len(ps) < paramsCount {
+				// panic will be catched be text/template executor
+				panic(fmt.Sprintf("missing params (expected: %s)", strings.Join(paramsTypes, ", ")))
+			}
+
+			// for all helper's params, forward values from wrapper
+			values := make([]reflect.Value, len(ps))
+			for i := 0; i < len(ps); i++ {
+				if value, ok := ps[i].(*val); ok {
+					// if the value is a pointer to val, we should return its internal value
+					values[i] = reflect.ValueOf((*value)["_"])
+				} else if value, ok := ps[i].(val); ok {
+					// if the value is a val, we should return its internal value
+					values[i] = reflect.ValueOf(value["_"])
+				} else if v := reflect.ValueOf(ps[i]); v.IsValid() {
+					// for all params that are not val (string, integer...) use it directly
+					values[i] = v
+				} else {
+					// if the value is not valid (means that given value is nil with unknown type), convert to nil void pointer
+					var v *void
+					values[i] = reflect.ValueOf(v)
+				}
+			}
+
+			results := helperV.Call(values)
+			if len(results) == 0 {
+				return nil
+			}
+
+			return results[0].Interface()
+		}
 	}
+	return wrappedHelpers
 }
 
 // Switch order so that "$foo" | trimall "$"

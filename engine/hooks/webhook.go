@@ -61,6 +61,9 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 		}
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
+		if len(pushEvent.After) >= 7 {
+			payload["git.hash.short"] = pushEvent.After[:7]
+		}
 		payload["git.repository"] = pushEvent.Repository.FullName
 		payload["cds.triggered_by.username"] = pushEvent.HeadCommit.Author.Username
 		payload["cds.triggered_by.fullname"] = pushEvent.HeadCommit.Author.Name
@@ -68,6 +71,11 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
+		}
+		for i := range pushEvent.Commits {
+			pushEvent.Commits[i].Added = nil
+			pushEvent.Commits[i].Removed = nil
+			pushEvent.Commits[i].Modified = nil
 		}
 		payloadStr, err := json.Marshal(pushEvent)
 		if err != nil {
@@ -94,6 +102,9 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 		}
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
+		if len(pushEvent.After) >= 7 {
+			payload["git.hash.short"] = pushEvent.After[:7]
+		}
 		payload["git.repository"] = pushEvent.Project.PathWithNamespace
 
 		payload["cds.triggered_by.username"] = pushEvent.UserUsername
@@ -134,6 +145,9 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 			}
 			payload["git.hash.before"] = pushChange.FromHash
 			payload["git.hash"] = pushChange.ToHash
+			if len(pushChange.ToHash) >= 7 {
+				payload["git.hash.short"] = pushChange.ToHash[:7]
+			}
 			payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Slug)
 
 			payload["cds.triggered_by.username"] = pushEvent.Actor.Name

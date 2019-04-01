@@ -8,8 +8,8 @@ import (
 )
 
 // Export convert sdk.Model to an exportentities.WorkerModel, format and write into a io.Writer
-func Export(wm sdk.Model, f exportentities.Format, w io.Writer) (int, error) {
-	eWm := exportentities.NewWorkerModel(wm)
+func Export(wm sdk.Model, f exportentities.Format, w io.Writer, opts ...exportentities.WorkerModelOption) (int, error) {
+	eWm := exportentities.NewWorkerModel(wm, opts...)
 
 	// Marshal to the desired format
 	b, err := exportentities.Marshal(eWm, f)

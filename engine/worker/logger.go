@@ -69,26 +69,9 @@ func (wk *currentWorker) sendHTTPLog() {
 	// While list is not empty
 	for wk.logger.llist.Len() > 0 {
 		// get older log line
-		l := wk.logger.llist.Front().Value.(sdk.Log)
-		wk.logger.llist.Remove(wk.logger.llist.Front())
-
-		// then count how many lines are exactly the same
-		count := 1
-		for wk.logger.llist.Len() > 0 {
-			n := wk.logger.llist.Front().Value.(sdk.Log)
-			if n.Val != l.Val {
-				break
-			}
-			count++
-			wk.logger.llist.Remove(wk.logger.llist.Front())
-		}
-
-		// and if count > 1, then add it at the beginning of the log
-		if count > 1 {
-			l.Val = fmt.Sprintf("[x%d]", count) + l.Val
-		}
-		// and append to the loerrorgs batch
-		l.Val = strings.Trim(strings.Replace(l.Val, "\n", " ", -1), " \t\n") + "\n"
+		e := wk.logger.llist.Front()
+		l := e.Value.(sdk.Log)
+		wk.logger.llist.Remove(e)
 
 		// First log
 		if currentStepLog == nil {
@@ -101,7 +84,6 @@ func (wk *currentWorker) sendHTTPLog() {
 			// new Step
 			logs = append(logs, currentStepLog)
 			currentStepLog = &l
-
 		}
 	}
 

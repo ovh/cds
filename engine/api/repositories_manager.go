@@ -79,9 +79,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":           url,
-			"request_token": token,
-			"username":      deprecatedGetUser(ctx).Username,
+			"url":                  url,
+			"request_token":        token,
+			"username":             deprecatedGetUser(ctx).Username,
 		}
 
 		if token != "" {
@@ -333,6 +333,17 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(errb, "deleteRepositoriesManagerHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
+
+		// Check that the VCS is not used by an application before removing it
+		apps, err := application.LoadAll(tx, api.Cache, projectKey)
+		if err != nil {
+			return err
+		}
+		for _, app := range apps {
+			if app.VCSServer == rmName {
+				return sdk.WithStack(sdk.ErrVCSUsedByApplication)
+			}
+		}
 
 		if err := repositoriesmanager.DeleteForProject(tx, p, vcsServer); err != nil {
 			return sdk.WrapError(err, "error deleting %s-%s", projectKey, rmName)

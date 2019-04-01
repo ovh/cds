@@ -86,6 +86,9 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "deleteVariableFromEnvironmentHandler: Cannot load environment %s", envName)
 		}
+		if env.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
@@ -143,6 +146,9 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "updateVariableInEnvironmentHandler: cannot load environment %s", envName)
 		}
+		if env.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
@@ -199,6 +205,9 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "addVariableInEnvironmentHandler: Cannot load environment %s", envName)
+		}
+		if env.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		tx, errBegin := api.mustDB().Begin()

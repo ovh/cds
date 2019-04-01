@@ -58,6 +58,13 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 	root.PersistentFlags().BoolP("insecure", "", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		var err error
+		cfg, err = loadConfig(cmd, configFile)
+
+		if err == nil && cfg != nil {
+			client = cdsclient.New(*cfg)
+		}
+
 		//Do not load config on login
 		if cmd.Name() == "login" ||
 			cmd.Name() == "signup" ||
@@ -66,11 +73,7 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 			return
 		}
 
-		var err error
-		cfg, err = loadConfig(cmd, configFile)
 		cli.ExitOnError(err, login().Help)
-
-		client = cdsclient.New(*cfg)
 	}
 
 	return root

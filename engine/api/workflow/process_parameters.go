@@ -99,7 +99,7 @@ func GetBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runCon
 	e.ExtraFields.Type = false
 	tmpVars, errdump := e.ToStringMap(payload)
 	if errdump != nil {
-		return nil, sdk.WrapError(errdump, "GetNodeBuildParameters> do-dump error")
+		return nil, sdk.WrapError(errdump, "do-dump error")
 	}
 
 	//Merge the dumped payload with vars
@@ -206,7 +206,7 @@ func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.W
 	// GET PARAMETER FROM NODE CONTEXT
 	params, errparam := GetBuildParameterFromNodeContext(proj, &wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
 	if errparam != nil {
-		return nil, sdk.WrapError(errparam, "getNodeRunParameters> Unable to compute node build parameters")
+		return nil, sdk.WrapError(errparam, "unable to compute node build parameters")
 	}
 
 	errm := &sdk.MultiError{}

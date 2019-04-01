@@ -1,8 +1,12 @@
 package interpolate
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
+	"text/template"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkDo(b *testing.B) {
@@ -420,6 +424,19 @@ func TestDo(t *testing.T) {
 			want:   `name: coucou-githu`,
 			enable: true,
 		},
+		{
+			name: "- trunc",
+			args: args{
+				input: `test_{{.cds.workflow}}_{{.git.hash | trunc 8 }}`,
+				vars: map[string]string{
+					"cds.workflow":    "myWorkflow",
+					"git.hash":        "863ddke13bfef8043960b19cec790f8b9f5435ab",
+					"git.hash.before": "863ddke13bfef8043960b19cec790f8b9f5435ab",
+				},
+			},
+			want:   `test_myWorkflow_863ddke1`,
+			enable: true,
+		},
 	}
 	for _, tt := range tests {
 		if !tt.enable {
@@ -434,6 +451,101 @@ func TestDo(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("Do() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWrapHelpers(t *testing.T) {
+	wrappedHelpers := wrapHelpers(template.FuncMap{
+		"substr":  substring,
+		"default": dfault,
+		"toJSON":  toJSON,
+		"trunc":   trunc,
+	})
+
+	tests := []struct {
+		name  string
+		input string
+		want  string
+		err   error
+		data  map[string]interface{}
+	}{
+		{
+			name:  "with native types",
+			input: `{{"text" | substr 1 3 }}`,
+			want:  `ex`,
+		},
+		{
+			name:  "with nil values",
+			input: `{{.one | default .two "biz" }}`,
+			want:  `biz`,
+		},
+		{
+			name:  "with unknown struct value",
+			input: `{{.one | toJSON }}`,
+			want:  `{"name":"myName","age":30}`,
+			data: map[string]interface{}{
+				"one": struct {
+					Name string `json:"name"`
+					Age  int    `json:"age"`
+				}{
+					Name: "myName",
+					Age:  30,
+				},
+			},
+		},
+		{
+			name:  "with a pointer to val struct",
+			input: `{{.one.two | trunc 7 }}`,
+			want:  `1234567`,
+			data: map[string]interface{}{
+				"one": &val{
+					"two": &val{
+						"_": "1234567890",
+					},
+				},
+			},
+		},
+		{
+			name:  "with a val struct",
+			input: `{{.one.two | trunc 7 }}`,
+			want:  `1234567`,
+			data: map[string]interface{}{
+				"one": val{
+					"two": val{
+						"_": "1234567890",
+					},
+				},
+			},
+		},
+		{
+			name:  "with a unknown value",
+			input: `{{.one}}`,
+			want:  `<no value>`,
+		},
+		{
+			name:  "with missing params",
+			input: `{{.one | trunc}}`,
+			err:   fmt.Errorf(`template: input:1:9: executing "input" at <trunc>: error calling trunc: missing params (expected: int, string)`),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmp, err := template.New("input").Funcs(wrappedHelpers).Parse(tt.input)
+			assert.NoError(t, err)
+
+			var buff bytes.Buffer
+			errexec := tmp.Execute(&buff, tt.data)
+			if tt.err == nil {
+				assert.NoError(t, errexec)
+			} else {
+				assert.Error(t, errexec, tt.err)
+			}
+
+			if buff.String() != tt.want {
+				t.Errorf("Do() = %v, want %v", buff.String(), tt.want)
 			}
 		})
 	}

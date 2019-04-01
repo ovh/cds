@@ -12,9 +12,10 @@ import (
 
 func (api *API) getWorkerModelExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		workerModelID, errr := requestVarInt(r, "permModelID")
+		u := deprecatedGetUser(ctx)
+		workerModelID, errr := requestVarInt(r, "modelID")
 		if errr != nil {
-			return sdk.WrapError(errr, "Invalid permModelID")
+			return sdk.WrapError(errr, "Invalid modelID")
 		}
 
 		format := FormString(r, "format")
@@ -33,7 +34,12 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 			return sdk.WrapError(err, "Format invalid")
 		}
 
-		if _, err := worker.Export(*wm, f, w); err != nil {
+		opts := []exportentities.WorkerModelOption{}
+		if u != nil && !u.Admin && !wm.Restricted {
+			opts = append(opts, exportentities.WorkerModelLoadOptions.HideAdminFields)
+		}
+
+		if _, err := worker.Export(*wm, f, w, opts...); err != nil {
 			return err
 		}
 

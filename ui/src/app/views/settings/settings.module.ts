@@ -19,6 +19,8 @@ import { UserEditComponent } from './user/edit/user.edit.component';
 import { UserListComponent } from './user/list/user.list.component';
 import { WorkerModelAddComponent } from './worker-model/add/worker-model.add.component';
 import { WorkerModelEditComponent } from './worker-model/edit/worker-model.edit.component';
+import { WorkerModelFormComponent } from './worker-model/form/worker-model.form.component';
+import { WorkerModelHelpComponent } from './worker-model/help/worker-model.help.component';
 import { WorkerModelListComponent } from './worker-model/list/worker-model.list.component';
 import { WorkflowTemplateAddComponent } from './workflow-template/add/workflow-template.add.component';
 import { WorkflowTemplateEditComponent } from './workflow-template/edit/workflow-template.edit.component';
@@ -45,6 +47,8 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         UserListComponent,
         WorkerModelAddComponent,
         WorkerModelEditComponent,
+        WorkerModelFormComponent,
+        WorkerModelHelpComponent,
         WorkerModelListComponent,
         WorkflowTemplateEditorComponent,
         WorkflowTemplateFormComponent,

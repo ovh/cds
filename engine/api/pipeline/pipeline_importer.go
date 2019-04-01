@@ -26,11 +26,16 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		return sdk.WrapError(err, "Unable to load pipeline %s %s", proj.Key, pip.Name)
 	}
 
+	if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
+		return sdk.WrapError(sdk.ErrForbidden, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
+	}
+
 	// check that action used by job can be used by pipeline's project
 	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
 	for i := range proj.ProjectGroups {
 		groupIDs = append(groupIDs, proj.ProjectGroups[i].Group.ID)
+
 	}
 
 	pip.ID = oldPipeline.ID

@@ -24,7 +24,8 @@ application.last_modified,
 application.metadata,
 application.vcs_server,
 application.vcs_strategy,
-application.description
+application.description,
+application.from_repository
 `
 
 // LoadOptionFunc is a type for all options in LoadOptions

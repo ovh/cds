@@ -24,7 +24,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 		return nil, fmt.Errorf("unable to get registered workers: %v", err)
 	}
 
-	// Then: get all worker in the orchestrator queue
+	// Then: get all workers in the orchestrator queue
 	startedWorkers := h.WorkersStarted()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get started workers: %v", err)

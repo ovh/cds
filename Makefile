@@ -14,7 +14,7 @@ endif
 
 modclean:
 	@echo "removing vendor directory... " && rm -rf vendor
-	@echo "cleaning modcache... " && GO111MODULE=on go clean -modcache || true
+	@echo "cleaning modcache... " && GO111MODULE=off go clean -modcache || true
 
 mod:
 	@echo "running go mod tidy... " && GO111MODULE=on go mod tidy

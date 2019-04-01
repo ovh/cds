@@ -37,7 +37,7 @@ worker download [flags]
 ## Options
 
 ```
-      --number string     Workflow Number to download from. Optional, default: current workflow run
+      --number string     Workflow Number to download from. Optional, default: if workflow is the current workflow: current run, else latest run
       --pattern string    Pattern matching files to download. Optional, default: *
       --tag string        Tag matching files to download. Optional
       --workflow string   Workflow name to download from. Optional, default: current workflow

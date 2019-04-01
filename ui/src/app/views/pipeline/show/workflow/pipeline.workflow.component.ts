@@ -33,7 +33,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     @Input('currentPipeline')
     set currentPipeline(data: Pipeline) {
         this.pipeline = cloneDeep(data);
-
+        this.originalPipeline = this.pipeline;
         if (!this.pipeline) {
             return;
         }

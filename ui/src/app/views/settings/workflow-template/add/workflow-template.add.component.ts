@@ -37,9 +37,6 @@ export class WorkflowTemplateAddComponent implements OnInit {
         private _translate: TranslateService,
         private _route: ActivatedRoute
     ) {
-        this.workflowTemplate = <WorkflowTemplate>{ editable: true };
-        this.getGroups();
-
         this.path = [<PathItem>{
             translate: 'common_settings'
         }, <PathItem>{
@@ -48,6 +45,9 @@ export class WorkflowTemplateAddComponent implements OnInit {
         }, <PathItem>{
             translate: 'common_create'
         }];
+
+        this.workflowTemplate = <WorkflowTemplate>{ editable: true };
+        this.getGroups();
     }
 
     ngOnInit() {
