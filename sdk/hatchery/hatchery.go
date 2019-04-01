@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"strconv"
 	"strings"
@@ -304,20 +303,6 @@ func Create(ctx context.Context, h Interface) error {
 // MemoryRegisterContainer is the RAM used for spawning
 // a docker container for register a worker model. 128 Mo
 const MemoryRegisterContainer int64 = 128
-
-// CheckRequirement checks binary requirement in path
-func CheckRequirement(r sdk.Requirement) (bool, error) {
-	switch r.Type {
-	case sdk.BinaryRequirement:
-		if _, err := exec.LookPath(r.Value); err != nil {
-			// Return nil because the error contains 'Exit status X', that's what we wanted
-			return false, nil
-		}
-		return true, nil
-	default:
-		return false, nil
-	}
-}
 
 func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	if model.Type != h.ModelType() {
