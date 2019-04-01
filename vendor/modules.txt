@@ -388,7 +388,7 @@ github.com/opencontainers/runc/libcontainer/configs
 github.com/opencontainers/runc/libcontainer/devices
 # github.com/opencontainers/runtime-spec v1.0.1
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25
+# github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
 github.com/ovh/cds/sdk/interpolate
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh

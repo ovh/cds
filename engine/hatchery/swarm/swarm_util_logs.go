@@ -71,7 +71,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 					WorkflowNodeJobRunID:   serviceJobID,
 					ServiceRequirementID:   reqServiceID,
 					ServiceRequirementName: cnt.Labels["service_req_name"],
-					Val: string(logs),
+					Val:                    string(logs),
 				})
 			}
 

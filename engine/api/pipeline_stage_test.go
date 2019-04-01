@@ -350,11 +350,11 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 		BuildOrder: 2,
 		Enabled:    true,
 		Prerequisites: []sdk.Prerequisite{
-			sdk.Prerequisite{
+			{
 				Parameter:     ".git.branch",
 				ExpectedValue: "master",
 			},
-			sdk.Prerequisite{
+			{
 				Parameter:     ".git.author",
 				ExpectedValue: "someone@somewhere.com",
 			},
@@ -457,7 +457,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 		BuildOrder: 1,
 		Enabled:    true,
 		Prerequisites: []sdk.Prerequisite{
-			sdk.Prerequisite{
+			{
 				Parameter:     ".git.branch",
 				ExpectedValue: "master",
 			},
@@ -515,7 +515,7 @@ func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
 		BuildOrder: 1,
 		Enabled:    true,
 		Prerequisites: []sdk.Prerequisite{
-			sdk.Prerequisite{
+			{
 				Parameter:     ".git.branch",
 				ExpectedValue: "master",
 			},
@@ -527,11 +527,11 @@ func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
 	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 
 	stage.Prerequisites = []sdk.Prerequisite{
-		sdk.Prerequisite{
+		{
 			Parameter:     "param1",
 			ExpectedValue: "value1",
 		},
-		sdk.Prerequisite{
+		{
 			Parameter:     "param2",
 			ExpectedValue: "value2",
 		},

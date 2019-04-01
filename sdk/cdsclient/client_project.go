@@ -15,7 +15,7 @@ func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
 	if groupName != "" {
 		// if the group does not exist, POST /project will create it
 		p.ProjectGroups = []sdk.GroupPermission{
-			sdk.GroupPermission{
+			{
 				Group:      sdk.Group{Name: groupName},
 				Permission: permission.PermissionReadWriteExecute,
 			},

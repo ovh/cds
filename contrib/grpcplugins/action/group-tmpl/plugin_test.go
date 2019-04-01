@@ -136,7 +136,7 @@ func TestGetConfigByApplication(t *testing.T) {
 		{
 			apps: &Applications{
 				Apps: map[string]map[string]interface{}{
-					"test": map[string]interface{}{
+					"test": {
 						"a": 1,
 						"b": 2,
 						"c": 3,
@@ -157,7 +157,7 @@ func TestGetConfigByApplication(t *testing.T) {
 					"c": 43,
 				},
 				Apps: map[string]map[string]interface{}{
-					"test": map[string]interface{}{
+					"test": {
 						"a": 1,
 						"c": 3,
 					},
