@@ -11,13 +11,11 @@ import (
 	"testing"
 
 	"github.com/go-gorp/gorp"
-	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -1379,16 +1377,6 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
-
-	c, _ := izanami.New("", "clientID", "secret")
-	feature.SetClient(c)
-
-	api.Cache.Set("feature:"+proj.Key, feature.ProjectFeatures{
-		Key: proj.Key,
-		Features: map[string]bool{
-			feature.FeatWorkflowAsCode: false,
-		},
-	})
 
 	//First pipeline
 	pip := sdk.Pipeline{

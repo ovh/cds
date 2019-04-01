@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -46,10 +45,6 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithFeatures, project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			sdk.WrapError(errP, "postImportAsCodeHandler> Cannot load project")
-		}
-
-		if enabled, has := p.Features[feature.FeatWorkflowAsCode]; has && !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "postImportAsCodeHandler> Project %s is not allowed for %s", key, feature.FeatWorkflowAsCode)
 		}
 
 		vcsServer := repositoriesmanager.GetProjectVCSServer(p, ope.VCSServer)
@@ -119,10 +114,6 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
-		}
-
-		if enabled, has := proj.Features[feature.FeatWorkflowAsCode]; has && !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "postPerformImportAsCodeHandler> Project %s is not allowed for %s", key, feature.FeatWorkflowAsCode)
 		}
 
 		var ope = new(sdk.Operation)

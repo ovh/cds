@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/feature"
@@ -138,16 +137,6 @@ func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
 			"secret": "bar",
 		},
 	}))
-
-	c, _ := izanami.New("", "clientID", "secret")
-	feature.SetClient(c)
-
-	api.Cache.Set("feature:"+p.Key, feature.ProjectFeatures{
-		Key: p.Key,
-		Features: map[string]bool{
-			feature.FeatWorkflowAsCode: false,
-		},
-	})
 
 	ope := `{"repo_fullname":"myrepo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
 
@@ -331,16 +320,6 @@ func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
-
-	c, _ := izanami.New("", "clientID", "secret")
-	feature.SetClient(c)
-
-	api.Cache.Set("feature:"+pkey, feature.ProjectFeatures{
-		Key: pkey,
-		Features: map[string]bool{
-			feature.FeatWorkflowAsCode: false,
-		},
-	})
 
 	uri := api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
 		"permProjectKey": pkey,

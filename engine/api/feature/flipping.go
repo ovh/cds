@@ -3,16 +3,13 @@ package feature
 import (
 	"strings"
 
-	"github.com/ovhlabs/izanami-go-client"
+	client "github.com/ovhlabs/izanami-go-client"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk/log"
 )
 
 const (
-	// FeatWorkflowAsCode is workflow as code feature id
-	FeatWorkflowAsCode = "cds:wasc"
-
 	// FeatEnableTracing is the opencensus tracing feature id
 	FeatEnableTracing = "cds:tracing"
 
@@ -37,7 +34,7 @@ type ProjectFeatures struct {
 
 // List all features
 func List() []string {
-	return []string{FeatWorkflowAsCode, FeatWNode, FeatEnableTracing}
+	return []string{FeatWNode, FeatEnableTracing}
 }
 
 // Init initialize Izanami client
