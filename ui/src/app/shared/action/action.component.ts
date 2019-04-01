@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { ActionService } from 'app/service/action/action.service';
 import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
-import { Subscription } from 'rxjs/Subscription';
 import { Action } from '../../model/action.model';
 import { AllKeys } from '../../model/keys.model';
 import { Parameter } from '../../model/parameter.model';
@@ -11,7 +10,6 @@ import { Pipeline } from '../../model/pipeline.model';
 import { Project } from '../../model/project.model';
 import { Requirement } from '../../model/requirement.model';
 import { Stage } from '../../model/stage.model';
-import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
 import { ParameterEvent } from '../parameter/parameter.event.model';
 import { RequirementEvent } from '../requirements/requirement.event.model';
 import { SharedService } from '../shared.service';
@@ -23,11 +21,10 @@ import { StepEvent } from './step/step.event';
     templateUrl: './action.html',
     styleUrls: ['./action.scss']
 })
-@AutoUnsubscribe()
 export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
     steps: Array<Action> = new Array<Action>();
-    publicActions: Array<Action>;
+    publicActions: Array<Action> = new Array<Action>();
 
     @Input() project: Project;
     @Input() keys: AllKeys;
@@ -55,8 +52,6 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     collapsed = true;
     configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
-
-    actionSub: Subscription;
 
     constructor(
         private sharedService: SharedService,
@@ -88,7 +83,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this.actionSub = this._actionService.getAllForProject(this.project.key).subscribe(as => {
+        this._actionService.getAllForProject(this.project.key).subscribe(as => {
             this.publicActions = as;
         });
     }

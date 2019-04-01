@@ -2,14 +2,12 @@ import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core
 import { ActionService } from 'app/service/action/action.service';
 import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
-import { Subscription } from 'rxjs/Subscription';
 import { Action } from '../../../../model/action.model';
 import { Group } from '../../../../model/group.model';
 import { AllKeys } from '../../../../model/keys.model';
 import { Parameter } from '../../../../model/parameter.model';
 import { Requirement } from '../../../../model/requirement.model';
 import { StepEvent } from '../../../../shared/action/step/step.event';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from '../../../../shared/parameter/parameter.event.model';
 import { RequirementEvent } from '../../../../shared/requirements/requirement.event.model';
 import { SharedService } from '../../../../shared/shared.service';
@@ -19,7 +17,6 @@ import { SharedService } from '../../../../shared/shared.service';
     templateUrl: './action.form.html',
     styleUrls: ['./action.form.scss']
 })
-@AutoUnsubscribe()
 export class ActionFormComponent implements OnDestroy {
     @Input() keys: AllKeys;
     @Input() suggest: Array<string>;
@@ -55,7 +52,6 @@ export class ActionFormComponent implements OnDestroy {
     actions: Array<Action> = new Array<Action>();
     collapsed = true;
     configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
-    actionSub: Subscription;
     stepFormExpended: boolean;
 
     constructor(
@@ -88,7 +84,7 @@ export class ActionFormComponent implements OnDestroy {
 
     refreshActions(): void {
         if (this.action.group_id) {
-            this.actionSub = this._actionService.getAllForGroup(this.action.group_id).subscribe(as => {
+            this._actionService.getAllForGroup(this.action.group_id).subscribe(as => {
                 this.actions = as.filter(a => this.action.id !== a.id);
             });
         }
