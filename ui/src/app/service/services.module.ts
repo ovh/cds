@@ -6,7 +6,6 @@ import {
     SkipSelf
 } from '@angular/core';
 import { ActionService } from './action/action.service';
-import { ActionStore } from './action/action.store';
 import { ApplicationAuditService } from './application/application.audit.service';
 import { ApplicationNoCacheService } from './application/application.nocache.service';
 import {
@@ -77,7 +76,6 @@ export class ServicesModule {
                 ApplicationResolver,
                 ApplicationQueryParamResolver,
                 ActionService,
-                ActionStore,
                 ApplicationWorkflowService,
                 ApplicationService,
                 ApplicationNoCacheService,
@@ -151,7 +149,6 @@ export class ServicesModule {
 
 export {
     ApplicationAuditService,
-    ActionStore,
     ApplicationWorkflowService,
     ApplicationResolver,
     ApplicationNoCacheService,

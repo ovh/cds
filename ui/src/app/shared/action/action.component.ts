@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { ActionService } from 'app/service/action/action.service';
 import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs/Subscription';
@@ -10,7 +11,6 @@ import { Pipeline } from '../../model/pipeline.model';
 import { Project } from '../../model/project.model';
 import { Requirement } from '../../model/requirement.model';
 import { Stage } from '../../model/stage.model';
-import { ActionStore } from '../../service/action/action.store';
 import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
 import { ParameterEvent } from '../parameter/parameter.event.model';
 import { RequirementEvent } from '../requirements/requirement.event.model';
@@ -60,7 +60,7 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     constructor(
         private sharedService: SharedService,
-        private _actionStore: ActionStore,
+        private _actionService: ActionService,
         private dragulaService: DragulaService,
         private _router: Router
     ) {
@@ -88,8 +88,8 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this.actionSub = this._actionStore.getProjectActions(this.project.key).subscribe(mapActions => {
-            this.publicActions = mapActions.valueSeq().toArray().filter((action) => action.name !== this.editableAction.name);
+        this.actionSub = this._actionService.getAllForProject(this.project.key).subscribe(as => {
+            this.publicActions = as;
         });
     }
 

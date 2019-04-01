@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ActionService } from 'app/service/action/action.service';
 import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs/Subscription';
@@ -7,7 +8,6 @@ import { Group } from '../../../../model/group.model';
 import { AllKeys } from '../../../../model/keys.model';
 import { Parameter } from '../../../../model/parameter.model';
 import { Requirement } from '../../../../model/requirement.model';
-import { ActionStore } from '../../../../service/action/action.store';
 import { StepEvent } from '../../../../shared/action/step/step.event';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from '../../../../shared/parameter/parameter.event.model';
@@ -60,7 +60,7 @@ export class ActionFormComponent implements OnDestroy {
 
     constructor(
         private sharedService: SharedService,
-        private _actionStore: ActionStore,
+        private _actionService: ActionService,
         private dragulaService: DragulaService
     ) {
         dragulaService.createGroup('bag-nonfinal', {
@@ -88,8 +88,8 @@ export class ActionFormComponent implements OnDestroy {
 
     refreshActions(): void {
         if (this.action.group_id) {
-            this.actionSub = this._actionStore.getGroupActions(this.action.group_id).subscribe(mapActions => {
-                this.actions = mapActions.valueSeq().toArray().filter(a => this.action.id !== a.id);
+            this.actionSub = this._actionService.getAllForGroup(this.action.group_id).subscribe(as => {
+                this.actions = as.filter(a => this.action.id !== a.id);
             });
         }
     }
