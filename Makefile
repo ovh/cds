@@ -25,6 +25,11 @@ mod:
 	# when docker update their vendor, it will be possible to remove this line.
 	# this will fix the plugin-clair for the moment
 	@echo "removing file /vendor/github.com/docker/docker/distribution/oci.go..." && rm -f vendor/github.com/docker/docker/distribution/oci.go
+	@echo "removing subpackages vendors" &&  rm -rf vendor/github.com/ovh/cds
 
 install:
 	go install $$(go list ./...)
+
+build:
+	$(MAKE) build -C engine
+	$(MAKE) build -C cli/cdsctl
