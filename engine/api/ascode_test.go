@@ -123,35 +123,6 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	assert.NotEmpty(t, myOpe.UUID)
 }
 
-func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
-
-	u, pass := assets.InsertAdminUser(db)
-
-	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
-	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
-		Name: "github",
-		Data: map[string]string{
-			"token":  "foo",
-			"secret": "bar",
-		},
-	}))
-
-	ope := `{"repo_fullname":"myrepo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
-
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
-		"permProjectKey": p.Key,
-	})
-	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 403, w.Code)
-}
-
 func Test_getImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
@@ -307,30 +278,4 @@ version: v1.0`),
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
-}
-
-func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
-	defer end()
-
-	u, pass := assets.InsertAdminUser(db)
-
-	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
-
-	//Insert Project
-	pkey := sdk.RandomString(10)
-	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
-
-	uri := api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
-		"permProjectKey": pkey,
-		"uuid":           "123456",
-	})
-	req, err := http.NewRequest("POST", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
-
-	// Do the request
-	w := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 403, w.Code)
 }
