@@ -401,8 +401,6 @@ github.com/opentracing/opentracing-go v1.0.2 h1:3jA2P6O1F9UOrWVpwrIo17pu01KWvNWg
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/ory-am/common v0.4.0 h1:edGPoxYX4hno0IJHXh9TCMUPR6ZcJp+y6aClFYxeuUE=
 github.com/ory-am/common v0.4.0/go.mod h1:oCYGuwwM8FyYMKqh9vrhBaeUoyz/edx0bgJN6uS6/+k=
-github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25 h1:bBZds5R1vAoPsfTaQycKfwnV4JEvGwnhd9bKc6iu2Z0=
-github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25/go.mod h1:qrsz1nc0EPZnhuTLZpKK4Y7awUQdeKmkY5M6DbKi6Ws=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 h1:x9UmLJfoTojbsVpUh0sOpU42p7FqhlzaHKWj6Kcf6ew=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689/go.mod h1:joRatxRJaZBsY3JAOEMcoOp05CnZzsx4scTxi95DHyQ=
 github.com/ovh/venom v0.25.0 h1:q0NC8KHuG1UoWNYXqhZUM/VbOnS8ciQJr6Afn230OIw=

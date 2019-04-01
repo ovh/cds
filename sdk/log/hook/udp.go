@@ -209,7 +209,7 @@ func (w *UDPWriter) Write(p []byte) (n int, err error) {
 		Host:     w.hostname,
 		Short:    string(short),
 		Full:     string(full),
-		Time:     float64(time.Now().UnixNano()) / 1E9,
+		Time:     float64(time.Now().UnixNano()) / 1e9,
 		Level:    6, // info
 		Facility: w.Facility,
 		File:     file,

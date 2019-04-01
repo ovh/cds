@@ -22,14 +22,14 @@ func initCli(mainFunc func()) *cli.App {
 		BashComplete: cli.DefaultAppComplete,
 		Writer:       os.Stdout,
 		Commands: []cli.Command{
-			cli.Command{
+			{
 				Name:      "help",
 				Aliases:   []string{"h"},
 				Usage:     "Shows a list of commands or help for one command",
 				ArgsUsage: "[command]",
 				Action:    helpAction,
 			},
-			cli.Command{
+			{
 				Name:      "listen",
 				Aliases:   []string{"l"},
 				Usage:     "Listen a Kafka topic and wait for chunks",
@@ -58,7 +58,7 @@ func initCli(mainFunc func()) *cli.App {
 				},
 				Action: listenAction,
 			},
-			cli.Command{
+			{
 				Name:      "ack",
 				Usage:     "Send Ack to CDS",
 				ArgsUsage: "<kafka> <topic> <user> <cds-action json file> <OK|KO>",

@@ -182,7 +182,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
-	github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25
+	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
 	github.com/ovh/venom v0.25.0
 	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
@@ -285,3 +285,5 @@ require (
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
+
+replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate
