@@ -24,6 +24,9 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		return nil
 	}
 
+	// Use reviewer account to post the review
+	c.client.Authentication.SetBasicAuth(c.reviewerName, c.reviewerToken)
+
 	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#review-input
 	ri := gerrit.ReviewInput{
 		Message: c.buildMessage(eventNR),

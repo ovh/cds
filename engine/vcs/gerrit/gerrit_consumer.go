@@ -35,6 +35,8 @@ func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, username, pass
 		disableStatusDetail: g.disableStatusDetail,
 		sshPort:             g.sshPort,
 		username:            username,
+		reviewerToken:       g.reviewerToken,
+		reviewerName:        g.reviewerName,
 	}
 	return c, nil
 }

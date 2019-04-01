@@ -120,7 +120,9 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			s.Cache,
 			serverCfg.Gerrit.Status.Disable,
 			serverCfg.Gerrit.Status.ShowDetail,
-			serverCfg.Gerrit.SSHPort), nil
+			serverCfg.Gerrit.SSHPort,
+			serverCfg.Gerrit.Reviewer.User,
+			serverCfg.Gerrit.Reviewer.Token), nil
 	}
 	return nil, sdk.WithStack(sdk.ErrNotFound)
 }

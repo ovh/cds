@@ -29,6 +29,10 @@ func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTask
 	d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
 }
 
+func (d *dao) RemoveGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) {
+	d.store.SetRemove(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
+}
+
 // FindGerritTasksByRepo get all gerrit hooks on the given repository
 func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTaskInfo, error) {
 	key := cache.Key(gerritRepoKey, vcsServer, repo)
@@ -50,12 +54,31 @@ func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTask
 	return allHooks, nil
 }
 
-func (s *Service) startGerritHookTask(t *sdk.Task) {
+func (s *Service) startGerritHookTask(t *sdk.Task) error {
 	g := gerritTaskInfo{
 		UUID:   t.UUID,
 		Events: strings.Split(t.Config[sdk.HookConfigEventFilter].Value, ";"),
 	}
 	s.Dao.RegisterGerritRepoHook(t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
+
+	// Check that stream is open
+	if _, has := gerritRepoHooks[t.Config[sdk.HookConfigVCSServer].Value]; !has {
+		// Start listening to gerrit event stream
+		vcsConfig, err := s.Client.VCSConfiguration()
+		if err != nil {
+			return sdk.WrapError(err, "unable to get vcs configuration")
+		}
+		s.initGerritStreamEvent(context.Background(), t.Config[sdk.HookConfigVCSServer].Value, vcsConfig)
+	}
+	return nil
+}
+
+func (s *Service) stopGerritHookTask(t *sdk.Task) {
+	g := gerritTaskInfo{
+		UUID:   t.UUID,
+		Events: strings.Split(t.Config[sdk.HookConfigEventFilter].Value, ";"),
+	}
+	s.Dao.RemoveGerritRepoHook(t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
 }
 
 func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {

@@ -181,4 +181,8 @@ type GerritServerConfiguration struct {
 		User       string `toml:"user" default:"myuser" commented:"true" comment:"User to access to gerrit event stream"`
 		PrivateKey string `toml:"privateKey" default:"" commented:"true" comment:"Private key of the user who access to gerrit event stream"`
 	}
+	Reviewer struct {
+		User  string `toml:"user" default:"myreviewer" commented:"true" comment:"User that review changes"`
+		Token string `toml:"token" default:"" commented:"true" comment:"Token of the reviewer"`
+	}
 }

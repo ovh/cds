@@ -41,6 +41,7 @@ var (
 	executionRootKey  = cache.Key("hooks", "tasks", "executions")
 	schedulerQueueKey = cache.Key("hooks", "scheduler", "queue")
 	gerritRepoKey     = cache.Key("hooks", "gerrit", "repo")
+	gerritRepoHooks   = make(map[string]bool)
 )
 
 // runTasks should run as a long-running goroutine
@@ -115,25 +116,27 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 
 	for k, v := range vcsConfig {
 		if v.Type == "gerrit" && v.Username != "" && v.Password != "" && v.SSHPort != 0 {
-			// open event stream
-			vcsName := k
-
-			// Create channel to store gerrit event
-			gerritEventChan := make(chan GerritEvent, 20)
-
-			// Listen to gerrit event stream
-			sdk.GoRoutine(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
-				ListenGerritStreamEvent(ctx, vcsConfig[vcsName], gerritEventChan)
-			})
-
-			// Listen to gerrit event stream
-			sdk.GoRoutine(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {
-				s.ComputeGerritStreamEvent(ctx, vcsName, gerritEventChan)
-			})
+			s.initGerritStreamEvent(ctx, k, vcsConfig)
 		}
 	}
 
 	return nil
+}
+
+func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcsConfig map[string]sdk.VCSConfiguration) {
+
+	// Create channel to store gerrit event
+	gerritEventChan := make(chan GerritEvent, 20)
+	// Listen to gerrit event stream
+	sdk.GoRoutine(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
+		ListenGerritStreamEvent(ctx, vcsConfig[vcsName], gerritEventChan)
+	})
+	// Listen to gerrit event stream
+	sdk.GoRoutine(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {
+		s.ComputeGerritStreamEvent(ctx, vcsName, gerritEventChan)
+	})
+	// Save the fact that we are listen the event stream for this gerrit
+	gerritRepoHooks[vcsName] = true
 }
 
 func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
@@ -262,8 +265,7 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	case TypeOutgoingWorkflow:
 		return s.startOutgoingWorkflowTask(t)
 	case TypeGerrit:
-		s.startGerritHookTask(t)
-		return nil, nil
+		return nil, s.startGerritHookTask(t)
 	default:
 		return nil, fmt.Errorf("Unsupported task type %s", t.Type)
 	}
@@ -347,6 +349,10 @@ func (s *Service) stopTask(t *sdk.Task) error {
 	switch t.Type {
 	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka, TypeWorkflowHook:
 		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
+		return nil
+	case TypeGerrit:
+		s.stopGerritHookTask(t)
+		log.Debug("Hooks> Gerrit Task %s has been stopped", t.UUID)
 		return nil
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
