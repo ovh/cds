@@ -3,13 +3,13 @@ package gerrit
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk/log"
 	"strings"
 
 	"github.com/andygrunwald/go-gerrit"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //SetStatus set build status on Gitlab
@@ -81,7 +81,7 @@ func (c *gerritClient) buildLabel(eventNR sdk.EventRunWorkflowNode) map[string]s
 	labels := make(map[string]string)
 	switch eventNR.Status {
 	case sdk.StatusSuccess.String():
-		labels["Verified"] = "+1"
+		labels["Verified"] = "1"
 	case sdk.StatusFail.String(), sdk.StatusStopped.String():
 		labels["Verified"] = "-1"
 	default:
