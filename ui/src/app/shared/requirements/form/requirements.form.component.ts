@@ -77,7 +77,7 @@ export class RequirementsFormComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._workerModelService.getWorkerModels('active')
+        this._workerModelService.getAll('active')
             .pipe(
               first(),
               finalize(() => this.loading = false)

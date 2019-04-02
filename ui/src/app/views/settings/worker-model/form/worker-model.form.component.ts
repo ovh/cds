@@ -76,7 +76,7 @@ pattern_name: basic_unix`;
         }
 
         this.loadingAsCode = true
-        this._workerModelService.exportWorkerModel(this.workerModel.id)
+        this._workerModelService.export(this.workerModel.group.name, this.workerModel.name)
             .pipe(finalize(() => this.loadingAsCode = false))
             .subscribe((wmStr) => this.workerModelAsCode = wmStr);
     }

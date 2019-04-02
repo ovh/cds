@@ -62,6 +62,13 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		return service.WriteJSON(w, *wm, http.StatusOK)
+		new, err := worker.LoadWorkerModelByID(api.mustDB(), wm.ID)
+		if err != nil {
+			return err
+		}
+
+		new.Editable = true
+
+		return service.WriteJSON(w, new, http.StatusOK)
 	}
 }

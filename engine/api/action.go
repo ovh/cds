@@ -204,7 +204,7 @@ func (api *API) getActionHandler() service.Handler {
 		if err := action.LoadOptions.Default(api.mustDB(), a); err != nil {
 			return err
 		}
-		if err := group.CheckUserIsGroupAdmin(a.Group, deprecatedGetUser(ctx)); err == nil {
+		if err := group.CheckUserIsGroupAdmin(g, deprecatedGetUser(ctx)); err == nil {
 			a.Editable = true
 		}
 

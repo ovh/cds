@@ -50,9 +50,13 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 	stateFlag := v.GetString("state")
 
 	if binaryFlag != "" {
-		workerModels, err = client.WorkerModelsByBinary(binaryFlag)
+		workerModels, err = client.WorkerModels(&WorkerModelFilter{
+			Binary: binary,
+		})
 	} else {
-		workerModels, err = client.WorkerModelsByState(stateFlag)
+		workerModels, err = client.WorkerModels(&WorkerModelFilter{
+			State: stateFlag,
+		})
 	}
 
 	if err != nil {
@@ -173,12 +177,9 @@ var workerModelExportCmd = cli.Command{
 }
 
 func workerModelExportRun(c cli.Values) error {
-	wmName := c.GetString("name")
-	wm, err := client.WorkerModel(wmName)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load worker model %s", wmName)
-	}
-	btes, err := client.WorkerModelExport(wm.ID, c.GetString("format"))
+	groupName := c.GetString("group_name")
+	modelName := c.GetString("name")
+	btes, err := client.WorkerModelExport(groupName, modelName, c.GetString("format"))
 	if err != nil {
 		return err
 	}

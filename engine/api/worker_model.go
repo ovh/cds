@@ -17,16 +17,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) addWorkerModelHandler() service.Handler {
+func (api *API) postWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Unmarshal body
 		var model sdk.Model
 		if err := service.UnmarshalBody(r, &model); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal body")
+			return err
 		}
 
 		if model.Type == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid type (empty)")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given type")
 		}
 
 		var modelPattern *sdk.ModelPattern
@@ -55,7 +54,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 
 		//User should have the right permission or be admin
 		if !currentUser.Admin && !isGroupAdmin {
-			return sdk.ErrWorkerModelNoAdmin
+			return sdk.WithStack(sdk.ErrWorkerModelNoAdmin)
 		}
 
 		switch model.Type {
@@ -65,7 +64,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 			}
 			if !currentUser.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrWorkerModelNoPattern
+					return sdk.WithStack(sdk.ErrWorkerModelNoPattern)
 				}
 				model.ModelDocker.Cmd = modelPattern.Model.Cmd
 				model.ModelDocker.Shell = modelPattern.Model.Shell
@@ -80,7 +79,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 			}
 			if !currentUser.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrWorkerModelNoPattern
+					return sdk.WithStack(sdk.ErrWorkerModelNoPattern)
 				}
 				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
 				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
@@ -128,7 +127,14 @@ func (api *API) addWorkerModelHandler() service.Handler {
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
 
-		return service.WriteJSON(w, model, http.StatusOK)
+		new, err := worker.LoadWorkerModelByID(api.mustDB(), model.ID)
+		if err != nil {
+			return err
+		}
+
+		new.Editable = true
+
+		return service.WriteJSON(w, new, http.StatusOK)
 	}
 }
 
@@ -136,11 +142,13 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
-			return sdk.WrapError(errr, "bookWorkerModelHandler> Invalid permModelID")
+			return sdk.WrapError(errr, "invalid permModelID")
 		}
+
 		if _, err := worker.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
 			return sdk.WithStack(err)
 		}
+
 		return nil
 	}
 }
@@ -190,14 +198,19 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 
 func (api *API) updateWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		workerModelID, err := requestVarInt(r, "permModelID")
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		modelName := vars["permModelName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		old, errLoad := worker.LoadWorkerModelByID(api.mustDB(), workerModelID)
+		old, errLoad := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
 		if errLoad != nil {
-			return sdk.WrapError(errLoad, "cannot load worker model by id")
+			return sdk.WrapError(errLoad, "cannot load worker model")
 		}
 
 		// Unmarshal body
@@ -322,19 +335,13 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 			}
 		}
 
-		//If the model modelID has not been set, keep the old modelID
-		if model.ID == 0 {
-			model.ID = old.ID
-		}
+		// override given model id
+		model.ID = old.ID
 
 		// provision is allowed only for CDS Admin
 		// or by user with a restricted model
 		if !deprecatedGetUser(ctx).Admin && !model.Restricted {
 			model.Provision = 0
-		}
-
-		if workerModelID != model.ID {
-			return sdk.WrapError(sdk.ErrInvalidID, "wrong ID")
 		}
 
 		tx, errtx := api.mustDB().Begin()
@@ -365,24 +372,41 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
 
-		return service.WriteJSON(w, model, http.StatusOK)
+		new, err := worker.LoadWorkerModelByID(api.mustDB(), model.ID)
+		if err != nil {
+			return err
+		}
+
+		new.Editable = true
+
+		return service.WriteJSON(w, new, http.StatusOK)
 	}
 }
 
 func (api *API) deleteWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		workerModelID, errr := requestVarInt(r, "permModelID")
-		if errr != nil {
-			return sdk.WrapError(errr, "deleteWorkerModel> Invalid permModelID")
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		modelName := vars["permModelName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
+		if err != nil {
+			return err
+		}
+
+		m, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model")
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 
-		if err := worker.DeleteWorkerModel(tx, workerModelID); err != nil {
-			return sdk.WrapError(err, "deleteWorkerModel: cannot delete worker model")
+		if err := worker.DeleteWorkerModel(tx, m.ID); err != nil {
+			return sdk.WrapError(err, "cannot delete worker model")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -396,30 +420,26 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name string) error {
-	m, err := worker.LoadWorkerModelByName(api.mustDB(), name)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load worker model")
-	}
-	return service.WriteJSON(w, m, http.StatusOK)
-}
-
 func (api *API) getWorkerModelUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		workerModelID, errr := requestVarInt(r, "modelID")
-		if errr != nil {
-			return sdk.WrapError(errr, "Invalid modelID")
-		}
-		db := api.mustDB()
+		vars := mux.Vars(r)
 
-		wm, err := worker.LoadWorkerModelByID(db, workerModelID)
+		groupName := vars["groupName"]
+		modelName := vars["permModelName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model for id %d", workerModelID)
+			return err
 		}
 
-		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, deprecatedGetUser(ctx))
-		if errP != nil {
-			return sdk.WrapError(errP, "Cannot load pipelines linked to worker model")
+		m, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model")
+		}
+
+		pips, err := pipeline.LoadByWorkerModelName(api.mustDB(), m.Name, deprecatedGetUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "cannot load pipelines linked to worker model")
 		}
 
 		return service.WriteJSON(w, pips, http.StatusOK)
@@ -440,15 +460,36 @@ func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	}
 }
 
+func (api *API) getWorkerModelHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		modelName := vars["permModelName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
+		if err != nil {
+			return err
+		}
+
+		// FIXME implements load options for worker model dao.
+		m, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model")
+		}
+
+		if err := group.CheckUserIsGroupAdmin(g, deprecatedGetUser(ctx)); err == nil {
+			m.Editable = true
+		}
+
+		return service.WriteJSON(w, m, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkerModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> cannot parse form")
-		}
-
-		name := r.FormValue("name")
-		if name != "" {
-			return api.getWorkerModel(w, r, name)
 		}
 
 		binary := r.FormValue("binary")

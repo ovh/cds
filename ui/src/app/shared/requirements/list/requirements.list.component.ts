@@ -50,7 +50,10 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
 
     loading = true;
 
-    constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
+    constructor(
+        private _requirementStore: RequirementStore,
+        private _workerModelService: WorkerModelService,
+    ) {
         super();
         this.nbElementsByPage = 5;
 
@@ -62,7 +65,7 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
     }
 
     ngOnInit() {
-        this._workerModelService.getWorkerModels(null)
+        this._workerModelService.getAll(null)
             .pipe(finalize(() => this.loading = false), first())
             .subscribe(wms => {
                 this.workerModels = wms;

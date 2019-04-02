@@ -34,7 +34,7 @@ export class WorkerModelPatternEditComponent implements OnInit {
     ) {
         this.currentUser = this._authentificationStore.getUser();
         this.loading = true;
-        this._workerModelService.getWorkerModelTypes()
+        this._workerModelService.getTypes()
             .pipe(finalize(() => this.loading = false))
             .subscribe(wmt => this.workerModelTypes = wmt);
         this.pattern = new ModelPattern();
@@ -42,7 +42,7 @@ export class WorkerModelPatternEditComponent implements OnInit {
 
     ngOnInit() {
         this.loading = true;
-        this._workerModelService.getWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
+        this._workerModelService.getPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
             .pipe(finalize(() => this.loading = false))
             .subscribe(
                 (pattern) => {
@@ -63,7 +63,7 @@ export class WorkerModelPatternEditComponent implements OnInit {
 
         this.editLoading = true;
         this._workerModelService
-            .updateWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'], this.pattern)
+            .updatePattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'], this.pattern)
             .pipe(finalize(() => this.editLoading = false))
             .subscribe((pattern) => {
                 this._toast.success('', this._translate.instant('worker_model_pattern_saved'));
@@ -78,7 +78,7 @@ export class WorkerModelPatternEditComponent implements OnInit {
 
         this.editLoading = true;
         this._workerModelService
-            .deleteWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
+            .deletePattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
             .pipe(finalize(() => this.editLoading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('worker_model_pattern_deleted'));

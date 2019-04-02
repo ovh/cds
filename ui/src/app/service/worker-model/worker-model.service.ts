@@ -2,157 +2,89 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Pipeline } from '../../model/pipeline.model';
 import { ModelPattern, WorkerModel } from '../../model/worker-model.model';
 
-/**
- * Service to get worker model
- */
 @Injectable()
 export class WorkerModelService {
+    constructor(private _http: HttpClient) { }
 
-    constructor(private _http: HttpClient) {
+    add(wm: WorkerModel): Observable<WorkerModel> {
+        return this._http.post<WorkerModel>('/worker/model', wm);
     }
 
-    /**
-     * Create a worker model
-     * @returns {Observable<WorkerModel>}
-     */
-    createWorkerModel(workerModel: WorkerModel): Observable<WorkerModel> {
-        return this._http.post<WorkerModel>('/worker/model', workerModel);
-    }
-
-    /**
-     * Import a worker model
-     * @returns {Observable<WorkerModel>}
-     */
-    importWorkerModel(workerModelStr: string, force = false): Observable<WorkerModel> {
-        let params = new HttpParams();
-        params = params.append('format', 'yaml');
+    import(workerModelStr: string, force = false): Observable<WorkerModel> {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
+
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
         if (force) {
             params = params.append('force', 'true');
         }
 
-        return this._http.post<WorkerModel>('/worker/model/import', workerModelStr, {params, headers});
+        return this._http.post<WorkerModel>('/worker/model/import', workerModelStr, { params, headers });
     }
 
-    /**
-     * Import a worker model
-     * @returns {Observable<WorkerModel>}
-     */
-    exportWorkerModel(workerModelId: number): Observable<string> {
+    export(groupName: string, name: string): Observable<string> {
         let params = new HttpParams();
         params = params.append('format', 'yaml');
-
-        return this._http.get<string>('/worker/model/' + workerModelId + '/export',  { params, responseType: <any>'text' });
+        return this._http.get<string>(`/worker/model/${groupName}/${name}/export`, { params, responseType: <any>'text' });
     }
 
-    /**
-     * Delete a worker model
-     * @returns {Observable<WorkerModel>}
-     */
-    deleteWorkerModel(workerModel: WorkerModel): Observable<boolean> {
-        return this._http.delete('/worker/model/' + workerModel.id).pipe(map(() => {
-            return true;
-        }));
+    delete(groupName: string, name: string): Observable<Response> {
+        return this._http.delete<Response>(`/worker/model/${groupName}/${name}`);
     }
 
-    /**
-     * Update a worker model
-     * @returns {Observable<WorkerModel>}
-     */
-    updateWorkerModel(workerModel: WorkerModel): Observable<WorkerModel> {
-        return this._http.put<WorkerModel>('/worker/model/' + workerModel.id, workerModel);
+    update(old: WorkerModel, wm: WorkerModel): Observable<WorkerModel> {
+        return this._http.put<WorkerModel>(`/worker/model/${old.group.name}/${old.name}`, wm);
     }
 
-    /**
-     * Get the list of available requirements
-     * @returns {Observable<WorkerModel>}
-     */
-    getWorkerModelByName(workerModelName: string): Observable<WorkerModel> {
-        return this._http.get<WorkerModel>('/worker/model?name=' + workerModelName);
+    get(groupName: string, name: string): Observable<WorkerModel> {
+        return this._http.get<WorkerModel>(`/worker/model/${groupName}/${name}`);
     }
 
-    /**
-     * Get the list of available worker models
-     * @returns {Observable<WorkerModel[]>}
-     */
-    getWorkerModels(state: string, binary?: string): Observable<Array<WorkerModel>> {
+    getAll(state: string, binary?: string): Observable<Array<WorkerModel>> {
         let params = new HttpParams();
         if (binary) {
-          params = params.append('binary', binary);
+            params = params.append('binary', binary);
         }
         if (state) {
-          params = params.append('state', state);
+            params = params.append('state', state);
         }
 
-        return this._http.get<Array<WorkerModel>>('/worker/model', {params});
+        return this._http.get<Array<WorkerModel>>('/worker/model', { params });
     }
 
-    /**
-     * Create a worker model pattern
-     * @returns {Observable<ModelPattern>}
-     */
-    createWorkerModelPattern(workerModelPattern: ModelPattern): Observable<ModelPattern> {
-        return this._http.post<ModelPattern>('/worker/model/pattern', workerModelPattern);
+    createWorkerModelPattern(mp: ModelPattern): Observable<ModelPattern> {
+        return this._http.post<ModelPattern>('/worker/model/pattern', mp);
     }
 
-    /**
-     * update a worker model pattern
-     * @returns {Observable<ModelPattern>}
-     */
-    updateWorkerModelPattern(type: string, name: string, workerModelPattern: ModelPattern): Observable<ModelPattern> {
-        return this._http.put<ModelPattern>(`/worker/model/pattern/${type}/${name}`, workerModelPattern);
+    updatePattern(type: string, name: string, mp: ModelPattern): Observable<ModelPattern> {
+        return this._http.put<ModelPattern>(`/worker/model/pattern/${type}/${name}`, mp);
     }
 
-    /**
-     * delete a worker model pattern
-     * @returns {Observable<null>}
-     */
-    deleteWorkerModelPattern(type: string, name: string): Observable<null> {
+    deletePattern(type: string, name: string): Observable<null> {
         return this._http.delete<null>(`/worker/model/pattern/${type}/${name}`);
     }
 
-    /**
-     * Get the list of available worker model patterns
-     * @returns {Observable<ModelPattern[]>}
-     */
-    getWorkerModelPatterns(): Observable<Array<ModelPattern>> {
+    getPatterns(): Observable<Array<ModelPattern>> {
         return this._http.get<Array<ModelPattern>>('/worker/model/pattern');
     }
 
-    /**
-     * Get worker model pattern
-     * @returns {Observable<ModelPattern>}
-     */
-    getWorkerModelPattern(type: string, name: string): Observable<ModelPattern> {
+    getPattern(type: string, name: string): Observable<ModelPattern> {
         return this._http.get<ModelPattern>(`/worker/model/pattern/${type}/${name}`);
     }
 
-    /**
-     * Get the list of available worker model type
-     * @returns {Observable<string[]>}
-     */
-    getWorkerModelTypes(): Observable<Array<string>> {
+    getTypes(): Observable<Array<string>> {
         return this._http.get<Array<string>>('/worker/model/type');
     }
 
-    /**
-     * Get the list of available worker model communication
-     * @returns {Observable<string[]>}
-     */
-    getWorkerModelCommunications(): Observable<Array<string>> {
+    getCommunications(): Observable<Array<string>> {
         return this._http.get<Array<string>>('/worker/model/communication');
     }
 
-     /**
-     * Get the list of worker model pipeline usage
-     * @returns {Observable<Pipeline[]>}
-     */
-    getUsage(workerModelId): Observable<Array<Pipeline>> {
-        return this._http.get<Array<Pipeline>>(`/worker/model/${workerModelId}/usage`);
+    getUsage(groupName: string, name: string): Observable<Array<Pipeline>> {
+        return this._http.get<Array<Pipeline>>(`/worker/model/${groupName}/${name}/usage`);
     }
 }

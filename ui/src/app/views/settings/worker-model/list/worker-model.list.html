@@ -50,7 +50,7 @@
           <tbody>
             <tr *ngFor="let v of getDataForCurrentPage()">
               <td class="border">
-                <a class="ui" [routerLink]="[v.name]">
+                <a class="ui" [routerLink]="[v.group.name, v.name]">
                   <div class="ui">
                     {{v.name}}
                     <span *ngIf="v.disabled" [smDirTooltip]="'worker_model_disabled' | translate" smDirPosition="top center">
