@@ -29,7 +29,7 @@ This action can be used to upload artifacts in CDS. This is the recommended way 
 
 ![img](../images/artifact-upload-view-artifact.png)
 
-## YML Format
+## YAML Format
 
 Example of Pipeline using Artifact Upload Action
 

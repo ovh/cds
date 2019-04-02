@@ -25,7 +25,7 @@ This action can be used to retrieve an artifact previously uploaded by an [Artif
 
 ![img](../images/artifact-download-logs.png)
 
-## YML Format
+## YAML Format
 
 Example of Pipeline using Artifact Download Action
 
