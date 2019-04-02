@@ -86,7 +86,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	services.HTTPClient = mock(
@@ -360,7 +360,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	services.HTTPClient = mock(
@@ -557,7 +557,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	services.HTTPClient = mock(
