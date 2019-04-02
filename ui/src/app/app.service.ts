@@ -62,9 +62,6 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        if (event.type_event.indexOf(EventType.ACTION_PREFIX) === 0) {
-            // this._actionStore.resync(); TODO invalidate cache
-        }
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
             event.type_event === EventType.APPLICATION_ADD || event.type_event === EventType.APPLICATION_UPDATE ||
             event.type_event === EventType.APPLICATION_DELETE ||

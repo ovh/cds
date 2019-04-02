@@ -9,8 +9,13 @@
             <input *ngIf="editStepName" class="inline" type="text" name="stepName" [(ngModel)]="step.step_name"
                 (keydown)="action.hasChanged = true">
             <span *ngIf="!editStepName">
-                {{step.step_name}}
-                <i class="stepname" *ngIf="step.step_name !== step.name">({{step.name}})</i>
+                <ng-container *ngIf="step.step_name === step.name">
+                    <span *ngIf="step.group">{{step.group.name}}/</span>{{step.name}}
+                </ng-container>
+                <span *ngIf="step.step_name !== step.name">
+                    {{step.step_name}}
+                    <i class="stepname">(<span *ngIf="step.group">{{step.group.name}}/</span>{{step.name}})</i>
+                </span>
             </span>
             <a class="inline pointing ml5" title="{{ 'step_edit_title' | translate }}" (click)="editStepName = true"
                 *ngIf="!editStepName">
