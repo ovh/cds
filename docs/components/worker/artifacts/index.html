@@ -17,13 +17,13 @@
 
 <meta name="description" content="worker artifacts worker artifacts [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]
 Synopsis Inside a job, you can list artifacts of a workflow:
-worker artifacts --pattern=&quot;files.*.yml&quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  -h, --help help for artifacts --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list.">
+worker artifacts --pattern=&quot;files.*.yml&quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list. Optional --workflow string Workflow name.">
 <meta property="og:description" content="worker artifacts worker artifacts [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]
 Synopsis Inside a job, you can list artifacts of a workflow:
-worker artifacts --pattern=&quot;files.*.yml&quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  -h, --help help for artifacts --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list.">
+worker artifacts --pattern=&quot;files.*.yml&quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list. Optional --workflow string Workflow name.">
 <meta name="twitter:description" content="worker artifacts worker artifacts [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]
 Synopsis Inside a job, you can list artifacts of a workflow:
-worker artifacts --pattern=&quot;files.*.yml&quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  -h, --help help for artifacts --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list.">
+worker artifacts --pattern=&quot;files.*.yml&quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list. Optional --workflow string Workflow name.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/components/worker/artifacts/">
 <meta property="og:title" content="artifacts">
 <meta name="twitter:title" content="artifacts">
@@ -2387,31 +2387,15 @@ worker artifacts --pattern=&quot;files.*.yml&quot; #theses two commands have the
 			<div id="docsContent">
         		
 
-<h1>artifacts</h1>
 
 
 
-<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#worker-artifacts">worker artifacts</a>
-<ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
-</ul></li>
-</ul></li>
-</ul>
-</nav>
 
-
-
-<h2 id="worker-artifacts">worker artifacts</h2>
+<h1 id="worker-artifacts">worker artifacts</h1>
 
 <p><code>worker artifacts [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]</code></p>
 
-<h3 id="synopsis">Synopsis</h3>
+<h2 id="synopsis">Synopsis</h2>
 
 <p>Inside a job, you can list artifacts of a workflow:</p>
 
@@ -2425,19 +2409,18 @@ worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}
 <pre><code>worker artifacts [flags]
 </code></pre>
 
-<h3 id="options">Options</h3>
+<h2 id="options">Options</h2>
 
-<pre><code>  -h, --help              help for artifacts
-      --number string     Workflow Number. Optional, default: current workflow run
+<pre><code>      --number string     Workflow Number. Optional, default: current workflow run
       --pattern string    Pattern matching files to list. Optional, default: *
       --tag string        Tag matching files to list. Optional
       --workflow string   Workflow name. Optional, default: current workflow
 </code></pre>
 
-<h3 id="see-also">SEE ALSO</h3>
+<h2 id="see-also">SEE ALSO</h2>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/worker/worker/">worker</a>  - CDS Worker</li>
+<li><a href="https://ovh.github.io/cds/docs/components/worker/worker/">worker</a>  - CDS Worker</li>
 </ul>
 
 

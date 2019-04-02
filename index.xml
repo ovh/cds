@@ -497,6 +497,16 @@ cdsctl admin errors get &amp;lt;error_uuid&amp;gt;  Usage in code All errors fro
     </item>
     
     <item>
+      <title>Memory</title>
+      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/</guid>
+      <description>The Memory requirement allows you to require a worker to have a specific number of mb of RAM.
+For example if you need 2Gb of RAM for your worker you can put 2048 in your memory requirement.</description>
+    </item>
+    
+    <item>
       <title>Mutex</title>
       <link>https://ovh.github.io/cds/docs/concepts/workflow/mutex/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -646,7 +656,7 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
       <guid>https://ovh.github.io/cds/docs/actions/artifact-download/</guid>
       <description>Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
-Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
+Parameters  enabled: Enable artifact download path: Path where artifacts will be downloaded pattern: Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB) tag: Artifact are uploaded with a tag, generally {{.cds.version}}  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
     </item>
     
     <item>
@@ -655,9 +665,9 @@ Parameters  application: Application from where artifacts will be downloaded pip
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/actions/artifact-upload/</guid>
-      <description> Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
+      <description>Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  </description>
+Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.</description>
     </item>
     
     <item>
@@ -1090,7 +1100,7 @@ cdsctl workflow applyTemplate [ PROJECT-KEY WORKFLOW-NAME ] [TEMPLATE-PATH] [fla
       <guid>https://ovh.github.io/cds/docs/components/worker/artifacts/</guid>
       <description>worker artifacts worker artifacts [--workflow=&amp;lt;workflow-name&amp;gt;] [--number=&amp;lt;run-number&amp;gt;] [--tag=&amp;lt;tag&amp;gt;] [--pattern=&amp;lt;pattern&amp;gt;]
 Synopsis Inside a job, you can list artifacts of a workflow:
-worker artifacts --pattern=&amp;quot;files.*.yml&amp;quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  -h, --help help for artifacts --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list.</description>
+worker artifacts --pattern=&amp;quot;files.*.yml&amp;quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list. Optional --workflow string Workflow name.</description>
     </item>
     
     <item>
@@ -1302,7 +1312,7 @@ engine config check  SEE ALSO  engine config - Manage CDS Configuration  </descr
       
       <guid>https://ovh.github.io/cds/docs/components/worker/check-secret/</guid>
       <description>worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:</description>
     </item>
     
@@ -1797,10 +1807,10 @@ Synopsis Download logs from a workflow run. You can download all logs files or j
       <guid>https://ovh.github.io/cds/docs/components/worker/download/</guid>
       <description>worker download worker download [--workflow=&amp;lt;workflow-name&amp;gt;] [--number=&amp;lt;run-number&amp;gt;] [--tag=&amp;lt;tag&amp;gt;] [--pattern=&amp;lt;pattern&amp;gt;]
 Synopsis Inside a job, there are two ways to download an artifact:
- with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command.  Worker Command:
+ with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.  Worker Command:
 worker download --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt;  Example:
 worker download --pattern=&amp;quot;files.*.yml&amp;quot;  Theses two commands have the same result:
-worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  -h, --help help for download --number string Workflow Number to download from.</description>
+worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from.</description>
     </item>
     
     <item>
@@ -1847,7 +1857,7 @@ cdsctl admin hooks executions UUID [flags]  Examples cdsctl admin hooks executio
       <guid>https://ovh.github.io/cds/docs/components/worker/exit/</guid>
       <description> worker exit worker exit
 Synopsis worker exit command lets job finish current step and disabled all further steps
-worker exit [flags]  Options  -h, --help help for exit  SEE ALSO  worker - CDS Worker  </description>
+worker exit  SEE ALSO  worker - CDS Worker  </description>
     </item>
     
     <item>
@@ -1978,10 +1988,10 @@ cdsctl workflow export [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --format 
       
       <guid>https://ovh.github.io/cds/docs/components/worker/export/</guid>
       <description> worker export worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt;
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can create a build variable with the worker command:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:
 worker export foo bar  then, you can use new build variable:
 echo &amp;quot;{{.cds.build.foo}}&amp;quot;  Scope You can use the build variable in :
- another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your worklow   worker export [flags]  Options  -h, --help help for export  SEE ALSO  worker - CDS Worker  </description>
+ another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your worklow   worker export  SEE ALSO  worker - CDS Worker  </description>
     </item>
     
     <item>
@@ -2996,7 +3006,7 @@ cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml  cdsctl workflow
       <description> worker cache push worker cache push tagValue {{.cds.workspace}}/pathToUpload
 Synopsis Inside a project, you can create a cache from your worker with a tag (useful for vendors for example) worker push  dir/file
 You can use you storage integration: worker push &amp;ndash;destination=MyStorageIntegration  dir/file
-worker cache push [flags]  Examples worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload  Options  --destination string optional. Your storage integration name -h, --help help for push  SEE ALSO  worker cache -  </description>
+worker cache push [flags]  Examples worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload  Options  --destination string optional. Your storage integration name  SEE ALSO  worker cache -  </description>
     </item>
     
     <item>
@@ -3495,7 +3505,7 @@ Inside a job, you can add a Tag with the worker command:
       
       <guid>https://ovh.github.io/cds/docs/components/worker/tmpl/</guid>
       <description>worker tmpl worker tmpl inputFile outputFile
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add a replace CDS variables with the real value into a file:
 # create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &amp;lt;input file&amp;gt; &amp;lt;output file&amp;gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
 this a a line in the file, with a CDS variable 2  if it&amp;rsquo;s the RUN n°2 of the current workflow.</description>
     </item>
@@ -3581,11 +3591,11 @@ engine update [flags]  Examples engine update --from-github  Options  --api stri
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/worker/update/</guid>
-      <description>worker update worker update [flags]
+      <description> worker update worker update [flags]
 Synopsis Update worker from CDS API or from CDS Release
 Update from Github:
  worker update --from-github  Update from your CDS API:
- worker update --api https://your-cds-api.localhost  worker update [flags]  Options  --api string URL of CDS API --from-github Update binary from latest github release -h, --help help for update --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+ worker update --api https://your-cds-api.localhost  worker update [flags]  Options  --api string URL of CDS API --from-github Update binary from latest github release --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.  SEE ALSO  worker - CDS Worker  </description>
     </item>
     
     <item>
@@ -3607,9 +3617,9 @@ engine database upgrade [flags]  Examples engine database upgrade --db-password=
       <guid>https://ovh.github.io/cds/docs/components/worker/upload/</guid>
       <description> worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
 Synopsis Inside a job, there are two ways to upload an artifact:
- with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: worker upload &amp;lt;path&amp;gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
+ with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command: worker upload &amp;lt;path&amp;gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 You can use you storage integration: worker upload &amp;ndash;destination=&amp;ldquo;yourStorageIntegrationName&amp;rdquo;
-worker upload [flags]  Options  --destination string optional. Your storage integration name -h, --help help for upload --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  </description>
+worker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  </description>
     </item>
     
     <item>
@@ -3682,7 +3692,7 @@ engine version  SEE ALSO  engine - CDS Engine  </description>
       <guid>https://ovh.github.io/cds/docs/components/worker/version/</guid>
       <description> worker version Print the version of the worker binary
 Synopsis Print the version of the worker binary
-worker version [flags]  Options  -h, --help help for version  SEE ALSO  worker - CDS Worker  </description>
+worker version  SEE ALSO  worker - CDS Worker  </description>
     </item>
     
     <item>
@@ -3700,7 +3710,7 @@ worker version [flags]  Options  -h, --help help for version  SEE ALSO  worker -
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/development/rest/worker/</guid>
-      <description>DELETE /worker/model/&amp;lt;permModelID&amp;gt;    URL /worker/model/&amp;lt;permModelID&amp;gt;     Method DELETE   Permissions Auth: true   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;    URL /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deleteWorkerModelPatternHandler    GET /worker/model/&amp;lt;modelID&amp;gt;/usage    URL /worker/model/&amp;lt;modelID&amp;gt;/usage     Method GET   Permissions Auth: true   Code getWorkerModelUsageHandler    GET /worker/model/&amp;lt;permModelID&amp;gt;/export    URL /worker/model/&amp;lt;permModelID&amp;gt;/export     Method GET   Permissions Auth: true   Code getWorkerModelExportHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Code getRequirementTypesHandler    GET /worker/model/communication    URL /worker/model/communication     Method GET   Permissions Auth: true   Code getWorkerModelCommunicationsHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions NeedHatchery: - Auth: true   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;    URL /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;     Method GET   Permissions Auth: true   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Code getWorkersHandler    POST /worker/&amp;lt;id&amp;gt;/disable    URL /worker/&amp;lt;id&amp;gt;/disable     Method POST   Permissions Auth: true   Code disableWorkerHandler    POST /worker/checking    URL /worker/checking     Method POST   Permissions Auth: true   Code workerCheckingHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Code addWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Code refreshWorkerHandler    POST /worker/unregister    URL /worker/unregister     Method POST   Permissions Auth: true   Code unregisterWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Code workerWaitingHandler    POST /worker    URL /worker     Method POST   Permissions Auth: false   Code registerWorkerHandler    PUT /worker/model/&amp;lt;permModelID&amp;gt;    URL /worker/model/&amp;lt;permModelID&amp;gt;     Method PUT   Permissions Auth: true   Code updateWorkerModelHandler    PUT /worker/model/book/&amp;lt;permModelID&amp;gt;    URL /worker/model/book/&amp;lt;permModelID&amp;gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code bookWorkerModelHandler    PUT /worker/model/error/&amp;lt;permModelID&amp;gt;    URL /worker/model/error/&amp;lt;permModelID&amp;gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code spawnErrorWorkerModelHandler    PUT /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;    URL /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.</description>
+      <description>DELETE /worker/model/&amp;lt;permModelID&amp;gt;    URL /worker/model/&amp;lt;permModelID&amp;gt;     Method DELETE   Permissions Auth: true   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;    URL /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deleteWorkerModelPatternHandler    GET /worker/model/&amp;lt;modelID&amp;gt;/export    URL /worker/model/&amp;lt;modelID&amp;gt;/export     Method GET   Permissions Auth: true   Code getWorkerModelExportHandler    GET /worker/model/&amp;lt;modelID&amp;gt;/usage    URL /worker/model/&amp;lt;modelID&amp;gt;/usage     Method GET   Permissions Auth: true   Code getWorkerModelUsageHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Code getRequirementTypesHandler    GET /worker/model/communication    URL /worker/model/communication     Method GET   Permissions Auth: true   Code getWorkerModelCommunicationsHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions NeedHatchery: - Auth: true   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;    URL /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;     Method GET   Permissions Auth: true   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Code getWorkersHandler    POST /worker/&amp;lt;id&amp;gt;/disable    URL /worker/&amp;lt;id&amp;gt;/disable     Method POST   Permissions Auth: true   Code disableWorkerHandler    POST /worker/checking    URL /worker/checking     Method POST   Permissions Auth: true   Code workerCheckingHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Code addWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Code refreshWorkerHandler    POST /worker/unregister    URL /worker/unregister     Method POST   Permissions Auth: true   Code unregisterWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Code workerWaitingHandler    POST /worker    URL /worker     Method POST   Permissions Auth: false   Code registerWorkerHandler    PUT /worker/model/&amp;lt;permModelID&amp;gt;    URL /worker/model/&amp;lt;permModelID&amp;gt;     Method PUT   Permissions Auth: true   Code updateWorkerModelHandler    PUT /worker/model/book/&amp;lt;permModelID&amp;gt;    URL /worker/model/book/&amp;lt;permModelID&amp;gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code bookWorkerModelHandler    PUT /worker/model/error/&amp;lt;permModelID&amp;gt;    URL /worker/model/error/&amp;lt;permModelID&amp;gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code spawnErrorWorkerModelHandler    PUT /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;    URL /worker/model/pattern/&amp;lt;type&amp;gt;/&amp;lt;name&amp;gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.</description>
     </item>
     
     <item>

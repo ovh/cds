@@ -16,15 +16,15 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description" content="worker tmpl worker tmpl inputFile outputFile
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add a replace CDS variables with the real value into a file:
 # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &lt;input file&gt; &lt;output file&gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
 this a a line in the file, with a CDS variable 2  if it&rsquo;s the RUN n°2 of the current workflow.">
 <meta property="og:description" content="worker tmpl worker tmpl inputFile outputFile
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add a replace CDS variables with the real value into a file:
 # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &lt;input file&gt; &lt;output file&gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
 this a a line in the file, with a CDS variable 2  if it&rsquo;s the RUN n°2 of the current workflow.">
 <meta name="twitter:description" content="worker tmpl worker tmpl inputFile outputFile
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add a replace CDS variables with the real value into a file:
 # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &lt;input file&gt; &lt;output file&gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
 this a a line in the file, with a CDS variable 2  if it&rsquo;s the RUN n°2 of the current workflow.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/components/worker/tmpl/">
@@ -2390,33 +2390,17 @@ this a a line in the file, with a CDS variable 2  if it&rsquo;s the RUN n°2 of 
 			<div id="docsContent">
         		
 
-<h1>tmpl</h1>
 
 
 
-<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#worker-tmpl">worker tmpl</a>
-<ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
-</ul></li>
-</ul></li>
-</ul>
-</nav>
 
-
-
-<h2 id="worker-tmpl">worker tmpl</h2>
+<h1 id="worker-tmpl">worker tmpl</h1>
 
 <p><code>worker tmpl inputFile outputFile</code></p>
 
-<h3 id="synopsis">Synopsis</h3>
+<h2 id="synopsis">Synopsis</h2>
 
-<p>Inside a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), you can add a replace CDS variables with the real value into a file:</p>
+<p>Inside a step script (<a href="https://ovh.github.io/cds/docs/actions/script/">https://ovh.github.io/cds/docs/actions/script/</a>), you can add a replace CDS variables with the real value into a file:</p>
 
 <pre><code># create a file
 cat &lt;&lt; EOF &gt; myFile
@@ -2434,18 +2418,13 @@ worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile
 
 <p>if it&rsquo;s the RUN n°2 of the current workflow.</p>
 
-<pre><code>worker tmpl [flags]
+<pre><code>worker tmpl
 </code></pre>
 
-<h3 id="options">Options</h3>
-
-<pre><code>  -h, --help   help for tmpl
-</code></pre>
-
-<h3 id="see-also">SEE ALSO</h3>
+<h2 id="see-also">SEE ALSO</h2>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/worker/worker/">worker</a>  - CDS Worker</li>
+<li><a href="https://ovh.github.io/cds/docs/components/worker/worker/">worker</a>  - CDS Worker</li>
 </ul>
 
 

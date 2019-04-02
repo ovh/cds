@@ -15,15 +15,15 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-<meta name="description" content=" Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
+<meta name="description" content="Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  ">
-<meta property="og:description" content=" Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
+Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.">
+<meta property="og:description" content="Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  ">
-<meta name="twitter:description" content=" Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
+Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.">
+<meta name="twitter:description" content="Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  ">
+Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/actions/artifact-upload/">
 <meta property="og:title" content="Artifact Upload">
 <meta name="twitter:title" content="Artifact Upload">
@@ -397,6 +397,8 @@ Parameters  path: Path of file to upload tag: Tag to apply to your file.  Exampl
 <ul>
 <li><a href="#parameters">Parameters</a></li>
 <li><a href="#example">Example</a></li>
+<li><a href="#yaml-format">YAML Format</a></li>
+<li><a href="#worker-upload-command">Worker Upload Command</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -410,29 +412,58 @@ Parameters  path: Path of file to upload tag: Tag to apply to your file.  Exampl
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>path: Path of file to upload</li>
-<li>tag: Tag to apply to your file.</li>
+<li>path: Path of file to upload, example: <code>./src/yourFile.json</code></li>
+<li>tag: Artifact will be uploaded with a tag, generally <code>{{.cds.version}}</code>.</li>
+<li>enabled: Enable artifact upload, <code>true</code> or <code>false</code></li>
+<li>destination: optional. Destination of this artifact. Use the name of integration attached on your project. Default is empty.</li>
 </ul>
 
 <h2 id="example">Example</h2>
 
 <ul>
-<li>Create a file <code>myFile</code> and upload it.</li>
+<li>Create a file <code>myfile</code> and upload it.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.artifact-upload-job.png" alt="img" /></p>
+<p><img src="../images/artifact-upload-job.png" alt="img" /></p>
 
 <ul>
 <li>Launch pipeline, check logs</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.artifact-upload-logs.png" alt="img" /></p>
+<p><img src="../images/artifact-upload-logs.png?width=500px" alt="img" /></p>
 
 <ul>
 <li>View artifact</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.artifact-upload-view-artifact.png" alt="img" /></p>
+<p><img src="../images/artifact-upload-view-artifact.png" alt="img" /></p>
+
+<h2 id="yaml-format">YAML Format</h2>
+
+<p>Example of Pipeline using Artifact Upload Action</p>
+
+<pre><code class="language-yml">version: v1.0
+name: test-artifacts
+stages:
+- Stage 1
+jobs:
+- job: JobWithUpload
+  stage: Stage 1
+  steps:
+  - script:
+    - echo &quot;content file&quot; &gt; myfile
+  - artifactUpload:
+      path: myfile
+      tag: '{{.cds.version}}'
+</code></pre>
+
+<h2 id="worker-upload-command">Worker Upload Command</h2>
+
+<p>You can upload an artifact with the built-in action - or use the worker command.</p>
+
+<p>Example of a step script using <a href="https://ovh.github.io/cds/docs/components/worker/upload/">worker upload command</a></p>
+
+<p><img src="../images/artifact-worker-upload.png" alt="img" /></p>
 
 
 

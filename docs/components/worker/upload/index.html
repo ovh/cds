@@ -17,19 +17,19 @@
 
 <meta name="description" content=" worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
 Synopsis Inside a job, there are two ways to upload an artifact:
- with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: worker upload &lt;path&gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
+ with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command: worker upload &lt;path&gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 You can use you storage integration: worker upload &ndash;destination=&ldquo;yourStorageIntegrationName&rdquo;
-worker upload [flags]  Options  --destination string optional. Your storage integration name -h, --help help for upload --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  ">
+worker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  ">
 <meta property="og:description" content=" worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
 Synopsis Inside a job, there are two ways to upload an artifact:
- with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: worker upload &lt;path&gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
+ with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command: worker upload &lt;path&gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 You can use you storage integration: worker upload &ndash;destination=&ldquo;yourStorageIntegrationName&rdquo;
-worker upload [flags]  Options  --destination string optional. Your storage integration name -h, --help help for upload --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  ">
+worker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  ">
 <meta name="twitter:description" content=" worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
 Synopsis Inside a job, there are two ways to upload an artifact:
- with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: worker upload &lt;path&gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
+ with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command: worker upload &lt;path&gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 You can use you storage integration: worker upload &ndash;destination=&ldquo;yourStorageIntegrationName&rdquo;
-worker upload [flags]  Options  --destination string optional. Your storage integration name -h, --help help for upload --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  ">
+worker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  ">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/components/worker/upload/">
 <meta property="og:title" content="upload">
 <meta name="twitter:title" content="upload">
@@ -2393,37 +2393,21 @@ worker upload [flags]  Options  --destination string optional. Your storage inte
 			<div id="docsContent">
         		
 
-<h1>upload</h1>
 
 
 
-<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#worker-upload">worker upload</a>
-<ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
-</ul></li>
-</ul></li>
-</ul>
-</nav>
 
-
-
-<h2 id="worker-upload">worker upload</h2>
+<h1 id="worker-upload">worker upload</h1>
 
 <p><code>worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload</code></p>
 
-<h3 id="synopsis">Synopsis</h3>
+<h2 id="synopsis">Synopsis</h2>
 
 <p>Inside a job, there are two ways to upload an artifact:</p>
 
 <ul>
 <li>with a step using action Upload Artifacts</li>
-<li>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command: <code>worker upload &lt;path&gt;</code></li>
+<li>with a step script (<a href="https://ovh.github.io/cds/docs/actions/script/">https://ovh.github.io/cds/docs/actions/script/</a>), using the worker command: <code>worker upload &lt;path&gt;</code></li>
 </ul>
 
 <p><code>worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml</code></p>
@@ -2434,17 +2418,16 @@ worker upload [flags]  Options  --destination string optional. Your storage inte
 <pre><code>worker upload [flags]
 </code></pre>
 
-<h3 id="options">Options</h3>
+<h2 id="options">Options</h2>
 
 <pre><code>      --destination string   optional. Your storage integration name
-  -h, --help                 help for upload
       --tag string           Tag for artifact Upload - Tag is mandatory
 </code></pre>
 
-<h3 id="see-also">SEE ALSO</h3>
+<h2 id="see-also">SEE ALSO</h2>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/worker/worker/">worker</a>  - CDS Worker</li>
+<li><a href="https://ovh.github.io/cds/docs/components/worker/worker/">worker</a>  - CDS Worker</li>
 </ul>
 
 

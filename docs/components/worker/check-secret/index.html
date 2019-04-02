@@ -16,13 +16,13 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description" content="worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:">
 <meta property="og:description" content="worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:">
 <meta name="twitter:description" content="worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/components/worker/check-secret/">
 <meta property="og:title" content="check-secret">
@@ -2387,33 +2387,17 @@ Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/act
 			<div id="docsContent">
         		
 
-<h1>check-secret</h1>
 
 
 
-<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#worker-check-secret">worker check-secret</a>
-<ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
-</ul></li>
-</ul></li>
-</ul>
-</nav>
 
-
-
-<h2 id="worker-check-secret">worker check-secret</h2>
+<h1 id="worker-check-secret">worker check-secret</h1>
 
 <p><code>worker check-secret fileA fileB</code></p>
 
-<h3 id="synopsis">Synopsis</h3>
+<h2 id="synopsis">Synopsis</h2>
 
-<p>Inside a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), you can add check if a file contains a CDS variable of type password or private key:</p>
+<p>Inside a step script (<a href="https://ovh.github.io/cds/docs/actions/script/">https://ovh.github.io/cds/docs/actions/script/</a>), you can add check if a file contains a CDS variable of type password or private key:</p>
 
 <pre><code class="language-bash">#!/bin/bash
 
@@ -2435,18 +2419,13 @@ worker check-secret {{.cds.workspace}}/myFile
 
 <p>The command will exit 0 if no variable of type password or key is found.</p>
 
-<pre><code>worker check-secret [flags]
+<pre><code>worker check-secret
 </code></pre>
 
-<h3 id="options">Options</h3>
-
-<pre><code>  -h, --help   help for check-secret
-</code></pre>
-
-<h3 id="see-also">SEE ALSO</h3>
+<h2 id="see-also">SEE ALSO</h2>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/worker/worker/">worker</a>  - CDS Worker</li>
+<li><a href="https://ovh.github.io/cds/docs/components/worker/worker/">worker</a>  - CDS Worker</li>
 </ul>
 
 

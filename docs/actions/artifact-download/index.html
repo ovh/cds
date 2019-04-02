@@ -17,13 +17,13 @@
 
 <meta name="description" content="Artifact Download Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
-Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.">
+Parameters  enabled: Enable artifact download path: Path where artifacts will be downloaded pattern: Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB) tag: Artifact are uploaded with a tag, generally {{.cds.version}}  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.">
 <meta property="og:description" content="Artifact Download Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
-Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.">
+Parameters  enabled: Enable artifact download path: Path where artifacts will be downloaded pattern: Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB) tag: Artifact are uploaded with a tag, generally {{.cds.version}}  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.">
 <meta name="twitter:description" content="Artifact Download Action is a builtin action, you can&rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
-Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.">
+Parameters  enabled: Enable artifact download path: Path where artifacts will be downloaded pattern: Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB) tag: Artifact are uploaded with a tag, generally {{.cds.version}}  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/actions/artifact-download/">
 <meta property="og:title" content="Artifact Download">
 <meta name="twitter:title" content="Artifact Download">
@@ -397,6 +397,8 @@ Parameters  application: Application from where artifacts will be downloaded pip
 <ul>
 <li><a href="#parameters">Parameters</a></li>
 <li><a href="#example">Example</a></li>
+<li><a href="#yaml-format">YAML Format</a></li>
+<li><a href="#worker-download-command">Worker Download Command</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -410,10 +412,10 @@ Parameters  application: Application from where artifacts will be downloaded pip
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>application: Application from where artifacts will be downloaded</li>
-<li>pipeline: Pipeline from where artifacts will be downloaded</li>
-<li>tag: Tag set in the Artifact Upload action</li>
+<li>enabled: Enable artifact download</li>
 <li>path: Path where artifacts will be downloaded</li>
+<li>pattern: Empty: download all files. Otherwise, enter regexp pattern to choose file: <code>(fileA|fileB)</code></li>
+<li>tag: Artifact are uploaded with a tag, generally <code>{{.cds.version}}</code></li>
 </ul>
 
 <h2 id="example">Example</h2>
@@ -422,19 +424,40 @@ Parameters  application: Application from where artifacts will be downloaded pip
 <li>Workflow Configuration: a pipeline doing an <code>upload artifact</code> and another doing a <code>download artifact</code>.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.artifact-download-workflow.png" alt="img" /></p>
-
-<ul>
-<li>Job Configuration: download artifact from pipeline <code>parent</code></li>
-</ul>
-
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.artifact-download-job.png" alt="img" /></p>
+<p><img src="../images/artifact-download-workflow.png" alt="img" /></p>
 
 <ul>
 <li>Run pipeline, check logs</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.artifact-download-logs.png" alt="img" /></p>
+<p><img src="../images/artifact-download-logs.png" alt="img" /></p>
+
+<h2 id="yaml-format">YAML Format</h2>
+
+<p>Example of Pipeline using Artifact Download Action</p>
+
+<pre><code class="language-yml">version: v1.0
+name: test-artifacts
+stages:
+- Stage 1
+jobs:
+- job: JobWithDownload
+  stage: Stage 1
+  steps:
+  - artifactDownload:
+      path: '{{.cds.workspace}}'
+      tag: '{{.cds.version}}'
+  - script:
+    - ls
+</code></pre>
+
+<h2 id="worker-download-command">Worker Download Command</h2>
+
+<p>You can download an artifact with the built-in action - or use the worker command.</p>
+
+<p>Example of a step script using <a href="https://ovh.github.io/cds/docs/components/worker/download/">worker download command</a></p>
+
+<p><img src="../images/artifact-worker-download.png" alt="img" /></p>
 
 
 

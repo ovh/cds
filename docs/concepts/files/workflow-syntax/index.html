@@ -360,6 +360,12 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 	
 		
 			
+<a class="item" data-title="Memory" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="OS &amp; Architecture" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/"></a>
 
 		
@@ -476,6 +482,15 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 
 
 
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#run-conditions">Run Conditions</a></li>
+</ul></li>
+</ul>
+</nav>
+
 
 
 <p>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc.
@@ -500,6 +515,45 @@ hooks:
 </code></pre>
 
 <p>Here there are two major things to understand: <code>workflow</code> and <code>hooks</code>. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the <code>deploy</code> pipeline will be triggered after the <code>build</code> pipeline.</p>
+
+<h2 id="run-conditions">Run Conditions</h2>
+
+<p><a href="{{ &lt;relref &quot;/docs/concepts/workflow/run-conditions.md&quot;&gt;}}">Run Conditions documentation</a></p>
+
+<p>Example of basic condition. Notice that the <code>when</code> attribute is optional, it&rsquo;s just a shortcut on condition <code>cds.status == Success</code>.</p>
+
+<pre><code class="language-yml">yourpipeline:
+  depends_on:
+  - theparentpipeline
+  conditions:
+    check:
+    - variable: git.branch
+      operator: ne
+      value: master
+  when:
+  - success
+</code></pre>
+
+<p>Example with many checks:</p>
+
+<pre><code class="language-yml">conditions:
+  check:
+  - variable: git.branch
+    operator: eq
+    value: master
+  - variable: git.repository
+    operator: eq
+    value: ovh/cds
+  when:
+  - success
+</code></pre>
+
+<p>Example with using LUA syntax as advanced condition:</p>
+
+<pre><code class="language-lua">  conditions:
+    script: return cds_manual == &quot;true&quot; or (cds_status == &quot;Success&quot; and git_branch
+      == &quot;master&quot; and git_repository == &quot;ovh/cds&quot;)
+</code></pre>
 
 
 

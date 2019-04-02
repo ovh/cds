@@ -33,6 +33,16 @@ How to use service requirement When editing a pipeline job, choose your model as
     </item>
     
     <item>
+      <title>Memory</title>
+      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/</guid>
+      <description>The Memory requirement allows you to require a worker to have a specific number of mb of RAM.
+For example if you need 2Gb of RAM for your worker you can put 2048 in your memory requirement.</description>
+    </item>
+    
+    <item>
       <title>OS &amp; Architecture</title>
       <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

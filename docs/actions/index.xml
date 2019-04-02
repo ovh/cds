@@ -18,7 +18,7 @@
       <guid>https://ovh.github.io/cds/docs/actions/artifact-download/</guid>
       <description>Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
-Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
+Parameters  enabled: Enable artifact download path: Path where artifacts will be downloaded pattern: Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB) tag: Artifact are uploaded with a tag, generally {{.cds.version}}  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
     </item>
     
     <item>
@@ -27,9 +27,9 @@ Parameters  application: Application from where artifacts will be downloaded pip
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/actions/artifact-upload/</guid>
-      <description> Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
+      <description>Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  </description>
+Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.</description>
     </item>
     
     <item>
