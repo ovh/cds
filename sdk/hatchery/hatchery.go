@@ -390,7 +390,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 
 		// Skip network access requirement as we can't check it
 		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, network or memory requirement. Don't check theses requirements for now", j.timestamp, j.id)
+			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't checkt it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 
