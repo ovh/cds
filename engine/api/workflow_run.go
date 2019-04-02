@@ -817,10 +817,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		} else {
 			var errWf error
 			wf, errWf = workflow.Load(ctx, api.mustDB(), api.Cache, p, name, u, workflow.LoadOptions{
-				OnlyRootNode:          true,
-				DeepPipeline:          false,
+				DeepPipeline:          true,
 				Base64Keys:            true,
 				WithAsCodeUpdateEvent: true,
+				WithIcon:              true,
 			})
 			if errWf != nil {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)
@@ -899,6 +899,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			}
 			// Get workflow from repository
 			var errCreate error
+			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
 			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p1, wf, *opts, u, project.DecryptWithBuiltinKey)
 			if errCreate != nil {
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
@@ -913,20 +914,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 				report.Merge(r1, nil) // nolint
 				return
 			}
-		} else {
-			var errl error
-			options := workflow.LoadOptions{
-				DeepPipeline: true,
-				Base64Keys:   true,
-			}
-			wf, errl = workflow.Load(ctx, db, cache, p, wf.Name, u, options)
-			if errl != nil {
-				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errl, "unable to load workflow %s/%s", p.Key, wf.Name))
-				report.Merge(r1, nil) // nolint
-				return
-			}
 		}
-
 		wfRun.Workflow = *wf
 	}
 

@@ -15,9 +15,15 @@ import (
 
 // ImportOptions is option to parse a workflow
 type ImportOptions struct {
-	DryRun       bool
-	Force        bool
-	WorkflowName string
+	Force              bool
+	WorkflowName       string
+	FromRepository     string
+	IsDefaultBranch    bool
+	FromBranch         string
+	VCSServer          string
+	RepositoryName     string
+	RepositoryStrategy sdk.RepositoryStrategy
+	HookUUID           string
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
@@ -72,6 +78,38 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, nil, sdk.WrapError(err, "Unable to rename node")
 	}
 
+	w.FromRepository = opts.FromRepository
+	if !opts.IsDefaultBranch {
+		w.DerivationBranch = opts.FromBranch
+	}
+
+	// do not override application data if no opts were given
+	appID := w.WorkflowData.Node.Context.ApplicationID
+	if opts.VCSServer != "" && appID != 0 {
+		app := w.GetApplication(appID)
+		app.VCSServer = opts.VCSServer
+		app.RepositoryFullname = opts.RepositoryName
+		app.RepositoryStrategy = opts.RepositoryStrategy
+		w.Applications[appID] = app
+	}
+
+	if w.FromRepository != "" {
+		if len(w.WorkflowData.Node.Hooks) == 0 {
+			w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+				HookModelName: sdk.RepositoryWebHookModel.Name,
+				HookModelID:   sdk.RepositoryWebHookModel.ID,
+				Config:        sdk.RepositoryWebHookModel.DefaultConfig,
+				UUID:          opts.HookUUID,
+			})
+			w.RetroMigrate()
+			var err error
+			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
+				return nil, nil, sdk.WrapError(err, "Unable to get default payload")
+			}
+			w.WorkflowData.Node.Context.DefaultPayload = w.Root.Context.DefaultPayload
+		}
+	}
+
 	w.RetroMigrate()
 
 	if opts.WorkflowName != "" && w.Name != opts.WorkflowName {
@@ -94,7 +132,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, store, proj, oldW, w, u, opts.Force, msgChan, opts.DryRun)
+	globalError := Import(ctx, db, store, proj, oldW, w, u, opts.Force, msgChan)
 	close(msgChan)
 	done.Wait()
 
