@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -12,28 +14,31 @@ import (
 
 func (api *API) getWorkerModelExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
-		workerModelID, errr := requestVarInt(r, "modelID")
-		if errr != nil {
-			return sdk.WrapError(errr, "Invalid modelID")
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		modelName := vars["permModelName"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
+		if err != nil {
+			return err
+		}
+
+		wm, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model")
 		}
 
 		format := FormString(r, "format")
 		if format == "" {
 			format = "yaml"
 		}
-
-		wm, err := worker.LoadWorkerModelByID(api.mustDB(), workerModelID)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load worker model id %d", workerModelID)
-		}
-
-		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return sdk.WrapError(err, "Format invalid")
+			return err
 		}
 
+		u := deprecatedGetUser(ctx)
 		opts := []exportentities.WorkerModelOption{}
 		if u != nil && !u.Admin && !wm.Restricted {
 			opts = append(opts, exportentities.WorkerModelLoadOptions.HideAdminFields)

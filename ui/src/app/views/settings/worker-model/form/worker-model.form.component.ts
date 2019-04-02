@@ -18,7 +18,14 @@ export class WorkerModelFormComponent implements OnChanges {
     codemirror: CodemirrorComponent;
     codeMirrorConfig: any;
 
-    @Input() workerModel: WorkerModel;
+    _workerModel: WorkerModel;
+    @Input() set workerModel(wm: WorkerModel) {
+        this._workerModel = { ...wm };
+        if (this._workerModel && this._workerModel.model_docker && this._workerModel.model_docker.envs) {
+            this.envNames = Object.keys(this._workerModel.model_docker.envs);
+        }
+    }
+    get workerModel(): WorkerModel { return this._workerModel; }
     @Input() currentUser: User;
     @Input() loading: boolean;
     @Input() types: Array<string>;
@@ -52,9 +59,6 @@ export class WorkerModelFormComponent implements OnChanges {
     }
 
     ngOnChanges(): void {
-        if (this.workerModel && this.workerModel.model_docker && this.workerModel.model_docker.envs) {
-            this.envNames = Object.keys(this.workerModel.model_docker.envs);
-        }
     }
 
     loadAsCode(): void {
