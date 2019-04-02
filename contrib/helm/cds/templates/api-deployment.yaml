@@ -25,6 +25,11 @@ spec:
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
+        - name: CDS_CONFIG_FILE
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}
+              key: cds_config_file
         - name: CDS_API_DATABASE_HOST
         {{- if .Values.postgresql.enabled }}
           value: {{ template "cds.postgresql.fullname" . }}
@@ -74,7 +79,7 @@ spec:
               name: {{ template "cds.fullname" . }}
               key: cds-api_secrets_key
         command: ["/bin/sh"]
-        args: ["-c", "/app/cds-engine-linux-amd64 start api"]
+        args: ["-c", "echo $CDS_CONFIG_FILE | base64 --decode -o config.toml && /app/cds-engine-linux-amd64 start api --config config.toml"]
         ports:
         - name: http
           containerPort: 8081
