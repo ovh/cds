@@ -393,6 +393,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
+			Shell: "sh",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -413,7 +414,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 403, w.Code, "Status code should be 403")
+	assert.Equal(t, 403, w.Code, "Status code should be 403 because only a group admin can create a model")
 
 	t.Logf("Body: %s", w.Body.String())
 }
@@ -441,6 +442,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
+			Shell: "sh",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -699,7 +701,8 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
-			Cmd:   "worker",
+      Cmd:   "worker",
+      Shell: "sh",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -720,7 +723,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 403, w.Code)
+	assert.Equal(t, 403, w.Code, "Status code should be 403 because only a group admin can create a model")
 
 	t.Logf("Body: %s", w.Body.String())
 }

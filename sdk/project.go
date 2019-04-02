@@ -36,7 +36,7 @@ type Project struct {
 	Favorite         bool                 `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 }
 
-// IsValid returns error if the project is not valid
+// IsValid returns error if the project is not valid.
 func (proj Project) IsValid() error {
 	if !NamePatternRegex.MatchString(proj.Key) {
 		return NewError(ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", NamePattern))

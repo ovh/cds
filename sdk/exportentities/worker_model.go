@@ -112,7 +112,7 @@ func (wm WorkerModel) GetWorkerModel() (sdk.Model, error) {
 	return model, wm.IsValid()
 }
 
-// IsValid returns error if worker model is invalid
+// IsValid returns error if the model is not valid.
 func (wm *WorkerModel) IsValid() error {
 	if wm.Name == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: worker model name is not provided")

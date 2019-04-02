@@ -127,6 +127,33 @@ type Model struct {
 	Editable bool `json:"editable,omitempty" db:"-"`
 }
 
+// IsValid returns error if the model is not valid.
+func (m Model) IsValid() error {
+	if len(m.Name) == 0 {
+		return WrapError(ErrWrongRequest, "model name is empty")
+	}
+	if m.GroupID == 0 {
+		return WrapError(ErrWrongRequest, "groupID should be set")
+	}
+	if m.Type == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given type")
+	}
+	switch m.Type {
+	case Docker:
+		if m.ModelDocker.Image == "" {
+			return NewErrorFrom(ErrWrongRequest, "invalid given worker image")
+		}
+		if m.ModelDocker.Cmd == "" || m.ModelDocker.Shell == "" {
+			return WrapError(ErrWrongRequest, "invalid worker command or invalid shell command")
+		}
+	default:
+		if m.ModelVirtualMachine.Image == "" {
+			return WrapError(ErrWrongRequest, "invalid worker command or invalid image")
+		}
+	}
+	return nil
+}
+
 // ModelVirtualMachine for openstack or vsphere
 type ModelVirtualMachine struct {
 	Image   string `json:"image,omitempty"`

@@ -24,27 +24,8 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
-		if len(data.Name) == 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "model name is empty")
-		}
-		if data.GroupID == 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "groupID should be set")
-		}
-		if data.Type == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given type")
-		}
-		switch data.Type {
-		case sdk.Docker:
-			if data.ModelDocker.Image == "" {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker image")
-			}
-			if data.ModelDocker.Cmd == "" || data.ModelDocker.Shell == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker command or invalid shell command")
-			}
-		default:
-			if data.ModelVirtualMachine.Image == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker command or invalid image")
-			}
+		if err := data.IsValid(); err != nil {
+			return err
 		}
 
 		// the default group cannot own worker model
