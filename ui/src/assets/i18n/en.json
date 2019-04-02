@@ -601,7 +601,7 @@
   "pipeline_administration": "General administration of the pipeline",
 
   "pipeline_run_test_filter_empty": "There is no test matching '{{criteria}}'",
-  "pipeline_run_test_no_error": "All tests are successfull",
+  "pipeline_run_test_no_error": "All tests are successful",
   "pipeline_run_test_total_title_s": " tests",
   "pipeline_run_test_total_title": " test",
   "pipeline_run_test_failed_title_s": " tests failed",
