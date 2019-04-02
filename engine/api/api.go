@@ -756,7 +756,7 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
-	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.39.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.CleanArtifactBuiltinActions(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
