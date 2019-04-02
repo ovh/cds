@@ -19,115 +19,101 @@ import (
 
 func (api *API) postWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var model sdk.Model
-		if err := service.UnmarshalBody(r, &model); err != nil {
+		// parse request and check data validity
+		var data sdk.Model
+		if err := service.UnmarshalBody(r, &data); err != nil {
+			return err
+		}
+		if len(data.Name) == 0 {
+			return sdk.WrapError(sdk.ErrWrongRequest, "model name is empty")
+		}
+		if data.GroupID == 0 {
+			return sdk.WrapError(sdk.ErrWrongRequest, "groupID should be set")
+		}
+		if data.Type == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given type")
+		}
+		switch data.Type {
+		case sdk.Docker:
+			if data.ModelDocker.Image == "" {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker image")
+			}
+			if data.ModelDocker.Cmd == "" || data.ModelDocker.Shell == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker command or invalid shell command")
+			}
+		default:
+			if data.ModelVirtualMachine.Image == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker command or invalid image")
+			}
+		}
+
+		// the default group cannot own worker model
+		if group.IsDefaultGroupID(data.GroupID) {
+			return sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
+		}
+
+		// check that the group exists and user is admin for group id
+		grp, err := group.LoadGroupByID(api.mustDB(), data.GroupID)
+		if err != nil {
+			return err
+		}
+		u := deprecatedGetUser(ctx)
+		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
 		}
 
-		if model.Type == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given type")
+		// provision is allowed only for CDS Admin or by user with a restricted model
+		if !u.Admin && !data.Restricted {
+			data.Provision = 0
 		}
 
-		var modelPattern *sdk.ModelPattern
-		if model.PatternName != "" {
-			var errP error
-			modelPattern, errP = worker.LoadWorkerModelPatternByName(api.mustDB(), model.Type, model.PatternName)
-			if errP != nil {
-				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Cannot load worker model pattern %s : %v", model.PatternName, errP)
-			}
+		// if current user is not admin and model is not restricted, a pattern should be given
+		if !u.Admin && !data.Restricted && data.PatternName == "" {
+			return sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "missing model pattern name")
 		}
 
-		currentUser := deprecatedGetUser(ctx)
-		//User must be admin of the group set in the model
-		var isGroupAdmin bool
-	currentUGroup:
-		for _, g := range currentUser.Groups {
-			if g.ID == model.GroupID {
-				for _, a := range g.Admins {
-					if a.ID == currentUser.ID {
-						isGroupAdmin = true
-						break currentUGroup
-					}
-				}
+		// if a model pattern is given try to get it from database
+		if data.PatternName != "" {
+			modelPattern, err := worker.LoadWorkerModelPatternByName(api.mustDB(), data.Type, data.PatternName)
+			if err != nil {
+				return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model name"))
 			}
-		}
 
-		//User should have the right permission or be admin
-		if !currentUser.Admin && !isGroupAdmin {
-			return sdk.WithStack(sdk.ErrWorkerModelNoAdmin)
-		}
-
-		switch model.Type {
-		case sdk.Docker:
-			if model.ModelDocker.Image == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker image")
+			// set pattern data on given model
+			switch data.Type {
+			case sdk.Docker:
+				data.ModelDocker.Cmd = modelPattern.Model.Cmd
+				data.ModelDocker.Shell = modelPattern.Model.Shell
+				data.ModelDocker.Envs = modelPattern.Model.Envs
+			default:
+				data.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
+				data.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
+				data.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 			}
-			if !currentUser.Admin && !model.Restricted {
-				if modelPattern == nil {
-					return sdk.WithStack(sdk.ErrWorkerModelNoPattern)
-				}
-				model.ModelDocker.Cmd = modelPattern.Model.Cmd
-				model.ModelDocker.Shell = modelPattern.Model.Shell
-				model.ModelDocker.Envs = modelPattern.Model.Envs
-			}
-			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
-			}
-		default:
-			if model.ModelVirtualMachine.Image == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
-			}
-			if !currentUser.Admin && !model.Restricted {
-				if modelPattern == nil {
-					return sdk.WithStack(sdk.ErrWorkerModelNoPattern)
-				}
-				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
-				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
-				model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
-			}
-		}
-
-		if len(model.Name) == 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> model name is empty")
-		}
-
-		if model.GroupID == 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> groupID should be set")
-		}
-
-		if group.IsDefaultGroupID(model.GroupID) {
-			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> this group can't be owner of a worker model")
 		}
 
 		// check if worker model already exists
-		if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
-			return sdk.WrapError(sdk.ErrModelNameExist, "addWorkerModel> worker model already exists")
+		if _, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), data.Name, grp.ID); err == nil {
+			return sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)
 		}
 
-		// provision is allowed only for CDS Admin
-		// or by currentUser with a restricted model
-		if !currentUser.Admin && !model.Restricted {
-			model.Provision = 0
+		data.CreatedBy = sdk.User{
+			Email:    u.Email,
+			Username: u.Username,
+			Admin:    u.Admin,
+			Fullname: u.Fullname,
+			ID:       u.ID,
+			Origin:   u.Origin,
 		}
 
-		model.CreatedBy = sdk.User{
-			Email:    currentUser.Email,
-			Username: currentUser.Username,
-			Admin:    currentUser.Admin,
-			Fullname: currentUser.Fullname,
-			ID:       currentUser.ID,
-			Origin:   currentUser.Origin,
-		}
-
-		// Insert model in db
-		if err := worker.InsertWorkerModel(api.mustDB(), &model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(), &data); err != nil {
 			return sdk.WrapError(err, "cannot add worker model")
 		}
 
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
 
-		new, err := worker.LoadWorkerModelByID(api.mustDB(), model.ID)
+		new, err := worker.LoadWorkerModelByID(api.mustDB(), data.ID)
 		if err != nil {
 			return err
 		}

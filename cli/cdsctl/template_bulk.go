@@ -166,7 +166,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 		return nil, nil, fmt.Errorf("cannot unmarshal given file %v", err)
 	}
 
-	groupName, templateSlug, err := templateParsePath(f.TemplatePath)
+	groupName, templateSlug, err := cli.ParsePath(f.TemplatePath)
 	if err != nil {
 		return nil, nil, err
 	}

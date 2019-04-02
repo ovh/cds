@@ -27,14 +27,6 @@ func workerModel() *cobra.Command {
 	})
 }
 
-func workerModelParsePath(path string) (string, string, error) {
-	pathSplitted := strings.Split(path, "/")
-	if len(pathSplitted) != 2 {
-		return "", "", fmt.Errorf("invalid given worker model path")
-	}
-	return pathSplitted[0], pathSplitted[1], nil
-}
-
 var workerModelListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS worker models",
@@ -144,7 +136,7 @@ var workerModelShowCmd = cli.Command{
 }
 
 func workerModelShowRun(v cli.Values) (interface{}, error) {
-	groupName, modelName, err := workerModelParsePath(v.GetString("worker-model-path"))
+	groupName, modelName, err := cli.ParsePath(v.GetString("worker-model-path"))
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +159,7 @@ var workerModelDeleteCmd = cli.Command{
 }
 
 func workerModelDeleteRun(v cli.Values) error {
-	groupName, modelName, err := workerModelParsePath(v.GetString("worker-model-path"))
+	groupName, modelName, err := cli.ParsePath(v.GetString("worker-model-path"))
 	if err != nil {
 		return err
 	}
@@ -198,7 +190,7 @@ var workerModelExportCmd = cli.Command{
 }
 
 func workerModelExportRun(c cli.Values) error {
-	groupName, modelName, err := workerModelParsePath(c.GetString("worker-model-path"))
+	groupName, modelName, err := cli.ParsePath(c.GetString("worker-model-path"))
 	if err != nil {
 		return err
 	}
