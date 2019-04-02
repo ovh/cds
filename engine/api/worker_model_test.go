@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -93,7 +92,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -213,7 +212,8 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"modelID": fmt.Sprintf("%d", model.ID),
+		"groupName":     gr.Name,
+		"permModelName": model.Name,
 	}
 	uri := router.GetRoute("GET", api.getWorkerModelUsageHandler, vars)
 	test.NotEmpty(t, uri)
@@ -265,7 +265,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -404,7 +404,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri, "Route route found")
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -452,7 +452,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -502,7 +502,7 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -566,7 +566,7 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -614,7 +614,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	//Do the request
@@ -643,7 +643,8 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	test.NoError(t, worker.InsertWorkerModelPattern(api.mustDB(), &pattern))
 
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", wm.ID),
+		"groupName":     g.Name,
+		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
@@ -710,7 +711,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -763,7 +764,7 @@ func Test_updateWorkerModel(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -802,7 +803,8 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", model.ID),
+		"groupName":     g.Name,
+		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
@@ -816,7 +818,6 @@ func Test_updateWorkerModel(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
-
 }
 
 func Test_deleteWorkerModel(t *testing.T) {
@@ -858,7 +859,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -875,7 +876,8 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", model.ID),
+		"groupName":     g.Name,
+		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("DELETE", api.deleteWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
@@ -889,7 +891,6 @@ func Test_deleteWorkerModel(t *testing.T) {
 	assert.Equal(t, 204, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
-
 }
 
 func Test_getWorkerModel(t *testing.T) {
@@ -926,7 +927,7 @@ func Test_getWorkerModel(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -989,7 +990,7 @@ func Test_getWorkerModels(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
