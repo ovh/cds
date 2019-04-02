@@ -103,16 +103,13 @@ func (r *NodeHook) PostInsert(db gorp.SqlExecutor) error {
 
 //PostGet is a db hook
 func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		Config sql.NullString `db:"config"`
-	}{}
-	if err := db.SelectOne(&res, "select config from workflow_node_hook where id = $1", r.ID); err != nil {
+	configDB, err := db.SelectNullStr("select config from workflow_node_hook where id = $1", r.ID)
+	if err != nil {
 		return err
 	}
 
-	conf := sdk.WorkflowNodeHookConfig{}
-
-	if err := gorpmapping.JSONNullString(res.Config, &conf); err != nil {
+	var conf sdk.WorkflowNodeHookConfig
+	if err := gorpmapping.JSONNullString(configDB, &conf); err != nil {
 		return err
 	}
 
