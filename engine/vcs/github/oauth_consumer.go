@@ -12,17 +12,11 @@ import (
 )
 
 //Github const
-const (
-	URL    = "https://github.com"
-	APIURL = "https://api.github.com"
-)
-
-//Github const
 var (
 	requestedScope = []string{"user:email", "repo", "admin:repo_hook"} //https://developer.github.com/v3/oauth/#scopes
 )
 
-//AuthorizeRedirect returns the request token, the Authorize URL
+//AuthorizeRedirect returns the request token, the Authorize GitHubURL
 //doc: https://developer.github.com/v3/oauth/#web-application-flow
 func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	// GET https://github.com/login/oauth/authorize
@@ -38,7 +32,7 @@ func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string,
 	val.Add("scope", strings.Join(requestedScope, " "))
 	val.Add("state", requestToken)
 
-	authorizeURL := fmt.Sprintf("%s/login/oauth/authorize?%s", URL, val.Encode())
+	authorizeURL := fmt.Sprintf("%s/login/oauth/authorize?%s", g.GitHubURL, val.Encode())
 
 	return requestToken, authorizeURL, nil
 }
@@ -93,6 +87,8 @@ func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, a
 		c = &githubClient{
 			ClientID:            g.ClientID,
 			OAuthToken:          accessToken,
+			GitHubURL:           g.GitHubURL,
+			GitHubAPIURL:        g.GitHubAPIURL,
 			Cache:               g.Cache,
 			uiURL:               g.uiURL,
 			DisableStatus:       g.disableStatus,
