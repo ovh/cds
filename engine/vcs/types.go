@@ -55,6 +55,7 @@ type ServerConfiguration struct {
 type GithubServerConfiguration struct {
 	ClientID     string `toml:"clientId" json:"-" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-"  comment:"Github OAuth Application Client Secret"`
+	APIURL       string `toml:"apiUrl" json:"-" comment:"The URL for the GitHub API."`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`

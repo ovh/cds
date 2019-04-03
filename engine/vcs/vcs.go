@@ -78,6 +78,8 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		return github.New(
 			serverCfg.Github.ClientID,
 			serverCfg.Github.ClientSecret,
+			serverCfg.URL,
+			serverCfg.Github.APIURL,
 			s.Cfg.API.HTTP.URL,
 			s.Cfg.UI.HTTP.URL,
 			serverCfg.Github.ProxyWebhook,
