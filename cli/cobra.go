@@ -310,6 +310,9 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				t := strings.Split(filter, " ")
 				for i := range t {
 					s := strings.SplitN(t[i], "=", 2)
+					if len(s) != 2 {
+						ExitOnError(fmt.Errorf("Filter should be formatted like name=value"))
+					}
 					filters[s[0]] = s[1]
 				}
 			}
@@ -438,8 +441,7 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 		t = reflect.TypeOf(reflect.ValueOf(i).Elem().Interface())
 	}
 
-	var ok = true
-	for i := 0; i < s.NumField() && ok; i++ {
+	for i := 0; i < s.NumField(); i++ {
 		f := s.Field(i)
 		structField := t.Field(i)
 		if f.Kind() == reflect.Ptr {
@@ -454,61 +456,71 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 				continue
 			}
 			if s.IsValid() && s.CanInterface() {
-				var isKey bool
 				tag := structField.Tag.Get("cli")
 				if tag == "-" {
 					continue
 				}
 
+				var isKey bool
 				if strings.HasSuffix(tag, ",key") {
 					isKey = true
 					tag = strings.Replace(tag, ",key", "", -1)
 				}
-
 				if !verbose && tag == "" {
 					continue
 				}
-
 				if tag == "" {
 					tag = structField.Name
 				}
 
+				// if there are filters and current tag value not match return nil item
 				if len(filters) > 0 {
 					for k, v := range filters {
+						// filter only if tag match
+						matchTag := k == tag || strings.ToUpper(k) == tag || strings.ToLower(k) == tag
+						if !matchTag {
+							continue
+						}
+
+						// transform filter to regex
 						if !strings.HasPrefix(v, "^") {
 							v = "^" + v
 						}
 						if !strings.HasSuffix(v, "$") {
 							v = v + "$"
 						}
-						match, err := regexp.MatchString(v, fmt.Sprintf("%v", f.Interface()))
+
+						// if the value don't match the item will not be displayed
+						matchValue, err := regexp.MatchString(v, fmt.Sprintf("%v", f.Interface()))
 						if err != nil {
 							panic(err)
 						}
-						if k == tag && !match {
-							ok = false
-							continue
+						if !matchValue {
+							return nil
 						}
 					}
-					if ok {
-						res[tag] = fmt.Sprintf("%v", f.Interface())
-					}
-				} else {
-					if quiet && isKey {
-						res["key"] = fmt.Sprintf("%v", f.Interface())
-						break
-					}
+				}
 
-					if len(fields) > 0 {
-						for _, ff := range fields {
-							if ff == tag || strings.ToUpper(ff) == tag || strings.ToLower(ff) == tag {
-								res[tag] = fmt.Sprintf("%v", f.Interface())
-								continue
-							}
+				// if there are fields list, add only tag that match in result (ignore for quiet mode)
+				if !quiet && len(fields) > 0 {
+					var visible bool
+					for _, ff := range fields {
+						matchTag := ff == tag || strings.ToUpper(ff) == tag || strings.ToLower(ff) == tag
+						if matchTag {
+							visible = true
+							break
 						}
+					}
+					if !visible {
 						continue
 					}
+				}
+
+				// if not quiet mode add the key:value to result else if quiet add only the key
+				if !quiet {
 					res[tag] = fmt.Sprintf("%v", f.Interface())
+				} else if isKey {
+					res["key"] = fmt.Sprintf("%v", f.Interface())
 				}
 			}
 		}
