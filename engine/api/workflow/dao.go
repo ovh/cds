@@ -1549,7 +1549,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, oldWf, &data.wrkflw, u, importOptions)
 	if err != nil {
-		log.Error("Push> Unable to import workflow: %v", err)
 		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
 	}
 

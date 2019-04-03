@@ -400,17 +400,13 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 		}
 
 		for _, hook := range hooks {
-			if hook.UUID == "" {
+			err := s.updateTask(ctx, &hook)
+			if err == errNoTask {
 				if err := s.addTask(ctx, &hook); err != nil {
 					return sdk.WithStack(err)
 				}
-				continue
-			}
-
-			if err := s.updateTask(ctx, &hook); err != nil {
-				if err != errNoTask {
-					return sdk.WithStack(err)
-				}
+			} else if err != nil {
+				return sdk.WithStack(err)
 			}
 		}
 		return service.WriteJSON(w, hooks, http.StatusOK)

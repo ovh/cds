@@ -217,7 +217,6 @@ func ExtractFromCDSFiles(tr *tar.Reader) (*ExportedEntities, error) {
 				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
 				continue
 			}
-			workflowFileName = hdr.Name
 		}
 	}
 
