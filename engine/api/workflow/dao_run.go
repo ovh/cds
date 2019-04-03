@@ -692,11 +692,11 @@ func PurgeAllWorkflowRunsByWorkflowID(db gorp.SqlExecutor, id int64) (int, error
 	return int(n), nil
 }
 
-type byInt64 []int64
+type byInt64Desc []int64
 
-func (a byInt64) Len() int           { return len(a) }
-func (a byInt64) Less(i, j int) bool { return a[i] < a[j] }
-func (a byInt64) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byInt64Desc) Len() int           { return len(a) }
+func (a byInt64Desc) Less(i, j int) bool { return a[i] > a[j] }
+func (a byInt64Desc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 // PurgeWorkflowRun mark all workflow run to delete
 func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow, workflowRunsMarkToDelete *stats.Int64Measure) error {
@@ -837,7 +837,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 				idsInt64[i] = nu
 			}
 
-			sort.Sort(byInt64(idsInt64))
+			sort.Sort(byInt64Desc(idsInt64))
 			idsStr := make([]string, 0, int64(len(idsInt64))-wf.HistoryLength)
 			for _, id := range idsInt64[wf.HistoryLength:] {
 				found := false
