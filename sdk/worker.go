@@ -115,7 +115,6 @@ type Model struct {
 	CreatedBy              User                `json:"created_by" db:"-" cli:"-"`
 	Provision              int64               `json:"provision" db:"provision" cli:"provision"`
 	GroupID                int64               `json:"group_id" db:"group_id" cli:"-"`
-	Group                  Group               `json:"group" db:"-" cli:"-"`
 	NbSpawnErr             int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
 	LastSpawnErr           string              `json:"last_spawn_err" db:"-" cli:"-"`
 	LastSpawnErrLogs       *string             `json:"last_spawn_err_log" db:"-" cli:"-"`
@@ -124,7 +123,31 @@ type Model struct {
 	IsOfficial             bool                `json:"is_official" db:"-" cli:"official"`
 	PatternName            string              `json:"pattern_name,omitempty" db:"-" cli:"-"`
 	// aggregates
-	Editable bool `json:"editable,omitempty" db:"-"`
+	Editable bool  `json:"editable,omitempty" db:"-"`
+	Group    Group `json:"group" db:"-" cli:"-" db:"-"`
+}
+
+// Update workflow template field from new data.
+func (m *Model) Update(data Model) {
+	m.Name = data.Name
+	m.Description = data.Description
+	m.Disabled = data.Disabled
+	m.Restricted = data.Restricted
+	m.IsDeprecated = data.IsDeprecated
+	m.IsOfficial = data.IsOfficial
+	m.GroupID = data.GroupID
+	m.Type = data.Type
+	m.Provision = data.Provision
+	m.Communication = data.Communication
+	m.ModelDocker = ModelDocker{}
+	m.ModelVirtualMachine = ModelVirtualMachine{}
+	switch m.Type {
+	case Docker:
+		m.ModelDocker = data.ModelDocker
+	default:
+		m.ModelVirtualMachine = data.ModelVirtualMachine
+	}
+	m.Restricted = data.Restricted
 }
 
 // IsValid returns error if the model is not valid.
@@ -143,12 +166,15 @@ func (m Model) IsValid() error {
 		if m.ModelDocker.Image == "" {
 			return NewErrorFrom(ErrWrongRequest, "invalid given worker image")
 		}
-		if m.ModelDocker.Cmd == "" || m.ModelDocker.Shell == "" {
+		if m.PatternName == "" && (m.ModelDocker.Cmd == "" || m.ModelDocker.Shell == "") {
 			return WrapError(ErrWrongRequest, "invalid worker command or invalid shell command")
 		}
 	default:
 		if m.ModelVirtualMachine.Image == "" {
 			return WrapError(ErrWrongRequest, "invalid worker command or invalid image")
+		}
+		if m.PatternName == "" && m.ModelVirtualMachine.Cmd == "" {
+			return WrapError(ErrWrongRequest, "invalid worker command")
 		}
 	}
 	return nil

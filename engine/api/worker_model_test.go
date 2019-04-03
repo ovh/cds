@@ -43,7 +43,7 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	}
 }
 
-func Test_addWorkerModelAsAdmin(t *testing.T) {
+func Test_postWorkerModelAsAdmin(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -80,13 +80,6 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 			Cmd:   "worker --api={{.API}}",
 			Envs: map[string]string{
 				"CDS_TEST": "THIS IS A TEST",
-			},
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
 			},
 		},
 	}
@@ -132,13 +125,6 @@ func Test_WorkerModelUsage(t *testing.T) {
 			Cmd:   "worker --api={{.API}}",
 			Envs: map[string]string{
 				"CDS_TEST": "THIS IS A TEST",
-			},
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
 			},
 		},
 	}
@@ -232,7 +218,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 	test.Equal(t, proj.Key, pipelines[0].ProjectKey)
 }
 
-func Test_addWorkerModelWithWrongRequest(t *testing.T) {
+func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -255,13 +241,6 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 			Cmd:   "worker",
 		},
 		GroupID: g.ID,
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -282,13 +261,6 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	model = sdk.Model{
 		GroupID: g.ID,
 		Type:    sdk.Docker,
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -310,13 +282,6 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -336,13 +301,6 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 		Type: sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
 		},
 	}
 
@@ -371,7 +329,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_addWorkerModelAsAGroupMember(t *testing.T) {
+func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -395,13 +353,6 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 			Cmd:   "worker",
 			Shell: "sh",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -419,7 +370,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -444,13 +395,6 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 			Cmd:   "worker",
 			Shell: "sh",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -468,7 +412,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -494,13 +438,6 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 			Shell: "sh -c",
 			Cmd:   "worker --api={{.API}}",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -521,7 +458,7 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 }
 
-func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -558,13 +495,6 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 			Flavor: "vps-ssd-1",
 			Cmd:    "worker --api={{.API}}",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -586,9 +516,9 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	test.Equal(t, "apt-get install curl -y", newModel.ModelVirtualMachine.PreCmd, "Pre worker command is not good")
 }
 
-// Test_addWorkerModelAsAGroupAdminWithProvision test the provioning
+// Test_postWorkerModelAsAGroupAdminWithProvision test the provioning
 // For a group Admin, it is allowed to set a provision only for restricted model
-func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -648,7 +578,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 		"groupName":     g.Name,
 		"permModelName": model.Name,
 	}
-	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
 	// API will set provisioning to 0 for a non-restricted model
@@ -667,7 +597,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	assert.Equal(t, "./worker", wmUpdated.ModelDocker.Cmd)
 }
 
-func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
+func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -701,15 +631,8 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
-      Cmd:   "worker",
-      Shell: "sh",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
+			Cmd:   "worker",
+			Shell: "sh",
 		},
 	}
 
@@ -728,7 +651,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_updateWorkerModel(t *testing.T) {
+func Test_putWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -757,13 +680,6 @@ func Test_updateWorkerModel(t *testing.T) {
 			Shell: "sh -c",
 			Cmd:   "worker",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -784,23 +700,13 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	model2 := sdk.Model{
 		Name:       "Test1bis",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
 		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
 			Shell: "sh -c",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-			{
-				Name:  "capa2",
-				Type:  sdk.BinaryRequirement,
-				Value: "2",
-			},
 		},
 	}
 
@@ -809,7 +715,7 @@ func Test_updateWorkerModel(t *testing.T) {
 		"groupName":     g.Name,
 		"permModelName": model.Name,
 	}
-	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
@@ -851,13 +757,6 @@ func Test_deleteWorkerModel(t *testing.T) {
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
 			Shell: "sh -c",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
 		},
 	}
 
@@ -920,13 +819,6 @@ func Test_getWorkerModel(t *testing.T) {
 			Shell: "sh -c",
 			Cmd:   "worker",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -956,7 +848,6 @@ func Test_getWorkerModel(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
-
 }
 
 func Test_getWorkerModels(t *testing.T) {
@@ -982,13 +873,6 @@ func Test_getWorkerModels(t *testing.T) {
 			Image: "buildpack-deps:jessie",
 			Shell: "sh -c",
 			Cmd:   "worker",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
 		},
 	}
 
@@ -1025,11 +909,10 @@ func Test_getWorkerModels(t *testing.T) {
 
 	assert.Equal(t, 1, len(results))
 	assert.Equal(t, "Test1", results[0].Name)
-	assert.Equal(t, 1, len(results[0].RegisteredCapabilities))
 	assert.Equal(t, u.Fullname, results[0].CreatedBy.Fullname)
 }
 
-func Test_addWorkerModelCapa(t *testing.T) {
+func Test_postWorkerModelCapa(t *testing.T) {
 
 }
 
@@ -1041,7 +924,7 @@ func Test_getWorkerModelCapaTypes(t *testing.T) {
 
 }
 
-func Test_updateWorkerModelCapa(t *testing.T) {
+func Test_putWorkerModelCapa(t *testing.T) {
 
 }
 

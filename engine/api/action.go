@@ -224,18 +224,14 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 		if old == nil {
 			return sdk.WithStack(sdk.ErrNoAction)
-		}
-
-		if err := action.LoadOptions.Default(api.mustDB(), old); err != nil {
-			return err
-		}
-
+    }
+    
 		var data sdk.Action
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
