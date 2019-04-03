@@ -83,7 +83,7 @@ If your application is linked to a repository, you can use {{.git.url}} (clone o
 		Description: `Set the private key to be able to git clone from ssh.
 You can create an application key named 'app-key' and use it in this action.
 The public key have to be granted on your repository`,
-		Type: sdk.KeySSHParameter,
+		Type: sdk.StringParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "user",
