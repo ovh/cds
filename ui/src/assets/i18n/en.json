@@ -601,7 +601,7 @@
   "pipeline_administration": "General administration of the pipeline",
 
   "pipeline_run_test_filter_empty": "There is no test matching '{{criteria}}'",
-  "pipeline_run_test_no_error": "All tests are successfull",
+  "pipeline_run_test_no_error": "All tests are successful",
   "pipeline_run_test_total_title_s": " tests",
   "pipeline_run_test_total_title": " test",
   "pipeline_run_test_failed_title_s": " tests failed",
@@ -1138,5 +1138,6 @@
   "application_repository_help_line_1": "Your application was not imported from your code.",
   "environment_repository_help_line_1": "Your environment was not imported from your code.",
   "pipeline_repository_help_line_1": "Your pipeline was not imported from your code.",
+  "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."
 }

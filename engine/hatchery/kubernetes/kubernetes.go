@@ -173,8 +173,8 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("please enter a valid kubernetes namespace")
 	}
 
-	if hconfig.KubernetesMasterURL == "" {
-		return fmt.Errorf("please enter a valid kubernetes master URL")
+	if hconfig.KubernetesMasterURL == "" && hconfig.KubernetesConfigFile == "" {
+		return fmt.Errorf("please enter a valid kubernetes master URL or provide a kubernetes config file")
 	}
 
 	return nil

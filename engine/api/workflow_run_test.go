@@ -11,13 +11,11 @@ import (
 	"testing"
 
 	"github.com/go-gorp/gorp"
-	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -1366,72 +1364,6 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 
 	opts := &sdk.WorkflowRunPostHandlerOption{}
 	req := assets.NewAuthentifiedRequest(t, uLambda, pass, "POST", uri, opts)
-
-	//Do the request
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 403, rec.Code)
-}
-
-func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
-	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
-
-	c, _ := izanami.New("", "clientID", "secret")
-	feature.SetClient(c)
-
-	api.Cache.Set("feature:"+proj.Key, feature.ProjectFeatures{
-		Key: proj.Key,
-		Features: map[string]bool{
-			feature.FeatWorkflowAsCode: false,
-		},
-	})
-
-	//First pipeline
-	pip := sdk.Pipeline{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "pip1",
-	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
-
-	w := sdk.Workflow{
-		Name:       "test_1",
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
-			Node: sdk.Node{
-				Name: "root",
-				Type: sdk.NodeTypePipeline,
-				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
-				},
-			},
-		},
-		FromRepository: "ovh/cds",
-	}
-
-	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
-	test.NoError(t, errP)
-
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
-	test.NoError(t, err)
-
-	//Prepare request
-	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
-
-	opts := &sdk.WorkflowRunPostHandlerOption{}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
 	//Do the request
 	rec := httptest.NewRecorder()

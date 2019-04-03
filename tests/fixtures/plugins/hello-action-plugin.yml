@@ -1,0 +1,4 @@
+name: hello-action-plugin
+type: action
+author: "me"
+description: "this is a test action plugin"

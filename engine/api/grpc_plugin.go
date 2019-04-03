@@ -36,11 +36,14 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
-		if err != nil {
-			return err
+		// a plugin can be attached to a integration model OR not, for "action plugin"
+		if p.Integration != "" {
+			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+			if err != nil {
+				p.IntegrationModelID = &integrationModel.ID
+				return err
+			}
 		}
-		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
 			old, err := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
@@ -118,11 +121,14 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot get integration model")
+		// a plugin can be attached to a integration model OR not, for "action plugin"
+		if p.Integration != "" {
+			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+			if err != nil {
+				p.IntegrationModelID = &integrationModel.ID
+				return err
+			}
 		}
-		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
 			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {

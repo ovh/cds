@@ -19,7 +19,7 @@ func LoadModels(db gorp.SqlExecutor) ([]sdk.IntegrationModel, error) {
 	var integrations = make([]sdk.IntegrationModel, len(pm))
 	for i, p := range pm {
 		if err := p.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "Cannot post et integration model")
+			return nil, sdk.WrapError(err, "Cannot postGet integration model")
 		}
 		integrations[i] = sdk.IntegrationModel(p)
 	}
@@ -142,7 +142,7 @@ func (pm *integrationModel) PostGet(db gorp.SqlExecutor) error {
 	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.integration_model_id = integration_model.id
 	WHERE integration_model.id = $1`
 	if err := db.SelectOne(&res, query, pm.ID); err != nil {
-		return sdk.WrapError(err, "Cannot get default_config, integration_model_plugin, deployment_default_config")
+		return sdk.WrapError(err, "Cannot get default_config, integration_model_plugin, deployment_default_config for integrationModel: %v", pm.ID)
 	}
 
 	if err := gorpmapping.JSONNullString(res.DefaultConfig, &pm.DefaultConfig); err != nil {
