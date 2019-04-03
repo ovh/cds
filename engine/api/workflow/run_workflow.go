@@ -16,6 +16,7 @@ const (
 	tagTriggeredBy   = "triggered_by"
 	tagEnvironment   = "environment"
 	tagGitHash       = "git.hash"
+	tagGitHashShort  = "git.hash.short"
 	tagGitRepository = "git.repository"
 	tagGitBranch     = "git.branch"
 	tagGitTag        = "git.tag"

@@ -388,17 +388,19 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 					return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
 				}
 
-				if len(info.Hash) >= 7 {
-					if _, err := w.addVariableInPipelineBuild(
-						sdk.Variable{
-							Name:  "git.hash.short",
-							Type:  sdk.StringVariable,
-							Value: info.Hash[:7],
-						},
-						params,
-					); err != nil {
-						return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
-					}
+				hashShort := info.Hash
+				if len(hashShort) >= 7 {
+					hashShort = hashShort[:7]
+				}
+				if _, err := w.addVariableInPipelineBuild(
+					sdk.Variable{
+						Name:  "git.hash.short",
+						Type:  sdk.StringVariable,
+						Value: hashShort,
+					},
+					params,
+				); err != nil {
+					return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
 				}
 				sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
 			} else {
