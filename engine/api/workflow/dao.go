@@ -1745,17 +1745,3 @@ func IsDeploymentIntegrationUsed(db gorp.SqlExecutor, projectID int64, appID int
 
 	return nb > 0, nil
 }
-
-// loadWorkflowIcon load the workflow icon given its id
-func loadWorkflowIcon(db gorp.SqlExecutor, workflowID int64) (string, error) {
-	var iconStr string
-	iconNull, err := db.SelectNullStr("SELECT icon FROM workflow WHERE id = $1", workflowID)
-	if err != nil {
-		return iconStr, sdk.WithStack(err)
-	}
-
-	if iconNull.Valid {
-		iconStr = iconNull.String
-	}
-	return iconStr, nil
-}
