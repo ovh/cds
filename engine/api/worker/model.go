@@ -323,7 +323,7 @@ func scanWorkerModels(db gorp.SqlExecutor, rows []dbResultWMS) ([]sdk.Model, err
 	models := []sdk.Model{}
 	for _, row := range rows {
 		m := row.WorkerModel
-		m.Group = sdk.Group{ID: m.GroupID, Name: row.GroupName}
+		m.Group = &sdk.Group{ID: m.GroupID, Name: row.GroupName}
 		if err := m.PostSelect(db); err != nil {
 			return nil, err
 		}

@@ -78,17 +78,20 @@ func NewWorkerModel(wm sdk.Model, opts ...WorkerModelOption) WorkerModel {
 }
 
 // GetWorkerModel convert an exportentities to a real sdk.Model
-func (wm WorkerModel) GetWorkerModel() (sdk.Model, error) {
+func (wm WorkerModel) GetWorkerModel() sdk.Model {
 	model := sdk.Model{
 		Type:          wm.Type,
 		Name:          wm.Name,
 		PatternName:   wm.PatternName,
 		Communication: wm.Communication,
-		Group:         sdk.Group{Name: wm.Group},
+		Group:         &sdk.Group{Name: wm.Group},
 		IsDeprecated:  wm.IsDeprecated,
 		Provision:     wm.Provision,
 		Description:   wm.Description,
 		Restricted:    wm.Restricted,
+	}
+	if model.Group.Name == "" {
+		model.Group.Name = sdk.SharedInfraGroupName
 	}
 
 	switch wm.Type {
@@ -109,56 +112,5 @@ func (wm WorkerModel) GetWorkerModel() (sdk.Model, error) {
 		}
 	}
 
-	return model, wm.IsValid()
-}
-
-// IsValid returns error if the model is not valid.
-func (wm *WorkerModel) IsValid() error {
-	if wm.Name == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: worker model name is not provided")
-	}
-
-	if wm.Group == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: group is not provided")
-	}
-
-	switch wm.Type {
-	case sdk.Docker:
-		if wm.Image == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Docker image not provided")
-		}
-		if wm.PatternName == "" {
-			if wm.Shell == "" {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: main shell command not provided")
-			}
-			if wm.Cmd == "" {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: main worker command not provided")
-			}
-		}
-	case sdk.Openstack:
-		if wm.Image == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Openstack image not provided")
-		}
-		if wm.Flavor == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Openstack flavor not provided")
-		}
-		if wm.PatternName == "" {
-			if wm.Cmd == "" {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Openstack command not provided")
-			}
-		}
-	case sdk.VSphere:
-		if wm.Image == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: VSphere image not provided")
-		}
-		if wm.PatternName == "" {
-			if wm.Cmd == "" {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: VSphere main worker command empty")
-			}
-		}
-	default:
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Unknown worker type: %s", wm.Type)
-	}
-
-	return nil
+	return model
 }
