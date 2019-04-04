@@ -1512,7 +1512,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		log.Debug("Push> -- %s OK", filename)
 	}
 
-	isDefaultBranch := false
+	isDefaultBranch := true
 	if opts != nil {
 		isDefaultBranch = opts.IsDefaultBranch
 	}
@@ -1562,8 +1562,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		return nil, nil, sdk.WrapError(err, "Unable to update workflow")
 	}
 
-	log.Debug("workflow %s updated", wf.Name)
-
 	if isDefaultBranch {
 		if errHr := HookRegistration(ctx, tx, store, oldWf, *wf, proj); errHr != nil {
 			return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
@@ -1574,10 +1572,12 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	if !isDefaultBranch {
 		_ = tx.Rollback()
+		log.Debug("workflow %s rollbacked because it's not comming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
 			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")
 		}
+		log.Debug("workflow %s updated", wf.Name)
 	}
 
 	return allMsg, wf, nil
