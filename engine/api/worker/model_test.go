@@ -85,7 +85,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
-	m1.Group = sdk.Group{}
+	m1.Group = nil
 
 	// lastregistration is LOCALTIMESTAMP (at sql insert)
 	// set it manually to allow use EqualValues on others fields
@@ -116,7 +116,7 @@ func TestInsertWorkerModel(t *testing.T) {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}
 	m3u := m3[0]
-	m3u.Group = sdk.Group{}
+	m3u.Group = nil
 
 	m.UserLastModified = m3u.UserLastModified
 	m.LastRegistration = m3u.LastRegistration
