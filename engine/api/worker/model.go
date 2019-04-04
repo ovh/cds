@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -62,8 +63,18 @@ type dbResultWMS struct {
 // StateLoadOption represent load options to load worker model
 type StateLoadOption string
 
-func (state StateLoadOption) String() string {
-	return string(state)
+func (s StateLoadOption) String() string {
+	return string(s)
+}
+
+// IsValid returns an error if the state value is not valid.
+func (s StateLoadOption) IsValid() error {
+	switch s {
+	case worker.StateDisabled, worker.StateOfficial, worker.StateError, worker.StateRegister, worker.StateDeprecated, worker.StateActive:
+		return nil
+	default:
+		return NewErrorFrom(sdk.ErrWrongRequest, "invalid given state value")
+	}
 }
 
 // List of const for state load option

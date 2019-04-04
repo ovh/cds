@@ -189,39 +189,31 @@ func (api *API) getWorkerModelHandler() service.Handler {
 func (api *API) getWorkerModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> cannot parse form")
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot parse form")
+		}
+
+		var opt *worker.StateLoadOption
+		stateString := r.FormValue("state")
+		if stateString != "" {
+			opt := *worker.StateLoadOption(stateString)
+			if err := opt.IsValid(); err != nil {
+				return err
+			}
 		}
 
 		binary := r.FormValue("binary")
-		state := r.FormValue("state")
-		var opt *worker.StateLoadOption
-		switch state {
-		case "", worker.StateDisabled.String(), worker.StateOfficial.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String(), worker.StateActive.String():
-			opt = new(worker.StateLoadOption)
-			*opt = worker.StateLoadOption(state)
-			break
-		default:
-			return sdk.ErrWrongRequest
-		}
 
 		u := deprecatedGetUser(ctx)
-		if u == nil || u.ID == 0 {
-			var username string
-			if u != nil {
-				username = u.Username
-			}
-			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
-		}
 
 		models := []sdk.Model{}
-		var errbyuser error
+		var err error
 		if binary != "" {
-			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), deprecatedGetUser(ctx), binary)
+			models, err = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), u, binary)
 		} else {
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), opt)
+			models, err = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, u, opt)
 		}
-		if errbyuser != nil {
-			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", deprecatedGetUser(ctx).ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker models")
 		}
 
 		return service.WriteJSON(w, models, http.StatusOK)
