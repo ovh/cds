@@ -113,6 +113,15 @@ func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata
 	return nil
 }
 
+// updateFromRepository update the from_repository of a workflow
+func updateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository string) error {
+	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return nil
+}
+
 // PreInsert is a db hook
 func (w *Workflow) PreInsert(db gorp.SqlExecutor) error {
 	return w.PreUpdate(db)
@@ -1735,4 +1744,18 @@ func IsDeploymentIntegrationUsed(db gorp.SqlExecutor, projectID int64, appID int
 	}
 
 	return nb > 0, nil
+}
+
+// loadWorkflowIcon load the workflow icon given its id
+func loadWorkflowIcon(db gorp.SqlExecutor, workflowID int64) (string, error) {
+	var iconStr string
+	iconNull, err := db.SelectNullStr("SELECT icon FROM workflow WHERE id = $1", workflowID)
+	if err != nil {
+		return iconStr, sdk.WithStack(err)
+	}
+
+	if iconNull.Valid {
+		iconStr = iconNull.String
+	}
+	return iconStr, nil
 }
