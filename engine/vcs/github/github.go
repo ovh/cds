@@ -1,7 +1,6 @@
 package github
 
 import (
-	"fmt"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -42,20 +41,16 @@ type githubConsumer struct {
 func New(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	//Github const
 	const (
-		URL    = "https://github.com"
-		APIURL = "https://api.github.com"
+		publicURL    = "https://github.com"
+		publicAPIURL = "https://api.github.com"
 	)
-	// if the github GitHubURL is passed as an empty string default it to public GitHub
+	// if the githubURL is passed as an empty string default it to public GitHub
 	if githubURL == "" {
-		githubURL = URL
+		githubURL = publicURL
 	}
-	// if the githubAPIURL is empty first check if githubURL was passed in, if not set to default
+	// if the githubAPIURL is passed as an empty string default it to public GitHub
 	if githubAPIURL == "" {
-		if githubURL == "" {
-			githubAPIURL = APIURL
-		} else {
-			githubAPIURL = fmt.Sprintf("%s/api/v3", githubURL)
-		}
+		githubAPIURL = publicAPIURL
 	}
 	return &githubConsumer{
 		ClientID:            ClientID,
