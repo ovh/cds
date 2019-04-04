@@ -174,7 +174,7 @@ func actionDocRun(v cli.Values) error {
 		return err
 	}
 
-	act, errapp := ea.Action()
+	act, errapp := ea.GetAction()
 	if errapp != nil {
 		return errapp
 	}

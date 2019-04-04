@@ -42,7 +42,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		model, err := worker.LoadWorkerModelByID(tx, workerModelID)
 		if err != nil {
