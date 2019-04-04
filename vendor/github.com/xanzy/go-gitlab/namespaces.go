@@ -37,7 +37,7 @@ type Namespace struct {
 	Path                        string `json:"path"`
 	Kind                        string `json:"kind"`
 	FullPath                    string `json:"full_path"`
-	ParentID                    string `json:"parent_id"`
+	ParentID                    int    `json:"parent_id"`
 	MembersCountWithDescendants int    `json:"members_count_with_descendants"`
 }
 

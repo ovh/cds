@@ -47,6 +47,7 @@ type Group struct {
 	ParentID             int                `json:"parent_id"`
 	Projects             []*Project         `json:"projects"`
 	Statistics           *StorageStatistics `json:"statistics"`
+	CustomAttributes     []*CustomAttribute `json:"custom_attributes"`
 }
 
 // ListGroupsOptions represents the available ListGroups() options.
@@ -54,12 +55,15 @@ type Group struct {
 // GitLab API docs: https://docs.gitlab.com/ce/api/groups.html#list-project-groups
 type ListGroupsOptions struct {
 	ListOptions
-	AllAvailable *bool   `url:"all_available,omitempty" json:"all_available,omitempty"`
-	OrderBy      *string `url:"order_by,omitempty" json:"order_by,omitempty"`
-	Owned        *bool   `url:"owned,omitempty" json:"owned,omitempty"`
-	Search       *string `url:"search,omitempty" json:"search,omitempty"`
-	Sort         *string `url:"sort,omitempty" json:"sort,omitempty"`
-	Statistics   *bool   `url:"statistics,omitempty" json:"statistics,omitempty"`
+	AllAvailable         *bool             `url:"all_available,omitempty" json:"all_available,omitempty"`
+	MinAccessLevel       *AccessLevelValue `url:"min_access_level,omitempty" json:"min_access_level,omitempty"`
+	OrderBy              *string           `url:"order_by,omitempty" json:"order_by,omitempty"`
+	Owned                *bool             `url:"owned,omitempty" json:"owned,omitempty"`
+	Search               *string           `url:"search,omitempty" json:"search,omitempty"`
+	SkipGroups           []int             `url:"skip_groups,omitempty" json:"skip_groups,omitempty"`
+	Sort                 *string           `url:"sort,omitempty" json:"sort,omitempty"`
+	Statistics           *bool             `url:"statistics,omitempty" json:"statistics,omitempty"`
+	WithCustomAttributes *bool             `url:"with_custom_attributes,omitempty" json:"with_custom_attributes,omitempty"`
 }
 
 // ListGroups gets a list of groups (as user: my groups, as admin: all groups).
@@ -142,12 +146,19 @@ func (s *GroupsService) CreateGroup(opt *CreateGroupOptions, options ...OptionFu
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/groups.html#transfer-project-to-group
-func (s *GroupsService) TransferGroup(gid interface{}, project int, options ...OptionFunc) (*Group, *Response, error) {
+func (s *GroupsService) TransferGroup(gid interface{}, pid interface{}, options ...OptionFunc) (*Group, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("groups/%s/projects/%d", url.QueryEscape(group), project)
+
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	u := fmt.Sprintf("groups/%s/projects/%s", url.QueryEscape(group),
+		url.QueryEscape(project))
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {
@@ -239,15 +250,13 @@ func (s *GroupsService) SearchGroup(query string, options ...OptionFunc) ([]*Gro
 // options.
 //
 // GitLab API docs:
-// https://docs.gitlab.com/ce/api/groups.html#list-a-group-s-projects
-type ListGroupProjectsOptions struct {
-	ListOptions
-}
+// https://docs.gitlab.com/ce/api/groups.html#list-a-group-39-s-projects
+type ListGroupProjectsOptions ListProjectsOptions
 
 // ListGroupProjects get a list of group projects
 //
 // GitLab API docs:
-// https://docs.gitlab.com/ce/api/groups.html#list-a-group-s-projects
+// https://docs.gitlab.com/ce/api/groups.html#list-a-group-39-s-projects
 func (s *GroupsService) ListGroupProjects(gid interface{}, opt *ListGroupProjectsOptions, options ...OptionFunc) ([]*Project, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
