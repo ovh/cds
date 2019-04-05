@@ -10,7 +10,7 @@
   [api.artifact]
 
     # swift or local
-    mode = "swift"
+    mode = "local"
 
     [api.artifact.local]
       baseDirectory = "/app/artifacts"
