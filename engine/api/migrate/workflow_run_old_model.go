@@ -47,6 +47,9 @@ func migrateRun(ctx context.Context, db *gorp.DbMap, id int64) error {
 
 	run, err := workflow.LockRun(tx, id)
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+			return nil
+		}
 		return err
 	}
 

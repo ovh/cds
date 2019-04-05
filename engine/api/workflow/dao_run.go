@@ -245,7 +245,7 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 func LockRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`SELECT %s
 	FROM workflow_run
-	WHERE id = $1 FOR UPDATE NOWAIT`, wfRunfields)
+	WHERE id = $1 FOR UPDATE SKIP LOCKED`, wfRunfields)
 	return loadRun(db, LoadRunOptions{}, query, id)
 }
 

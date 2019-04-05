@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -39,9 +40,11 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 		}
 		var id int64
 		// Lock the job (action)
-		if err := tx.QueryRow("select id from action where id = $1 for update nowait", p.ActionID).Scan(&id); err != nil {
-			log.Info("MigrateActionDEPRECATEDGitClone> unable to take lock on action table: %v", err)
+		if err := tx.QueryRow("select id from action where id = $1 for update SKIP LOCKED", p.ActionID).Scan(&id); err != nil {
 			tx.Rollback()
+			if err != sql.ErrNoRows {
+				log.Info("MigrateActionDEPRECATEDGitClone> unable to take lock on action table: %v", err)
+			}
 			continue
 		}
 		_ = id // we don't care about it

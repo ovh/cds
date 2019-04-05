@@ -268,9 +268,12 @@ func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 				return sdk.WrapError(errLj, "Cannot load node job run")
 			}
 
-			wfNodeRun, errLr := workflow.LoadAndLockNodeRunByID(ctx, tx, wfNodeJobRun.WorkflowNodeRunID, true)
+			wfNodeRun, errLr := workflow.LoadAndLockNodeRunByID(ctx, tx, wfNodeJobRun.WorkflowNodeRunID)
 			if errLr != nil {
-				return sdk.WrapError(errLr, "Cannot load node run")
+				if sdk.ErrorIs(errLr, sdk.ErrWorkflowNodeRunLocked) {
+					return sdk.WrapError(errLr, "cannot load node run, maybe locked: %d", wfNodeJobRun.WorkflowNodeRunID)
+				}
+				return errLr
 			}
 
 			if found, err := workflow.SyncNodeRunRunJob(ctx, tx, wfNodeRun, *wfNodeJobRun); err != nil || !found {
@@ -451,9 +454,12 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	defer tx.Rollback()
 
 	//Load workflow node job run
-	job, errj := workflow.LoadAndLockNodeJobRunNoWait(ctx, tx, store, res.BuildID)
+	job, errj := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, store, res.BuildID)
 	if errj != nil {
-		return nil, sdk.WrapError(errj, "postJobResult> Unable to load node run job %d", res.BuildID)
+		if sdk.ErrorIs(errj, sdk.ErrWorkflowNodeRunJobNotFound) {
+			return nil, sdk.WrapError(errj, "node run job not found, maybe locked %d", res.BuildID)
+		}
+		return nil, sdk.WrapError(errj, "cannot load node run job %d", res.BuildID)
 	}
 
 	observability.Current(ctx,
@@ -681,9 +687,12 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 		var nodeRun sdk.WorkflowNodeRun
 		if !found {
-			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeJobRun.WorkflowNodeRunID, false)
+			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeJobRun.WorkflowNodeRunID)
 			if errNR != nil {
-				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot load node run")
+				if sdk.ErrorIs(errNR, sdk.ErrWorkflowNodeRunLocked) {
+					return sdk.WrapError(errNR, "cannot load node run, maybe locked: %d", nodeJobRun.WorkflowNodeRunID)
+				}
+				return errNR
 			}
 			sync, errS := workflow.SyncNodeRunRunJob(ctx, tx, nodeRun, *nodeJobRun)
 			if errS != nil {
@@ -922,9 +931,12 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		nr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID, false)
+		nr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load node job")
+			if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunLocked) {
+				return sdk.WrapError(err, "node run not found, maybe locked: %d", nodeRunJob.WorkflowNodeRunID)
+			}
+			return err
 		}
 
 		if nr.Tests == nil {
@@ -1053,9 +1065,12 @@ func (api *API) postWorkflowJobVariableHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		job, errj := workflow.LoadAndLockNodeJobRunNoWait(ctx, tx, api.Cache, id)
+		job, errj := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, api.Cache, id)
 		if errj != nil {
-			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job %d", id)
+			if sdk.ErrorIs(errj, sdk.ErrWorkflowNodeRunJobNotFound) {
+				return sdk.WrapError(errj, "node job run not found, maybe locked")
+			}
+			return errj
 		}
 
 		found := false

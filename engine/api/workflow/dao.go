@@ -326,10 +326,10 @@ func LoadAndLock(db gorp.SqlExecutor, id int64, store cache.Store, proj *sdk.Pro
 	query := `
 		select *
 		from workflow
-		where id = $1 FOR UPDATE NOWAIT`
+		where id = $1 FOR UPDATE SKIP LOCKED`
 	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
+		return nil, err
 	}
 	return res, nil
 }

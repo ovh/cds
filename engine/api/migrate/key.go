@@ -75,6 +75,9 @@ func migrateProject(db *gorp.DbMap, projID int64, store cache.Store, u *sdk.User
 
 	proj, errP := project.LoadByID(tx, store, projID, u, project.LoadOptions.WithLockNoWait, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 	if errP != nil {
+		if sdk.ErrorIs(errP, sdk.ErrNoProject) {
+			return nil
+		}
 		log.Warning("migrateProject> Cannot get project %d: %s", projID, errP)
 		return errP
 	}
@@ -141,6 +144,9 @@ func migrateApplication(db *gorp.DbMap, appID int64, store cache.Store) error {
 
 	app, errA := application.LoadAndLockByID(tx, store, appID, application.LoadOptions.WithVariablesWithClearPassword, application.LoadOptions.WithKeys)
 	if errA != nil {
+		if sdk.ErrorIs(errA, sdk.ErrConditionsNotOk) {
+			return nil
+		}
 		log.Warning("migrateApplication> Cannot load application %d: %s", appID, errA)
 		return errA
 	}
@@ -203,6 +209,9 @@ func migrateEnvironment(db *gorp.DbMap, envID int64) error {
 	}
 
 	if errL := environment.LockByID(tx, envID); errL != nil {
+		if errL == sdk.ErrNoEnvironment {
+			return nil
+		}
 		log.Warning("migrateEnvironment> Cannot lock environment %d: %s", envID, errL)
 		return errL
 	}

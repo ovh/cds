@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
@@ -279,12 +277,12 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	}
 
 	// reload and recheck status
-	job, errl := LoadAndLockNodeJobRunNoWait(ctx, db, store, jobID)
+	job, errl := LoadAndLockNodeJobRunSkipLocked(ctx, db, store, jobID)
 	if errl != nil {
-		if errPG, ok := sdk.Cause(errl).(*pq.Error); ok && errPG.Code == "55P03" {
+		if sdk.ErrorIs(errl, sdk.ErrWorkflowNodeRunJobNotFound) {
 			errl = sdk.ErrJobAlreadyBooked
 		}
-		return nil, nil, sdk.WrapError(errl, "Cannot load node job run (WAIT) %d", jobID)
+		return nil, nil, sdk.WrapError(errl, "cannot load node job run (WAIT) %d", jobID)
 	}
 	if err := checkStatusWaiting(store, jobID, job.Status); err != nil {
 		return nil, report, err
@@ -693,7 +691,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 		}
 	}
 
-	nodeRun, errNR := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID, true)
+	nodeRun, errNR := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID)
 	if errNR != nil {
 		return sdk.WrapError(errNR, "RestartWorkflowNodeJob> Cannot load node run")
 	}

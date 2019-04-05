@@ -367,7 +367,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.Us
 			break
 		}
 		if o == LoadOptions.WithLockNoWait {
-			query += " FOR UPDATE NOWAIT"
+			query += " FOR UPDATE SKIP LOCKED"
 			break
 		}
 	}

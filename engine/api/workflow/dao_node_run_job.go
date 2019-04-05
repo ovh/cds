@@ -279,17 +279,17 @@ func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64)
 	return &jr, nil
 }
 
-//LoadAndLockNodeJobRunNoWait load for update a NodeJobRun given its ID
-func LoadAndLockNodeJobRunNoWait(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+//LoadAndLockNodeJobRunSkipLocked load for update a NodeJobRun given its ID
+func LoadAndLockNodeJobRunSkipLocked(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	var end func()
-	_, end = observability.Span(ctx, "workflow.LoadAndLockNodeJobRunNoWait")
+	_, end = observability.Span(ctx, "workflow.LoadAndLockNodeJobRunSkipLocked")
 	defer end()
 
 	j := JobRun{}
-	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update nowait`
+	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update SKIP LOCKED`
 	if err := db.SelectOne(&j, query, id); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
-			return nil, sdk.ErrJobLocked
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrWorkflowNodeRunJobNotFound)
 		}
 		return nil, err
 	}

@@ -51,6 +51,9 @@ func migrateNotification(db *gorp.DbMap, store cache.Store, id int64) error {
 
 	wf, err := workflow.LoadAndLock(tx, id, store, proj, workflow.LoadOptions{}, nil)
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+			return nil
+		}
 		return err
 	}
 
