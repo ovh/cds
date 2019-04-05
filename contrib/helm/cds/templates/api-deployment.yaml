@@ -47,6 +47,8 @@ spec:
         {{- end }}
         - name: CDS_API_URL_API
           value: http://{{ template "cds.fullname" . }}-ui/cdsapi
+        - name: CDS_API_URL_UI
+          value: http://{{ template "cds.fullname" . }}-ui
         - name: CDS_API_AUTH_DEFAULTGROUP
           value: cdsdemo
         - name: CDS_LOG_LEVEL
