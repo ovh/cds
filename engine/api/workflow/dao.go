@@ -100,6 +100,15 @@ func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName str
 	return datas, nil
 }
 
+// UpdateIcon update the icon of a workflow
+func UpdateIcon(db gorp.SqlExecutor, workflowID int64, icon string) error {
+	if _, err := db.Exec("update workflow set icon = $1 where id = $2", icon, workflowID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateMetadata update the metadata of a workflow
 func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata) error {
 	b, err := json.Marshal(metadata)

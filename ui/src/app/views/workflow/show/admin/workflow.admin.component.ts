@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { DeleteWorkflow, UpdateWorkflow } from 'app/store/workflows.action';
+import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflows.action';
 import { cloneDeep } from 'lodash';
 import { finalize, first } from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
@@ -41,6 +41,7 @@ export class WorkflowAdminComponent implements OnInit {
     existingTags = new Array<string>();
     selectedTags = new Array<string>();
     purgeTag: string;
+    iconUpdated = false;
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
@@ -95,6 +96,28 @@ export class WorkflowAdminComponent implements OnInit {
             .subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 
+    deleteIcon(): void {
+        this.loading = true;
+        this.store.dispatch(new DeleteWorkflowIcon({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
+    }
+
+    updateIcon(): void {
+        this.loading = true;
+        this.store.dispatch(new UpdateWorkflowIcon({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            icon: this.workflow.icon
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this.iconUpdated = false;
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            });
+    }
+
     updateTagMetadata(m): void {
         this._workflow.metadata['default_tags'] = m.join(',');
     }
@@ -144,6 +167,7 @@ export class WorkflowAdminComponent implements OnInit {
         if (this.fileTooLarge) {
             return;
         }
+        this.iconUpdated = true;
         this._workflow.icon = event.content;
     }
 }
