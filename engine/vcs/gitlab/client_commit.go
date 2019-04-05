@@ -21,12 +21,14 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 
 	commit, err := c.Commit(ctx, repo, since)
 	if err == nil {
-		opt.Since = time.Unix(commit.Timestamp, 0)
+		since := time.Unix(commit.Timestamp, 0)
+		opt.Since = &since
 	}
 
 	commit, err = c.Commit(ctx, repo, until)
 	if err == nil {
-		opt.Since = time.Unix(commit.Timestamp, 0)
+		since := time.Unix(commit.Timestamp, 0)
+		opt.Since = &since
 	}
 
 	commits, _, err := c.client.Commits.ListCommits(repo, opt)
@@ -43,7 +45,7 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 				DisplayName: c.AuthorName,
 				Email:       c.AuthorEmail,
 			},
-			Timestamp: c.AuthoredDate.Unix(),
+			Timestamp: c.AuthoredDate.Unix() * 1000,
 			Message:   c.Message,
 		}
 	}
@@ -66,7 +68,7 @@ func (c *gitlabClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 		DisplayName: gc.AuthorName,
 		Email:       gc.AuthorEmail,
 	}
-	commit.Timestamp = gc.AuthoredDate.Unix()
+	commit.Timestamp = gc.AuthoredDate.Unix() * 1000
 	commit.Message = gc.Message
 
 	return commit, nil
@@ -96,7 +98,7 @@ func (c *gitlabClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 				DisplayName: c.AuthorName,
 				Email:       c.AuthorEmail,
 			},
-			Timestamp: c.AuthoredDate.Unix(),
+			Timestamp: c.AuthoredDate.Unix() * 1000,
 			Message:   c.Message,
 		}
 	}

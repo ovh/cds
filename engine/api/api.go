@@ -300,7 +300,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if aConfig.Directories.Download == "" {
-		return fmt.Errorf("Invalid download directory")
+		return fmt.Errorf("Invalid download directory (empty)")
 	}
 
 	if ok, err := DirectoryExists(aConfig.Directories.Download); !ok {
@@ -309,7 +309,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		}
 		log.Info("Directory %s has been created", aConfig.Directories.Download)
 	} else if err != nil {
-		return fmt.Errorf("Invalid download directory: %v", err)
+		return fmt.Errorf("Invalid download directory %s: %v", aConfig.Directories.Download, err)
 	}
 
 	if aConfig.Directories.Keys == "" {
@@ -333,7 +333,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 
 	if aConfig.Artifact.Mode == "local" {
 		if aConfig.Artifact.Local.BaseDirectory == "" {
-			return fmt.Errorf("Invalid artifact local base directory")
+			return fmt.Errorf("Invalid artifact local base directory (empty name)")
 		}
 		if ok, err := DirectoryExists(aConfig.Artifact.Local.BaseDirectory); !ok {
 			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0700)); err != nil {
@@ -341,7 +341,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 			}
 			log.Info("Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
 		} else if err != nil {
-			return fmt.Errorf("Invalid artifact local base directory: %v", err)
+			return fmt.Errorf("Invalid artifact local base directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 		}
 	}
 
@@ -755,6 +755,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
+	}})
+	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.CleanArtifactBuiltinActions(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {

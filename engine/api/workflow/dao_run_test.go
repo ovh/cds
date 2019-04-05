@@ -246,6 +246,7 @@ vcs_ssh_key: proj-blabla
 
 	toDeleteNb := 0
 	for _, wfRun := range wruns {
+		fmt.Printf("%+v\n=======\n", wfRun)
 		if wfRun.ToDelete {
 			toDeleteNb++
 		}
@@ -717,7 +718,6 @@ vcs_ssh_key: proj-blabla
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
-	fmt.Printf("%+v\n", wruns)
 	toDeleteNb := 0
 	for _, wfRun := range wruns {
 		if wfRun.ToDelete {
