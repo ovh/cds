@@ -98,24 +98,24 @@
   [api.database]
 
     # Maximum wait for connection, in seconds
-#    connectTimeout = 10
+    connectTimeout = 10
 #    host = "localhost"
 
-#    # DB Max connection
-#    maxconn = 20
-#    name = "cds"
+    # DB Max connection
+    maxconn = 20
+    name = "cds"
 #    password = "cds"
-#    port = 5432
+    port = 5432
 
-#    # Set a specific role to run SET ROLE for each connection
-#    # role = ""
+    # Set a specific role to run SET ROLE for each connection
+    # role = ""
 
-#    # DB SSL Mode: require (default), verify-full, or disable
-#    sslmode = "disable"
+    # DB SSL Mode: require (default), verify-full, or disable
+    sslmode = "disable"
 
-#    # Statement timeout value in milliseconds
-#    timeout = 3000
-#    user = "cds"
+    # Statement timeout value in milliseconds
+    timeout = 3000
+    user = "cds"
 
   [api.directories]
     download = "/app"
