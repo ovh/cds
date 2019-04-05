@@ -58,7 +58,7 @@ func (h *HatcheryKubernetes) getServicesLogs() error {
 				WorkflowNodeJobRunID:   serviceJobID,
 				ServiceRequirementID:   reqServiceID,
 				ServiceRequirementName: subsStr[0][2],
-				Val: string(logs),
+				Val:                    string(logs),
 			})
 		}
 	}

@@ -323,6 +323,8 @@
   "common_edit_ui": "Edit with UI",
   "common_create_ui": "Create with UI",
   "common_migrate": "Migrate",
+  "common_capabilities": "Capabilities",
+  "common_help_no_group": "No group can be found, you will not be able to save current resource.",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -599,7 +601,7 @@
   "pipeline_administration": "General administration of the pipeline",
 
   "pipeline_run_test_filter_empty": "There is no test matching '{{criteria}}'",
-  "pipeline_run_test_no_error": "All tests are successfull",
+  "pipeline_run_test_no_error": "All tests are successful",
   "pipeline_run_test_total_title_s": " tests",
   "pipeline_run_test_total_title": " test",
   "pipeline_run_test_failed_title_s": " tests failed",
@@ -866,6 +868,7 @@
   "wizard_app_empty": "Empty application",
   "wizard_ssh_key_name": "Ssh key name",
 
+  "worker_model": "Worker Model",
   "worker_model_type": "Type",
   "worker_model_env": "Environment variables",
   "worker_model_env_tooltip": "You can set environment variables to put in your worker. If you have no specific need, the default environment variables will be added automatically at the creation",
@@ -909,8 +912,6 @@
   "worker_model_help_error_openstack_2": "Check that you have the right to write on $TMPDIR or update 'basedir' parameter on your Openstack Hatchery",
   "worker_model_last_registration": "Last Registration",
   "worker_model_list_title": "Worker Models",
-  "worker_model_load_worker_models": "Loading worker models...",
-  "worker_model_load_worker_model": "Loading worker model...",
   "worker_model_name": "Name",
   "worker_model_need_register": "Need to be registered: ",
   "worker_model_none": "No worker model",
@@ -1137,5 +1138,6 @@
   "application_repository_help_line_1": "Your application was not imported from your code.",
   "environment_repository_help_line_1": "Your environment was not imported from your code.",
   "pipeline_repository_help_line_1": "Your pipeline was not imported from your code.",
+  "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."
 }

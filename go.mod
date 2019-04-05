@@ -71,7 +71,7 @@ require (
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/fsamin/go-dump v1.0.8
-	github.com/fsamin/go-repo v0.1.0
+	github.com/fsamin/go-repo v0.1.1
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
@@ -89,7 +89,6 @@ require (
 	github.com/golang/protobuf v1.2.0
 	github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a // indirect
 	github.com/google/go-cmp v0.2.0 // indirect
-	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/google/gops v0.0.0-20170728214508-806455e841dc
 	github.com/google/martian v2.1.0+incompatible // indirect
@@ -181,7 +180,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
-	github.com/ovh/cds/sdk/interpolate v0.0.0-20190325170641-262be7400c25
+	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
 	github.com/ovh/venom v0.25.0
 	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
@@ -229,7 +228,7 @@ require (
 	github.com/urfave/cli v1.20.0
 	github.com/vbatts/tar-split v0.10.2 // indirect
 	github.com/vmware/govmomi v0.0.0-20170817040329-d7e841db6909
-	github.com/xanzy/go-gitlab v0.7.5
+	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20161231055540-f06f290571ce
@@ -247,7 +246,6 @@ require (
 	go.uber.org/zap v1.9.1 // indirect
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190313220215-9f648a60d977
-	golang.org/x/oauth2 v0.0.0-20181017192945-9dcd33a902f4 // indirect
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/api v0.0.0-20180517000435-aedc137bffca // indirect
@@ -284,3 +282,5 @@ require (
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
+
+replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate

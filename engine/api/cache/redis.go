@@ -290,13 +290,13 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 
 	msg, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v, %s", channel, value, err)
+		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v", channel, err)
 		return
 	}
 
 	iUnquoted, err := strconv.Unquote(string(msg))
 	if err != nil {
-		log.Warning("redis.Publish> Unquote error, cannot push in channel %s: %v, %s", channel, string(msg), err)
+		log.Warning("redis.Publish> Unquote error, cannot push in channel %s: %v", channel, err)
 		return
 	}
 
@@ -305,7 +305,7 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 		if errP == nil {
 			break
 		}
-		log.Warning("redis.Publish> Unable to publish in channel %s the message %v: %v", channel, value, errP)
+		log.Warning("redis.Publish> Unable to publish in channel %s: %v", channel, errP)
 		time.Sleep(100 * time.Millisecond)
 	}
 }

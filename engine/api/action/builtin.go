@@ -1,8 +1,6 @@
 package action
 
 import (
-	"database/sql"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -85,7 +83,7 @@ If your application is linked to a repository, you can use {{.git.url}} (clone o
 		Description: `Set the private key to be able to git clone from ssh.
 You can create an application key named 'app-key' and use it in this action.
 The public key have to be granted on your repository`,
-		Type: sdk.KeySSHParameter,
+		Type: sdk.StringParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "user",
@@ -292,82 +290,44 @@ Semver used if fully compatible with https://semver.org/
 		Advanced:    true,
 	})
 
-	return checkBuiltinAction(db, serveStaticAct)
-}
-
-// checkBuiltinAction add builtin actions in database if needed
-func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
-	var name string
-	err := db.QueryRow(`SELECT action.name FROM action WHERE action.name = $1 and action.type = $2`, a.Name, sdk.BuiltinAction).Scan(&name)
-	if err != nil && err != sql.ErrNoRows {
-		return sdk.WithStack(err)
-	}
-
-	if err != nil && err == sql.ErrNoRows {
-		if err := createBuiltinAction(db, a); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func createBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback()
-
-	log.Info("createBuiltinAction> create builtin action %s", a.Name)
-	if err := Insert(tx, a); err != nil {
+	if err := checkBuiltinAction(db, serveStaticAct); err != nil {
 		return err
 	}
 
-	return sdk.WithStack(tx.Commit())
-}
-
-// CreateBuiltinArtifactActions  Create Action BuiltinArtifact
-func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
-	var name string
-	query := `SELECT action.name FROM action where action.name = $1 and action.type = $2`
-
-	// Check ArtifactUpload action
-	err := db.QueryRow(query, sdk.ArtifactUpload, sdk.BuiltinAction).Scan(&name)
-	if err != nil && err == sql.ErrNoRows {
-		if err := createBuiltinArtifactUploadAction(db); err != nil {
-			return sdk.WrapError(err, "cannot create builtin artifact upload action")
-		}
+	artifactUpload := craftBuiltinArtifactUploadAction()
+	if err := checkBuiltinAction(db, artifactUpload); err != nil {
+		return err
 	}
 
-	// Check ArtifactDownload action
-	err = db.QueryRow(query, sdk.ArtifactDownload, sdk.BuiltinAction).Scan(&name)
-	if err != nil && err == sql.ErrNoRows {
-		if err := createBuiltinArtifactDownloadAction(db); err != nil {
-			return sdk.WrapError(err, "cannot create builtin artifact download action")
-		}
+	artifactDownload := craftBuiltinArtifactDownloadAction()
+	if err := checkBuiltinAction(db, artifactDownload); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
+func craftBuiltinArtifactUploadAction() *sdk.Action {
 	upload := sdk.NewAction(sdk.ArtifactUpload)
 	upload.Type = sdk.BuiltinAction
 	upload.Parameter(sdk.Parameter{
 		Name:        "path",
 		Type:        sdk.StringParameter,
-		Description: "Path of file to upload, example: ./src/yourFile.json"})
+		Description: "Path of file to upload, example: ./src/yourFile.json",
+	})
 	upload.Parameter(sdk.Parameter{
 		Name:        "tag",
 		Type:        sdk.StringParameter,
 		Description: "Artifact will be uploaded with a tag, generally {{.cds.version}}",
-		Value:       "{{.cds.version}}"})
+		Value:       "{{.cds.version}}",
+	})
 	upload.Parameter(sdk.Parameter{
 		Name:        "enabled",
 		Type:        sdk.BooleanParameter,
 		Description: "Enable artifact upload",
-		Value:       "true"})
+		Value:       "true",
+		Advanced:    true,
+	})
 	upload.Parameter(sdk.Parameter{
 		Name:        "destination",
 		Description: "Destination of this artifact. Use the name of integration attached on your project",
@@ -375,61 +335,71 @@ func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 		Type:        sdk.StringParameter,
 		Advanced:    true,
 	})
-
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback()
-
-	log.Info("createBuiltinArtifactUploadAction> create builtin action %s", upload.Name)
-	if err := Insert(tx, upload); err != nil {
-		return err
-	}
-
-	return sdk.WithStack(tx.Commit())
+	return upload
 }
 
-func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
+func craftBuiltinArtifactDownloadAction() *sdk.Action {
 	dl := sdk.NewAction(sdk.ArtifactDownload)
 	dl.Type = sdk.BuiltinAction
 	dl.Parameter(sdk.Parameter{
 		Name:        "path",
 		Description: "Path where artifacts will be downloaded",
-		Type:        sdk.StringParameter})
+		Type:        sdk.StringParameter,
+	})
 	dl.Parameter(sdk.Parameter{
 		Name:        "tag",
 		Description: "Artifact are uploaded with a tag, generally {{.cds.version}}",
-		Type:        sdk.StringParameter})
-	dl.Parameter(sdk.Parameter{
-		Name:        "pipeline",
-		Description: "Pipeline from where artifacts will be downloaded, generally {{.cds.pipeline}} or {{.cds.parent.pipeline}}",
-		Type:        sdk.StringParameter})
-	dl.Parameter(sdk.Parameter{
-		Name:        "application",
-		Description: "Application from where artifacts will be downloaded, generally {{.cds.application}}",
-		Type:        sdk.StringParameter})
+		Type:        sdk.StringParameter,
+		Value:       "{{.cds.version}}",
+	})
 	dl.Parameter(sdk.Parameter{
 		Name:        "enabled",
 		Type:        sdk.BooleanParameter,
 		Description: "Enable artifact download",
-		Value:       "true"})
+		Value:       "true",
+		Advanced:    true,
+	})
 	dl.Parameter(sdk.Parameter{
 		Name:        "pattern",
 		Type:        sdk.StringParameter,
 		Description: "Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB)",
-		Value:       ""})
+		Value:       "",
+		Advanced:    true,
+	})
+	return dl
+}
 
+// checkBuiltinAction add builtin actions in database if needed
+func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	defer tx.Rollback()
 
-	log.Info("createBuiltinArtifactDownloadAction> create builtin action %s", dl.Name)
-	if err := Insert(tx, dl); err != nil {
-		return err
+	nb, err := tx.SelectInt("SELECT COUNT(1) FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)
+	if err != nil {
+		return sdk.WrapError(err, "unable to count action %s", a.Name)
 	}
 
+	// If the action doesn't exist, let's create
+	if nb == 0 {
+		log.Debug("createBuiltinAction> create builtin action %s", a.Name)
+		if err := Insert(tx, a); err != nil {
+			return err
+		}
+		return sdk.WithStack(tx.Commit())
+	}
+
+	id, err := tx.SelectInt("SELECT id FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)
+	if err != nil {
+		return sdk.WrapError(err, "unable to get action %s ID", a.Name)
+	}
+
+	a.ID = id
+	log.Debug("createBuiltinAction> update builtin action %s", a.Name)
+	if err := Update(tx, a); err != nil {
+		return err
+	}
 	return sdk.WithStack(tx.Commit())
 }

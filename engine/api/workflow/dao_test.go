@@ -303,7 +303,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 								PipelineID: pip4.ID,
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
-										sdk.WorkflowNodeCondition{
+										{
 											Operator: "eq",
 											Value:    "master",
 											Variable: ".git.branch",

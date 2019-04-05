@@ -264,10 +264,10 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		//User must be admin of the group set in the model
 		var ok bool
 	currentUGroup:
-		for _, g := range deprecatedGetUser(ctx).Groups {
+		for _, g := range user.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == deprecatedGetUser(ctx).ID {
+					if a.ID == user.ID {
 						ok = true
 						break currentUGroup
 					}
@@ -276,7 +276,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !deprecatedGetUser(ctx).Admin && !ok {
+		if !user.Admin && !ok {
 			return sdk.ErrWorkerModelNoAdmin
 		}
 
@@ -287,8 +287,8 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
-					if old.Type != sdk.Docker { // Forbidden because we can't fetch previous user data
-						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type is different")
+					if old.Type != sdk.Docker || old.Restricted != model.Restricted { // Forbidden because we can't fetch previous user data
+						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
 					}
 					model.ModelDocker.Cmd = old.ModelDocker.Cmd
 					model.ModelDocker.Shell = old.ModelDocker.Shell

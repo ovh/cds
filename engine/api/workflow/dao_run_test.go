@@ -3,8 +3,9 @@ package workflow_test
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/event"
@@ -156,6 +157,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 
 	toDeleteNb := 0
 	for _, wfRun := range wruns {
+		fmt.Printf("%+v\n=======\n", wfRun)
 		if wfRun.ToDelete {
 			toDeleteNb++
 		}
@@ -467,7 +469,6 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
-	fmt.Printf("%+v\n", wruns)
 	toDeleteNb := 0
 	for _, wfRun := range wruns {
 		if wfRun.ToDelete {

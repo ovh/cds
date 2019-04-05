@@ -285,6 +285,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 
 	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "0"
+	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name

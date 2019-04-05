@@ -13,7 +13,6 @@ import { Parameter } from '../../model/parameter.model';
 import { Project } from '../../model/project.model';
 import { Requirement } from '../../model/requirement.model';
 import { ActionService } from '../../service/action/action.service';
-import { ActionStore } from '../../service/action/action.store';
 import { ParameterService } from '../../service/parameter/parameter.service';
 import { RepoManagerService } from '../../service/repomanager/project.repomanager.service';
 import { RequirementService } from '../../service/requirement/requirement.service';
@@ -39,7 +38,6 @@ describe('CDS: Action Component', () => {
                 RequirementService,
                 ParameterService,
                 RepoManagerService,
-                ActionStore,
                 ActionService,
                 WorkerModelService,
                 { provide: XHRBackend, useClass: MockBackend },

@@ -11,10 +11,12 @@ testcases:
 - name: cdsctl admin plugins import
   steps:
   - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/hello-it-plugin.yml
+  - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/hello-action-plugin.yml
 
 - name: cdsctl admin plugins binary-add
   steps:
   - script: {{.cds.build.cdsctl}} admin plugins binary-add hello-it-plugin ./tests/fixtures/plugins/hello-it-plugin-binary.yml ./tests/fixtures/plugins/hello.py 
+  - script: {{.cds.build.cdsctl}} admin plugins binary-add hello-action-plugin ./tests/fixtures/plugins/hello-action-plugin-binary.yml ./tests/fixtures/plugins/hello.py
 
 - name: cdsctl admin plugins list
   steps:

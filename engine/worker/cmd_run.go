@@ -229,7 +229,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				var requirementsOK, pluginsOK bool
 				var t string
 				if exceptJobID != j.ID && w.bookedWJobID == 0 { // If we already check the requirements before and it was OK
-					requirementsOK, _ = checkRequirements(w, &j.Job.Action, nil, j.ID)
+					requirementsOK, _ = checkRequirements(w, &j.Job.Action, j.ID)
 					if j.ID == w.bookedWJobID {
 						t = ", this was my booked job"
 					}
@@ -304,7 +304,7 @@ func (w *currentWorker) processBookedWJob(ctx context.Context, wjobs chan<- sdk.
 		return sdk.WrapError(err, "Unable to load workflow node job %d", w.bookedWJobID)
 	}
 
-	requirementsOK, errRequirements := checkRequirements(w, &wjob.Job.Action, nil, wjob.ID)
+	requirementsOK, errRequirements := checkRequirements(w, &wjob.Job.Action, wjob.ID)
 	if !requirementsOK {
 		var details string
 		for _, r := range errRequirements {

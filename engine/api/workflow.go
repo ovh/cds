@@ -374,6 +374,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
+		wf1.Permission = permission.PermissionReadWriteExecute
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
@@ -472,12 +473,27 @@ func (api *API) putWorkflowHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
+		wf1.Permission = permission.PermissionReadWriteExecute
 
 		usage, errU := loadWorkflowUsage(api.mustDB(), wf1.ID)
 		if errU != nil {
 			return sdk.WrapError(errU, "Cannot load usage")
 		}
 		wf1.Usage = &usage
+
+		// FIXME Sync hooks on new model. To delete when hooks will be compute on new model
+		hooks := wf1.GetHooks()
+		wf1.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
+		for _, h := range hooks {
+			wf1.WorkflowData.Node.Hooks = append(wf1.WorkflowData.Node.Hooks, sdk.NodeHook{
+				Ref:           h.Ref,
+				HookModelID:   h.WorkflowHookModelID,
+				Config:        h.Config,
+				UUID:          h.UUID,
+				HookModelName: h.WorkflowHookModel.Name,
+				NodeID:        wf1.WorkflowData.Node.ID,
+			})
+		}
 
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)

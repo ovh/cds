@@ -13,7 +13,7 @@ Type of requirements:
 - Hostname
 - [Network access]({{< relref "/docs/concepts/requirement/requirement_network.md" >}})
 - [Service]({{< relref "/docs/concepts/requirement/requirement_service.md" >}})
-- Memory
+- [Memory]({{< relref "/docs/concepts/requirement/requirement_memory.md" >}})
 - [OS & Architecture]({{< relref "/docs/concepts/requirement/requirement_os_arch.md" >}})
 
 A [Job]({{< relref "/docs/concepts/job.md" >}}) will be executed by a **worker**.

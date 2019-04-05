@@ -16,7 +16,7 @@ type LintResult struct {
 	Errors []string `json:"errors"`
 }
 
-// Lint validates .gitlab-ci content.
+// Lint validates .gitlab-ci.yml content.
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/lint.html
 func (s *ValidateService) Lint(content string, options ...OptionFunc) (*LintResult, *Response, error) {

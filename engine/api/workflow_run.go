@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/observability"
@@ -827,14 +826,6 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)
 			}
 
-			// Check allow as code
-			if wf.FromRepository != "" {
-				enabled, has := p.Features[feature.FeatWorkflowAsCode]
-				if has && !enabled {
-					return sdk.WrapError(sdk.ErrForbidden, "as code is not allowed for project %s", p.Key)
-				}
-			}
-
 			// Check node permission
 			if getService(ctx) == nil && !permission.AccessToWorkflowNode(wf, &wf.WorkflowData.Node, u, permission.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
@@ -890,8 +881,8 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 
 		// IF AS CODE - REBUILD Workflow
 		if wf.FromRepository != "" {
-			var errp error
-			p, errp = project.Load(db, cache, p.Key, u,
+			p1, errp := project.Load(db, cache, p.Key, u,
+				project.LoadOptions.WithVariables,
 				project.LoadOptions.WithGroups,
 				project.LoadOptions.WithApplicationVariables,
 				project.LoadOptions.WithApplicationWithDeploymentStrategies,
@@ -908,7 +899,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			}
 			// Get workflow from repository
 			var errCreate error
-			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p, wf, *opts, u, project.DecryptWithBuiltinKey)
+			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p1, wf, *opts, u, project.DecryptWithBuiltinKey)
 			if errCreate != nil {
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 				for i, msg := range asCodeInfosMsg {
