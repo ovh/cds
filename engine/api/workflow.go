@@ -501,7 +501,7 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
+			return errP
 		}
 
 		imageBts, errr := ioutil.ReadAll(r.Body)
@@ -520,11 +520,11 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
 		if err != nil {
-			return sdk.WrapError(err, "cannot load workflow %s", name)
+			return err
 		}
 
 		if err := workflow.UpdateIcon(api.mustDB(), wf.ID, icon); err != nil {
-			return sdk.WrapError(err, "cannot update workflow icon for %s", wf.Name)
+			return err
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)
@@ -540,16 +540,16 @@ func (api *API) deleteWorkflowIconHandler() service.Handler {
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
+			return errP
 		}
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
 		if err != nil {
-			return sdk.WrapError(err, "cannot load workflow %s", name)
+			return err
 		}
 
 		if err := workflow.UpdateIcon(api.mustDB(), wf.ID, ""); err != nil {
-			return sdk.WrapError(err, "cannot update workflow icon for %s", wf.Name)
+			return err
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)

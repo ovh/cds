@@ -87,7 +87,7 @@
                             </button>
                         </div>
                     </ng-container>
-                    <ng-container *ngIf="!workflow.from_repository || workflow.from_repository.lenght === 0">
+                    <ng-container *ngIf="!workflow.from_repository || workflow.from_repository.length === 0">
                         <button class="ui green right floated button" type="submit" name="savebtn"
                             [class.loading]="loading" [disabled]="loading">
                             {{'btn_save' | translate}}
