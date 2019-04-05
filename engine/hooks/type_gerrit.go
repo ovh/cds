@@ -61,7 +61,7 @@ type GerritEvent struct {
 	PatchSet       *GerritPatchSet  `json:"patchSet,omitempty"`
 	Abandoner      *GerritAccount   `json:"abandoner,omitempty"`
 	Reason         string           `json:"reason,omitempty"`
-	Deleter        *GerritAccount   `json:"deleted,omitempty"`
+	Deleter        *GerritAccount   `json:"deleter,omitempty"`
 	Submitter      *GerritAccount   `json:"submitter,omitempty"`
 	NewRev         string           `json:"newRev,omitempty"`
 	Restorer       string           `json:"restorer,omitempty"`
@@ -74,7 +74,7 @@ type GerritEvent struct {
 	HashTags       []string         `json:"hashtags,omitempty"`
 	ProjectName    string           `json:"projectName,omitempty"`
 	ProjectHead    string           `json:"projectHead,omitempty"`
-	Uploader       *GerritAccount   `json:"updaloed,omitempty"`
+	Uploader       *GerritAccount   `json:"uploader,omitempty"`
 	RefUpdate      *GerritRefUpdate `json:"refUpdate,omitempty"`
 	Reviewer       *GerritAccount   `json:"reviewer,omitempty"`
 	Remover        *GerritAccount   `json:"remover,omitempty"`
@@ -105,7 +105,7 @@ type GerritChange struct {
 	PatchSets       []GerritPatchSet     `json:"patchSets,omitempty"`
 	DependsOn       []GerritDependency   `json:"dependsOn,omitempty"`
 	NeededBy        []GerritDependency   `json:"neededBy,omitempty"`
-	SubmitRecords   []GerritSubmitRecord `json:"submitRecord,omitempty"`
+	SubmitRecords   []GerritSubmitRecord `json:"submitRecords,omitempty"`
 	AllReviewers    []GerritAccount      `json:"allReviewers,omitempty"`
 }
 

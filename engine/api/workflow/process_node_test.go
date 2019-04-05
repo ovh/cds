@@ -963,6 +963,11 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
 
+	// Load run
+	var errRun error
+	wr, errRun = workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
+	assert.NoError(t, errRun)
+
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID]))
 
@@ -973,7 +978,6 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	assert.Equal(t, "super commit", mapParams["git.message"])
 
 	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].BuildParameters)
-	t.Logf("%+v", mapParams2)
 	assert.Equal(t, "feat/branch", mapParams2["git.branch"])
 	assert.Equal(t, "mylastcommit", mapParams2["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])

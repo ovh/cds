@@ -234,7 +234,7 @@ func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 		}
 		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
 		if err != nil {
-			return sdk.WrapError(err, "Job already booked")
+			return err
 		}
 
 		hCount, err := services.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
