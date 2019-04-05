@@ -289,7 +289,7 @@ func LoadAndLockNodeJobRunSkipLocked(ctx context.Context, db gorp.SqlExecutor, s
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update SKIP LOCKED`
 	if err := db.SelectOne(&j, query, id); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrWorkflowNodeRunJobNotFound)
+			return nil, sdk.WithStack(sdk.ErrLocked)
 		}
 		return nil, err
 	}

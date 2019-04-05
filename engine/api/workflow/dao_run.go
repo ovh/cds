@@ -12,7 +12,6 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -246,7 +245,11 @@ func LockRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`SELECT %s
 	FROM workflow_run
 	WHERE id = $1 FOR UPDATE SKIP LOCKED`, wfRunfields)
-	return loadRun(db, LoadRunOptions{}, query, id)
+	wr, err := loadRun(db, LoadRunOptions{}, query, id)
+	if err == sdk.ErrWorkflowNotFound {
+		err = sdk.ErrLocked
+	}
+	return wr, sdk.WithStack(err)
 }
 
 // LoadRunIDsWithOldModel loads all ids for run that use old workflow model
@@ -464,9 +467,6 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 	if err := db.SelectOne(runDB, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
-		}
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.RowLockedPGCode {
-			return nil, sdk.ErrLocked
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow run. query:%s args:%v", query, args)
 	}

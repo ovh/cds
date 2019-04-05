@@ -42,7 +42,7 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 		// Lock the job (action)
 		if err := tx.QueryRow("select id from action where id = $1 for update SKIP LOCKED", p.ActionID).Scan(&id); err != nil {
 			tx.Rollback()
-			if err != sql.ErrNoRows {
+			if err == sql.ErrNoRows {
 				log.Info("MigrateActionDEPRECATEDGitClone> unable to take lock on action table: %v", err)
 			}
 			continue

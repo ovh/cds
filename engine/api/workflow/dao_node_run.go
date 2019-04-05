@@ -177,7 +177,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) 
 	where workflow_node_run.id = $1 for update SKIP LOCKED`, nodeRunFields, nodeRunTestsField)
 	if err := db.SelectOne(&rr, query, id); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrWorkflowNodeRunLocked)
+			return nil, sdk.WithStack(sdk.ErrLocked)
 		}
 		return nil, sdk.WrapError(err, "unable to load workflow_node_run node=%d", id)
 	}

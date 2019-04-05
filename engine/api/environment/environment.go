@@ -65,7 +65,7 @@ func LockByID(db gorp.SqlExecutor, envID int64) error {
 	WHERE id = $1 FOR UPDATE SKIP LOCKED
 	`, envID)
 	if err == sql.ErrNoRows {
-		return sdk.ErrNoEnvironment
+		return sdk.ErrLocked
 	}
 	return err
 }

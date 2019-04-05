@@ -242,7 +242,6 @@ var LoadOptions = struct {
 	WithKeys                                LoadOptionFunc
 	WithWorkflows                           LoadOptionFunc
 	WithWorkflowNames                       LoadOptionFunc
-	WithLock                                LoadOptionFunc
 	WithLockNoWait                          LoadOptionFunc
 	WithClearKeys                           LoadOptionFunc
 	WithIntegrations                        LoadOptionFunc
@@ -266,7 +265,6 @@ var LoadOptions = struct {
 	WithKeys:                                &loadKeys,
 	WithWorkflows:                           &loadWorkflows,
 	WithWorkflowNames:                       &loadWorkflowNames,
-	WithLock:                                &lockProject,
 	WithLockNoWait:                          &lockAndWaitProject,
 	WithClearKeys:                           &loadClearKeys,
 	WithIntegrations:                        &loadIntegrations,
@@ -362,10 +360,6 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.Us
 
 	dbProj := &dbProject{}
 	for _, o := range opts {
-		if o == LoadOptions.WithLock {
-			query += " FOR UPDATE"
-			break
-		}
 		if o == LoadOptions.WithLockNoWait {
 			query += " FOR UPDATE SKIP LOCKED"
 			break
@@ -374,7 +368,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.Us
 
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrNoProject)
+			return nil, sdk.WithStack(sdk.ErrLocked)
 		}
 		return nil, sdk.WithStack(err)
 	}

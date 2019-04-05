@@ -279,7 +279,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	// reload and recheck status
 	job, errl := LoadAndLockNodeJobRunSkipLocked(ctx, db, store, jobID)
 	if errl != nil {
-		if sdk.ErrorIs(errl, sdk.ErrWorkflowNodeRunJobNotFound) {
+		if sdk.ErrorIs(errl, sdk.ErrLocked) {
 			errl = sdk.ErrJobAlreadyBooked
 		}
 		return nil, nil, sdk.WrapError(errl, "cannot load node job run (WAIT) %d", jobID)
@@ -693,7 +693,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 
 	nodeRun, errNR := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID)
 	if errNR != nil {
-		return sdk.WrapError(errNR, "RestartWorkflowNodeJob> Cannot load node run")
+		return errNR
 	}
 
 	//Synchronize struct but not in db
