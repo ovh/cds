@@ -359,16 +359,21 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.Us
 	defer end()
 
 	dbProj := &dbProject{}
+	needLock := false
 	for _, o := range opts {
 		if o == LoadOptions.WithLockNoWait {
 			query += " FOR UPDATE SKIP LOCKED"
+			needLock = true
 			break
 		}
 	}
 
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrLocked)
+			if needLock {
+				return nil, sdk.WithStack(sdk.ErrLocked)
+			}
+			return nil, sdk.WithStack(sdk.ErrNoProject)
 		}
 		return nil, sdk.WithStack(err)
 	}
