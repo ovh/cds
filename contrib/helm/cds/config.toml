@@ -1,3 +1,259 @@
+[api]
+
+  # if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)
+  defaultArch = "amd64"
+
+  # if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)
+  defaultOS = "linux"
+
+  # Either filesystem local storage or Openstack Swift Storage are supported
+  [api.artifact]
+
+    # swift or local
+    mode = "swift"
+
+    [api.artifact.local]
+      baseDirectory = "/app/artifacts"
+
+    [api.artifact.openstack]
+
+      # Use if your want to prefix containers for CDS Artifacts
+      containerPrefix = ""
+
+      # True if you want to disable Temporary URL in file upload
+      # disableTempURL = false
+
+      # Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only
+      domain = ""
+
+      # Openstack Password, generally value of $OS_PASSWORD
+      password = ""
+
+      # Region, generally value of $OS_REGION_NAME
+      region = ""
+
+      # Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only
+      tenant = ""
+
+      # Authentication Endpoint, generally value of $OS_AUTH_URL
+      url = ""
+
+      # Openstack Username, generally value of $OS_USERNAME
+      username = ""
+
+  ##############################
+  # CDS Authentication Settings#
+  ##############################
+  [api.auth]
+
+    # The default group is the group in which every new user will be granted at signup
+    defaultGroup = "cdsdemo"
+
+    # The RSA Private Key used to sign and verify the JWT Tokens issued by the API
+    #This is mandatory.
+    rsaPrivateKey = ""
+
+    # Token for shared.infra group. This value will be used when shared.infra will be created
+    #at first CDS launch. This token can be used by CDS CLI, Hatchery, etc...
+    #This is mandatory.
+    #sharedInfraToken = ""
+
+    [api.auth.ldap]
+      base = "dc=myorganization,dc=com"
+
+      # Define it if ldapsearch need to be authenticated
+      bindDN = ""
+
+      # Define it if ldapsearch need to be authenticated
+      bindPwd = ""
+      dn = "uid=%s,ou=people,dc=myorganization,dc=com"
+      enable = false
+      fullname = "{{.givenName}} {{.sn}}"
+      host = ""
+      port = 636
+      ssl = true
+
+    [api.auth.local]
+
+      # Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com
+      # signupAllowedDomains = ""
+
+  ######################
+  # CDS Cache Settings
+  ######################
+  #
+  [api.cache]
+    ttl = 60
+
+    # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
+    [api.cache.redis]
+
+      # If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379
+      #host = "localhost:6379"
+      #password = ""
+
+  ################################
+  # Postgresql Database settings
+  ################################
+  [api.database]
+
+    # Maximum wait for connection, in seconds
+#    connectTimeout = 10
+#    host = "localhost"
+
+#    # DB Max connection
+#    maxconn = 20
+#    name = "cds"
+#    password = "cds"
+#    port = 5432
+
+#    # Set a specific role to run SET ROLE for each connection
+#    # role = ""
+
+#    # DB SSL Mode: require (default), verify-full, or disable
+#    sslmode = "disable"
+
+#    # Statement timeout value in milliseconds
+#    timeout = 3000
+#    user = "cds"
+
+  [api.directories]
+    download = "/app"
+    keys = "/app/keys"
+
+  #######################
+  # CDS Events Settings
+  #######################
+  [api.events]
+
+    [api.events.kafka]
+      broker = ""
+      enabled = false
+      maxmessagebytes = 10000000
+      password = ""
+      topic = ""
+      user = ""
+
+  ###########################
+  # CDS Features flipping Settings
+  ###########################
+  [api.features]
+
+    # Feature flipping provider: https://maif.github.io/izanami
+    [api.features.izanami]
+      apiurl = ""
+      clientid = ""
+      clientsecret = ""
+
+      # Token shared between Izanami and CDS to be able to send webhooks from izanami
+      token = ""
+
+  ###########################
+  # Graylog Search.
+  # When CDS API generates errors, you can fetch them with cdsctl.
+  # Examples:
+  # $ cdsctl admin errors get <error-id>
+  # $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007
+  ###########################
+  [api.graylog]
+    accessToken = ""
+    stream = ""
+
+    # Example: http://localhost:9000
+    url = ""
+
+  [api.grpc]
+
+    # Listen GRPC address without port, example: 127.0.0.1
+    # addr = ""
+#    port = 8082
+
+  [api.http]
+
+    # Listen HTTP address without port, example: 127.0.0.1
+    # addr = ""
+#    port = 8081
+#    sessionTTL = 60
+
+  ###########################
+  # Log settings.
+  ###########################
+  [api.log]
+
+    # Max service logs size in bytes (default: 15MB)
+    serviceMaxSize = 15728640
+
+    # Max step logs size in bytes (default: 15MB)
+    stepMaxSize = 15728640
+
+  [api.secrets]
+#    key = ""
+
+  #####################
+  ## CDS SMTP Settings
+  #####################
+  [api.smtp]
+    disable = true
+    from = "no-reply@cds.local"
+    host = ""
+    password = ""
+    port = ""
+    tls = false
+    user = ""
+
+  ###########################
+  # CDS Status Settings
+  # Documentation: https://ovh.github.io/cds/hosting/monitoring/
+  ###########################
+  [api.status]
+
+    [api.status.api]
+
+      # if less than minInstance of API is running, an alert will on Global/API be created on /mon/status
+      minInstance = 1
+
+    [api.status.dbmigrate]
+
+      # if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status
+      minInstance = 1
+
+    [api.status.elasticsearch]
+
+      # if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status
+      minInstance = 1
+
+    [api.status.hatchery]
+
+      # if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status
+      minInstance = 1
+
+    [api.status.hooks]
+
+      # if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status
+      minInstance = 1
+
+    [api.status.repositories]
+
+      # if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status
+      minInstance = 1
+
+    [api.status.vcs]
+
+      # if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status
+      minInstance = 1
+
+  #####################
+  # CDS URLs Settings
+  #####################
+  [api.url]
+#    api = "http://localhost:8081"
+#    ui = "http://localhost:2015"
+
+  [api.vault]
+    configurationKey = ""
+
+
+
 ######################
 # CDS Hooks Settings
 #######################

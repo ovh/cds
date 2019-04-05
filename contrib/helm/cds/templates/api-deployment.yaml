@@ -45,12 +45,12 @@ spec:
         {{- else }}
           value: {{ default "" .Values.externalDatabase.password | quote }}
         {{- end }}
+        - name: CDS_API_URL_API
+          value: http://{{ template "cds.fullname" . }}-ui/cdsapi
         - name: CDS_API_AUTH_DEFAULTGROUP
           value: cdsdemo
         - name: CDS_LOG_LEVEL
           value: {{ default "" .Values.logLevel | quote }}
-        - name: CDS_API_CACHE_MODE
-          value: redis #No alternative in this chart
         - name: CDS_API_CACHE_REDIS_HOST
           value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }}
         - name: CDS_API_CACHE_REDIS_PASSWORD
@@ -62,12 +62,6 @@ spec:
         {{- else }}
           value: {{ default "" .Values.redis.password | quote }}
         {{- end }}
-        - name: CDS_API_DIRECTORIES_DOWNLOAD
-          value: /app
-        - name: CDS_API_DIRECTORIES_KEYS
-          value: /app/keys
-        - name: CDS_API_ARTIFACT_LOCAL_BASEDIRECTORY
-          value: /app/artifacts
         - name: CDS_API_AUTH_SHAREDINFRATOKEN
           valueFrom:
             secretKeyRef:
