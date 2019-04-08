@@ -16,7 +16,7 @@ export class ProjectStateModel {
     public project: Project;
     public loading: boolean;
     public currentProjectKey: string;
-    public repoManager: { request_token?: string, url?: string };
+    public repoManager: { request_token?: string, url?: string, auth_type?: string };
 }
 
 @State<ProjectStateModel>({
@@ -930,17 +930,38 @@ export class ProjectState {
     @Action(ProjectAction.ConnectRepositoryManagerInProject)
     connectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ConnectRepositoryManagerInProject) {
         const state = ctx.getState();
-        return this._http.post<{ request_token: string, url: string }>(
+        return this._http.post<{ request_token: string, url: string, auth_type: string }>(
             '/project/' + action.payload.projectKey + '/repositories_manager/' +
             action.payload.repoManager + '/authorize',
             null
-        ).pipe(tap(({ request_token, url }) => {
+        ).pipe(tap(({ request_token, url, auth_type }) => {
             ctx.setState({
                 ...state,
                 repoManager: {
                     request_token,
-                    url
+                    url,
+                    auth_type
                 },
+            });
+        }));
+    }
+
+    @Action(ProjectAction.CallbackRepositoryManagerBasicAuthInProject)
+    callbackRepositoryManagerBasicAuth(ctx: StateContext<ProjectStateModel>,
+                                       action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
+        const state = ctx.getState();
+        let data = {
+            'username': action.payload.basicUser,
+            'secret': action.payload.basicPassword
+        };
+        return this._http.post<Project>(
+            '/project/' + action.payload.projectKey + '/repositories_manager/' +
+            action.payload.repoManager + '/authorize/basicauth',
+            data
+        ).pipe(tap((project: Project) => {
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ vcs_servers: project.vcs_servers }),
             });
         }));
     }

@@ -115,6 +115,38 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		}
 	}
 
+	// Try to get gerrit variable
+	var project, changeID, branch, revision, url string
+	projectParam := sdk.ParameterFind(&nr.BuildParameters, "git.repository")
+	if projectParam != nil {
+		project = projectParam.Value
+	}
+	changeIDParam := sdk.ParameterFind(&nr.BuildParameters, "gerrit.change.id")
+	if changeIDParam != nil {
+		changeID = changeIDParam.Value
+	}
+	branchParam := sdk.ParameterFind(&nr.BuildParameters, "gerrit.change.branch")
+	if branchParam != nil {
+		branch = branchParam.Value
+	}
+	revisionParams := sdk.ParameterFind(&nr.BuildParameters, "git.hash")
+	if revisionParams != nil {
+		revision = revisionParams.Value
+	}
+	urlParams := sdk.ParameterFind(&nr.BuildParameters, "cds.ui.pipeline.run")
+	if urlParams != nil {
+		url = urlParams.Value
+	}
+	if changeID != "" && project != "" && branch != "" && revision != "" {
+		e.GerritChange = &sdk.GerritChangeEvent{
+			ID:         changeID,
+			DestBranch: branch,
+			Project:    project,
+			Revision:   revision,
+			URL:        url,
+		}
+	}
+
 	e.NodeName = nodeName
 	var envName string
 	var appName string

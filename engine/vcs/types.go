@@ -49,6 +49,7 @@ type ServerConfiguration struct {
 	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty" json:"github"`
 	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty" json:"gitlab"`
 	Bitbucket *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty" json:"bitbucket"`
+	Gerrit    *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty" json:"gerrit"`
 }
 
 // GithubServerConfiguration represents the github configuration
@@ -167,4 +168,22 @@ func (s ServerConfiguration) check() error {
 	}
 
 	return nil
+}
+
+// GerritServerConfiguration represents the gerrit configuration
+type GerritServerConfiguration struct {
+	Status struct {
+		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
+	}
+	DisableGerritEvent bool `toml:"disableGerritEvent" comment:"Does gerrit event stream are supported by VCS Server" json:"disable_gerrit_event"`
+	SSHPort            int  `toml:"sshport" default:"29418" commented:"true" comment:"SSH port of gerrit"`
+	EventStream        struct {
+		User       string `toml:"user" default:"myuser" commented:"true" comment:"User to access to gerrit event stream"`
+		PrivateKey string `toml:"privateKey" default:"" commented:"true" comment:"Private key of the user who access to gerrit event stream"`
+	}
+	Reviewer struct {
+		User  string `toml:"user" default:"myreviewer" commented:"true" comment:"User that review changes"`
+		Token string `toml:"token" default:"" commented:"true" comment:"Token of the reviewer"`
+	}
 }

@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -56,47 +54,6 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return err
-	}
-
-	if !hook.Workflow {
-		hcfg, err := b.getHooksConfig(ctx, repo)
-		if err != nil {
-			return err
-		}
-		if b.proxyURL != "" {
-			lastIndexSlash := strings.LastIndex(hook.URL, "/")
-			if b.proxyURL[len(b.proxyURL)-1] == '/' {
-				lastIndexSlash++
-			}
-			hook.URL = b.proxyURL + hook.URL[lastIndexSlash:]
-		}
-
-		hcfg.Details = append(hcfg.Details, HookConfigDetail{
-			Method:          hook.Method,
-			URL:             hook.URL,
-			PostContentType: hook.ContentType,
-			PostData:        hook.Body,
-		})
-		hcfg.LocationCount = fmt.Sprintf("%d", len(hcfg.Details))
-
-		values, err := json.Marshal(&hcfg)
-		if err != nil {
-			return err
-		}
-
-		updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-		if err := b.do(ctx, "PUT", "core", updatePath, nil, values, &hook, nil); err != nil {
-			return sdk.WrapError(err, "Unable to update hook config %s", string(values))
-		}
-
-		//If it's the first hook, let's enable the plugin
-		if len(hcfg.Details) == 1 {
-			enablePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/enabled", project, slug, bitbucketHookKey)
-			if err := b.do(ctx, "PUT", "core", enablePath, nil, values, &hook, nil); err != nil {
-				return sdk.WrapError(err, "Unable to get enable hook")
-			}
-		}
-		return nil
 	}
 
 	url := fmt.Sprintf("/projects/%s/repos/%s/webhooks", project, slug)

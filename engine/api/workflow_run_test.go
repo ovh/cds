@@ -554,9 +554,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 
 	tags := map[string][]string{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &tags))
-	assert.Len(t, tags, 3)
-	assert.Len(t, tags["git.branch"], 1)
-	assert.Len(t, tags["git.hash"], 10)
+	assert.Len(t, tags, 1)
 
 }
 

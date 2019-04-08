@@ -234,7 +234,7 @@ func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 		}
 		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
 		if err != nil {
-			return sdk.WrapError(err, "Job already booked")
+			return err
 		}
 
 		hCount, err := services.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
@@ -985,7 +985,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 				return nil
 			}
 
-			if defaultBranch == nr.VCSBranch {
+			if defaultBranch.DisplayID == nr.VCSBranch {
 				// Push metrics
 				metrics.PushUnitTests(p.Key, nr.ApplicationID, nr.WorkflowID, nr.Number, *nr.Tests)
 			}

@@ -80,6 +80,17 @@ type EventRunWorkflowNode struct {
 	HookUUID              string                    `json:"hook_uuid"`
 	HookLog               string                    `json:"log,omitempty"`
 	NodeType              string                    `json:"node_type,omitempty"`
+	GerritChange          *GerritChangeEvent        `json:"gerrit_change,omitempty"`
+}
+
+// GerritChangeEvent Gerrit information that are needed on event
+type GerritChangeEvent struct {
+	ID         string `json:"id,omitempty"`
+	Project    string `json:"project,omitempty"`
+	DestBranch string `json:"dest_branch,omitempty"`
+	Revision   string `json:"revision,omitempty"`
+	Report     string `json:"report,omitempty"`
+	URL        string `json:"url,omitempty"`
 }
 
 // EventRunWorkflowOutgoingHook contains event data for a workflow outgoing hook run

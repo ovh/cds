@@ -211,6 +211,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 			msgChan <- sdk.NewMessage(sdk.MsgPipelineCreated, pip.Name)
 		}
 	}
+
 	//Reload the pipeline
 	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
 	if err != nil {

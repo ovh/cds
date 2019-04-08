@@ -27,6 +27,8 @@ github.com/Shopify/sarama v1.17.0 h1:Y2/FBwElFVwt7aLKL3fDG6hh+rrlywR6uLgTgKObwTc
 github.com/Shopify/sarama v1.17.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.3+incompatible h1:awiJqUYH4q4OmoBiRccJykjd7B+w0loJi2keSna4X/M=
 github.com/Shopify/toxiproxy v2.1.3+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
+github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4 h1:LY5JPwCVaVWtvVMyPb/FuWEqFq0qAewr8SU5pAO371I=
+github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4/go.mod h1:0iuRQp6WJ44ts+iihy5E/WlPqfg5RNeQxOmzRkxCdtk=
 github.com/aokoli/goutils v1.1.0 h1:jy4ghdcYvs5EIoGssZNslIASX5m+KNMfyyKvRQ0TEVE=
 github.com/aokoli/goutils v1.1.0/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
 github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 h1:MbFvRvOzFRujpuBALUI/2ll9+8PYi23cEp/DSQFEBfU=

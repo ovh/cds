@@ -454,6 +454,11 @@ func (s *Service) deleteTask(ctx context.Context, h *sdk.WorkflowNodeHook) error
 		return sdk.WrapError(err, "Unable to parse hook")
 	}
 
+	switch t.Type {
+	case TypeGerrit:
+		s.stopGerritHookTask(t)
+	}
+
 	//Delete the task
 	s.Dao.DeleteTask(t)
 

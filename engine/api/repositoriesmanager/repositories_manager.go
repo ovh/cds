@@ -22,22 +22,30 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.VCSConfiguration, error) {
+	var vcsServer sdk.VCSConfiguration
+	srvs, err := services.FindByType(db, services.TypeVCS)
+	if err != nil {
+		return vcsServer, sdk.WrapError(err, "Unable to load services")
+	}
+	if _, err := services.DoJSONRequest(ctx, srvs, "GET", fmt.Sprintf("/vcs/%s", vcsName), nil, &vcsServer); err != nil {
+		return vcsServer, sdk.WithStack(err)
+	}
+	return vcsServer, nil
+}
+
 //LoadAll Load all RepositoriesManager from the database
-func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) ([]string, error) {
+func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string]sdk.VCSConfiguration, error) {
 	srvs, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load services")
 	}
 
-	vcsServers := map[string]interface{}{}
+	vcsServers := make(map[string]sdk.VCSConfiguration)
 	if _, err := services.DoJSONRequest(ctx, srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
 		return nil, sdk.WithStack(err)
 	}
-	servers := []string{}
-	for k := range vcsServers {
-		servers = append(servers, k)
-	}
-	return servers, nil
+	return vcsServers, nil
 }
 
 type vcsConsumer struct {
@@ -304,17 +312,17 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 }
 
 // DefaultBranch get default branch from given repository
-func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (string, error) {
+func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (sdk.VCSBranch, error) {
 	branches, err := c.Branches(ctx, fullname)
 	if err != nil {
-		return "", sdk.WrapError(err, "Unable to list branches on repository %s", fullname)
+		return sdk.VCSBranch{}, sdk.WrapError(err, "Unable to list branches on repository %s", fullname)
 	}
 	for _, b := range branches {
 		if b.Default {
-			return b.DisplayID, nil
+			return b, nil
 		}
 	}
-	return "", sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find default branch on repository %s (among %d branches)", fullname, len(branches))
+	return sdk.VCSBranch{}, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find default branch on repository %s (among %d branches)", fullname, len(branches))
 }
 
 func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until string) ([]sdk.VCSCommit, error) {
@@ -533,9 +541,11 @@ func (c *vcsClient) GrantReadPermission(ctx context.Context, repo string) error 
 
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
-	WebhooksSupported bool   `json:"webhooks_supported"`
-	WebhooksDisabled  bool   `json:"webhooks_disabled"`
-	Icon              string `json:"webhooks_icon"`
+	WebhooksSupported  bool     `json:"webhooks_supported"`
+	WebhooksDisabled   bool     `json:"webhooks_disabled"`
+	GerritHookDisabled bool     `json:"gerrithook_disabled"`
+	Icon               string   `json:"webhooks_icon"`
+	Events             []string `json:"events"`
 }
 
 // GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server
