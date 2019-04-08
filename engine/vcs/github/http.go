@@ -31,7 +31,7 @@ var (
 func (g *githubConsumer) postForm(path string, data url.Values, headers map[string][]string) (int, []byte, error) {
 	body := strings.NewReader(data.Encode())
 
-	req, err := http.NewRequest(http.MethodPost, URL+path, body)
+	req, err := http.NewRequest(http.MethodPost, g.GitHubURL+path, body)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -122,8 +122,8 @@ func (c *githubClient) post(path string, bodyType string, body io.Reader, opts *
 	if opts == nil {
 		opts = new(postOptions)
 	}
-	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
-		path = APIURL + path
+	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, c.GitHubAPIURL) {
+		path = c.GitHubAPIURL + path
 	}
 
 	req, err := http.NewRequest(http.MethodPost, path, body)
@@ -149,8 +149,8 @@ func (c *githubClient) patch(path string, opts *postOptions) (*http.Response, er
 	if opts == nil {
 		opts = new(postOptions)
 	}
-	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
-		path = APIURL + path
+	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, c.GitHubAPIURL) {
+		path = c.GitHubAPIURL + path
 	}
 
 	req, err := http.NewRequest(http.MethodPatch, path, nil)
@@ -175,8 +175,8 @@ func (c *githubClient) put(path string, bodyType string, body io.Reader, opts *p
 	if opts == nil {
 		opts = new(postOptions)
 	}
-	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
-		path = APIURL + path
+	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, c.GitHubAPIURL) {
+		path = c.GitHubAPIURL + path
 	}
 
 	req, err := http.NewRequest(http.MethodPut, path, body)
@@ -203,8 +203,8 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 		return 0, nil, nil, ErrorRateLimit
 	}
 
-	if !strings.HasPrefix(path, APIURL) {
-		path = APIURL + path
+	if !strings.HasPrefix(path, c.GitHubAPIURL) {
+		path = c.GitHubAPIURL + path
 	}
 
 	callURL, err := url.ParseRequestURI(path)
@@ -229,7 +229,7 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 		}
 	}
 
-	log.Debug("Github API>> Request URL %s", req.URL.String())
+	log.Debug("Github API>> Request GitHubURL %s", req.URL.String())
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -275,8 +275,8 @@ func (c *githubClient) delete(path string) error {
 		return ErrorRateLimit
 	}
 
-	if !strings.HasPrefix(path, APIURL) {
-		path = APIURL + path
+	if !strings.HasPrefix(path, c.GitHubAPIURL) {
+		path = c.GitHubAPIURL + path
 	}
 
 	req, err := http.NewRequest(http.MethodDelete, path, nil)

@@ -247,7 +247,17 @@ func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.S
 func (c *client) QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64, error) {
 	var spawnAttempts []int64
 	path := fmt.Sprintf("/queue/workflows/%d/attempt", jobID)
-	_, err := c.PostJSON(ctx, path, nil, &spawnAttempts)
+	retry := 0
+	var code int
+	var err error
+	for {
+		code, err = c.PostJSON(ctx, path, nil, &spawnAttempts)
+		if code != http.StatusConflict || retry >= 5 {
+			break
+		}
+		retry++
+		time.Sleep(250 * time.Millisecond)
+	}
 	return spawnAttempts, err
 }
 

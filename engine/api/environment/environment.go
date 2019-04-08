@@ -62,10 +62,10 @@ func LockByID(db gorp.SqlExecutor, envID int64) error {
 	_, err := db.Exec(`
 	SELECT *
 	FROM environment
-	WHERE id = $1 FOR UPDATE NOWAIT
+	WHERE id = $1 FOR UPDATE SKIP LOCKED
 	`, envID)
 	if err == sql.ErrNoRows {
-		return sdk.ErrNoEnvironment
+		return sdk.ErrLocked
 	}
 	return err
 }
@@ -79,7 +79,7 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 		SELECT environment.id FROM environment
 		JOIN project ON project.id = environment.project_id
 		WHERE project.projectKey = $1 AND environment.name = $2
-	) FOR UPDATE NOWAIT
+	) FOR UPDATE SKIP LOCKED
 	`, projectKey, envName)
 	if err == sql.ErrNoRows {
 		return sdk.ErrNoEnvironment

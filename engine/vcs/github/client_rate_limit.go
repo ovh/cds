@@ -2,6 +2,8 @@ package github
 
 import (
 	"encoding/json"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -24,6 +26,10 @@ func (g *githubClient) RateLimit() error {
 	if err != nil {
 		log.Warning("githubClient.RateLimit> Error %s", err)
 		return err
+	}
+	// If the GitHub instance does not have Rate Limitting enabled you will see a 404.
+	if status == http.StatusNotFound && strings.Contains(string(body), "Rate limiting is not enabled.") {
+		return nil
 	}
 	if status >= 400 {
 		return sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
