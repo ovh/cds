@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { SharedInfraGroupName } from 'app/model/group.model';
 import { finalize, first } from 'rxjs/operators';
 import { Requirement } from '../../../model/requirement.model';
 import { WorkerModel } from '../../../model/worker-model.model';
@@ -70,7 +71,12 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
             .subscribe(wms => {
                 this.workerModels = wms;
                 if (Array.isArray(this.workerModels)) {
-                    this._suggestWithWorkerModel = this.workerModels.map(wm => wm.name).concat(this._suggest);
+                    this._suggestWithWorkerModel = this.workerModels.map(wm => {
+                        if (wm.group.name !== SharedInfraGroupName) {
+                            return `${wm.group.name}/${wm.name}`;
+                        }
+                        return wm.name;
+                    }).concat(this._suggest);
                 }
             });
 

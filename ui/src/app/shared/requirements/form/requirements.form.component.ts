@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
 import { finalize, first } from 'rxjs/operators';
-import { adminGroupName, GroupPermission } from '../../../model/group.model';
+import { GroupPermission, SharedInfraGroupName } from '../../../model/group.model';
 import { PermissionValue } from '../../../model/permission.model';
 import { Requirement } from '../../../model/requirement.model';
 import { WorkerModel } from '../../../model/worker-model.model';
@@ -42,7 +42,7 @@ export class RequirementsFormComponent implements OnInit {
 
     @Input() modal: SemanticModalComponent;
     @Input() groupsPermission: Array<GroupPermission>;
-    @Input() config: {disableModel?: boolean, disableHostname?: boolean};
+    @Input() config: { disableModel?: boolean, disableHostname?: boolean };
 
     @Output() event = new EventEmitter<RequirementEvent>();
 
@@ -51,7 +51,7 @@ export class RequirementsFormComponent implements OnInit {
     workerModels: Array<WorkerModel>;
     _suggest: Array<string> = [];
     _suggestWithWorkerModel: Array<string> = [];
-    _suggestWithOsArch:  Array<string> = [];
+    _suggestWithOsArch: Array<string> = [];
     loading = true;
     workerModelLinked: WorkerModel;
     isFormValid = false;
@@ -79,10 +79,10 @@ export class RequirementsFormComponent implements OnInit {
     ngOnInit() {
         this._workerModelService.getAll('active')
             .pipe(
-              first(),
-              finalize(() => this.loading = false)
+                first(),
+                finalize(() => this.loading = false)
             )
-            .subscribe( wms => {
+            .subscribe(wms => {
                 this.workerModels = wms;
                 if (Array.isArray(this.workerModels)) {
                     let filteredWm = this.workerModels;
@@ -93,11 +93,16 @@ export class RequirementsFormComponent implements OnInit {
                                 return grp.group.name === wm.group.name && grp.permission >= PermissionValue.READ_EXECUTE;
                             });
 
-                            return groupPerm != null || wm.group.name === adminGroupName;
+                            return groupPerm != null || wm.group.name === SharedInfraGroupName;
                         });
                     }
 
-                    this._suggestWithWorkerModel = filteredWm.map(wm => wm.name).concat(this._suggest);
+                    this._suggestWithWorkerModel = filteredWm.map(wm => {
+                        if (wm.group.name !== SharedInfraGroupName) {
+                            return `${wm.group.name}/${wm.name}`;
+                        }
+                        return wm.name;
+                    }).concat(this._suggest);
                 }
             });
 
@@ -154,7 +159,7 @@ export class RequirementsFormComponent implements OnInit {
 
     closeModal() {
         if (this.modal) {
-          this.modal.hide();
+            this.modal.hide();
         }
     }
 
