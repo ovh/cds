@@ -270,6 +270,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				} else {
 					fmt.Println(string(b))
 				}
+
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
@@ -278,18 +279,21 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				} else {
 					fmt.Println(string(b))
 				}
+
 			default:
 				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
-				e := dump.NewDefaultEncoder()
-				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-				e.ExtraFields.DetailedMap = false
-				e.ExtraFields.DetailedStruct = false
-				e.ExtraFields.Len = false
-				e.ExtraFields.Type = false
-				m, err := e.ToStringMap(i)
+				m, err := dump.ToStringMap(i)
 				ExitOnError(err)
-				for k, v := range m {
-					fmt.Fprintln(w, k+"\t"+v)
+
+				itemKeys := []string{}
+				for k := range m {
+					itemKeys = append(itemKeys, k)
+				}
+
+				sort.Strings(itemKeys)
+
+				for _, k := range itemKeys {
+					fmt.Fprintln(w, k+"\t"+m[k])
 				}
 				w.Flush()
 				return

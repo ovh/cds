@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -64,20 +65,53 @@ var projectShowCmd = cli.Command{
 
 func projectShowRun(v cli.Values) (interface{}, error) {
 	mods := []cdsclient.RequestModifier{}
-	if v.GetString("verbose") == "true" {
-		mods = append(mods, func(r *http.Request) {
-			q := r.URL.Query()
-			q.Set("withApplications", "true")
-			q.Set("withPipelines", "true")
-			q.Set("withEnvironments", "true")
-			r.URL.RawQuery = q.Encode()
-		})
-	}
+	mods = append(mods, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withWorkflowNames", "true")
+		q.Set("withIntegrations", "true")
+		r.URL.RawQuery = q.Encode()
+	})
+
 	proj, err := client.ProjectGet(v.GetString(_ProjectKey), mods...)
 	if err != nil {
 		return nil, err
 	}
-	return *proj, nil
+
+	var p = struct {
+		Key          string `cli:"key,key"`
+		Name         string `cli:"name"`
+		Description  string `cli:"description"`
+		Favorite     bool   `cli:"favorite"`
+		URL          string `cli:"url"`
+		API          string `cli:"api"`
+		Workflows    string `cli:"workflows"`
+		NbWorkflows  int    `cli:"nb_workflows"`
+		RepoManagers string `cli:"repositories_manager"`
+		Integrations string `cli:"integration"`
+	}{
+		Key:         proj.Key,
+		Name:        proj.Name,
+		Description: proj.Description,
+		Favorite:    proj.Favorite,
+		NbWorkflows: len(proj.WorkflowNames),
+		Workflows:   cli.Ellipsis(strings.Join(proj.WorkflowNames.Names(), ","), 70),
+		URL:         proj.URLs.UIURL,
+		API:         proj.URLs.APIURL,
+	}
+
+	var integrations []string
+	for _, inte := range proj.Integrations {
+		integrations = append(integrations, inte.Name)
+	}
+	p.Integrations = cli.Ellipsis(strings.Join(integrations, ","), 70)
+
+	var repomanagers []string
+	for _, vcs := range proj.VCSServers {
+		repomanagers = append(repomanagers, vcs.Name)
+	}
+	p.RepoManagers = cli.Ellipsis(strings.Join(repomanagers, ","), 70)
+
+	return p, nil
 }
 
 var projectCreateCmd = cli.Command{
