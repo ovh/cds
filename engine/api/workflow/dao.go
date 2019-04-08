@@ -103,7 +103,7 @@ func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName str
 // UpdateIcon update the icon of a workflow
 func UpdateIcon(db gorp.SqlExecutor, workflowID int64, icon string) error {
 	if _, err := db.Exec("update workflow set icon = $1 where id = $2", icon, workflowID); err != nil {
-		return err
+		return sdk.WrapError(err, "cannot update workflow icon for workflow id %d", workflowID)
 	}
 
 	return nil
