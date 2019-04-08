@@ -44,14 +44,14 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 		} else {
 			if err := json.Unmarshal(body, &pr); err != nil {
 				log.Warning("githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
-				return sdk.VCSPullRequest{}, err
+				return sdk.VCSPullRequest{}, sdk.WithStack(err)
 			}
 		}
 
 		if pr.Number != id {
 			log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
 			g.Cache.Delete(cachePullRequestKey)
-			return sdk.VCSPullRequest{}, fmt.Errorf("githubClient.PullRequest > Cannot find pullrequest %d", id)
+			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %d", id))
 		}
 
 		//Put the body on cache for one hour and one minute

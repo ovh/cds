@@ -153,7 +153,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			wf.LastModified = time.Now()
 
 			if err := updateFromRepository(db, wf.ID, wf.FromRepository); err != nil {
-				return sdk.WrapError(err, "Unable to update workflow from_repository")
+				return sdk.WrapError(err, "unable to update workflow from_repository")
 			}
 		}
 		// If event ended, delete it from db
