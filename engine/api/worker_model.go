@@ -195,7 +195,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		var opt *worker.StateLoadOption
 		stateString := r.FormValue("state")
 		if stateString != "" {
-			opt := *worker.StateLoadOption(stateString)
+			*opt = worker.StateLoadOption(stateString)
 			if err := opt.IsValid(); err != nil {
 				return err
 			}

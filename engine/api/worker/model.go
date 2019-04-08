@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -70,10 +69,10 @@ func (s StateLoadOption) String() string {
 // IsValid returns an error if the state value is not valid.
 func (s StateLoadOption) IsValid() error {
 	switch s {
-	case worker.StateDisabled, worker.StateOfficial, worker.StateError, worker.StateRegister, worker.StateDeprecated, worker.StateActive:
+	case StateDisabled, StateOfficial, StateError, StateRegister, StateDeprecated, StateActive:
 		return nil
 	default:
-		return NewErrorFrom(sdk.ErrWrongRequest, "invalid given state value")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given state value")
 	}
 }
 
