@@ -183,7 +183,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := environment.Lock(tx, key, envName); err != nil {
-			return sdk.WrapError(err, "Cannot lock env %s/%s", key, envName)
+			return sdk.WrapError(err, "cannot lock env %s/%s", key, envName)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(tx, key, envName)
