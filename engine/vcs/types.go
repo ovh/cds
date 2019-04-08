@@ -84,9 +84,10 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
-	AppID  string `toml:"appId" json:"-" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/ \n#######"`
-	Secret string `toml:"secret" json:"-"`
-	Status struct {
+	AppID            string `toml:"appId" json:"-" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/ \n#######"`
+	Secret           string `toml:"secret" json:"-"`
+	OAuthCallbackURL string `toml:"callbackUrl" json:"OAuth Application Callback URL"`
+	Status           struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
