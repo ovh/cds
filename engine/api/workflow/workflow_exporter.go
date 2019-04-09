@@ -131,6 +131,9 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 
 	wp.Applications = make([]exportentities.WorkflowPulledItem, len(apps))
 	for i, a := range apps {
+		if a.FromRepository != wf.FromRepository { // don't export if coming from an other repository
+			continue
+		}
 		buff := new(bytes.Buffer)
 		if _, err := application.ExportApplication(db, a, f, encryptFunc, buff); err != nil {
 			return wp, sdk.WrapError(err, "unable to export app %s", a.Name)
@@ -141,6 +144,9 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 
 	wp.Environments = make([]exportentities.WorkflowPulledItem, len(envs))
 	for i, e := range envs {
+		if e.FromRepository != wf.FromRepository { // don't export if coming from an other repository
+			continue
+		}
 		buff := new(bytes.Buffer)
 		if _, err := environment.ExportEnvironment(db, e, f, encryptFunc, buff); err != nil {
 			return wp, sdk.WrapError(err, "unable to export env %s", e.Name)
@@ -151,6 +157,9 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 
 	wp.Pipelines = make([]exportentities.WorkflowPulledItem, len(pips))
 	for i, p := range pips {
+		if p.FromRepository != wf.FromRepository { // don't export if coming from an other repository
+			continue
+		}
 		buff := new(bytes.Buffer)
 		if _, err := pipeline.ExportPipeline(p, f, buff); err != nil {
 			return wp, sdk.WrapError(err, "unable to export pipeline %s", p.Name)
