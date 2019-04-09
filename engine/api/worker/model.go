@@ -161,36 +161,6 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 	return loadWorkerModel(db, query, ID)
 }
 
-// LoadAndLockWorkerModelByID retrieves a specific worker model in database
-func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	query := `
-		SELECT worker_model.id,
-		worker_model.type,
-		worker_model.name,
-		worker_model.image,
-		worker_model.description,
-		worker_model.group_id,
-		worker_model.last_registration,
-		worker_model.need_registration,
-		worker_model.check_registration,
-		worker_model.disabled,
-		worker_model.template,
-		worker_model.communication,
-		worker_model.run_script,
-		worker_model.provision,
-		worker_model.restricted,
-		worker_model.user_last_modified,
-		worker_model.last_spawn_err,
-		worker_model.last_spawn_err_log,
-		worker_model.nb_spawn_err,
-		worker_model.date_last_spawn_err,
-		worker_model.is_deprecated,
-		"group".name as groupname
-	FROM worker_model
-		JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1 FOR UPDATE NOWAIT`
-	return loadWorkerModel(db, query, ID)
-}
-
 // LoadWorkerModelsByUser returns worker models list according to user's groups
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts *StateLoadOption) ([]sdk.Model, error) {
 	prefixKey := "api:workermodels"

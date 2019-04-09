@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -47,9 +45,9 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	// Select for update
 	var serv service
-	query := `select * from services where name = $1 for update nowait`
+	query := `select * from services where name = $1 for update SKIP LOCKED`
 	if err := db.SelectOne(&serv, query, s.Name); err != nil {
-		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+		if err == sql.ErrNoRows {
 			log.Debug("services.ping> Unable to lock service %s: %v", s.Name, err)
 			return nil
 		}
@@ -111,8 +109,8 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 				return sdk.WrapError(err, "Unable to start transaction")
 			}
 			var serv service
-			query := `select * from services where name = $1 for update nowait`
-			if err := tx.SelectOne(&serv, query, s.Name); err != nil && err != sql.ErrNoRows {
+			query := `select * from services where name = $1 for update SKIP LOCKED`
+			if err := tx.SelectOne(&serv, query, s.Name); err != nil {
 				log.Warning("services.ping> Unable to lock service %s: %v", s.Name, err)
 				_ = tx.Rollback()
 				return err

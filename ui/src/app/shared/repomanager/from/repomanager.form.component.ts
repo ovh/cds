@@ -1,7 +1,11 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { CallbackRepositoryManagerInProject, ConnectRepositoryManagerInProject } from 'app/store/project.action';
+import {
+    CallbackRepositoryManagerBasicAuthInProject,
+    CallbackRepositoryManagerInProject,
+    ConnectRepositoryManagerInProject
+} from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { finalize, flatMap } from 'rxjs/operators';
 import { Project } from '../../../model/project.model';
@@ -36,13 +40,15 @@ export class RepoManagerFormComponent {
     validationToken: string;
     private modalInstance: any;
 
+    basicUser: string;
+    basicPassword: string;
+
     constructor(
         private _repoManService: RepoManagerService,
-        private _toast: ToastService,
+                private _toast: ToastService,
         public _translate: TranslateService,
-        private store: Store
-    ) {
-        this._repoManService.getAll().subscribe(res => {
+        private store: Store) {
+        this._repoManService.getAll().subscribe( res => {
             this.ready = true;
             this.reposManagerList = res;
         });
@@ -69,6 +75,23 @@ export class RepoManagerFormComponent {
                 });
             }
         }
+    }
+
+    sendBasicAuth(): void {
+        this.verificationLoading = true;
+        this.store.dispatch(new CallbackRepositoryManagerBasicAuthInProject({
+            projectKey: this.project.key,
+            repoManager: this.reposManagerList[this.selectedRepoId],
+            basicUser: this.basicUser,
+            basicPassword: this.basicPassword
+        }))
+            .pipe(finalize(() => this.verificationLoading = false))
+            .subscribe( () => {
+                this.modalInstance.hide();
+                this.basicUser = '';
+                this.basicPassword = '';
+                this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
+            });
     }
 
     sendVerificationCode(): void {

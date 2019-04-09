@@ -19,7 +19,9 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type mockHTTPClient struct{}
+type mockHTTPClient struct {
+	f func(r *http.Request) (*http.Response, error) // nolint
+}
 
 func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
 	body := ioutil.NopCloser(bytes.NewReader([]byte("{}")))

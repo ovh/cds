@@ -23,7 +23,32 @@ func muxVar(r *http.Request, s string) string {
 
 func (s *Service) getAllVCSServersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, s.Cfg.Servers, http.StatusOK)
+		servers := make(map[string]sdk.VCSConfiguration, len(s.Cfg.Servers))
+		for k, v := range s.Cfg.Servers {
+			var vcsType, user, privateKey string
+			var sshPort int
+			if v.Gerrit != nil {
+				vcsType = "gerrit"
+				user = v.Gerrit.EventStream.User
+				privateKey = v.Gerrit.EventStream.PrivateKey
+				sshPort = v.Gerrit.SSHPort
+			} else if v.Bitbucket != nil {
+				vcsType = "bitbucket"
+			} else if v.Github != nil {
+				vcsType = "github"
+			} else if v.Gitlab != nil {
+				vcsType = "gitlab"
+			}
+
+			servers[k] = sdk.VCSConfiguration{
+				Type:     vcsType,
+				Username: user,
+				Password: privateKey,
+				URL:      v.URL,
+				SSHPort:  sshPort,
+			}
+		}
+		return service.WriteJSON(w, servers, http.StatusOK)
 	}
 }
 
@@ -34,7 +59,19 @@ func (s *Service) getVCSServersHandler() service.Handler {
 		if !ok {
 			return sdk.ErrNotFound
 		}
-		return service.WriteJSON(w, cfg, http.StatusOK)
+		s := sdk.VCSConfiguration{
+			URL: cfg.URL,
+		}
+		if cfg.Gerrit != nil {
+			s.Type = "gerrit"
+		} else if cfg.Bitbucket != nil {
+			s.Type = "bitbucket"
+		} else if cfg.Github != nil {
+			s.Type = "github"
+		} else if cfg.Gitlab != nil {
+			s.Type = "gitlab"
+		}
+		return service.WriteJSON(w, s, http.StatusOK)
 	}
 }
 
@@ -46,9 +83,11 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			return sdk.ErrNotFound
 		}
 		res := struct {
-			WebhooksSupported bool   `json:"webhooks_supported"`
-			WebhooksDisabled  bool   `json:"webhooks_disabled"`
-			WebhooksIcon      string `json:"webhooks_icon"`
+			WebhooksSupported  bool     `json:"webhooks_supported"`
+			WebhooksDisabled   bool     `json:"webhooks_disabled"`
+			WebhooksIcon       string   `json:"webhooks_icon"`
+			GerritHookDisabled bool     `json:"gerrithook_disabled"`
+			Events             []string `json:"events"`
 		}{}
 
 		switch {
@@ -56,14 +95,112 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
 			res.WebhooksIcon = sdk.BitbucketIcon
+			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
+			res.Events = []string{
+				"refs_changed",
+				"repo:forked",
+				"comment:added",
+				"comment:edited",
+				"comment:deleted",
+				"pr:opened",
+				"pr:modified",
+				"pr:merged",
+				"pr:declined",
+				"pr:deleted",
+				"pr:reviewer:updated",
+				"pr:reviewer:approved",
+				"pr:reviewer:unapproved",
+				"pr:reviewer:needs_work",
+				"pr:comment:added",
+				"pr:comment:edited",
+				"pr:comment:deleted",
+			}
 		case cfg.Github != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks
 			res.WebhooksIcon = sdk.GitHubIcon
+			// https://developer.github.com/v3/activity/events/types/
+			res.Events = []string{
+				"push",
+				"check_run",
+				"check_suite",
+				"commit_comment",
+				"create",
+				"delete",
+				"deployment",
+				"deployment_status",
+				"fork",
+				"github_app_authorization",
+				"gollum",
+				"installation",
+				"installation_repositories",
+				"issue_comment",
+				"issues",
+				"label",
+				"marketplace_purchase",
+				"member",
+				"membership",
+				"milestone",
+				"organization",
+				"org_block",
+				"page_build",
+				"project_card",
+				"project_column",
+				"project",
+				"public",
+				"pull-request_review_comment",
+				"pull-request_review",
+				"pull_request",
+				"repository",
+				"repository_import",
+				"repository_vulnerability_alert",
+				"release",
+				"security_advisory",
+				"status",
+				"team",
+				"team_add",
+				"watch",
+			}
 		case cfg.Gitlab != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
 			res.WebhooksIcon = sdk.GitlabIcon
+			// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
+			res.Events = []string{
+				"Push Hook",
+				"Tag Push Hook",
+				"Issue Hook",
+				"Note Hook",
+				"Merge Request Hook",
+				"Wiki Page Hook",
+				"Pipeline Hook",
+				"Build Hook",
+			}
+		case cfg.Gerrit != nil:
+			res.WebhooksSupported = false
+			res.GerritHookDisabled = cfg.Gerrit.DisableGerritEvent
+			res.WebhooksIcon = sdk.GerritIcon
+			// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
+			res.Events = []string{
+				"patchset-created",
+				"assignee-changed",
+				"change-abandoned",
+				"change-deleted",
+				"change-merged",
+				"change-restored",
+				"comment-added",
+				"draft-published",
+				"dropped-output",
+				"hashtags-changed",
+				"project-created",
+				"ref-updated",
+				"reviewer-added",
+				"reviewer-deleted",
+				"topic-changed",
+				"wip-state-changed",
+				"private-state-changed",
+				"vote-deleted",
+			}
 		}
 
 		return service.WriteJSON(w, res, http.StatusOK)

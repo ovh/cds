@@ -129,9 +129,11 @@ func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) err
 		}
 		var id int64
 		// Lock the job (action)
-		if err := tx.QueryRow("select id from action where id = $1 for update nowait", p.ActionID).Scan(&id); err != nil {
-			log.Debug("GitClonePrivateKey> unable to take lock on action table: %v", err)
+		if err := tx.QueryRow("select id from action where id = $1 for update SKIP LOCKED", p.ActionID).Scan(&id); err != nil {
 			_ = tx.Rollback()
+			if err != sql.ErrNoRows {
+				log.Error("GitClonePrivateKey> unable to take lock on action table: %v", err)
+			}
 			continue
 		}
 

@@ -211,6 +211,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if vcsServer == nil {
 		return nil
 	}
+
 	//Get the RepositoriesManager Client
 	client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
 	if errClient != nil {
@@ -252,6 +253,51 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		envName = env.Name
 	}
 
+	report, err := nodeRun.Report()
+	if err != nil {
+		log.Error("sendVCSEventStatus> unable to compute node run report%v", err)
+		return nil
+	}
+
+	// Check if it's a gerrit or not
+	vcsConf, err := repositoriesmanager.LoadByName(ctx, db, vcsServer.Name)
+	if err != nil {
+		return err
+	}
+
+	if vcsConf.Type == "gerrit" {
+		// Get gerrit variable
+		var project, changeID, branch, revision, url string
+		projectParam := sdk.ParameterFind(&nodeRun.BuildParameters, "git.repository")
+		if projectParam != nil {
+			project = projectParam.Value
+		}
+		changeIDParam := sdk.ParameterFind(&nodeRun.BuildParameters, "gerrit.change.id")
+		if changeIDParam != nil {
+			changeID = changeIDParam.Value
+		}
+		branchParam := sdk.ParameterFind(&nodeRun.BuildParameters, "gerrit.change.branch")
+		if branchParam != nil {
+			branch = branchParam.Value
+		}
+		revisionParams := sdk.ParameterFind(&nodeRun.BuildParameters, "git.hash")
+		if revisionParams != nil {
+			revision = revisionParams.Value
+		}
+		urlParams := sdk.ParameterFind(&nodeRun.BuildParameters, "cds.ui.pipeline.run")
+		if urlParams != nil {
+			url = urlParams.Value
+		}
+		eventWNR.GerritChange = &sdk.GerritChangeEvent{
+			ID:         changeID,
+			DestBranch: branch,
+			Project:    project,
+			Revision:   revision,
+			Report:     report,
+			URL:        url,
+		}
+	}
+
 	evt := sdk.Event{
 		EventType:       fmt.Sprintf("%T", eventWNR),
 		Payload:         structs.Map(eventWNR),
@@ -262,32 +308,29 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		ApplicationName: appName,
 		EnvironmentName: envName,
 	}
+
 	if err := client.SetStatus(ctx, evt); err != nil {
 		repositoriesmanager.RetryEvent(&evt, err, store)
 		return fmt.Errorf("sendEvent> err:%s", err)
 	}
 
-	//Check if this branch and this commit is a pullrequest
-	prs, err := client.PullRequests(ctx, app.RepositoryFullname)
-	if err != nil {
-		log.Error("sendVCSEventStatus> unable to get pull requests on repo %s: %v", app.RepositoryFullname, err)
-		return nil
-	}
+	if vcsConf.Type != "gerrit" {
+		//Check if this branch and this commit is a pullrequest
+		prs, err := client.PullRequests(ctx, app.RepositoryFullname)
+		if err != nil {
+			log.Error("sendVCSEventStatus> unable to get pull requests on repo %s: %v", app.RepositoryFullname, err)
+			return nil
+		}
 
-	//Send comment on pull request
-	for _, pr := range prs {
-		if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
-			if nodeRun.Status != sdk.StatusFail.String() && nodeRun.Status != sdk.StatusStopped.String() {
-				continue
-			}
-			report, err := nodeRun.Report()
-			if err != nil {
-				log.Error("sendVCSEventStatus> unable to compute node run report%v", err)
-				return nil
-			}
-			if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {
-				log.Error("sendVCSEventStatus> unable to send PR report%v", err)
-				return nil
+		//Send comment on pull request
+		if nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusStopped.String() {
+			for _, pr := range prs {
+				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
+					if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {
+						log.Error("sendVCSEventStatus> unable to send PR report%v", err)
+						return nil
+					}
+				}
 			}
 		}
 	}

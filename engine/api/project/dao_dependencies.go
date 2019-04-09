@@ -140,10 +140,6 @@ var (
 		return nil
 	}
 
-	lockProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		return nil
-	}
-
 	lockAndWaitProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		return nil
 	}

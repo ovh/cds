@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
 	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -166,7 +165,7 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 }
 
 //LoadAndLockNodeRunByID load and lock a specific node run on a workflow
-func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, wait bool) (*sdk.WorkflowNodeRun, error) {
+func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
 	var end func()
 	_, end = observability.Span(ctx, "workflow.LoadAndLockNodeRunByID")
 	defer end()
@@ -175,15 +174,12 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, 
 
 	query := fmt.Sprintf(`select %s %s
 	from workflow_node_run
-	where workflow_node_run.id = $1 for update`, nodeRunFields, nodeRunTestsField)
-	if !wait {
-		query += " nowait"
-	}
+	where workflow_node_run.id = $1 for update SKIP LOCKED`, nodeRunFields, nodeRunTestsField)
 	if err := db.SelectOne(&rr, query, id); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
-			return nil, sdk.ErrWorkflowNodeRunLocked
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrLocked)
 		}
-		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
+		return nil, sdk.WrapError(err, "unable to load workflow_node_run node=%d", id)
 	}
 	return fromDBNodeRun(rr, LoadRunOptions{})
 }

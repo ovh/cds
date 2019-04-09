@@ -4,6 +4,7 @@ package sdk
 const (
 	WebHookModelName              = "WebHook"
 	RepositoryWebHookModelName    = "RepositoryWebHook"
+	GerritHookModelName           = "GerritHook"
 	SchedulerModelName            = "Scheduler"
 	GitPollerModelName            = "Git Repository Poller"
 	KafkaHookModelName            = "Kafka hook"
@@ -15,6 +16,9 @@ const (
 	HookConfigTargetWorkflow      = "target_workflow"
 	HookConfigTargetHook          = "target_hook"
 	HookConfigWorkflowID          = "workflow_id"
+	HookConfigVCSServer           = "vcsServer"
+	HookConfigEventFilter         = "eventFilter"
+	HookConfigRepoFullName        = "repoFullName"
 	HookConfigModelType           = "model_type"
 	HookConfigModelName           = "model_name"
 	HookConfigIcon                = "hookIcon"
@@ -43,6 +47,7 @@ var (
 		&KafkaHookModel,
 		&RabbitMQHookModel,
 		&WorkflowModel,
+		&GerritHookModel,
 	}
 
 	BuiltinOutgoingHookModels = []*WorkflowHookModel{
@@ -181,6 +186,21 @@ var (
 				Value:        "{}",
 				Configurable: true,
 				Type:         HookConfigTypeString,
+			},
+		},
+	}
+
+	GerritHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/gerrit",
+		Name:       GerritHookModelName,
+		Icon:       "git",
+		DefaultConfig: WorkflowNodeHookConfig{
+			HookConfigEventFilter: {
+				Value:        "",
+				Configurable: false,
+				Type:         HookConfigTypeMultiChoice,
 			},
 		},
 	}

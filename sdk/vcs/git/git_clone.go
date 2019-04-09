@@ -85,6 +85,21 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 	allCmd = append(allCmd, gitcmd)
 
 	if opts != nil && opts.CheckoutCommit != "" && opts.Tag == "" {
+		fetchCmd := cmd{
+			cmd:  "git",
+			args: []string{"fetch", "origin", opts.CheckoutCommit},
+		}
+		userLogCommand += "\n\rExecuting: git " + strings.Join(fetchCmd.args, " ")
+		//Locate the git reset cmd to the right directory
+		if path == "" {
+			t := strings.Split(repo, "/")
+			fetchCmd.dir = strings.TrimSuffix(t[len(t)-1], ".git")
+		} else {
+			fetchCmd.dir = path
+		}
+
+		allCmd = append(allCmd, fetchCmd)
+
 		resetCmd := cmd{
 			cmd:  "git",
 			args: []string{"reset", "--hard", opts.CheckoutCommit},

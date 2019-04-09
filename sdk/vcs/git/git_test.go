@@ -207,6 +207,7 @@ func Test_gitCommand(t *testing.T) {
 			},
 			want: []string{
 				"git clone --quiet --branch master https://github.com/ovh/cds.git /tmp/Test_gitCommand-3",
+				"git fetch origin eb8b87a",
 				"git reset --hard eb8b87a",
 			},
 		},

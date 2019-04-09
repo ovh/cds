@@ -15,13 +15,29 @@
 </form>
 <sm-modal title="{{ 'repoman_modal_verif_title' | translate }}" class="small" #verificationModal>
     <modal-content>
-        <div>
-            {{ 'repoman_modal_verif_text' | translate}}
-            <a href="{{addRepoResponse?.url}}" target="_blank">{{ 'common_click_here' | translate}}</a>
-        </div>
-        <div class="ui input" *ngIf="selectedRepoId != null">
-            <input type="text" name="verifiercode" placeholder="{{ 'repoman_modal_verif_code_placeholder' | translate }}" [(ngModel)]="validationToken">
-            <button name="validationbtn" class="ui green button" [class.loading]="verificationLoading" (click)="sendVerificationCode()">{{ 'btn_validate' | translate }}</button>
-        </div>
+        <ng-container *ngIf="addRepoResponse?.auth_type === 'basic'">
+            <div class="ui form">
+                <div class="field">
+                    <label>{{ 'user_label_username' | translate }}</label>
+                    <input type="text" name="first-name" placeholder="First Name" [(ngModel)]="basicUser">
+                </div>
+                <div class="field">
+                    <label>{{ 'user_label_password' | translate }}</label>
+                    <input type="password" name="last-name" placeholder="Last Name" [(ngModel)]="basicPassword">
+                </div>
+                <button class="ui green button" name="validationbtn" [class.loading]="verificationLoading" (click)="sendBasicAuth()">{{ 'btn_validate' | translate }}</button>
+            </div>
+        </ng-container>
+        <ng-container *ngIf="addRepoResponse?.auth_type === 'oauth'">
+            <div>
+                {{ 'repoman_modal_verif_text' | translate}}
+                <a href="{{addRepoResponse?.url}}" target="_blank">{{ 'common_click_here' | translate}}</a>
+            </div>
+            <div class="ui input" *ngIf="selectedRepoId != null">
+                <input type="text" name="verifiercode" placeholder="{{ 'repoman_modal_verif_code_placeholder' | translate }}" [(ngModel)]="validationToken">
+                <button name="validationbtn" class="ui green button" [class.loading]="verificationLoading" (click)="sendVerificationCode()">{{ 'btn_validate' | translate }}</button>
+            </div>
+        </ng-container>
+
     </modal-content>
 </sm-modal>

@@ -234,6 +234,10 @@ var configNewCmd = &cobra.Command{
 					Secret: "xxxx",
 				},
 			}
+			conf.VCS.Servers["Gerrit"] = vcs.ServerConfiguration{
+				URL:    "http://localhost:8080",
+				Gerrit: &vcs.GerritServerConfiguration{},
+			}
 		}
 
 		if !configNewAsEnvFlag {
