@@ -187,7 +187,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	// * is root because they come from payload
 	// * no repo on current job
 	// * parent was on same repo
-	if isRoot || currentRepo == "" || (currentRepo != "" && parentRepo != nil && parentRepo.Value == currentRepo) {
+	if isRoot || currentRepo == "" || (parentRepo != nil && parentRepo.Value == currentRepo) {
 		for _, param := range run.BuildParameters {
 			switch param.Name {
 			case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
@@ -213,15 +213,14 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 						currentJobGitValues[param.Name] = param.Value
 					}
 				}
+				break
 			}
 		}
 		// If we change repo and we dont find ancestor on the same repo, just keep the branch
 		if !found {
-			for _, param := range run.BuildParameters {
-				switch param.Name {
-				case tagGitBranch:
-					currentJobGitValues[param.Name] = param.Value
-				}
+			b := sdk.ParameterFind(&run.BuildParameters, tagGitBranch)
+			if b != nil {
+				currentJobGitValues[tagGitBranch] = b.Value
 			}
 			needVCSInfo = true
 		}
