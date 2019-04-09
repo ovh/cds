@@ -986,9 +986,15 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 		vcsInfos.Hash = defaultB.LatestCommit
 	case vcsInfos.Hash == "" && vcsInfos.Branch != "":
 		// GET COMMIT INFO
-		branch, err := client.Branch(ctx, vcsInfos.Repository, vcsInfos.Branch)
-		if err != nil {
-			return nil, sdk.NewError(sdk.ErrBranchNameNotProvided, err)
+		branch, errB := client.Branch(ctx, vcsInfos.Repository, vcsInfos.Branch)
+		if errB != nil {
+			// Try default branch
+			b, errD := repositoriesmanager.DefaultBranch(ctx, client, vcsInfos.Repository)
+			if errD != nil {
+				return nil, errD
+			}
+			branch = &b
+			vcsInfos.Branch = branch.DisplayID
 		}
 		vcsInfos.Hash = branch.LatestCommit
 	}
