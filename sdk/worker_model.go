@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -146,6 +147,14 @@ func (m Model) IsValidType() error {
 		return NewErrorFrom(ErrWrongRequest, "invalid worker model type")
 	}
 	return nil
+}
+
+// GetPath returns path for model.
+func (m Model) GetPath(groupName string) string {
+	if groupName == SharedInfraGroupName {
+		return m.Name
+	}
+	return fmt.Sprintf("%s/%s", groupName, m.Name)
 }
 
 // ModelVirtualMachine for openstack or vsphere

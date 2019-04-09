@@ -51,7 +51,7 @@ func migrateActionRequirementForModel(db *gorp.DbMap, wm sdk.Model) error {
 	defer tx.Rollback() // nolint
 
 	// select and lock requirements to migrate for given model
-	rs, err := action.GetRequirementsTypeModelAndValueStartBy(tx, wm.Name)
+	rs, err := action.GetRequirementsTypeModelAndValueStartByWithLock(tx, wm.Name)
 	if err != nil {
 		return err
 	}

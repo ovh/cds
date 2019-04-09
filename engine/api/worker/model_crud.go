@@ -1,12 +1,14 @@
 package worker
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // CreateModel returns a new worker model for given data.
@@ -138,17 +140,24 @@ func UpdateModel(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Mode
 		return nil, sdk.WrapError(err, "cannot update worker model")
 	}
 
+	oldPath, newPath := old.GetPath(old.Group.Name), old.GetPath(grp.Name)
 	// if the model has been renamed, we will have to update requirements
-	renamed := data.Name != old.Name
-
-	// update requirements if needed
-	// FIXME jobs and actions requirements should contains group name
-	if renamed {
-		actionsID, err := action.UpdateRequirementsValue(db, old.Name, model.Name, sdk.ModelRequirement)
+	if oldPath != newPath {
+		// select requirements to update
+		rs, err := action.GetRequirementsTypeModelAndValueStartBy(db, oldPath)
 		if err != nil {
-			return nil, sdk.WrapError(err, "cannot update action requirements")
+			return nil, err
 		}
-		log.Debug("putWorkerModelHandler> Update requirement %s/%s for actions %v", grp.Name, model.Name, actionsID)
+
+		// try to migrate each requirement
+		for i := range rs {
+			newValue := fmt.Sprintf("%s%s", newPath, strings.TrimPrefix(rs[i].Value, oldPath))
+			rs[i].Name = newValue
+			rs[i].Value = newValue
+			if err := action.UpdateRequirement(db, &rs[i]); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return &model, nil
