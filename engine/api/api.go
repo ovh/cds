@@ -747,9 +747,6 @@ func (a *API) Serve(ctx context.Context) error {
 		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	}, a.PanicDump())
 
-	migrate.Add(sdk.Migration{Name: "Permissions", Release: "0.37.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.Permissions(a.DBConnectionFactory.GetDBMap, a.Cache)
-	}})
 	migrate.Add(sdk.Migration{Name: "WorkflowOldStruct", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.WorkflowRunOldModel(ctx, a.DBConnectionFactory.GetDBMap)
 	}})
@@ -759,14 +756,12 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.39.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.CleanArtifactBuiltinActions(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
-	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
-		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-			return migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache)
-		}})
-	}
-	// migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	// migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 	// 	return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
-	// }})
+  // }})
+  migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+    return migrate.ActionModelRequirements(a.Cache, a.DBConnectionFactory.GetDBMap)
+  }})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
@@ -823,16 +818,6 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			services.Pings(ctx, a.mustDB, externalServices)
 		}, a.PanicDump())
-
-	// TODO: to delete after migration
-	if os.Getenv("CDS_MIGRATE_GIT_CLONE") == "true" {
-		go func() {
-			if err := migrate.GitClonePrivateKey(a.mustDB, a.Cache); err != nil {
-				log.Error("Bootstrap Error: %v", err)
-			}
-		}()
-	}
-
 	sdk.GoRoutine(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
 			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)

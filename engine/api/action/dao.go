@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -192,12 +193,35 @@ func GetRequirementsDistinctBinary(db gorp.SqlExecutor) (sdk.RequirementList, er
 	return rs, nil
 }
 
+// GetRequirementsTypeModelAndValueStartBy returns action requirements from database for given criteria.
+func GetRequirementsTypeModelAndValueStartBy(db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
+	rs := []sdk.Requirement{}
+
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM action_requirement
+    WHERE type = 'model' AND value LIKE $1
+    FOR UPDATE SKIP LOCKED
+  `).Args(fmt.Sprintf("%s%%", value))
+
+	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
+		return nil, sdk.WrapError(err, "cannot get requirements")
+	}
+
+	return rs, nil
+}
+
 // InsertRequirement in database.
 func InsertRequirement(db gorp.SqlExecutor, r *sdk.Requirement) error {
 	if r.Name == "" || r.Type == "" || r.Value == "" {
 		return sdk.WithStack(sdk.ErrInvalidJobRequirement)
 	}
 	return sdk.WithStack(gorpmapping.Insert(db, r))
+}
+
+// UpdateRequirement in database.
+func UpdateRequirement(db gorp.SqlExecutor, r *sdk.Requirement) error {
+	return sdk.WrapError(gorpmapping.Update(db, r), "unable to update action requirement %d", r.ID)
 }
 
 // UpdateRequirementsValue updates all action_requirement.value given a value and a type then returns action IDs.

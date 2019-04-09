@@ -195,10 +195,11 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		var opt *worker.StateLoadOption
 		stateString := r.FormValue("state")
 		if stateString != "" {
-			*opt = worker.StateLoadOption(stateString)
-			if err := opt.IsValid(); err != nil {
+			o := worker.StateLoadOption(stateString)
+			if err := o.IsValid(); err != nil {
 				return err
 			}
+			opt = &o
 		}
 
 		binary := r.FormValue("binary")

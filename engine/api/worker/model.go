@@ -127,11 +127,21 @@ func UpdateWorkerModelWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) 
 	return nil
 }
 
-// LoadWorkerModels retrieves models from database
+// LoadWorkerModels retrieves models from database.
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
 	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, modelColumns)
 	if _, err := db.Select(&wms, query); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return scanWorkerModels(db, wms)
+}
+
+// LoadWorkerModelsNotSharedInfra retrieves models not shared infra from database.
+func LoadWorkerModelsNotSharedInfra(db gorp.SqlExecutor) ([]sdk.Model, error) {
+	wms := []dbResultWMS{}
+	query := fmt.Sprintf(`SELECT %s FROM worker_model JOIN "group" ON worker_model.group_id = "group".id WHERE worker_model.group_id != $1 ORDER BY worker_model.name`, modelColumns)
+	if _, err := db.Select(&wms, query, group.SharedInfraGroup.ID); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return scanWorkerModels(db, wms)
