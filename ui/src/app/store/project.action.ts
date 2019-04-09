@@ -264,6 +264,10 @@ export class CallbackRepositoryManagerInProject {
     static readonly type = '[Project] Callback Repository Manager in Project';
     constructor(public payload: { projectKey: string, repoManager: string, requestToken: string, code: string }) { }
 }
+export class CallbackRepositoryManagerBasicAuthInProject {
+    static readonly type = '[Project] Callback Repository Basic Auth Manager in Project';
+    constructor(public payload: { projectKey: string, repoManager: string, basicUser: string, basicPassword: string }) { }
+}
 export class DisconnectRepositoryManagerInProject {
     static readonly type = '[Project] Disconnect Repository Manager in Project';
     constructor(public payload: { projectKey: string, repoManager: string }) { }

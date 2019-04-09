@@ -7,7 +7,7 @@ import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {
     WNode,
     WNodeHook,
-    Workflow
+    Workflow, WorkflowNodeHookConfigValue
 } from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 
@@ -57,7 +57,34 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
         this.hook.hook_model_id = this.selectedHookModel.id;
+        this.initConfig();
+
         this.displayConfig = Object.keys(this.hook.config).length !== 0;
+    }
+
+    initConfig(): void {
+        Object.getOwnPropertyNames(this.hook.config).forEach(k => {
+            if ((<WorkflowNodeHookConfigValue>this.hook.config[k]).type === 'multiple') {
+
+                // init temp array for checkbox
+                (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp = {};
+                for (let event of this.hook.config[k].value.split(';')) {
+                    (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp[event] = true;
+                }
+
+                // init ref list from model
+                (<WorkflowNodeHookConfigValue>this.hook.config[k]).multiple_choice_list =
+                    (<WorkflowNodeHookConfigValue>this.hook.model.default_config[k]).multiple_choice_list;
+            }
+
+        });
+    }
+
+    updateHookMultiChoice(k: string): void {
+        let finalValue = Object.getOwnPropertyNames((<WorkflowNodeHookConfigValue>this.hook.config[k]).temp).filter( choice => {
+            return (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp[choice];
+        });
+        (<WorkflowNodeHookConfigValue>this.hook.config[k]).value = finalValue.join(';');
     }
 
     updateIntegration(): void {
@@ -108,6 +135,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             if (this.hook && this.hook.hook_model_id) {
                 this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
                 this.hook.model = this.selectedHookModel;
+                this.initConfig();
             }
         });
     }

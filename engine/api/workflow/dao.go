@@ -113,6 +113,15 @@ func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata
 	return nil
 }
 
+// updateFromRepository update the from_repository of a workflow
+func updateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository string) error {
+	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return nil
+}
+
 // PreInsert is a db hook
 func (w *Workflow) PreInsert(db gorp.SqlExecutor) error {
 	return w.PreUpdate(db)
@@ -326,10 +335,13 @@ func LoadAndLock(db gorp.SqlExecutor, id int64, store cache.Store, proj *sdk.Pro
 	query := `
 		select *
 		from workflow
-		where id = $1 FOR UPDATE NOWAIT`
+		where id = $1 FOR UPDATE SKIP LOCKED`
 	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
+		if err == sdk.ErrWorkflowNotFound {
+			err = sdk.ErrLocked
+		}
+		return nil, sdk.WithStack(err)
 	}
 	return res, nil
 }

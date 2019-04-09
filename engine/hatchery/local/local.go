@@ -129,7 +129,7 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		return fmt.Errorf("Cannot fetch requirements: %v", err)
 	}
 
-	capa, err := checkCapabilities(req)
+	capa, err := h.checkCapabilities(req)
 	if err != nil {
 		return fmt.Errorf("Cannot check local capabilities: %v", err)
 	}
@@ -152,12 +152,12 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 
 // checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
 // returns an error "Exit status X" if current host misses one requirement
-func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
+func (h *HatcheryLocal) checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 	var tmp map[string]sdk.Requirement
 
 	tmp = make(map[string]sdk.Requirement)
 	for _, r := range req {
-		ok, err := hatchery.CheckRequirement(r)
+		ok, err := h.checkRequirement(r)
 		if err != nil {
 			return nil, err
 		}
@@ -194,14 +194,16 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	}
 
 	for _, r := range requirements {
-		ok, err := hatchery.CheckRequirement(r)
+		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
+			log.Debug("CanSpawn false hatchery.checkRequirement ok:%v err:%v", ok, err)
 			return false
 		}
 	}
 
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			log.Debug("CanSpawn false service or memory")
 			return false
 		}
 	}
@@ -440,4 +442,21 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryLocal) NeedRegistration(m *sdk.Model) bool {
 	return m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix()
+}
+
+// checkRequirement checks binary requirement in path
+func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
+	switch r.Type {
+	case sdk.BinaryRequirement:
+		if _, err := exec.LookPath(r.Value); err != nil {
+			log.Debug("checkRequirement> %v not in path", r.Value)
+			// Return nil because the error contains 'Exit status X', that's what we wanted
+			return false, nil
+		}
+		return true, nil
+	case sdk.PluginRequirement:
+		return true, nil
+	default:
+		return false, nil
+	}
 }

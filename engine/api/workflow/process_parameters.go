@@ -36,15 +36,15 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 	return params, errm
 }
 
-// GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
-func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
+// GetNodeBuildParameters returns the parameters compute from  node context (project, application,  pipeline, pyaload)
+func GetBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
 	tmpProj := sdk.ParametersFromProjectVariables(*proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
 		vars[k] = v
 	}
 
-	// compute application variables
+	// COMPUTE APPLICATION VARIABLE
 	if runContext.Application.ID != 0 {
 		vars["cds.application"] = runContext.Application.Name
 		tmp := sdk.ParametersFromApplicationVariables(runContext.Application)
@@ -53,7 +53,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 		}
 	}
 
-	// compute environment variables
+	// COMPUTE ENVIRONMENT VARIABLE
 	if runContext.Environment.ID != 0 {
 		vars["cds.environment"] = runContext.Environment.Name
 		tmp := sdk.ParametersFromEnvironmentVariables(runContext.Environment)
@@ -62,7 +62,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 		}
 	}
 
-	// compute parameters variables
+	// COMPUTE  INTEGRATION VARIABLE
 	if runContext.ProjectIntegration.ID != 0 {
 		vars["cds.integration"] = runContext.ProjectIntegration.Name
 		tmp := sdk.ParametersFromIntegration(runContext.ProjectIntegration.Config)
@@ -70,7 +70,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 			vars[k] = v
 		}
 
-		// Process deployment strategy of the chosen integration
+		// COMPUTE DEPLOYMENT STRATEGIES VARIABLE
 		if runContext.Application.ID != 0 {
 			for pfName, pfConfig := range runContext.Application.DeploymentStrategies {
 				if pfName == runContext.ProjectIntegration.Name {
@@ -83,14 +83,15 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 		}
 	}
 
-	// compute pipeline parameters
+	// COMPUTE PIPELINE PARAMETER
 	tmpPip := sdk.ParametersFromPipelineParameters(pipelineParameters)
 	for k, v := range tmpPip {
 		vars[k] = v
 	}
 
-	// compute payload
+	// COMPUTE PAYLOAD
 	e := dump.NewDefaultEncoder()
+
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
 	e.ExtraFields.DetailedStruct = false
@@ -102,7 +103,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 	}
 
 	//Merge the dumped payload with vars
-	vars = sdk.ParametersMapMerge(vars, tmpVars, sdk.MapMergeOptions.ExcludeGitParams)
+	vars = sdk.ParametersMapMerge(vars, tmpVars)
 
 	// TODO Update suggest.go  with new variable
 
@@ -110,6 +111,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = runContext.Pipeline.Name
 
+	// COMPUTE VCS STRATEGY VARIABLE
 	if runContext.Application.RepositoryStrategy.ConnectionType != "" {
 		vars["git.connection.type"] = runContext.Application.RepositoryStrategy.ConnectionType
 		if runContext.Application.RepositoryStrategy.SSHKey != "" {
@@ -146,8 +148,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 	return params, nil
 }
 
-func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun, payload map[string]string) ([]sdk.Parameter, error) {
-	repos := w.Workflow.GetRepositories()
+func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	params := make([]sdk.Parameter, 0, len(nodeRuns))
 	for _, parentNodeRun := range nodeRuns {
 		var nodeName string
@@ -158,39 +159,38 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun, pa
 		}
 		nodeName = node.Name
 
-		for i := range parentNodeRun.BuildParameters {
-			p := &parentNodeRun.BuildParameters[i]
+		parentParams := make([]sdk.Parameter, 0, len(parentNodeRun.BuildParameters))
+		for _, param := range parentNodeRun.BuildParameters {
 
-			if p.Name == "" || p.Name == "cds.semver" || p.Name == "cds.release.version" ||
-				strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") ||
-				strings.HasPrefix(p.Name, "cds.version") || strings.HasPrefix(p.Name, "cds.run.number") ||
-				strings.HasPrefix(p.Name, "cds.workflow") || strings.HasPrefix(p.Name, "job.requirement") {
+			if param.Name == "" || param.Name == "cds.semver" || param.Name == "cds.release.version" ||
+				strings.HasPrefix(param.Name, "cds.proj") || strings.HasPrefix(param.Name, "workflow.") ||
+				strings.HasPrefix(param.Name, "cds.version") || strings.HasPrefix(param.Name, "cds.run.number") ||
+				strings.HasPrefix(param.Name, "cds.workflow") || strings.HasPrefix(param.Name, "job.requirement") {
 				continue
 			}
 
-			// Do not duplicate variable from payload
-			if _, ok := payload[p.Name]; ok {
-				if !strings.HasPrefix(p.Name, "git.") {
-					continue
-				}
-			}
-
 			// We inherite git variables is there is more than one repositories in the whole workflow
-			if strings.HasPrefix(p.Name, "git.") && len(repos) == 1 {
+			if strings.HasPrefix(param.Name, "git.") {
+				parentParams = append(parentParams, param)
+				continue
+			}
+			if strings.HasPrefix(param.Name, "gerrit.") {
+				parentParams = append(parentParams, param)
 				continue
 			}
 
 			prefix := "workflow." + nodeName + "."
 
-			if p.Name == "payload" {
+			if param.Name == "payload" || strings.HasPrefix(param.Name, "cds.triggered") {
 				// keep p.Name as is
-			} else if strings.HasPrefix(p.Name, "cds.") {
-				p.Name = strings.Replace(p.Name, "cds.", prefix, 1)
+			} else if strings.HasPrefix(param.Name, "cds.") {
+				param.Name = strings.Replace(param.Name, "cds.", prefix, 1)
 			} else {
-				p.Name = prefix + p.Name
+				param.Name = prefix + param.Name
 			}
+			parentParams = append(parentParams, param)
 		}
-		params = append(params, parentNodeRun.BuildParameters...)
+		params = append(params, parentParams...)
 	}
 	return params, nil
 }
@@ -203,8 +203,8 @@ func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.W
 	)
 	defer end()
 
-	//Get node build parameters
-	params, errparam := GetNodeBuildParameters(proj, &wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
+	// GET PARAMETER FROM NODE CONTEXT
+	params, errparam := GetBuildParameterFromNodeContext(proj, &wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
 	if errparam != nil {
 		return nil, sdk.WrapError(errparam, "unable to compute node build parameters")
 	}

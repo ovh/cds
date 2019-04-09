@@ -59,9 +59,7 @@ func (s Snippet) String() string {
 // ListSnippetsOptions represents the available ListSnippets() options.
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/snippets.html#list-snippets
-type ListSnippetsOptions struct {
-	ListOptions
-}
+type ListSnippetsOptions ListOptions
 
 // ListSnippets gets a list of snippets.
 //
@@ -210,9 +208,7 @@ func (s *SnippetsService) SnippetContent(snippet int, options ...OptionFunc) ([]
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/snippets.html#explore-all-public-snippets
-type ExploreSnippetsOptions struct {
-	ListOptions
-}
+type ExploreSnippetsOptions ListOptions
 
 // ExploreSnippets gets the list of public snippets.
 //

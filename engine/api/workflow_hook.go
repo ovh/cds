@@ -68,7 +68,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 
 		// Post processing  on repositoryWebHook
 		hasRepoManager := false
-		repoWebHookEnable, repoPollerEnable := false, false
+		repoWebHookEnable, repoPollerEnable, gerritHookEnable := false, false, false
 		if node.IsLinkedToRepo(wf) {
 			hasRepoManager = true
 		}
@@ -93,6 +93,8 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 					return sdk.WrapError(errPoll, "getWorkflowHookModelsHandler> Cannot get vcs poller info")
 				}
 				repoPollerEnable = pollInfo.PollingSupported && !pollInfo.PollingDisabled
+
+				gerritHookEnable = !webHookInfo.GerritHookDisabled
 			}
 		}
 
@@ -104,12 +106,31 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			}
 		}
 
-		models := []sdk.WorkflowHookModel{}
+		models := make([]sdk.WorkflowHookModel, 0, len(m))
 		for i := range m {
 			switch m[i].Name {
+			case sdk.GerritHookModelName:
+				if gerritHookEnable {
+					m[i].Icon = webHookInfo.Icon
+					m[i].DefaultConfig[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+						Type:               sdk.HookConfigTypeMultiChoice,
+						Value:              webHookInfo.Events[0],
+						Configurable:       true,
+						MultipleChoiceList: webHookInfo.Events,
+					}
+					models = append(models, m[i])
+				}
 			case sdk.RepositoryWebHookModelName:
 				if repoWebHookEnable {
 					m[i].Icon = webHookInfo.Icon
+					/*  UNCOMMENT WHEN DEVELOP EVENT SUBSCRIPTION
+					m[i].DefaultConfig[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+						Type:               sdk.HookConfigTypeMultiChoice,
+						Value:              webHookInfo.Events[0],
+						Configurable:       true,
+						MultipleChoiceList: webHookInfo.Events,
+					}
+					*/
 					models = append(models, m[i])
 				}
 			case sdk.GitPollerModelName:

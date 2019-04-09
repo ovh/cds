@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/observability"
@@ -825,14 +824,6 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			})
 			if errWf != nil {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)
-			}
-
-			// Check allow as code
-			if wf.FromRepository != "" {
-				enabled, has := p.Features[feature.FeatWorkflowAsCode]
-				if has && !enabled {
-					return sdk.WrapError(sdk.ErrForbidden, "as code is not allowed for project %s", p.Key)
-				}
 			}
 
 			// Check node permission

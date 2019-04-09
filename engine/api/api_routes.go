@@ -307,6 +307,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/repositories_manager", r.GET(api.getRepositoriesManagerForProjectHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize", r.POST(api.repositoriesManagerAuthorizeHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/callback", r.POST(api.repositoriesManagerAuthorizeCallbackHandler))
+	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/basicauth", r.POST(api.repositoriesManagerAuthorizeBasicHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}", r.DELETE(api.deleteRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo", r.GET(api.getRepoFromRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", r.GET(api.getReposFromRepositoriesManagerHandler))
@@ -328,6 +329,7 @@ func (api *API) InitRouter() {
 
 	// config
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(false)))
+	r.Handle("/config/vcs", r.GET(api.ConfigVCShandler, NeedService()))
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
