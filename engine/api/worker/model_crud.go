@@ -140,7 +140,7 @@ func UpdateModel(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Mode
 		return nil, sdk.WrapError(err, "cannot update worker model")
 	}
 
-	oldPath, newPath := old.GetPath(old.Group.Name), old.GetPath(grp.Name)
+	oldPath, newPath := old.GetPath(old.Group.Name), model.GetPath(grp.Name)
 	// if the model has been renamed, we will have to update requirements
 	if oldPath != newPath {
 		// select requirements to update

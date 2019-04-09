@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -912,22 +913,121 @@ func Test_getWorkerModels(t *testing.T) {
 	assert.Equal(t, u.Fullname, results[0].CreatedBy.Fullname)
 }
 
-func Test_postWorkerModelCapa(t *testing.T) {
+// This test create a worker model then an action that will use it.
+// Next the model group and name will be updated and we want to check if the requirement was updated.
+func Test_renameWorkerModel(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
-}
+	// create new group
+	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-func Test_getWorkerModelTypes(t *testing.T) {
+	// create new group
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-}
+	// create admin user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
 
-func Test_getWorkerModelCapaTypes(t *testing.T) {
+	// prepare post model request
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
 
-}
+	initialName := sdk.RandomString(10)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Model{
+		Name:    initialName,
+		GroupID: g1.ID,
+		Type:    sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Cmd:   "worker",
+			Shell: "sh",
+		},
+	})
 
-func Test_putWorkerModelCapa(t *testing.T) {
+	// send post model request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
 
-}
+	// check created model
+	assert.Equal(t, 200, w.Code)
+	var result sdk.Model
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+	assert.Equal(t, g1.Name, result.Group.Name)
+	assert.Equal(t, initialName, result.Name)
 
-func Test_deleteWorkerModelCapa(t *testing.T) {
+	// prepare post action request
+	uri = router.GetRoute("POST", api.postActionHandler, nil)
+	test.NotEmpty(t, uri)
 
+	actionName := sdk.RandomString(10)
+	modelPath := fmt.Sprintf("%s/%s --privileged", result.Group.Name, result.Name)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Action{
+		Name:    actionName,
+		GroupID: &g1.ID,
+		Requirements: []sdk.Requirement{{
+			Type:  sdk.ModelRequirement,
+			Name:  modelPath,
+			Value: modelPath,
+		}},
+	})
+
+	// send post action request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// check created action
+	assert.Equal(t, 201, w.Code)
+	var action sdk.Action
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &action))
+	assert.Equal(t, g1.Name, action.Group.Name)
+	assert.Equal(t, actionName, action.Name)
+	assert.Equal(t, 1, len(action.Requirements))
+	assert.Equal(t, modelPath, action.Requirements[0].Value)
+
+	// prepare put model request
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, map[string]string{
+		"groupName":     result.Group.Name,
+		"permModelName": result.Name,
+	})
+	test.NotEmpty(t, uri)
+
+	newName := sdk.RandomString(10)
+	result.Name = newName
+	result.GroupID = g2.ID
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, result)
+
+	// send put model request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// check updated model
+	assert.Equal(t, 200, w.Code)
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+	assert.Equal(t, g2.Name, result.Group.Name)
+	assert.Equal(t, newName, result.Name)
+
+	// prepare get action request
+	uri = router.GetRoute("GET", api.getActionHandler, map[string]string{
+		"groupName":      action.Group.Name,
+		"permActionName": action.Name,
+	})
+	test.NotEmpty(t, uri)
+
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	// send get action request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// check action
+	updatedModelPath := fmt.Sprintf("%s/%s --privileged", result.Group.Name, result.Name)
+	assert.Equal(t, 200, w.Code)
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &action))
+	assert.Equal(t, g1.Name, action.Group.Name)
+	assert.Equal(t, actionName, action.Name)
+	assert.Equal(t, 1, len(action.Requirements))
+	assert.Equal(t, updatedModelPath, action.Requirements[0].Value)
 }
