@@ -113,6 +113,15 @@ func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata
 	return nil
 }
 
+// updateFromRepository update the from_repository of a workflow
+func updateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository string) error {
+	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return nil
+}
+
 // PreInsert is a db hook
 func (w *Workflow) PreInsert(db gorp.SqlExecutor) error {
 	return w.PreUpdate(db)
