@@ -13,7 +13,6 @@ export class AuditListComponent {
     @Input() loading = false;
     @Output() rollback: EventEmitter<number> = new EventEmitter();
     selectedAudit: AuditWorkflow;
-    diffType: string;
     items: Array<Item>;
     columns: Column<AuditWorkflow>[];
 
@@ -48,23 +47,24 @@ export class AuditListComponent {
     }
 
     updateSelectedAudit(a: AuditWorkflow): void {
+        let diffType: string;
         this.selectedAudit = a;
 
         switch (a.data_type) {
             case 'yaml':
-                this.diffType = 'text/x-yaml';
+                diffType = 'text/x-yaml';
                 break;
             case 'json':
-                this.diffType = 'application/json';
+                diffType = 'application/json';
                 break;
             default:
-                this.diffType = 'text/plain';
+                diffType = 'text/plain';
         }
 
         this.items = [<Item>{
             before: this.selectedAudit.data_before,
             after: this.selectedAudit.data_after,
-            type: this.diffType,
+            type: diffType,
         }]
     }
 }
