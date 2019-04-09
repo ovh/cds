@@ -12,11 +12,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type requirement struct {
-	ID    int64
-	Value string
-}
-
 // ActionModelRequirements adds group name for worker model not shared.infra on existing action's and job's requirements.
 func ActionModelRequirements(store cache.Store, DBFunc func() *gorp.DbMap) error {
 	db := DBFunc()
