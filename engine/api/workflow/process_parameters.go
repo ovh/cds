@@ -149,7 +149,6 @@ func GetBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runCon
 }
 
 func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
-	repos := w.Workflow.GetRepositories()
 	params := make([]sdk.Parameter, 0, len(nodeRuns))
 	for _, parentNodeRun := range nodeRuns {
 		var nodeName string
@@ -171,7 +170,8 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 			}
 
 			// We inherite git variables is there is more than one repositories in the whole workflow
-			if strings.HasPrefix(param.Name, "git.") && len(repos) == 1 {
+			if strings.HasPrefix(param.Name, "git.") {
+				parentParams = append(parentParams, param)
 				continue
 			}
 			if strings.HasPrefix(param.Name, "gerrit.") {

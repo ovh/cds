@@ -1332,6 +1332,165 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 
 }
 
+// Payload: branch only  + run condition on git.branch
+func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, _ := assets.InsertAdminUser(db)
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
+	test.NoError(t, services.Insert(db, mockVCSSservice))
+	defer func() {
+		_ = services.Delete(db, mockVCSSservice) // nolint
+	}()
+
+	//This is a mock for the vcs service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo":
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
+			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "steven.guiheux",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "mylastcommit",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
+	pip := createEmptyPipeline(t, db, cache, proj, u)
+	//pip2 := createBuildPipeline(t, db, cache, proj, u)
+	app := createApplication1(t, db, cache, proj, u)
+
+	// RELOAD PROJECT WITH DEPENDENCIES
+	proj.Applications = append(proj.Applications, *app)
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	// WORKFLOW TO RUN
+	w := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    proj.Pipelines[0].ID,
+					ApplicationID: proj.Applications[0].ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "child",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID:    proj.Pipelines[0].ID,
+								ApplicationID: proj.Applications[0].ID,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Variable: "git.branch",
+											Operator: "eq",
+											Value:    "feat/branch",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Applications: map[int64]sdk.Application{
+			proj.Applications[0].ID: proj.Applications[0],
+		},
+		Pipelines: map[int64]sdk.Pipeline{
+			proj.Pipelines[0].ID: proj.Pipelines[0],
+		},
+	}
+
+	(&w).RetroMigrate()
+	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	// CREATE RUN
+	var manualEvent sdk.WorkflowNodeRunManual
+	manualEvent.Payload = map[string]string{
+		"git.branch": "feat/branch",
+	}
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+	wr.Workflow = w
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	assert.NoError(t, errR)
+
+	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
+	assert.Equal(t, 1, len(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID]))
+
+	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].BuildParameters)
+	assert.Equal(t, "feat/branch", mapParams["git.branch"])
+	assert.Equal(t, "mylastcommit", mapParams["git.hash"])
+	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
+	assert.Equal(t, "super commit", mapParams["git.message"])
+}
+
 func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {
 	pip := &sdk.Pipeline{
 		Name: "build",
