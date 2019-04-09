@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,15 +31,29 @@ Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsct
 	},
 	Flags: []cli.Flag{
 		{
-			Name:      "from-remote",
-			ShortHand: "r",
-			Usage:     "Initialize a workflow from your git origin",
-			Type:      cli.FlagBool,
+			Name:  "repository-fullname",
+			Usage: "Set the repository fullname defined in repository manager",
+		},
+		{
+			Name:  "repository-ssh-key",
+			Usage: "Set the repository access key you want to use",
+		},
+		{
+			Name:  "repository-pgp-key",
+			Usage: "Set the repository pgp key you want to use",
+		},
+		{
+			Name:  "pipeline",
+			Usage: "Set the root pipeline you want to use",
 		},
 	},
 }
 
-func interactiveChooseProject(gitRepo repo.Repo) (string, error) {
+func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, error) {
+	if defaultValue != "" {
+		return defaultValue, nil
+	}
+
 	projs, err := client.ProjectList(false, false)
 	if err != nil {
 		return "", err
@@ -59,108 +74,162 @@ func interactiveChooseProject(gitRepo repo.Repo) (string, error) {
 	return chosenProj.Key, nil
 }
 
-func workflowInitRunFromRemote(c cli.Values) error {
-	path := "."
-	gitRepo, errRepo := repo.New(path)
-	if errRepo != nil {
-		return errRepo
-	}
+func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, error) {
+	switch len(proj.VCSServers) {
+	case 0:
+		//TODO ask to link the project
+		return "", fmt.Errorf("your CDS project must be linked to a repositories manager to perform this operation")
+	case 1:
+		return proj.VCSServers[0].Name, nil
+	default:
 
-	var pkey = c.GetString(_ProjectKey)
-	if pkey == "" {
-		var err error
-		pkey, err = interactiveChooseProject(gitRepo)
+		fetchURL, err := gitRepo.FetchURL()
 		if err != nil {
-			return err
+			return "", fmt.Errorf("Unable to get remote URL: %v", err)
+		}
+
+		originURL, err := url.Parse(fetchURL)
+		if err != nil {
+			return "", fmt.Errorf("Unable to parse remote URL: %v", err)
+		}
+
+		vcsConf, err := client.VCSConfiguration()
+		if err != nil {
+			return "", fmt.Errorf("Unable to get VCS Configuration: %v", err)
+		}
+
+		for rmName, cfg := range vcsConf {
+			rmURL, err := url.Parse(cfg.URL)
+			if err != nil {
+				return "", fmt.Errorf("Unable to get VCS Configuration: %v", err)
+			}
+			if rmURL.Host == originURL.Host {
+				return rmName, nil
+			}
 		}
 	}
 
-	repoName, _ := gitRepo.Name()
-	if repoName == "" {
-		return fmt.Errorf("unable to retrieve repository name")
+	// Ask the user to choose the repository
+	repoManagerNames := make([]string, len(proj.VCSServers))
+	for i, s := range proj.VCSServers {
+		repoManagerNames[i] = s.Name
 	}
 
-	fetchURL, _ := gitRepo.FetchURL()
-	if fetchURL == "" {
-		return fmt.Errorf("unable to retrieve origin URL")
-	}
+	selected := cli.MultiChoice("Choose the repository manager:", repoManagerNames...)
+	return proj.VCSServers[selected].Name, nil
+}
 
-	fmt.Printf("Initializing workflow from %s (%v)...\n", cli.Magenta(repoName), cli.Magenta(fetchURL))
-
-	ope, err := client.WorkflowAsCodeStart(pkey, fetchURL, sdk.RepositoryStrategy{})
+func interactiveChooseExistingApplication(pkey, repoFullname, repoName string) (*sdk.Application, error) {
+	// Try to find application or create a new one from the repo
+	apps, err := client.ApplicationList(pkey)
 	if err != nil {
-		return fmt.Errorf("unable to perform operation: %v", err)
+		return nil, fmt.Errorf("unable to list applications: %v", err)
 	}
 
-	for ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
-		ope, err = client.WorkflowAsCodeInfo(pkey, ope.UUID)
-		if err != nil {
-			return fmt.Errorf("unable to perform operation: %v", err)
+	for i, a := range apps {
+		if a.RepositoryFullname == repoFullname {
+			fmt.Printf("application %s/%s (%s) found in CDS\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
+			return &apps[i], nil
+		} else if a.Name == repoName {
+			fmt.Printf("application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
+			fmt.Println(cli.Red("But it's not linked to repository"), cli.Red(repoFullname))
+			if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
+				return nil, fmt.Errorf("operation aborted")
+			}
+			return nil, nil
 		}
 	}
 
-	msgList, err := client.WorkflowAsCodePerform(pkey, ope.UUID)
-	for _, msg := range msgList {
-		fmt.Println("\t" + msg)
-	}
+	return nil, nil
+}
 
+func searchRepository(pkey, repoManagerName, repoFullname string) (string, error) {
+	// Get repositories from the repository manager
+	repos, err := client.RepositoriesList(pkey, repoManagerName, true)
 	if err != nil {
-		return fmt.Errorf("unable to perform operation: %v", err)
+		return "", fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
 	}
 
-	return nil
+	// Check it the project with it's delegated oauth knows the current repo
+	// Search the repo
+	for _, r := range repos {
+		// r.Fullname = CDS/demo
+		if strings.ToLower(r.Fullname) == repoFullname {
+			return r.Fullname, nil
+		}
+	}
+
+	return "", fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoFullname, repoManagerName)
+}
+
+func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipeline, error) {
+	// Try to find pipeline or create a new pipeline
+	pips, err := client.PipelineList(pkey)
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to list pipelines: %v", err)
+	}
+	if len(pips) == 0 {
+		// If the project doesn't have any pipeline, lets return
+		return defaultPipeline, nil, nil
+	} else if defaultPipeline != "" {
+		// Try to find the defaultPipeline in the list of pipelines
+		for _, p := range pips {
+			if p.Name == defaultPipeline {
+				return defaultPipeline, &p, nil
+			}
+		}
+		return defaultPipeline, nil, nil
+	}
+
+	pipelineNames := make([]string, len(pips))
+	for i, p := range pips {
+		pipelineNames[i] = p.Name
+	}
+	pipelineNames = append([]string{"new pipeline"}, pipelineNames...)
+	selected := cli.MultiChoice("Choose your pipeline:", pipelineNames...)
+
+	if selected == 0 {
+		fmt.Print("Enter your pipeline name: ")
+		pipName := cli.ReadLine()
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(pipName) {
+			return "", nil, fmt.Errorf("Pipeline name '%s' do not respect pattern %s", pipName, sdk.NamePattern)
+		}
+		return pipName, nil, nil
+	}
+	return pips[selected-1].Name, &pips[selected-1], nil
 }
 
 func workflowInitRun(c cli.Values) error {
-	if c.GetBool("from-remote") {
-		return workflowInitRunFromRemote(c)
-	}
-
 	path := "."
 	gitRepo, errRepo := repo.New(path)
 	if errRepo != nil {
 		return errRepo
 	}
 
-	var pkey = c.GetString(_ProjectKey)
-	if pkey == "" {
-		var err error
-		pkey, err = interactiveChooseProject(gitRepo)
-		if err != nil {
-			return err
-		}
+	pkey, err := interactiveChooseProject(gitRepo, c.GetString(_ProjectKey))
+	if err != nil {
+		return err
 	}
 
-	repoName, _ := gitRepo.Name()
-	if repoName == "" {
-		return fmt.Errorf("unable to retrieve repository name")
+	repoFullname, err := gitRepo.Name()
+	if err != nil {
+		return fmt.Errorf("unable to retrieve repository name: %v", err)
 	}
 
-	fullnames := strings.SplitN(repoName, "/", 2)
-	name := fullnames[1]
+	fullnames := strings.SplitN(repoFullname, "/", 2)
+	repoShortname := fullnames[1]
 
-	fetchURL, _ := gitRepo.FetchURL()
-	if fetchURL == "" {
-		return fmt.Errorf("unable to retrieve origin URL")
+	fetchURL, err := gitRepo.FetchURL()
+	if err != nil {
+		return fmt.Errorf("unable to retrieve origin URL: %v", err)
 	}
 
-	fmt.Printf("Initializing workflow from %s (%v)...\n", cli.Magenta(repoName), cli.Magenta(fetchURL))
+	fmt.Printf("Initializing workflow from %s (%v)...\n", cli.Magenta(repoFullname), cli.Magenta(fetchURL))
 
 	dotCDS := filepath.Join(path, ".cds")
-
-	var shouldCreateWorkflowDir, shouldCreateWorkflowFiles, shouldCreateApplication, shouldCreatePipeline bool
-	var existingApp *sdk.Application
-	var existingPip *sdk.Pipeline
-	var repoManagerName string
-
-	if _, err := os.Stat(dotCDS); err != nil && os.IsNotExist(err) {
-		shouldCreateWorkflowDir = true
-	}
-
-	if shouldCreateWorkflowDir {
-		if err := os.MkdirAll(dotCDS, os.FileMode(0755)); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(dotCDS, os.FileMode(0755)); err != nil {
+		return err
 	}
 
 	files, err := filepath.Glob(dotCDS + "/*.yml")
@@ -169,10 +238,6 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	if len(files) == 0 {
-		shouldCreateWorkflowFiles = true
-	}
-
-	if !shouldCreateWorkflowFiles {
 		fmt.Println("Loading yaml files...")
 		//TODO
 		return fmt.Errorf("Not yet implemented: you have already .cds/ files, please use web UI to use them for now")
@@ -188,108 +253,27 @@ func workflowInitRun(c cli.Values) error {
 		return fmt.Errorf("unable to get project: %v", err)
 	}
 
-	if len(proj.VCSServers) == 0 {
-		//TODO ask to link the project
-		return fmt.Errorf("your CDS project must be linked to a repositories manager to perform this operation")
-	}
-
-	// Ask the user to choose the repository
-	repoManagerNames := make([]string, len(proj.VCSServers))
-	for i, s := range proj.VCSServers {
-		repoManagerNames[i] = s.Name
-	}
-	selected := cli.MultiChoice("Choose the repository manager:", repoManagerNames...)
-	repoManagerName = proj.VCSServers[selected].Name
-
-	resync := false
-	for { // Useful to retry with resync
-		// Get repositories from the repository manager
-		repos, err := client.RepositoriesList(pkey, repoManagerName, resync)
-		if err != nil {
-			return fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
-		}
-
-		// Check it the project with it's delegated oauth knows the current repo
-		// Search the repo
-		var repoFound bool
-		for _, r := range repos {
-			if strings.ToLower(r.Fullname) == repoName {
-				repoName = r.Fullname
-				repoFound = true
-				break
-			}
-		}
-		if !repoFound {
-			if !resync {
-				resync = true
-				continue
-			} else {
-				return fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoName, repoManagerName)
-			}
-		}
-		break
-	}
-
-	// Try to find application or create a new one from the repo
-	apps, err := client.ApplicationList(pkey)
+	repoManagerName, err := interactiveChooseVCSServer(proj, gitRepo)
 	if err != nil {
-		return fmt.Errorf("unable to list applications: %v", err)
+		return fmt.Errorf("unable to get vcs server: %v", err)
 	}
 
-	for i, a := range apps {
-		if a.RepositoryFullname == repoName {
-			fmt.Printf("application %s/%s (%s) found in CDS\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
-			existingApp = &apps[i]
-			break
-		} else if a.Name == name {
-			fmt.Printf("application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
-			fmt.Println(cli.Red("But it's not linked to repository"), cli.Red(repoName))
-			if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
-				return fmt.Errorf("operation aborted")
-			}
-			shouldCreateApplication = true
-			break
-		}
-	}
-
-	if existingApp == nil {
-		shouldCreateApplication = true
-	}
-
-	// Try to find pipeline or create a new pipeline
-	pips, err := client.PipelineList(pkey)
+	repoFullname, err = searchRepository(pkey, repoManagerName, repoFullname)
 	if err != nil {
-		return fmt.Errorf("unable to list pipelines: %v", err)
-	}
-	if len(pips) == 0 {
-		shouldCreatePipeline = true
-	} else if !cli.AskForConfirmation("Do you want to reuse an existing pipeline?") {
-		shouldCreatePipeline = true
-	} else {
-		pipelineNames := make([]string, len(pips))
-		for i, p := range pips {
-			pipelineNames[i] = p.Name
-		}
-		selected := cli.MultiChoice("Choose your pipeline:", pipelineNames...)
-		existingPip = &pips[selected]
+		return err
 	}
 
-	var pipName string
-	if shouldCreatePipeline {
-		fmt.Print("Enter your pipeline name: ")
-		pipName = cli.ReadLine()
-
-		regexp := sdk.NamePatternRegex
-		if !regexp.MatchString(pipName) {
-			return fmt.Errorf("Pipeline name '%s' do not respect pattern %s", pipName, sdk.NamePattern)
-		}
+	existingApp, err := interactiveChooseExistingApplication(pkey, repoFullname, repoShortname)
+	if err != nil {
+		return err
 	}
 
-	if existingPip != nil {
-		pipName = existingPip.Name
+	pipName, existingPip, err := interactiveChoosePipeline(pkey, c.GetString("pipeline"))
+	if err != nil {
+		return err
 	}
 
-	var appName = name
+	var appName = repoShortname
 	if existingApp != nil {
 		appName = existingApp.Name
 	}
@@ -297,7 +281,7 @@ func workflowInitRun(c cli.Values) error {
 	// Crafting the workflow
 	wkflw := exportentities.Workflow{
 		Version:         exportentities.WorkflowVersion1,
-		Name:            name,
+		Name:            repoShortname,
 		ApplicationName: appName,
 		PipelineName:    pipName,
 	}
@@ -307,7 +291,7 @@ func workflowInitRun(c cli.Values) error {
 		return fmt.Errorf("Unable to write workflow file format: %v", err)
 	}
 
-	wFilePath := filepath.Join(dotCDS, name+".yml")
+	wFilePath := filepath.Join(dotCDS, repoShortname+".yml")
 	if err := ioutil.WriteFile(wFilePath, b, os.FileMode(0644)); err != nil {
 		return fmt.Errorf("Unable to write workflow file: %v", err)
 	}
@@ -316,7 +300,7 @@ func workflowInitRun(c cli.Values) error {
 	files = []string{wFilePath}
 
 	// Crafting the application
-	if shouldCreateApplication {
+	if existingApp == nil {
 		connectionType := "ssh"
 		if strings.HasPrefix(fetchURL, "https") {
 			connectionType = "https"
@@ -324,7 +308,7 @@ func workflowInitRun(c cli.Values) error {
 
 		app := exportentities.Application{
 			Name:              appName,
-			RepositoryName:    repoName,
+			RepositoryName:    repoFullname,
 			VCSServer:         repoManagerName,
 			VCSConnectionType: connectionType,
 			Keys:              map[string]exportentities.KeyValue{},
@@ -400,7 +384,7 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	// Crafting the pipeline
-	if shouldCreatePipeline {
+	if existingPip == nil {
 		pip := exportentities.PipelineV1{
 			Name:    pipName,
 			Version: exportentities.PipelineVersion1,
@@ -455,7 +439,7 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	//Configure local git
-	if err := gitRepo.LocalConfigSet("cds", "workflow", name); err != nil {
+	if err := gitRepo.LocalConfigSet("cds", "workflow", repoShortname); err != nil {
 		return err
 	}
 	if err := gitRepo.LocalConfigSet("cds", "application", appName); err != nil {
