@@ -660,6 +660,20 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/stash/repos/ovh/cds/branches/?branch=feat%2Fbranch":
+				return writeError(w, sdk.ErrNotFound)
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				bs := []sdk.VCSBranch{
+					{
+						LatestCommit: "defaultCommit",
+						DisplayID:    "defaultBranch",
+						Default:      true,
+						ID:           "1",
+					},
+				}
+				if err := enc.Encode(bs); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/stash/repos/ovh/cds/commits/defaultCommit":
 				c := sdk.VCSCommit{
 					Author: sdk.VCSAuthor{
