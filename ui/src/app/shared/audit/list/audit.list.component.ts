@@ -1,26 +1,50 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { AuditWorkflow } from '../../../model/audit.model';
 import { Item } from '../../diff/list/diff.list.component';
-import { Table } from '../../table/table';
 
 @Component({
     selector: 'app-audit-list',
     templateUrl: './audit.list.html',
     styleUrls: ['./audit.list.scss']
 })
-export class AuditListComponent extends Table<AuditWorkflow> {
+export class AuditListComponent {
     @Input() audits: Array<AuditWorkflow>;
+    @Input() loading = false;
     @Output() rollback: EventEmitter<number> = new EventEmitter();
     selectedAudit: AuditWorkflow;
     diffType: string;
     items: Array<Item>;
-
-    getData(): Array<AuditWorkflow> {
-        return this.audits;
-    }
+    columns: Column<AuditWorkflow>[];
 
     constructor() {
-        super();
+        this.columns = [
+            <Column<AuditWorkflow>>{
+                type: ColumnType.TEXT,
+                name: 'audit_action',
+                selector: (audit: AuditWorkflow) => audit.event_type,
+            },
+            <Column<AuditWorkflow>>{
+                type: ColumnType.TEXT,
+                name: 'audit_username',
+                selector: (audit: AuditWorkflow) => audit.triggered_by,
+            },
+            <Column<AuditWorkflow>>{
+                type: ColumnType.DATE,
+                name: 'audit_time_author',
+                selector: (audit: AuditWorkflow) => audit.created,
+            },
+            <Column<AuditWorkflow>>{
+                type: ColumnType.CONFIRM_BUTTON,
+                name: '',
+                selector: (audit: AuditWorkflow) => {
+                    return {
+                        title: 'common_rollback',
+                        click: () => this.rollback.emit(audit.id)
+                    };
+                },
+            },
+        ];
     }
 
     updateSelectedAudit(a: AuditWorkflow): void {

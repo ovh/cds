@@ -110,7 +110,7 @@
                 </app-usage>
             </div>
             <div *ngSwitchCase="'audits'" class="padded">
-                <app-audit-list [audits]="detailedWorkflow.audits" (rollback)="rollback($event)"></app-audit-list>
+                <app-audit-list [audits]="detailedWorkflow.audits" [loading]="loading" (rollback)="rollback($event)"></app-audit-list>
             </div>
         </app-scrollview>
         <ng-container>

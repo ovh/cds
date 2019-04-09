@@ -479,6 +479,10 @@ export class WorkflowsState {
                 projectKey: action.payload.projectKey,
                 workflow
             }));
+            return ctx.dispatch(new actionWorkflow.FetchWorkflowAudits({
+                projectKey: action.payload.projectKey,
+                workflowName: workflow.name
+            }))
         }));
     }
 

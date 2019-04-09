@@ -1,6 +1,10 @@
 <div class="audits">
     <h3>{{ 'audit_title' | translate }}</h3>
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <app-data-table [withPagination]="25" [columns]="columns" [data]="audits" [loading]="loading" [withLineClick]="true"
+        (clickLine)="updateSelectedAudit($event)">
+    </app-data-table>
+
+    <!-- <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
             <tr>
                 <th class="four wide">{{ 'audit_modification_type' | translate}}</th>
@@ -10,13 +14,13 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let a of getDataForCurrentPage()" class="ui form pointing" [class.active]="selectedAudit && selectedAudit.id === a.id"
-                (click)="updateSelectedAudit(a)">
+            <tr *ngFor="let a of getDataForCurrentPage()" class="ui form pointing"
+                [class.active]="selectedAudit && selectedAudit.id === a.id" (click)="updateSelectedAudit(a)">
                 <td class="middle-aligned border">
                     {{a.event_type}}
                 </td>
                 <td class="middle-aligned border">
-                    {{a.created | amCalendar}}
+                    {{a.created | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm'}}
                 </td>
                 <td class="middle-aligned border">
                     {{a.triggered_by}}
@@ -45,12 +49,12 @@
                 </th>
             </tr>
         </tfoot>
-    </table>
-    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+    </table> -->
+    <!-- <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
         {{ 'audit_no' | translate }}
-    </div>
+    </div> -->
 </div>
 <div *ngIf="selectedAudit" class="area">
-    <h3>{{selectedAudit.created | amCalendar}}</h3>
+    <h3>{{selectedAudit.created | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm'}}</h3>
     <app-diff-list [items]="items"></app-diff-list>
 </div>
