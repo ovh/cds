@@ -363,7 +363,7 @@ export class WorkflowsState {
     addJoinTrigger(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddJoinWorkflow) {
         const state = ctx.getState();
         const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
-        let joins = state.workflows[wfKey].workflow_data.joins ? state.workflows[wfKey].workflow_data.joins : [];
+        let joins = state.workflows[wfKey].workflow_data.joins ? [...state.workflows[wfKey].workflow_data.joins] : [];
         joins.push(action.payload.join);
 
         const workflow: Workflow = {

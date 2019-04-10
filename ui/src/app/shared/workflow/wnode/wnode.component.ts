@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnInit } from '@angular/core';
+import {Component, Input, NgZone, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PipelineStatus } from '../../../model/pipeline.model';
@@ -7,6 +7,7 @@ import { WNode, WNodeType, Workflow } from '../../../model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from '../../../model/workflow.run.model';
 import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../decorator/autoUnsubscribe';
+import {IPopup} from 'ng2-semantic-ui';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -19,6 +20,8 @@ export class WorkflowWNodeComponent implements OnInit {
     @Input() node: WNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
+
+
 
     // Selected node
     isSelected = false;
@@ -91,16 +94,13 @@ export class WorkflowWNodeComponent implements OnInit {
         });
     }
 
-    clickOnNode(): void {
-        if (this.workflow.previewMode) {
+    clickOnNode(popup: IPopup): void {
+
+        if (this.workflow.previewMode || !popup) {
             return;
         }
+        popup.open();
 
-        let url = this._router.createUrlTree(['./'], {
-            relativeTo: this._activatedRoute,
-            queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref }
-        });
-        this._router.navigateByUrl(url.toString());
     }
 
     dblClickOnNode() {

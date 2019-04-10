@@ -1,4 +1,6 @@
-<div class="node-wrapper" (click)="clickOnNode()" (dblclick)="$event.stopPropagation(); dblClickOnNode()" [ngSwitch]="node.type">
+<div class="node-wrapper" (click)="clickOnNode(popup)" (dblclick)="$event.stopPropagation(); dblClickOnNode()" [ngSwitch]="node.type"
+     suiPopup [popupTemplate]="popupNode"
+     popupPlacement="right" popupTrigger="outsideClick" #popup="suiPopup">
     <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [project]="project" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
     <app-workflow-wnode-join *ngSwitchCase="'join'" [project]="project" [workflow]="workflow" [node]="node" [noderun]="currentNodeRun"
@@ -8,3 +10,7 @@
     <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [project]="project" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [workflowrun]="workflowRun" [selected]="isSelected"></app-workflow-wnode-outgoing-hook>
 </div>
+
+<ng-template let-popup #popupNode>
+    <app-workflow-menu-wnode-edit [project]="project" [workflow]="workflow" [node]="node" [popup]="popup"></app-workflow-menu-wnode-edit>
+</ng-template>

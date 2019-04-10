@@ -115,6 +115,8 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
+import {WorkflowWNodeMenuEditComponent} from '@cds/shared/workflow/menu/edit-node/menu.edit.node.component';
+import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trigger/node.trigger.component';
 
 @NgModule({
     imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,
@@ -182,11 +184,13 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
+        WorkflowWNodeMenuEditComponent,
         StageStepSummaryComponent,
         JobStepSummaryComponent,
         ActionStepSummaryComponent,
         WorkflowSidebarRunHookComponent,
         WorkflowSaveAsCodeComponent,
+        WorkflowNodeTriggerComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -303,7 +307,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowSidebarRunNodeComponent,
         WorkflowSidebarRunHookComponent,
         WorkflowSaveAsCodeComponent,
-
+        WorkflowWNodeMenuEditComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,
         WorkflowNodeContextComponent,
@@ -314,6 +318,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodePermissionsComponent,
+        WorkflowNodeTriggerComponent,
         WorkflowTriggerComponent,
         ZoneComponent,
         ZoneContentComponent,

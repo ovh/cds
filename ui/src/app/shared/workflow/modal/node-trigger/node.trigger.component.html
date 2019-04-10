@@ -1,0 +1,24 @@
+<ng-template let-context let-modal="modal" #triggerModal>
+  <div class="header">{{ 'workflow_node_trigger_title' }}</div>
+  <div class="content">
+      <div class="ui grid">
+          <div class="four wide column">
+              <div class="ui secondary vertical pointing menu">
+                  <a class="item" (click)="selected = 'pipeline'" [class.active]="selected == 'pipeline'">{{'workflow_node_type_pipeline' | translate }}</a>
+                  <a class="item" (click)="selected = 'fork'" [class.active]="selected == 'fork'">{{'workflow_node_type_fork' | translate }}</a>
+                  <a class="item" (click)="selected = 'join'" [class.active]="selected == 'join'">{{'workflow_node_type_join' | translate }}</a>
+                  <a class="item" (click)="selected = 'outgoinghook'" [class.active]="selected == 'outgoinghook'">{{'workflow_node_type_outgoing_hook' | translate }}</a>
+              </div>
+          </div>
+          <div class="twelve wide column">
+              <div [ngSwitch]="selected">
+                  <ng-container *ngSwitchCase="'pipeline'">
+                      <app-workflow-node-form [project]="project" [workflow]="workflow" [(node)]="node"></app-workflow-node-form>
+                  </ng-container>
+              </div>
+          </div>
+      </div>
+
+
+  </div>
+</ng-template>
