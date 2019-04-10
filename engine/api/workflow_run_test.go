@@ -1653,14 +1653,14 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1675,14 +1675,14 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
