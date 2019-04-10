@@ -1316,6 +1316,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	var manualEvent sdk.WorkflowNodeRunManual
 	manualEvent.Payload = map[string]string{
 		"git.branch": "feat/branch",
+		"my.value":   "bar",
 	}
 
 	opts := &sdk.WorkflowRunPostHandlerOption{
@@ -1336,6 +1337,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.Equal(t, "mylastcommit", mapParams["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
 	assert.Equal(t, "super commit", mapParams["git.message"])
+	assert.Equal(t, "bar", mapParams["my.value"])
 
 	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].BuildParameters)
 	t.Logf("%+v", mapParams2)
@@ -1343,6 +1345,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.Equal(t, "mylastcommit", mapParams2["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
 	assert.Equal(t, "super commit", mapParams2["git.message"])
+	assert.Equal(t, "bar", mapParams2["my.value"])
 
 }
 
