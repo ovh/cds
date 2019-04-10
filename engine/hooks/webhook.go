@@ -17,7 +17,7 @@ func (s *Service) doWebHookExecution(e *sdk.TaskExecution) ([]sdk.WorkflowNodeRu
 	log.Debug("Hooks> Processing webhook %s %s", e.UUID, e.Type)
 
 	if e.Type == TypeRepoManagerWebHook {
-		return executeRepositoryWebHook(e)
+		return s.executeRepositoryWebHook(e)
 	}
 	event, err := executeWebHook(e)
 	if err != nil {
@@ -37,7 +37,7 @@ func getRepositoryHeader(whe *sdk.WebHookExecution) string {
 	return ""
 }
 
-func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	payloads := []map[string]interface{}{}
 
@@ -49,7 +49,10 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 			return nil, sdk.WrapError(err, "unable ro read github request: %s", string(t.WebHook.RequestBody))
 		}
 		if pushEvent.Deleted {
-			return nil, nil
+			projectKey := t.Config["project"].Value
+			workflowName := t.Config["workflow"].Value
+			err := s.Client.WorkflowRunsDeleteByBranch(projectKey, workflowName, strings.TrimPrefix(pushEvent.Ref, "refs/heads/"))
+			return nil, sdk.WrapError(err, "cannot mark to delete workflow runs")
 		}
 		payload["git.author"] = pushEvent.HeadCommit.Author.Username
 		payload["git.author.email"] = pushEvent.HeadCommit.Author.Email
