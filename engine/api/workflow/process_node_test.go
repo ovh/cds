@@ -1351,7 +1351,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 }
 
 // Payload: branch only
-func TestGitParamOn2ApplicationSameRepoWithJoin(t *testing.T) {
+func TestGitParamWithJoin(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
@@ -1452,10 +1452,9 @@ func TestGitParamOn2ApplicationSameRepoWithJoin(t *testing.T) {
 
 	pip := createEmptyPipeline(t, db, cache, proj, u)
 	app1 := createApplication1(t, db, cache, proj, u)
-	app3 := createApplication3WithSameRepoAsA(t, db, cache, proj, u)
 
 	// RELOAD PROJECT WITH DEPENDENCIES
-	proj.Applications = append(proj.Applications, *app1, *app3)
+	proj.Applications = append(proj.Applications, *app1)
 	proj.Pipelines = append(proj.Pipelines, *pip)
 
 	// WORKFLOW TO RUN
@@ -1489,7 +1488,7 @@ func TestGitParamOn2ApplicationSameRepoWithJoin(t *testing.T) {
 								Type: sdk.NodeTypePipeline,
 								Context: &sdk.NodeContext{
 									PipelineID:    proj.Pipelines[0].ID,
-									ApplicationID: proj.Applications[1].ID,
+									ApplicationID: proj.Applications[0].ID,
 								},
 							},
 						},
@@ -1499,7 +1498,6 @@ func TestGitParamOn2ApplicationSameRepoWithJoin(t *testing.T) {
 		},
 		Applications: map[int64]sdk.Application{
 			proj.Applications[0].ID: proj.Applications[0],
-			proj.Applications[1].ID: proj.Applications[1],
 		},
 		Pipelines: map[int64]sdk.Pipeline{
 			proj.Pipelines[0].ID: proj.Pipelines[0],
