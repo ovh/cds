@@ -1350,6 +1350,412 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 
 }
 
+// Payload: branch only
+func TestGitParamOn2ApplicationSameRepoWithJoin(t *testing.T) {
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, _ := assets.InsertAdminUser(db)
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "stash",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
+	test.NoError(t, services.Insert(db, mockVCSSservice))
+	defer func() {
+		services.Delete(db, mockVCSSservice)
+	}()
+
+	repoRoute := 0
+	repoBranch := 0
+	repoCommit := 0
+	//This is a mock for the vcs service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo":
+				repoRoute++
+				if repoRoute == 2 {
+					t.Fatalf("Must not be call twice: %s", r.URL.String())
+				}
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+				repoBranch++
+				if repoBranch == 2 {
+					t.Fatalf("Must not be call twice: %s", r.URL.String())
+				}
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
+			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
+				repoCommit++
+				if repoCommit == 2 {
+					t.Fatalf("Must not be call twice: %s", r.URL.String())
+				}
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "steven.guiheux",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "mylastcommit",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
+	pip := createEmptyPipeline(t, db, cache, proj, u)
+	app1 := createApplication1(t, db, cache, proj, u)
+	app3 := createApplication3WithSameRepoAsA(t, db, cache, proj, u)
+
+	// RELOAD PROJECT WITH DEPENDENCIES
+	proj.Applications = append(proj.Applications, *app1, *app3)
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	// WORKFLOW TO RUN
+	w := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Ref:  "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    proj.Pipelines[0].ID,
+					ApplicationID: proj.Applications[0].ID,
+				},
+			},
+			Joins: []sdk.Node{
+				{
+					Name: "join",
+					Type: sdk.NodeTypeJoin,
+					JoinContext: []sdk.NodeJoin{
+						{
+							ParentName: "root",
+						},
+					},
+					Triggers: []sdk.NodeTrigger{
+						{
+							ChildNode: sdk.Node{
+								Name: "child1",
+								Type: sdk.NodeTypePipeline,
+								Context: &sdk.NodeContext{
+									PipelineID:    proj.Pipelines[0].ID,
+									ApplicationID: proj.Applications[1].ID,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Applications: map[int64]sdk.Application{
+			proj.Applications[0].ID: proj.Applications[0],
+			proj.Applications[1].ID: proj.Applications[1],
+		},
+		Pipelines: map[int64]sdk.Pipeline{
+			proj.Pipelines[0].ID: proj.Pipelines[0],
+		},
+	}
+
+	(&w).RetroMigrate()
+	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	// CREATE RUN
+	var manualEvent sdk.WorkflowNodeRunManual
+	manualEvent.Payload = map[string]string{
+		"git.branch": "feat/branch",
+		"my.value":   "bar",
+	}
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+	wr.Workflow = w
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	assert.NoError(t, errR)
+
+	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
+	assert.Equal(t, 1, len(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID]))
+
+	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].BuildParameters)
+	assert.Equal(t, "feat/branch", mapParams["git.branch"])
+	assert.Equal(t, "mylastcommit", mapParams["git.hash"])
+	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
+	assert.Equal(t, "super commit", mapParams["git.message"])
+	assert.Equal(t, "bar", mapParams["my.value"])
+
+	mapParamsJoin := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Joins[0].ID][0].BuildParameters)
+	assert.Equal(t, "feat/branch", mapParamsJoin["git.branch"])
+	assert.Equal(t, "mylastcommit", mapParamsJoin["git.hash"])
+	assert.Equal(t, "steven.guiheux", mapParamsJoin["git.author"])
+	assert.Equal(t, "super commit", mapParamsJoin["git.message"])
+	assert.Equal(t, "bar", mapParamsJoin["my.value"])
+	assert.Equal(t, "build", mapParamsJoin["workflow.root.pipeline"])
+
+	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Joins[0].Triggers[0].ChildNode.ID][0].BuildParameters)
+	assert.Equal(t, "feat/branch", mapParams2["git.branch"])
+	assert.Equal(t, "mylastcommit", mapParams2["git.hash"])
+	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
+	assert.Equal(t, "super commit", mapParams2["git.message"])
+	assert.Equal(t, "bar", mapParams2["my.value"])
+	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
+	assert.Equal(t, "join", mapParams2["workflow.join.node"])
+}
+
+// Payload: branch only
+func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, _ := assets.InsertAdminUser(db)
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "stash",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
+	test.NoError(t, services.Insert(db, mockVCSSservice))
+	defer func() {
+		services.Delete(db, mockVCSSservice)
+	}()
+
+	repoRoute := 0
+	repoBranch := 0
+	repoCommit := 0
+	//This is a mock for the vcs service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo":
+				repoRoute++
+				if repoRoute == 2 {
+					t.Fatalf("Must not be call twice: %s", r.URL.String())
+				}
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+				repoBranch++
+				if repoBranch == 2 {
+					t.Fatalf("Must not be call twice: %s", r.URL.String())
+				}
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
+			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
+				repoCommit++
+				if repoCommit == 2 {
+					t.Fatalf("Must not be call twice: %s", r.URL.String())
+				}
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "steven.guiheux",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "mylastcommit",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
+	pip := createEmptyPipeline(t, db, cache, proj, u)
+	app1 := createApplication1(t, db, cache, proj, u)
+	app3 := createApplication3WithSameRepoAsA(t, db, cache, proj, u)
+
+	// RELOAD PROJECT WITH DEPENDENCIES
+	proj.Applications = append(proj.Applications, *app1, *app3)
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	// WORKFLOW TO RUN
+	w := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Ref:  "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    proj.Pipelines[0].ID,
+					ApplicationID: proj.Applications[0].ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "fork",
+							Type: sdk.NodeTypeFork,
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "child1",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID:    proj.Pipelines[0].ID,
+											ApplicationID: proj.Applications[1].ID,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Applications: map[int64]sdk.Application{
+			proj.Applications[0].ID: proj.Applications[0],
+			proj.Applications[1].ID: proj.Applications[1],
+		},
+		Pipelines: map[int64]sdk.Pipeline{
+			proj.Pipelines[0].ID: proj.Pipelines[0],
+		},
+	}
+
+	(&w).RetroMigrate()
+	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	// CREATE RUN
+	var manualEvent sdk.WorkflowNodeRunManual
+	manualEvent.Payload = map[string]string{
+		"git.branch": "feat/branch",
+		"my.value":   "bar",
+	}
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &manualEvent,
+	}
+	wr, err := workflow.CreateRun(db, &w, opts, u)
+	assert.NoError(t, err)
+	wr.Workflow = w
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	assert.NoError(t, errR)
+
+	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
+	assert.Equal(t, 1, len(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID]))
+
+	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].BuildParameters)
+	assert.Equal(t, "feat/branch", mapParams["git.branch"])
+	assert.Equal(t, "mylastcommit", mapParams["git.hash"])
+	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
+	assert.Equal(t, "super commit", mapParams["git.message"])
+	assert.Equal(t, "bar", mapParams["my.value"])
+
+	mapParamsFork := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].BuildParameters)
+	assert.Equal(t, "feat/branch", mapParamsFork["git.branch"])
+	assert.Equal(t, "mylastcommit", mapParamsFork["git.hash"])
+	assert.Equal(t, "steven.guiheux", mapParamsFork["git.author"])
+	assert.Equal(t, "super commit", mapParamsFork["git.message"])
+	assert.Equal(t, "bar", mapParamsFork["my.value"])
+	assert.Equal(t, "build", mapParamsFork["workflow.root.pipeline"])
+
+	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].BuildParameters)
+	assert.Equal(t, "feat/branch", mapParams2["git.branch"])
+	assert.Equal(t, "mylastcommit", mapParams2["git.hash"])
+	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
+	assert.Equal(t, "super commit", mapParams2["git.message"])
+	assert.Equal(t, "bar", mapParams2["my.value"])
+	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
+	assert.Equal(t, "fork", mapParams2["workflow.fork.node"])
+
+}
+
 // Payload: branch only  + run condition on git.branch
 func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
