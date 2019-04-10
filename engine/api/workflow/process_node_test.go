@@ -1377,7 +1377,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	repoRoute := 0
@@ -1579,7 +1579,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
-		services.Delete(db, mockVCSSservice)
+		services.Delete(db, mockVCSSservice) //nolint
 	}()
 
 	repoRoute := 0
