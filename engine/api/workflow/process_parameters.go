@@ -185,8 +185,6 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 				// keep p.Name as is
 			} else if strings.HasPrefix(param.Name, "cds.") {
 				param.Name = strings.Replace(param.Name, "cds.", prefix, 1)
-			} else {
-				param.Name = prefix + param.Name
 			}
 			parentParams = append(parentParams, param)
 		}
