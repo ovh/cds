@@ -1346,6 +1346,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
 	assert.Equal(t, "super commit", mapParams2["git.message"])
 	assert.Equal(t, "bar", mapParams2["my.value"])
+	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
 
 }
 
