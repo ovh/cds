@@ -330,7 +330,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 						log.Error("sendVCSEventStatus> unable to send PR report%v", err)
 						return nil
 					}
-					// if we found the pull request for head branch we can't break (only one PR for the branch should exist)
+					// if we found the pull request for head branch we can break (only one PR for the branch should exist)
 					break
 				}
 			}
