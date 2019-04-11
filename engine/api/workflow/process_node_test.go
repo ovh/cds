@@ -816,18 +816,21 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.Equal(t, "mylastcommit", mapParams["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
 	assert.Equal(t, "super commit", mapParams["git.message"])
+	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSServer)
 
 	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].BuildParameters)
 	assert.Equal(t, "defaultBranch", mapParams2["git.branch"])
 	assert.Equal(t, "defaultCommit", mapParams2["git.hash"])
 	assert.Equal(t, "john.snow", mapParams2["git.author"])
 	assert.Equal(t, "super default commit", mapParams2["git.message"])
+	assert.Equal(t, "stash", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSServer)
 
 	mapParams3 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].BuildParameters)
 	assert.Equal(t, "feat/branch", mapParams3["git.branch"])
 	assert.Equal(t, "mylastcommit", mapParams3["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams3["git.author"])
 	assert.Equal(t, "super commit", mapParams3["git.message"])
+	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].VCSServer)
 }
 
 // Payload: branch only
@@ -1347,6 +1350,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.Equal(t, "super commit", mapParams2["git.message"])
 	assert.Equal(t, "bar", mapParams2["my.value"])
 	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
+	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSServer)
 
 }
 
@@ -1550,6 +1554,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	assert.Equal(t, "bar", mapParams2["my.value"])
 	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
 	assert.Equal(t, "join", mapParams2["workflow.join.node"])
+	assert.Equal(t, "feat/branch", wr.WorkflowNodeRuns[w.WorkflowData.Joins[0].Triggers[0].ChildNode.ID][0].VCSBranch)
 }
 
 // Payload: branch only

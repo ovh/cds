@@ -190,7 +190,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if isRoot || currentRepo == "" || (parentRepo != nil && parentRepo.Value == currentRepo) {
 		for _, param := range run.BuildParameters {
 			switch param.Name {
-			case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
+			case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL, tagGitServer:
 				currentJobGitValues[param.Name] = param.Value
 			}
 		}
@@ -209,7 +209,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 				// copy git info from ancestors
 				for _, param := range parent[0].BuildParameters {
 					switch param.Name {
-					case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
+					case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL, tagGitServer:
 						currentJobGitValues[param.Name] = param.Value
 					}
 				}
@@ -286,6 +286,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		vcsInf.Message = currentJobGitValues[tagGitMessage]
 		vcsInf.URL = currentJobGitValues[tagGitURL]
 		vcsInf.HTTPUrl = currentJobGitValues[tagGitHTTPURL]
+		vcsInf.Server = currentJobGitValues[tagGitServer]
 	}
 
 	// Update datas if repo change
