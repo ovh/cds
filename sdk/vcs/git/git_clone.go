@@ -86,7 +86,7 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 
 	// if a specific commit hash is given, try to reset current repo to this commit
 	if opts != nil && opts.CheckoutCommit != "" && opts.Tag == "" {
-		// if no branch or tag given, this means that we cloned the repo on the default branch, we need to fetch the target commit id
+		// if no branch or tag given, this means that we cloned the repo on the default branch, we need to fetch the target commit hash
 		// fetching a specific commit hash will not work for old git version (1.7 for example)
 		if opts.Branch == "" && opts.Tag == "" {
 			fetchCmd := cmd{
