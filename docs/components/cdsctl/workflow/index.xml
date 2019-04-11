@@ -140,9 +140,9 @@ cdsctl workflow run [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  -d, --data s
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/workflow/show/</guid>
-      <description> cdsctl workflow show Show a CDS workflow
+      <description>cdsctl workflow show Show a CDS workflow
 Synopsis Show a CDS workflow
-cdsctl workflow show [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  </description>
+cdsctl workflow show [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -151,9 +151,9 @@ cdsctl workflow show [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --format st
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/workflow/status/</guid>
-      <description> cdsctl workflow status Check the status of the run
+      <description>cdsctl workflow status Check the status of the run
 Synopsis Check the status of the run
-cdsctl workflow status [ PROJECT-KEY WORKFLOW-NAME ] [RUN-NUMBER] [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) --track Wait the workflow to be over  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  </description>
+cdsctl workflow status [ PROJECT-KEY WORKFLOW-NAME ] [RUN-NUMBER] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --track Wait the workflow to be over  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>

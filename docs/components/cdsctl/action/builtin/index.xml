@@ -27,9 +27,9 @@ cdsctl action builtin list [flags]  Options  --fields string Only display specif
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/show/</guid>
-      <description> cdsctl action builtin show Show a CDS builtin action
+      <description>cdsctl action builtin show Show a CDS builtin action
 Synopsis Show a CDS builtin action
-cdsctl action builtin show ACTION-NAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl action builtin - Manage CDS builtin action  </description>
+cdsctl action builtin show ACTION-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
   </channel>

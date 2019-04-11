@@ -49,9 +49,9 @@ cdsctl environment variable list [ PROJECT-KEY ] ENV-NAME [flags]  Options  --fi
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/environment/variable/show/</guid>
-      <description> cdsctl environment variable show Show a CDS environment variable
+      <description>cdsctl environment variable show Show a CDS environment variable
 Synopsis Show a CDS environment variable
-cdsctl environment variable show [ PROJECT-KEY ] ENV-NAME VARIABLE-NAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl environment variable - Manage CDS environment variables  </description>
+cdsctl environment variable show [ PROJECT-KEY ] ENV-NAME VARIABLE-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>

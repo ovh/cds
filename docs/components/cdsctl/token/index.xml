@@ -30,7 +30,7 @@ cdsctl token delete GROUPNAME TOKENID [flags]  Options  --force Force delete wit
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/token/find/</guid>
       <description>cdsctl token find Find an existing token
 Synopsis Find an existing token with his value to have his description, creation date and the name of the creator.
-cdsctl token find TOKEN [flags]  Examples cdsctl token find &amp;quot;myTokenValue&amp;quot;  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl token find TOKEN [flags]  Examples cdsctl token find &amp;quot;myTokenValue&amp;quot;  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -45,7 +45,7 @@ The expiration must be [daily|persistent|session].
 Daily expirate after one day.
 Persistent doesn&amp;rsquo;t expirate until you revoke them.
 Pay attention you must be an administrator of the group to launch this command.
-cdsctl token generate GROUPNAME EXPIRATION [DESCRIPTION] [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl token generate GROUPNAME EXPIRATION [DESCRIPTION] [flags]  Options  --fields string Only display specified object fields.</description>
     </item>
     
     <item>
