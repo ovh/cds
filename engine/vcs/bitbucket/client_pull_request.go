@@ -135,21 +135,26 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 
 func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pullRequest PullRequest) (sdk.VCSPullRequest, error) {
 	pr := sdk.VCSPullRequest{
-		ID: pullRequest.ID,
+		ID:     pullRequest.ID,
+		Closed: pullRequest.Closed,
+		Merged: pullRequest.State == "MERGED",
+		Base: sdk.VCSPushEvent{
+			Branch: sdk.VCSBranch{
+				ID:           strings.Replace(pullRequest.ToRef.ID, "refs/heads/", "", 1),
+				DisplayID:    pullRequest.ToRef.DisplayID,
+				LatestCommit: pullRequest.ToRef.LatestCommit,
+			},
+		},
+		Head: sdk.VCSPushEvent{
+			Branch: sdk.VCSBranch{
+				ID:           strings.Replace(pullRequest.FromRef.ID, "refs/heads/", "", 1),
+				DisplayID:    pullRequest.FromRef.DisplayID,
+				LatestCommit: pullRequest.FromRef.LatestCommit,
+			},
+		},
 	}
 	if len(pullRequest.Links.Self) > 0 {
 		pr.URL = pullRequest.Links.Self[0].Href
-	}
-
-	pr.Base = sdk.VCSPushEvent{
-		Branch: sdk.VCSBranch{
-			ID: strings.Replace(pullRequest.ToRef.ID, "refs/heads/", "", 1),
-		},
-	}
-	pr.Head = sdk.VCSPushEvent{
-		Branch: sdk.VCSBranch{
-			ID: strings.Replace(pullRequest.FromRef.ID, "refs/heads/", "", 1),
-		},
 	}
 	if pullRequest.Author != nil {
 		pr.User = sdk.VCSAuthor{
@@ -159,19 +164,5 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 		}
 	}
 
-	pr.Base.Branch = sdk.VCSBranch{
-		ID:           pullRequest.FromRef.ID,
-		DisplayID:    pullRequest.FromRef.DisplayID,
-		LatestCommit: pullRequest.FromRef.LatestCommit,
-	}
-
-	pr.Head.Branch = sdk.VCSBranch{
-		ID:           pullRequest.ToRef.ID,
-		DisplayID:    pullRequest.ToRef.DisplayID,
-		LatestCommit: pullRequest.ToRef.LatestCommit,
-	}
-
-	pr.Closed = pullRequest.Closed
-	pr.Merged = pullRequest.State == "MERGED"
 	return pr, nil
 }

@@ -325,11 +325,13 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		//Send comment on pull request
 		if nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusStopped.String() {
 			for _, pr := range prs {
-				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
+				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
 					if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {
 						log.Error("sendVCSEventStatus> unable to send PR report%v", err)
 						return nil
 					}
+					// if we found the pull request for head branch we can break (only one PR for the branch should exist)
+					break
 				}
 			}
 		}
