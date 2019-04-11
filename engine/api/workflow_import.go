@@ -283,7 +283,8 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		var pushOptions *workflow.PushOption
 		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {
 			pushOptions = &workflow.PushOption{
-				FromRepository: r.Header.Get(sdk.WorkflowAsCodeHeader),
+				FromRepository:  r.Header.Get(sdk.WorkflowAsCodeHeader),
+				IsDefaultBranch: true,
 			}
 		}
 
