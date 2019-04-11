@@ -256,11 +256,14 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				ExitOnError(err)
 			}
 
+			quiet, _ := cmd.Flags().GetBool("quiet")
 			verbose, _ := cmd.Flags().GetBool("verbose")
-			if !verbose {
-				i = listItem(i, nil, false, nil, verbose, map[string]string{})
+			fields, _ := cmd.Flags().GetString("fields")
+			var fs []string
+			if fields != "" {
+				fs = strings.Split(fields, ",")
 			}
-
+			i = listItem(i, nil, quiet, fs, verbose, map[string]string{})
 			switch format {
 			case "json":
 				b, err := json.Marshal(i)
@@ -279,6 +282,10 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 					fmt.Println(string(b))
 				}
 			default:
+				if quiet {
+					fmt.Println(i.(map[string]string)["key"])
+					return
+				}
 				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
 				e := dump.NewDefaultEncoder()
 				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}

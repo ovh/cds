@@ -2,19 +2,16 @@ package workflow
 
 import (
 	"archive/tar"
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
@@ -27,7 +24,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -933,12 +929,12 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	// Delete all OLD JOIN
 	for _, j := range oldWorkflow.Joins {
 		if err := deleteJoin(db, j); err != nil {
-			return sdk.WrapError(err, "unable to delete all joins on workflow(%d)", w.ID)
+			return sdk.WrapError(err, "unable to delete all joins on workflow(%d - %s)", w.ID, w.Name)
 		}
 	}
 
 	if err := DeleteNotifications(db, oldWorkflow.ID); err != nil {
-		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d)", w.ID)
+		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d - %s)", w.ID, w.Name)
 	}
 
 	// Delete old Root Node
@@ -948,20 +944,20 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		}
 
 		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root); err != nil {
-			return sdk.WrapError(err, "unable to delete root node on workflow(%d)", w.ID)
+			return sdk.WrapError(err, "unable to delete root node on workflow(%d - %s)", w.ID, w.Name)
 		}
 	}
 
 	// Delete workflow data
 	if err := DeleteWorkflowData(db, *oldWorkflow); err != nil {
-		return sdk.WrapError(err, "Update> unable to delete workflow data(%d)", w.ID)
+		return sdk.WrapError(err, "Update> unable to delete workflow data(%d - %s)", w.ID, w.Name)
 	}
 
 	// Delete all node ID
 	w.ResetIDs()
 
 	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
-		return sdk.WrapError(err, "unable to update root node on workflow(%d)", w.ID)
+		return sdk.WrapError(err, "unable to update root node on workflow(%d - %s)", w.ID, w.Name)
 	}
 	w.RootID = w.Root.ID
 
@@ -1047,7 +1043,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 	// Delete all JOINs
 	for _, j := range w.Joins {
 		if err := deleteJoin(db, j); err != nil {
-			return sdk.WrapError(err, "unable to delete all join on workflow(%d)", w.ID)
+			return sdk.WrapError(err, "unable to delete all join on workflow(%d - %s)", w.ID, w.Name)
 		}
 	}
 
@@ -1443,93 +1439,32 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
 
-	apps := make(map[string]exportentities.Application)
-	pips := make(map[string]exportentities.PipelineV1)
-	envs := make(map[string]exportentities.Environment)
-
-	var wrkflw exportentities.Workflow
-
-	mError := new(sdk.MultiError)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WithStack(err)
-		}
-
-		log.Debug("Push> Reading %s", hdr.Name)
-
-		buff := new(bytes.Buffer)
-		if _, err := io.Copy(buff, tr); err != nil {
-			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WithStack(err)
-		}
-
-		var workflowFileName string
-		b := buff.Bytes()
-		switch {
-		case strings.Contains(hdr.Name, ".app."):
-			var app exportentities.Application
-			if err := yaml.Unmarshal(b, &app); err != nil {
-				log.Error("Push> Unable to unmarshal application %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal application %s: %v", hdr.Name, err))
-				continue
-			}
-			apps[hdr.Name] = app
-		case strings.Contains(hdr.Name, ".pip."):
-			var pip exportentities.PipelineV1
-			if err := yaml.Unmarshal(b, &pip); err != nil {
-				log.Error("Push> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal pipeline %s: %v", hdr.Name, err))
-				continue
-			}
-			pips[hdr.Name] = pip
-		case strings.Contains(hdr.Name, ".env."):
-			var env exportentities.Environment
-			if err := yaml.Unmarshal(b, &env); err != nil {
-				log.Error("Push> Unable to unmarshal environment %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal environment %s: %v", hdr.Name, err))
-				continue
-			}
-			envs[hdr.Name] = env
-		default:
-			// if a workflow was already found, it's a mistake
-			if workflowFileName != "" {
-				log.Error("two workflows files found: %s and %s", workflowFileName, hdr.Name)
-				mError.Append(fmt.Errorf("two workflows files found: %s and %s", workflowFileName, hdr.Name))
-				break
-			}
-			if err := yaml.Unmarshal(b, &wrkflw); err != nil {
-				log.Error("Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
-				continue
-			}
-			workflowFileName = hdr.Name
-		}
-	}
-
-	// We only use the multiError during unmarshalling steps.
-	// When a DB transaction has been started, just return at the first error
-	// because transaction may have to be aborted
-	if !mError.IsEmpty() {
-		return nil, nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
-	}
-
-	// load the workflow from database if exists
-	workflowExists, err := Exists(db, proj.Key, wrkflw.Name)
+	data, err := ExtractFromCDSFiles(tr)
 	if err != nil {
-		return nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
+		return nil, nil, err
 	}
-	var wf *sdk.Workflow
-	if workflowExists {
-		wf, err = Load(ctx, db, store, proj, wrkflw.Name, u, LoadOptions{WithIcon: true})
+
+	var workflowExists bool
+	var oldWf *sdk.Workflow
+
+	if opts != nil && opts.OldWorkflow != nil {
+		oldWf = opts.OldWorkflow
+	} else {
+		// load the workflow from database if exists
+		workflowExists, err = Exists(db, proj.Key, data.wrkflw.Name)
 		if err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
+			return nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
 		}
-		if wf.FromRepository != "" && opts != nil && opts.FromRepository != wf.FromRepository {
+		if workflowExists {
+			oldWf, err = Load(ctx, db, store, proj, data.wrkflw.Name, u, LoadOptions{WithIcon: true})
+			if err != nil {
+				return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
+			}
+		}
+	}
+
+	if oldWf != nil {
+		if oldWf.FromRepository != "" && opts != nil && opts.FromRepository != oldWf.FromRepository {
 			return nil, nil, sdk.WrapError(sdk.ErrForbidden, "cannot overwrite ascode workflow")
 		}
 	}
@@ -1541,9 +1476,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	defer tx.Rollback()
 
 	allMsg := []sdk.Message{}
-	for filename, app := range apps {
+	for filename, app := range data.apps {
 		log.Debug("Push> Parsing %s", filename)
-
 		var fromRepo string
 		if opts != nil {
 			fromRepo = opts.FromRepository
@@ -1554,24 +1488,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 				sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unable to import application %s: %v", app.Name, err)))
 		}
 		allMsg = append(allMsg, msgList...)
-
-		// Update application data on project
-		found := false
-		for i, a := range proj.Applications {
-			if a.Name == appDB.Name {
-				proj.Applications[i] = *appDB
-				found = true
-				break
-			}
-		}
-		if !found {
-			proj.Applications = append(proj.Applications, *appDB)
-		}
-
+		proj.SetApplication(*appDB)
 		log.Debug("Push> -- %s OK", filename)
 	}
 
-	for filename, env := range envs {
+	for filename, env := range data.envs {
 		log.Debug("Push> Parsing %s", filename)
 		var fromRepo string
 		if opts != nil {
@@ -1583,24 +1504,11 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		allMsg = append(allMsg, msgList...)
-
-		// Update environment data on project
-		found := false
-		for i, e := range proj.Environments {
-			if e.Name == envDB.Name {
-				proj.Environments[i] = *envDB
-				found = true
-				break
-			}
-		}
-		if !found {
-			proj.Environments = append(proj.Environments, *envDB)
-		}
-
+		proj.SetEnvironment(*envDB)
 		log.Debug("Push> -- %s OK", filename)
 	}
 
-	for filename, pip := range pips {
+	for filename, pip := range data.pips {
 		log.Debug("Push> Parsing %s", filename)
 		var fromRepo string
 		if opts != nil {
@@ -1612,106 +1520,76 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 				fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)))
 		}
 		allMsg = append(allMsg, msgList...)
-
-		// Update pipeline data on project
-		found := false
-		for i, pi := range proj.Pipelines {
-			if pi.Name == pipDB.Name {
-				proj.Pipelines[i] = *pipDB
-				found = true
-				break
-			}
-		}
-		if !found {
-			proj.Pipelines = append(proj.Pipelines, *pipDB)
-		}
-
+		proj.SetPipeline(*pipDB)
 		log.Debug("Push> -- %s OK", filename)
 	}
 
-	var dryRun bool
+	isDefaultBranch := true
 	if opts != nil {
-		dryRun = opts.DryRun
+		isDefaultBranch = opts.IsDefaultBranch
 	}
 
 	// In workflow as code context, if we only have the repowebhook, we skip it
 	//  because it will be automatically recreated later with the proper configuration
 	if opts != nil && opts.FromRepository != "" {
-		if len(wrkflw.Workflow) == 0 {
-			if len(wrkflw.PipelineHooks) == 1 && wrkflw.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
-				wrkflw.PipelineHooks = nil
+		if len(data.wrkflw.Workflow) == 0 {
+			if len(data.wrkflw.PipelineHooks) == 1 && data.wrkflw.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
+				data.wrkflw.PipelineHooks = nil
 			}
 		} else {
-			for node, hooks := range wrkflw.Hooks {
+			for node, hooks := range data.wrkflw.Hooks {
 				if len(hooks) == 1 && hooks[0].Model == sdk.RepositoryWebHookModelName {
-					wrkflw.Hooks[node] = nil
+					data.wrkflw.Hooks[node] = nil
 				}
 			}
 		}
 	}
 
-	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, wf, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
-	if err != nil {
-		log.Error("Push> Unable to import workflow: %v", err)
-		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", wrkflw.Name)
+	var importOptions = ImportOptions{
+		Force: true,
 	}
 
-	// TODO workflow as code, manage derivation workflow
 	if opts != nil {
-		wf.FromRepository = opts.FromRepository
-		if !opts.IsDefaultBranch {
-			wf.DerivationBranch = opts.Branch
-		}
-		// do not override application data if no opts were given
-		if wf.Root.Context.Application != nil && opts.VCSServer != "" {
-			wf.Root.Context.Application.VCSServer = opts.VCSServer
-			wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
-			wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
-		}
+		importOptions.FromRepository = opts.FromRepository
+		importOptions.IsDefaultBranch = opts.IsDefaultBranch
+		importOptions.FromBranch = opts.Branch
+		importOptions.VCSServer = opts.VCSServer
+		importOptions.RepositoryName = opts.RepositoryName
+		importOptions.RepositoryStrategy = opts.RepositoryStrategy
+		importOptions.HookUUID = opts.HookUUID
+	}
 
-		if wf.FromRepository != "" {
-			if len(wf.Root.Hooks) == 0 {
-				wf.Root.Hooks = append(wf.Root.Hooks, sdk.WorkflowNodeHook{
-					WorkflowHookModel: sdk.RepositoryWebHookModel,
-					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
-					UUID:              opts.HookUUID,
-				})
-				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, wf); err != nil {
-					return nil, nil, sdk.WrapError(err, "Unable to get default payload")
-				}
-				wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
-			}
+	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, oldWf, &data.wrkflw, u, importOptions)
+	if err != nil {
+		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
+	}
 
-			if wf.Root.Context.Application != nil {
-				if err := application.Update(tx, store, wf.Root.Context.Application); err != nil {
-					return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
-				}
-			}
+	if wf.Root.Context.Application != nil {
+		if err := application.Update(tx, store, wf.Root.Context.Application); err != nil {
+			return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 		}
+	}
 
-		if err := Update(ctx, tx, store, wf, wf, proj, u); err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to update workflow")
-		}
+	if err := Update(ctx, tx, store, wf, wf, proj, u); err != nil {
+		return nil, nil, sdk.WrapError(err, "Unable to update workflow")
+	}
 
-		if !opts.DryRun {
-			if errHr := HookRegistration(ctx, tx, store, nil, *wf, proj); errHr != nil {
-				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
-			}
+	if isDefaultBranch {
+		if errHr := HookRegistration(ctx, tx, store, oldWf, *wf, proj); errHr != nil {
+			return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
 		}
 	}
 
 	allMsg = append(allMsg, msgList...)
 
-	isDefaultBranch := false
-	if opts != nil {
-		isDefaultBranch = opts.IsDefaultBranch
-	}
-	if dryRun && !isDefaultBranch {
+	if !isDefaultBranch {
 		_ = tx.Rollback()
+		log.Debug("workflow %s rollbacked because it's not comming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
 			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")
 		}
+		log.Debug("workflow %s updated", wf.Name)
 	}
 
 	return allMsg, wf, nil

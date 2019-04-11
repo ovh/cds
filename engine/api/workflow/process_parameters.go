@@ -163,9 +163,14 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 		for _, param := range parentNodeRun.BuildParameters {
 
 			if param.Name == "" || param.Name == "cds.semver" || param.Name == "cds.release.version" ||
-				strings.HasPrefix(param.Name, "cds.proj") || strings.HasPrefix(param.Name, "workflow.") ||
+				strings.HasPrefix(param.Name, "cds.proj") ||
 				strings.HasPrefix(param.Name, "cds.version") || strings.HasPrefix(param.Name, "cds.run.number") ||
 				strings.HasPrefix(param.Name, "cds.workflow") || strings.HasPrefix(param.Name, "job.requirement") {
+				continue
+			}
+
+			if strings.HasPrefix(param.Name, "workflow.") {
+				parentParams = append(parentParams, param)
 				continue
 			}
 
