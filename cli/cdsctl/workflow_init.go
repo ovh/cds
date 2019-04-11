@@ -31,8 +31,12 @@ Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsct
 	},
 	Flags: []cli.Flag{
 		{
+			Name:  "repository-url",
+			Usage: "(Optionnal) Set the repository remote URL. Default is the fetch URL",
+		},
+		{
 			Name:  "repository-fullname",
-			Usage: "Set the repository fullname defined in repository manager",
+			Usage: "(Optionnal) Set the repository fullname defined in repository manager",
 		},
 		{
 			Name:  "repository-ssh-key",
@@ -44,12 +48,15 @@ Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsct
 		},
 		{
 			Name:  "pipeline",
-			Usage: "Set the root pipeline you want to use",
+			Usage: "(Optionnal) Set the root pipeline you want to use. If empty it will propose you to reuse of create a pipeline.",
 		},
 	},
 }
 
 func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, error) {
+	if cfg.Verbose {
+		fmt.Println("interactiveChooseProject: ", defaultValue)
+	}
 	if defaultValue != "" {
 		return defaultValue, nil
 	}
@@ -368,16 +375,23 @@ func workflowInitRun(c cli.Values) error {
 		return fmt.Errorf("unable to get project: %v", err)
 	}
 
-	repoFullname, err := gitRepo.Name()
-	if err != nil {
-		return fmt.Errorf("unable to retrieve repository name: %v", err)
+	repoFullname := c.GetString("repository-fullname")
+	if repoFullname == "" {
+		repoFullname, err = gitRepo.Name()
+		if err != nil {
+			return fmt.Errorf("unable to retrieve repository name: %v", err)
+		}
 	}
 
 	fullnames := strings.SplitN(repoFullname, "/", 2)
 	repoShortname := fullnames[1]
-	fetchURL, err := gitRepo.FetchURL()
-	if err != nil {
-		return fmt.Errorf("unable to retrieve origin URL: %v", err)
+
+	fetchURL := c.GetString("repository-url")
+	if fetchURL == "" {
+		fetchURL, err = gitRepo.FetchURL()
+		if err != nil {
+			return fmt.Errorf("unable to retrieve origin URL: %v", err)
+		}
 	}
 
 	fmt.Printf("Initializing workflow from %s (%v)...\n", cli.Magenta(repoFullname), cli.Magenta(fetchURL))

@@ -36,6 +36,7 @@ type PushOption struct {
 	RepositoryName     string
 	RepositoryStrategy sdk.RepositoryStrategy
 	HookUUID           string
+	Force              bool
 	OldWorkflow        *sdk.Workflow
 }
 

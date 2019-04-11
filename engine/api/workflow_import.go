@@ -277,7 +277,6 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		defer r.Body.Close()
 
 		log.Debug("Read %d bytes from body", len(btes))
-
 		tr := tar.NewReader(bytes.NewReader(btes))
 
 		var pushOptions *workflow.PushOption
@@ -285,6 +284,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			pushOptions = &workflow.PushOption{
 				FromRepository:  r.Header.Get(sdk.WorkflowAsCodeHeader),
 				IsDefaultBranch: true,
+				Force:           FormBool(r, "force"),
 			}
 		}
 
