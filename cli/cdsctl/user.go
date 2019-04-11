@@ -44,12 +44,22 @@ var userMeCmd = cli.Command{
 }
 
 func userMeRun(v cli.Values) (interface{}, error) {
-	fmt.Printf("CDS API:%s\n", cfg.Host)
 	u, err := client.UserGet(cfg.User)
 	if err != nil {
 		return nil, err
 	}
-	return *u, nil
+	var res = struct {
+		Url      string `cli:"url"`
+		Username string `cli:"username,key"`
+		Fullname string `cli:"fullname"`
+		Email    string `cli:"email"`
+	}{
+		Url:      cfg.Host,
+		Username: u.Username,
+		Fullname: u.Fullname,
+		Email:    u.Email,
+	}
+	return res, nil
 }
 
 var userShowCmd = cli.Command{

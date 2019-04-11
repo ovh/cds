@@ -36,6 +36,51 @@ type Project struct {
 	Favorite         bool                 `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 }
 
+// SetApplication data on project
+func (proj *Project) SetApplication(app Application) {
+	found := false
+	for i, a := range proj.Applications {
+		if a.Name == app.Name {
+			proj.Applications[i] = app
+			found = true
+			break
+		}
+	}
+	if !found {
+		proj.Applications = append(proj.Applications, app)
+	}
+}
+
+// SetEnvironment data on project
+func (proj *Project) SetEnvironment(env Environment) {
+	found := false
+	for i, e := range proj.Environments {
+		if e.Name == env.Name {
+			proj.Environments[i] = env
+			found = true
+			break
+		}
+	}
+	if !found {
+		proj.Environments = append(proj.Environments, env)
+	}
+}
+
+// SetPipeline data on project
+func (proj *Project) SetPipeline(pip Pipeline) {
+	found := false
+	for i, p := range proj.Pipelines {
+		if p.Name == pip.Name {
+			proj.Pipelines[i] = pip
+			found = true
+			break
+		}
+	}
+	if !found {
+		proj.Pipelines = append(proj.Pipelines, pip)
+	}
+}
+
 // IsValid returns error if the project is not valid
 func (proj Project) IsValid() error {
 	if !NamePatternRegex.MatchString(proj.Key) {
