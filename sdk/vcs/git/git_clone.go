@@ -84,22 +84,28 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 
 	allCmd = append(allCmd, gitcmd)
 
+	// if a specific commit hash is given, try to reset current repo to this commit
 	if opts != nil && opts.CheckoutCommit != "" && opts.Tag == "" {
-		fetchCmd := cmd{
-			cmd:  "git",
-			args: []string{"fetch", "origin", opts.CheckoutCommit},
-		}
-		userLogCommand += "\n\rExecuting: git " + strings.Join(fetchCmd.args, " ")
-		//Locate the git reset cmd to the right directory
-		if path == "" {
-			t := strings.Split(repo, "/")
-			fetchCmd.dir = strings.TrimSuffix(t[len(t)-1], ".git")
-		} else {
-			fetchCmd.dir = path
+		// if no branch or tag given, this means that we cloned the repo on the default branch, we need to fetch the target commit id
+		// fetching a specific commit hash will not work for old git version (1.7 for example)
+		if opts.Branch == "" && opts.Tag == "" {
+			fetchCmd := cmd{
+				cmd:  "git",
+				args: []string{"fetch", "origin", opts.CheckoutCommit},
+			}
+			userLogCommand += "\n\rExecuting: git " + strings.Join(fetchCmd.args, " ")
+			//Locate the git reset cmd to the right directory
+			if path == "" {
+				t := strings.Split(repo, "/")
+				fetchCmd.dir = strings.TrimSuffix(t[len(t)-1], ".git")
+			} else {
+				fetchCmd.dir = path
+			}
+
+			allCmd = append(allCmd, fetchCmd)
 		}
 
-		allCmd = append(allCmd, fetchCmd)
-
+		// even if we cloned the right branch or tag, we need to reset to the given commit hash that could be different than HEAD
 		resetCmd := cmd{
 			cmd:  "git",
 			args: []string{"reset", "--hard", opts.CheckoutCommit},
