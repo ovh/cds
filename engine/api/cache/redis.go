@@ -71,7 +71,7 @@ const retryWaitDuration = retryWait * time.Millisecond
 //Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) bool {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return false
 	}
 
@@ -101,7 +101,7 @@ func (s *RedisStore) Get(key string, value interface{}) bool {
 //SetWithTTL a value in local store (0 for eternity)
 func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 	b, err := json.Marshal(value)
@@ -125,7 +125,7 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 //UpdateTTL update the ttl linked to the key
 func (s *RedisStore) UpdateTTL(key string, ttl int) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 
@@ -150,7 +150,7 @@ func (s *RedisStore) Set(key string, value interface{}) {
 //Delete a key in redis
 func (s *RedisStore) Delete(key string) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 	var errRedis error
@@ -169,7 +169,7 @@ func (s *RedisStore) Delete(key string) {
 //DeleteAll delete all mathing keys in redis
 func (s *RedisStore) DeleteAll(pattern string) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 	keys, err := s.Client.Keys(pattern).Result()
@@ -188,7 +188,7 @@ func (s *RedisStore) DeleteAll(pattern string) {
 //Enqueue pushes to queue
 func (s *RedisStore) Enqueue(queueName string, value interface{}) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 	b, err := json.Marshal(value)
@@ -203,7 +203,7 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) {
 //Dequeue gets from queue This is blocking while there is nothing in the queue
 func (s *RedisStore) Dequeue(queueName string, value interface{}) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 read:
@@ -226,7 +226,7 @@ read:
 //QueueLen returns the length of a queue
 func (s *RedisStore) QueueLen(queueName string) int {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return 0
 	}
 
@@ -248,7 +248,7 @@ func (s *RedisStore) QueueLen(queueName string) int {
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 
@@ -284,7 +284,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 // Publish a msg in a channel
 func (s *RedisStore) Publish(channel string, value interface{}) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return
 	}
 
@@ -313,7 +313,7 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 // Subscribe to a channel
 func (s *RedisStore) Subscribe(channel string) PubSub {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return nil
 	}
 	return s.Client.Subscribe(channel)
@@ -322,7 +322,7 @@ func (s *RedisStore) Subscribe(channel string) PubSub {
 // GetMessageFromSubscription from a redis PubSub
 func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
+		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
 		return "", nil
 	}
 

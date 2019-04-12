@@ -115,6 +115,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		}
 	}
 
+	t.Logf("Connecting to redis store: %s", RedisHost)
 	store, err := cache.NewRedisStore(RedisHost, RedisPassword, 60)
 	if err != nil {
 		t.Fatalf("Unable to connect to redis: %v", err)
