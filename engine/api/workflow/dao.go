@@ -240,7 +240,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 }
 
 // LoadAllNames loads all workflow names for a project.
-func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) (sdk.IDNames, error) {
 	query := `
 		SELECT workflow.name, workflow.id, workflow.description, workflow.icon
 		FROM workflow
@@ -248,7 +248,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 		AND workflow.to_delete = false
 		ORDER BY workflow.name ASC`
 
-	var res []sdk.IDName
+	var res sdk.IDNames
 	if _, err := db.Select(&res, query, projID); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil
