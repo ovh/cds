@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -947,7 +948,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	// Check repository value
 	if vcsInfos.Repository == "" {
 		vcsInfos.Repository = applicationRepositoryFullname
-	} else if vcsInfos.Repository != applicationRepositoryFullname {
+	} else if strings.ToLower(vcsInfos.Repository) != strings.ToLower(applicationRepositoryFullname) {
 		//The input repository is not the same as the application, we have to check if it is a fork
 		forks, err := client.ListForks(ctx, applicationRepositoryFullname)
 		if err != nil {
