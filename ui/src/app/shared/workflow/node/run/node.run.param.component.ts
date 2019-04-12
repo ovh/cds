@@ -134,6 +134,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
                 nodeRunID = rootNodeRun.id;
             }
         }
+        this.num = num;
 
         // if the pipeline was already launched, we refresh data from API
 
@@ -217,9 +218,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
                         this.lastNum = n.num + 1;
                         this.getCommits(n.num + 1, false);
                     });
-            }
-
-            if (this.num != null) {
+            } else {
                 this.getCommits(this.num, false);
             }
         }
@@ -253,6 +252,10 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         }
 
         if (this._firstCommitLoad && branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
+            return;
+        }
+
+        if (num == null) {
             return;
         }
 
