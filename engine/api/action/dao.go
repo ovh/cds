@@ -1,7 +1,6 @@
 package action
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -203,7 +202,7 @@ func GetRequirementsTypeModelAndValueStartByWithLock(db gorp.SqlExecutor, value 
     FROM action_requirement
     WHERE type = 'model' AND value LIKE $1
     FOR UPDATE SKIP LOCKED
-  `).Args(fmt.Sprintf("%s%%", value))
+  `).Args(value + "%")
 
 	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get requirements")
@@ -220,7 +219,7 @@ func GetRequirementsTypeModelAndValueStartBy(db gorp.SqlExecutor, value string) 
     SELECT *
     FROM action_requirement
     WHERE type = 'model' AND value LIKE $1
-  `).Args(fmt.Sprintf("%s%%", value))
+  `).Args(value + "%")
 
 	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get requirements")
