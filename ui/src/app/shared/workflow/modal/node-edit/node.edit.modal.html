@@ -1,0 +1,42 @@
+<ng-template let-context let-modal="modal" #nodeEdittModal>
+    <div class="header">MON TITRE</div>
+    <div class="content">
+       <div class="ui grid">
+           <div class="four wide column">
+               <div class="ui secondary vertical pointing menu">
+                   <a class="item" [class.active]="selected === 'context'" (click)="selected = 'context'">
+                       {{ 'workflow_node_context_label' | translate }}
+                   </a>
+                   <a class="item" [class.active]="selected === 'input'" (click)="selected = 'input'">
+                       {{ 'workflow_node_input' | translate }}
+                   </a>
+                   <a class="item" [class.active]="selected === 'conditions'" (click)="selected = 'conditions'">
+                       {{ 'workflow_node_condition_label' | translate }}
+                   </a>
+                   <a class="item" [class.active]="selected === 'permissions'" (click)="selected = 'permissions'">
+                       {{ 'common_permissions' | translate }}
+                   </a>
+                   <a class="item" [class.active]="selected === 'vcs'" (click)="selected = 'vcs'">
+                       {{ 'VCS' | translate }}
+                   </a>
+               </div>
+           </div>
+           <div class="twelve wide column">
+               <div [ngSwitch]="selected">
+                   <ng-container *ngSwitchCase="'context'">
+                        <app-workflow-node-context [project]="project" [workflow]="workflow" [node]="node"></app-workflow-node-context>
+                   </ng-container>
+                   <ng-container *ngSwitchCase="'input'">
+                        <app-workflow-node-input [project]="project" [workflow]="workflow" [node]="node"></app-workflow-node-input>
+                   </ng-container>
+                   <ng-container *ngSwitchCase="'conditions'">
+                   </ng-container>
+                   <ng-container *ngSwitchCase="'permissions'">
+                   </ng-container>
+                   <ng-container *ngSwitchCase="'vcs'">
+                   </ng-container>
+               </div>
+           </div>
+       </div>
+    </div>
+</ng-template>

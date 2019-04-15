@@ -95,7 +95,6 @@
     <i *ngIf="sidebarMode !== sidebarModes.RUNS" class="ui icon black close closeButton" (click)="changeToRunsMode()"></i>
     <div class="sidebar-toggle">
         <ng-container *ngIf="project && workflow" [ngSwitch]="sidebarMode">
-            <app-workflow-sidebar-wnode-edit *ngSwitchCase="sidebarModes.EDIT" [project]="project" [workflow]="workflow"></app-workflow-sidebar-wnode-edit>
             <app-workflow-sidebar-hook *ngSwitchCase="sidebarModes.EDIT_HOOK" [project]="project" [workflow]="workflow"></app-workflow-sidebar-hook>
             <app-workflow-sidebar-run-list *ngSwitchCase="sidebarModes.RUNS" [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-list>
             <app-workflow-sidebar-run-node *ngSwitchCase="sidebarModes.RUN_NODE" [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-node>

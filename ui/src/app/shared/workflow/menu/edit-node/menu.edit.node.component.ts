@@ -1,28 +1,29 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { FetchPipeline } from 'app/store/pipelines.action';
-import { PipelinesState } from 'app/store/pipelines.state';
 import { AddHookWorkflow, AddJoinWorkflow, AddNodeTriggerWorkflow, UpdateHookWorkflow, UpdateWorkflow } from 'app/store/workflows.action';
 import { cloneDeep } from 'lodash';
-import {IPopup, ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {IPopup} from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
-import { finalize, flatMap } from 'rxjs/operators';
-import { PermissionValue } from '../../../../model/permission.model';
-import { Project } from '../../../../model/project.model';
-import * as workflowModel from '../../../../model/workflow.model';
-import { WorkflowCoreService } from '../../../../service/services.module';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { ToastService } from '../../../toast/ToastService';
-import { WorkflowNodeConditionsComponent } from '../../modal/conditions/node.conditions.component';
-import { WorkflowNodeContextComponent } from '../../modal/context/workflow.node.context.component';
-import { WorkflowDeleteNodeComponent } from '../../modal/delete/workflow.node.delete.component';
-import { WorkflowHookModalComponent } from '../../modal/hook-modal/hook.modal.component';
-import { WorkflowNodeOutGoingHookEditComponent } from '../../modal/outgoinghook-edit/outgoinghook.edit.component';
-import { WorkflowNodePermissionsComponent } from '../../modal/permissions/node.permissions.component';
-import { WorkflowTriggerComponent } from '../../modal/trigger/workflow.trigger.component';
-import {WNode} from "../../../../model/workflow.model";
-import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trigger/node.trigger.component';
+import { finalize } from 'rxjs/operators';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {
+    WNode, WNodeHook,
+    WNodeJoin,
+    WNodeTrigger,
+    WNodeType,
+    Workflow,
+    WorkflowPipelineNameImpact
+} from 'app/model/workflow.model';
+import {Project} from 'app/model/project.model';
+import {PermissionValue} from 'app/model/permission.model';
+import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/trigger/workflow.trigger.component';
+import {WorkflowNodeOutGoingHookEditComponent} from 'app/shared/workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
+import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
+import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
+import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-modal/hook.modal.component';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {WorkflowCoreService} from 'app/service/workflow/workflow.core.service';
 
 @Component({
     selector: 'app-workflow-menu-wnode-edit',
@@ -34,7 +35,7 @@ export class WorkflowWNodeMenuEditComponent {
 
     // Project that contains the workflow
     @Input() project: Project;
-    @Input() workflow: workflowModel.Workflow;
+    @Input() workflow: Workflow;
     @Input() popup: IPopup;
     @Input() node: WNode;
 
@@ -45,30 +46,24 @@ export class WorkflowWNodeMenuEditComponent {
     // Modal
     @ViewChild('workflowDeleteNode')
     workflowDeleteNode: WorkflowDeleteNodeComponent;
-    @ViewChild('workflowContext')
-    workflowContext: WorkflowNodeContextComponent;
-    @ViewChild('workflowConditions')
-    workflowConditions: WorkflowNodeConditionsComponent;
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
     @ViewChild('workflowEditOutgoingHook')
     workflowEditOutgoingHook: WorkflowNodeOutGoingHookEditComponent;
     @ViewChild('workflowAddHook')
     workflowAddHook: WorkflowHookModalComponent;
-    @ViewChild('workflowNodePermissions')
-    workflowNodePermissions: WorkflowNodePermissionsComponent;
-    @ViewChild('nodeNameWarningModal')
-    nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('nodeEditModal')
+    nodeEditModal: WorkflowNodeEditModalComponent;
+
 
     // Subscription
-    nameWarning: workflowModel.WorkflowPipelineNameImpact;
+    nameWarning: WorkflowPipelineNameImpact;
 
     constructor(
         private store: Store,
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _modalService: SuiModalService
     ) {
 
     }
@@ -81,8 +76,8 @@ export class WorkflowWNodeMenuEditComponent {
         if (!this.canEdit()) {
             return;
         }
-        let clonedWorkflow: workflowModel.Workflow = cloneDeep(this.workflow);
-        let node = workflowModel.Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        let node = Workflow.getNodeByID(this.node.id, clonedWorkflow);
         if (!node) {
             return;
         }
@@ -107,7 +102,7 @@ export class WorkflowWNodeMenuEditComponent {
         if (!this.canEdit()) {
             return;
         }
-        this.nameWarning = workflowModel.Workflow.getNodeNameImpact(this.workflow, this.node.name);
+        this.nameWarning = Workflow.getNodeNameImpact(this.workflow, this.node.name);
         this.displayInputName = true;
     }
 
@@ -121,34 +116,14 @@ export class WorkflowWNodeMenuEditComponent {
         }
     }
 
-    openWarningModal(): void {
-        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.nodeNameWarningModal);
-        this._modalService.open(tmpl);
-    }
-
-    openEditContextModal(): void {
-        this.store.dispatch(new FetchPipeline({
-            projectKey: this.project.key,
-            pipelineName: this.workflow.pipelines[this.node.context.pipeline_id].name
-        })).pipe(
-            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(
-                this.project.key, this.workflow.pipelines[this.node.context.pipeline_id].name
-            )))
-        ).subscribe((pip) => {
-            if (pip) {
-                setTimeout(() => {
-                    this.workflowContext.show();
-                }, 100);
-            }
-        });
-    }
-
-    openEditRunConditions(): void {
-        this.workflowConditions.show();
-    }
-
-    openNodePermissions(): void {
-        this.workflowNodePermissions.show();
+    openEditNodeModal(): void {
+        this.popup.close();
+        if (!this.canEdit()) {
+            return;
+        }
+        if (this.nodeEditModal) {
+            this.nodeEditModal.show();
+        }
     }
 
     openTriggerModal(t: string, parent: boolean): void {
@@ -172,16 +147,17 @@ export class WorkflowWNodeMenuEditComponent {
     }
 
     openAddHookModal(): void {
+        this.popup.close();
         if (this.canEdit() && this.workflowAddHook) {
             this.workflowAddHook.show();
         }
     }
 
     createFork(): void {
-        let n = workflowModel.Workflow.getNodeByID(this.node.id, this.workflow);
-        let fork = new workflowModel.WNode();
-        fork.type = workflowModel.WNodeType.FORK;
-        let t = new workflowModel.WNodeTrigger();
+        let n = Workflow.getNodeByID(this.node.id, this.workflow);
+        let fork = new WNode();
+        fork.type = WNodeType.FORK;
+        let t = new WNodeTrigger();
         t.child_node = fork;
         t.parent_node_id = n.id;
         t.parent_node_name = n.ref;
@@ -199,10 +175,10 @@ export class WorkflowWNodeMenuEditComponent {
     }
 
     createJoin(): void {
-        let join = new workflowModel.WNode();
-        join.type = workflowModel.WNodeType.JOIN;
-        join.parents = new Array<workflowModel.WNodeJoin>();
-        let p = new workflowModel.WNodeJoin();
+        let join = new WNode();
+        join.type = WNodeType.JOIN;
+        join.parents = new Array<WNodeJoin>();
+        let p = new WNodeJoin();
         p.parent_id = this.node.id;
         p.parent_name = this.node.ref;
         join.parents.push(p);
@@ -218,7 +194,7 @@ export class WorkflowWNodeMenuEditComponent {
             });
     }
 
-    updateWorkflow(w: workflowModel.Workflow, modal: ActiveModal<boolean, boolean, void>): void {
+    updateWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
@@ -237,7 +213,7 @@ export class WorkflowWNodeMenuEditComponent {
             });
     }
 
-    updateHook(hook: workflowModel.WNodeHook, modal: ActiveModal<boolean, boolean, void>): void {
+    updateHook(hook: WNodeHook, modal: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
 
         let action = new UpdateHookWorkflow({
@@ -264,6 +240,7 @@ export class WorkflowWNodeMenuEditComponent {
     }
 
     linkJoin(): void {
+        this.popup.close();
         if (!this.canEdit()) {
             return;
         }

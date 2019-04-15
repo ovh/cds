@@ -86,7 +86,6 @@ import { WorkflowTemplateParamFormComponent } from './workflow-template/param-fo
 import { WorkflowNodeConditionFormComponent } from './workflow/modal/conditions/condition-form/condition.component';
 import { WorkflowNodeConditionListComponent } from './workflow/modal/conditions/condition-list/condition.list.component';
 import { WorkflowNodeConditionsComponent } from './workflow/modal/conditions/node.conditions.component';
-import { WorkflowNodeContextComponent } from './workflow/modal/context/workflow.node.context.component';
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
@@ -96,11 +95,9 @@ import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trig
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeHookFormComponent } from './workflow/node/hook/form/hook.form.component';
 import { WorkflowNodeOutGoingHookFormComponent } from './workflow/node/outgoinghook-form/outgoinghook.form.component';
-import { WorkflowNodeFormComponent } from './workflow/node/pipeline-form/workflow.node.form.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
 import { WorkflowNodeAddWizardComponent } from './workflow/node/wizard/node.wizard.component';
 import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
-import { WorkflowWNodeSidebarEditComponent } from './workflow/sidebar/edit-node/sidebar.edit.component';
 import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
 import { WorkflowSidebarRunListComponent } from './workflow/sidebar/run-list/workflow.sidebar.run.component';
 import { ActionStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/action/action.summary.component';
@@ -115,8 +112,10 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
-import {WorkflowWNodeMenuEditComponent} from '@cds/shared/workflow/menu/edit-node/menu.edit.node.component';
-import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trigger/node.trigger.component';
+import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
+import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
+import {WorkflowWizardNodeInputComponent} from './workflow/wizard/input/wizard.input.component';
+import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wizard.context.compontent';
 
 @NgModule({
     imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,
@@ -177,7 +176,6 @@ import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trig
         WorkflowWNodeJoinComponent,
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
-        WorkflowWNodeSidebarEditComponent,
         WorkflowNodeOutGoingHookFormComponent,
         WorkflowNodeOutGoingHookEditComponent,
         WorkflowHookModalComponent,
@@ -190,13 +188,10 @@ import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trig
         ActionStepSummaryComponent,
         WorkflowSidebarRunHookComponent,
         WorkflowSaveAsCodeComponent,
-        WorkflowNodeTriggerComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
         WorkflowDeleteNodeComponent,
-        WorkflowNodeContextComponent,
-        WorkflowNodeFormComponent,
         WorkflowNodeConditionsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
@@ -205,6 +200,9 @@ import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trig
         WorkflowTriggerComponent,
         WorkflowNodeConditionFormComponent,
         WorkflowNodeConditionListComponent,
+        WorkflowNodeEditModalComponent,
+        WorkflowWizardNodeContextComponent,
+        WorkflowWizardNodeInputComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,
@@ -301,7 +299,6 @@ import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trig
         LabelsEditComponent,
 
         WorkflowWNodeComponent,
-        WorkflowWNodeSidebarEditComponent,
         WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
@@ -310,16 +307,14 @@ import {WorkflowNodeTriggerComponent} from '@cds/shared/workflow/modal/node-trig
         WorkflowWNodeMenuEditComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,
-        WorkflowNodeContextComponent,
-        WorkflowNodeFormComponent,
         WorkflowNodeConditionsComponent,
         WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodePermissionsComponent,
-        WorkflowNodeTriggerComponent,
         WorkflowTriggerComponent,
+        WorkflowNodeEditModalComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,
