@@ -323,8 +323,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 
 	case TypeBranchDeletion:
 		now := time.Now()
-		// nextSchedule = now.Add(24 * time.Hour)
-		nextSchedule = now.Add(2 * time.Minute)
+		nextSchedule = now.Add(24 * time.Hour)
 	}
 
 	//Craft a new execution
