@@ -364,7 +364,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		defer tx.Rollback()
 
 		if _, err := workflow.LoadNodeJobRun(tx, api.Cache, id); err != nil {
-			if err != sdk.ErrWorkflowNodeRunJobNotFound {
+			if !sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 				return sdk.WrapError(err, "cannot load node job run")
 			}
 			return nil
