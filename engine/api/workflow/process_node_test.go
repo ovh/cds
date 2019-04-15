@@ -823,6 +823,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.Equal(t, "defaultCommit", mapParams2["git.hash"])
 	assert.Equal(t, "john.snow", mapParams2["git.author"])
 	assert.Equal(t, "super default commit", mapParams2["git.message"])
+	assert.Equal(t, "mylastcommit", mapParams2["workflow.root.git.hash"])
 	assert.Equal(t, "stash", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSServer)
 
 	mapParams3 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].BuildParameters)
@@ -830,6 +831,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.Equal(t, "mylastcommit", mapParams3["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams3["git.author"])
 	assert.Equal(t, "super commit", mapParams3["git.message"])
+	assert.Equal(t, "defaultBranch", mapParams3["workflow.child1.git.branch"])
 	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].VCSServer)
 }
 
