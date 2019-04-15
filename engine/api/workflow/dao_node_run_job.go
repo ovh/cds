@@ -225,7 +225,7 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
 			return nil, sdk.WithStack(sdk.ErrJobLocked)
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	if store != nil {
 		getHatcheryInfo(store, &j)
