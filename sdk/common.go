@@ -45,6 +45,24 @@ type IDName struct {
 	Labels      []Label `json:"labels,omitempty" db:"-"`
 }
 
+type IDNames []IDName
+
+func (idNames IDNames) IDs() []int64 {
+	res := make([]int64, len(idNames))
+	for i := range idNames {
+		res[i] = idNames[i].ID
+	}
+	return res
+}
+
+func (idNames IDNames) Names() []string {
+	res := make([]string, len(idNames))
+	for i := range idNames {
+		res[i] = idNames[i].Name
+	}
+	return res
+}
+
 // NamePattern  Pattern for project/application/pipeline/group name
 const NamePattern = "^[a-zA-Z0-9._-]{1,}$"
 

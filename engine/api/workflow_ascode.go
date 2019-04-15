@@ -55,25 +55,13 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WrapError(errW, "unable to load workflow")
 		}
 
-		// Workflow must have a repository webhook on root node
-		found := false
-		for _, h := range wf.WorkflowData.Node.Hooks {
-			if h.HookModelName == sdk.RepositoryWebHookModel.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Root node must have a repository web hook")
-		}
-
 		// Sync as code event
 		if len(wf.AsCodeEvent) > 0 {
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WrapError(err, "unable to start transaction")
 			}
-			if err := workflow.SyncAsCodeEvent(ctx, tx, api.Cache, proj, wf); err != nil {
+			if err := workflow.SyncAsCodeEvent(ctx, tx, api.Cache, proj, wf, u); err != nil {
 				tx.Rollback() // nolint
 				return err
 			}

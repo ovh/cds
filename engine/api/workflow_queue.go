@@ -363,6 +363,12 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
+		if _, err := workflow.LoadNodeJobRun(tx, api.Cache, id); err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+				return err
+			}
+			return nil
+		}
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
 			return sdk.WrapError(err, "Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}

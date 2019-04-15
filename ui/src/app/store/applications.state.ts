@@ -144,15 +144,7 @@ export class ApplicationsState {
                 let applications = Object.assign({}, state.applications, {
                     [action.payload.projectKey + '/' + app.name]: app,
                 });
-                if (state.applications[appKey] && state.applications[appKey].usage &&
-                    Array.isArray(state.applications[appKey].usage.workflows)) {
-                    state.applications[appKey].usage.workflows.forEach((wf) => {
-                        ctx.dispatch(new DeleteFromCacheWorkflow({
-                            projectKey: action.payload.projectKey,
-                            workflowName: wf.name
-                        }));
-                    });
-                }
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
                 delete applications[appKey];
 
                 ctx.setState({
@@ -321,6 +313,8 @@ export class ApplicationsState {
                     deployment_strategies: app.deployment_strategies
                 });
 
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
+
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -384,6 +378,8 @@ export class ApplicationsState {
                     vcs_strategy: app.vcs_strategy
                 });
 
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
+
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -406,6 +402,8 @@ export class ApplicationsState {
                     repository_fullname: app.repository_fullname,
                     vcs_strategy: app.vcs_strategy
                 });
+
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
 
                 ctx.setState({
                     ...state,
@@ -464,5 +462,20 @@ export class ApplicationsState {
     @Action(ActionApplication.ClearCacheApplication)
     clearCache(ctx: StateContext<ApplicationsStateModel>, _: ActionApplication.ClearCacheApplication) {
         ctx.setState(getInitialApplicationsState());
+    }
+
+    //  ------- Helpers --------- //
+    clearWorkflowCache(ctx: StateContext<ApplicationsStateModel>, projectKey: string, appKey: string) {
+        const state = ctx.getState();
+
+        if (state.applications[appKey] && state.applications[appKey].usage &&
+            Array.isArray(state.applications[appKey].usage.workflows)) {
+            state.applications[appKey].usage.workflows.forEach((wf) => {
+                ctx.dispatch(new DeleteFromCacheWorkflow({
+                    projectKey: projectKey,
+                    workflowName: wf.name
+                }));
+            });
+        }
     }
 }

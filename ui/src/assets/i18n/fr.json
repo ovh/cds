@@ -941,6 +941,7 @@
   "workflow_save_as_code_title": "Sauvegarde du workflow as code",
   "workflow_save_as_code_pending": "Envoie des modifications",
   "workflow_as_code_pr_success": "Une demande de revue a été créée :",
+  "workflow_as_code_no_edit": "Edition impossible via l'interface lorsque le mode as code est actif",
 
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
   "workflow_resync_vcs": "Resynchroniser les statuts VCS",

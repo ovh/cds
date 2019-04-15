@@ -150,7 +150,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	// NODE CONTEXT BUILD PARAMETER
 	computeNodeContextBuildParameters(ctx, proj, wr, run, n, runContext)
 
-	// PARENT BUILD PARAMETER
+	// PARENT BUILD PARAMETER WITH git.*
 	if len(parents) > 0 {
 		_, next := observability.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(wr, parents)
@@ -164,69 +164,88 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
 
-	currentApplicationParam := sdk.ParameterFind(&run.BuildParameters, "cds.application")
-
-	// GIT PARAMETER VALUE
-	currentJobGitValues := map[string]string{}
-	for _, param := range run.BuildParameters {
-		switch param.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
-			currentJobGitValues[param.Name] = param.Value
-		}
-	}
-
-	// Retrieve previous git information
-	if currentApplicationParam != nil && n.Context.ApplicationID > 0 && wr.Workflow.Applications[n.Context.ApplicationID].RepositoryFullname != "" {
-		for _, nr := range wr.WorkflowNodeRuns {
-			nrApplicationParam := sdk.ParameterFind(&nr[0].BuildParameters, "cds.application")
-			if nrApplicationParam == nil {
-				continue
-			}
-			p := sdk.ParameterFind(&nr[0].BuildParameters, tagGitRepository)
-			if p == nil || (currentApplicationParam.Value != nrApplicationParam.Value && p.Value != wr.Workflow.Applications[n.Context.ApplicationID].RepositoryFullname) {
-				continue
-			}
-
-			// retrieve git information
-			for _, tag := range []string{tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL} {
-				p := sdk.ParameterFind(&nr[0].BuildParameters, tag)
-				if p != nil {
-					currentJobGitValues[tag] = p.Value
-				}
-			}
-		}
-	} else {
-		// GET GIT INFO
-		for _, pa := range parents {
-			// retrieve git information
-			for _, tag := range []string{tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL} {
-				p := sdk.ParameterFind(&pa.BuildParameters, tag)
-				if p != nil {
-					currentJobGitValues[tag] = p.Value
-				}
-			}
-		}
-	}
-
 	isRoot := n.ID == wr.Workflow.WorkflowData.Node.ID
-	var vcsInfos *vcsInfos
+
+	// GIT PARAMS
+	// Here, run.BuildParameters contains parent git params, get from getParentParameters
+
 	var app sdk.Application
+	var currentRepo string
+	currentJobGitValues := map[string]string{}
+	needVCSInfo := false
+
+	// Get current application and repository
 	if n.Context.ApplicationID != 0 {
 		app = wr.Workflow.Applications[n.Context.ApplicationID]
-	}
-	var errVcs error
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-	vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
-	if errVcs != nil {
-		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errVcs.Error()},
-		})
-		return nil, false, sdk.WrapError(errVcs, "unable to get git informations")
+		currentRepo = app.RepositoryFullname
 	}
 
-	if isRoot && vcsInfos != nil {
-		setValuesGitInBuildParameters(run, *vcsInfos)
+	parentRepo := sdk.ParameterFind(&run.BuildParameters, tagGitRepository)
+
+	// Compute git params for current job
+	// Get from parent when
+	// * is root because they come from payload
+	// * no repo on current job
+	// * parent was on same repo
+	if isRoot || currentRepo == "" || (parentRepo != nil && parentRepo.Value == currentRepo) {
+		for _, param := range run.BuildParameters {
+			switch param.Name {
+			case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL, tagGitServer:
+				currentJobGitValues[param.Name] = param.Value
+			}
+		}
+		if isRoot {
+			needVCSInfo = true
+		}
+	}
+	// Find an ancestor on the same repo
+	if currentRepo != "" && parentRepo != nil && parentRepo.Value != currentRepo {
+		// Try to found a parent on the same repo
+		found := false
+		for _, parent := range wr.WorkflowNodeRuns {
+			repo := sdk.ParameterFind(&parent[0].BuildParameters, tagGitRepository)
+			if repo != nil && repo.Value == currentRepo {
+				found = true
+				// copy git info from ancestors
+				for _, param := range parent[0].BuildParameters {
+					switch param.Name {
+					case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL, tagGitServer:
+						currentJobGitValues[param.Name] = param.Value
+					}
+				}
+				break
+			}
+		}
+		// If we change repo and we dont find ancestor on the same repo, just keep the branch
+		if !found {
+			b := sdk.ParameterFind(&run.BuildParameters, tagGitBranch)
+			if b != nil {
+				currentJobGitValues[tagGitBranch] = b.Value
+			}
+			needVCSInfo = true
+		}
+	}
+
+	// GET VCS Infos IF NEEDED
+	// * root Node
+	// * different repo
+	var vcsInf *vcsInfos
+	var errVcs error
+	if needVCSInfo {
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+		vcsInf, errVcs = getVCSInfos(ctx, db, store, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
+		if errVcs != nil {
+			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errVcs.Error()},
+			})
+			return nil, false, sdk.WrapError(errVcs, "unable to get git informations")
+		}
+	}
+
+	// Update git params / git columns
+	if isRoot && vcsInf != nil {
+		setValuesGitInBuildParameters(run, *vcsInf)
 	}
 
 	// CONDITION
@@ -256,8 +275,23 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 
-	if !isRoot && vcsInfos != nil {
-		setValuesGitInBuildParameters(run, *vcsInfos)
+	// Resync vcsInfos if we dont call func getVCSInfos
+	if !needVCSInfo {
+		vcsInf = &vcsInfos{}
+		vcsInf.Repository = currentJobGitValues[tagGitRepository]
+		vcsInf.Branch = currentJobGitValues[tagGitBranch]
+		vcsInf.Tag = currentJobGitValues[tagGitTag]
+		vcsInf.Hash = currentJobGitValues[tagGitHash]
+		vcsInf.Author = currentJobGitValues[tagGitAuthor]
+		vcsInf.Message = currentJobGitValues[tagGitMessage]
+		vcsInf.URL = currentJobGitValues[tagGitURL]
+		vcsInf.HTTPUrl = currentJobGitValues[tagGitHTTPURL]
+		vcsInf.Server = currentJobGitValues[tagGitServer]
+	}
+
+	// Update datas if repo change
+	if !isRoot && vcsInf != nil {
+		setValuesGitInBuildParameters(run, *vcsInf)
 	}
 
 	// ADD TAG
@@ -275,7 +309,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		} else {
 			wr.Tag(tagGitHash, run.VCSHash)
 		}
-		wr.Tag(tagGitAuthor, vcsInfos.Author)
+		wr.Tag(tagGitAuthor, vcsInf.Author)
 	}
 
 	// Add env tag

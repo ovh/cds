@@ -941,6 +941,7 @@
   "workflow_save_as_code_title": "Save workflow as code",
   "workflow_save_as_code_pending": "Pushing files...",
   "workflow_as_code_pr_success": "A pull-request has just been created:",
+  "workflow_as_code_no_edit": "You can't edit your workflow in UI when you are in as code mode",
 
   "workflow_app_info_new_wf": "This project is allowed to use the new CDS Workflows.",
   "workflow_resync_vcs": "Resync VCS status",

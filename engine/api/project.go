@@ -253,6 +253,9 @@ func (api *API) getProjectHandler() service.Handler {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
 
+		p.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getProjectHandler, map[string]string{"permProjectKey": key})
+		p.URLs.UIURL = api.Config.URL.UI + "/project/" + key
+
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }

@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -501,6 +503,70 @@ func (api *API) putWorkflowHandler() service.Handler {
 		wf1.Root = nil
 		wf1.Joins = nil
 		return service.WriteJSON(w, wf1, http.StatusOK)
+	}
+}
+
+// putWorkflowIconHandler updates a workflow
+func (api *API) putWorkflowIconHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		if errP != nil {
+			return errP
+		}
+
+		imageBts, errr := ioutil.ReadAll(r.Body)
+		if errr != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		}
+		defer r.Body.Close()
+
+		icon := string(imageBts)
+		if !strings.HasPrefix(icon, sdk.IconFormat) {
+			return sdk.ErrIconBadFormat
+		}
+		if len(icon) > sdk.MaxIconSize {
+			return sdk.ErrIconBadSize
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.UpdateIcon(api.mustDB(), wf.ID, icon); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+// deleteWorkflowIconHandler updates a workflow
+func (api *API) deleteWorkflowIconHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		if errP != nil {
+			return errP
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.UpdateIcon(api.mustDB(), wf.ID, ""); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
