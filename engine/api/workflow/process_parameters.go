@@ -179,7 +179,7 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 				parentParams = append(parentParams, param)
 
 				// Create parent param
-				param.Name = strings.Replace(param.Name, "git.", prefix+"git.", 1)
+				param.Name = prefix + param.Name
 				parentParams = append(parentParams, param)
 				continue
 			}
