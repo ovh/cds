@@ -526,6 +526,8 @@ github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/debug
 github.com/vmware/govmomi/vim25/xml
+# github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
+github.com/whilp/git-urls
 # github.com/xanzy/go-gitlab v0.15.0
 github.com/xanzy/go-gitlab
 # github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076

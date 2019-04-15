@@ -97,12 +97,12 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 func DecryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, token string) (string, error) {
 	dbed := dbEncryptedData{}
 	if err := db.SelectOne(&dbed, "select * from encrypted_data where token = $1", token); err != nil {
-		return "", err
+		return "", sdk.WithStack(sdk.ErrProjectSecretDataUnknown)
 	}
 
 	k, err := loadBuildinKey(db, projectID)
 	if err != nil {
-		return "", sdk.WrapError(err, "Unable to load builtin key")
+		return "", sdk.WrapError(sdk.WithStack(sdk.ErrProjectSecretDataUnknown), "Unable to load builtin key")
 	}
 
 	b, err := base64.StdEncoding.DecodeString(string(dbed.EncyptedContent))

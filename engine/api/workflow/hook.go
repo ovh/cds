@@ -74,15 +74,8 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 						}
 
 						//Go Dump
-						e := dump.NewDefaultEncoder()
-						e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-						e.ExtraFields.DetailedMap = false
-						e.ExtraFields.DetailedStruct = false
-						e.ExtraFields.DeepJSON = true
-						e.ExtraFields.Len = false
-						e.ExtraFields.Type = false
 						var errDump error
-						payloadValues, errDump = e.ToStringMap(bodyJSON)
+						payloadValues, errDump = dump.ToStringMap(bodyJSON)
 						if errDump != nil {
 							return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
 						}
@@ -108,13 +101,8 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 						if errDefault != nil {
 							return sdk.WrapError(errDefault, "HookRegistration> Unable to get default payload")
 						}
-						dumper := dump.NewDefaultEncoder()
-						dumper.ExtraFields.DetailedMap = false
-						dumper.ExtraFields.DetailedStruct = false
-						dumper.ExtraFields.Len = false
-						dumper.ExtraFields.Type = false
 						var errDump error
-						payloadValues, errDump = dumper.ToStringMap(defaultPayload)
+						payloadValues, errDump = dump.ToStringMap(defaultPayload)
 						if errDump != nil {
 							return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
 						}

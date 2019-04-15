@@ -183,6 +183,11 @@ var (
 	ErrInvalidJobRequirementWorkerModelCapabilitites = Error{ID: 166, Status: http.StatusBadRequest}
 	ErrMalformattedStep                              = Error{ID: 167, Status: http.StatusBadRequest}
 	ErrVCSUsedByApplication                          = Error{ID: 168, Status: http.StatusBadRequest}
+	ErrApplicationAsCodeOverride                     = Error{ID: 169, Status: http.StatusForbidden}
+	ErrPipelineAsCodeOverride                        = Error{ID: 170, Status: http.StatusForbidden}
+	ErrEnvironmentAsCodeOverride                     = Error{ID: 171, Status: http.StatusForbidden}
+	ErrWorkflowAsCodeOverride                        = Error{ID: 172, Status: http.StatusForbidden}
+	ErrProjectSecretDataUnknown                      = Error{ID: 173, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -348,6 +353,11 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Invalid job requirements: the worker model does't match with the binary requirements",
 	ErrMalformattedStep.ID:                              "Malformatted step",
 	ErrVCSUsedByApplication.ID:                          "Repository manager still used by an application",
+	ErrApplicationAsCodeOverride.ID:                     "You cannot override application from this repository",
+	ErrPipelineAsCodeOverride.ID:                        "You cannot override pipeline from this repository",
+	ErrEnvironmentAsCodeOverride.ID:                     "You cannot override environment from this repository",
+	ErrWorkflowAsCodeOverride.ID:                        "You cannot override workflow from this repository",
+	ErrProjectSecretDataUnknown.ID:                      "Invalid encrypted data",
 }
 
 var errorsFrench = map[int]string{
@@ -513,6 +523,11 @@ var errorsFrench = map[int]string{
 	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Pré-requis de job invalide: Le modèle de worker ne dispose pas de binaires suffisants",
 	ErrMalformattedStep.ID:                              "Étape malformée",
 	ErrVCSUsedByApplication.ID:                          "Le gestionnaire de dépot est encore utilisé par une application",
+	ErrApplicationAsCodeOverride.ID:                     "Vous ne pouvez pas importer l'application depuis ce dépôt",
+	ErrPipelineAsCodeOverride.ID:                        "Vous ne pouvez pas importer le pipeline depuis ce dépôt",
+	ErrEnvironmentAsCodeOverride.ID:                     "Vous ne pouvez pas importer l'environment depuis ce dépôt",
+	ErrWorkflowAsCodeOverride.ID:                        "Vous ne pouvez pas importer le workflow depuis ce dépôt",
+	ErrProjectSecretDataUnknown.ID:                      "Donnée chiffrée non valide",
 }
 
 var errorsLanguages = []map[int]string{
@@ -604,6 +619,14 @@ func (w errorWithStack) Format(s fmt.State, verb rune) {
 	default:
 		_, _ = io.WriteString(s, w.Error())
 	}
+}
+
+// ErrorWithFallback returns the current error if it's not a ErrUnknownError else it returns a new ErrorWithStack
+func ErrorWithFallback(err error, httpError Error, from string, args ...interface{}) error {
+	if ErrorIs(err, ErrUnknownError) {
+		return NewErrorWithStack(err, NewError(ErrWrongRequest, fmt.Errorf(from, args...)))
+	}
+	return err
 }
 
 // IsErrorWithStack returns true if given error is an errorWithStack.

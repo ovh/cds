@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	repo "github.com/fsamin/go-repo"
+	giturls "github.com/whilp/git-urls"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -49,6 +51,12 @@ Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsct
 		{
 			Name:  "pipeline",
 			Usage: "(Optionnal) Set the root pipeline you want to use. If empty it will propose you to reuse of create a pipeline.",
+		},
+		{
+			Name:      "yes",
+			ShortHand: "y",
+			Type:      cli.FlagBool,
+			Usage:     "Automatic yes to prompts. Assume \"yes\" as answer to all prompts and run non-interactively.",
 		},
 	},
 }
@@ -95,7 +103,7 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 			return "", fmt.Errorf("Unable to get remote URL: %v", err)
 		}
 
-		originURL, err := url.Parse(fetchURL)
+		originURL, err := giturls.Parse(fetchURL)
 		if err != nil {
 			return "", fmt.Errorf("Unable to parse remote URL: %v", err)
 		}
@@ -406,6 +414,12 @@ func workflowInitRun(c cli.Values) error {
 		return err
 	}
 
+	if len(files) > 0 {
+		if c.GetString("pipeline") != "" {
+			return errors.New("you can't set a pipeline name while files alerady exists in .cds/ folder")
+		}
+	}
+
 	if len(files) == 0 {
 		repoManagerName, err := interactiveChooseVCSServer(proj, gitRepo)
 		if err != nil {
@@ -437,13 +451,17 @@ func workflowInitRun(c cli.Values) error {
 		if err != nil {
 			return err
 		}
-		files = append(files, appFilePath)
+		if appFilePath != "" {
+			files = append(files, appFilePath)
+		}
 
 		pipFilePath, err := craftPipelineFile(proj, existingPip, pipName, dotCDS)
 		if err != nil {
 			return err
 		}
-		files = append(files, pipFilePath)
+		if pipFilePath != "" {
+			files = append(files, pipFilePath)
+		}
 	}
 
 	buf := new(bytes.Buffer)

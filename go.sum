@@ -500,6 +500,8 @@ github.com/vbatts/tar-split v0.10.2 h1:CXd7HEKGkTLjBMinpObcJZU5Hm8EKlor2a1JtX6ms
 github.com/vbatts/tar-split v0.10.2/go.mod h1:LEuURwDEiWjRjwu46yU3KVGuUdVv/dcnpcEPSzR8z6g=
 github.com/vmware/govmomi v0.0.0-20170817040329-d7e841db6909 h1:22o0VnN54B2BjdNB+MsW/MZWSGbG/IqtJ580R+Cq+oI=
 github.com/vmware/govmomi v0.0.0-20170817040329-d7e841db6909/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
+github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa h1:rW+Lu6281ed/4XGuVIa4/YebTRNvoUJlfJ44ktEVwZk=
+github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa/go.mod h1:2rx5KE5FLD0HRfkkpyn8JwbVLBdhgeiOb2D2D9LLKM4=
 github.com/xanzy/go-gitlab v0.15.0 h1:rWtwKTgEnXyNUGrOArN7yyc3THRkpYcKXIXia9abywQ=
 github.com/xanzy/go-gitlab v0.15.0/go.mod h1:8zdQa/ri1dfn8eS3Ir1SyfvOKlw7WBJ8DVThkpGiXrs=
 github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 h1:KM4T3G70MiR+JtqplcYkNVoNz7pDwYaBxWBXQK804So=

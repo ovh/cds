@@ -302,7 +302,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, deprecatedGetUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot push workflow")
+			return err
 		}
 		msgListString := translate(r, allMsg)
 

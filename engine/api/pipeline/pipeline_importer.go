@@ -27,7 +27,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 	}
 
 	if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
-		return sdk.WrapError(sdk.ErrForbidden, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
+		return sdk.WrapError(sdk.ErrPipelineAsCodeOverride, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
 	}
 
 	// check that action used by job can be used by pipeline's project

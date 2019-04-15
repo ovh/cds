@@ -95,6 +95,13 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	if w.FromRepository != "" {
 		if len(w.WorkflowData.Node.Hooks) == 0 {
+			// If we are coming from a workflow init command, the opts.HookUUID is empty, and we have to take the old value
+			if opts.HookUUID == "" && oldW != nil &&
+				len(oldW.WorkflowData.Node.Hooks) == 1 &&
+				oldW.WorkflowData.Node.Hooks[0].HookModelName == sdk.RepositoryWebHookModel.Name {
+				opts.HookUUID = oldW.WorkflowData.Node.Hooks[0].UUID
+			}
+
 			w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
 				HookModelName: sdk.RepositoryWebHookModel.Name,
 				HookModelID:   sdk.RepositoryWebHookModel.ID,
