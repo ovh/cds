@@ -406,8 +406,8 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 	return wruns, offset, limit, int(count), nil
 }
 
-// LoadRunsIDByTags load workflow run ids for given tag list
-func LoadRunsIDByTags(db gorp.SqlExecutor, projectKey, workflowName string, tagFilter map[string]string) ([]int64, error) {
+// LoadRunsIDByTag load workflow run ids for given tag and his value
+func LoadRunsIDByTag(db gorp.SqlExecutor, projectKey, workflowName, tag, tagValue string) ([]int64, error) {
 	query := `SELECT workflow_run.id
 		FROM workflow_run
 		JOIN project on workflow_run.project_id = project.id
@@ -417,24 +417,19 @@ func LoadRunsIDByTags(db gorp.SqlExecutor, projectKey, workflowName string, tagF
 			FROM (
 				SELECT workflow_run_id, tag || '=' || value "all_tags"
 				FROM workflow_run_tag
+				WHERE workflow_run_tag.tag = $3 AND workflow_run_tag.value = $4
 				ORDER BY tag
 			) AS all_wr_tags
 			GROUP BY workflow_run_id
 		) AS tags on workflow_run.id = tags.workflow_run_id
 		WHERE project.projectkey = $1
 		AND workflow.name = $2
-		AND string_to_array($3, ',') <@ string_to_array(tags.tags, ',')
-		ORDER BY workflow_run.start desc`
-
-	tags := make([]string, 0, len(tagFilter))
-	for k, v := range tagFilter {
-		tags = append(tags, k+"="+v)
-	}
+		ORDER BY workflow_run.start DESC`
 
 	idsDB := []struct {
 		ID int64 `db:"id"`
 	}{}
-	if _, err := db.Select(&idsDB, query, projectKey, workflowName, strings.Join(tags, ",")); err != nil {
+	if _, err := db.Select(&idsDB, query, projectKey, workflowName, tag, tagValue); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

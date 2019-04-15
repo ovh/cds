@@ -168,7 +168,7 @@ func (api *API) deleteWorkflowRunsBranchHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		branch := vars["branch"]
 
-		wfIDs, err := workflow.LoadRunsIDByTags(api.mustDB(), key, name, map[string]string{"git.branch": branch})
+		wfIDs, err := workflow.LoadRunsIDByTag(api.mustDB(), key, name, "git.branch", branch)
 		if err != nil {
 			return err
 		}
