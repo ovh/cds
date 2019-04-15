@@ -2,8 +2,9 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { DeleteWorkflow, UpdateWorkflow } from 'app/store/workflows.action';
+import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflows.action';
 import { cloneDeep } from 'lodash';
+import { forkJoin } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
 import { Workflow } from '../../../../model/workflow.model';
@@ -37,10 +38,12 @@ export class WorkflowAdminComponent implements OnInit {
     oldName: string;
 
     runnumber: number;
+    originalRunNumber: number;
 
     existingTags = new Array<string>();
     selectedTags = new Array<string>();
     purgeTag: string;
+    iconUpdated = false;
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
@@ -80,33 +83,35 @@ export class WorkflowAdminComponent implements OnInit {
             this.existingTags = this.existingTags.concat(existingTags);
         });
         this._workflowRunService.getRunNumber(this.project.key, this.workflow).pipe(first()).subscribe(n => {
+            this.originalRunNumber = n.num;
             this.runnumber = n.num;
         });
     }
 
-    updateWorkflow(): void {
+    deleteIcon(): void {
         this.loading = true;
-        this._workflow.purge_tags = [this.purgeTag];
-        this.store.dispatch(new UpdateWorkflow({
+        this.store.dispatch(new DeleteWorkflowIcon({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
-            changes: this.workflow
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 
-    updateTagMetadata(m): void {
-        this._workflow.metadata['default_tags'] = m.join(',');
+    updateIcon(): void {
+        this.loading = true;
+        this.store.dispatch(new UpdateWorkflowIcon({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            icon: this.workflow.icon
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this.iconUpdated = false;
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            });
     }
 
-    onSubmitWorkflowRunNumUpdate() {
-        this.loading = true;
-
-        this._workflowRunService.updateRunNumber(this.project.key, this.workflow, this.runnumber).pipe(first(), finalize(() => {
-            this.loading = false;
-        })).subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_updated'));
-        });
+    updateTagMetadata(m): void {
+        this._workflow.metadata['default_tags'] = m.join(',');
     }
 
     onSubmitWorkflowUpdate(skip?: boolean) {
@@ -114,11 +119,20 @@ export class WorkflowAdminComponent implements OnInit {
             this.warningUpdateModal.show();
         } else {
             this.loading = true;
-            this.store.dispatch(new UpdateWorkflow({
+            let actions = [];
+            if (this.runnumber !== this.originalRunNumber) {
+                actions.push(this._workflowRunService.updateRunNumber(this.project.key, this.workflow, this.runnumber));
+            }
+            this._workflow.purge_tags = [this.purgeTag];
+
+            actions.push(this.store.dispatch(new UpdateWorkflow({
                 projectKey: this.project.key,
                 workflowName: this.oldName,
                 changes: this.workflow
-            })).pipe(finalize(() => this.loading = false))
+            })));
+
+            forkJoin(...actions)
+                .pipe(finalize(() => this.loading = false))
                 .subscribe(() => {
                     this._toast.success('', this._translate.instant('workflow_updated'));
                     this._router.navigate([
@@ -144,6 +158,7 @@ export class WorkflowAdminComponent implements OnInit {
         if (this.fileTooLarge) {
             return;
         }
+        this.iconUpdated = true;
         this._workflow.icon = event.content;
     }
 }
