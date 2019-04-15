@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -147,6 +149,25 @@ func LoadWorkerModelsNotSharedInfra(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	return scanWorkerModels(db, wms)
 }
 
+// loadWorkerModel retrieves a list of worker model in database
+func loadWorkerModels(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Model, error) {
+	wms := []dbResultWMS{}
+	if _, err := db.Select(&wms, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.WithStack(sdk.ErrNoWorkerModel)
+		}
+		return nil, err
+	}
+	if len(wms) == 0 {
+		return []sdk.Model{}, nil
+	}
+	r, err := scanWorkerModels(db, wms)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
 // loadWorkerModel retrieves a specific worker model in database
 func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Model, error) {
 	wms := []dbResultWMS{}
@@ -185,6 +206,19 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 func LoadWorkerModelByNameAndGroupID(db gorp.SqlExecutor, name string, groupID int64) (*sdk.Model, error) {
 	query := fmt.Sprintf(`SELECT %s FROM worker_model JOIN "group" ON worker_model.group_id = "group".id AND worker_model.name = $1 AND worker_model.group_id = $2`, modelColumns)
 	return loadWorkerModel(db, query, name, groupID)
+}
+
+// LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs retrieves models for given group ids.
+func LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.Model, error) {
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
+    AND worker_model.is_deprecated = false
+    AND worker_model.disabled = false
+  `, modelColumns)
+	return loadWorkerModels(db, query, gorpmapping.IDsToQueryString(groupIDs))
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups

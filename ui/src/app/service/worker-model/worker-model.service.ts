@@ -56,6 +56,14 @@ export class WorkerModelService {
         return this._http.get<Array<WorkerModel>>('/worker/model', { params });
     }
 
+    getAllForProject(projectKey: string): Observable<Array<WorkerModel>> {
+        return this._http.get<Array<WorkerModel>>(`/project/${projectKey}/worker/model`);
+    }
+
+    getAllForGroup(groupID: number): Observable<Array<WorkerModel>> {
+        return this._http.get<Array<WorkerModel>>(`/group/${groupID}/worker/model`);
+    }
+
     createWorkerModelPattern(mp: ModelPattern): Observable<ModelPattern> {
         return this._http.post<ModelPattern>('/worker/model/pattern', mp);
     }

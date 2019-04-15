@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -244,6 +245,58 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, pips, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerModelsForProjectHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars[permProjectKey]
+
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load projet %s", key)
+		}
+
+		groupIDs := make([]int64, len(proj.ProjectGroups))
+		for i := range proj.ProjectGroups {
+			groupIDs[i] = proj.ProjectGroups[i].Group.ID
+		}
+
+		models, err := worker.LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(api.mustDB(), append(groupIDs, group.SharedInfraGroup.ID))
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, models, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerModelsForGroupHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		groupID, err := requestVarInt(r, "groupID")
+		if err != nil {
+			return err
+		}
+
+		// check that the group exists and user is part of the group
+		g, err := group.LoadGroupByID(api.mustDB(), groupID)
+		if err != nil {
+			return err
+		}
+
+		u := deprecatedGetUser(ctx)
+
+		if err := group.CheckUserIsGroupMember(g, u); err != nil {
+			return err
+		}
+
+		wms, err := worker.LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(api.mustDB(), []int64{g.ID, group.SharedInfraGroup.ID})
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, wms, http.StatusOK)
 	}
 }
 

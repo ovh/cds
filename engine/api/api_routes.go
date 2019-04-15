@@ -362,6 +362,8 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/{groupName}/{permModelName}", r.GET(api.getWorkerModelHandler), r.PUT(api.putWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
 	r.Handle("/worker/model/{groupName}/{permModelName}/export", r.GET(api.getWorkerModelExportHandler))
 	r.Handle("/worker/model/{groupName}/{permModelName}/usage", r.GET(api.getWorkerModelUsageHandler))
+	r.Handle("/project/{permProjectKey}/worker/model", r.GET(api.getWorkerModelsForProjectHandler))
+	r.Handle("/group/{groupID}/worker/model", r.GET(api.getWorkerModelsForGroupHandler))
 	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/error/{permModelID}", r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/enabled", r.GET(api.getWorkerModelsEnabledHandler, NeedHatchery()))

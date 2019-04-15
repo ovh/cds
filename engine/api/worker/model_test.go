@@ -1,4 +1,4 @@
-package worker
+package worker_test
 
 import (
 	"testing"
@@ -10,20 +10,22 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
 
 func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
 	//Loading all models
-	models, err := LoadWorkerModels(db)
+	models, err := worker.LoadWorkerModels(db)
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := DeleteWorkerModel(db, m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(db, m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -64,7 +66,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 		UserLastModified: time.Now(),
 	}
 
-	if err := InsertWorkerModel(db, &m); err != nil {
+	if err := worker.InsertWorkerModel(db, &m); err != nil {
 		t.Fatalf("Cannot insert worker model: %s", err)
 	}
 
@@ -81,7 +83,7 @@ func TestInsertWorkerModel(t *testing.T) {
 
 	m := insertWorkerModel(t, db, "Foo", g.ID)
 
-	m1, err := LoadWorkerModelByID(db, m.ID)
+	m1, err := worker.LoadWorkerModelByID(db, m.ID)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -111,7 +113,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	group.InsertGroup(db, g)
 	group.InsertUserInGroup(db, g.ID, u.ID, false)
 
-	m3, err := LoadWorkerModelsByUser(db, store, u, nil)
+	m3, err := worker.LoadWorkerModelsByUser(db, store, u, nil)
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}
@@ -135,7 +137,7 @@ func TestLoadWorkerModel(t *testing.T) {
 	}
 	insertWorkerModel(t, db, "Foo", g.ID)
 
-	m, err := LoadWorkerModelByName(db, "Foo")
+	m, err := worker.LoadWorkerModelByName(db, "Foo")
 	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
@@ -143,7 +145,7 @@ func TestLoadWorkerModel(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m.Type)
 
-	_, errNotExist := LoadWorkerModelByName(db, "NotExisting")
+	_, errNotExist := worker.LoadWorkerModelByName(db, "NotExisting")
 	assert.True(t, sdk.ErrorIs(errNotExist, sdk.ErrNoWorkerModel))
 }
 
@@ -157,7 +159,7 @@ func TestLoadWorkerModels(t *testing.T) {
 	insertWorkerModel(t, db, "lol", g.ID)
 	insertWorkerModel(t, db, "foo", g.ID)
 
-	models, err := LoadWorkerModels(db)
+	models, err := worker.LoadWorkerModels(db)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -183,8 +185,8 @@ func TestLoadWorkerModelsWithFilter(t *testing.T) {
 	insertWorkerModel(t, db, "lol", g.ID)
 	insertWorkerModel(t, db, "foo", g.ID)
 
-	opts := StateError
-	models, err := LoadWorkerModelsByUser(db, store, &sdk.User{Admin: true}, &opts)
+	opts := worker.StateError
+	models, err := worker.LoadWorkerModelsByUser(db, store, &sdk.User{Admin: true}, &opts)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -218,7 +220,7 @@ func TestLoadWorkerModelsByUserAndBinary(t *testing.T) {
 	insertWorkerModel(t, db, "lol", g.ID)
 	insertWorkerModel(t, db, "foo", g.ID)
 
-	models, err := LoadWorkerModelsByUserAndBinary(db, u, "capa_1")
+	models, err := worker.LoadWorkerModelsByUserAndBinary(db, u, "capa_1")
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -245,7 +247,7 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 	}
 	m := insertWorkerModel(t, db, "Foo", g.ID)
 
-	capa, err := LoadWorkerModelCapabilities(db, m.ID)
+	capa, err := worker.LoadWorkerModelCapabilities(db, m.ID)
 	if err != nil {
 		t.Fatalf("Cannot load worker model capabilities: %s", err)
 	}
@@ -267,11 +269,11 @@ func TestUpdateWorkerModel(t *testing.T) {
 		Value: "Capa_2",
 	})
 
-	if err := UpdateWorkerModel(db, &m1); err != nil {
+	if err := worker.UpdateWorkerModel(db, &m1); err != nil {
 		t.Fatalf("Error : %s", err)
 	}
 
-	m3, err := LoadWorkerModelByName(db, "lol")
+	m3, err := worker.LoadWorkerModelByName(db, "lol")
 	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
@@ -279,4 +281,61 @@ func TestUpdateWorkerModel(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m3.Type)
 	assert.Equal(t, 2, len(m3.RegisteredCapabilities))
+}
+
+func TestLoadWorkerModelsForGroupIDs(t *testing.T) {
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+	deleteAllWorkerModel(t, db)
+
+	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	m1 := insertWorkerModel(t, db, sdk.RandomString(10), g1.ID)
+	m2 := insertWorkerModel(t, db, sdk.RandomString(10), g2.ID)
+	m3 := sdk.Model{
+		Name:             sdk.RandomString(10),
+		Type:             sdk.Docker,
+		ModelDocker:      sdk.ModelDocker{Image: "foo/bar:3.4"},
+		GroupID:          g2.ID,
+		UserLastModified: time.Now(),
+		Disabled:         true,
+	}
+	if err := worker.InsertWorkerModel(db, &m3); err != nil {
+		t.Fatalf("cannot insert worker model: %s", err)
+	}
+
+	models, err := worker.LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(db, []int64{g1.ID})
+	if err != nil {
+		t.Fatalf("cannot load worker model: %s", err)
+	}
+	assert.Equal(t, 1, len(models))
+	found := make([]bool, 2)
+	for i := range models {
+		if models[i].ID == m1.ID {
+			found[0] = true
+		}
+		if models[i].ID == m2.ID {
+			found[1] = true
+		}
+	}
+	assert.True(t, found[0], "Model for group %s not found in result", g1.Name)
+	assert.False(t, found[1], "Model for group %s should not be in result", g2.Name)
+
+	models, err = worker.LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(db, []int64{g1.ID, g2.ID})
+	if err != nil {
+		t.Fatalf("cannot load worker model: %s", err)
+	}
+	assert.Equal(t, 2, len(models))
+	found = make([]bool, 2)
+	for i := range models {
+		if models[i].ID == m1.ID {
+			found[0] = true
+		}
+		if models[i].ID == m2.ID {
+			found[1] = true
+		}
+	}
+	assert.True(t, found[0], "Model for group %s not found in result", g1.Name)
+	assert.True(t, found[1], "Model for group %s not found in result", g2.Name)
 }
