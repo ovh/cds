@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { FetchPipelineAudits, RollbackPipeline } from 'app/store/pipelines.action';
 import { compare } from 'fast-json-patch';
 import { cloneDeep } from 'lodash';
@@ -11,7 +12,6 @@ import { Pipeline, PipelineAudit, PipelineAuditDiff } from '../../../../model/pi
 import { Project } from '../../../../model/project.model';
 import { Stage } from '../../../../model/stage.model';
 import { Item } from '../../../../shared/diff/list/diff.list.component';
-import { Table } from '../../../../shared/table/table';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -19,7 +19,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     templateUrl: './pipeline.audit.html',
     styleUrls: ['./pipeline.audit.scss']
 })
-export class PipelineAuditComponent extends Table<PipelineAudit> implements OnInit {
+export class PipelineAuditComponent implements OnInit {
     @Input() project: Project;
     @Input() pipeline: Pipeline;
 
@@ -29,13 +29,13 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
     indexSelected: number;
     codeMirrorConfig: any;
     loading = false;
+    columns: Column<PipelineAudit>[];
 
     constructor(
         private store: Store,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
-        super();
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -46,27 +46,59 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
         };
     }
 
-    getData(): Array<PipelineAudit> {
-        return this.pipeline.audits;
-    }
-
     ngOnInit(): void {
+        this.loading = true;
         this.store.dispatch(new FetchPipelineAudits({
             projectKey: this.project.key,
             pipelineName: this.pipeline.name
-        }));
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe();
+
+        this.columns = [
+            <Column<PipelineAudit>>{
+                type: ColumnType.TEXT,
+                name: 'audit_action',
+                selector: (audit: PipelineAudit) => audit.action,
+            },
+            <Column<PipelineAudit>>{
+                type: ColumnType.TEXT,
+                name: 'audit_username',
+                selector: (audit: PipelineAudit) => audit.username,
+            },
+            <Column<PipelineAudit>>{
+                type: ColumnType.DATE,
+                name: 'audit_time_author',
+                selector: (audit: PipelineAudit) => audit.versionned,
+            },
+            <Column<PipelineAudit>>{
+                type: ColumnType.CONFIRM_BUTTON,
+                name: '',
+                selector: (audit: PipelineAudit) => {
+                    return {
+                        title: 'common_rollback',
+                        click: () => this.rollback(audit.id)
+                    };
+                },
+            },
+        ];
     }
 
-    compareIndex(i): void {
-        this.indexSelected = i;
-        let indexToCompare = (this.currentPage - 1) * this.nbElementsByPage + i;
+    compareIndex(audit: PipelineAudit): void {
+        let pipFrom = cloneDeep(audit.pipeline);
 
-        let pipFrom = cloneDeep(this.pipeline.audits[indexToCompare].pipeline);
+        if (!this.pipeline.audits) {
+            return;
+        }
+
+        let pipFromIdx = this.pipeline.audits.findIndex((aud) => aud.id === audit.id);
+        if (pipFromIdx < 0) {
+            return;
+        }
         let pipTo: Pipeline;
-        if (indexToCompare === 0) {
+        if (pipFromIdx === 0) {
             pipTo = cloneDeep(this.pipeline);
         } else {
-            pipTo = cloneDeep(this.pipeline.audits[indexToCompare - 1].pipeline);
+            pipTo = cloneDeep(this.pipeline.audits[pipFromIdx - 1].pipeline);
         }
 
         pipFrom = this.cleanPipeline(pipFrom);
@@ -78,7 +110,7 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
             let path = c.path;
             let pathSplitted = path.split('/').filter(p => p !== '');
 
-            switch (this.pipeline.audits[indexToCompare].action) {
+            switch (audit.action) {
                 case 'addStage':
                     diff = this.getAddStageDiff(pathSplitted, pipTo);
                     break;
@@ -237,6 +269,9 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
 
         if (path.indexOf('requirements') !== -1) {
             diff.title = 'Update ' + stage.name + ' > ' + job.action.name + ' > requirements';
+            if (!pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]]) {
+                return null;
+            }
             diff.before = JSON.stringify(pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]].action.requirements, undefined, 4);
             diff.after = JSON.stringify(job.action.requirements, undefined, 4);
             diff.type = 'json';
@@ -244,11 +279,17 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
             if (path.indexOf('always_executed') !== -1 || path.indexOf('optional') !== -1 || path.indexOf('enabled') !== -1) {
                 diff.title = 'Update ' + stage.name + ' > ' + job.action.name + ' > steps > '
                     + job.action.actions[pathSplitted[6]].name + ' > ' + pathSplitted[7];
+                if (!pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]]) {
+                    return null;
+                }
                 diff.before = pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]].action.actions[pathSplitted[6]][pathSplitted[7]];
                 diff.after = job.action.actions[pathSplitted[6]][pathSplitted[7]];
                 diff.type = 'string';
             } else {
                 diff.title = 'Update ' + stage.name + ' > ' + job.action.name + ' > steps';
+                if (!pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]]) {
+                    return null;
+                }
                 diff.before = JSON.stringify(
                     this.cleanSteps(pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]].action.actions), undefined, 4);
                 diff.after = JSON.stringify(this.cleanSteps(job.action.actions), undefined, 4);
@@ -260,6 +301,9 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
             // change enabled/description/name
             diff.title = 'Update ' + stage.name + ' > ' + job.action.name + ' > ' + pathSplitted[5];
             diff.type = 'string';
+            if (!pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]]) {
+                return null;
+            }
             diff.before = pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]].action[pathSplitted[5]];
             diff.after = job.action[pathSplitted[5]];
         }

@@ -13,7 +13,7 @@
                             <div class="row">
                                 <div class="five wide column" title="{{'workflow_first_execution' | translate}}">
                                     <i class="calendar icon"></i>
-                                    <span>{{workflowRun.start | date:'short' }}</span>
+                                    <span>{{workflowRun.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
                                 </div>
                                 <div class="six wide column centered" title="{{'common_version' | translate}}">
                                     <i class="tag icon"></i>
@@ -21,9 +21,9 @@
                                 </div>
                                 <div class="five wide column" title="{{'workflow_last_execution' | translate}}">
                                     <div class="right floated"
-                                      *ngIf="workflowRun.status !== pipelineStatusEnum.BUILDING && workflowRun.status !== pipelineStatusEnum.WAITING">
+                                        *ngIf="workflowRun.status !== pipelineStatusEnum.BUILDING && workflowRun.status !== pipelineStatusEnum.WAITING">
                                         <i class="checked calendar icon"></i>
-                                        <span>{{workflowRun.last_execution | date:'short' }}</span>
+                                        <span>{{workflowRun.last_execution | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -33,13 +33,11 @@
                         <div class="ui grid">
                             <div class="row">
                                 <div class="five wide column" title="{{'common_orientation' | translate}}">
-                                    <button class="ui icon button"
-                                        *ngIf="direction === 'TB'"
+                                    <button class="ui icon button" *ngIf="direction === 'TB'"
                                         (click)="changeDirection()">
                                         <i class="resize horizontal icon"></i>
                                     </button>
-                                    <button class="ui icon button"
-                                        *ngIf="direction === 'LR'"
+                                    <button class="ui icon button" *ngIf="direction === 'LR'"
                                         (click)="changeDirection()">
                                         <i class="resize vertical icon"></i>
                                     </button>
@@ -56,18 +54,14 @@
                                     <div class="right floated">
                                         <button class="ui labeled icon button red"
                                             [disabled]="loadingAction || workflow.permission < permissionEnum.READ_EXECUTE"
-                                            [class.loading]="loadingAction"
-                                            (click)="stopWorkflow()"
-                                            *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
+                                            [class.loading]="loadingAction" (click)="stopWorkflow()" *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
                                                 workflowRun.status === pipelineStatusEnum.BUILDING">
                                             <i class="stop icon"></i>
                                             {{ 'common_stop' | translate }}
                                         </button>
-                                        <button class="ui labeled icon button blue"
-                                            (click)="relaunch.emit(null)"
+                                        <button class="ui labeled icon button blue" (click)="relaunch.emit(null)"
                                             [disabled]="loadingAction || workflow.permission < permissionEnum.READ_EXECUTE"
-                                            [class.loading]="loadingAction"
-                                            *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
+                                            [class.loading]="loadingAction" *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
                                                 workflowRun.status !== pipelineStatusEnum.BUILDING">
                                             <i class="repeat icon"></i>
                                             {{ 'common_relaunch' | translate }}
@@ -79,12 +73,9 @@
                     </div>
                     <div class="info content animated fadeIn spawninfo" *ngIf="showInfos">
                         <div class="sixteen wide column center aligned">
-                            <button class="ui labeled icon button"
-                                suiPopup
-                                [popupText]="'workflow_resync_vcs_tooltip' | translate"
-                                popupPlacement="top center"
-                                [class.loading]="loadingAction"
-                                (click)="resyncVCSStatus()">
+                            <button class="ui labeled icon button" suiPopup
+                                [popupText]="'workflow_resync_vcs_tooltip' | translate" popupPlacement="top center"
+                                [class.loading]="loadingAction" (click)="resyncVCSStatus()">
                                 <i class="handshake outline icon"></i>
                                 {{ 'workflow_resync_vcs' | translate }}
                             </button>
@@ -93,8 +84,7 @@
                             <pre [innerHTML]="getSpawnInfos()"></pre>
                         </div>
                     </div>
-                    <div class="pointing semicircle bottom aligned"
-                        (click)="showInfos = !showInfos"
+                    <div class="pointing semicircle bottom aligned" (click)="showInfos = !showInfos"
                         [class.building]="workflowRun.status === pipelineStatusEnum.PENDING || workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
                         [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
                         [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"

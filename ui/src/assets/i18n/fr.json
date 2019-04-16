@@ -109,6 +109,7 @@
   "audit_diff": "Différences",
   "audit_context": "Contexte",
   "audit_modification_type": "Type de modification",
+  "audit_title_variable": "Audit de variable",
 
   "btn_apply": "Appliquer",
   "btn_cancel": "Annuler",
