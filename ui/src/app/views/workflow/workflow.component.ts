@@ -140,6 +140,7 @@ export class WorkflowComponent {
                         if (!this.workflow || (this.workflow && wf.id !== this.workflow.id)) {
                             this.initRuns(key, workflowName);
                         }
+                        console.log('Update workflow');
                         this.workflow = wf;
 
                         if (this.selectecHookRef) {

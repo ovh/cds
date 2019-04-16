@@ -1,5 +1,6 @@
-import {Component, Input, NgZone, OnInit, ViewChild} from '@angular/core';
+import {Component, Input, NgZone, OnInit} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import {IPopup} from 'ng2-semantic-ui';
 import { Subscription } from 'rxjs';
 import { PipelineStatus } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
@@ -7,7 +8,6 @@ import { WNode, WNodeType, Workflow } from '../../../model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from '../../../model/workflow.run.model';
 import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../decorator/autoUnsubscribe';
-import {IPopup} from 'ng2-semantic-ui';
 
 @Component({
     selector: 'app-workflow-wnode',

@@ -941,6 +941,7 @@
   "workflow_save_as_code_pending": "Envoie des modifications",
   "workflow_as_code_pr_success": "Une demande de revue a été créée :",
 
+  "workflow_node_condition_duplicate": "Vous testez plusieurs fois une même variable",
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
   "workflow_resync_vcs": "Resynchroniser les statuts VCS",
   "workflow_resync_vcs_tooltip": "Cette action va renvoyer les statuts de vos pipelines à votre gestionnaire de dépots distants",
@@ -993,7 +994,6 @@
   "workflow_hook_delete_msg": "Êtes-vous certain de vouloir supprimer ce hook ?",
   "workflow_hook_log_title": "Logs du hook",
   "workflow_hook_log_workflow_run": "Numéro de run",
-
   "workflow_fork_delete_alert": "ATTENTION, cela va supprimer l'embranchement et tout ce qu'il déclenche",
   "workflow_fork_delete_alert_soft": "Enlever uniquement cet embranchement",
   "workflow_fork_delete_btn": "Supprimer l'embranchement",

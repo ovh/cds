@@ -1,16 +1,16 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
+import {ApplicationService} from 'app/service/application/application.service';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {UpdateWorkflow} from 'app/store/workflows.action';
 import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {WNode, Workflow} from '../../../../model/workflow.model';
-import {IdName, Project} from '../../../../model/project.model';
 import {Environment} from '../../../../model/environment.model';
 import {PermissionValue} from '../../../../model/permission.model';
-import {ApplicationService} from 'app/service/application/application.service';
-import {UpdateWorkflow} from 'app/store/workflows.action';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from 'app/shared/toast/ToastService';
+import {IdName, Project} from '../../../../model/project.model';
+import {WNode, Workflow} from '../../../../model/workflow.model';
+import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-node-context',
@@ -24,6 +24,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     @Input() workflow: Workflow;
     editableNode: WNode;
     @Input('node') set node(data: WNode) {
+        console.log('new context data');
         if (data) {
             this.editableNode = cloneDeep(data);
         }
@@ -107,7 +108,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
             changes: clonedWorkflow
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                this._toast.success('', this._translate.instant('permission_updated'));
+                this._toast.success('', this._translate.instant('workflow_updated'));
             });
     }
 }

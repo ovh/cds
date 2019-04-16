@@ -1,8 +1,8 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Project} from 'app/model/project.model';
 import {WNode, Workflow} from 'app/model/workflow.model';
+import {ModalSize, ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-node-edit-modal',
@@ -15,7 +15,7 @@ export class WorkflowNodeEditModalComponent {
     @Input() workflow: Workflow;
     @Input() node: WNode;
 
-    @ViewChild('nodeEdittModal')
+    @ViewChild('nodeEditModal')
     public nodeEditModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
@@ -27,6 +27,8 @@ export class WorkflowNodeEditModalComponent {
     show(): void {
         if (this.nodeEditModal) {
             const modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeEditModal);
+            modalConfig.mustScroll = true;
+            modalConfig.size = ModalSize.Large;
             this.modal = this._modalService.open(modalConfig);
         }
     }

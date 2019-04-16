@@ -1,5 +1,5 @@
 <div class="conditions ui form">
-    <ng-container *ngIf="mode === 'basic'">
+    <ng-container *ngIf="mode === 'basic' && data">
         <table class="ui fixed celled table" *ngIf="data.length > 0">
             <thead>
             <tr>
@@ -68,7 +68,7 @@
             </tfoot>
         </table>
     </ng-container>
-    <ng-container *ngIf="mode === 'advanced'">
+    <ng-container *ngIf="mode === 'advanced' && data">
         <div>
             <div class="mb">
                 <h4 class="inline">{{'workflow_node_condition_lua_title' | translate}}</h4>

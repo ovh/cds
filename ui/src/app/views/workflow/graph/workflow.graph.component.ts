@@ -22,7 +22,6 @@ import { WorkflowStore } from '../../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { WorkflowNodeHookComponent } from '../../../shared/workflow/wnode/hook/hook.component';
 import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.component';
-import {WorkflowEventStore} from '@cds/service/workflow/workflow.event.store';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -99,8 +98,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore,
-        private _workflowCore: WorkflowCoreService,
-        private _workflowEventStore: WorkflowEventStore
+        private _workflowCore: WorkflowCoreService
     ) { }
 
     ngAfterViewInit(): void {

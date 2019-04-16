@@ -1,5 +1,5 @@
-<ng-template let-context let-modal="modal" #nodeEdittModal>
-    <div class="header">MON TITRE</div>
+<ng-template let-context let-modal="modal" #nodeEditModal>
+    <div class="header">{{node?.id}}</div>
     <div class="content">
        <div class="ui grid">
            <div class="four wide column">
@@ -30,6 +30,7 @@
                         <app-workflow-node-input [project]="project" [workflow]="workflow" [node]="node"></app-workflow-node-input>
                    </ng-container>
                    <ng-container *ngSwitchCase="'conditions'">
+                       <app-workflow-node-conditions [project]="project" [workflow]="workflow" [node]="node"></app-workflow-node-conditions>
                    </ng-container>
                    <ng-container *ngSwitchCase="'permissions'">
                    </ng-container>

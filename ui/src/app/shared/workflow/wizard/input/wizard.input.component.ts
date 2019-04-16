@@ -1,20 +1,22 @@
 import {Component, Input, ViewChild} from '@angular/core';
+import {Store} from '@ngxs/store';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {finalize, flatMap} from 'rxjs/operators';
-import {Store} from '@ngxs/store';
-import {SuiModalService} from 'ng2-semantic-ui';
 
-import {cloneDeep} from 'lodash';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {WNode, Workflow} from 'app/model/workflow.model';
-import {Project} from 'app/model/project.model';
-import {Pipeline} from 'app/model/pipeline.model';
+import {TranslateService} from '@ngx-translate/core';
+import {Application} from 'app/model/application.model';
 import {PermissionValue} from 'app/model/permission.model';
+import {Pipeline} from 'app/model/pipeline.model';
+import {Project} from 'app/model/project.model';
+import {WNode, Workflow} from 'app/model/workflow.model';
 import {ApplicationWorkflowService, VariableService} from 'app/service/services.module';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {ParameterEvent} from 'app/shared/parameter/parameter.event.model';
+import {ToastService} from 'app/shared/toast/ToastService';
 import {FetchPipeline} from 'app/store/pipelines.action';
 import {PipelinesState} from 'app/store/pipelines.state';
-import {ParameterEvent} from 'app/shared/parameter/parameter.event.model';
-import {Application} from 'app/model/application.model';
+import {UpdateWorkflow} from 'app/store/workflows.action';
+import {cloneDeep} from 'lodash';
 
 declare var CodeMirror: any;
 
@@ -31,6 +33,7 @@ export class WorkflowWizardNodeInputComponent {
     editableNode: WNode;
 
     @Input('node') set node(data: WNode) {
+        console.log('new input data');
         if (data) {
             this.init(data);
         }
@@ -54,12 +57,12 @@ export class WorkflowWizardNodeInputComponent {
     currentPipeline: Pipeline;
     remotes: string[] = [];
     tags: string[] = [];
+    loading = false;
 
     constructor(
-        private store: Store,
-        private _variableService: VariableService,
-        private _modalService: SuiModalService,
-        private _appWorkflowService: ApplicationWorkflowService
+        private store: Store, private _variableService: VariableService,
+        private _appWorkflowService: ApplicationWorkflowService, private _translate: TranslateService,
+        private _toast: ToastService
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -194,5 +197,22 @@ export class WorkflowWizardNodeInputComponent {
             },
             specialChars: ''
         });
+    }
+
+    updateWorkflow(): void {
+        this.loading = true;
+        let clonedWorkflow = cloneDeep(this.workflow);
+        let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+
+        n.context.default_payload = this.editableNode.context.default_payload;
+        n.context.default_pipeline_parameters = this.editableNode.context.default_pipeline_parameters;
+        this.store.dispatch(new UpdateWorkflow({
+            projectKey: this.workflow.project_key,
+            workflowName: this.workflow.name,
+            changes: clonedWorkflow
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            });
     }
 }

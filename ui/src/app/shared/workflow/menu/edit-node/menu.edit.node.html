@@ -76,10 +76,6 @@
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)"
                               #workflowDeleteNode></app-workflow-node-delete>
 
-    <!-- Conditions -->
-    <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                  (conditionsEvent)="updateWorkflow($event, workflowConditions.modal)" #workflowConditions></app-workflow-node-conditions>
-
     <!-- Add node permissions -->
     <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node" #workflowNodePermissions></app-workflow-node-permissions>
 

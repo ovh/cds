@@ -6,6 +6,7 @@ import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { MomentModule } from 'angular2-moment';
+import {WorkflowWizardNodeConditionComponent} from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula';
@@ -83,11 +84,13 @@ import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-fo
 import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 import { WorkflowTemplateParamFormComponent } from './workflow-template/param-form/workflow-template.param-form.component';
+import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
 import { WorkflowNodeConditionFormComponent } from './workflow/modal/conditions/condition-form/condition.component';
 import { WorkflowNodeConditionListComponent } from './workflow/modal/conditions/condition-list/condition.list.component';
 import { WorkflowNodeConditionsComponent } from './workflow/modal/conditions/node.conditions.component';
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
+import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
 import { WorkflowNodePermissionsComponent } from './workflow/modal/permissions/node.permissions.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
@@ -104,6 +107,8 @@ import { ActionStepSummaryComponent } from './workflow/sidebar/run-node/stage/jo
 import { JobStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/job.summary.component';
 import { StageStepSummaryComponent } from './workflow/sidebar/run-node/stage/stage.summary.component';
 import { WorkflowSidebarRunNodeComponent } from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
+import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wizard.context.component';
+import {WorkflowWizardNodeInputComponent} from './workflow/wizard/input/wizard.input.component';
 import { WorkflowWNodeForkComponent } from './workflow/wnode/fork/node.fork.component';
 import { WorkflowNodeHookComponent } from './workflow/wnode/hook/hook.component';
 import { WorkflowWNodeJoinComponent } from './workflow/wnode/join/node.join.component';
@@ -112,10 +117,6 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
-import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
-import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
-import {WorkflowWizardNodeInputComponent} from './workflow/wizard/input/wizard.input.component';
-import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wizard.context.compontent';
 
 @NgModule({
     imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,
@@ -203,6 +204,7 @@ import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wiza
         WorkflowNodeEditModalComponent,
         WorkflowWizardNodeContextComponent,
         WorkflowWizardNodeInputComponent,
+        WorkflowWizardNodeConditionComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,

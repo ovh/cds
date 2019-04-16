@@ -10,7 +10,7 @@ import { WNode, Workflow, WorkflowNodeConditions } from '../../../../model/workf
 import { VariableService } from '../../../../service/variable/variable.service';
 
 @Component({
-    selector: 'app-workflow-node-conditions',
+    selector: 'app-workflow-node-conditions-old',
     templateUrl: './node.conditions.html',
     styleUrls: ['./node.conditions.scss']
 })

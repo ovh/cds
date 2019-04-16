@@ -1,12 +1,8 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AddHookWorkflow, AddJoinWorkflow, AddNodeTriggerWorkflow, UpdateHookWorkflow, UpdateWorkflow } from 'app/store/workflows.action';
-import { cloneDeep } from 'lodash';
-import {IPopup} from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
-import { finalize } from 'rxjs/operators';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {PermissionValue} from 'app/model/permission.model';
+import {Project} from 'app/model/project.model';
 import {
     WNode, WNodeHook,
     WNodeJoin,
@@ -15,15 +11,19 @@ import {
     Workflow,
     WorkflowPipelineNameImpact
 } from 'app/model/workflow.model';
-import {Project} from 'app/model/project.model';
-import {PermissionValue} from 'app/model/permission.model';
-import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/trigger/workflow.trigger.component';
-import {WorkflowNodeOutGoingHookEditComponent} from 'app/shared/workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
-import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
-import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
-import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-modal/hook.modal.component';
-import {ToastService} from 'app/shared/toast/ToastService';
 import {WorkflowCoreService} from 'app/service/workflow/workflow.core.service';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
+import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-modal/hook.modal.component';
+import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
+import {WorkflowNodeOutGoingHookEditComponent} from 'app/shared/workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
+import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/trigger/workflow.trigger.component';
+import { AddHookWorkflow, AddJoinWorkflow, AddNodeTriggerWorkflow, UpdateHookWorkflow, UpdateWorkflow } from 'app/store/workflows.action';
+import { cloneDeep } from 'lodash';
+import {IPopup} from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-menu-wnode-edit',

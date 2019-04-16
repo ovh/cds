@@ -1,0 +1,11 @@
+@import '../../../../../common';
+
+td {
+    &.middle-aligned {
+        vertical-align: middle !important;
+    }
+}
+
+.mb {
+    margin-bottom: 20px;
+}
