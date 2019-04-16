@@ -5,7 +5,9 @@ extern crate serde_derive;
 extern crate http;
 extern crate reqwest;
 extern crate serde;
+extern crate chrono;
 
 pub mod client;
 pub mod error;
 pub mod models;
+pub mod service;
