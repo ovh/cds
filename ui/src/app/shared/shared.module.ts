@@ -41,7 +41,6 @@ import { ParameterDescriptionComponent } from './parameter/description-popup/des
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
 import { ParameterValueComponent } from './parameter/value/parameter.value.component';
-import { PermissionEnvironmentFormComponent } from './permission/environment/form/permission.env.form.component';
 import { PermissionFormComponent } from './permission/form/permission.form.component';
 import { PermissionListComponent } from './permission/list/permission.list.component';
 import { PermissionService } from './permission/permission.service';
@@ -148,7 +147,6 @@ import { ZoneComponent } from './zone/zone.component';
         ParameterValueComponent,
         PermissionFormComponent,
         PermissionListComponent,
-        PermissionEnvironmentFormComponent,
         PrerequisiteComponent,
         PrerequisitesFormComponent,
         RequirementsListComponent,
@@ -273,7 +271,6 @@ import { ZoneComponent } from './zone/zone.component';
         ParameterValueComponent,
         PermissionFormComponent,
         PermissionListComponent,
-        PermissionEnvironmentFormComponent,
         PrerequisiteComponent,
         PrerequisitesFormComponent,
         PrerequisiteComponent,

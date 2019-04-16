@@ -96,6 +96,15 @@ func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName str
 	return datas, nil
 }
 
+// UpdateIcon update the icon of a workflow
+func UpdateIcon(db gorp.SqlExecutor, workflowID int64, icon string) error {
+	if _, err := db.Exec("update workflow set icon = $1 where id = $2", icon, workflowID); err != nil {
+		return sdk.WrapError(err, "cannot update workflow icon for workflow id %d", workflowID)
+	}
+
+	return nil
+}
+
 // UpdateMetadata update the metadata of a workflow
 func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata) error {
 	b, err := json.Marshal(metadata)
@@ -240,7 +249,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 }
 
 // LoadAllNames loads all workflow names for a project.
-func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) (sdk.IDNames, error) {
 	query := `
 		SELECT workflow.name, workflow.id, workflow.description, workflow.icon
 		FROM workflow
@@ -248,7 +257,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 		AND workflow.to_delete = false
 		ORDER BY workflow.name ASC`
 
-	var res []sdk.IDName
+	var res sdk.IDNames
 	if _, err := db.Select(&res, query, projID); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil

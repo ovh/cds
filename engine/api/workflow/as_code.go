@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -121,8 +122,8 @@ func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient,
 	return pr.Merged, pr.Closed, nil
 }
 
-// CheckAsCodeEvent checks if workflow as to become ascode
-func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow) error {
+// SyncAsCodeEvent checks if workflow as to become ascode
+func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u *sdk.User) error {
 	if len(wf.AsCodeEvent) == 0 {
 		return nil
 	}
@@ -166,6 +167,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		}
 	}
 	wf.AsCodeEvent = eventLeft
+	event.PublishWorkflowUpdate(proj.Key, *wf, *wf, u)
 	return nil
 }
 

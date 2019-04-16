@@ -161,7 +161,7 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 
 		parentParams := make([]sdk.Parameter, 0, len(parentNodeRun.BuildParameters))
 		for _, param := range parentNodeRun.BuildParameters {
-
+			prefix := "workflow." + nodeName + "."
 			if param.Name == "" || param.Name == "cds.semver" || param.Name == "cds.release.version" ||
 				strings.HasPrefix(param.Name, "cds.proj") ||
 				strings.HasPrefix(param.Name, "cds.version") || strings.HasPrefix(param.Name, "cds.run.number") ||
@@ -177,14 +177,16 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 			// We inherite git variables is there is more than one repositories in the whole workflow
 			if strings.HasPrefix(param.Name, "git.") {
 				parentParams = append(parentParams, param)
+
+				// Create parent param
+				param.Name = prefix + param.Name
+				parentParams = append(parentParams, param)
 				continue
 			}
 			if strings.HasPrefix(param.Name, "gerrit.") {
 				parentParams = append(parentParams, param)
 				continue
 			}
-
-			prefix := "workflow." + nodeName + "."
 
 			if param.Name == "payload" || strings.HasPrefix(param.Name, "cds.triggered") {
 				// keep p.Name as is

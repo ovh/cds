@@ -129,34 +129,46 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	wp.Workflow.Name = wf.Name
 	wp.Workflow.Value = base64.StdEncoding.EncodeToString(buffw.Bytes())
 
-	wp.Applications = make([]exportentities.WorkflowPulledItem, len(apps))
-	for i, a := range apps {
+	for _, a := range apps {
+		if a.FromRepository != wf.FromRepository { // don't export if coming from an other repository
+			continue
+		}
 		buff := new(bytes.Buffer)
 		if _, err := application.ExportApplication(db, a, f, encryptFunc, buff); err != nil {
 			return wp, sdk.WrapError(err, "unable to export app %s", a.Name)
 		}
-		wp.Applications[i].Name = a.Name
-		wp.Applications[i].Value = base64.StdEncoding.EncodeToString(buff.Bytes())
+		wp.Applications = append(wp.Applications, exportentities.WorkflowPulledItem{
+			Name:  a.Name,
+			Value: base64.StdEncoding.EncodeToString(buff.Bytes()),
+		})
 	}
 
-	wp.Environments = make([]exportentities.WorkflowPulledItem, len(envs))
-	for i, e := range envs {
+	for _, e := range envs {
+		if e.FromRepository != wf.FromRepository { // don't export if coming from an other repository
+			continue
+		}
 		buff := new(bytes.Buffer)
 		if _, err := environment.ExportEnvironment(db, e, f, encryptFunc, buff); err != nil {
 			return wp, sdk.WrapError(err, "unable to export env %s", e.Name)
 		}
-		wp.Environments[i].Name = e.Name
-		wp.Environments[i].Value = base64.StdEncoding.EncodeToString(buff.Bytes())
+		wp.Environments = append(wp.Environments, exportentities.WorkflowPulledItem{
+			Name:  e.Name,
+			Value: base64.StdEncoding.EncodeToString(buff.Bytes()),
+		})
 	}
 
-	wp.Pipelines = make([]exportentities.WorkflowPulledItem, len(pips))
-	for i, p := range pips {
+	for _, p := range pips {
+		if p.FromRepository != wf.FromRepository { // don't export if coming from an other repository
+			continue
+		}
 		buff := new(bytes.Buffer)
 		if _, err := pipeline.ExportPipeline(p, f, buff); err != nil {
 			return wp, sdk.WrapError(err, "unable to export pipeline %s", p.Name)
 		}
-		wp.Pipelines[i].Name = p.Name
-		wp.Pipelines[i].Value = base64.StdEncoding.EncodeToString(buff.Bytes())
+		wp.Pipelines = append(wp.Pipelines, exportentities.WorkflowPulledItem{
+			Name:  p.Name,
+			Value: base64.StdEncoding.EncodeToString(buff.Bytes()),
+		})
 	}
 
 	return wp, nil

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, Pipe, PipeTransform, } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, Pipe, PipeTransform } from '@angular/core';
 import { Table } from './table';
 
 type direction = string;
@@ -79,6 +79,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     @Output() clickLine = new EventEmitter<T>();
     @Output() selectChange = new EventEmitter<Array<string>>();
     @Input() withSelect: boolean | Select<T>;
+    @Input() activeLine: Select<T>;
     selectedAll: boolean;
     selected: Object = {};
     @Input() data: Array<T>;
@@ -98,11 +99,23 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     ngOnChanges() {
         this.allData = this.data;
 
-        if (this.withSelect && this.allData) {
-            this.allData.forEach(d => { this.selected[d.key()] = false });
-            if (typeof this.withSelect === 'function') {
-                this.allData.filter(<Select<T>>this.withSelect).forEach(d => this.selected[d.key()] = true);
-                this.emitSelectChange();
+        if (this.allData) {
+            if (this.withSelect) {
+                this.allData.forEach(d => this.selected[d.key()] = false);
+                if (typeof this.withSelect === 'function') {
+                    this.allData.filter(<Select<T>>this.withSelect).forEach(d => this.selected[d.key()] = true);
+                    this.emitSelectChange();
+                }
+            }
+
+            if (this.activeLine) {
+                this.allData.some((data, index) => {
+                    if (this.activeLine(data)) {
+                        this.indexSelected = index;
+                        return true;
+                    }
+                    return false;
+                });
             }
         }
 

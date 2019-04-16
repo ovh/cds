@@ -1,56 +1,10 @@
 <div class="audits">
     <h3>{{ 'audit_title' | translate }}</h3>
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
-        <thead>
-            <tr>
-                <th class="four wide">{{ 'audit_modification_type' | translate}}</th>
-                <th class="four wide">{{ 'audit_time_author' | translate }}</th>
-                <th class="four wide">{{ 'audit_username' | translate }}</th>
-                <th class="three wide"></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let a of getDataForCurrentPage()" class="ui form pointing" [class.active]="selectedAudit && selectedAudit.id === a.id"
-                (click)="updateSelectedAudit(a)">
-                <td class="middle-aligned border">
-                    {{a.event_type}}
-                </td>
-                <td class="middle-aligned border">
-                    {{a.created | amCalendar}}
-                </td>
-                <td class="middle-aligned border">
-                    {{a.triggered_by}}
-                </td>
-                <td class="middle-aligned border">
-                    <ng-container *ngIf="rollback">
-                        <app-confirm-button (event)="rollback.emit(a.id)" title="common_rollback">
-                        </app-confirm-button>
-                    </ng-container>
-                </td>
-            </tr>
-        </tbody>
-        <tfoot *ngIf="getNbOfPages() > 1">
-            <tr>
-                <th colspan="4">
-                    <div class="ui right floated pagination menu">
-                        <a class="icon item" (click)="downPage()">
-                            <i class="left chevron icon"></i>
-                        </a>
-                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
-                            [class.active]="currentPage === page">{{page}}</a>
-                        <a class="icon item" (click)="upPage()">
-                            <i class="right chevron icon"></i>
-                        </a>
-                    </div>
-                </th>
-            </tr>
-        </tfoot>
-    </table>
-    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
-        {{ 'audit_no' | translate }}
-    </div>
+    <app-data-table [withPagination]="25" [columns]="columns" [data]="audits" [loading]="loading" [withLineClick]="true"
+        (clickLine)="updateSelectedAudit($event)">
+    </app-data-table>
 </div>
 <div *ngIf="selectedAudit" class="area">
-    <h3>{{selectedAudit.created | amCalendar}}</h3>
+    <h3>{{selectedAudit.created | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm'}}</h3>
     <app-diff-list [items]="items"></app-diff-list>
 </div>
