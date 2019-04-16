@@ -713,3 +713,136 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 }
+
+func Test_putWorkflowImportHandlerChocapic(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	pip := &sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+
+	// create the workflow
+	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	test.NotEmpty(t, uri)
+	var wf = &sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Name: "pip1",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf))
+	assert.Equal(t, 201, rec.Code)
+
+	// update the workflow
+	uri = api.Router.GetRoute("PUT", api.putWorkflowImportHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "test_1",
+	})
+	test.NotEmpty(t, uri)
+	body := `name: test_1
+version: v1.0
+workflow:
+  build_admin-panel-api:
+    depends_on:
+    - root
+    pipeline: pip1
+  build_admin-panel-ui:
+    depends_on:
+    - root
+    pipeline: pip1
+  build_cache-manager:
+    depends_on:
+    - root
+    pipeline: pip1
+  build_health-checker:
+    depends_on:
+    - root
+    pipeline: pip1
+  deploy_admin-panel-api_dev:
+    depends_on:
+    - join
+    pipeline: pip1
+  deploy_admin-panel-api_prod:
+    depends_on:
+    - fork
+    pipeline: pip1
+  deploy_admin-panel-ui_dev:
+    depends_on:
+    - join
+    pipeline: pip1
+  deploy_admin-panel-ui_prod:
+    depends_on:
+    - fork
+    pipeline: pip1
+  deploy_cache-manager_dev:
+    depends_on:
+    - join
+    pipeline: pip1
+  deploy_cache-manager_prod:
+    depends_on:
+    - fork
+    pipeline: pip1
+  deploy_health-checker_dev:
+    depends_on:
+    - join
+    pipeline: pip1
+  deploy_health-checker_prod:
+    depends_on:
+    - fork
+    pipeline: pip1
+  join:
+    depends_on:
+    - build_admin-panel-api
+    - build_admin-panel-ui
+    - build_cache-manager
+    - build_health-checker
+    conditions:
+      script: return cds_status == "Success" and cds_manual == "true" -- and (cds_manual
+        == "true" or git_branch == "master" or git_branch:find("^release/") ~= nil)
+  fork:
+    depends_on:
+    - deploy_admin-panel-api_dev
+    conditions:
+      script: return cds_status == "Success" and cds_manual == "true"
+  root:
+    pipeline: pip1
+    payload:
+      git.branch: master
+metadata:
+  default_tags: git.branch,git.tag
+`
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	p, errP := project.Load(db, api.Cache, proj.Key, u)
+	assert.NoError(t, errP)
+	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, p, "test_1", u, workflow.LoadOptions{})
+	assert.NoError(t, err)
+
+	t.Logf("%+v", wUpdated.WorkflowData)
+	assert.Equal(t, 1, len(wUpdated.WorkflowData.Joins))
+}
