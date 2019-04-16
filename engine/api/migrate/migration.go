@@ -7,9 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/blang/semver"
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -39,9 +38,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 	for _, migration := range migrations {
 		func(currentMigration sdk.Migration) {
 			sdk.GoRoutine(ctx, "migrate_"+migration.Name, func(contex context.Context) {
-				var mig *sdk.Migration
-				var errMig error
-				mig, errMig = GetByName(db, currentMigration.Name)
+				mig, errMig := GetByName(db, currentMigration.Name)
 				if errMig != nil {
 					log.Error("Cannot get migration %s : %v", currentMigration.Name, errMig)
 					return
@@ -51,6 +48,9 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 						log.Info("Migration> %s> Already done (status: %s)", currentMigration.Name, mig.Status)
 						return
 					}
+
+					// set the previous migration id for for the case where the migration was reset
+					currentMigration.ID = mig.ID
 				} else {
 					currentMigration.Progress = "Begin"
 					currentMigration.Status = sdk.MigrationStatusInProgress
@@ -59,6 +59,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 						return
 					}
 				}
+
 				log.Info("Migration [%s]: begin", currentMigration.Name)
 				if err := currentMigration.ExecFunc(contex); err != nil {
 					log.Error("migration %s in ERROR : %v", currentMigration.Name, err)
