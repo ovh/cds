@@ -714,7 +714,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	t.Logf(">>%s", rec.Body.String())
 }
 
-func Test_putWorkflowImportHandlerChocapic(t *testing.T) {
+func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
