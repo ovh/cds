@@ -107,6 +107,7 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 		if err != nil {
 			return "", fmt.Errorf("Unable to parse remote URL: %v", err)
 		}
+		originHost := strings.TrimSpace(strings.SplitN(originURL.Host, ":", 2)[0])
 
 		vcsConf, err := client.VCSConfiguration()
 		if err != nil {
@@ -118,7 +119,10 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 			if err != nil {
 				return "", fmt.Errorf("Unable to get VCS Configuration: %v", err)
 			}
-			if rmURL.Host == originURL.Host {
+			rmHost := strings.TrimSpace(strings.SplitN(rmURL.Host, ":", 2)[0])
+			if originHost == rmHost {
+				fmt.Printf(" * using repositories manager %s (%s)", cli.Magenta(rmName), cli.Magenta(rmURL.String()))
+				fmt.Println()
 				return rmName, nil
 			}
 		}
@@ -143,11 +147,11 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 
 	for i, a := range apps {
 		if a.RepositoryFullname == repoFullname {
-			fmt.Printf("application %s/%s (%s) found in CDS\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
+			fmt.Printf(" * application %s/%s (%s) found in CDS\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
 			return a.Name, &apps[i], nil
 		} else if a.Name == repoName {
-			fmt.Printf("application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
-			fmt.Println(cli.Red("But it's not linked to repository"), cli.Red(repoFullname))
+			fmt.Printf(" * application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
+			fmt.Println(cli.Red(" * but it's not linked to repository"), cli.Red(repoFullname))
 			if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
 				return "", nil, fmt.Errorf("operation aborted")
 			}
@@ -158,7 +162,7 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 	return repoName, nil, nil
 }
 
-func searchRepository(pkey, repoManagerName, repoFullname string) (string, error) {
+func searchRepository(pkey, repoManagerName, repoFullname string, resync bool) (string, error) {
 	// Get repositories from the repository manager
 	repos, err := client.RepositoriesList(pkey, repoManagerName, true)
 	if err != nil {
@@ -170,6 +174,8 @@ func searchRepository(pkey, repoManagerName, repoFullname string) (string, error
 	for _, r := range repos {
 		// r.Fullname = CDS/demo
 		if strings.ToLower(r.Fullname) == repoFullname {
+			fmt.Printf(" * using repository %s from %s", cli.Magenta(r.Fullname), cli.Magenta(repoManagerName))
+			fmt.Println()
 			return r.Fullname, nil
 		}
 	}
@@ -185,14 +191,20 @@ func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipel
 	}
 	if len(pips) == 0 {
 		// If the project doesn't have any pipeline, lets return
+		fmt.Printf(" * using new pipeline %s", cli.Magenta(defaultPipeline))
+		fmt.Println()
 		return defaultPipeline, nil, nil
 	} else if defaultPipeline != "" {
 		// Try to find the defaultPipeline in the list of pipelines
 		for _, p := range pips {
 			if p.Name == defaultPipeline {
+				fmt.Printf(" * using pipeline %s/%s", cli.Magenta(pkey), cli.Magenta(defaultPipeline))
+				fmt.Println()
 				return defaultPipeline, &p, nil
 			}
 		}
+		fmt.Printf(" * using new pipeline %s", cli.Magenta(defaultPipeline))
+		fmt.Println()
 		return defaultPipeline, nil, nil
 	}
 
@@ -234,7 +246,7 @@ func craftWorkflowFile(workflowName, appName, pipName, destinationDir string) (s
 		return "", fmt.Errorf("Unable to write workflow file: %v", err)
 	}
 
-	fmt.Printf("File %s created\n", cli.Magenta(wFilePath))
+	fmt.Printf("File %s has been created\n", cli.Cyan(wFilePath))
 	return wFilePath, nil
 }
 
@@ -271,7 +283,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 	// ask for pgp key, if not selected or no existing key create a new one.
 	if len(projectPGPKeys) > 1 {
 		opts := make([]string, len(projectPGPKeys)+1)
-		opts[0] = "Use a new pgp key"
+		opts[0] = "Use a new PGP key"
 		for i := range projectPGPKeys {
 			opts[i+1] = projectPGPKeys[i].Name
 		}
@@ -280,10 +292,11 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 			app.VCSPGPKey = opts[selected]
 		}
 	} else if len(projectPGPKeys) == 1 {
-		if cli.AskForConfirmation(fmt.Sprintf("Found one existing PGP key '%s' on project. Use it in application VCS strategy?", projectPGPKeys[0].Name)) {
-			app.VCSPGPKey = projectPGPKeys[0].Name
-		}
+		fmt.Printf(" * using PGP Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(projectPGPKeys[0].Name))
+		fmt.Println()
+		app.VCSPGPKey = projectPGPKeys[0].Name
 	}
+
 	if app.VCSPGPKey == "" {
 		app.VCSPGPKey = fmt.Sprintf("app-pgp-%s", repoManagerName)
 		app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
@@ -302,9 +315,10 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 				app.VCSSSHKey = opts[selected]
 			}
 		} else if len(projectSSHKeys) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found one existing SSH key '%s' on project. Use it in application VCS strategy?", projectSSHKeys[0].Name)) {
-				app.VCSSSHKey = projectSSHKeys[0].Name
-			}
+			fmt.Printf(" * using SSH Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(projectSSHKeys[0].Name))
+			fmt.Println()
+			app.VCSSSHKey = projectSSHKeys[0].Name
+
 		}
 		if app.VCSSSHKey == "" {
 			app.VCSSSHKey = fmt.Sprintf("app-ssh-%s", repoManagerName)
@@ -322,7 +336,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 		return "", fmt.Errorf("Unable to write application file: %v", err)
 	}
 
-	fmt.Printf("File %s created\n", cli.Magenta(appFilePath))
+	fmt.Printf("File %s has been created\n", cli.Cyan(appFilePath))
 	return appFilePath, nil
 }
 
@@ -357,7 +371,7 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 		return pipName, fmt.Errorf("Unable to write application file: %v", err)
 	}
 
-	fmt.Printf("File %s created\n", cli.Magenta(pipFilePath))
+	fmt.Printf("File %s has been created\n", cli.Cyan(pipFilePath))
 	return pipFilePath, nil
 }
 
@@ -426,7 +440,7 @@ func workflowInitRun(c cli.Values) error {
 			return fmt.Errorf("unable to get vcs server: %v", err)
 		}
 
-		repoFullname, err = searchRepository(pkey, repoManagerName, repoFullname)
+		repoFullname, err = searchRepository(pkey, repoManagerName, repoFullname, c.GetBool("resync-repositories"))
 		if err != nil {
 			return err
 		}
@@ -462,6 +476,16 @@ func workflowInitRun(c cli.Values) error {
 		if pipFilePath != "" {
 			files = append(files, pipFilePath)
 		}
+	} else {
+		fmt.Println("Reading files:")
+		for _, f := range files {
+			fmt.Printf(" * %s", cli.Magenta(f))
+			fmt.Println()
+		}
+	}
+
+	if !c.GetBool("yes") && !cli.AskForConfirmation(cli.Red("CDS Files are ready, continue ?")) {
+		return nil
 	}
 
 	buf := new(bytes.Buffer)
