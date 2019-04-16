@@ -760,7 +760,7 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	case 1:
 		w.AddTrigger(ancestors[0].Name, *n)
 		return true, nil
-	case 2:
+	default:
 		if n != nil && n.Type == sdk.NodeTypeJoin && joinAsNode(n) {
 			w.WorkflowData.Joins = append(w.WorkflowData.Joins, *n)
 			return true, nil
@@ -811,9 +811,11 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 		appendJoin = true
 	}
 
-	join.Triggers = append(join.Triggers, sdk.NodeTrigger{
-		ChildNode: *n,
-	})
+	if n.Type != sdk.NodeTypeJoin {
+		join.Triggers = append(join.Triggers, sdk.NodeTrigger{
+			ChildNode: *n,
+		})
+	}
 
 	if appendJoin {
 		w.WorkflowData.Joins = append(w.WorkflowData.Joins, *join)
