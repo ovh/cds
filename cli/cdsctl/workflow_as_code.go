@@ -201,24 +201,33 @@ func workflowInitRun(c cli.Values) error {
 	selected := cli.MultiChoice("Choose the repository manager:", repoManagerNames...)
 	repoManagerName = proj.VCSServers[selected].Name
 
-	// Get repositories from the repository manager
-	repos, err := client.RepositoriesList(pkey, repoManagerName)
-	if err != nil {
-		return fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
-	}
-
-	// Check it the project with it's delegated oauth knows the current repo
-	// Search the repo
-	var repoFound bool
-	for _, r := range repos {
-		// r.Fullname = CDS/demo
-		if strings.ToLower(r.Fullname) == repoName {
-			repoName = r.Fullname
-			repoFound = true
+	resync := false
+	for { // Useful to retry with resync
+		// Get repositories from the repository manager
+		repos, err := client.RepositoriesList(pkey, repoManagerName, resync)
+		if err != nil {
+			return fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
 		}
-	}
-	if !repoFound {
-		return fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoName, repoManagerName)
+
+		// Check it the project with it's delegated oauth knows the current repo
+		// Search the repo
+		var repoFound bool
+		for _, r := range repos {
+			if strings.ToLower(r.Fullname) == repoName {
+				repoName = r.Fullname
+				repoFound = true
+				break
+			}
+		}
+		if !repoFound {
+			if !resync {
+				resync = true
+				continue
+			} else {
+				return fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoName, repoManagerName)
+			}
+		}
+		break
 	}
 
 	// Try to find application or create a new one from the repo
