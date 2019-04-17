@@ -10,7 +10,29 @@
     <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [project]="project" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [workflowrun]="workflowRun" [selected]="isSelected"></app-workflow-wnode-outgoing-hook>
 </div>
-
 <ng-template let-popup #popupNode>
-    <app-workflow-menu-wnode-edit [project]="project" [workflow]="workflow" [node]="node" [popup]="popup"></app-workflow-menu-wnode-edit>
+    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [project]="project" [workflow]="workflow" [node]="node" [popup]="popup" #menu></app-workflow-menu-wnode-edit>
 </ng-template>
+
+<!-- MODALS -->
+<ng-container *ngIf="project && node && workflow">
+
+    <!-- Add trigger -->
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)"
+                          #workflowTrigger></app-workflow-trigger>
+    <!-- Add outgoing hook -->
+    <app-workflow-node-outgoinghook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
+                                          (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)" #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
+
+    <!-- Add hook -->
+    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateHook($event, workflowAddHook.modal)"
+                    #workflowAddHook></app-hook-modal>
+
+    <!-- Delete Node -->
+    <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)"
+                              #workflowDeleteNode></app-workflow-node-delete>
+
+    <!-- Add node permissions -->
+    <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node" #workflowNodePermissions></app-workflow-node-permissions>
+
+</ng-container>

@@ -4,6 +4,7 @@ import { GroupPermission } from 'app/model/group.model';
 import { Label } from 'app/model/project.model';
 import { WNode, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import {UpdateNodeInModal} from 'app/store/node.modal.action';
 import { cloneDeep } from 'lodash';
 import { tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
@@ -168,6 +169,7 @@ export class WorkflowsState {
                     previousWorkflowName: action.payload.workflowName,
                     changes: wf
                 }));
+                ctx.dispatch(new UpdateNodeInModal({workflow: wf}));
             } else {
                 let wfUpdated: Workflow = {
                     ...state.workflows[wfKey],
@@ -186,6 +188,8 @@ export class WorkflowsState {
                     ...state,
                     workflows: Object.assign({}, state.workflows, { [wfKey]: wfUpdated }),
                 });
+
+                ctx.dispatch(new UpdateNodeInModal({workflow: wfUpdated}));
             }
         }));
     }

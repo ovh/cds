@@ -1,52 +1,52 @@
 <div class="sidebar-node-edit">
     <div class="ui list">
-        <a class="item" (click)="openTriggerModal('pipeline', false)"
+        <a class="item" (click)="sendEvent('pipeline')"
            [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             <div class="content">
                 {{ 'workflow_node_trigger_add' | translate }}
             </div>
         </a>
-        <a class="item" (click)="openTriggerModal('pipeline', true)"
+        <a class="item" (click)="sendEvent('parent')"
            [class.disabled]="!workflow || workflow.workflow_data.node.id !== node.id ||  (workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             <div class="content">
                 {{ 'workflow_node_parent' | translate }}
             </div>
         </a>
-        <a class="item" (click)="createFork()"
+        <a class="item" (click)="sendEvent('fork')"
            [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             <div class="content">
                 {{ 'workflow_node_fork_add' | translate }}
             </div>
         </a>
-        <a class="item" (click)="createJoin()"
+        <a class="item" (click)="sendEvent('join')"
            [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             <div class="content">
                 {{ 'workflow_node_join_add' | translate }}
             </div>
         </a>
-        <a class="item" (click)="linkJoin()"
+        <a class="item" (click)="sendEvent('join_link')"
            [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             {{ 'workflow_node_join_link' | translate }}
         </a>
         <hr>
-        <a class="item" (click)="openAddHookModal()"
+        <a class="item" (click)="sendEvent('hook')"
            [class.disabled]="!workflow || !workflow.workflow_data || workflow.workflow_data.node.id !== node.id || (workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             {{ 'workflow_node_hook_add' | translate }}
         </a>
-        <a class="item" (click)="openTriggerModal('outgoinghook', false)"
+        <a class="item" (click)="sendEvent('outgoing')"
            [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             <div class="content">
                 {{ 'workflow_node_outgoing_hook' | translate }}
             </div>
         </a>
         <hr>
-        <a class="item" (click)="openEditNodeModal()">
+        <a class="item" (click)="sendEvent('edit')">
             <div class="content">
-                {{ 'workflow_node_menu_edit' | translate }}
+                {{ 'workflow_node_menu_edit' + ' ' + node.id | translate }}
             </div>
         </a>
         <hr>
-        <a class="item" (click)="openDeleteNodeModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0) && workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+        <a class="item" (click)="sendEvent('delete')" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0) && workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
             <div class="content">
                 {{ 'btn_delete' | translate }}
             </div>
@@ -54,29 +54,3 @@
     </div>
 </div>
 
-
-<!-- MODALS -->
-<ng-container *ngIf="project && node && workflow">
-
-    <!-- Add trigger -->
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)"
-        #workflowTrigger></app-workflow-trigger>
-    <!-- Add outgoing hook -->
-    <app-workflow-node-outgoinghook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-        (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)" #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
-
-    <!-- Add hook -->
-    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateHook($event, workflowAddHook.modal)"
-        #workflowAddHook></app-hook-modal>
-
-
-    <app-node-edit-modal [node]="node" [workflow]="workflow" [project]="project" #nodeEditModal></app-node-edit-modal>
-
-    <!-- Delete Node -->
-    <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)"
-                              #workflowDeleteNode></app-workflow-node-delete>
-
-    <!-- Add node permissions -->
-    <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node" #workflowNodePermissions></app-workflow-node-permissions>
-
-</ng-container>
