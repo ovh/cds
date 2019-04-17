@@ -125,7 +125,7 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 	f.Database.SetMaxIdleConns(int(f.DBMaxConn / 2))
 
 	log.Debug("database> setting statement_timeout %d on database", f.DBTimeout)
-	if _, err := f.Database.Exec("SET statement_timeout = %d", f.DB); err != nil {
+	if _, err := f.Database.Exec(fmt.Sprintf("SET statement_timeout = %d", f.DBTimeout)); err != nil {
 		log.Error("unable to set statement_timeout with %d on database: %s", f.DBTimeout, err)
 		return nil, sdk.WrapError(err, "unable to set statement_timeout with %d", f.DBTimeout)
 	}
