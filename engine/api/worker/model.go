@@ -531,7 +531,7 @@ func UnbookForRegister(store cache.Store, id int64) {
 	store.Delete(k)
 }
 
-func mergeWithDefaultEnvs(envs map[string]string) map[string]string {
+func MergeModelEnvsWithDefaultEnvs(envs map[string]string) map[string]string {
 	if envs == nil {
 		return defaultEnvs
 	}
