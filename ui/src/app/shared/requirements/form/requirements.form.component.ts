@@ -28,14 +28,16 @@ export class RequirementsFormComponent implements OnInit {
 
     _workerModels: Array<WorkerModel>;
     @Input() set workerModels(wms: Array<WorkerModel>) {
-        this._workerModels = wms;
+        if (wms) {
+            this._workerModels = wms;
 
-        this.suggestWithWorkerModel = wms.map(wm => {
-            if (wm.group.name !== SharedInfraGroupName) {
-                return `${wm.group.name}/${wm.name}`;
-            }
-            return wm.name;
-        }).concat(this._suggest);
+            this.suggestWithWorkerModel = wms.map(wm => {
+                if (wm.group.name !== SharedInfraGroupName) {
+                    return `${wm.group.name}/${wm.name}`;
+                }
+                return wm.name;
+            }).concat(this._suggest);
+        }
     }
     get workerModels() { return this._workerModels; }
 
