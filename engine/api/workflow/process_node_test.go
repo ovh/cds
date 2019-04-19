@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -695,6 +696,12 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 			w.Body = ioutil.NopCloser(body)
 
 			switch r.URL.String() {
+			case "/vcs/github/repos/sguiheux/demo":
+				t.Fatalf("No need to get repo: %s", r.URL.String())
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2FbranchForked":
+				t.Fatalf("No need to get branch: %s", r.URL.String())
+			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
+				t.Fatalf("No need to get last commit: %s", r.URL.String())
 			// NEED get forks
 			case "/vcs/github/repos/sguiheux/demo/forks":
 				forks := []sdk.VCSRepo{{
@@ -709,7 +716,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 				if err := enc.Encode(forks); err != nil {
 					return writeError(w, err)
 				}
-				// NEED get REPO
+			// NEED get REPO
 			case "/vcs/github/repos/richardlt/demo":
 				repo := sdk.VCSRepo{
 					URL:          "https",
@@ -755,12 +762,13 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		},
 	)
 
-	pip := createBuildPipeline(t, db, cache, proj, u)
+	pip1 := createEmptyPipeline(t, db, cache, proj, u)
+	pip2 := createBuildPipeline(t, db, cache, proj, u)
 	app := createApplication1(t, db, cache, proj, u)
 
 	// RELOAD PROJECT WITH DEPENDENCIES
 	proj.Applications = append(proj.Applications, *app)
-	proj.Pipelines = append(proj.Pipelines, *pip)
+	proj.Pipelines = append(proj.Pipelines, *pip1, *pip2)
 
 	// WORKFLOW TO RUN
 	w := sdk.Workflow{
@@ -781,7 +789,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 							Name: "child1",
 							Type: sdk.NodeTypePipeline,
 							Context: &sdk.NodeContext{
-								PipelineID:    proj.Pipelines[0].ID,
+								PipelineID:    proj.Pipelines[1].ID,
 								ApplicationID: proj.Applications[0].ID,
 							},
 						},
@@ -794,6 +802,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		},
 		Pipelines: map[int64]sdk.Pipeline{
 			proj.Pipelines[0].ID: proj.Pipelines[0],
+			proj.Pipelines[1].ID: proj.Pipelines[1],
 		},
 	}
 
@@ -813,6 +822,9 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+
+	buf, _ := json.Marshal(wr)
+	fmt.Println(string(buf))
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
@@ -1253,6 +1265,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	assert.Equal(t, "mylastcommit", mapParams2["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
 	assert.Equal(t, "super commit", mapParams2["git.message"])
+
 }
 
 // Payload: branch only
@@ -1623,7 +1636,6 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.Equal(t, "bar", mapParams2["my.value"])
 	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
 	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSServer)
-
 }
 
 // Payload: branch only
@@ -2048,7 +2060,6 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	assert.Equal(t, "bar", mapParams2["my.value"])
 	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
 	assert.Equal(t, "fork", mapParams2["workflow.fork.node"])
-
 }
 
 // Payload: branch only  + run condition on git.branch
@@ -2141,7 +2152,6 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	)
 
 	pip := createEmptyPipeline(t, db, cache, proj, u)
-	//pip2 := createBuildPipeline(t, db, cache, proj, u)
 	app := createApplication1(t, db, cache, proj, u)
 
 	// RELOAD PROJECT WITH DEPENDENCIES
@@ -2224,7 +2234,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 
 func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {
 	pip := &sdk.Pipeline{
-		Name: "build",
+		Name: "empty",
 		Stages: []sdk.Stage{
 			{
 				Name:       "stage1",
