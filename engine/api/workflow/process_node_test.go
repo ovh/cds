@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -696,12 +695,44 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 			w.Body = ioutil.NopCloser(body)
 
 			switch r.URL.String() {
+			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
-				t.Fatalf("No need to get repo: %s", r.URL.String())
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2FbranchForked":
-				t.Fatalf("No need to get branch: %s", r.URL.String())
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
 			case "/vcs/github/repos/sguiheux/demo/commits/mylastcommit":
-				t.Fatalf("No need to get last commit: %s", r.URL.String())
+				c := sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:  "steven.guiheux",
+						Email: "sg@foo.bar",
+					},
+					Hash:      "mylastcommit",
+					Message:   "super commit",
+					Timestamp: time.Now().Unix(),
+				}
+				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
 			// NEED get forks
 			case "/vcs/github/repos/sguiheux/demo/forks":
 				forks := []sdk.VCSRepo{{
@@ -716,7 +747,17 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 				if err := enc.Encode(forks); err != nil {
 					return writeError(w, err)
 				}
-			// NEED get REPO
+			// NEED GET BRANCH TO GET LASTEST COMMIT
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2FbranchForked":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branchForked",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode(b); err != nil {
+					return writeError(w, err)
+				}
+				// NEED get REPO
 			case "/vcs/github/repos/richardlt/demo":
 				repo := sdk.VCSRepo{
 					URL:          "https",
@@ -822,9 +863,6 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-
-	buf, _ := json.Marshal(wr)
-	fmt.Println(string(buf))
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
 	assert.NoError(t, errR)
