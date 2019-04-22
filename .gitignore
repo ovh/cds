@@ -1,7 +1,7 @@
 *.swp
 *.iml
 .idea
-*.iml
+vendor/
 .vscode
 .DS_Store
 dump.rdb
