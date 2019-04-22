@@ -44,9 +44,9 @@ type Kind int
 // These are the defined objecstore drivers
 const (
 	Openstack Kind = iota
-	AWSS3
 	Filesystem
 	Swift
+	AWSS3
 )
 
 // Config represents all the configuration for all objectstore drivers
