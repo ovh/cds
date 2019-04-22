@@ -17,12 +17,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// FilesystemStore implements ObjectStore interface with filesystem driver
+// AWSS3Store implements ObjectStore interface with filesystem driver
 type AWSS3Store struct {
 	projectIntegration sdk.ProjectIntegration
 	prefix             string
 	bucketName         string
-	region             string
 	sess               *session.Session
 }
 
@@ -51,7 +50,7 @@ func newS3Store(integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*A
 }
 
 func (s *AWSS3Store) account() (*s3.ListObjectsOutput, error) {
-	log.Debug("AWS-S3-Store> Getting bucket info\n")
+	log.Debug("AWS-S3-Store> Getting bucket info")
 	s3n := s3.New(s.sess)
 	out, err := s3n.ListObjects(&s3.ListObjectsInput{
 		Bucket: aws.String(s.bucketName),
@@ -90,14 +89,14 @@ func (s *AWSS3Store) Status() sdk.MonitoringStatusLine {
 
 func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
 	defer data.Close()
-	log.Debug("AWS-S3-Store> Setting up uploader\n")
+	log.Debug("AWS-S3-Store> Setting up uploader")
 	uploader := s3manager.NewUploader(s.sess)
 	b, e := ioutil.ReadAll(data)
 	if e != nil {
 		return "", sdk.WrapError(e, "AWS-S3-Store> Unable to read data from input object")
 	}
 
-	log.Debug("AWS-S3-Store> Uploading object %s to bucket %s\n", s.getObjectPath(o), s.bucketName)
+	log.Debug("AWS-S3-Store> Uploading object %s to bucket %s", s.getObjectPath(o), s.bucketName)
 	out, err := uploader.Upload(&s3manager.UploadInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
@@ -106,7 +105,7 @@ func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
 	if err != nil {
 		return "", sdk.WrapError(err, "AWS-S3-Store> Unable to create object %s", s.getObjectPath(o))
 	}
-	log.Debug("AWS-S3-Store> Successfully uploaded object %s to bucket %s\n", s.getObjectPath(o), s.bucketName)
+	log.Debug("AWS-S3-Store> Successfully uploaded object %s to bucket %s", s.getObjectPath(o), s.bucketName)
 	return out.Location, nil
 }
 
@@ -116,7 +115,7 @@ func (s *AWSS3Store) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 
 func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
 	s3n := s3.New(s.sess)
-	log.Debug("AWS-S3-Store> Fetching object %s from bucket %s\n", s.getObjectPath(o), s.bucketName)
+	log.Debug("AWS-S3-Store> Fetching object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	out, err := s3n.GetObject(&s3.GetObjectInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
@@ -124,13 +123,13 @@ func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, sdk.WrapError(err, "AWS-S3-Store> Unable to download object %s", s.getObjectPath(o))
 	}
-	log.Debug("AWS-S3-Store> Successfully retrieved object %s from bucket %s\n", s.getObjectPath(o), s.bucketName)
+	log.Debug("AWS-S3-Store> Successfully retrieved object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	return out.Body, nil
 }
 
 func (s *AWSS3Store) Delete(o Object) error {
 	s3n := s3.New(s.sess)
-	log.Debug("AWS-S3-Store> Deleting object %s from bucket %s\n", s.getObjectPath(o), s.bucketName)
+	log.Debug("AWS-S3-Store> Deleting object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	_, err := s3n.DeleteObject(&s3.DeleteObjectInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
@@ -138,6 +137,6 @@ func (s *AWSS3Store) Delete(o Object) error {
 	if err != nil {
 		return sdk.WrapError(err, "AWS-S3-Store> Unable to delete object %s", s.getObjectPath(o))
 	}
-	log.Debug("AWS-S3-Store> Successfully Deleted object %s/%s\n", s.bucketName, s.getObjectPath(o))
+	log.Debug("AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getObjectPath(o))
 	return nil
 }

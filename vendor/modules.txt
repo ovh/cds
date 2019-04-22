@@ -363,9 +363,6 @@ github.com/lib/pq
 github.com/lib/pq/oid
 # github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024
 github.com/lytics/logrus
-# github.com/magefile/mage v1.8.0
-github.com/magefile/mage/mg
-github.com/magefile/mage/sh
 # github.com/magiconair/properties v0.0.0-20160908093658-0723e352fa35
 github.com/magiconair/properties
 # github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d

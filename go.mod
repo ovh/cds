@@ -140,7 +140,6 @@ require (
 	github.com/kr/fs v0.0.0-20131111012553-2788f0dbd169 // indirect
 	github.com/lib/pq v0.0.0-20161014011634-ae8357db35d7
 	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
-	github.com/magefile/mage v1.8.0
 	github.com/magiconair/properties v0.0.0-20160908093658-0723e352fa35 // indirect
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
 	github.com/manucorporat/sse v0.0.0-20160126180136-ee05b128a739 // indirect
