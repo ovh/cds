@@ -13,19 +13,22 @@
             </div>
         </a>
         <a class="item" (click)="sendEvent('fork')"
-           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
+            || workflow.permission < permissionEnum.READ_WRITE_EXECUTE || node.type !== 'pipeline'">
             <div class="content">
                 {{ 'workflow_node_fork_add' | translate }}
             </div>
         </a>
         <a class="item" (click)="sendEvent('join')"
-           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
+           || workflow.permission < permissionEnum.READ_WRITE_EXECUTE || node.type !== 'pipeline'">
             <div class="content">
                 {{ 'workflow_node_join_add' | translate }}
             </div>
         </a>
         <a class="item" (click)="sendEvent('join_link')"
-           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
+           || workflow.permission < permissionEnum.READ_WRITE_EXECUTE || node.type !== 'pipeline'">
             {{ 'workflow_node_join_link' | translate }}
         </a>
         <hr>
@@ -34,7 +37,8 @@
             {{ 'workflow_node_hook_add' | translate }}
         </a>
         <a class="item" (click)="sendEvent('outgoing')"
-           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
+           || workflow.permission < permissionEnum.READ_WRITE_EXECUTE || node.type !== 'pipeline'" >
             <div class="content">
                 {{ 'workflow_node_outgoing_hook' | translate }}
             </div>
@@ -42,12 +46,14 @@
         <hr>
         <a class="item" (click)="sendEvent('edit')">
             <div class="content">
-                {{ 'workflow_node_menu_edit' + ' ' + node.id | translate }}
+                {{ 'workflow_node_menu_edit' | translate }}
             </div>
         </a>
         <hr>
-        <a class="item" (click)="sendEvent('delete')" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0) && workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
-            <div class="content">
+        <a class="item" (click)="sendEvent('delete')"
+           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE
+                || node.id === workflow.workflow_data.node.id">
+           <div class="content">
                 {{ 'btn_delete' | translate }}
             </div>
         </a>

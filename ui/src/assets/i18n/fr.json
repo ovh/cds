@@ -1068,6 +1068,7 @@
   "workflow_root_context_integration": "Intégration (facultatif)",
   "workflow_root_context_mutex": "Limiter à une execution à la fois",
   "workflow_root_context_pipeline": "Pipeline",
+  "workflow_root_context_application_send_vcs_status": "Désactiver les status VCS",
   "workflow_run_loading": "Chargement des exécutions",
   "workflow_no_run_found": "Aucune exécution trouvée pour ce workflow",
   "workflow_run_resync_done": "Resynchronisé",

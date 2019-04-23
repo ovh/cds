@@ -6,8 +6,20 @@
             </div>
             <div class="twelve wide field">
                 <ng-container
-                    *ngIf="node.id > 0 && node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id];else editPipeline">
+                    *ngIf="node.id > 0 && node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
                     <div class="ui input">{{workflow.pipelines[node.context.pipeline_id].name}}</div>
+                </ng-container>
+            </div>
+        </div>
+        <div class="inline fields">
+            <div class="four wide field">
+                <label>{{ 'common_name' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <ng-container>
+                    <div class="ui input">
+                        <input type="text" [(ngModel)]="node.name">
+                    </div>
                 </ng-container>
             </div>
         </div>
@@ -18,6 +30,7 @@
             <div class="twelve wide field">
                 <sui-select class="fluid selection"
                             [(ngModel)]="node.context.application_id"
+                            (ngModelChange)="updateVCSStatusCheck()"
                             [options]="applications"
                             labelField="name"
                             valueField="id"
@@ -28,6 +41,18 @@
                                        [value]="option">
                     </sui-select-option>
                 </sui-select>
+            </div>
+        </div>
+
+        <div class="inline fields" *ngIf="showCheckStatus">
+            <div class="four wide field">
+                <label>{{ 'workflow_root_context_application_send_vcs_status' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <div class="ui toggle checkbox ml10">
+                    <input type="checkbox" id="vcs_status" name="vcs_status" [(ngModel)]="node.context.disable_vcs_status">
+                    <label></label>
+                </div>
             </div>
         </div>
         <div class="inline fields">

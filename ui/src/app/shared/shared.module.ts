@@ -84,21 +84,16 @@ import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-m
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 import { WorkflowTemplateParamFormComponent } from './workflow-template/param-form/workflow-template.param-form.component';
 import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
-import { WorkflowNodeConditionFormComponent } from './workflow/modal/conditions/condition-form/condition.component';
-import { WorkflowNodeConditionListComponent } from './workflow/modal/conditions/condition-list/condition.list.component';
-import { WorkflowNodeConditionsComponent } from './workflow/modal/conditions/node.conditions.component';
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
 import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
-import { WorkflowNodePermissionsComponent } from './workflow/modal/permissions/node.permissions.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeHookFormComponent } from './workflow/node/hook/form/hook.form.component';
 import { WorkflowNodeOutGoingHookFormComponent } from './workflow/node/outgoinghook-form/outgoinghook.form.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
-import { WorkflowNodeAddWizardComponent } from './workflow/node/wizard/node.wizard.component';
 import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
 import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
 import { WorkflowSidebarRunListComponent } from './workflow/sidebar/run-list/workflow.sidebar.run.component';
@@ -108,6 +103,7 @@ import { StageStepSummaryComponent } from './workflow/sidebar/run-node/stage/sta
 import { WorkflowSidebarRunNodeComponent } from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
 import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wizard.context.component';
 import {WorkflowWizardNodeInputComponent} from './workflow/wizard/input/wizard.input.component';
+import { WorkflowNodeAddWizardComponent } from './workflow/wizard/node-add/node.wizard.component';
 import { WorkflowWNodeForkComponent } from './workflow/wnode/fork/node.fork.component';
 import { WorkflowNodeHookComponent } from './workflow/wnode/hook/hook.component';
 import { WorkflowWNodeJoinComponent } from './workflow/wnode/join/node.join.component';
@@ -191,14 +187,10 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
         WorkflowDeleteNodeComponent,
-        WorkflowNodeConditionsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
-        WorkflowNodePermissionsComponent,
         WorkflowTriggerComponent,
-        WorkflowNodeConditionFormComponent,
-        WorkflowNodeConditionListComponent,
         WorkflowNodeEditModalComponent,
         WorkflowWizardNodeContextComponent,
         WorkflowWizardNodeInputComponent,
@@ -306,12 +298,10 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWNodeMenuEditComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,
-        WorkflowNodeConditionsComponent,
         WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
-        WorkflowNodePermissionsComponent,
         WorkflowTriggerComponent,
         WorkflowNodeEditModalComponent,
         ZoneComponent,

@@ -1,43 +1,49 @@
 <ng-template let-context let-modal="modal" #nodeEditModal>
-    <div class="header">{{node.name + ' - ' + node.id}}</div>
+    <div class="header">{{node.name}}</div>
     <div class="content">
-       <div class="ui grid">
-           <div class="four wide column">
-               <div class="ui secondary vertical pointing menu">
-                   <a class="item" [class.active]="selected === 'context'" (click)="selected = 'context'">
-                       {{ 'workflow_node_context_label' | translate }}
-                   </a>
-                   <a class="item" [class.active]="selected === 'input'" (click)="selected = 'input'">
-                       {{ 'workflow_node_input' | translate }}
-                   </a>
-                   <a class="item" [class.active]="selected === 'conditions'" (click)="selected = 'conditions'">
-                       {{ 'workflow_node_condition_label' | translate }}
-                   </a>
-                   <a class="item" [class.active]="selected === 'permissions'" (click)="selected = 'permissions'">
-                       {{ 'common_permissions' | translate }}
-                   </a>
-                   <a class="item" [class.active]="selected === 'vcs'" (click)="selected = 'vcs'">
-                       {{ 'VCS' | translate }}
-                   </a>
-               </div>
-           </div>
-           <div class="twelve wide column">
-               <div [ngSwitch]="selected">
-                   <ng-container *ngSwitchCase="'context'">
-                        <app-workflow-node-context [project]="project" [workflow]="workflow" [node]="node"></app-workflow-node-context>
-                   </ng-container>
-                   <ng-container *ngSwitchCase="'input'">
-                        <app-workflow-node-input [project]="project" [workflow]="workflow" [node]="node"></app-workflow-node-input>
-                   </ng-container>
-                   <ng-container *ngSwitchCase="'conditions'">
-                       <app-workflow-node-conditions [project]="project" [workflow]="workflow" [node]="node"></app-workflow-node-conditions>
-                   </ng-container>
-                   <ng-container *ngSwitchCase="'permissions'">
-                   </ng-container>
-                   <ng-container *ngSwitchCase="'vcs'">
-                   </ng-container>
-               </div>
-           </div>
-       </div>
+        <div class="ui grid">
+            <div class="four wide column">
+                <div class="ui secondary vertical pointing menu">
+                    <a class="item" [class.active]="selected === 'context'" (click)="selected = 'context'">
+                        {{ 'workflow_node_context_label' | translate }}
+                    </a>
+                    <a class="item" [class.active]="selected === 'input'" (click)="selected = 'input'">
+                        {{ 'workflow_node_input' | translate }}
+                    </a>
+                    <a class="item" [class.active]="selected === 'conditions'" (click)="selected = 'conditions'">
+                        {{ 'workflow_node_condition_label' | translate }}
+                    </a>
+                    <a class="item" [class.active]="selected === 'permissions'" (click)="selected = 'permissions'">
+                        {{ 'common_permissions' | translate }}
+                    </a>
+                </div>
+            </div>
+            <div class="twelve wide column">
+                <div [ngSwitch]="selected">
+                    <ng-container *ngSwitchCase="'context'">
+                        <app-workflow-node-context [project]="project" [workflow]="workflow"
+                                                   [node]="node"></app-workflow-node-context>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'input'">
+                        <app-workflow-node-input [project]="project" [workflow]="workflow"
+                                                 [node]="node"></app-workflow-node-input>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'conditions'">
+                        <app-workflow-node-conditions [project]="project" [workflow]="workflow"
+                                                      [node]="node"></app-workflow-node-conditions>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'permissions'">
+                        <app-permission-list [permissions]="node.groups" (event)="groupManagement($event)"
+                                             [edit]="(workflow.from_repository && workflow.from_repository.length > 0)?false:workflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                        <ng-container
+                            *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE && !(workflow.from_repository && workflow.from_repository.length > 0)">
+                            <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>
+                            <app-permission-form (createGroupPermissionEvent)="groupManagement($event)"
+                                                 [loading]="loading"></app-permission-form>
+                        </ng-container>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
     </div>
 </ng-template>

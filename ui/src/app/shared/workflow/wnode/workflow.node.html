@@ -31,8 +31,4 @@
     <!-- Delete Node -->
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)"
                               #workflowDeleteNode></app-workflow-node-delete>
-
-    <!-- Add node permissions -->
-    <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node" #workflowNodePermissions></app-workflow-node-permissions>
-
 </ng-container>

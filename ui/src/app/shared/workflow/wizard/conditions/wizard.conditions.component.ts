@@ -24,7 +24,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     @Input() workflow: Workflow;
     editableNode: WNode;
     @Input('node') set node(data: WNode) {
-        console.log('new condition data');
         if (data) {
             this.editableNode = cloneDeep(data);
             if (!this.editableNode.context) {

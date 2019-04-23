@@ -33,7 +33,6 @@ export class WorkflowWizardNodeInputComponent {
     editableNode: WNode;
 
     @Input('node') set node(data: WNode) {
-        console.log('new input data');
         if (data) {
             this.init(data);
         }

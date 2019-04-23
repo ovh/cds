@@ -1,11 +1,14 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
+import {Application} from 'app/model/application.model';
 import {ApplicationService} from 'app/service/application/application.service';
 import {ToastService} from 'app/shared/toast/ToastService';
+import {FetchApplication} from 'app/store/applications.action';
+import {ApplicationsState} from 'app/store/applications.state';
 import {UpdateWorkflow} from 'app/store/workflows.action';
 import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
+import {filter, finalize, first} from 'rxjs/operators';
 import {Environment} from '../../../../model/environment.model';
 import {PermissionValue} from '../../../../model/permission.model';
 import {IdName, Project} from '../../../../model/project.model';
@@ -24,9 +27,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     @Input() workflow: Workflow;
     editableNode: WNode;
     @Input('node') set node(data: WNode) {
-        console.log('new context data');
         if (data) {
             this.editableNode = cloneDeep(data);
+            this.updateVCSStatusCheck();
         }
     };
     get node(): WNode {
@@ -37,8 +40,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     integrations: Array<IdName>;
     permissionEnum = PermissionValue;
     loading: boolean;
+    showCheckStatus = false;
 
-    constructor(private store: Store, private _appService: ApplicationService, private _translate: TranslateService,
+    constructor(private _store: Store, private _appService: ApplicationService, private _translate: TranslateService,
                 private _toast: ToastService) {}
 
     ngOnInit() {
@@ -53,6 +57,28 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         voidApp.name = ' ';
         this.applications = cloneDeep(this.project.application_names) || [];
         this.applications.unshift(voidApp);
+        this.updateVCSStatusCheck();
+    }
+
+    updateVCSStatusCheck(): void {
+        if (!this.applications || !this.node) {
+            return;
+        }
+        if (!this.node.context.application_id) {
+            this.showCheckStatus = false;
+            return;
+        }
+        let i = this.applications.findIndex(a => a.id === this.node.context.application_id);
+        if (i === -1) {
+            this.showCheckStatus = false;
+            return;
+        }
+        this._store.dispatch(new FetchApplication({projectKey: this.project.key, applicationName: this.applications[i].name}));
+        this._store.select(ApplicationsState.selectApplication(this.project.key, this.applications[i].name))
+            .pipe(filter((app) => app != null), first())
+            .subscribe((app: Application) => {
+                this.showCheckStatus = app.repository_fullname && app.repository_fullname !== '';
+            })
     }
 
     initIntegrationList(): void {
@@ -102,7 +128,8 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         n.context.environment_id = this.editableNode.context.environment_id;
         n.context.project_integration_id = this.editableNode.context.project_integration_id;
         n.context.mutex = this.editableNode.context.mutex;
-        this.store.dispatch(new UpdateWorkflow({
+        n.name = this.editableNode.name;
+        this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
