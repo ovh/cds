@@ -72,7 +72,7 @@ type WorkflowAsCodeInterface interface {
 
 // RepositoriesManagerInterface exposes all repostories manager functions
 type RepositoriesManagerInterface interface {
-	RepositoriesList(projectKey string, repoManager string) ([]sdk.VCSRepo, error)
+	RepositoriesList(projectKey string, repoManager string, resync bool) ([]sdk.VCSRepo, error)
 }
 
 // ApplicationClient exposes application related functions
