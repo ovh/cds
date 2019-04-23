@@ -250,7 +250,7 @@ func craftWorkflowFile(workflowName, appName, pipName, destinationDir string) (s
 	return wFilePath, nil
 }
 
-func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetchURL, appName, repoFullname, repoManagerName, destinationDir string) (string, error) {
+func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetchURL, appName, repoFullname, repoManagerName, defaultSSHKey, defaultPGPKey, destinationDir string) (string, error) {
 	if existingApp != nil {
 		return "", nil
 	}
@@ -269,61 +269,101 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 		Keys:              map[string]exportentities.KeyValue{},
 	}
 
+	// First collect all PGP and SSSH Keys/
+	// And try to find teh chosen key
 	projectPGPKeys := make([]sdk.ProjectKey, 0, len(proj.Keys))
 	projectSSHKeys := make([]sdk.ProjectKey, 0, len(proj.Keys))
 	for i := range proj.Keys {
 		switch proj.Keys[i].Type {
 		case "pgp":
 			projectPGPKeys = append(projectPGPKeys, proj.Keys[i])
+			if defaultPGPKey == proj.Keys[i].Name {
+				app.VCSPGPKey = proj.Keys[i].Name
+				break
+			}
 		case "ssh":
 			projectSSHKeys = append(projectSSHKeys, proj.Keys[i])
+			if defaultSSHKey == proj.Keys[i].Name {
+				app.VCSSSHKey = proj.Keys[i].Name
+				break
+			}
 		}
-	}
-
-	// ask for pgp key, if not selected or no existing key create a new one.
-	if len(projectPGPKeys) > 1 {
-		opts := make([]string, len(projectPGPKeys)+1)
-		opts[0] = "Use a new PGP key"
-		for i := range projectPGPKeys {
-			opts[i+1] = projectPGPKeys[i].Name
-		}
-		selected := cli.MultiChoice("Select a PGP key to use in application VCS strategy", opts...)
-		if selected > 0 {
-			app.VCSPGPKey = opts[selected]
-		}
-	} else if len(projectPGPKeys) == 1 {
-		fmt.Printf(" * using PGP Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(projectPGPKeys[0].Name))
-		fmt.Println()
-		app.VCSPGPKey = projectPGPKeys[0].Name
 	}
 
 	if app.VCSPGPKey == "" {
-		app.VCSPGPKey = fmt.Sprintf("app-pgp-%s", repoManagerName)
-		app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+		if defaultPGPKey != "" {
+			if !strings.HasPrefix(defaultPGPKey, "app-pgp-") {
+				defaultPGPKey = fmt.Sprintf("app-pgp-%s", defaultPGPKey)
+			}
+			// The key is unknown, we have to create a new one
+			app.VCSPGPKey = defaultPGPKey
+			app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+
+			fmt.Printf(" * using PGP Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(app.VCSPGPKey))
+			fmt.Println()
+		} else {
+			// ask for pgp key, if not selected or no existing key create a new one.
+			if len(projectPGPKeys) > 1 {
+				opts := make([]string, len(projectPGPKeys)+1)
+				opts[0] = "Use a new PGP key"
+				for i := range projectPGPKeys {
+					opts[i+1] = projectPGPKeys[i].Name
+				}
+				selected := cli.MultiChoice("Select a PGP key to use in application VCS strategy", opts...)
+				if selected > 0 {
+					app.VCSPGPKey = opts[selected]
+				} else {
+					app.VCSPGPKey = fmt.Sprintf("app-pgp-%s", repoManagerName)
+					app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+				}
+			} else if len(projectPGPKeys) == 1 {
+				app.VCSPGPKey = projectPGPKeys[0].Name
+
+				fmt.Printf(" * using PGP Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(app.VCSPGPKey))
+				fmt.Println()
+			}
+		}
 	}
 
 	// ask for ssh key if connection type is ssh, if not selected or no existing key create a new one
 	if connectionType == "ssh" {
-		if len(projectSSHKeys) > 1 {
-			opts := make([]string, len(projectSSHKeys)+1)
-			opts[0] = "Use a new ssh key"
-			for i := range projectSSHKeys {
-				opts[i+1] = projectSSHKeys[i].Name
-			}
-			selected := cli.MultiChoice("Select a SSH key to use in application VCS strategy", opts...)
-			if selected > 0 {
-				app.VCSSSHKey = opts[selected]
-			}
-		} else if len(projectSSHKeys) == 1 {
-			fmt.Printf(" * using SSH Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(projectSSHKeys[0].Name))
-			fmt.Println()
-			app.VCSSSHKey = projectSSHKeys[0].Name
 
-		}
 		if app.VCSSSHKey == "" {
-			app.VCSSSHKey = fmt.Sprintf("app-ssh-%s", repoManagerName)
-			app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypeSSH}
+			if defaultSSHKey != "" {
+				// The key is unknown, we have to create a new one
+				if !strings.HasPrefix(defaultPGPKey, "app-ssh-") {
+					defaultPGPKey = fmt.Sprintf("app-ssh-%s", defaultPGPKey)
+				}
+
+				app.VCSSSHKey = defaultSSHKey
+				app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypeSSH}
+
+				fmt.Printf(" * using SSH Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(app.VCSSSHKey))
+				fmt.Println()
+			} else {
+				// ask for ssh key, if not selected or no existing key create a new one.
+				if len(projectSSHKeys) > 1 {
+					opts := make([]string, len(projectPGPKeys)+1)
+					opts[0] = "Use a new SSH key"
+					for i := range projectSSHKeys {
+						opts[i+1] = projectSSHKeys[i].Name
+					}
+					selected := cli.MultiChoice("Select a SSH key to use in application VCS strategy", opts...)
+					if selected > 0 {
+						app.VCSSSHKey = opts[selected]
+					} else {
+						app.VCSSSHKey = fmt.Sprintf("app-ssh-%s", repoManagerName)
+						app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+					}
+				} else if len(projectSSHKeys) == 1 {
+					app.VCSSSHKey = projectSSHKeys[0].Name
+
+					fmt.Printf(" * using SSH Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(app.VCSSSHKey))
+					fmt.Println()
+				}
+			}
 		}
+
 	}
 
 	b, err := exportentities.Marshal(app, exportentities.FormatYAML)
@@ -461,7 +501,7 @@ func workflowInitRun(c cli.Values) error {
 		}
 		files = []string{wFilePath}
 
-		appFilePath, err := craftApplicationFile(proj, existingApp, fetchURL, appName, repoFullname, repoManagerName, dotCDS)
+		appFilePath, err := craftApplicationFile(proj, existingApp, fetchURL, appName, repoFullname, repoManagerName, c.GetString("repository-ssh-key"), c.GetString("repository-pgp-key"), dotCDS)
 		if err != nil {
 			return err
 		}
@@ -513,8 +553,12 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	//Configure local git
+	if err := gitRepo.LocalConfigSet("cds", "project", proj.Key); err != nil {
+		fmt.Printf("error: unable to setup git local config to store cds project key: %v\n", err)
+	}
+
 	if err := gitRepo.LocalConfigSet("cds", "workflow", repoShortname); err != nil {
-		return err
+		fmt.Printf("error: unable to setup git local config to store cds workflow name: %v\n", err)
 	}
 
 	fmt.Printf("Now you can run: ")
