@@ -17,9 +17,9 @@ type Pipeliner interface {
 
 // PipelineV1 represents exported sdk.Pipeline
 type PipelineV1 struct {
-	Version      string                    `json:"version,omitempty" yaml:"version,omitempty"`
-	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
-	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	Version      string                    `json:"version,omitempty" yaml:"version,omitempty" description:"The version for the current pipeline file (v1.0)"`
+	Name         string                    `json:"name,omitempty" yaml:"name,omitempty" description:"The name of the pipeline"`
+	Description  string                    `json:"description,omitempty" yaml:"description,omitempty" `
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Stages       []string                  `json:"stages,omitempty" yaml:"stages,omitempty"` //Here Stage.Jobs will NEVER be set
 	StageOptions map[string]Stage          `json:"options,omitempty" yaml:"options,omitempty"`
@@ -43,14 +43,14 @@ type Stage struct {
 
 // Job represents exported sdk.Job
 type Job struct {
-	Name           string        `json:"job,omitempty" yaml:"job,omitempty"`     //This will ONLY be set with Pipelinev1
-	Stage          string        `json:"stage,omitempty" yaml:"stage,omitempty"` //This will ONLY be set with Pipelinev1
-	Description    string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty"`
-	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
-	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty"`
-	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
+	Name           string        `json:"job,omitempty" yaml:"job,omitempty" description:"The name of the job."`
+	Stage          string        `json:"stage,omitempty" yaml:"stage,omitempty" description:"The name of the stage for the job."`
+	Description    string        `json:"description,omitempty" yaml:"description,omitempty" description:"The description of the job."`
+	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty" description:"Job is enabled by default, you can set this option to disable a job."`
+	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty" description:"The list of steps for the job."`
+	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" description:"The list of requirements for the jobs."`
+	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty" description:"Set this option to ignore job's errors."`
+	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty" description:"Set this option to execute the job even if a previous step failed."`
 }
 
 // Step represents exported step used in a job
