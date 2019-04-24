@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -68,7 +69,7 @@ func (s *AWSS3Store) getObjectPath(o Object) string {
 }
 
 func (s *AWSS3Store) TemporaryURLSupported() bool {
-	return false
+	return true
 }
 
 func (s *AWSS3Store) GetProjectIntegration() sdk.ProjectIntegration {
@@ -109,8 +110,26 @@ func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
 	return out.Location, nil
 }
 
-func (s *AWSS3Store) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	return "", sdk.ErrNotImplemented
+// StoreURL returns a temporary url and a secret key to store an object
+func (s *AWSS3Store) StoreURL(o Object, contentType string) (string, string, error) {
+	log.Debug("AWS-S3-Store> StoreURL")
+	s3n := s3.New(s.sess)
+	key := aws.String(s.getObjectPath(o))
+	req, _ := s3n.PutObjectRequest(&s3.PutObjectInput{
+		Key:    key,
+		Bucket: aws.String(s.bucketName),
+	})
+
+	if contentType != "" {
+		req.HTTPRequest.Header.Set("Content-Type", contentType)
+	}
+
+	urlStr, hs, err := req.PresignRequest(5 * time.Minute)
+	if err != nil {
+		return "", "", sdk.WrapError(err, "failed to sign request")
+	}
+	log.Debug("AWS-S3-Store> StoreURL urlStr:%v key:%v hs:%v", urlStr, *key, hs)
+	return urlStr, *key, nil
 }
 
 func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
@@ -139,4 +158,30 @@ func (s *AWSS3Store) Delete(o Object) error {
 	}
 	log.Debug("AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getObjectPath(o))
 	return nil
+}
+
+// FetchURL returns a temporary url and a secret key to fetch an object
+func (s *AWSS3Store) FetchURL(o Object) (string, string, error) {
+	log.Debug("AWS-S3-Store> FetchURL")
+	s3n := s3.New(s.sess)
+	key := aws.String(s.getObjectPath(o))
+	req, _ := s3n.GetObjectRequest(&s3.GetObjectInput{
+		Key:    key,
+		Bucket: aws.String(s.bucketName),
+	})
+	urlStr, err := req.Presign(5 * time.Minute)
+	if err != nil {
+		return "", "", sdk.WrapError(err, "failed to sign request")
+	}
+	log.Debug("AWS-S3-Store> FetchURL urlStr:%v key:%v", urlStr, *key)
+	return urlStr, *key, nil
+}
+
+func (s *AWSS3Store) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
+	return "", sdk.ErrNotImplemented
+}
+
+// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
+func (s *AWSS3Store) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
+	return "", "", sdk.ErrNotImplemented
 }

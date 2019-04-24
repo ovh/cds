@@ -21,7 +21,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW12 test-action-staticfiles
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW12 test-action-staticfiles -p integration=myOpenstackIntegration
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-action-staticfiles #1 has been launched"

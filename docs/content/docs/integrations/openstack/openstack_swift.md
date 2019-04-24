@@ -75,7 +75,7 @@ this allows you to propose a Public OpenStack Swift, available on all CDS Projec
 Create a file public-configuration.yml:
 
 ```yml
-name: your-public-openstack-integration
+name: Openstack
 storage: true
 public: true
 public_configurations:
