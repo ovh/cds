@@ -188,6 +188,7 @@ var (
 	ErrEnvironmentAsCodeOverride                     = Error{ID: 171, Status: http.StatusForbidden}
 	ErrWorkflowAsCodeOverride                        = Error{ID: 172, Status: http.StatusForbidden}
 	ErrProjectSecretDataUnknown                      = Error{ID: 173, Status: http.StatusBadRequest}
+	ErrApplicationMandatoryOnWorkflowAsCode          = Error{ID: 174, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -358,6 +359,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrEnvironmentAsCodeOverride.ID:                     "You cannot override environment from this repository",
 	ErrWorkflowAsCodeOverride.ID:                        "You cannot override workflow from this repository",
 	ErrProjectSecretDataUnknown.ID:                      "Invalid encrypted data",
+	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application linked to a git repository is mandatory on the workflow root",
 }
 
 var errorsFrench = map[int]string{
@@ -528,6 +530,7 @@ var errorsFrench = map[int]string{
 	ErrEnvironmentAsCodeOverride.ID:                     "Vous ne pouvez pas importer l'environment depuis ce dépôt",
 	ErrWorkflowAsCodeOverride.ID:                        "Vous ne pouvez pas importer le workflow depuis ce dépôt",
 	ErrProjectSecretDataUnknown.ID:                      "Donnée chiffrée non valide",
+	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Une application liée à un dépôt git est obligatoire à la racine du workflow",
 }
 
 var errorsLanguages = []map[int]string{

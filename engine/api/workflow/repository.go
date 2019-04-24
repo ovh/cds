@@ -326,6 +326,11 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 				break
 			}
 		}
+		ope.RepositoryStrategy.User = ""
+		ope.RepositoryStrategy.Password = ""
+	} else {
+		ope.RepositoryStrategy.SSHKey = ""
+		ope.RepositoryStrategy.SSHKeyContent = ""
 	}
 
 	if multipartData == nil {

@@ -1571,6 +1571,16 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
 	}
 
+	// If the workflow is "as-code", it should always be linked to a git repository
+	if opts != nil && opts.FromRepository != "" {
+		if wf.Root.Context.Application == nil {
+			return nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
+		}
+		if wf.Root.Context.Application.VCSServer == "" || wf.Root.Context.Application.RepositoryFullname == "" {
+			return nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
+		}
+	}
+
 	if wf.Root.Context.Application != nil {
 		if err := application.Update(tx, store, wf.Root.Context.Application); err != nil {
 			return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
