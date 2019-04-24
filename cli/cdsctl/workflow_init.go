@@ -162,22 +162,26 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 	return repoName, nil, nil
 }
 
-func searchRepository(pkey, repoManagerName, repoFullname string, resync bool) (string, error) {
-	// Get repositories from the repository manager
-	repos, err := client.RepositoriesList(pkey, repoManagerName, true)
-	if err != nil {
-		return "", fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
-	}
-
-	// Check it the project with it's delegated oauth knows the current repo
-	// Search the repo
-	for _, r := range repos {
-		// r.Fullname = CDS/demo
-		if strings.ToLower(r.Fullname) == repoFullname {
-			fmt.Printf(" * using repository %s from %s", cli.Magenta(r.Fullname), cli.Magenta(repoManagerName))
-			fmt.Println()
-			return r.Fullname, nil
+func searchRepository(pkey, repoManagerName, repoFullname string) (string, error) {
+	var resync bool
+	for !resync {
+		// Get repositories from the repository manager
+		repos, err := client.RepositoriesList(pkey, repoManagerName, resync)
+		if err != nil {
+			return "", fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
 		}
+
+		// Check it the project with it's delegated oauth knows the current repo
+		// Search the repo
+		for _, r := range repos {
+			// r.Fullname = CDS/demo
+			if strings.ToLower(r.Fullname) == repoFullname {
+				fmt.Printf(" * using repository %s from %s", cli.Magenta(r.Fullname), cli.Magenta(repoManagerName))
+				fmt.Println()
+				return r.Fullname, nil
+			}
+		}
+		resync = true
 	}
 
 	return "", fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoFullname, repoManagerName)
@@ -480,7 +484,7 @@ func workflowInitRun(c cli.Values) error {
 			return fmt.Errorf("unable to get vcs server: %v", err)
 		}
 
-		repoFullname, err = searchRepository(pkey, repoManagerName, repoFullname, c.GetBool("resync-repositories"))
+		repoFullname, err = searchRepository(pkey, repoManagerName, repoFullname)
 		if err != nil {
 			return err
 		}
