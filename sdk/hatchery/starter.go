@@ -178,7 +178,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	}
 
 	ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID))
-	SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
+	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 		ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
 		Args: []interface{}{
 			h.Service().Name,
@@ -189,10 +189,12 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	next()
 
 	if j.model.IsDeprecated {
-		SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
+		ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
+		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
 			Args: []interface{}{j.model.Name},
 		})
+		next()
 	}
 	return true, nil // ok for this job
 }
