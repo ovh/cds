@@ -183,6 +183,7 @@ var (
 	ErrInvalidJobRequirementWorkerModelCapabilitites = Error{ID: 166, Status: http.StatusBadRequest}
 	ErrMalformattedStep                              = Error{ID: 167, Status: http.StatusBadRequest}
 	ErrVCSUsedByApplication                          = Error{ID: 168, Status: http.StatusBadRequest}
+	ErrApplicationMandatoryOnWorkflowAsCode          = Error{ID: 169, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -348,6 +349,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Invalid job requirements: the worker model does't match with the binary requirements",
 	ErrMalformattedStep.ID:                              "Malformatted step",
 	ErrVCSUsedByApplication.ID:                          "Repository manager still used by an application",
+	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application repository is mandatory on the workflow root",
 }
 
 var errorsFrench = map[int]string{
@@ -513,6 +515,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Pré-requis de job invalide: Le modèle de worker ne dispose pas de binaires suffisants",
 	ErrMalformattedStep.ID:                              "Étape malformée",
 	ErrVCSUsedByApplication.ID:                          "Le gestionnaire de dépot est encore utilisé par une application",
+	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Un dépôt d'application est obligatoire à la racine du workflow",
 }
 
 var errorsLanguages = []map[int]string{
