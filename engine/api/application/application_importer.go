@@ -18,6 +18,14 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return sdk.WrapError(erre, "application.Import> Unable to check if application exists")
 	}
 
+	if app.RepositoryStrategy.ConnectionType == "ssh" {
+		app.RepositoryStrategy.User = ""
+		app.RepositoryStrategy.Password = ""
+	} else {
+		app.RepositoryStrategy.SSHKey = ""
+		app.RepositoryStrategy.SSHKeyContent = ""
+	}
+
 	if doUpdate {
 		oldApp, errlo := LoadByName(db, store, proj.Key, app.Name, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
 		if errlo != nil {
