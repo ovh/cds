@@ -184,6 +184,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			continue
 		}
 		if ope.Status == sdk.OperationStatusError {
+			log.Error("operation in error %s: %s", ope.UUID, ope.Error)
 			break
 		}
 		if ope.Status == sdk.OperationStatusDone {

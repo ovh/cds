@@ -52,7 +52,6 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgAppUpdated, app.Name)
 		}
-
 	} else {
 		//Save application in database
 		if err := Insert(db, store, proj, app, u); err != nil {
