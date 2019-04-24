@@ -335,8 +335,8 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 		if app.VCSSSHKey == "" {
 			if defaultSSHKey != "" {
 				// The key is unknown, we have to create a new one
-				if !strings.HasPrefix(defaultPGPKey, "app-ssh-") {
-					defaultPGPKey = fmt.Sprintf("app-ssh-%s", defaultPGPKey)
+				if !strings.HasPrefix(defaultSSHKey, "app-ssh-") {
+					defaultSSHKey = fmt.Sprintf("app-ssh-%s", defaultSSHKey)
 				}
 
 				app.VCSSSHKey = defaultSSHKey
