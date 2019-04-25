@@ -73,7 +73,7 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 			status, body, headers, err := g.get(nextPage, opts...)
 			if err != nil {
 				log.Warning("githubClient.PullRequests> Error %s", err)
-				return nil, err
+				return nil, sdk.WithStack(err)
 			}
 			if status >= 400 {
 				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
