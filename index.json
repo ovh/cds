@@ -1075,7 +1075,7 @@
 	"title": "config",
 	"tags": [],
 	"description": "",
-	"content": " ConfigUser return url of CDS UI    URL /config/user     Method GET   Permissions Auth: false   Code ConfigUserHandler    ConfigVCShandler return the configuration of vcs server    URL /config/vcs     Method GET   Permissions NeedService: - Auth: true   Code ConfigVCShandler    "
+	"content": " ConfigUser return url of CDS UI    URL /config/user     Method GET   Permissions Auth: false   Code ConfigUserHandler    ConfigVCShandler return the configuration of vcs server    URL /config/vcs     Method GET   Permissions Auth: true   Code ConfigVCShandler    "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/engine/config/",
@@ -1789,7 +1789,7 @@
 	"title": "init",
 	"tags": [],
 	"description": "",
-	"content": " cdsctl workflow init Init a workflow\nSynopsis Initialize a workflow from your current repository, this will create yml files and push them to CDS.\nDocumentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/\ncdsctl workflow init [PROJECT-KEY] [flags]  Options  -r, --from-remote Initialize a workflow from your git origin  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  "
+	"content": " cdsctl workflow init Init a workflow\nSynopsis Initialize a workflow from your current repository, this will read or create yml files and push them to CDS.\nDocumentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/\ncdsctl workflow init [PROJECT-KEY] [flags]  Options  --pipeline string (Optionnal) Set the root pipeline you want to use. If empty it will propose you to reuse of create a pipeline. --repository-fullname string (Optionnal) Set the repository fullname defined in repository manager --repository-pgp-key string Set the repository pgp key you want to use --repository-ssh-key string Set the repository access key you want to use --repository-url string (Optionnal) Set the repository remote URL. Default is the fetch URL -y, --yes Automatic yes to prompts. Assume \u0026quot;yes\u0026quot; as answer to all prompts and run non-interactively.  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/worker/key/install/",
