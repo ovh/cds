@@ -68,41 +68,35 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 	cacheKey := cache.Key("vcs", "github", "hooks", g.OAuthToken, "/repos/"+fullname+"/hooks")
 	opts := []getArgFunc{withETag}
 
-	for {
-		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage, opts...)
-			if err != nil {
-				log.Warning("githubClient.PullRequests> Error %s", err)
-				return nil, sdk.WithStack(err)
-			}
-			if status >= 400 {
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			opts[0] = withETag
-			nextHooks := []Webhook{}
-
-			//Github may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				if !g.Cache.Get(cacheKey, &webhooks) {
-					opts[0] = withoutETag
-					log.Error("Unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
-					continue
-				}
-				break
-			} else {
-				if err := json.Unmarshal(body, &nextHooks); err != nil {
-					log.Warning("githubClient.getHooks> Unable to parse github hooks: %s", err)
-					return nil, err
-				}
-			}
-
-			webhooks = append(webhooks, nextHooks...)
-
-			nextPage = getNextPage(headers)
-		} else {
-			break
+	for nextPage != "" {
+		status, body, headers, err := g.get(nextPage, opts...)
+		if err != nil {
+			log.Warning("githubClient.PullRequests> Error %s", err)
+			return nil, sdk.WithStack(err)
 		}
+		if status >= 400 {
+			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		}
+		opts[0] = withETag
+		nextHooks := []Webhook{}
+
+		//Github may return 304 status because we are using conditional request with ETag based headers
+		if status == http.StatusNotModified {
+			//If repos aren't updated, lets get them from cache
+			if !g.Cache.Get(cacheKey, &webhooks) {
+				opts[0] = withoutETag
+				log.Error("Unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
+				continue
+			}
+			break
+		} else {
+			if err := json.Unmarshal(body, &nextHooks); err != nil {
+				log.Warning("githubClient.getHooks> Unable to parse github hooks: %s", err)
+				return nil, err
+			}
+		}
+		webhooks = append(webhooks, nextHooks...)
+		nextPage = getNextPage(headers)
 	}
 
 	//Put the body on cache for one hour and one minute
