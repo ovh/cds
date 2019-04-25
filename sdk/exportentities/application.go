@@ -7,7 +7,7 @@ import (
 // Application represents exported sdk.Application
 type Application struct {
 	Version              string                              `json:"version,omitempty" yaml:"version,omitempty"`
-	Name                 string                              `json:"name" yaml:"name"`
+	Name                 string                              `json:"name" yaml:"name" jsonschema_description:"The name of the application"`
 	Description          string                              `json:"description,omitempty" yaml:"description,omitempty"`
 	VCSServer            string                              `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
 	RepositoryName       string                              `json:"repo,omitempty" yaml:"repo,omitempty"`

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -16,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_getActionExportHandler(t *testing.T) {
@@ -61,6 +61,8 @@ func Test_postActionImportHandler(t *testing.T) {
 	uri := api.Router.GetRoute("POST", api.importActionHandler, nil)
 	test.NotEmpty(t, uri)
 
+	script := exportentities.StepScript{"echo {{.cds.pip.param1}}"}
+
 	a := exportentities.Action{
 		Name:        "myAction",
 		Description: "MyDecription",
@@ -76,8 +78,8 @@ func Test_postActionImportHandler(t *testing.T) {
 			},
 		},
 		Steps: []exportentities.Step{
-			map[string]interface{}{
-				"script": "echo {{.cds.pip.param1}}",
+			{
+				Script: &script,
 			},
 		},
 	}

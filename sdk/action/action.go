@@ -1,0 +1,78 @@
+package action
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
+	yaml "gopkg.in/yaml.v2"
+)
+
+// List of all available actions.
+var List = []Manifest{
+	ArtifactDownload,
+	ArtifactUpload,
+	CheckoutApplication,
+	Coverage,
+	DeployApplication,
+	GitClone,
+	GitTag,
+	JUnit,
+	Release,
+	Script,
+	ServeStaticFiles,
+}
+
+// Manifest for a action.
+type Manifest struct {
+	Action  sdk.Action
+	Example exportentities.Step
+}
+
+// Markdown returns string formatted for an action.
+func (m Manifest) Markdown() string {
+	var sp, rq string
+	ps := m.Action.Parameters
+	sort.Slice(ps, func(i, j int) bool { return ps[i].Name < ps[j].Name })
+	for _, p := range ps {
+		sp += fmt.Sprintf("* **%s**: %s\n", p.Name, p.Description)
+	}
+	if sp == "" {
+		sp = "No Parameter"
+	}
+
+	rs := m.Action.Requirements
+	sort.Slice(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
+	for _, r := range rs {
+		rq += fmt.Sprintf("* **%s**: type: %s Value: %s\n", r.Name, r.Type, r.Value)
+	}
+
+	if rq == "" {
+		rq = "No Requirement"
+	}
+
+	ex, _ := yaml.Marshal(m.Example)
+
+	info := fmt.Sprintf(`
+%s
+
+## Parameters
+
+%s
+
+## Requirements
+
+%s
+
+## YAML example
+
+%s
+`,
+		m.Action.Description,
+		sp,
+		rq,
+		fmt.Sprintf("```yml\n%s\n```", string(ex)))
+
+	return info
+}

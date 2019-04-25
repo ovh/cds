@@ -22,7 +22,7 @@ const (
 
 // Workflow is the "as code" representation of a sdk.Workflow
 type Workflow struct {
-	Name        string  `json:"name" yaml:"name"`
+	Name        string  `json:"name" yaml:"name" jsonschema_description:"The name of the workflow"`
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Version     string  `json:"version,omitempty" yaml:"version,omitempty"`
 	Template    *string `json:"template,omitempty" yaml:"template,omitempty"`

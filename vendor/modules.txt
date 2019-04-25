@@ -18,6 +18,8 @@ github.com/Microsoft/go-winio
 github.com/Nvveen/Gotty
 # github.com/Shopify/sarama v1.17.0
 github.com/Shopify/sarama
+# github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
+github.com/alecthomas/jsonschema
 # github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 github.com/andygrunwald/go-gerrit
 # github.com/aokoli/goutils v1.1.0
@@ -187,7 +189,7 @@ github.com/fatih/color
 github.com/fatih/structs
 # github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b
 github.com/fernet/fernet-go
-# github.com/fsamin/go-dump v1.0.8
+# github.com/fsamin/go-dump v1.0.8 => github.com/richardlt/go-dump v0.0.0-20190530092628-7e74e489d264
 github.com/fsamin/go-dump
 # github.com/fsamin/go-repo v0.1.1
 github.com/fsamin/go-repo

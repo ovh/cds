@@ -401,6 +401,7 @@ func workflowInitRun(c cli.Values) error {
 
 	// Crafting the pipeline
 	if shouldCreatePipeline {
+		checkout := exportentities.StepCheckout("{{.cds.workspace}}")
 		pip := exportentities.PipelineV1{
 			Name:    pipName,
 			Version: exportentities.PipelineVersion1,
@@ -409,7 +410,7 @@ func workflowInitRun(c cli.Values) error {
 					Name: "First job",
 					Steps: []exportentities.Step{
 						{
-							"checkout": "{{.cds.workspace}}",
+							Checkout: &checkout,
 						},
 					},
 				},
