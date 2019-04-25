@@ -59,9 +59,10 @@ type Workflow struct {
 	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
+	URLs             URL                       `json:"urls" yaml:"-" db:"-" cli:"-"`
 }
 
-// AsCodeUpdateEvent represents all pending modifications on a workflow
+// AsCodeEvent represents all pending modifications on a workflow
 type AsCodeEvent struct {
 	ID             int64     `json:"id" db:"id" cli:"-"`
 	WorkflowID     int64     `json:"workflow_id" db:"workflow_id" cli:"-"`
