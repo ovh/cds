@@ -20,10 +20,6 @@
     <!-- Add trigger -->
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)"
                           #workflowTrigger></app-workflow-trigger>
-    <!-- Add outgoing hook -->
-    <app-workflow-node-outgoinghook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                          (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)" #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
-
     <!-- Add hook -->
     <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateHook($event, workflowAddHook.modal)"
                     #workflowAddHook></app-hook-modal>

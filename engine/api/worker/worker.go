@@ -381,7 +381,7 @@ func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jo
 
 	res, errE := db.Exec(query, sdk.StatusBuilding.String(), actionBuildID, jobType, workerID)
 	if errE != nil {
-		return errE
+		return sdk.WithStack(errE)
 	}
 
 	_, err := res.RowsAffected()

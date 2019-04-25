@@ -23,14 +23,20 @@ export class WorkflowNodeEditModalComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() node: WNode;
+    _node: WNode;
+    @Input('node') set node(data: WNode) {
+        this._node = data;
+    }
+    get node() {
+        return this._node;
+    }
 
     @ViewChild('nodeEditModal')
     public nodeEditModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
-    selected = 'context';
+    selected: string;
 
     permissionEnum = PermissionValue;
     loading = false;
@@ -44,9 +50,23 @@ export class WorkflowNodeEditModalComponent implements OnInit {
             if (s.node) {
                 this.project = s.project;
                 this.workflow = s.workflow;
+                let open = this.node != null;
                 this.node = cloneDeep(s.node);
-                this.show();
+                if (!this.selected) {
+                    switch (this.node.type) {
+                        case 'outgoinghook':
+                            this.selected = 'outgoinghook';
+                            break;
+                        default:
+                            this.selected = 'context';
+                    }
+                }
+                if (!open) {
+                    this.show();
+                }
             } else if (this.modal) {
+                delete this.node;
+                delete this.selected;
                 this.modal.approve(true);
             }
         });

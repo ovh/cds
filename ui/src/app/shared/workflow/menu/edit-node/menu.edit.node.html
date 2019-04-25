@@ -36,7 +36,7 @@
            [class.disabled]="!workflow || !workflow.workflow_data || workflow.workflow_data.node.id !== node.id || (workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
             {{ 'workflow_node_hook_add' | translate }}
         </a>
-        <a class="item" (click)="sendEvent('outgoing')"
+        <a class="item" (click)="sendEvent('outgoinghook')"
            [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
            || workflow.permission < permissionEnum.READ_WRITE_EXECUTE || node.type !== 'pipeline'" >
             <div class="content">

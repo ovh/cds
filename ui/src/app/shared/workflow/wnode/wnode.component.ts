@@ -9,7 +9,6 @@ import {WorkflowWNodeMenuEditComponent} from 'app/shared/workflow/menu/edit-node
 import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
 import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-modal/hook.modal.component';
 import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
-import {WorkflowNodeOutGoingHookEditComponent} from 'app/shared/workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
 import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/trigger/workflow.trigger.component';
 import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
 import {
@@ -66,8 +65,6 @@ export class WorkflowWNodeComponent implements OnInit {
     workflowDeleteNode: WorkflowDeleteNodeComponent;
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
-    @ViewChild('workflowEditOutgoingHook')
-    workflowEditOutgoingHook: WorkflowNodeOutGoingHookEditComponent;
     @ViewChild('workflowAddHook')
     workflowAddHook: WorkflowHookModalComponent;
     @ViewChild('nodeEditModal')
@@ -255,15 +252,6 @@ export class WorkflowWNodeComponent implements OnInit {
         }
         if (this.workflowTrigger) {
             this.workflowTrigger.show(t, parent);
-        }
-    }
-
-    openEditOutgoingHookModal(): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        if (this.workflowEditOutgoingHook) {
-            this.workflowEditOutgoingHook.show();
         }
     }
 

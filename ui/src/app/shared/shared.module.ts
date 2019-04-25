@@ -7,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { MomentModule } from 'angular2-moment';
 import {WorkflowWizardNodeConditionComponent} from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
+import {WorkflowWizardOutgoingHookComponent} from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula';
@@ -87,12 +88,10 @@ import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edi
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
 import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
-import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeHookFormComponent } from './workflow/node/hook/form/hook.form.component';
-import { WorkflowNodeOutGoingHookFormComponent } from './workflow/node/outgoinghook-form/outgoinghook.form.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
 import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
 import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
@@ -171,8 +170,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWNodeJoinComponent,
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
-        WorkflowNodeOutGoingHookFormComponent,
-        WorkflowNodeOutGoingHookEditComponent,
+        WorkflowWizardOutgoingHookComponent,
         WorkflowHookModalComponent,
         WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,

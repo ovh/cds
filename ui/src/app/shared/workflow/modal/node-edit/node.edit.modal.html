@@ -1,15 +1,25 @@
 <ng-template let-context let-modal="modal" #nodeEditModal>
+    <ng-container *ngIf="node">
     <div class="header">{{node.name}}</div>
     <div class="content">
         <div class="ui grid">
             <div class="four wide column">
                 <div class="ui secondary vertical pointing menu">
-                    <a class="item" [class.active]="selected === 'context'" (click)="selected = 'context'">
-                        {{ 'workflow_node_context_label' | translate }}
-                    </a>
-                    <a class="item" [class.active]="selected === 'input'" (click)="selected = 'input'">
-                        {{ 'workflow_node_input' | translate }}
-                    </a>
+                    <ng-container *ngIf="node.type === 'pipeline'">
+                        <a class="item" [class.active]="selected === 'context'" (click)="selected = 'context'">
+                            {{ 'workflow_node_context_label' | translate }}
+                        </a>
+                    </ng-container>
+                    <ng-container *ngIf="node.type === 'pipeline'">
+                        <a class="item" [class.active]="selected === 'input'" (click)="selected = 'input'">
+                            {{ 'workflow_node_input' | translate }}
+                        </a>
+                    </ng-container>
+                    <ng-container *ngIf="node.type === 'outgoinghook'">
+                        <a class="item" [class.active]="selected === 'outgoinghook'" (click)="selected = 'outgoinghook'">
+                            {{ 'workflow_node_type_outgoing_hook' | translate }}
+                        </a>
+                    </ng-container>
                     <a class="item" [class.active]="selected === 'conditions'" (click)="selected = 'conditions'">
                         {{ 'workflow_node_condition_label' | translate }}
                     </a>
@@ -27,6 +37,10 @@
                     <ng-container *ngSwitchCase="'input'">
                         <app-workflow-node-input [project]="project" [workflow]="workflow"
                                                  [node]="node"></app-workflow-node-input>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'outgoinghook'">
+                        <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow"
+                            [hook]="node" [updateMode]="true"></app-workflow-node-outgoinghook>
                     </ng-container>
                     <ng-container *ngSwitchCase="'conditions'">
                         <app-workflow-node-conditions [project]="project" [workflow]="workflow"
@@ -46,4 +60,5 @@
             </div>
         </div>
     </div>
+    </ng-container>
 </ng-template>

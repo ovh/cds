@@ -97,5 +97,13 @@
             </ng-container>
             <div class="ui info message" *ngIf="!hook.outgoing_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
         </ng-container>
+        <ng-container *ngIf="updateMode && workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+            <button class="ui right floated green button"
+                    *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE"
+                    [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                    [class.loading]="loading" (click)="updateWorkflow()">
+                {{ 'btn_save' | translate }}
+            </button>
+        </ng-container>
     </div>
 </div>

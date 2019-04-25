@@ -14,12 +14,12 @@
                 </app-workflow-node-add-wizard>
             </ng-container>
             <ng-container *ngIf="selectedType === 'outgoinghook'">
-                <app-workflow-node-outgoinghook-form
+                <app-workflow-node-outgoinghook
                         [project]="project"
                         [workflow]="workflow"
                         [source]="source"
                         (outgoinghookEvent)="destNodeChange($event)"
-                        #worklflowAddOutgoingHook></app-workflow-node-outgoinghook-form>
+                        #worklflowAddOutgoingHook></app-workflow-node-outgoinghook>
             </ng-container>
         </div>
     </div>

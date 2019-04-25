@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { FetchWorkflow } from 'app/store/workflows.action';
+import {PermissionValue} from 'app/model/permission.model';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {FetchWorkflow, UpdateWorkflow} from 'app/store/workflows.action';
 import { WorkflowsState } from 'app/store/workflows.state';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
@@ -12,15 +15,16 @@ import { HookService } from '../../../../service/hook/hook.service';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 
 @Component({
-    selector: 'app-workflow-node-outgoinghook-form',
-    templateUrl: './outgoinghook.form.html',
-    styleUrls: ['./outgoinghook.form.scss']
+    selector: 'app-workflow-node-outgoinghook',
+    templateUrl: './wizard.outgoinghook.html',
+    styleUrls: ['./wizard.outgoinghook.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
+export class WorkflowWizardOutgoingHookComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
+    @Input() updateMode = false;
 
     _outgoingHook: WNode;
     @Input('hook')
@@ -33,6 +37,7 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
 
     @Output() outgoinghookEvent = new EventEmitter<WNode>();
 
+    permissionEnum = PermissionValue;
     codeMirrorConfig: {};
     loadingModels = false;
     outgoingHookModels: Array<WorkflowHookModel>;
@@ -44,9 +49,10 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
     wSub: Subscription;
     invalidJSON = false;
     outgoing_default_payload: {};
+    loading = false;
 
     constructor(
-        private store: Store,
+        private store: Store, private _translate: TranslateService, private _toast: ToastService,
         private _hookService: HookService
     ) {
     }
@@ -72,7 +78,7 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
                     }
                     this.displayConfig = Object.keys(this._outgoingHook.outgoing_hook.config).length !== 0;
                     if (this.selectedOutgoingHookModel.name === 'Workflow') {
-                        this.updateWorkflow();
+                        this.updateWorkflowData();
                     }
                     this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
                 }
@@ -98,7 +104,7 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
         }
     }
 
-    updateWorkflow(): void {
+    updateWorkflowData(): void {
         if (this.hook && this.hook.outgoing_hook.config && this.hook.outgoing_hook.config['target_project']
             && this.hook.outgoing_hook.config['target_workflow']) {
             this.loadingHooks = true;
@@ -141,6 +147,22 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
         if (this.hook.outgoing_hook.config['target_hook']) {
             this.hook.outgoing_hook.config['payload'].value = JSON.stringify(this.outgoing_default_payload, undefined, 4);
         }
+    }
+
+    updateWorkflow(): void {
+        this.loading = true;
+        let clonedWorkflow = cloneDeep(this.workflow);
+        let n = Workflow.getNodeByID(this.hook.id, clonedWorkflow);
+
+        n.outgoing_hook = this.hook.outgoing_hook;
+        this.store.dispatch(new UpdateWorkflow({
+            projectKey: this.workflow.project_key,
+            workflowName: this.workflow.name,
+            changes: clonedWorkflow
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            });
     }
 
     changeCodeMirror(code: string) {
