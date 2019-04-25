@@ -330,7 +330,7 @@ func (api *API) InitRouter() {
 
 	// config
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(false)))
-	r.Handle("/config/vcs", r.GET(api.ConfigVCShandler, NeedService()))
+	r.Handle("/config/vcs", r.GET(api.ConfigVCShandler))
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))

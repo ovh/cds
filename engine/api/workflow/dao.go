@@ -1472,9 +1472,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	if oldWf != nil {
+	if oldWf != nil && (opts == nil || !opts.Force) {
 		if oldWf.FromRepository != "" && opts != nil && opts.FromRepository != oldWf.FromRepository {
-			return nil, nil, sdk.WrapError(sdk.ErrForbidden, "cannot overwrite ascode workflow")
+			return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 		}
 	}
 
@@ -1493,8 +1493,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
-			return nil, nil, sdk.NewErrorWithStack(err,
-				sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unable to import application %s: %v", app.Name, err)))
+			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
 		}
 		allMsg = append(allMsg, msgList...)
 		proj.SetApplication(*appDB)
@@ -1509,8 +1508,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		envDB, msgList, err := environment.ParseAndImport(tx, proj, &env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
-			err = fmt.Errorf("unable to import environment %s: %v", env.Name, err)
-			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
+			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
 		}
 		allMsg = append(allMsg, msgList...)
 		proj.SetEnvironment(*envDB)
@@ -1525,8 +1523,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
-			return nil, nil, sdk.NewErrorWithStack(err, sdk.NewError(sdk.ErrWrongRequest,
-				fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)))
+			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
+
 		}
 		allMsg = append(allMsg, msgList...)
 		proj.SetPipeline(*pipDB)
@@ -1640,7 +1638,7 @@ func IsDeploymentIntegrationUsed(db gorp.SqlExecutor, projectID int64, appID int
 
 	nb, err := db.SelectInt(query, projectID, appID, pfName)
 	if err != nil {
-		return false, sdk.WrapError(err, "IsDeploymentIntegrationUsed")
+		return false, sdk.WithStack(err)
 	}
 
 	return nb > 0, nil

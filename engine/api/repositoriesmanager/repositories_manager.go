@@ -398,7 +398,11 @@ func (c *vcsClient) PullRequestCreate(ctx context.Context, fullname string, pr s
 func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
 	_, err := c.doJSONRequest(ctx, "POST", path, hook, hook)
-	return sdk.WrapError(err, "unable to create hook on repository %s from %s", fullname, c.name)
+	if err != nil {
+		log.Error("CreateHook> %v", err)
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to create hook on repository %s from %s", fullname, c.name)
+	}
+	return nil
 }
 
 func (c *vcsClient) GetHook(ctx context.Context, fullname, u string) (sdk.VCSHook, error) {
