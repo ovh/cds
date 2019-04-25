@@ -82,7 +82,7 @@ type VCSAuthorizedClient interface {
 	ListForks(ctx context.Context, repo string) ([]VCSRepo, error)
 
 	// Permissions
-	GrantReadPermission(ctx context.Context, repo string) error
+	GrantWritePermission(ctx context.Context, repo string) error
 }
 
 // GetDefaultBranch return the default branch

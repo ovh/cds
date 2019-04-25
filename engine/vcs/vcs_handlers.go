@@ -1092,7 +1092,7 @@ func (s *Service) postRepoGrantHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
-		if err := client.GrantReadPermission(ctx, owner+"/"+repo); err != nil {
+		if err := client.GrantWritePermission(ctx, owner+"/"+repo); err != nil {
 			return sdk.WrapError(err, "unable to grant %s/%s on %s", owner, repo, name)
 		}
 
