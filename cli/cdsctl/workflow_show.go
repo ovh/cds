@@ -18,5 +18,20 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return *w, nil
+	wrkflw := struct {
+		ProjectKey  string `cli:"project_key"`
+		Name        string `cli:"name"`
+		Description string `cli:"description"`
+		From        string `cli:"from"`
+		URL         string `cli:"url"`
+		API         string `cli:"api"`
+	}{
+		ProjectKey:  w.ProjectKey,
+		Name:        w.Name,
+		Description: w.Description,
+		From:        w.FromRepository,
+		URL:         w.URLs.UIURL,
+		API:         w.URLs.APIURL,
+	}
+	return wrkflw, nil
 }
