@@ -277,7 +277,6 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		defer r.Body.Close()
 
 		log.Debug("Read %d bytes from body", len(btes))
-
 		tr := tar.NewReader(bytes.NewReader(btes))
 
 		var pushOptions *workflow.PushOption
@@ -285,6 +284,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			pushOptions = &workflow.PushOption{
 				FromRepository:  r.Header.Get(sdk.WorkflowAsCodeHeader),
 				IsDefaultBranch: true,
+				Force:           FormBool(r, "force"),
 			}
 		}
 
@@ -302,7 +302,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, deprecatedGetUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot push workflow")
+			return err
 		}
 		msgListString := translate(r, allMsg)
 

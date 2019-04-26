@@ -10,6 +10,8 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // Sign will sign an http.Request using the provided token.
@@ -75,7 +77,7 @@ func (c *bitbucketConsumer) SignParams(req *http.Request, token Token, params ma
 func sign(message string, key []byte) (string, error) {
 	block, _ := pem.Decode(key)
 	if block == nil {
-		return "", fmt.Errorf("Unable to decode key (length: %d)", len(key))
+		return "", sdk.WithStack(fmt.Errorf("Unable to decode key (length: %d)", len(key)))
 	}
 
 	// try to parse private key in PKCS8 format first
@@ -91,7 +93,7 @@ func sign(message string, key []byte) (string, error) {
 		// fall back to PKCS1 if it fails
 		privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 		if err != nil {
-			return "", fmt.Errorf("Issue parsing private key: %s", err)
+			return "", sdk.WithStack(fmt.Errorf("Issue parsing private key: %s", err))
 		}
 	}
 
@@ -101,7 +103,7 @@ func sign(message string, key []byte) (string, error) {
 
 	cipher, err := rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, rawsignature)
 	if err != nil {
-		return "", fmt.Errorf("Issue with SignPKCS1v15: %s", err)
+		return "", sdk.WithStack(fmt.Errorf("Issue with SignPKCS1v15: %s", err))
 	}
 
 	base64signature := make([]byte, base64.StdEncoding.EncodedLen(len(cipher)))

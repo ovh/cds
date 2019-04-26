@@ -157,7 +157,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if erra != nil {
 			log.Error("postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
 		} else {
-			if err := client.GrantReadPermission(ctx, ope.RepoFullName); err != nil {
+			if err := client.GrantWritePermission(ctx, ope.RepoFullName); err != nil {
 				log.Error("postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
 			}
 		}

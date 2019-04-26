@@ -27,7 +27,7 @@ CDS provides an intuitive UI that allows you to build complex workflows, run the
 
 cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands such as `cdsctl shell` to browse your projects and workflows without the need to open a browser.
 
-[See all cdsctl commands](https://ovh.github.io/cds/cli/cdsctl/#see-also)
+[See all cdsctl commands](https://ovh.github.io/cds/docs/components/cdsctl/)
 
 <p align="center">
   <img src="./docs/static/images/init_template_as_code.gif" alt="create workflow as code with CDS command line" title="create workflow as code with CDS command line">
@@ -59,7 +59,7 @@ Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ov
 
 Most of the CI/CD Tools play with jobs inside a pipeline. CDS introduce a new concept named `CDS Workflows`.
 A [CDS Workflow](https://ovh.github.io/cds/docs/concepts/workflow/) allows you to chain pipelines with triggers.
-A [pipeline](https://ovh.github.io/cds/docs/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/docs/concepts/stage/) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/docs/concepts/job/).
+A [pipeline](https://ovh.github.io/cds/docs/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/docs/concepts/pipeline/) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/docs/concepts/job/).
 
 
 ### Can I use it in production?
@@ -172,7 +172,7 @@ In CDS these services are called Service Prerequisites. You just need to specify
 Take a simple example: you have a pipeline that builds a docker image containing your application. Your application needs a redis and a postgreSQL to work. You can in a CDS job put three prerequisites service: a redis, a postgreSQL and your application. CDS will take care of making a private network between its services so that they can communicate with each other.
 Your CDS job can thus perform integration tests on your application started with a real database and a real cache.
 
-Please read: https://ovh.github.io/cds/workflows/pipelines/requirements/service/
+Please read: https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/
 
 #### Secure Remote Caching
 
@@ -279,12 +279,12 @@ A [hatchery](https://ovh.github.io/cds/hatchery/) is like an incubator, it gives
 
 Several types of hatchery are available:
 
- - **[hatchery kubernetes](https://ovh.github.io/cds/hatchery/kubernetes/)** starts workers in pods
- - **[hatchery openstack](https://ovh.github.io/cds/hatchery/openstack/)** starts virtual machines
- - **[hatchery swarm](https://ovh.github.io/cds/hatchery/swarm/)** starts docker containers
- - **[hatchery marathon](https://ovh.github.io/cds/hatchery/marathon/)** starts docker containers
- - **[hatchery VSphere](https://ovh.github.io/cds/hatchery/vsphere/)** starts virtual machines
- - **[hatchery local](https://ovh.github.io/cds/hatchery/local/)** starts processes on a host
+ - **[hatchery kubernetes](https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/)** starts workers in pods
+ - **[hatchery openstack](https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/)** starts virtual machines
+ - **[hatchery swarm](https://ovh.github.io/cds/docs/integrations/swarm/)** starts docker containers
+ - **[hatchery marathon](https://ovh.github.io/cds/docs/integrations/marathon/)** starts docker containers
+ - **[hatchery vSphere](https://ovh.github.io/cds/docs/integrations/vsphere/)** starts virtual machines
+ - **[hatchery local](https://ovh.github.io/cds/docs/components/hatchery/local/)** starts processes on a host
 
  So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
