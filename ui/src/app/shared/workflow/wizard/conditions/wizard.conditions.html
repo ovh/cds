@@ -54,7 +54,7 @@
                             *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE; then valueWrite;else valueRead"></div>
                         <ng-template #valueWrite>
                             <div class="ui fluid input">
-                                <ng-container *ngIf="isStatusVariable(c)">
+                                <ng-container *ngIf="c.variable === 'cds.status' && statuses">
                                     <sui-select class="selection"
                                                 name="value"
                                                 [(ngModel)]="c.value"
@@ -68,7 +68,7 @@
                                     <input class="ui checkbox" type="checkbox" [(ngModel)]="c.value">
                                 </ng-container>
                                 <input type="text" [(ngModel)]="c.value"
-                                       *ngIf="!isStatusVariable(c) && c.variable !== 'cds.manual'">
+                                       *ngIf="c.variable !== 'cds.status' && c.variable !== 'cds.manual'">
                             </div>
                         </ng-template>
                         <ng-template #valueRead>

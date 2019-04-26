@@ -64,10 +64,12 @@ export class WorkflowNodeEditModalComponent implements OnInit {
                 if (!open) {
                     this.show();
                 }
-            } else if (this.modal) {
-                delete this.node;
+            } else {
+                this.node = undefined;
                 delete this.selected;
-                this.modal.approve(true);
+                if (this.modal) {
+                    this.modal.approve(true);
+                }
             }
         });
     }

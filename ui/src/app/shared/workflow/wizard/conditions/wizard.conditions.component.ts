@@ -40,6 +40,12 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             } else {
                 this.isAdvanced = false;
             }
+
+            let c = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
+            if (c) {
+                c.value = <any>(c.value !== 'false');
+            }
+
         }
     };
     get node(): WNode {
@@ -89,10 +95,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             });
     }
 
-    isStatusVariable(cond: WorkflowNodeCondition): boolean {
-        return cond && cond.variable && cond.variable.indexOf('.status') !== -1;
-    }
-
     removeCondition(cond: WorkflowNodeCondition): void {
         this.editableNode.context.conditions.plain = this.editableNode.context.conditions.plain.filter(c => c.variable !== cond.variable)
     }
@@ -117,14 +119,14 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 this.loading = false;
                 return;
             }
-            this.editableNode.context.conditions.plain.forEach(c => {
-                c.value = c.value.toString();
-            })
         }
 
         let clonedWorkflow = cloneDeep(this.workflow);
         let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
-        n.context.conditions = this.editableNode.context.conditions;
+        n.context.conditions = cloneDeep(this.editableNode.context.conditions);
+        n.context.conditions.plain.forEach(cc => {
+            cc.value = cc.value.toString();
+        });
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
