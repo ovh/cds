@@ -37,7 +37,7 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 	}
 
 	if !v.GetBool("silent") {
-		fmt.Printf("CDS is pushing files on your repository. A pull request will be created, please wait...\n")
+		fmt.Println("CDS is pushing files on your repository. A pull request will be created, please wait...")
 	}
 	for {
 		if err := client.WorkflowTransformAsCodeFollow(v.GetString(_ProjectKey), v.GetString(_WorkflowName), ope); err != nil {
