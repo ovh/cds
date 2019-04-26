@@ -138,7 +138,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		default:
 			wPerm, has := deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)]
 			if !has {
-				return sdk.ErrNotFound
+				return sdk.WithStack(sdk.ErrNotFound)
 			}
 			if wPerm >= perm {
 				return nil
