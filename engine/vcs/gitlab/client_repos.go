@@ -81,6 +81,6 @@ func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 	return repo, nil
 }
 
-func (c *gitlabClient) GrantReadPermission(ctx context.Context, repo string) error {
+func (c *gitlabClient) GrantWritePermission(ctx context.Context, repo string) error {
 	return nil
 }

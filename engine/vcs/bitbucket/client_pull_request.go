@@ -95,6 +95,10 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 		return pr, sdk.WithStack(err)
 	}
 
+	if err := b.GrantWritePermission(ctx, repo); err != nil {
+		return pr, err
+	}
+
 	request := PullRequest{
 		Title:  pr.Title,
 		State:  "OPEN",

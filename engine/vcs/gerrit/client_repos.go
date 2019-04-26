@@ -37,7 +37,7 @@ func (c *gerritClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 	return c.ToVCSRepo(fullname, *repo), nil
 }
 
-func (c *gerritClient) GrantReadPermission(ctx context.Context, repo string) error {
+func (c *gerritClient) GrantWritePermission(ctx context.Context, repo string) error {
 	return nil
 }
 
