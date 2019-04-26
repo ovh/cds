@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -17,8 +16,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
@@ -58,48 +55,23 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	var errCl error
-	var clientset *kubernetes.Clientset
-	k8sTimeout := time.Second * 10
-	if h.Config.KubernetesConfigFile != "" {
-		cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot build config from flags")
-		}
-		cfg.Timeout = k8sTimeout
-
-		clientset, errCl = kubernetes.NewForConfig(cfg)
-		if errCl != nil {
-			return sdk.WrapError(errCl, "Cannot create client with newForConfig")
-		}
-	} else {
-		configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot build config from config getter")
-		}
-		configK8s.Timeout = k8sTimeout
-
-		if h.Config.KubernetesCertAuthData != "" {
-			configK8s.TLSClientConfig = rest.TLSClientConfig{
-				CAData:   []byte(h.Config.KubernetesCertAuthData),
-				CertData: []byte(h.Config.KubernetesClientCertData),
-				KeyData:  []byte(h.Config.KubernetesClientKeyData),
-			}
-		}
-
-		// creates the clientset
-		clientset, errCl = kubernetes.NewForConfig(configK8s)
-		if errCl != nil {
-			return sdk.WrapError(errCl, "Cannot create new config")
-		}
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return sdk.WrapError(err, "Unable to configure k8s in cluster config")
 	}
-	h.k8sClient = clientset
+
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to configure k8s client")
+	}
+
+	h.k8sClient = clientSet
 
 	if h.Config.Namespace != apiv1.NamespaceDefault {
-		if _, err := clientset.CoreV1().Namespaces().Get(h.Config.Namespace, metav1.GetOptions{}); err != nil {
+		if _, err := clientSet.CoreV1().Namespaces().Get(h.Config.Namespace, metav1.GetOptions{}); err != nil {
 			ns := apiv1.Namespace{}
 			ns.SetName(h.Config.Namespace)
-			if _, errC := clientset.CoreV1().Namespaces().Create(&ns); errC != nil {
+			if _, errC := clientSet.CoreV1().Namespaces().Create(&ns); errC != nil {
 				return sdk.WrapError(errC, "Cannot create namespace %s in kubernetes", h.Config.Namespace)
 			}
 		}
@@ -127,29 +99,6 @@ func (h *HatcheryKubernetes) Status() sdk.MonitoringStatus {
 	return m
 }
 
-// getStartingConfig implements ConfigAccess
-func (h *HatcheryKubernetes) getStartingConfig() (*clientcmdapi.Config, error) {
-	defaultClientConfigRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	overrideCfg := clientcmd.ConfigOverrides{
-		AuthInfo: clientcmdapi.AuthInfo{
-			Username: h.Config.KubernetesUsername,
-			Password: h.Config.KubernetesPassword,
-			Token:    h.Config.KubernetesToken,
-		},
-	}
-
-	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(defaultClientConfigRules, &overrideCfg)
-	rawConfig, err := clientConfig.RawConfig()
-	if os.IsNotExist(err) {
-		return clientcmdapi.NewConfig(), nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &rawConfig, nil
-}
-
 // CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
@@ -171,10 +120,6 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 
 	if hconfig.Namespace == "" {
 		return fmt.Errorf("please enter a valid kubernetes namespace")
-	}
-
-	if hconfig.KubernetesMasterURL == "" && hconfig.KubernetesConfigFile == "" {
-		return fmt.Errorf("please enter a valid kubernetes master URL or provide a kubernetes config file")
 	}
 
 	return nil

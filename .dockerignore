@@ -1,0 +1,7 @@
+**/dist/*
+tests/
+images/
+tools/
+ui/
+docs/
+contrib/
