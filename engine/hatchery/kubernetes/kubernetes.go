@@ -5,9 +5,12 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/gorilla/mux"
 	apiv1 "k8s.io/api/core/v1"
@@ -16,6 +19,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
@@ -55,14 +59,54 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return sdk.WrapError(err, "Unable to configure k8s in cluster config")
-	}
+	var errCl error
+	var clientSet *kubernetes.Clientset
+	k8sTimeout := time.Second * 10
 
-	clientSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to configure k8s client")
+	if h.Config.KubernetesMasterURL != "" {
+		if h.Config.KubernetesConfigFile != "" {
+			cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot build config from flags")
+			}
+			cfg.Timeout = k8sTimeout
+
+			clientSet, errCl = kubernetes.NewForConfig(cfg)
+			if errCl != nil {
+				return sdk.WrapError(errCl, "Cannot create client with newForConfig")
+			}
+		} else {
+			configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot build config from config getter")
+			}
+			configK8s.Timeout = k8sTimeout
+
+			if h.Config.KubernetesCertAuthData != "" {
+				configK8s.TLSClientConfig = rest.TLSClientConfig{
+					CAData:   []byte(h.Config.KubernetesCertAuthData),
+					CertData: []byte(h.Config.KubernetesClientCertData),
+					KeyData:  []byte(h.Config.KubernetesClientKeyData),
+				}
+			}
+
+			// creates the clientset
+			clientSet, errCl = kubernetes.NewForConfig(configK8s)
+			if errCl != nil {
+				return sdk.WrapError(errCl, "Cannot create new config")
+			}
+		}
+	} else {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			return sdk.WrapError(err, "Unable to configure k8s InClusterConfig")
+		}
+
+		clientSet, errCl = kubernetes.NewForConfig(config)
+		if errCl != nil {
+			return sdk.WrapError(errCl, "Unable to configure k8s client with InClusterConfig")
+		}
+
 	}
 
 	h.k8sClient = clientSet
@@ -97,6 +141,29 @@ func (h *HatcheryKubernetes) Status() sdk.MonitoringStatus {
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	}
 	return m
+}
+
+// getStartingConfig implements ConfigAccess
+func (h *HatcheryKubernetes) getStartingConfig() (*clientcmdapi.Config, error) {
+	defaultClientConfigRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	overrideCfg := clientcmd.ConfigOverrides{
+		AuthInfo: clientcmdapi.AuthInfo{
+			Username: h.Config.KubernetesUsername,
+			Password: h.Config.KubernetesPassword,
+			Token:    h.Config.KubernetesToken,
+		},
+	}
+
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(defaultClientConfigRules, &overrideCfg)
+	rawConfig, err := clientConfig.RawConfig()
+	if os.IsNotExist(err) {
+		return clientcmdapi.NewConfig(), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &rawConfig, nil
 }
 
 // CheckConfiguration checks the validity of the configuration object
