@@ -34,7 +34,7 @@ type HatcheryConfiguration struct {
 	// Namespace is the kubernetes namespace in which workers are spawned"
 	Namespace string `mapstructure:"namespace" toml:"namespace" default:"cds" commented:"false" comment:"Kubernetes namespace in which workers are spawned" json:"namespace"`
 	// KubernetesMasterURL Address of kubernetes master
-	KubernetesMasterURL string `mapstructure:"kubernetesMasterURL" toml:"kubernetesMasterURL" default:"https://1.1.1.1:8443" commented:"false" comment:"Address of kubernetes master" json:"kubernetesMasterURL"`
+	KubernetesMasterURL string `mapstructure:"kubernetesMasterURL" toml:"kubernetesMasterURL" default:"" commented:"false" comment:"Address of kubernetes master" json:"kubernetesMasterURL"`
 	// KubernetesConfigFile Kubernetes config file in yaml
 	KubernetesConfigFile string `mapstructure:"kubernetesConfigFile" toml:"kubernetesConfigFile" default:"kubeconfig.yaml" commented:"false" comment:"Kubernetes config file in yaml" json:"kubernetesConfigFile"`
 	// KubernetesUsername Username to connect to kubernetes cluster (optional if config file is set)
