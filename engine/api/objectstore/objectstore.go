@@ -29,13 +29,11 @@ type Driver interface {
 // DriverWithRedirect has to be implemented if your storage backend supports temp url
 type DriverWithRedirect interface {
 	// StoreURL returns a temporary url and a secret key to store an object
-	StoreURL(o Object) (url string, key string, err error)
+	StoreURL(o Object, contentType string) (url string, key string, err error)
 	// FetchURL returns a temporary url and a secret key to fetch an object
 	FetchURL(o Object) (url string, key string, err error)
 	// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
 	ServeStaticFilesURL(o Object, entrypoint string) (string, string, error)
-	// GetPublicURL returns a public url to fetch an object (check your object ACLs before)
-	GetPublicURL(o Object) (url string, err error)
 }
 
 // Kind will define const defining all supported objecstore drivers
@@ -107,6 +105,14 @@ func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 	}
 
 	switch projectIntegration.Model.Name {
+	case sdk.AWSIntegrationModel:
+		return newS3Store(projectIntegration, ConfigOptionsAWSS3{
+			Region:          projectIntegration.Config["region"].Value,
+			BucketName:      projectIntegration.Config["bucket_name"].Value,
+			Prefix:          projectIntegration.Config["prefix"].Value,
+			AccessKeyID:     projectIntegration.Config["access_key_id"].Value,
+			SecretAccessKey: projectIntegration.Config["secret_access_key"].Value,
+		})
 	case sdk.OpenstackIntegrationModel:
 		return newSwiftStore(projectIntegration, ConfigOptionsOpenstack{
 			Address:         projectIntegration.Config["address"].Value,

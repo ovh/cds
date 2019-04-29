@@ -128,8 +128,8 @@ type Configuration struct {
 			SharedCredsFile     string `toml:"sharedCredsFile" json:"sharedCredsFile" comment:"The path for the AWS credential file, used with profile"`
 			Profile             string `toml:"profile" json:"profile" comment:"The profile within the AWS credentials file to use"`
 			AccessKeyID         string `toml:"accessKeyId" json:"accessKeyId" comment:"A static AWS Secret Key ID"`
-			SecretAccessKey     string `toml:"secretAccessKey" json:"secretAccessKey" comment:"A static AWS Secret Access Key"`
-			SessionToken        string `toml:"sessionToken" json:"sessionToken" comment:"A static AWS session token"`
+			SecretAccessKey     string `toml:"secretAccessKey" json:"-" comment:"A static AWS Secret Access Key"`
+			SessionToken        string `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
 		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
 	Events struct {

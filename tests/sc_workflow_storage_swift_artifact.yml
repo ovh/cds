@@ -21,7 +21,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW11 test-action-artifact
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW11 test-action-artifact -p integration=myOpenstackIntegration
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-action-artifact #1 has been launched"

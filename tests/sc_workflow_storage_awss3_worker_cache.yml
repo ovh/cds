@@ -13,7 +13,7 @@ testcases:
 
 - name: import integration
   steps:
-  - script:  {{.cds.build.cdsctl}} project integration import ITSCWRKFLW14 ./myOpenstackIntegration.yml
+  - script:  {{.cds.build.cdsctl}} project integration import ITSCWRKFLW14 ./myAWSS3Integration.yml
 
 - name: import workflow
   steps:
@@ -21,7 +21,7 @@ testcases:
 
 - name: run workflow, for put in cache
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW14 test-worker-cache
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW14 test-worker-cache -p integration=myAWSS3Integration
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-worker-cache #1 has been launched"
@@ -37,7 +37,7 @@ testcases:
 
 - name: run workflow second times, for check get from cache
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW14 test-worker-cache
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW14 test-worker-cache -p integration=myAWSS3Integration
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-worker-cache #2 has been launched"

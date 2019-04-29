@@ -354,7 +354,7 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 
 			break
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 	}
 
 	return globalErr

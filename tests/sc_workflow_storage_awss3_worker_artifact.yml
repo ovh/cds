@@ -13,7 +13,7 @@ testcases:
 
 - name: import integration
   steps:
-  - script:  {{.cds.build.cdsctl}} project integration import ITSCWRKFLW13 ./myOpenstackIntegration.yml
+  - script:  {{.cds.build.cdsctl}} project integration import ITSCWRKFLW13 ./myAWSS3Integration.yml
 
 - name: import workflow
   steps:
@@ -21,7 +21,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW13 test-worker-artifact
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW13 test-worker-artifact -p integration=myAWSS3Integration
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-worker-artifact #1 has been launched"
