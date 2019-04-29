@@ -83,3 +83,6 @@ $ engine start vcs
 $ engine start api vcs
 ```
 
+## Vcs events
+
+For now we only support push events. We also use this push event to delete existing run for deleted branches.
