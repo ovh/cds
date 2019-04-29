@@ -13,4 +13,4 @@ You have to:
 
 GitHub / Bitbucket / GitLab are supported by CDS.
 
-> When you add a repository webhook it will also automatically delete your runs which are linked to a deleted branch (24h after branch deletion).
+> When you add a repository webhook, it will also automatically delete your runs which are linked to a deleted branch (24h after branch deletion).

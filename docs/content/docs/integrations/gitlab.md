@@ -85,4 +85,4 @@ $ engine start api vcs
 
 ## Vcs events
 
-For now we only support push events. We also use this push event to delete existing run for deleted branches.
+For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).
