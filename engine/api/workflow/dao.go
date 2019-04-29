@@ -1347,6 +1347,7 @@ func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n
 			for _, e := range proj.Environments {
 				if e.ID == n.Context.EnvironmentID {
 					found = true
+					break
 				}
 			}
 			if !found {
@@ -1385,6 +1386,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 				if a.ID == n.Context.ApplicationID {
 					app = a
 					found = true
+					break
 				}
 			}
 			if !found {
@@ -1415,6 +1417,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 			for _, p := range proj.Pipelines {
 				if p.ID == n.Context.PipelineID {
 					found = true
+					break
 				}
 			}
 			if !found {

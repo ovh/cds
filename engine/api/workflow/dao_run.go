@@ -636,6 +636,13 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		}
 		payload = m1
 	}
+
+	for payloadKey := range payload {
+		if strings.HasPrefix(payloadKey, "workflownoderunmanual.payload.cds.") {
+			return nil, sdk.WrapError(sdk.ErrInvalidPayloadVariable, "cannot use cds. in a payload key (%s)", payloadKey)
+		}
+	}
+
 	if tags != "" {
 		tagsSplited := strings.Split(tags, ",")
 		for _, t := range tagsSplited {
