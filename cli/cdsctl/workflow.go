@@ -30,7 +30,7 @@ func workflow() *cobra.Command {
 		cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowFavoriteCmd, workflowFavoriteRun, nil, withAllCommandModifiers()...),
-		cli.NewCommand(workflowTransformAsCodeCmd, workflowTransformAsCodeRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(workflowTransformAsCodeCmd, workflowTransformAsCodeRun, nil, withAllCommandModifiers()...),
 		workflowArtifact(),
 		workflowLog(),
 		workflowAdvanced(),
