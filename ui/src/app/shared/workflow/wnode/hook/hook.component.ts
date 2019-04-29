@@ -1,11 +1,13 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs/Subscription';
 import { Project } from '../../../../model/project.model';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from '../../../../model/workflow.model';
 import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
+import {Store} from '@ngxs/store';
+import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -28,6 +30,9 @@ export class WorkflowNodeHookComponent implements OnInit {
     @Input() project: Project;
     @Input() node: WNode;
 
+    @ViewChild('deleteHookModal')
+    deleteHookModal: DeleteModalComponent;
+
     icon: string;
     loading = false;
     isSelected = false;
@@ -37,8 +42,7 @@ export class WorkflowNodeHookComponent implements OnInit {
 
     constructor(
         private _workflowEventStore: WorkflowEventStore,
-        private _activatedRoute: ActivatedRoute,
-        private _router: Router
+        private _store: Store
     ) { }
 
     ngOnInit(): void {
@@ -69,14 +73,19 @@ export class WorkflowNodeHookComponent implements OnInit {
         });
     }
 
-    openEditHookSidebar(): void {
-        if (this.workflow.previewMode) {
-            return;
+    receivedEvent(e: string): void {
+        switch (e) {
+            case 'edit':
+                this._store.dispatch(new OpenWorkflowNodeModal({
+                    project: this.project,
+                    workflow: this.workflow,
+                    node: null,
+                    hook: this.hook
+                })).subscribe(() => {});
+                break;
+            case 'delete':
+
+                break
         }
-        let url = this._router.createUrlTree(['./'], {
-            relativeTo: this._activatedRoute,
-            queryParams: { 'hook_ref': this.hook.ref }
-        });
-        this._router.navigateByUrl(url.toString()).then(() => this._workflowEventStore.setSelectedHook(this.hook));
     }
 }

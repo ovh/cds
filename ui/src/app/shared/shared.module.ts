@@ -111,6 +111,7 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
+import {WorkflowHookMenuEditComponent} from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 
 @NgModule({
     imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,
@@ -181,6 +182,7 @@ import { ZoneComponent } from './zone/zone.component';
         ActionStepSummaryComponent,
         WorkflowSidebarRunHookComponent,
         WorkflowSaveAsCodeComponent,
+        WorkflowHookMenuEditComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,

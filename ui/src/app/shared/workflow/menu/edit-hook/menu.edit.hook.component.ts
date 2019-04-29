@@ -6,24 +6,23 @@ import {
 } from '@angular/core';
 import {PermissionValue} from 'app/model/permission.model';
 import {
-    WNode,
+    WNodeHook,
     Workflow,
 } from 'app/model/workflow.model';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {IPopup} from 'ng2-semantic-ui';
 
 @Component({
-
-    selector: 'app-workflow-menu-wnode-edit',
-    templateUrl: './menu.edit.node.html',
-    styleUrls: ['./menu.edit.node.scss'],
+    selector: 'app-workflow-menu-hook-edit',
+    templateUrl: './menu.edit.hook.html',
+    styleUrls: ['./menu.edit.hook.scss'],
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeMenuEditComponent {
+export class WorkflowHookMenuEditComponent {
 
     // Project that contains the workflow
     @Input() workflow: Workflow;
-    @Input() node: WNode;
+    @Input() hook: WNodeHook;
     @Input() popup: IPopup;
     @Output() event = new EventEmitter<string>();
     permissionEnum = PermissionValue;

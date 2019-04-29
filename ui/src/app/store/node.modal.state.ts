@@ -1,6 +1,6 @@
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import {Project} from 'app/model/project.model';
-import {WNode, Workflow} from 'app/model/workflow.model';
+import {WNode, WNodeHook, Workflow} from 'app/model/workflow.model';
 import {
     CleanWorkflowNodeModal,
     OpenWorkflowNodeModal,
@@ -9,6 +9,7 @@ import {
 
 export class NodeModalStateModel {
     public node: WNode;
+    public hook: WNodeHook;
     public project: Project;
     public workflow: Workflow;
 }
@@ -16,6 +17,7 @@ export class NodeModalStateModel {
 export function getInitialNodeModalState(): NodeModalStateModel {
     return {
         node: null,
+        hook: null,
         workflow: null,
         project: null
     };
@@ -42,6 +44,7 @@ export class NodeModalState {
         ctx.setState({
             ...state,
             node: action.payload.node,
+            hook: action.payload.hook,
             project: action.payload.project,
             workflow: action.payload.workflow
         });
@@ -55,10 +58,18 @@ export class NodeModalState {
     @Action(UpdateNodeInModal)
     update(ctx: StateContext<NodeModalStateModel>, action: UpdateNodeInModal) {
         const state = ctx.getState();
-        let node = Workflow.getNodeByRef(state.node.ref, action.payload.workflow);
+        let node;
+        let hook;
+        if (state.node) {
+            node = Workflow.getNodeByRef(state.node.ref, action.payload.workflow);
+        }
+        if (state.hook) {
+            hook = Workflow.getHookByRef(state.hook.ref, action.payload.workflow);
+        }
         ctx.setState({
             ...state,
             node: node,
+            hook: hook,
             project: state.project,
             workflow: action.payload.workflow
         });

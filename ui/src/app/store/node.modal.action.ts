@@ -1,10 +1,10 @@
 
 import {Project} from 'app/model/project.model';
-import {WNode, Workflow} from 'app/model/workflow.model';
+import {WNode, WNodeHook, Workflow} from 'app/model/workflow.model';
 
 export class OpenWorkflowNodeModal {
     static readonly type = '[ModalNode] OpenNodeModal';
-    constructor(public payload: { project: Project, workflow: Workflow, node: WNode, screen: string }) { }
+    constructor(public payload: { project: Project, workflow: Workflow, node: WNode, hook: WNodeHook }) { }
 }
 
 export class CleanWorkflowNodeModal {

@@ -1,4 +1,6 @@
-<div class="workflowHook pointing" (click)="openEditHookSidebar()" [class.active]="isSelected">
+<div class="workflowHook pointing" [class.active]="isSelected"
+     suiPopup [popupTemplate]="popupHook"
+     popupPlacement="right" popupTrigger="outsideClick" #popup="suiPopup">
     <ng-container *ngIf="nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow && !nodeRun.hook_event.parent_workflow.name">
         <i class="ui icon {{icon}}"></i>
     </ng-container>
@@ -9,3 +11,9 @@
         <i class="ui icon {{icon}}"></i>
     </ng-container>
 </div>
+<ng-template let-popup #popupHook>
+    <app-workflow-menu-hook-edit (event)="receivedEvent($event)" [workflow]="workflow" [popup]="popup" [hook]="hook" #menuHook></app-workflow-menu-hook-edit>
+</ng-template>
+<app-delete-modal [title]="'workflow_hook_delete_title' | translate" [msg]="'workflow_hook_delete_msg' | translate"
+                  [autoclose]="false" (event)="deleteHook(deleteHookModal.modal)" #deleteHookModal>
+</app-delete-modal>

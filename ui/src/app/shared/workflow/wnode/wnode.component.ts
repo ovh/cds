@@ -186,7 +186,7 @@ export class WorkflowWNodeComponent implements OnInit {
                     project: this.project,
                     workflow: this.workflow,
                     node: this.node,
-                    screen: e
+                    hook: null
                 })).subscribe(() => {});
                 break;
             case 'hook':
