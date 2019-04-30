@@ -7,10 +7,12 @@
     <ng-container *ngIf="!isAdvanced">
         <div class="ui info message"
              *ngIf="!editableNode || !editableNode.context || !editableNode.context.conditions || !editableNode.context.conditions.plain || editableNode.context.conditions.plain.length === 0">
-            {{ 'workflow_node_trigger_condition_no' | translate }}
+                <div class="empty">
+                {{ 'workflow_node_trigger_condition_no' | translate }}
                 <button class="ui right floated blue button" (click)="addEmptyCondition()">
                     {{ 'btn_add' | translate }}
                 </button>
+                </div>
         </div>
         <ng-container *ngIf="editableNode?.context?.conditions?.plain?.length > 0">
             <table class="ui fixed celled table">
@@ -27,7 +29,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr *ngFor="let c of editableNode?.context?.conditions?.plain">
+                <tr *ngFor="let c of editableNode?.context?.conditions?.plain; let i = index">
                     <td class="middle-aligned">
                         <div class="field">
                             <ng-container *ngIf="conditionNames">
@@ -83,7 +85,7 @@
                         </ng-template>
                     </td>
                     <td class="center" *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE">
-                        <app-delete-button (event)="removeCondition(c)"></app-delete-button>
+                        <app-delete-button (event)="removeCondition(i)"></app-delete-button>
                     </td>
                 </tr>
                 </tbody>

@@ -95,8 +95,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             });
     }
 
-    removeCondition(cond: WorkflowNodeCondition): void {
-        this.editableNode.context.conditions.plain = this.editableNode.context.conditions.plain.filter(c => c.variable !== cond.variable)
+    removeCondition(index: number): void {
+        this.editableNode.context.conditions.plain.splice(index, 1);
     }
 
     addEmptyCondition(): void {

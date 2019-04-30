@@ -1,8 +1,13 @@
 <ng-template let-context let-modal="modal" #nodeEditModal>
     <ng-container *ngIf="node">
     <div class="header">
-        <ng-container *ngIf="!hook">{{node.name}}</ng-container>
-        <ng-container *ngIf="hook">{{ 'workflow_node_hook_modal_title' | translate }}</ng-container>
+        <div class="modalHeader">
+            <ng-container *ngIf="!hook">{{node.name}}</ng-container>
+            <ng-container *ngIf="hook">{{ 'workflow_node_hook_modal_title' | translate }}</ng-container>
+            <button class="ui icon grey button" [class.loading]="loading" (click)="modal.deny()">
+                <i class="close icon"></i>
+            </button>
+        </div>
     </div>
     <div class="content">
         <div class="ui grid">

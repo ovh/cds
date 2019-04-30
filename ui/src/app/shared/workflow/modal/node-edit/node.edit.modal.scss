@@ -1,3 +1,18 @@
 .ui.secondary.vertical.menu {
     height: 100%;
 }
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+}
+
+.ui.icon.grey.button {
+    background-color: transparent;
+    color: black;
+
+}
+.ui.icon.grey.button:hover {
+    color: grey;
+
+}
