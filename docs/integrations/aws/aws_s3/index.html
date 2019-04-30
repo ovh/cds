@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Openstack Compute - CDS - Continuous Delivery Service</title>
+<title>AWS S3 - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -15,18 +15,21 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-<meta name="description" content="CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
-Start OpenStack hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 &#43;0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.">
-<meta property="og:description" content="CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
-Start OpenStack hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 &#43;0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.">
-<meta name="twitter:description" content="CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
-Start OpenStack hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 &#43;0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/">
-<meta property="og:title" content="Openstack Compute">
-<meta name="twitter:title" content="Openstack Compute">
+<meta name="description" content="The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.
+With this integration, you can use a dedicated AWS S3 Bucket Storage on :
+ action Artifact Upload action Artifact Download worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own AWS S3 Storage and not use the shared storage.
+Configure with WebUI You can add a AWS S3 on your CDS Project.">
+<meta property="og:description" content="The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.
+With this integration, you can use a dedicated AWS S3 Bucket Storage on :
+ action Artifact Upload action Artifact Download worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own AWS S3 Storage and not use the shared storage.
+Configure with WebUI You can add a AWS S3 on your CDS Project.">
+<meta name="twitter:description" content="The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.
+With this integration, you can use a dedicated AWS S3 Bucket Storage on :
+ action Artifact Upload action Artifact Download worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own AWS S3 Storage and not use the shared storage.
+Configure with WebUI You can add a AWS S3 on your CDS Project.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/">
+<meta property="og:title" content="AWS S3">
+<meta name="twitter:title" content="AWS S3">
 <meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -343,7 +346,7 @@ $ cdsctl token generate shared.infra persistent expiration persistent created 20
 			<div id="docsContent">
         		
 
-<h1>Openstack Compute</h1>
+<h1>AWS S3</h1>
 
 
 
@@ -351,41 +354,103 @@ $ cdsctl token generate shared.infra persistent expiration persistent created 20
 <ul>
 <li>
 <ul>
-<li><a href="#start-openstack-hatchery">Start OpenStack hatchery</a></li>
-<li><a href="#setup-a-worker-model">Setup a worker model</a></li>
+<li><a href="#configure-with-webui">Configure with WebUI</a></li>
+<li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
+<ul>
+<li><a href="#import-a-aws-s3-on-your-cds-project">Import a AWS S3 on your CDS Project</a></li>
+<li><a href="#create-a-public-aws-s3-for-whole-cds-projects">Create a Public AWS S3 for whole CDS Projects</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p><img src="https://ovh.github.io/cds/images/hatchery.openstack.png" alt="Hatchery OpenStack" /></p>
+<p>The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.</p>
 
-<p>CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.</p>
+<p>With this integration, you can use a dedicated AWS S3 Bucket Storage on :</p>
 
-<h2 id="start-openstack-hatchery">Start OpenStack hatchery</h2>
+<ul>
+<li>action <a href="https://ovh.github.io/cds/docs/actions/artifact-upload/">Artifact Upload</a></li>
+<li>action <a href="https://ovh.github.io/cds/docs/actions/artifact-download/">Artifact Download</a></li>
+<li><a href="https://ovh.github.io/cds/docs/components/worker/cache/">worker cache command</a></li>
+</ul>
 
-<p>Generate a token for group:</p>
+<p>Notice: by default, the storage is configured in CDS Configuration. This integration
+allows user to use their own AWS S3 Storage and not use the shared storage.</p>
 
-<pre><code class="language-bash">$ cdsctl token generate shared.infra persistent
-expiration  persistent
-created     2019-03-13 18:47:56.715104 +0100 CET
-group_name  shared.infra
-token       xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx
+<h2 id="configure-with-webui">Configure with WebUI</h2>
+
+<p>You can add a AWS S3 on your CDS Project.</p>
+
+<p><img src="../images/aws-s3-integration-webui.png" alt="Integration" /></p>
+
+<h2 id="configure-with-cdsctl">Configure with cdsctl</h2>
+
+<h3 id="import-a-aws-s3-on-your-cds-project">Import a AWS S3 on your CDS Project</h3>
+
+<p>Create a file project-configuration.yml:</p>
+
+<pre><code class="language-yml">name: MyAWS
+model:
+  name: AWS
+  public: false
+config:
+  region:
+    value: your-region
+    type: string
+  bucket_name:
+    value: your-bucket-name
+    type: string
+  prefix:
+    value: cds-prefix-
+    type: string
+  access_key_id:
+    value: your-access-key
+    type: string
+  secret_access_key:
+    value: 'your-secret-access-key'
+    type: password
 </code></pre>
 
-<p>Edit the CDS <a href="https://ovh.github.io/cds/hosting/configuration/">configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.</p>
+<p>Import the integration on your CDS Project with:</p>
 
-<p>Then start hatchery:</p>
-
-<pre><code class="language-bash">engine start hatchery:openstack --config config.toml
+<pre><code class="language-bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
 </code></pre>
 
-<p>This hatchery will now start worker of model &lsquo;openstack&rsquo; on OpenStack infrastructure.</p>
+<h3 id="create-a-public-aws-s3-for-whole-cds-projects">Create a Public AWS S3 for whole CDS Projects</h3>
 
-<h2 id="setup-a-worker-model">Setup a worker model</h2>
+<p>You can also add a AWS S3 with cdsctl. As a CDS Administrator,
+this allows you to propose a Public AWS S3, available on all CDS Projects.</p>
 
-<p>See <a href="https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/">Tutorial</a></p>
+<p>Create a file public-configuration.yml:</p>
+
+<pre><code class="language-yml">name: AWS
+storage: true
+public: true
+public_configurations:
+  your-public-aws-s3-integration:
+    &quot;region&quot;:
+      value: your-region
+      type: string
+    &quot;bucket_name&quot;:
+      value: your-bucket-name
+      type: string
+    &quot;prefix&quot;:
+      value: cds-prefix-
+      type: string
+    &quot;access_key_id&quot;:
+      value: your-access-key
+      type: string
+    &quot;secret_access_key&quot;:
+      value: 'your-secret-access-key'
+      type: password
+</code></pre>
+
+<p>Import the integration with :</p>
+
+<pre><code class="language-bash">cdsctl admin integration-model import public-configuration.yml
+</code></pre>
 
 
 

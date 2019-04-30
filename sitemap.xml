@@ -303,6 +303,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/aws/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/aws/aws_s3/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/about/</loc>
   </url>
   

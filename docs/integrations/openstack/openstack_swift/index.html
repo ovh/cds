@@ -17,13 +17,13 @@
 
 <meta name="description" content="The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
 With this integration, you can use a dedicated OpenStack Swift Storage on :
- action Artifact Upload action Artifact Downlaod action Serve Static Files worker cache command  Notice: per default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.">
+ action Artifact Upload action Artifact Download action Serve Static Files worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.">
 <meta property="og:description" content="The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
 With this integration, you can use a dedicated OpenStack Swift Storage on :
- action Artifact Upload action Artifact Downlaod action Serve Static Files worker cache command  Notice: per default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.">
+ action Artifact Upload action Artifact Download action Serve Static Files worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.">
 <meta name="twitter:description" content="The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
 With this integration, you can use a dedicated OpenStack Swift Storage on :
- action Artifact Upload action Artifact Downlaod action Serve Static Files worker cache command  Notice: per default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.">
+ action Artifact Upload action Artifact Download action Serve Static Files worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/">
 <meta property="og:title" content="OpenStack Swift">
 <meta name="twitter:title" content="OpenStack Swift">
@@ -207,6 +207,28 @@ With this integration, you can use a dedicated OpenStack Swift Storage on :
 	
 		
 			
+<div class="item" data-title="AWS">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="AWS S3" href="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
 <a class="item" data-title="Bitbucket Server" href="https://ovh.github.io/cds/docs/integrations/bitbucket/"></a>
 
 		
@@ -347,12 +369,12 @@ With this integration, you can use a dedicated OpenStack Swift Storage on :
 
 <ul>
 <li>action <a href="https://ovh.github.io/cds/docs/actions/artifact-upload/">Artifact Upload</a></li>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/artifact-download/">Artifact Downlaod</a></li>
+<li>action <a href="https://ovh.github.io/cds/docs/actions/artifact-download/">Artifact Download</a></li>
 <li>action <a href="https://ovh.github.io/cds/docs/actions/serve-static-files/">Serve Static Files</a></li>
 <li><a href="https://ovh.github.io/cds/docs/components/worker/cache/">worker cache command</a></li>
 </ul>
 
-<p>Notice: per default, the storage is configured in CDS Configuration. This integration
+<p>Notice: by default, the storage is configured in CDS Configuration. This integration
 allows user to user their own OpenStack Storage and not use the shared storage.</p>
 
 <h2 id="configure-with-webui">Configure with WebUI</h2>
@@ -410,7 +432,7 @@ this allows you to propose a Public OpenStack Swift, available on all CDS Projec
 
 <p>Create a file public-configuration.yml:</p>
 
-<pre><code class="language-yml">name: your-public-openstack-integration
+<pre><code class="language-yml">name: Openstack
 storage: true
 public: true
 public_configurations:

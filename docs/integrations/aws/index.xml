@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>AWS on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/integrations/aws/</link>
+    <description>Recent content in AWS on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/integrations/aws/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>AWS S3</title>
+      <link>https://ovh.github.io/cds/docs/integrations/aws/aws_s3/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/aws/aws_s3/</guid>
+      <description>The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.
+With this integration, you can use a dedicated AWS S3 Bucket Storage on :
+ action Artifact Upload action Artifact Download worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own AWS S3 Storage and not use the shared storage.
+Configure with WebUI You can add a AWS S3 on your CDS Project.</description>
+    </item>
+    
+  </channel>
+</rss>

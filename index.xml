@@ -649,6 +649,18 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
     </item>
     
     <item>
+      <title>AWS S3</title>
+      <link>https://ovh.github.io/cds/docs/integrations/aws/aws_s3/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/aws/aws_s3/</guid>
+      <description>The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.
+With this integration, you can use a dedicated AWS S3 Bucket Storage on :
+ action Artifact Upload action Artifact Download worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own AWS S3 Storage and not use the shared storage.
+Configure with WebUI You can add a AWS S3 on your CDS Project.</description>
+    </item>
+    
+    <item>
       <title>Artifact Download</title>
       <link>https://ovh.github.io/cds/docs/actions/artifact-download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -874,7 +886,7 @@ $ cdsctl token generate shared.infra persistent expiration persistent created 20
       <guid>https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/</guid>
       <description>The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
 With this integration, you can use a dedicated OpenStack Swift Storage on :
- action Artifact Upload action Artifact Downlaod action Serve Static Files worker cache command  Notice: per default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.</description>
+ action Artifact Upload action Artifact Download action Serve Static Files worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to user their own OpenStack Storage and not use the shared storage.</description>
     </item>
     
     <item>
