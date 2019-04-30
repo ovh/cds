@@ -75,7 +75,6 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 		}
 
 		if strings.HasPrefix(w, "register-") {
-			name = strings.Replace(w, "register-", "", 1)
 			status = sdk.StatusWorkerRegistering
 		}
 

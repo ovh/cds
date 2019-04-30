@@ -24,7 +24,7 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 		return fmt.Errorf("hatchery> workerRegister> No model returned by GetWorkerModels")
 	}
 	// currentRegister contains the register spawned in this ticker
-	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering, sdk.StatusWorkerPending)
+	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering)
 	if err != nil {
 		log.Error("hatchery> workerRegister> %v", err)
 	}
@@ -53,7 +53,7 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 
 		// Check if there is a pending registering worker
 		for _, w := range currentRegistering {
-			if strings.HasPrefix(w.Name, "register-") && strings.Contains(w.Name, models[k].Name) {
+			if strings.Contains(w.Name, models[k].Name) {
 				log.Info("hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
 			}
 		}
