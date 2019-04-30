@@ -1558,7 +1558,7 @@
 	"title": "export",
 	"tags": [],
 	"description": "",
-	"content": " worker export worker export \u0026lt;varname\u0026gt; \u0026lt;value\u0026gt;\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:\nworker export foo bar  then, you can use new build variable:\necho \u0026quot;{{.cds.build.foo}}\u0026quot;  Scope You can use the build variable in :\n another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your worklow   worker export  SEE ALSO  worker - CDS Worker  "
+	"content": " worker export worker export \u0026lt;varname\u0026gt; \u0026lt;value\u0026gt;\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:\nworker export foo bar  then, you can use new build variable:\necho \u0026quot;{{.cds.build.foo}}\u0026quot;  Scope You can use the build variable in :\n another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/project/favorite/",

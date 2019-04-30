@@ -2003,7 +2003,7 @@ cdsctl workflow export [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --format 
 Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:
 worker export foo bar  then, you can use new build variable:
 echo &amp;quot;{{.cds.build.foo}}&amp;quot;  Scope You can use the build variable in :
- another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your worklow   worker export  SEE ALSO  worker - CDS Worker  </description>
+ another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  </description>
     </item>
     
     <item>
