@@ -2,12 +2,17 @@ import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs/Subscription';
-import { Project } from '../../../../model/project.model';
-import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from '../../../../model/workflow.model';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import { Project } from 'app/model/project.model';
+import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
+import { WorkflowEventStore } from 'app/service/workflow/workflow.event.store';
 import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
 import {Store} from '@ngxs/store';
 import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {DeleteHookWorkflow} from 'app/store/workflows.action';
+import {finalize} from 'rxjs/operators';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -42,7 +47,7 @@ export class WorkflowNodeHookComponent implements OnInit {
 
     constructor(
         private _workflowEventStore: WorkflowEventStore,
-        private _store: Store
+        private _store: Store, private _toast: ToastService, private _translate: TranslateService
     ) { }
 
     ngOnInit(): void {
@@ -75,17 +80,36 @@ export class WorkflowNodeHookComponent implements OnInit {
 
     receivedEvent(e: string): void {
         switch (e) {
+            case 'details':
+                this._workflowEventStore.setSelectedHook(this.hook);
+                 break;
             case 'edit':
                 this._store.dispatch(new OpenWorkflowNodeModal({
                     project: this.project,
                     workflow: this.workflow,
-                    node: null,
+                    node: this.node,
                     hook: this.hook
                 })).subscribe(() => {});
                 break;
             case 'delete':
-
+                if (this.deleteHookModal) {
+                    this.deleteHookModal.show();
+                }
                 break
         }
+    }
+
+    deleteHook(modal: ActiveModal<boolean, boolean, void>) {
+        this.loading = true;
+        this._store.dispatch(new DeleteHookWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            hook: this.hook
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+                this._workflowEventStore.unselectAll();
+                modal.approve(null);
+            });
     }
 }

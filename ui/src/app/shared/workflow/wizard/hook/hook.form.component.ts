@@ -1,15 +1,15 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
-import {ProjectIntegration} from '../../../../../model/integration.model';
-import {Project} from '../../../../../model/project.model';
-import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
-import {
-    WNode,
-    WNodeHook,
-    Workflow, WorkflowNodeHookConfigValue
-} from '../../../../../model/workflow.model';
-import {HookService} from '../../../../../service/hook/hook.service';
+import {WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue} from 'app/model/workflow.model';
+import {Project} from 'app/model/project.model';
+import {WorkflowHookModel} from 'app/model/workflow.hook.model';
+import {ProjectIntegration} from 'app/model/integration.model';
+import {HookService} from 'app/service/hook/hook.service';
+import {UpdateWorkflow} from 'app/store/workflows.action';
+import {Store} from '@ngxs/store';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -40,6 +40,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         return this._hook;
     }
 
+    // Enable form button to update hook
+    @Input() formMode = false;
+
     hooksModel: Array<WorkflowHookModel>;
     selectedHookModel: WorkflowHookModel;
     readonly = false;
@@ -50,10 +53,30 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     codeMirrorConfig: any;
     selectedIntegration: ProjectIntegration;
     availableIntegrations: Array<ProjectIntegration>;
+    loading = false;
 
-    constructor(private _hookService: HookService) { }
+    constructor(private _hookService: HookService, private _store: Store, private _toast: ToastService,
+                private _translate: TranslateService) { }
 
     updateHook(): void {
+        this.loading = true;
+        let clonedWorkflow = cloneDeep(this.workflow);
+        let n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        let h = WNode.getHookByRef(n, this.hook.ref);
+        if (h) {
+            h.config = cloneDeep(this.hook.config);
+            this._store.dispatch(new UpdateWorkflow({
+                projectKey: this.workflow.project_key,
+                workflowName: this.workflow.name,
+                changes: clonedWorkflow
+            })).pipe(finalize(() => this.loading = false))
+                .subscribe(() => {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                });
+        }
+    }
+
+    updateHookModel(): void {
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
         this.hook.hook_model_id = this.selectedHookModel.id;

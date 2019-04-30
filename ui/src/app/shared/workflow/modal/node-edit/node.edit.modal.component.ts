@@ -3,7 +3,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
 import {Project} from 'app/model/project.model';
-import {WNode, Workflow} from 'app/model/workflow.model';
+import {WNode, WNodeHook, Workflow} from 'app/model/workflow.model';
 import {PermissionEvent} from 'app/shared/permission/permission.event.model';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {CleanWorkflowNodeModal} from 'app/store/node.modal.action';
@@ -21,15 +21,11 @@ import {finalize} from 'rxjs/operators';
 })
 export class WorkflowNodeEditModalComponent implements OnInit {
 
-    @Input() project: Project;
-    @Input() workflow: Workflow;
-    _node: WNode;
-    @Input('node') set node(data: WNode) {
-        this._node = data;
-    }
-    get node() {
-        return this._node;
-    }
+    project: Project;
+    workflow: Workflow;
+    node: WNode;
+    hook: WNodeHook;
+
 
     @ViewChild('nodeEditModal')
     public nodeEditModal: ModalTemplate<boolean, boolean, void>;
@@ -52,19 +48,27 @@ export class WorkflowNodeEditModalComponent implements OnInit {
                 this.workflow = s.workflow;
                 let open = this.node != null;
                 this.node = cloneDeep(s.node);
+                if (s.hook) {
+                    this.hook = cloneDeep(s.hook);
+                }
                 if (!this.selected) {
-                    switch (this.node.type) {
-                        case 'outgoinghook':
-                            this.selected = 'outgoinghook';
-                            break;
-                        default:
-                            this.selected = 'context';
+                    if (this.hook) {
+                        this.selected = 'hook';
+                    } else {
+                        switch (this.node.type) {
+                            case 'outgoinghook':
+                                this.selected = 'outgoinghook';
+                                break;
+                            default:
+                                this.selected = 'context';
+                        }
                     }
                 }
                 if (!open) {
                     this.show();
                 }
             } else {
+                this.hook = undefined;
                 this.node = undefined;
                 delete this.selected;
                 if (this.modal) {

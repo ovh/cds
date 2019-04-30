@@ -5,7 +5,7 @@ import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
 import { WNode, WNodeHook, Workflow } from '../../../../model/workflow.model';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { WorkflowNodeHookFormComponent } from '../../node/hook/form/hook.form.component';
+import { WorkflowNodeHookFormComponent } from '../../wizard/hook/hook.form.component';
 
 @Component({
     selector: 'app-hook-modal',

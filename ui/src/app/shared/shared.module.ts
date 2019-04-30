@@ -86,12 +86,12 @@ import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-mod
 import { WorkflowTemplateParamFormComponent } from './workflow-template/param-form/workflow-template.param-form.component';
 import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
-import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
+import { WorkflowHookModalComponent } from './workflow/modal/hook-add/hook.modal.component';
 import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
-import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trigger.component';
+import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
-import { WorkflowNodeHookFormComponent } from './workflow/node/hook/form/hook.form.component';
+import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
 import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
 import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';

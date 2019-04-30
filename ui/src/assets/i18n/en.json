@@ -943,6 +943,7 @@
   "workflow_as_code_pr_success": "A pull-request has just been created:",
   "workflow_as_code_no_edit": "You can't edit your workflow in UI when you are in as code mode",
 
+  "workflow_node_condition_empty": "There are empty run conditions",
   "workflow_node_condition_duplicate": "You test many times the same variable",
   "workflow_app_info_new_wf": "This project is allowed to use the new CDS Workflows.",
   "workflow_resync_vcs": "Resync VCS status",

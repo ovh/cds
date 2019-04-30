@@ -7,9 +7,9 @@ import {WorkflowCoreService} from 'app/service/workflow/workflow.core.service';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {WorkflowWNodeMenuEditComponent} from 'app/shared/workflow/menu/edit-node/menu.edit.node.component';
 import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
-import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-modal/hook.modal.component';
+import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
-import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/trigger/workflow.trigger.component';
+import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
 import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
 import {
     AddHookWorkflow,

@@ -10,7 +10,7 @@ import { HookService } from '../../../../service/hook/hook.service';
 import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
-import { WorkflowNodeHookFormComponent } from '../../node/hook/form/hook.form.component';
+import { WorkflowNodeHookFormComponent } from '../../wizard/hook/hook.form.component';
 
 @Component({
     selector: 'app-workflow-sidebar-run-hook',

@@ -8,7 +8,7 @@
             <ng-container *ngIf="!loadingModels">
                 <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}"
                             [(ngModel)]="selectedHookModel"
-                            (ngModelChange)="updateHook()"
+                            (ngModelChange)="updateHookModel()"
                             [options]="hooksModel"
                             [isSearchable]="true"
                             [isDisabled]="hook.uuid"
@@ -78,6 +78,10 @@
                 </ng-container>
                 <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
             </ng-container>
+            <button class="ui right floated green button" type="button" *ngIf="formMode" (click)="updateHook()"
+                    [disabled]="loading" [class.loading]="loading">
+                {{ 'btn_save' | translate }}
+            </button>
         </div>
     </div>
 </ng-container>

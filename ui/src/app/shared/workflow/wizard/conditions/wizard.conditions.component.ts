@@ -119,6 +119,14 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 this.loading = false;
                 return;
             }
+            this.editableNode.context.conditions.plain = tmp;
+
+            let emptyConditions = this.editableNode.context.conditions.plain.findIndex(c => (!c.variable || c.variable === ''))
+            if (emptyConditions > -1) {
+                this._toast.error('Forbidden', this._translate.instant('workflow_node_condition_empty'));
+                this.loading = false;
+                return;
+            }
         }
 
         let clonedWorkflow = cloneDeep(this.workflow);
