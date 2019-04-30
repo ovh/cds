@@ -2968,7 +2968,7 @@ cdsctl workflow pull [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --force For
       <guid>https://ovh.github.io/cds/docs/components/worker/cache/pull/</guid>
       <description>worker cache pull worker cache pull tagValue
 Synopsis Inside a project, you can fetch a cache from your worker with a tag
-worker pull &amp;lt;tagValue&amp;gt;  If you push a cache with:
+worker cache pull &amp;lt;tagValue&amp;gt;  If you push a cache with:
 worker cache push latest {{.cds.workspace}}/pathToUpload  The command:
 worker cache pull latest  will create the directory {{.cds.workspace}}/pathToUpload with the content of the cache
 If you want to push a cache into a storage integration:
@@ -3016,8 +3016,8 @@ cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml  cdsctl workflow
       
       <guid>https://ovh.github.io/cds/docs/components/worker/cache/push/</guid>
       <description> worker cache push worker cache push tagValue {{.cds.workspace}}/pathToUpload
-Synopsis Inside a project, you can create a cache from your worker with a tag (useful for vendors for example) worker push  dir/file
-You can use you storage integration: worker push &amp;ndash;destination=MyStorageIntegration  dir/file
+Synopsis Inside a project, you can create a cache from your worker with a tag (useful for vendors for example) worker cache push  dir/file
+You can use you storage integration: worker cache push &amp;ndash;destination=MyStorageIntegration  dir/file
 worker cache push [flags]  Examples worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload  Options  --destination string optional. Your storage integration name  SEE ALSO  worker cache -  </description>
     </item>
     
