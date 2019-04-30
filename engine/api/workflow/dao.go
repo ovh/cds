@@ -1203,6 +1203,18 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		return nil
 	}
 
+	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.DefaultPayload != nil {
+		defaultPayload, err := w.WorkflowData.Node.Context.DefaultPayloadToMap()
+		if err != nil {
+			return sdk.WrapError(err, "cannot transform default payload to map")
+		}
+		for payloadKey := range defaultPayload {
+			if strings.HasPrefix(payloadKey, "cds.") {
+				return sdk.WrapError(sdk.ErrInvalidPayloadVariable, "cannot have key %s in default payload", payloadKey)
+			}
+		}
+	}
+
 	// Fill empty node type
 	w.AssignEmptyType()
 	if err := w.ValidateType(); err != nil {
