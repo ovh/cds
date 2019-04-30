@@ -236,13 +236,9 @@ func Create(ctx context.Context, h Interface) error {
 			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 			//Check bookedBy current hatchery
-			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
-				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
-				endTrace("booked by someone else")
-				continue
-			} else if j.BookedBy.ID != 0 {
-				log.Debug("hatchery> job %d is booked by me", j.ID)
-				endTrace("booked by me")
+			if j.BookedBy.ID != 0 {
+				log.Debug("hatchery> job %d is booked by someone (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				endTrace("booked by someone")
 				continue
 			}
 
