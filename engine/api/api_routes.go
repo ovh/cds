@@ -200,6 +200,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/icon", r.PUT(api.putWorkflowIconHandler), r.DELETE(api.deleteWorkflowIconHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/{uuid}", r.GET(api.getWorkflowAsCodeHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode", r.POST(api.postWorkflowAsCodeHandler, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/resync/pr", r.POST(api.postResyncPRWorkflowAsCodeHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label", r.POST(api.postWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label/{labelID}", r.DELETE(api.deleteWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/rollback/{auditID}", r.POST(api.postWorkflowRollbackHandler))
