@@ -240,6 +240,10 @@ func Create(ctx context.Context, h Interface) error {
 				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
 				endTrace("booked by someone else")
 				continue
+			} else if j.BookedBy.ID != 0 {
+				log.Debug("hatchery> job %d is booked by me", j.ID)
+				endTrace("booked by me")
+				continue
 			}
 
 			//Check if hatchery if able to start a new worker
