@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/alecthomas/jsonschema"
 	"github.com/spf13/cobra"
@@ -59,19 +60,19 @@ func (y yamlSchemaVSCodeInstaller) Install(schemas yamlSchemaPath) error {
 	fmt.Println("You will need to execute the following command:")
 	fmt.Println(cli.Cyan("code --install-extension %s", pluginVSCodeName))
 
-	type settings struct {
-		Schemas map[string]string `json:"yaml.schemas"`
-	}
-
-	buf, _ := json.MarshalIndent(settings{Schemas: map[string]string{
+	var schs []string
+	for k, v := range map[string]string{
+		schemas.Workflow:    "*.cds*.yml",
 		schemas.Application: "*.cds*.app.yml",
 		schemas.Environment: "*.cds*.env.yml",
 		schemas.Pipeline:    "*.cds*.pip.yml",
-		// schemas.Workflow:    "*.cds*.yml", TODO find the good glob pattern
-	}}, "", "\t")
+	} {
+		schs = append(schs, fmt.Sprintf("\n\t\t\"%s\": \"%s\"", k, v))
+	}
+	res := fmt.Sprintf("{\n\t\"yaml.schemas\": {%s\n\t}\n}", strings.Join(schs, ","))
 
 	fmt.Println("You need to add the following part in your VSCode settings.json file:")
-	fmt.Println(cli.Cyan(string(buf)))
+	fmt.Println(cli.Cyan(res))
 
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 // CreateBuiltinActions add builtin actions in database if needed
 func CreateBuiltinActions(db *gorp.DbMap) error {
 	for i := range action.List {
-		if err := checkBuiltinAction(db, &action.List[i]); err != nil {
+		if err := checkBuiltinAction(db, &action.List[i].Action); err != nil {
 			return err
 		}
 	}
