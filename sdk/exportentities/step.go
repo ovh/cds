@@ -3,6 +3,7 @@ package exportentities
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -341,7 +342,7 @@ type StepDeploy string
 
 // Step represents exported step used in a job.
 type Step struct {
-	StepCustom `json:",inline" yaml:",inline"`
+	StepCustom `json:"-" yaml:",inline"`
 	// TODO use type for script
 	//Script           *StepScript           `json:"script,omitempty" yaml:"script,omitempty" jsonschema_description:"Script\nhttps://ovh.github.io/cds/docs/actions/script"`
 	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"-"`
@@ -361,6 +362,82 @@ type Step struct {
 	Enabled          *bool                 `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Optional         *bool                 `json:"optional,omitempty" yaml:"optional,omitempty"`
 	AlwaysExecuted   *bool                 `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
+}
+
+// MarshalJSON custom marshal json impl to inline custom step.
+func (s Step) MarshalJSON() ([]byte, error) {
+	type StepAlias Step // prevent recursion
+	sa := StepAlias(s)
+
+	if sa.StepCustom == nil {
+		return json.Marshal(sa)
+	}
+
+	b, err := json.Marshal(sa)
+	if err != nil {
+		return nil, err
+	}
+
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+
+	for k, v := range sa.StepCustom {
+		// do not override builtin action key
+		if _, ok := m[k]; ok {
+			continue
+		}
+
+		b, err = json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		m[k] = b
+	}
+
+	return json.Marshal(m)
+}
+
+// UnmarshalJSON custom unmarshal json impl to get custom step data.
+func (s *Step) UnmarshalJSON(data []byte) error {
+	type StepAlias Step // prevent recursion
+	var sa StepAlias
+	if err := json.Unmarshal(data, &sa); err != nil {
+		return err
+	}
+	*s = Step(sa)
+
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+
+	jsonFields := make(map[string]struct{})
+
+	typ := reflect.TypeOf(s).Elem()
+	countFields := typ.NumField()
+	for i := 0; i < countFields; i++ {
+		jsonName := strings.Split(typ.Field(i).Tag.Get("json"), ",")[0]
+		if jsonName != "" {
+			jsonFields[jsonName] = struct{}{}
+		}
+	}
+
+	for k, v := range m {
+		if _, ok := jsonFields[k]; !ok {
+			var sp StepParameters
+			if err := json.Unmarshal(v, &sp); err != nil {
+				return err
+			}
+			if s.StepCustom == nil {
+				s.StepCustom = make(StepCustom)
+			}
+			s.StepCustom[k] = sp
+		}
+	}
+
+	return nil
 }
 
 // IsValid returns true is the step is valid
