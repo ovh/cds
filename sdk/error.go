@@ -361,7 +361,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowAsCodeOverride.ID:                        "You cannot override workflow from this repository",
 	ErrProjectSecretDataUnknown.ID:                      "Invalid encrypted data",
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application linked to a git repository is mandatory on the workflow root",
-	ErrInvalidPayloadVariable.ID:                        "Your payload cannot contain keys like cds.*",
+	ErrInvalidPayloadVariable.ID:                        "Your payload cannot contain key like cds.*",
 }
 
 var errorsFrench = map[int]string{
@@ -533,7 +533,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowAsCodeOverride.ID:                        "Vous ne pouvez pas importer le workflow depuis ce dépôt",
 	ErrProjectSecretDataUnknown.ID:                      "Donnée chiffrée non valide",
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Une application liée à un dépôt git est obligatoire à la racine du workflow",
-	ErrInvalidPayloadVariable.ID:                        "Le payload du workflow ne peut pas contenir de clés nommées cds.*",
+	ErrInvalidPayloadVariable.ID:                        "Le payload du workflow ne peut pas contenir de clé nommée cds.*",
 }
 
 var errorsLanguages = []map[int]string{
