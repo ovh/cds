@@ -270,47 +270,47 @@ type StepScript []string
 
 // StepCoverage represents exported coverage step.
 type StepCoverage struct {
-	Path    string `json:"path,omitempty" yaml:"path,omitempty"`
 	Format  string `json:"format,omitempty" yaml:"format,omitempty"`
 	Minimum string `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	Path    string `json:"path,omitempty" yaml:"path,omitempty"`
 }
 
 // StepArtifactDownload represents exported artifact download step.
 type StepArtifactDownload struct {
-	Path    string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
-	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 	Enabled string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Path    string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
+	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty"`
 }
 
 // StepArtifactUpload represents exported artifact upload step.
 type StepArtifactUpload struct {
+	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 	Path        string `json:"path,omitempty" yaml:"name,omitempty" jsonschema:"required"`
 	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 }
 
 // StepServeStaticFiles represents exported serve static files step.
 type StepServeStaticFiles struct {
+	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
+	Entrypoint  string `json:"entrypoint,omitempty" yaml:"entrypoint,omitempty"`
 	Name        string `json:"name,omitempty" yaml:"name,omitempty"`
 	Path        string `json:"path,omitempty" yaml:"path,omitempty"`
-	Entrypoint  string `json:"entrypoint,omitempty" yaml:"entrypoint,omitempty"`
 	StaticKey   string `json:"static-key,omitempty" yaml:"static-key,omitempty"`
-	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 }
 
 // StepGitClone represents exported git clone step.
 type StepGitClone struct {
 	Branch     string `json:"branch,omitempty" yaml:"branch,omitempty"`
 	Commit     string `json:"commit,omitempty" yaml:"commit,omitempty"`
+	Depth      string `json:"depth,omitempty" yaml:"depth,omitempty"`
 	Directory  string `json:"directory,omitempty" yaml:"directory,omitempty"`
 	Password   string `json:"password,omitempty" yaml:"password,omitempty"`
 	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
-	URL        string `json:"url,omitempty" yaml:"url,omitempty"`
-	User       string `json:"user,omitempty" yaml:"user,omitempty"`
-	Depth      string `json:"depth,omitempty" yaml:"depth,omitempty"`
 	SubModules string `json:"submodules,omitempty" yaml:"submodules,omitempty"`
 	Tag        string `json:"tag,omitempty" yaml:"tag,omitempty"`
+	URL        string `json:"url,omitempty" yaml:"url,omitempty"`
+	User       string `json:"user,omitempty" yaml:"user,omitempty"`
 }
 
 // StepRelease represents exported release step.
@@ -324,11 +324,11 @@ type StepRelease struct {
 // StepGitTag represents exported git tag step.
 type StepGitTag struct {
 	Path          string `json:"path,omitempty" yaml:"path,omitempty"`
+	Prefix        string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
 	TagLevel      string `json:"tagLevel,omitempty" yaml:"tagLevel,omitempty"`
 	TagMessage    string `json:"tagMessage,omitempty" yaml:"tagMessage,omitempty"`
 	TagMetadata   string `json:"tagMetadata,omitempty" yaml:"tagMetadata,omitempty"`
 	TagPrerelease string `json:"tagPrerelease,omitempty" yaml:"tagPrerelease,omitempty"`
-	Prefix        string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
 }
 
 // StepJUnitReport represents exported junit report step.
@@ -342,6 +342,12 @@ type StepDeploy string
 
 // Step represents exported step used in a job.
 type Step struct {
+	// common step data
+	Name           string `json:"name,omitempty" yaml:"name,omitempty" jsonschema_description:"the name"`
+	Enabled        *bool  `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Optional       *bool  `json:"optional,omitempty" yaml:"optional,omitempty"`
+	AlwaysExecuted *bool  `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
+	// step specific data, only one option should be set
 	StepCustom `json:"-" yaml:",inline"`
 	// TODO use type for script
 	//Script           *StepScript           `json:"script,omitempty" yaml:"script,omitempty" jsonschema_description:"Script\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
@@ -358,10 +364,6 @@ type Step struct {
 	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema_description:"Parse JUnit report\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema_description:"Checkout repository for an application\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
 	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema_description:"Deploy an application\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
-	Name             string                `json:"name,omitempty" yaml:"name,omitempty" jsonschema_description:"the name"`
-	Enabled          *bool                 `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Optional         *bool                 `json:"optional,omitempty" yaml:"optional,omitempty"`
-	AlwaysExecuted   *bool                 `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
 }
 
 // MarshalJSON custom marshal json impl to inline custom step.
