@@ -937,7 +937,7 @@
   "worker_model_shell_cmd": "Commande principale du shell",
   "worker_model_no_usage": "Ce modèle de worker n'est pas utilisé explicitement dans un pipeline",
 
-
+  "workflow_modal_change_view_confirm": "Êtes-vous sure de vouloir perdre vos changements ?",
   "workflow_save_as_code_title": "Sauvegarde du workflow as code",
   "workflow_save_as_code_pending": "Envoie des modifications",
   "workflow_as_code_pr_success": "Une demande de revue a été créée :",

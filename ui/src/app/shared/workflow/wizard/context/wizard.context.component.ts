@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {Application} from 'app/model/application.model';
@@ -35,6 +35,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     get node(): WNode {
         return this.editableNode;
     }
+
+    @Output() contextChange = new EventEmitter<boolean>();
+
     environments: Environment[];
     applications: IdName[];
     integrations: Array<IdName>;
@@ -60,13 +63,20 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         this.updateVCSStatusCheck();
     }
 
-    updateVCSStatusCheck(): void {
+    pushChange(): void {
+        this.contextChange.emit(true);
+    }
+
+    updateVCSStatusCheck(b?: boolean): void {
         if (!this.applications || !this.node) {
             return;
         }
         if (!this.node.context.application_id) {
             this.showCheckStatus = false;
             return;
+        }
+        if (b) {
+            this.pushChange();
         }
         let i = this.applications.findIndex(a => a.id === this.node.context.application_id);
         if (i === -1) {

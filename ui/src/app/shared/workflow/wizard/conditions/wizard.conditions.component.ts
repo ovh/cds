@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
@@ -51,12 +51,15 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     get node(): WNode {
         return this.editableNode;
     }
+    @Input() editMode = true;
+
+    @Output() conditionsChange = new EventEmitter<boolean>();
 
     codeMirrorConfig: {};
     isAdvanced = false;
     suggest: Array<string> = [];
     loadingConditions = false;
-    operators: {};
+    operators: Array<any>;
     conditionNames: Array<string>;
     permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
@@ -81,6 +84,9 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     }
 
     ngOnInit(): void {
+        if (this.editMode) {
+            this.codeMirrorConfig['readOnly'] = false;
+        }
         this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
             .subscribe((suggest) => this.suggest = suggest);
 
@@ -90,13 +96,17 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 finalize(() => this.loadingConditions = false)
             )
             .subscribe(wtc => {
-                this.operators = wtc.operators;
+                this.operators = [];
+                Object.keys(wtc.operators).forEach( (k, v, i) => {
+                    this.operators.push({key: k, value: wtc.operators[k]});
+                });
                 this.conditionNames = wtc.names;
             });
     }
 
     removeCondition(index: number): void {
         this.editableNode.context.conditions.plain.splice(index, 1);
+        this.pushChange('remove');
     }
 
     addEmptyCondition(): void {
@@ -153,5 +163,10 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             // eliminate the dead keys & store unique objects
             .filter(e => arr[e]).map(e => arr[e]);
         return unique;
+    }
+
+    pushChange(event: string): void {
+        console.log(event);
+        this.conditionsChange.emit(true);
     }
 }

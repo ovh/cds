@@ -20,8 +20,8 @@
                 [class.invalid]="invalidJSON"
                 [(ngModel)]="payloadString"
                 [config]="codeMirrorConfig"
-                (click)="changeCodeMirror($event)"
-                (change)="changeCodeMirror($event)"
+                (click)="changeCodeMirror($event, false)"
+                (change)="changeCodeMirror($event, true)"
                 #textareaCodeMirror>
             </codemirror>
         </ng-container>

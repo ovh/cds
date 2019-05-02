@@ -1,15 +1,15 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
-import {WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue} from 'app/model/workflow.model';
+import {TranslateService} from '@ngx-translate/core';
+import {Store} from '@ngxs/store';
+import {ProjectIntegration} from 'app/model/integration.model';
 import {Project} from 'app/model/project.model';
 import {WorkflowHookModel} from 'app/model/workflow.hook.model';
-import {ProjectIntegration} from 'app/model/integration.model';
+import {WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue} from 'app/model/workflow.model';
 import {HookService} from 'app/service/hook/hook.service';
-import {UpdateWorkflow} from 'app/store/workflows.action';
-import {Store} from '@ngxs/store';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
+import {UpdateWorkflow} from 'app/store/workflows.action';
+import {cloneDeep} from 'lodash';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-hook-form',

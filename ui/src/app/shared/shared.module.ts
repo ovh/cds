@@ -6,6 +6,7 @@ import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { MomentModule } from 'angular2-moment';
+import {WorkflowHookMenuEditComponent} from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import {WorkflowWizardNodeConditionComponent} from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import {WorkflowWizardOutgoingHookComponent} from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
@@ -87,11 +88,10 @@ import { WorkflowTemplateParamFormComponent } from './workflow-template/param-fo
 import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-add/hook.modal.component';
+import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.trigger.component';
 import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
-import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
-import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
 import { WorkflowSidebarHookComponent } from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
 import { WorkflowSidebarRunHookComponent } from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
@@ -101,6 +101,7 @@ import { JobStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/j
 import { StageStepSummaryComponent } from './workflow/sidebar/run-node/stage/stage.summary.component';
 import { WorkflowSidebarRunNodeComponent } from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
 import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wizard.context.component';
+import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
 import {WorkflowWizardNodeInputComponent} from './workflow/wizard/input/wizard.input.component';
 import { WorkflowNodeAddWizardComponent } from './workflow/wizard/node-add/node.wizard.component';
 import { WorkflowWNodeForkComponent } from './workflow/wnode/fork/node.fork.component';
@@ -111,7 +112,6 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
-import {WorkflowHookMenuEditComponent} from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 
 @NgModule({
     imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,

@@ -1,6 +1,4 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { PermissionValue } from '../../../../model/permission.model';
@@ -11,7 +9,6 @@ import { HookService } from '../../../../service/hook/hook.service';
 import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { DeleteModalComponent } from '../../../modal/delete/delete.component';
-import { ToastService } from '../../../toast/ToastService';
 import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
 
 @Component({
@@ -41,10 +38,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
     hookStatus = HookStatus;
 
     constructor(
-        private store: Store,
-        private _toast: ToastService,
         private _hookService: HookService,
-        private _translate: TranslateService,
         private _workflowEventStore: WorkflowEventStore,
     ) {
     }

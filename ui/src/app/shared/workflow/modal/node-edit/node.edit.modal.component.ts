@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
@@ -24,6 +24,7 @@ export class WorkflowNodeEditModalComponent implements OnInit {
     project: Project;
     workflow: Workflow;
     node: WNode;
+    beforeNode: WNode;
     hook: WNodeHook;
 
 
@@ -33,6 +34,7 @@ export class WorkflowNodeEditModalComponent implements OnInit {
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     selected: string;
+    hasModification = false;
 
     permissionEnum = PermissionValue;
     loading = false;
@@ -48,6 +50,7 @@ export class WorkflowNodeEditModalComponent implements OnInit {
                 this.workflow = s.workflow;
                 let open = this.node != null;
                 this.node = cloneDeep(s.node);
+                this.beforeNode = cloneDeep(s.node);
                 if (s.hook) {
                     this.hook = cloneDeep(s.hook);
                 }
@@ -138,4 +141,22 @@ export class WorkflowNodeEditModalComponent implements OnInit {
             });
     }
 
+    pushChange(): void {
+        this.hasModification = true;
+    }
+
+    changeView(newView: string): void {
+        if (this.selected === newView) {
+         return;
+        }
+        if (this.hasModification) {
+            if (confirm(this._translate.instant('workflow_modal_change_view_confirm'))) {
+                this.hasModification = false;
+                this.selected = newView;
+            }
+            return;
+        }
+        this.hasModification = false;
+        this.selected = newView;
+    }
 }

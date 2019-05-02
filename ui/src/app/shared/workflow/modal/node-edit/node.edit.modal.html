@@ -15,29 +15,29 @@
                 <div class="ui secondary vertical pointing menu">
                     <ng-container *ngIf="!hook">
                         <ng-container *ngIf="node.type === 'pipeline'">
-                            <a class="item" [class.active]="selected === 'context'" (click)="selected = 'context'">
+                            <a class="item" [class.active]="selected === 'context'" (click)="changeView('context')">
                                 {{ 'workflow_node_context_label' | translate }}
                             </a>
                         </ng-container>
                         <ng-container *ngIf="node.type === 'pipeline'">
-                            <a class="item" [class.active]="selected === 'input'" (click)="selected = 'input'">
+                            <a class="item" [class.active]="selected === 'input'" (click)="changeView('input')">
                                 {{ 'workflow_node_input' | translate }}
                             </a>
                         </ng-container>
                         <ng-container *ngIf="node.type === 'outgoinghook'">
-                            <a class="item" [class.active]="selected === 'outgoinghook'" (click)="selected = 'outgoinghook'">
+                            <a class="item" [class.active]="selected === 'outgoinghook'" (click)="changeView('outgoinghook')">
                                 {{ 'workflow_node_type_outgoing_hook' | translate }}
                             </a>
                         </ng-container>
-                        <a class="item" [class.active]="selected === 'conditions'" (click)="selected = 'conditions'">
+                        <a class="item" [class.active]="selected === 'conditions'" (click)="changeView('conditions')">
                             {{ 'workflow_node_condition_label' | translate }}
                         </a>
-                        <a class="item" [class.active]="selected === 'permissions'" (click)="selected = 'permissions'">
+                        <a class="item" [class.active]="selected === 'permissions'" (click)="changeView('permissions')">
                             {{ 'common_permissions' | translate }}
                         </a>
                     </ng-container>
                     <ng-container *ngIf="hook">
-                        <a class="item" [class.active]="selected === 'hook'" (click)="selected = 'hook'">
+                        <a class="item" [class.active]="selected === 'hook'" (click)="changeView('hook')">
                             Hook
                         </a>
                     </ng-container>
@@ -47,11 +47,11 @@
                 <div [ngSwitch]="selected">
                     <ng-container *ngSwitchCase="'context'">
                         <app-workflow-node-context [project]="project" [workflow]="workflow"
-                                                   [node]="node"></app-workflow-node-context>
+                                                   [node]="node" (contextChange)="pushChange()"></app-workflow-node-context>
                     </ng-container>
                     <ng-container *ngSwitchCase="'input'">
                         <app-workflow-node-input [project]="project" [workflow]="workflow"
-                                                 [node]="node"></app-workflow-node-input>
+                                                 [node]="node" (inputChange)="pushChange()"></app-workflow-node-input>
                     </ng-container>
                     <ng-container *ngSwitchCase="'outgoinghook'">
                         <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow"
@@ -59,7 +59,7 @@
                     </ng-container>
                     <ng-container *ngSwitchCase="'conditions'">
                         <app-workflow-node-conditions [project]="project" [workflow]="workflow"
-                                                      [node]="node"></app-workflow-node-conditions>
+                                                      [node]="node" (conditionsChange)="pushChange()"></app-workflow-node-conditions>
                     </ng-container>
                     <ng-container *ngSwitchCase="'permissions'">
                         <app-permission-list [permissions]="node.groups" (event)="groupManagement($event)"

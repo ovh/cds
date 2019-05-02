@@ -938,6 +938,7 @@
   "worker_model_shell_cmd": "Main shell command",
   "worker_model_no_usage": "This worker model is not explicitly used in a pipeline",
 
+  "workflow_modal_change_view_confirm": "Are you sure you want to discard your unsaved changes?",
   "workflow_save_as_code_title": "Save workflow as code",
   "workflow_save_as_code_pending": "Pushing files...",
   "workflow_as_code_pr_success": "A pull-request has just been created:",

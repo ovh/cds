@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {Store} from '@ngxs/store';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {finalize, flatMap} from 'rxjs/operators';
@@ -41,6 +41,8 @@ export class WorkflowWizardNodeInputComponent {
     get node(): WNode {
         return this.editableNode;
     }
+
+    @Output() inputChange = new EventEmitter<boolean>();
 
     @ViewChild('textareaCodeMirror')
     codemirror: CodemirrorComponent;
@@ -123,17 +125,15 @@ export class WorkflowWizardNodeInputComponent {
         this.updateValue(this.payloadString);
     }
 
-    parameterEvent(event: ParameterEvent) {
-        switch (event.type) {
-            case 'delete':
-                this.editableNode.context.default_pipeline_parameters =
-                    this.editableNode.context.default_pipeline_parameters.filter((param) => param.name !== event.parameter.name);
-                event.parameter.updating = false;
-                break;
-        }
+    pushEvent(): void {
+        this.inputChange.emit(true);
     }
 
-    changeCodeMirror(eventRoot: Event): void {
+    parameterEvent(event: ParameterEvent) {
+        this.pushEvent();
+    }
+
+    changeCodeMirror(eventRoot: Event, sendEvent: boolean): void {
         if (eventRoot.type !== 'click') {
             this.updateValue(eventRoot);
         }
@@ -174,6 +174,7 @@ export class WorkflowWizardNodeInputComponent {
             return;
         }
 
+        let previousPayload = JSON.stringify(cloneDeep(this.editableNode.context.default_payload), undefined, 4);
         try {
             newPayload = JSON.parse(payload);
             this.invalidJSON = false;
@@ -183,6 +184,10 @@ export class WorkflowWizardNodeInputComponent {
         }
         this.payloadString = JSON.stringify(newPayload, undefined, 4);
         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
+
+        if (this.payloadString !== previousPayload) {
+            this.pushEvent();
+        }
     }
 
     showHint(cm, event) {

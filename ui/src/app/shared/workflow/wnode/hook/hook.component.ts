@@ -1,18 +1,18 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Subscription } from 'rxjs/Subscription';
+import {TranslateService} from '@ngx-translate/core';
+import {Store} from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { WorkflowEventStore } from 'app/service/workflow/workflow.event.store';
-import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
-import {Store} from '@ngxs/store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {DeleteHookWorkflow} from 'app/store/workflows.action';
-import {finalize} from 'rxjs/operators';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
+import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
+import {DeleteHookWorkflow} from 'app/store/workflows.action';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {finalize} from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-node-hook',
