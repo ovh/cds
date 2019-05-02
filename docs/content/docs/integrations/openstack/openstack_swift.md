@@ -15,7 +15,7 @@ With this integration, you can use a dedicated OpenStack Swift Storage on :
 - [worker cache command]({{< relref "/docs/components/worker/cache">}})
 
 Notice: by default, the storage is configured in CDS Configuration. This integration
-allows user to user their own OpenStack Storage and not use the shared storage.
+allows user to use their own OpenStack Storage and not use the shared storage.
 
 ## Configure with WebUI
 
