@@ -21,14 +21,15 @@
     </item>
     
     <item>
-      <title>Blog Posts and Podcasts</title>
+      <title>Blog Posts, Podcasts and Talks</title>
       <link>https://ovh.github.io/cds/about/articles/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/about/articles/</guid>
       <description>Blog Posts February 14, 2019 - How does OVH manage the CI/CD at scale?
 March 1, 2019 - Continuous Delivery and Deployment Workflows with CDS
-Podcasts February 14, 2019 - DataBuzzWord podcast - French - Understanding CI/CD for Big Data and Machine Learning</description>
+Podcasts February 14, 2019 - DataBuzzWord podcast - French - Understanding CI/CD for Big Data and Machine Learning 
+Talks March 22, 2019 - Talk at conference Breizhcamp to introduce CDS (French): CI/CD FIVE MILLION WORKERS</description>
     </item>
     
     <item>

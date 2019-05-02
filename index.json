@@ -568,10 +568,10 @@
 },
 {
 	"uri": "https://ovh.github.io/cds/about/articles/",
-	"title": "Blog Posts and Podcasts",
+	"title": "Blog Posts, Podcasts and Talks",
 	"tags": [],
 	"description": "",
-	"content": " Blog Posts February 14, 2019 - How does OVH manage the CI/CD at scale?\nMarch 1, 2019 - Continuous Delivery and Deployment Workflows with CDS\nPodcasts February 14, 2019 - DataBuzzWord podcast - French - Understanding CI/CD for Big Data and Machine Learning \n"
+	"content": " Blog Posts February 14, 2019 - How does OVH manage the CI/CD at scale?\nMarch 1, 2019 - Continuous Delivery and Deployment Workflows with CDS\nPodcasts February 14, 2019 - DataBuzzWord podcast - French - Understanding CI/CD for Big Data and Machine Learning \nTalks March 22, 2019 - Talk at conference Breizhcamp to introduce CDS (French): CI/CD FIVE MILLION WORKERS\n"
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/actions/checkoutapplication/",
