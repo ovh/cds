@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) postPGRPCluginHandler() service.Handler {
+func (api *API) postGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 		db := api.mustDB()

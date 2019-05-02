@@ -349,7 +349,7 @@ URL         | **`/admin/plugin`**
 ----------- |----------
 Method      | POST     
 Permissions |  NeedAdmin: true -  Auth: true
-Code        | [postPGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPGRPCluginHandler%22)
+Code        | [postGRPCluginHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postGRPCluginHandler%22)
     
 
 
