@@ -40,7 +40,7 @@ pub struct ServiceSDK {
 }
 
 impl ServiceSDK {
-    fn new() -> Self {
+    pub fn new() -> Self {
         ServiceSDK{
             ..Default::default()
         }
@@ -53,6 +53,27 @@ pub trait ServiceTrait<T> {
     fn heartbeat(&self, status: String, config: T) -> Result<(), CdsError>;
     fn register(&mut self, status: String, config: T) -> Result<(), CdsError>;
     fn status(&self) -> Result<String, CdsError>;
+}
+
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
+pub struct APIConfiguration {
+    #[serde(rename = "maxHeartbeatFailures")]
+    pub max_heartbeat_failures: i32,
+    
+    #[serde(rename = "requestTimeout")]
+    pub request_timeout: i32,
+
+    pub token: String,
+    pub http: APITypeConfiguration,
+    pub grpc: APITypeConfiguration,
+}
+
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
+pub struct APITypeConfiguration {
+    pub insecure: bool,
+    pub url: String,
 }
 
 mod test {
@@ -70,7 +91,6 @@ mod test {
 
     impl ServiceTrait<Configuration> for ServiceSDK {
         fn apply_configuration(&mut self, config: Configuration) -> Result<(), CdsError> {
-            // TODO: convert client with String
             self.client = Client::new(config.api_url.clone(), "".to_string(), config.token.clone());
 	        self.service_name = String::from("cds-service");
             self.api = config.api_url;
