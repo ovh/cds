@@ -12,6 +12,14 @@ testcases:
   - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW15 "
   - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW15 ITSCWRKFLW15"
 
+- name: import integration
+  steps:
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/hello-it.yml
+  - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/hello-it-plugin.yml
+  - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/hello-action-plugin.yml
+  - script: {{.cds.build.cdsctl}} admin plugins binary-add hello-it-plugin ./tests/fixtures/plugins/hello-it-plugin-binary.yml ./tests/fixtures/plugins/hello.py 
+  - script: {{.cds.build.cdsctl}} admin plugins binary-add hello-action-plugin ./tests/fixtures/plugins/hello-action-plugin-binary.yml ./tests/fixtures/plugins/hello.py
+
 - name: import application
   steps:
   - script: {{.cds.build.cdsctl}} application import --force ITSCWRKFLW15 ./tests/fixtures/ITSCWRKFLW15/application.yml
