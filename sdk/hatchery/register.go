@@ -55,6 +55,7 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 		for _, w := range currentRegistering {
 			if strings.Contains(w.Name, models[k].Name) {
 				log.Info("hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
+				continue
 			}
 		}
 
