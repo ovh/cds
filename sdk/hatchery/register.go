@@ -40,6 +40,9 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 		}
 
 		maxRegistration := int64(h.Configuration().Provision.MaxConcurrentRegistering)
+		if maxRegistration == 0 {
+			maxRegistration = 2
+		}
 		if atomic.LoadInt64(&nbRegisteringWorkerModels) > maxRegistration {
 			log.Debug("hatchery> workerRegister> max registering worker reached")
 			return nil
