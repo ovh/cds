@@ -11,10 +11,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
@@ -115,7 +114,6 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		}
 	}
 
-	t.Logf("Connecting to redis store: %s", RedisHost)
 	store, err := cache.NewRedisStore(RedisHost, RedisPassword, 60)
 	if err != nil {
 		t.Fatalf("Unable to connect to redis: %v", err)

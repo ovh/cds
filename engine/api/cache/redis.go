@@ -71,7 +71,7 @@ const retryWaitDuration = retryWait * time.Millisecond
 //Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) bool {
 	if s.Client == nil {
-		log.Error("%v", sdk.WithStack(fmt.Errorf("cannot get redis client")))
+		log.Error("redis> cannot get redis client")
 		return false
 	}
 
