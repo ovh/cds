@@ -123,6 +123,9 @@ func (api *API) getWorkflowHandler() service.Handler {
 			})
 		}
 
+		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
+		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 		return service.WriteJSON(w, w1, http.StatusOK)

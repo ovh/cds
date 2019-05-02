@@ -21,7 +21,7 @@ type Service struct {
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
 	Config           ServiceConfig    `json:"config" db:"config" cli:"-"`
 	IsSharedInfra    bool             `json:"is_shared_infra" db:"-"`
-	Version          string           `json:"version" db:"-"`
+	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
 }
 

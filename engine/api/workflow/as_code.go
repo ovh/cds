@@ -114,7 +114,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient, repoFullName string, prID int64) (bool, bool, error) {
 	pr, err := client.PullRequest(ctx, repoFullName, int(prID))
 	if err != nil {
-		if err == sdk.ErrNotFound {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return false, true, nil
 		}
 		return false, false, sdk.WrapError(err, "unable to check pull request status")
@@ -184,6 +184,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			continue
 		}
 		if ope.Status == sdk.OperationStatusError {
+			log.Error("operation in error %s: %s", ope.UUID, ope.Error)
 			break
 		}
 		if ope.Status == sdk.OperationStatusDone {
@@ -202,6 +203,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				ope.Error = "unable to create repositories manager client"
 				return
 			}
+
 			request := sdk.VCSPullRequest{
 				Title: ope.Setup.Push.Message,
 				Head: sdk.VCSPushEvent{

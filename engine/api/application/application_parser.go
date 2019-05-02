@@ -45,7 +45,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
-		return nil, nil, sdk.WrapError(sdk.ErrForbidden, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
+		return nil, nil, sdk.WrapError(sdk.ErrApplicationAsCodeOverride, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
 	}
 
 	//Craft the application
@@ -100,7 +100,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to parse key")
+			return app, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
 		}
 
 		k := sdk.ApplicationKey{

@@ -78,6 +78,7 @@ func workflowPullRun(c cli.Values) error {
 
 func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 	force := v.GetBool("force")
+	yes := v.GetBool("yes")
 	quiet := v.GetBool("quiet")
 	if tr == nil {
 		return fmt.Errorf("Unable to read workflow")
@@ -94,7 +95,7 @@ func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 
 		fname := filepath.Join(dir, hdr.Name)
 		if _, err = os.Stat(fname); err == nil || os.IsExist(err) {
-			if !force {
+			if !force && !yes {
 				if !cli.AskForConfirmation(fmt.Sprintf("This will override %s. Do you want to continue?", fname)) {
 					os.Exit(0)
 				}

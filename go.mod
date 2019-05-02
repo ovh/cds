@@ -22,7 +22,7 @@ require (
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/artyom/untar v0.0.0-20160228112026-02ed5a2449a6
-	github.com/aws/aws-sdk-go v1.15.57 // indirect
+	github.com/aws/aws-sdk-go v1.19.11
 	github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a // indirect
 	github.com/bgentry/speakeasy v0.0.0-20160813190634-a1ccbf2c40df
 	github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932 // indirect
@@ -230,6 +230,7 @@ require (
 	github.com/urfave/cli v1.20.0
 	github.com/vbatts/tar-split v0.10.2 // indirect
 	github.com/vmware/govmomi v0.0.0-20170817040329-d7e841db6909
+	github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
 	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c // indirect

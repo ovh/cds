@@ -52,6 +52,22 @@ type WebhookCreate struct {
 	Config WebHookConfig `json:"config"`
 }
 
+type Webhook struct {
+	ID      int      `json:"id"`
+	URL     string   `json:"url"`
+	TestURL string   `json:"test_url"`
+	PingURL string   `json:"ping_url"`
+	Name    string   `json:"name"`
+	Events  []string `json:"events"`
+	Active  bool     `json:"active"`
+	Config  struct {
+		URL         string `json:"url"`
+		ContentType string `json:"content_type"`
+	} `json:"config"`
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // WebHookConfig represent the configuration of a webhook
 type WebHookConfig struct {
 	URL         string `json:"url"`

@@ -136,7 +136,11 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 			}
 			return sdk.WrapError(sdk.ErrForbidden, "user not authorized for workflow %s", workflowName)
 		default:
-			if deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)] >= perm {
+			wPerm, has := deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)]
+			if !has {
+				return sdk.WithStack(sdk.ErrNotFound)
+			}
+			if wPerm >= perm {
 				return nil
 			}
 			return sdk.WrapError(sdk.ErrForbidden, "user not authorized for workflow %s", workflowName)

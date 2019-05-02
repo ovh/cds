@@ -44,7 +44,7 @@ type TarOptions struct {
 }
 
 // CreateTarFromPaths returns a tar formatted reader of a tar made of several path
-func CreateTarFromPaths(cwd string, paths []string, opts *TarOptions) (io.Reader, error) {
+func CreateTarFromPaths(cwd string, paths []string, opts *TarOptions) (io.Reader, int, error) {
 	// Create a buffer to write our archive to.
 	buf := new(bytes.Buffer)
 
@@ -54,7 +54,7 @@ func CreateTarFromPaths(cwd string, paths []string, opts *TarOptions) (io.Reader
 	for _, path := range paths {
 		// ensure the src actually exists before trying to tar it
 		if _, err := os.Stat(path); err != nil {
-			return nil, fmt.Errorf("Unable to tar files - %v", err.Error())
+			return nil, 0, fmt.Errorf("Unable to tar files - %v", err.Error())
 		}
 		// walk path
 		errWalk := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
@@ -117,17 +117,18 @@ func CreateTarFromPaths(cwd string, paths []string, opts *TarOptions) (io.Reader
 
 		if errWalk != nil {
 			_ = tw.Close()
-			return nil, WrapError(errWalk, "CreateTarFromPaths> Cannot walk file")
+			return nil, 0, WrapError(errWalk, "CreateTarFromPaths> Cannot walk file")
 		}
 	}
 
 	if err := tw.Close(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	// Open the tar archive for reading.
 	btes := buf.Bytes()
+	size := buf.Len()
 	res := bytes.NewBuffer(btes)
 
-	return res, nil
+	return res, size, nil
 }

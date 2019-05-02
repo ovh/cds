@@ -67,13 +67,22 @@ func NewApplication(app sdk.Application, keys []EncryptedKey) (a Application, er
 		}
 	}
 
+	a.VCSPGPKey = app.RepositoryStrategy.PGPKey
+	a.VCSConnectionType = app.RepositoryStrategy.ConnectionType
+	if app.RepositoryStrategy.ConnectionType == "ssh" {
+		a.VCSSSHKey = app.RepositoryStrategy.SSHKey
+		a.VCSUser = ""
+		a.VCSPassword = ""
+	} else {
+		a.VCSSSHKey = ""
+		a.VCSUser = app.RepositoryStrategy.User
+		a.VCSPassword = app.RepositoryStrategy.Password
+	}
+
 	if app.RepositoryStrategy.ConnectionType != "https" {
 		a.VCSConnectionType = app.RepositoryStrategy.ConnectionType
 	}
 	a.VCSPGPKey = app.RepositoryStrategy.PGPKey
-	a.VCSSSHKey = app.RepositoryStrategy.SSHKey
-	a.VCSUser = app.RepositoryStrategy.User
-	a.VCSPassword = app.RepositoryStrategy.Password
 
 	a.DeploymentStrategies = make(map[string]map[string]VariableValue, len(app.DeploymentStrategies))
 	for name, config := range app.DeploymentStrategies {

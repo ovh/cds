@@ -48,6 +48,8 @@
                             <a href="{{p.pullrequest_url}}" target="_blank">{{p.pullrequest_url}}</a>
                         </li>
                     </ul>
+                    <button class="ui right floated green tiny button" (click)="resyncPR()" [class.loading]="loadingPopupButton"
+                            [disabled]="loadingPopupButton">{{'workflow_resync' | translate }}</button>
                 </ng-container>
             </div>
         </ng-template>

@@ -101,7 +101,7 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 			switch abp.Name {
 			case "cds.project":
 				project = abp.Value
-			case "cds.worklow":
+			case "cds.workflow":
 				workflow = abp.Value
 			case "cds.node":
 				node = abp.Value

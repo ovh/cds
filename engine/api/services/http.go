@@ -127,7 +127,7 @@ func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, i
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
 	res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, b, mods...)
 	if err != nil {
-		return code, sdk.WrapError(err, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
+		return code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
 
 	if out != nil {
@@ -231,7 +231,6 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 
 	req = req.WithContext(ctx)
 
-	log.Debug("services> tracing> > context> %s", tracingutils.DumpContext(ctx))
 	spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
 	if ok {
 		tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
