@@ -40,9 +40,9 @@ func (api *API) postGRPCluginHandler() service.Handler {
 		if p.Integration != "" {
 			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
 			if err != nil {
-				p.IntegrationModelID = &integrationModel.ID
 				return err
 			}
+			p.IntegrationModelID = &integrationModel.ID
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
@@ -125,9 +125,9 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		if p.Integration != "" {
 			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
 			if err != nil {
-				p.IntegrationModelID = &integrationModel.ID
 				return err
 			}
+			p.IntegrationModelID = &integrationModel.ID
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
