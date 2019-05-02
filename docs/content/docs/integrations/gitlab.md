@@ -13,7 +13,7 @@ to a CDS Application.
 This integration enables some features:
 
  - [Git Repository Webhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
- - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/gitclone.md">}}) for advanced usage
+ - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/builtin-gitclone.md">}}) for advanced usage
  - Send build notifications on your Pull-Requests and Commits on GitLab
 
 

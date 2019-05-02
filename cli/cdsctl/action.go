@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	actionSDK "github.com/ovh/cds/sdk/action"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 var actionCmd = cli.Command{
@@ -300,14 +301,14 @@ func actionBuiltinDocRun(v cli.Values) error {
 	var found bool
 	var m actionSDK.Manifest
 	for i := range actionSDK.List {
-		if actionSDK.List[i].Action.Name == n {
+		if slug.Convert(actionSDK.List[i].Action.Name) == slug.Convert(n) {
 			found = true
 			m = actionSDK.List[i]
 			break
 		}
 	}
 	if !found {
-		return fmt.Errorf("Invalid given action name")
+		return fmt.Errorf("Invalid given action name %s", n)
 	}
 
 	fmt.Println(m.Markdown())

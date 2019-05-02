@@ -1,6 +1,6 @@
 ---
 title: "plugin-archive"
-card: 
+card:
   name: plugin
 ---
 

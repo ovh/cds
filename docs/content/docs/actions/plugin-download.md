@@ -1,6 +1,6 @@
 ---
 title: "plugin-download"
-card: 
+card:
   name: plugin
 ---
 

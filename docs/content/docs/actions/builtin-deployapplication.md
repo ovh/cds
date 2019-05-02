@@ -1,12 +1,37 @@
+
 ---
 title: "DeployApplication"
-card: 
+card:
   name: builtin
 ---
 
 **DeployApplication** is a builtin action, you can't modify it.
 
-This action is useful only if you have a Deployment Plaftorm associated to your current application.
+Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.
+
+## Parameters
+
+No Parameter
+
+## Requirements
+
+No Requirement
+
+## YAML example
+
+Example of a pipeline using DeployApplication action:
+```yml
+version: v1.0
+name: Pipeline1
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - deploy: '{{.cds.application}}'
+
+```
 
 ## Example
 

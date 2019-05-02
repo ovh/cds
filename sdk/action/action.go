@@ -27,7 +27,7 @@ var List = []Manifest{
 // Manifest for a action.
 type Manifest struct {
 	Action  sdk.Action
-	Example exportentities.Step
+	Example exportentities.PipelineV1
 }
 
 // Markdown returns string formatted for an action.
@@ -55,6 +55,14 @@ func (m Manifest) Markdown() string {
 	ex, _ := yaml.Marshal(m.Example)
 
 	info := fmt.Sprintf(`
+---
+title: "%s"
+card:
+  name: builtin
+---
+
+**%s** is a builtin action, you can't modify it.
+
 %s
 
 ## Parameters
@@ -67,11 +75,15 @@ func (m Manifest) Markdown() string {
 
 ## YAML example
 
+Example of a pipeline using %s action:
 %s
 `,
+		m.Action.Name,
+		m.Action.Name,
 		m.Action.Description,
 		sp,
 		rq,
+		m.Action.Name,
 		fmt.Sprintf("```yml\n%s\n```", string(ex)))
 
 	return info

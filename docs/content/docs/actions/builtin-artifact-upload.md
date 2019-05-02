@@ -1,18 +1,44 @@
+
 ---
 title: "Artifact Upload"
-card: 
+card:
   name: builtin
 ---
 
-**Artifact Upload Action** is a builtin action, you can't modify it.
+**Artifact Upload** is a builtin action, you can't modify it.
 
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
 
 ## Parameters
-* path: Path of file to upload, example: `./src/yourFile.json`
-* tag: Artifact will be uploaded with a tag, generally `{{.cds.version}}`.
-* enabled: Enable artifact upload, `true` or `false`
-* destination: optional. Destination of this artifact. Use the name of integration attached on your project. Default is empty.
+
+* **destination**: (optional) Destination of this artifact. Use the name of integration attached on your project.
+* **enabled**: Enable artifact upload, "true" or "false".
+* **path**: Path of file to upload, example: ./src/yourFile.json.
+* **tag**: Artifact will be uploaded with a tag, generally {{.cds.version}}.
+
+
+## Requirements
+
+No Requirement
+
+## YAML example
+
+Example of a pipeline using Artifact Upload action:
+```yml
+version: v1.0
+name: Pipeline1
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - artifactUpload:
+      name: '{{.cds.workspace}}/myFile'
+      tag: '{{.cds.version}}'
+
+```
+
 
 ## Example
 
@@ -28,26 +54,6 @@ This action can be used to upload artifacts in CDS. This is the recommended way 
 * View artifact
 
 ![img](../images/artifact-upload-view-artifact.png)
-
-## YAML Format
-
-Example of Pipeline using Artifact Upload Action
-
-```yml
-version: v1.0
-name: test-artifacts
-stages:
-- Stage 1
-jobs:
-- job: JobWithUpload
-  stage: Stage 1
-  steps:
-  - script:
-    - echo "content file" > myfile
-  - artifactUpload:
-      path: myfile
-      tag: '{{.cds.version}}'
-```
 
 ## Worker Upload Command
 

@@ -344,20 +344,20 @@ type StepDeploy string
 type Step struct {
 	StepCustom `json:"-" yaml:",inline"`
 	// TODO use type for script
-	//Script           *StepScript           `json:"script,omitempty" yaml:"script,omitempty" jsonschema_description:"Script\nhttps://ovh.github.io/cds/docs/actions/script"`
+	//Script           *StepScript           `json:"script,omitempty" yaml:"script,omitempty" jsonschema_description:"Script\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
 	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"-"`
 	Coverage         *StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty"`
-	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema_description:"Download artifacts in workspace\nhttps://ovh.github.io/cds/docs/actions/artifact-download"`
+	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema_description:"Download artifacts in workspace\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-download"`
 	// TODO use type for artifact upload
-	//ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema_description:"Upload artifacts from workspace\nhttps://ovh.github.io/cds/docs/actions/artifact-upload"`
+	//ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema_description:"Upload artifacts from workspace\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-upload"`
 	ArtifactUpload   interface{}           `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema:"-"`
-	ServeStaticFiles *StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty" jsonschema_description:"Serve static files\nhttps://ovh.github.io/cds/docs/actions/serve-static-files"`
-	GitClone         *StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty" jsonschema_description:"Clone a git repository\nhttps://ovh.github.io/cds/docs/actions/gitclone"`
-	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema_description:"Create a git tag\nhttps://ovh.github.io/cds/docs/actions/gittag"`
-	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema_description:"Release an application\nhttps://ovh.github.io/cds/docs/actions/release"`
-	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema_description:"Parse JUnit report\nhttps://ovh.github.io/cds/docs/actions/junit"`
-	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema_description:"Checkout repository for an application\nhttps://ovh.github.io/cds/docs/actions/checkoutapplication"`
-	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema_description:"Deploy an application\nhttps://ovh.github.io/cds/docs/actions/deployapplication"`
+	ServeStaticFiles *StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty" jsonschema_description:"Serve static files\nhttps://ovh.github.io/cds/docs/actions/builtin-serve-static-files"`
+	GitClone         *StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty" jsonschema_description:"Clone a git repository\nhttps://ovh.github.io/cds/docs/actions/builtin-gitclone"`
+	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema_description:"Create a git tag\nhttps://ovh.github.io/cds/docs/actions/builtin-gittag"`
+	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema_description:"Release an application\nhttps://ovh.github.io/cds/docs/actions/builtin-release"`
+	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema_description:"Parse JUnit report\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
+	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema_description:"Checkout repository for an application\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
+	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema_description:"Deploy an application\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
 	Name             string                `json:"name,omitempty" yaml:"name,omitempty" jsonschema_description:"the name"`
 	Enabled          *bool                 `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Optional         *bool                 `json:"optional,omitempty" yaml:"optional,omitempty"`

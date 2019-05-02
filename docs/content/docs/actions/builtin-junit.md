@@ -1,6 +1,7 @@
+
 ---
 title: "JUnit"
-card: 
+card:
   name: builtin
 ---
 
@@ -8,11 +9,30 @@ card:
 
 This action parses a given Junit formatted XML file to extract its test results.
 
-
 ## Parameters
 
-* path: Path to a JUnit XML file
+* **path**: Path to junit xml file.
 
+
+## Requirements
+
+No Requirement
+
+## YAML example
+
+Example of a pipeline using JUnit action:
+```yml
+version: v1.0
+name: Pipeline1
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - jUnitReport: '{{.cds.workspace}}/report.xml'
+
+```
 
 ## Example
 

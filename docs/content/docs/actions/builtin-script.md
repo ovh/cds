@@ -1,6 +1,7 @@
+
 ---
 title: "Script"
-card: 
+card:
   name: builtin
 ---
 
@@ -10,52 +11,33 @@ This action executes a given script with a given interpreter.
 
 ## Parameters
 
-* script: Content of your script. You can put
+* **script**: Content of your script.
+You can put #!/bin/bash, or #!/bin/perl at first line.
+Make sure that the binary used is in
+the pre-requisites of action.
 
-```bash
-#!/bin/bash
+
+## Requirements
+
+No Requirement
+
+## YAML example
+
+Example of a pipeline using Script action:
+```yml
+version: v1.0
+name: Pipeline1
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - script:
+    - '#!/bin/sh'
+    - echo "{{.cds.application}}"
+
 ```
-
- or
-
-```bash
-#!/bin/perl
-```
-
- at first line. This will define the interpreter.
-
-Make sure that the binary used is in the pre-requisites of the action.
-
-If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.
-
-If you want to control command's exit code, you have to add
-```bash
-set +e
-```
-
-Below is an example of a step that will fail at the first line:
-
-```bash
-which a-unknown-binary # Step will fail here, lines below won't be executed
-if [ $? -ne 0 ]; then
-  echo "binary a-unknown-binary does not exists"; # this won't be displayed
-  exit 1
-fi;
-exit 0
-```
-
-If you want to display an error message before exiting, you should rather use:
-
-```bash
-set +e
-which a-unknown-binary
-if [ $? -ne 0 ]; then
-  echo "binary a-unknown-binary does not exists"; # this will be displayed
-  exit 1
-fi;
-exit 0
-```
-
 
 #### Using CDS variables in a script
 
@@ -97,3 +79,37 @@ You can use worker CLI to make different actions
 * Launch pipeline, check logs
 
 ![img](/images/workflows.pipelines.actions.builtin.script-logs.png)
+
+## Notes
+
+Make sure that the binary used is in the pre-requisites of the action.
+
+If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.
+
+If you want to control command's exit code, you have to add
+```bash
+set +e
+```
+
+Below is an example of a step that will fail at the first line:
+
+```bash
+which a-unknown-binary # Step will fail here, lines below won't be executed
+if [ $? -ne 0 ]; then
+  echo "binary a-unknown-binary does not exists"; # this won't be displayed
+  exit 1
+fi;
+exit 0
+```
+
+If you want to display an error message before exiting, you should rather use:
+
+```bash
+set +e
+which a-unknown-binary
+if [ $? -ne 0 ]; then
+  echo "binary a-unknown-binary does not exists"; # this will be displayed
+  exit 1
+fi;
+exit 0
+```
