@@ -1,5 +1,5 @@
 ---
-title: Blog Posts and Podcasts
+title: Blog Posts, Podcasts and Talks
 ---
 
 
@@ -13,3 +13,7 @@ March 1, 2019 - [Continuous Delivery and Deployment Workflows with CDS](https://
 
 February 14, 2019 - [DataBuzzWord podcast](https://www.spreaker.com/show/2072727) - French - [Understanding CI/CD for Big Data and Machine Learning
 ](https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/)
+
+## Talks
+
+March 22, 2019 - Talk at conference [Breizhcamp](https://www.breizhcamp.org) to introduce CDS (French): [CI/CD FIVE MILLION WORKERS](https://www.youtube.com/watch?v=JUzEQuOehv4)
