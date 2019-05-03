@@ -29,6 +29,7 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 	}
 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
+loopModels:
 	for k := range models {
 		if models[k].Type != h.ModelType() {
 			continue
@@ -57,7 +58,7 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 		for _, w := range currentRegistering {
 			if strings.Contains(w.Name, models[k].Name) {
 				log.Info("hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
-				continue
+				continue loopModels
 			}
 		}
 
