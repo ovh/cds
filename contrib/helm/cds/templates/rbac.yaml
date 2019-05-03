@@ -4,7 +4,7 @@ kind: Role
 metadata:
   name: {{ template "cds.fullname" . }}
   labels:
-    app: {{ template "cds.fullname" . }}-api
+    app: {{ template "cds.fullname" . }}-hatchery
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -14,14 +14,14 @@ rules:
     verbs: ["get", "list", "create", "update", "delete"]
   - apiGroups: [""]
     resources: ["namespaces"]
-    verbs: ["list", "create"]
+    verbs: ["get", "list", "create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
   name: {{ template "cds.fullname" . }}
   labels:
-    app: {{ template "cds.fullname" . }}-api
+    app: {{ template "cds.fullname" . }}-hatchery
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}

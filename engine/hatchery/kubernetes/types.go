@@ -36,7 +36,7 @@ type HatcheryConfiguration struct {
 	// KubernetesMasterURL Address of kubernetes master
 	KubernetesMasterURL string `mapstructure:"kubernetesMasterURL" toml:"kubernetesMasterURL" default:"" commented:"false" comment:"Address of kubernetes master" json:"kubernetesMasterURL"`
 	// KubernetesConfigFile Kubernetes config file in yaml
-	KubernetesConfigFile string `mapstructure:"kubernetesConfigFile" toml:"kubernetesConfigFile" default:"kubeconfig.yaml" commented:"false" comment:"Kubernetes config file in yaml" json:"kubernetesConfigFile"`
+	KubernetesConfigFile string `mapstructure:"kubernetesConfigFile" toml:"kubernetesConfigFile" default:"" commented:"false" comment:"Kubernetes config file in yaml" json:"kubernetesConfigFile"`
 	// KubernetesUsername Username to connect to kubernetes cluster (optional if config file is set)
 	KubernetesUsername string `mapstructure:"username" toml:"username" default:"" commented:"true" comment:"Username to connect to kubernetes cluster (optional if config file is set)" json:"username"`
 	// KubernetesPassword Password to connect to kubernetes cluster (optional if config file is set)
