@@ -1,4 +1,6 @@
 import {AfterViewInit, Component, ViewChild} from '@angular/core';
+import {GroupPermission} from '@cds/model/group.model';
+import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
 import {ProjectState, ProjectStateModel} from '@cds/store/project.state';
 import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {TranslateService} from '@ngx-translate/core';
@@ -20,6 +22,7 @@ import {finalize} from 'rxjs/operators';
     templateUrl: './node.edit.modal.html',
     styleUrls: ['./node.edit.modal.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
     project: Project;
@@ -27,6 +30,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     node: WNode;
     beforeNode: WNode;
     hook: WNodeHook;
+    groups: Array<GroupPermission>;
 
 
     @ViewChild('nodeEditModal')
@@ -37,10 +41,12 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     selected: string;
     hasModification = false;
 
+
     permissionEnum = PermissionValue;
     loading = false;
 
     projectSubscriber: Subscription;
+    storeSub: Subscription;
 
     constructor(private _modalService: SuiModalService, private _store: Store,
                 private _translate: TranslateService, private _toast: ToastService) {
@@ -52,14 +58,21 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+        this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
             if (!s.editModal) {
+                this.hook = undefined;
+                this.node = undefined;
+                delete this.selected;
+                if (this.modal) {
+                    this.modal.approve(true);
+                }
                 return;
             }
             if (s.node) {
                 this.workflow = s.workflow;
                 let open = this.node != null;
                 this.node = cloneDeep(s.node);
+                this.groups = cloneDeep(this.node.groups);
                 this.beforeNode = cloneDeep(s.node);
                 if (s.hook) {
                     this.hook = cloneDeep(s.hook);
@@ -79,13 +92,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 }
                 if (!open) {
                     this.show();
-                }
-            } else {
-                this.hook = undefined;
-                this.node = undefined;
-                delete this.selected;
-                if (this.modal) {
-                    this.modal.approve(true);
                 }
             }
         });
@@ -146,6 +152,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
             changes: workflow
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
+                this.hasModification = false;
                 event.gp.updating = false;
                 this._toast.success('', this._translate.instant('permission_updated'));
             });
@@ -165,6 +172,9 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 this.selected = newView;
             }
             return;
+        }
+        if (newView === 'permissions') {
+            this.groups = cloneDeep(this.node.groups);
         }
         this.hasModification = false;
         this.selected = newView;

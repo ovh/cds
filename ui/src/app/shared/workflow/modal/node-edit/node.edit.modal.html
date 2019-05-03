@@ -55,15 +55,18 @@
                     </ng-container>
                     <ng-container *ngSwitchCase="'outgoinghook'">
                         <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow"
-                            [hook]="node" [updateMode]="true"></app-workflow-node-outgoinghook>
+                            [hook]="node" [updateMode]="true" (outgoinghookChange)="pushChange($event)"></app-workflow-node-outgoinghook>
                     </ng-container>
                     <ng-container *ngSwitchCase="'conditions'">
                         <app-workflow-node-conditions [project]="project" [workflow]="workflow"
                                                       [node]="node" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
                     </ng-container>
                     <ng-container *ngSwitchCase="'permissions'">
-                        <app-permission-list [permissions]="node.groups" (event)="groupManagement($event)"
-                                             [edit]="(workflow.from_repository && workflow.from_repository.length > 0)?false:workflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                        <ng-container *ngIf="groups">
+                            <app-permission-list [permissions]="groups" (event)="groupManagement($event)"
+                                                 (permissionChange)="pushChange($event)"
+                                                 [edit]="(workflow.from_repository && workflow.from_repository.length > 0)?false:workflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                        </ng-container>
                         <ng-container
                             *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE && !(workflow.from_repository && workflow.from_repository.length > 0)">
                             <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>

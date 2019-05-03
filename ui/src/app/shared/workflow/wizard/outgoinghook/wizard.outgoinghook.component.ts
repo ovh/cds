@@ -29,13 +29,14 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     _outgoingHook: WNode;
     @Input('hook')
     set hook(data: WNode) {
-        this._outgoingHook = data;
+        this._outgoingHook = cloneDeep(data);
     }
     get hook() {
         return this._outgoingHook;
     }
 
     @Output() outgoinghookEvent = new EventEmitter<WNode>();
+    @Output() outgoinghookChange = new EventEmitter<boolean>();
 
     permissionEnum = PermissionValue;
     codeMirrorConfig: {};
@@ -50,6 +51,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     invalidJSON = false;
     outgoing_default_payload: {};
     loading = false;
+    codeMirrorSkipChange = true;
 
     constructor(
         private _store: Store, private _translate: TranslateService, private _toast: ToastService,
@@ -78,7 +80,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
                     }
                     this.displayConfig = Object.keys(this._outgoingHook.outgoing_hook.config).length !== 0;
                     if (this.selectedOutgoingHookModel.name === 'Workflow') {
-                        this.updateWorkflowData();
+                        this.updateWorkflowData(false);
                     }
                     this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
                 }
@@ -104,7 +106,10 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         }
     }
 
-    updateWorkflowData(): void {
+    updateWorkflowData(pushChange: boolean): void {
+        if (pushChange) {
+            this.pushChange();
+        }
         if (this.hook && this.hook.outgoing_hook.config && this.hook.outgoing_hook.config['target_project']
             && this.hook.outgoing_hook.config['target_workflow']) {
             this.loadingHooks = true;
@@ -137,6 +142,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     }
 
     updateWorkflowOutgoingHook(): void {
+        this.pushChange();
         if (this.hook.outgoing_hook.config['target_hook']) {
             this.hook.outgoing_hook.config['payload'].value = JSON.stringify(this.outgoing_default_payload, undefined, 4);
         }
@@ -154,11 +160,21 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
             changes: clonedWorkflow
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
+                this.outgoinghookChange.emit(false);
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });
     }
 
     changeCodeMirror(code: string) {
+        // skip first event that is initialization of codemirror
+        if (!this.codeMirrorSkipChange) {
+            this.pushChange();
+        }
+        if (this.codeMirrorSkipChange) {
+            this.codeMirrorSkipChange = false;
+        }
+
+
         if (typeof code === 'string') {
             this.invalidJSON = false;
             try {
@@ -167,5 +183,9 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
                 this.invalidJSON = true;
             }
         }
+    }
+
+    pushChange(): void {
+        this.outgoinghookChange.emit(true);
     }
 }
