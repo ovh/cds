@@ -1,75 +1,111 @@
 @import '../../../../../common';
 
-#workflowRunStatus{
-  .winfo{
-    z-index: 1;
-  }
+.workflowRunStatus {
+    :host-context(.night) & {
+        .success {
+            background-color: $darkTheme_light_green;
+            border: 2px solid $darkTheme_green;
+            border-top: none;
+        }
 
-  .cardinfo {
-    border-radius: 0 0 0.28571429rem 0.28571429rem;
-  }
+        .fail {
+            background-color: $darkTheme_light_red;
+            border: 2px solid $darkTheme_red;
+            border-top: none;
+        }
 
-  .running {
-    border: none;
-  }
-  .success {
-    background-color: $cds_color_light_green;
-    border: 2px solid $cds_color_green;
-    border-top: none;
-  }
-  .fail {
-    background-color: $cds_color_light_red;
-    border: 2px solid $cds_color_red;
-    border-top: none;
-  }
-  .inactive {
-    background-color: $cds_color_light_grey;
-    border: 2px solid grey;
-    border-top: none;
-  }
-  .building {
-    background-color: $cds_color_light_teal;
-    border: 2px solid $cds_color_teal;
-    border-top: none;
-  }
+        .building {
+            background-color: $darkTheme_light_teal;
+            border: 2px solid $darkTheme_teal;
+            border-top: none;
+        }
 
-  .semicircle {
-    width: 3em;
-    position: absolute;
-    height: 3em;
-    border: 2px solid black;
-    border-radius: 50% !important;
-    margin: 0 auto 0em auto;
-    bottom: -1.5em;
-    left: calc(50% - 1.5em);
-    z-index: -1;
-    .icon {
-      position: absolute;
-      bottom: 0;
-      left: 17%;
+        .inactive {
+            background-color: $darkTheme_light_grey;
+            border: 2px solid grey;
+            border-top: none;
+        }
     }
-    &.success {
-      border-color: $cds_color_green;
-    }
-    &.fail {
-      border-color: $cds_color_red;
-    }
-    &.inactive {
-      border-color: grey;
-    }
-    &.building {
-      border-color: $cds_color_teal;
-    }
-  }
 
-  .spawninfo {
-    .scrollable {
-      max-height: 300px;
-      overflow-y: auto;
+    .winfo {
+        z-index: 1;
     }
-    pre {
-      white-space: pre-line;
-      font-size: 0.85em;
+
+    .cardinfo {
+        border-radius: 0 0 0.28571429rem 0.28571429rem;
     }
-  }
+
+    .running {
+        border: none;
+    }
+
+    .success {
+        background-color: $cds_color_light_green;
+        border: 2px solid $cds_color_green;
+        border-top: none;
+    }
+
+    .fail {
+        background-color: $cds_color_light_red;
+        border: 2px solid $cds_color_red;
+        border-top: none;
+    }
+
+    .inactive {
+        background-color: $cds_color_light_grey;
+        border: 2px solid grey;
+        border-top: none;
+    }
+
+    .building {
+        background-color: $cds_color_light_teal;
+        border: 2px solid $cds_color_teal;
+        border-top: none;
+    }
+
+    .semicircle {
+        width: 3em;
+        position: absolute;
+        height: 3em;
+        border: 2px solid black;
+        border-radius: 50% !important;
+        margin: 0 auto 0em auto;
+        bottom: -1.5em;
+        left: calc(50% - 1.5em);
+        z-index: -1;
+
+        .icon {
+            position: absolute;
+            bottom: 0;
+            left: 17%;
+        }
+
+        &.success {
+            border-color: $cds_color_green;
+        }
+
+        &.fail {
+            border-color: $cds_color_red;
+        }
+
+        &.inactive {
+            border-color: grey;
+        }
+
+        &.building {
+            border-color: $cds_color_teal;
+        }
+    }
+
+    .spawninfo {
+        .scrollable {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        pre {
+            white-space: pre-line;
+            font-size: 0.85em;
+        }
+    }
 }

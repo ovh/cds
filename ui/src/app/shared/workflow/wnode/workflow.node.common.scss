@@ -6,11 +6,27 @@
   border-radius: 3px;
   color: $polar_grey_1;
   padding: 2px;
-  :host-context(.night) &:not(.success):not(.fail):not(.building):not(.inactive) {
-    border-color: $polar_grey_5;
-    color: $polar_grey_5;
+  :host-context(.night) & {
+    border-color: $darkTheme_grey_5;
+    color: $darkTheme_grey_6;
     a {
       color: $polar_grey_4;
+    }
+    &.success {
+      background-color: $darkTheme_light_green;
+      border-color: $darkTheme_green;
+    }
+    &.fail {
+      background-color: $darkTheme_light_red;
+      border-color: $darkTheme_red;
+    }
+    &.building {
+      background-color: $darkTheme_light_teal;
+      border-color: $darkTheme_teal;
+    }
+    &.inactive {
+      background-color: $darkTheme_light_grey;
+      border-color: grey;
     }
     &.active {
       border-color: $cds_color_teal;

@@ -71,12 +71,6 @@ input[disabled] {
     overflow: hidden;
 }
 
-// Override semantic-ui color to apply CDS theme
-.ui.popup {
-    padding: 10px;
-    margin: 0;
-}
-
 $scrollbarsize: 10px;
 $scrollbarradius: 0px;
 body ::-webkit-scrollbar {

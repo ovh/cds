@@ -9,140 +9,192 @@ $polar_grey_5: #FCFCFC;
 $polar_grey_6: #212121;
 $polar_grey_7: #282828;
 $polar_grey_8: #303030;
+
+$darkTheme_grey_0: #2d2c2c; // top bar and active|hover on darkTheme_grey_1 background
+$darkTheme_grey_1: #383736;
+$darkTheme_grey_2: #333333;
+$darkTheme_grey_3: #434141;
+$darkTheme_grey_4: #aaaaaa;
+$darkTheme_grey_5: #a2a3a3; // title on darkTheme_grey_1
+$darkTheme_grey_6: #cccccc; // text on darkTheme_grey_1
+
+$darkTheme_green: #245b2c;
+$darkTheme_teal: #00498d;
+$darkTheme_red: #c30101;
+$darkTheme_light_green: #263f0d;
+$darkTheme_light_red: #940000;
+$darkTheme_light_teal: #02386e;
+$darkTheme_light_grey: #EEEEEE;
+
 .night {
-  color: white;
-  background-color: $darkBackground;
+    color: $darkTheme_grey_6;
+    background-color: $darkTheme_grey_1;
 }
 
 .ui.card {
-  .meta {
-    .night & {
-      color: rgba(255, 255, 255, 0.4)
+    .meta {
+        .night & {
+            color: rgba(255, 255, 255, 0.4)
+        }
     }
-  }
-  .night & {
-    background-color: $polar_grey_6;
-    box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
-  }
+
+    .night & {
+        background-color: $darkTheme_grey_0;
+        box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
+    }
 }
 
 .ui.cards a.card:hover,
 .ui.link.cards .card:hover,
 a.ui.card:hover,
 .ui.link.card:hover {
-  .night & {
-    background-color: $darkBackground;
-    box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
-  }
+    .night & {
+        background-color: $darkBackground;
+        box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
+    }
 }
 
 .ui.card>.content>.header {
-  .night & {
-    color: white;
-  }
+    .night & {
+        color: white;
+    }
 }
 
 .ui.selection.dropdown {
-  .night & {
-    background-color: $polar_grey_6;
-  }
+    .night & {
+        background-color: $darkTheme_grey_0;
+    }
 }
 
 .ui.menu .item {
-  .night & {
-    color: white;
-  }
+    .night & {
+        color: white;
+    }
 }
 
 .ui.vertical.menu {
-  background-color: transparent !important;
+    background-color: transparent !important;
 }
 
 .ui.secondary.pointing.menu .active.item {
-  .night & {
-    color: white;
-  }
+    .night & {
+        color: white;
+    }
 }
 
 .ui.breadcrumb .divider {
-  .night & {
-    color: white;
-  }
+    .night & {
+        color: white;
+    }
 }
 
 .ui.segment {
-  .night & {
-    background-color: $polar_grey_6;
-  }
+    .night & {
+        background-color: $darkTheme_grey_0;
+    }
 }
 
 .ui.form .field>label {
-  .night & {
-    color: white;
-  }
+    .night & {
+        color: white;
+    }
 }
 
 .ui.form input,
 .ui.form textarea,
 .ui.input input {
-  .night & {
-    color: white;
-    background-color: $polar_grey_6;
-    border-color: $polar_grey_0;
-  }
+    .night & {
+        color: white;
+        background-color: $darkTheme_grey_0;
+        border-color: $polar_grey_0;
+    }
 }
 
 .ui.form input:focus,
 .ui.form textarea:focus {
-  .night & {
-    color: white;
-    background-color: $darkBackground;
-    border-color: $polar_grey_0;
-  }
+    .night & {
+        color: white;
+        background-color: $darkBackground;
+        border-color: $polar_grey_0;
+    }
 }
 
 .ui.header,
 .ui.attached.block.header,
 .ui.attached.top.segment {
-  .night & {
-    color: white;
-    background-color: $polar_grey_7 !important;
-    border-color: $polar_grey_7;
-  }
+    .night & {
+        color: white;
+        background-color: $polar_grey_7 !important;
+        border-color: $polar_grey_7;
+    }
 }
 
 .ui.attached.segment {
-  .night & {
-    border-color: $polar_grey_7;
-  }
+    .night & {
+        border-color: $polar_grey_7;
+    }
 }
 
 .ui.label,
 .ui.basic.green.label {
-  background-color: transparent !important;
+    background-color: transparent !important;
+}
+
+a.ui.basic.green.label:hover {
+    background-color: transparent !important;
 }
 
 .ui.steps .step {
-  .night & {
-    color: white;
-    background-color: transparent !important;
-  }
+    .night & {
+        color: white;
+        background-color: transparent !important;
+    }
 }
 
 .table {
-  background-color: transparent !important;
-  .night &,
-  :host-context(.night) & {
-    color: white;
-  }
+    background-color: transparent !important;
+
+    .night &,
+    :host-context(.night) & {
+        color: white;
+    }
 }
 
 .table thead th,
 .ui.table thead th {
-  color: grey;
-  background-color: transparent !important;
-  .night &,
-  :host-context(.night) & {
-    color: white;
-  }
+    color: grey;
+    background-color: transparent !important;
+
+    .night &,
+    :host-context(.night) & {
+        color: white;
+    }
+}
+
+.ui.popup {
+
+    .night &,
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_1;
+        border-color: $darkTheme_grey_5;
+        color: $darkTheme_grey_6;
+    }
+}
+
+.ui.modal,
+.ui.modal>.content {
+
+    .night &,
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_1;
+    }
+}
+
+.ui.modal>.header,
+.ui.modal>.actions {
+
+    .night &,
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_0;
+    }
 }
