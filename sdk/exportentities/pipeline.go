@@ -17,13 +17,13 @@ type Pipeliner interface {
 
 // PipelineV1 represents exported sdk.Pipeline
 type PipelineV1 struct {
-	Version      string                    `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"The version for the current pipeline file (v1.0)"`
-	Name         string                    `json:"name,omitempty" yaml:"name,omitempty" jsonschema_description:"The name of the pipeline"`
-	Description  string                    `json:"description,omitempty" yaml:"description,omitempty" jsonschema_description:"The description of the pipeline"`
-	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty" jsonschema_description:"The list of parameters of the pipeline"`
-	Stages       []string                  `json:"stages,omitempty" yaml:"stages,omitempty" jsonschema_description:"The list of stage's names for the pipeline"`
-	StageOptions map[string]Stage          `json:"options,omitempty" yaml:"options,omitempty" jsonschema_description:"The options for stages of the pipeline"` //Here Stage.Jobs will NEVER be set
-	Jobs         []Job                     `json:"jobs,omitempty" yaml:"jobs,omitempty" jsonschema_description:"The list of jobs for the pipeline"`
+	Version      string                    `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"The version for the current pipeline file (v1.0)."`
+	Name         string                    `json:"name,omitempty" yaml:"name,omitempty" jsonschema_description:"The name of the pipeline."`
+	Description  string                    `json:"description,omitempty" yaml:"description,omitempty" jsonschema_description:"The description of the pipeline."`
+	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty" jsonschema_description:"The list of parameters of the pipeline."`
+	Stages       []string                  `json:"stages,omitempty" yaml:"stages,omitempty" jsonschema_description:"The list of stage's names for the pipeline."`
+	StageOptions map[string]Stage          `json:"options,omitempty" yaml:"options,omitempty" jsonschema_description:"The options for stages of the pipeline."` //Here Stage.Jobs will NEVER be set
+	Jobs         []Job                     `json:"jobs,omitempty" yaml:"jobs,omitempty" jsonschema_description:"The list of jobs for the pipeline."`
 }
 
 // PipelineVersion is a version

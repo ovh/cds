@@ -60,14 +60,12 @@ func (y yamlSchemaVSCodeInstaller) Install(schemas yamlSchemaPath) error {
 	fmt.Println("You will need to execute the following command:")
 	fmt.Println(cli.Cyan("code --install-extension %s", pluginVSCodeName))
 
+	// manually constructs a json to preserve rules order
+	paths := []string{schemas.Workflow, schemas.Application, schemas.Environment, schemas.Pipeline}
+	globPatterns := []string{"*.cds*.yml", "*.cds*.app.yml", "*.cds*.env.yml", "*.cds*.pip.yml"}
 	var schs []string
-	for k, v := range map[string]string{
-		schemas.Workflow:    "*.cds*.yml",
-		schemas.Application: "*.cds*.app.yml",
-		schemas.Environment: "*.cds*.env.yml",
-		schemas.Pipeline:    "*.cds*.pip.yml",
-	} {
-		schs = append(schs, fmt.Sprintf("\n\t\t\"%s\": \"%s\"", k, v))
+	for i := range paths {
+		schs = append(schs, fmt.Sprintf("\n\t\t\"%s\": \"%s\"", paths[i], globPatterns[i]))
 	}
 	res := fmt.Sprintf("{\n\t\"yaml.schemas\": {%s\n\t}\n}", strings.Join(schs, ","))
 

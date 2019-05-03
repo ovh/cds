@@ -54,8 +54,7 @@ func (m Manifest) Markdown() string {
 
 	ex, _ := yaml.Marshal(m.Example)
 
-	info := fmt.Sprintf(`
----
+	info := fmt.Sprintf(`---
 title: "%s"
 card:
   name: builtin

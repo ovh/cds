@@ -1,4 +1,3 @@
-
 ---
 title: "CheckoutApplication"
 card:

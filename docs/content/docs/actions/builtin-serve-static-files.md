@@ -1,4 +1,3 @@
-
 ---
 title: "Serve Static Files"
 card:

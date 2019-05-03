@@ -6,7 +6,7 @@ import (
 
 // Environment is a struct to export sdk.Environment
 type Environment struct {
-	Name   string                   `json:"name" yaml:"name" jsonschema_description:"The name of the environment"`
+	Name   string                   `json:"name" yaml:"name" jsonschema_description:"The name of the environment."`
 	Values map[string]VariableValue `json:"values,omitempty" yaml:"values,omitempty"`
 	Keys   map[string]KeyValue      `json:"keys,omitempty" yaml:"keys,omitempty"`
 }
