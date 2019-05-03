@@ -5,3 +5,8 @@ args:
 - hello.py
 requirements:
 - name: python
+  value: python
+  type: binary
+- name: localhost.local
+  value: localhost.local
+  type: network
