@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"gopkg.in/olivere/elastic.v5"
 
@@ -34,6 +35,9 @@ func (s *Service) getEventsHandler() service.Handler {
 
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.IndexEvents).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
+			if strings.Contains(errR.Error(), "index_not_found_exception") {
+				return service.WriteJSON(w, nil, http.StatusOK)
+			}
 			return sdk.WrapError(errR, "Cannot get result on index: %s", s.Cfg.ElasticSearch.IndexEvents)
 		}
 		return service.WriteJSON(w, result.Hits.Hits, http.StatusOK)

@@ -63,38 +63,36 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	var clientSet *kubernetes.Clientset
 	k8sTimeout := time.Second * 10
 
-	if h.Config.KubernetesMasterURL != "" {
-		if h.Config.KubernetesConfigFile != "" {
-			cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot build config from flags")
-			}
-			cfg.Timeout = k8sTimeout
+	if h.Config.KubernetesConfigFile != "" {
+		cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot build config from flags")
+		}
+		cfg.Timeout = k8sTimeout
 
-			clientSet, errCl = kubernetes.NewForConfig(cfg)
-			if errCl != nil {
-				return sdk.WrapError(errCl, "Cannot create client with newForConfig")
-			}
-		} else {
-			configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot build config from config getter")
-			}
-			configK8s.Timeout = k8sTimeout
+		clientSet, errCl = kubernetes.NewForConfig(cfg)
+		if errCl != nil {
+			return sdk.WrapError(errCl, "Cannot create client with newForConfig")
+		}
+	} else if h.Config.KubernetesMasterURL != "" {
+		configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot build config from config getter")
+		}
+		configK8s.Timeout = k8sTimeout
 
-			if h.Config.KubernetesCertAuthData != "" {
-				configK8s.TLSClientConfig = rest.TLSClientConfig{
-					CAData:   []byte(h.Config.KubernetesCertAuthData),
-					CertData: []byte(h.Config.KubernetesClientCertData),
-					KeyData:  []byte(h.Config.KubernetesClientKeyData),
-				}
+		if h.Config.KubernetesCertAuthData != "" {
+			configK8s.TLSClientConfig = rest.TLSClientConfig{
+				CAData:   []byte(h.Config.KubernetesCertAuthData),
+				CertData: []byte(h.Config.KubernetesClientCertData),
+				KeyData:  []byte(h.Config.KubernetesClientKeyData),
 			}
+		}
 
-			// creates the clientset
-			clientSet, errCl = kubernetes.NewForConfig(configK8s)
-			if errCl != nil {
-				return sdk.WrapError(errCl, "Cannot create new config")
-			}
+		// creates the clientset
+		clientSet, errCl = kubernetes.NewForConfig(configK8s)
+		if errCl != nil {
+			return sdk.WrapError(errCl, "Cannot create new config")
 		}
 	} else {
 		config, err := rest.InClusterConfig()

@@ -45,6 +45,10 @@ spec:
         {{- else }}
           value: {{ default "" .Values.externalDatabase.password | quote }}
         {{- end }}
+        - name: CDS_API_HTTP_PORT
+          value: "8081"
+        - name: CDS_API_GRPC_PORT
+          value: "8082"
         - name: CDS_API_URL_API
           value: http://{{ template "cds.fullname" . }}-ui/cdsapi
         - name: CDS_API_URL_UI
