@@ -23,8 +23,8 @@ import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from 
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
-import { DeleteFromCacheWorkflow, ExternalChangeWorkflow, ResyncWorkflow } from './store/workflows.action';
-import { WorkflowsState, WorkflowsStateModel } from './store/workflows.state';
+import {ExternalChangeWorkflow, GetWorkflow} from './store/workflow.action';
+import { WorkflowState, WorkflowStateModel } from './store/workflow.state';
 
 @Injectable()
 export class AppService {
@@ -257,18 +257,16 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        this.store.selectOnce(WorkflowsState)
-            .pipe(filter((wfs) => wfs != null))
-            .subscribe((wfs: WorkflowsStateModel) => {
-                const wfKey = `${event.project_key}/${event.workflow_name}`;
-                if (!wfs || !wfs.workflows || !wfs.workflows[wfKey]) {
+        this.store.selectOnce(WorkflowState)
+            .pipe(filter((wf) => wf != null))
+            .subscribe((wfs: WorkflowStateModel) => {
+                if (!wfs || !wfs.workflow ) {
+                    return;
+                }
+                if (wfs.projectKey !== event.project_key || wfs.workflow.name !== event.workflow_name) {
                     return;
                 }
                 if (event.type_event === EventType.WORKFLOW_DELETE) {
-                    this.store.dispatch(new DeleteFromCacheWorkflow({
-                        projectKey: event.project_key,
-                        workflowName: event.workflow_name
-                    }));
                     this.store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name }));
                     return;
                 }
@@ -285,14 +283,10 @@ export class AppService {
                         return;
                     }
                 } else {
-                    this.store.dispatch(new DeleteFromCacheWorkflow({
-                        projectKey: event.project_key,
-                        workflowName: event.workflow_name
-                    }));
                     return;
                 }
 
-                this.store.dispatch(new ResyncWorkflow({
+                this.store.dispatch(new GetWorkflow({
                     projectKey: event.project_key,
                     workflowName: event.workflow_name
                 }));

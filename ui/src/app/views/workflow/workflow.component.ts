@@ -3,8 +3,8 @@ import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { FetchWorkflow, UpdateFavoriteWorkflow } from 'app/store/workflows.action';
-import { WorkflowsState } from 'app/store/workflows.state';
+import {CleanWorkflowState, GetWorkflow, UpdateFavoriteWorkflow} from 'app/store/workflow.action';
+import { WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
@@ -83,13 +83,13 @@ export class WorkflowComponent {
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private store: Store
+        private _store: Store
     ) {
         this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
-        this.projectSubscription = this.store.select(ProjectState)
+        this.projectSubscription = this._store.select(ProjectState)
             .pipe(filter((projState) => projState.project && projState.project.key))
             .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
@@ -118,6 +118,24 @@ export class WorkflowComponent {
             }
         });
 
+        this._store.dispatch(new CleanWorkflowState());
+        this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+            if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
+                this.initRuns(s.projectKey, s.workflow.name);
+            }
+            if (s.workflow) {
+                console.log('Update workflow');
+                this.workflow = s.workflow;
+
+                if (this.selectecHookRef) {
+                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                    if (h) {
+                        this._workflowEventStore.setSelectedHook(h);
+                    }
+                }
+            }
+        });
+
 
         // Workflow subscription
         this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {
@@ -126,30 +144,9 @@ export class WorkflowComponent {
 
             if (key && workflowName) {
                 this.loading = true;
-                this.store.dispatch(new FetchWorkflow({ projectKey: key, workflowName }))
+                this._store.dispatch(new GetWorkflow({ projectKey: key, workflowName }))
                     .pipe(finalize(() => this.loading = false))
                     .subscribe(null, () => this._router.navigate(['/project', key]));
-
-                if (this.workflowSubscription) {
-                    this.workflowSubscription.unsubscribe();
-                }
-
-                this.workflowSubscription = this.store.select(WorkflowsState.selectWorkflow(key, workflowName))
-                    .pipe(filter((wf) => wf != null && !wf.externalChange))
-                    .subscribe((wf) => {
-                        if (!this.workflow || (this.workflow && wf.id !== this.workflow.id)) {
-                            this.initRuns(key, workflowName);
-                        }
-                        console.log('Update workflow');
-                        this.workflow = wf;
-
-                        if (this.selectecHookRef) {
-                            let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
-                            if (h) {
-                                this._workflowEventStore.setSelectedHook(h);
-                            }
-                        }
-                    });
             }
         });
 
@@ -193,7 +190,7 @@ export class WorkflowComponent {
             return;
         }
         this.loadingFav = true;
-        this.store.dispatch(new UpdateFavoriteWorkflow({
+        this._store.dispatch(new UpdateFavoriteWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name
         })).pipe(finalize(() => this.loadingFav = false))

@@ -2,7 +2,7 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { FetchAsCodeWorkflow, ImportWorkflow, PreviewWorkflow, ResyncWorkflow } from 'app/store/workflows.action';
+import {FetchAsCodeWorkflow, GetWorkflow, ImportWorkflow, PreviewWorkflow} from 'app/store/workflow.action';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -89,7 +89,7 @@ export class WorkflowSidebarCodeComponent {
 
     cancel() {
         if (this.previewMode) {
-            this.store.dispatch(new ResyncWorkflow({
+            this.store.dispatch(new GetWorkflow({
                 projectKey: this.project.key,
                 workflowName: this.workflow.name
             })).subscribe(() => this._workflowCore.toggleAsCodeEditor({ open: false, save: false }));

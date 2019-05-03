@@ -9,7 +9,7 @@ import {VariableService} from 'app/service/variable/variable.service';
 import {WorkflowService} from 'app/service/workflow/workflow.service';
 import {Table} from 'app/shared/table/table';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {UpdateWorkflow} from 'app/store/workflows.action';
+import {UpdateWorkflow} from 'app/store/workflow.action';
 import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
 
@@ -151,6 +151,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             changes: clonedWorkflow
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
+                this.conditionsChange.emit(false);
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });
     }
@@ -166,7 +167,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     }
 
     pushChange(event: string): void {
-        console.log(event);
         this.conditionsChange.emit(true);
     }
 }

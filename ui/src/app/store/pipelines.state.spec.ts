@@ -15,7 +15,7 @@ import * as pipelinesActions from './pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
-import { WorkflowsState } from './workflows.state';
+import { WorkflowState } from './workflows.state';
 
 describe('Pipelines', () => {
     let store: Store;
@@ -25,7 +25,7 @@ describe('Pipelines', () => {
         TestBed.configureTestingModule({
             providers: [NavbarService],
             imports: [
-                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowsState]),
+                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();

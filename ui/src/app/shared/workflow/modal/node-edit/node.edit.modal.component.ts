@@ -1,4 +1,6 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ViewChild} from '@angular/core';
+import {ProjectState, ProjectStateModel} from '@cds/store/project.state';
+import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
@@ -6,12 +8,11 @@ import {Project} from 'app/model/project.model';
 import {WNode, WNodeHook, Workflow} from 'app/model/workflow.model';
 import {PermissionEvent} from 'app/shared/permission/permission.event.model';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {CleanWorkflowNodeModal} from 'app/store/node.modal.action';
-import {NodeModalState, NodeModalStateModel} from 'app/store/node.modal.state';
-import {UpdateWorkflow} from 'app/store/workflows.action';
+import {CloseEditModal, UpdateWorkflow} from 'app/store/workflow.action';
 import {cloneDeep} from 'lodash';
 import {ModalSize, ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 
 @Component({
@@ -19,7 +20,7 @@ import {finalize} from 'rxjs/operators';
     templateUrl: './node.edit.modal.html',
     styleUrls: ['./node.edit.modal.scss']
 })
-export class WorkflowNodeEditModalComponent implements OnInit {
+export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
     project: Project;
     workflow: Workflow;
@@ -39,14 +40,23 @@ export class WorkflowNodeEditModalComponent implements OnInit {
     permissionEnum = PermissionValue;
     loading = false;
 
+    projectSubscriber: Subscription;
+
     constructor(private _modalService: SuiModalService, private _store: Store,
                 private _translate: TranslateService, private _toast: ToastService) {
+
+        this.projectSubscriber = this._store.select(ProjectState)
+            .subscribe((projState: ProjectStateModel) => {
+                this.project = projState.project;
+            });
     }
 
-    ngOnInit(): void {
-        this._store.select(NodeModalState.getCurrent()).subscribe( (s: NodeModalStateModel) => {
+    ngAfterViewInit(): void {
+        this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+            if (!s.editModal) {
+                return;
+            }
             if (s.node) {
-                this.project = s.project;
                 this.workflow = s.workflow;
                 let open = this.node != null;
                 this.node = cloneDeep(s.node);
@@ -89,18 +99,18 @@ export class WorkflowNodeEditModalComponent implements OnInit {
             this.modalConfig.isClosable = true;
             this.modal = this._modalService.open(this.modalConfig);
             this.modal.onApprove(() => {
-                this._store.dispatch(new CleanWorkflowNodeModal({}));
+                this._store.dispatch(new CloseEditModal({}));
             });
             this.modal.onDeny(() => {
-                this._store.dispatch(new CleanWorkflowNodeModal({}));
+                this._store.dispatch(new CloseEditModal({}));
             });
         } else {
             this.modal = this._modalService.open(this.modalConfig);
             this.modal.onApprove(() => {
-                this._store.dispatch(new CleanWorkflowNodeModal({}));
+                this._store.dispatch(new CloseEditModal({}));
             });
             this.modal.onDeny(() => {
-                this._store.dispatch(new CleanWorkflowNodeModal({}));
+                this._store.dispatch(new CloseEditModal({}));
             });
         }
     }
@@ -141,8 +151,8 @@ export class WorkflowNodeEditModalComponent implements OnInit {
             });
     }
 
-    pushChange(): void {
-        this.hasModification = true;
+    pushChange(b: boolean): void {
+        this.hasModification = b;
     }
 
     changeView(newView: string): void {

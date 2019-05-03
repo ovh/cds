@@ -1,5 +1,11 @@
 import {Component, Input, NgZone, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import {PipelineStatus} from '@cds/model/pipeline.model';
+import {Project} from '@cds/model/project.model';
+import {WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from '@cds/model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
+import {WorkflowEventStore} from '@cds/service/workflow/workflow.event.store';
+import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
@@ -10,24 +16,17 @@ import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/work
 import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
 import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
-import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
 import {
     AddHookWorkflow,
     AddJoinWorkflow,
-    AddNodeTriggerWorkflow,
+    AddNodeTriggerWorkflow, OpenEditModal,
     UpdateHookWorkflow,
     UpdateWorkflow
-} from 'app/store/workflows.action';
+} from 'app/store/workflow.action';
 import {IPopup} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
 import {finalize} from 'rxjs/operators';
-import { PipelineStatus } from '../../../model/pipeline.model';
-import { Project } from '../../../model/project.model';
-import {WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from '../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../model/workflow.run.model';
-import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
-import { AutoUnsubscribe } from '../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -182,9 +181,7 @@ export class WorkflowWNodeComponent implements OnInit {
                 this.openTriggerModal('pipeline', false);
                 break;
             case 'edit':
-                this._store.dispatch(new OpenWorkflowNodeModal({
-                    project: this.project,
-                    workflow: this.workflow,
+                this._store.dispatch(new OpenEditModal({
                     node: this.node,
                     hook: null
                 })).subscribe(() => {});

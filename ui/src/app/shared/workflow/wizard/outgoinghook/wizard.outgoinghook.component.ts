@@ -1,18 +1,18 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {IdName, Project} from '@cds/model/project.model';
+import {WorkflowHookModel} from '@cds/model/workflow.hook.model';
+import {WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow} from '@cds/model/workflow.model';
+import {HookService} from '@cds/service/hook/hook.service';
+import {WorkflowService} from '@cds/service/workflow/workflow.service';
+import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
 import {TranslateService} from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {FetchWorkflow, UpdateWorkflow} from 'app/store/workflows.action';
-import { WorkflowsState } from 'app/store/workflows.state';
+import {UpdateWorkflow} from 'app/store/workflow.action';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
-import { finalize, flatMap } from 'rxjs/operators';
-import { IdName, Project } from '../../../../model/project.model';
-import { WorkflowHookModel } from '../../../../model/workflow.hook.model';
-import { WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow } from '../../../../model/workflow.model';
-import { HookService } from '../../../../service/hook/hook.service';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-outgoinghook',
@@ -52,8 +52,8 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     loading = false;
 
     constructor(
-        private store: Store, private _translate: TranslateService, private _toast: ToastService,
-        private _hookService: HookService
+        private _store: Store, private _translate: TranslateService, private _toast: ToastService,
+        private _hookService: HookService, private _workflowService: WorkflowService
     ) {
     }
 
@@ -108,18 +108,11 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         if (this.hook && this.hook.outgoing_hook.config && this.hook.outgoing_hook.config['target_project']
             && this.hook.outgoing_hook.config['target_workflow']) {
             this.loadingHooks = true;
-            this.store.dispatch(new FetchWorkflow({
-                projectKey: this.hook.outgoing_hook.config['target_project'].value,
-                workflowName: this.hook.outgoing_hook.config['target_workflow'].value
-            })).pipe(
-                flatMap(() => {
-                    return this.store.selectOnce(WorkflowsState.selectWorkflow(
-                        this.hook.outgoing_hook.config['target_project'].value,
-                        this.hook.outgoing_hook.config['target_workflow'].value)
-                    );
-                }),
-                finalize(() => this.loadingHooks = false)
-            ).subscribe((wf: Workflow) => {
+
+            this._workflowService.getWorkflow(this.hook.outgoing_hook.config['target_project'].value,
+                this.hook.outgoing_hook.config['target_workflow'].value)
+                .pipe(first(), finalize(() => this.loadingHooks = false))
+                .subscribe(wf => {
                 this.outgoing_default_payload = wf.workflow_data.node.context.default_payload;
                 let allHooks = Workflow.getAllHooks(wf);
                 if (allHooks) {
@@ -155,7 +148,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         let n = Workflow.getNodeByID(this.hook.id, clonedWorkflow);
 
         n.outgoing_hook = this.hook.outgoing_hook;
-        this.store.dispatch(new UpdateWorkflow({
+        this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow

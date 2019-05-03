@@ -8,8 +8,7 @@ import { WorkflowEventStore } from 'app/service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {OpenWorkflowNodeModal} from 'app/store/node.modal.action';
-import {DeleteHookWorkflow} from 'app/store/workflows.action';
+import {DeleteHookWorkflow, OpenEditModal} from 'app/store/workflow.action';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {finalize} from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -84,9 +83,7 @@ export class WorkflowNodeHookComponent implements OnInit {
                 this._workflowEventStore.setSelectedHook(this.hook);
                  break;
             case 'edit':
-                this._store.dispatch(new OpenWorkflowNodeModal({
-                    project: this.project,
-                    workflow: this.workflow,
+                this._store.dispatch(new OpenEditModal({
                     node: this.node,
                     hook: this.hook
                 })).subscribe(() => {});

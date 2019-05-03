@@ -15,7 +15,7 @@ import {ParameterEvent} from 'app/shared/parameter/parameter.event.model';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {FetchPipeline} from 'app/store/pipelines.action';
 import {PipelinesState} from 'app/store/pipelines.state';
-import {UpdateWorkflow} from 'app/store/workflows.action';
+import {UpdateWorkflow} from 'app/store/workflow.action';
 import {cloneDeep} from 'lodash';
 
 declare var CodeMirror: any;
@@ -216,6 +216,7 @@ export class WorkflowWizardNodeInputComponent {
             changes: clonedWorkflow
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
+                this.inputChange.emit(false);
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });
     }

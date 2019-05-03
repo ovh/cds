@@ -11,7 +11,7 @@ import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import * as workflowsActions from './workflows.action';
-import { WorkflowsState, WorkflowsStateModel } from './workflows.state';
+import { WorkflowState, WorkflowsStateModel } from './workflows.state';
 
 describe('Workflows', () => {
     let store: Store;
@@ -21,7 +21,7 @@ describe('Workflows', () => {
         TestBed.configureTestingModule({
             providers: [NavbarService],
             imports: [
-                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowsState]),
+                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();
@@ -56,10 +56,10 @@ describe('Workflows', () => {
             name: 'wf1',
             project_key: testProjectKey
         });
-        store.selectOnce(WorkflowsState).subscribe((state: WorkflowsStateModel) => {
+        store.selectOnce(WorkflowState).subscribe((state: WorkflowsStateModel) => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -71,17 +71,17 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -91,10 +91,10 @@ describe('Workflows', () => {
             projectKey: testProjectKey,
             workflowName: 'wf1'
         }));
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -113,17 +113,17 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -138,10 +138,10 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1bis')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1bis')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1bis');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -160,17 +160,17 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe(wf => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe(wf => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -183,11 +183,11 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1';
         })).flush(null);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(0);
         });
 
-        store.selectOnce(WorkflowsState).subscribe((wfState: WorkflowsStateModel) => {
+        store.selectOnce(WorkflowState).subscribe((wfState: WorkflowsStateModel) => {
             expect(wfState.workflows).toBeTruthy();
             expect(Object.keys(wfState.workflows).length).toEqual(0);
         });
@@ -204,17 +204,17 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -229,10 +229,10 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1/icon';
         })).flush(null);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -254,17 +254,17 @@ describe('Workflows', () => {
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
         workflow.icon = 'testicon';
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -278,10 +278,10 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1/icon';
         })).flush(null);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -302,17 +302,17 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
             expect(wf).toBeTruthy();
             expect(wf.overview).toBeFalsy();
             expect(wf.name).toEqual('wf1');
@@ -334,10 +334,10 @@ describe('Workflows', () => {
             name: 'wf1',
             audits: [audit]
         });
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.audits).toBeTruthy();
             expect(wf.name).toEqual('wf1');
@@ -353,17 +353,17 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
             expect(wf).toBeTruthy();
             expect(wf.overview).toBeFalsy();
             expect(wf.name).toEqual('wf1');
@@ -387,10 +387,10 @@ describe('Workflows', () => {
                 joins: []
             },
         });
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.name).toEqual('wf1');
             expect(wf.project_key).toEqual(testProjectKey);
@@ -403,17 +403,17 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
             expect(wf).toBeTruthy();
             expect(wf.overview).toBeFalsy();
             expect(wf.name).toEqual('wf1');
@@ -431,10 +431,10 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1/label';
         })).flush(label);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.labels).toBeTruthy();
             expect(wf.name).toEqual('wf1');
@@ -453,17 +453,17 @@ describe('Workflows', () => {
         label.name = 'my label';
         label.id = 2;
         workflow.labels = [label];
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
             expect(wf).toBeTruthy();
             expect(wf.overview).toBeFalsy();
             expect(wf.name).toEqual('wf1');
@@ -478,10 +478,10 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1/label/2';
         })).flush(label);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.labels).toBeTruthy();
             expect(wf.name).toEqual('wf1');
@@ -499,17 +499,17 @@ describe('Workflows', () => {
         label.name = 'my label';
         label.id = 2;
         workflow.labels = [label];
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
             expect(wf).toBeTruthy();
             expect(wf.overview).toBeFalsy();
             expect(wf.name).toEqual('wf1');
@@ -524,10 +524,10 @@ description: some description`;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/export/workflows/wf1';
         })).flush(asCode);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.labels).toBeTruthy();
             expect(wf.name).toEqual('wf1');
@@ -545,17 +545,17 @@ description: some description`;
         label.name = 'my label';
         label.id = 2;
         workflow.labels = [label];
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
             expect(wf).toBeTruthy();
             expect(wf.overview).toBeFalsy();
             expect(wf.name).toEqual('wf1');
@@ -571,10 +571,10 @@ description: some description`;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/preview/workflows';
         })).flush({ ...workflow, name: 'wf1preview' });
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.labels).toBeTruthy();
             expect(wf.name).toEqual('wf1');
@@ -592,17 +592,17 @@ description: some description`;
         label.name = 'my label';
         label.id = 2;
         workflow.labels = [label];
-        store.dispatch(new workflowsActions.AddWorkflow({
+        store.dispatch(new workflowsActions.createWorkflow({
             projectKey: testProjectKey,
             workflow
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf) => {
             expect(wf).toBeTruthy();
             expect(wf.overview).toBeFalsy();
             expect(wf.name).toEqual('wf1');
@@ -615,10 +615,10 @@ description: some description`;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/user/favorite';
         })).flush(null);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.labels).toBeTruthy();
             expect(wf.name).toEqual('wf1');
@@ -632,10 +632,10 @@ description: some description`;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/user/favorite';
         })).flush(null);
-        store.selectOnce(WorkflowsState).subscribe(state => {
+        store.selectOnce(WorkflowState).subscribe(state => {
             expect(Object.keys(state.workflows).length).toEqual(1);
         });
-        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+        store.selectOnce(WorkflowState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
             expect(wf).toBeTruthy();
             expect(wf.labels).toBeTruthy();
             expect(wf.name).toEqual('wf1');

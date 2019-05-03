@@ -47,11 +47,11 @@
                 <div [ngSwitch]="selected">
                     <ng-container *ngSwitchCase="'context'">
                         <app-workflow-node-context [project]="project" [workflow]="workflow"
-                                                   [node]="node" (contextChange)="pushChange()"></app-workflow-node-context>
+                                                   [node]="node" (contextChange)="pushChange($event)"></app-workflow-node-context>
                     </ng-container>
                     <ng-container *ngSwitchCase="'input'">
                         <app-workflow-node-input [project]="project" [workflow]="workflow"
-                                                 [node]="node" (inputChange)="pushChange()"></app-workflow-node-input>
+                                                 [node]="node" (inputChange)="pushChange($event)"></app-workflow-node-input>
                     </ng-container>
                     <ng-container *ngSwitchCase="'outgoinghook'">
                         <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow"
@@ -59,7 +59,7 @@
                     </ng-container>
                     <ng-container *ngSwitchCase="'conditions'">
                         <app-workflow-node-conditions [project]="project" [workflow]="workflow"
-                                                      [node]="node" (conditionsChange)="pushChange()"></app-workflow-node-conditions>
+                                                      [node]="node" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
                     </ng-container>
                     <ng-container *ngSwitchCase="'permissions'">
                         <app-permission-list [permissions]="node.groups" (event)="groupManagement($event)"

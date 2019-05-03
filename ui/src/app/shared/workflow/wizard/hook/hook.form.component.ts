@@ -7,7 +7,7 @@ import {WorkflowHookModel} from 'app/model/workflow.hook.model';
 import {WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue} from 'app/model/workflow.model';
 import {HookService} from 'app/service/hook/hook.service';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {UpdateWorkflow} from 'app/store/workflows.action';
+import {UpdateWorkflow} from 'app/store/workflow.action';
 import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
 

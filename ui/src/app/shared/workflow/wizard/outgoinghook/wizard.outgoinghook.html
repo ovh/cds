@@ -58,7 +58,7 @@
                     <div class="twelve wide field">
                         <sui-select class="selection" placeholder="{{'workflow_name' | translate}}"
                                     [(ngModel)]="hook.outgoing_hook.config['target_workflow'].value"
-                                    (ngModelChange)="updateWorkflow()"
+                                    (ngModelChange)="updateWorkflowData()"
                                     [options]="availableWorkflows"
                                     [isSearchable]="true"
                                     labelField="name" #selectWorkflow

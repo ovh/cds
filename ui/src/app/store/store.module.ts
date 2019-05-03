@@ -5,11 +5,10 @@ import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
 import { NgxsModule } from '@ngxs/store';
 import { SharedModule } from 'app/shared/shared.module';
 import { ApplicationsState } from 'app/store/applications.state';
-import {NodeModalState} from 'app/store/node.modal.state';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { environment as env } from '../../environments/environment';
 import { ProjectState } from './project.state';
-import { WorkflowsState } from './workflows.state';
+import { WorkflowState } from './workflow.state';
 
 
 @NgModule({
@@ -18,8 +17,7 @@ import { WorkflowsState } from './workflows.state';
         SharedModule,
         NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false, disabled: env.production }),
         NgxsReduxDevtoolsPluginModule.forRoot({ disabled: env.production }),
-        NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowsState,
-            NodeModalState], { developmentMode: !env.production })
+        NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState], { developmentMode: !env.production })
     ],
     exports: [
         NgxsLoggerPluginModule,

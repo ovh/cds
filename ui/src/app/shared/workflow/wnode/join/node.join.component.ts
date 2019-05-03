@@ -1,16 +1,16 @@
 import { Component, Input } from '@angular/core';
+import {PipelineStatus} from '@cds/model/pipeline.model';
+import {Project} from '@cds/model/project.model';
+import {WNode, WNodeJoin, Workflow} from '@cds/model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
+import {WorkflowCoreService} from '@cds/service/workflow/workflow.core.service';
+import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
+import {ToastService} from '@cds/shared/toast/ToastService';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { UpdateWorkflow } from 'app/store/workflows.action';
+import { UpdateWorkflow } from 'app/store/workflow.action';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
-import { PipelineStatus } from '../../../../model/pipeline.model';
-import { Project } from '../../../../model/project.model';
-import { WNode, WNodeJoin, Workflow } from '../../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
-import { WorkflowCoreService } from '../../../../service/workflow/workflow.core.service';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { ToastService } from '../../../toast/ToastService';
 
 @Component({
     selector: 'app-workflow-wnode-join',

@@ -2,26 +2,38 @@ import { GroupPermission } from 'app/model/group.model';
 import { Label } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
 
-// Use to load fetched Workflow in our app
-export class LoadWorkflow {
-    static readonly type = '[Workflow] Load Workflow';
-    constructor(public payload: { projectKey: string, workflow: Workflow }) { }
+// ---------  MODAL  -----
+
+export class OpenEditModal {
+    static readonly type = '[WorkflowView] Open Edit Modal';
+    constructor(public payload: { node: WNode, hook: WNodeHook}) { }
 }
 
-// Use to fetch Workflow from backend
-export class FetchWorkflow {
-    static readonly type = '[Workflow] Fetch Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string }) { }
+export class CloseEditModal {
+    static readonly type = '[WorkflowView] Close Edit Modal';
+    constructor(public payload: {}) { }
 }
 
-export class AddWorkflow {
-    static readonly type = '[Workflow] Add Workflow';
+export class UpdateModal {
+    static readonly type = '[WorkflowView] UpdateModal';
+    constructor(public payload: { workflow: Workflow }) {}
+}
+
+// ---------  Workflow  -----
+
+export class CreateWorkflow {
+    static readonly type = '[Workflow] Create Workflow';
     constructor(public payload: { projectKey: string, workflow: Workflow }) { }
 }
 
 export class ImportWorkflow {
     static readonly type = '[Workflow] Import Workflow';
     constructor(public payload: { projectKey: string, workflowCode: string, wfName?: string, force?: boolean }) { }
+}
+
+export class GetWorkflow {
+    static readonly  type = '[Workflow] Get Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string }) {}
 }
 
 export class UpdateWorkflow {
@@ -149,23 +161,13 @@ export class ExternalChangeWorkflow {
     constructor(public payload: { projectKey: string, workflowName: string }) { }
 }
 
-export class ResyncWorkflow {
-    static readonly type = '[Workflow] Resync Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string }) { }
-}
-
-export class DeleteFromCacheWorkflow {
-    static readonly type = '[Workflow] Delete from cache Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string }) { }
-}
-
 export class UpdateFavoriteWorkflow {
     static readonly type = '[Workflow] Update Workflow Favorite';
     constructor(public payload: { projectKey: string, workflowName: string }) { }
 }
 
-export class ClearCacheWorkflow {
-    static readonly type = '[Workflow] Clear cache Workflow';
+export class CleanWorkflowState {
+    static readonly type = '[Workflow] Clean Workflow State';
     constructor() { }
 }
 

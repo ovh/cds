@@ -1,24 +1,21 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import {PipelineStatus} from '@cds/model/pipeline.model';
+import {Project} from '@cds/model/project.model';
+import {WNode, Workflow} from '@cds/model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
+import {NotificationService} from '@cds/service/notification/notification.service';
+import {WorkflowEventStore, WorkflowRunService, WorkflowStore} from '@cds/service/services.module';
+import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
+import {WorkflowNodeRunParamComponent} from '@cds/shared/workflow/node/run/node.run.param.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { FetchWorkflow } from 'app/store/workflows.action';
-import { WorkflowsState } from 'app/store/workflows.state';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
-import { filter, flatMap } from 'rxjs/operators';
-import { PipelineStatus } from '../../../model/pipeline.model';
-import { Project } from '../../../model/project.model';
-import { WNode, Workflow } from '../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../model/workflow.run.model';
-import { NotificationService } from '../../../service/notification/notification.service';
-import { WorkflowRunService } from '../../../service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
-import { WorkflowStore } from '../../../service/workflow/workflow.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { WorkflowNodeRunParamComponent } from '../../../shared/workflow/node/run/node.run.param.component';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-run',
@@ -57,7 +54,7 @@ export class WorkflowRunComponent implements OnInit {
     nodeToRun: WNode;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _activatedRoute: ActivatedRoute,
         private _workflowStore: WorkflowStore,
         private _notification: NotificationService,
@@ -77,23 +74,33 @@ export class WorkflowRunComponent implements OnInit {
             }
         });
 
-        this.project$ = this.store.select(ProjectState)
+        this.project$ = this._store.select(ProjectState)
             .pipe(filter((prj) => prj != null))
             .subscribe((projState: ProjectStateModel) => this.project = projState.project);
 
-        // Get workflow
-        this.parentParamsSubs = this._activatedRoute.parent.params
-            .pipe(flatMap((params) => {
-                this.workflowName = params['workflowName'];
-                this.store.dispatch(new FetchWorkflow({
-                    projectKey: params['key'],
-                    workflowName: this.workflowName
-                }));
+        this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+            if (s.workflow) {
+                this.workflow = s.workflow;
+                this.workflowName = s.workflow.name;
 
-                return this.store.select(WorkflowsState.selectWorkflow(params['key'], this.workflowName))
-                    .pipe(filter((wf) => wf != null));
-            }))
-            .subscribe((wf) => this.workflow = wf);
+                if (this.paramsSubs) {
+                    this.paramsSubs.unsubscribe();
+                }
+
+                // Subscribe to route event
+                this.paramsSubs = this._activatedRoute.params.subscribe(ps => {
+                    // if there is no current workflow run
+                    if (!this.workflowRun) {
+                        this.initWorkflowRun(ps['number']);
+                    } else {
+                        if (this.workflowRun.workflow.name !== this.workflowName || this.workflowRun.num !== ps['number']) {
+                            this.initWorkflowRun(ps['number']);
+                        }
+                    }
+                });
+            }
+        });
+
 
         // Get workflow run
         this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
@@ -108,18 +115,6 @@ export class WorkflowRunComponent implements OnInit {
             }
             this.updateTitle();
             this.selectNode();
-        });
-
-        // Subscribe to route event
-        this.paramsSubs = this._activatedRoute.params.subscribe(ps => {
-            // if there is no current workflow run
-            if (!this.workflowRun) {
-                this.initWorkflowRun(ps['number']);
-            } else {
-                if (this.workflowRun.workflow.name !== this.workflowName || this.workflowRun.num !== ps['number']) {
-                    this.initWorkflowRun(ps['number']);
-                }
-            }
         });
 
         this.qpsSubs = this._activatedRoute.queryParams.subscribe(params => {

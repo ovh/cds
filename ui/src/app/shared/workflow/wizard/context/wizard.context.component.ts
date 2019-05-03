@@ -6,7 +6,7 @@ import {ApplicationService} from 'app/service/application/application.service';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {FetchApplication} from 'app/store/applications.action';
 import {ApplicationsState} from 'app/store/applications.state';
-import {UpdateWorkflow} from 'app/store/workflows.action';
+import {UpdateWorkflow} from 'app/store/workflow.action';
 import {cloneDeep} from 'lodash';
 import {filter, finalize, first} from 'rxjs/operators';
 import {Environment} from '../../../../model/environment.model';
@@ -145,6 +145,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
             changes: clonedWorkflow
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
+                this.contextChange.emit(false);
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });
     }
