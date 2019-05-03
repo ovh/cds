@@ -38,3 +38,14 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- define "cds.elasticsearch.fullname" -}}
 {{- printf "%s-%s" .Release.Name "elasticsearch" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "cds.serviceAccount.name" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "cds.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
