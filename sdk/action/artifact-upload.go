@@ -25,7 +25,7 @@ var ArtifactUpload = Manifest{
 			{
 				Name:        "enabled",
 				Type:        sdk.BooleanParameter,
-				Description: "Enable artifact upload, \"true\" or \"false\".",
+				Description: "(optional) Enable artifact upload, \"true\" or \"false\".",
 				Value:       "true",
 				Advanced:    true,
 			},

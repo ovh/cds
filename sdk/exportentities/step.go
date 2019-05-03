@@ -38,15 +38,9 @@ func newStep(act sdk.Action) Step {
 			   }
 			   s.Script = &step
 			*/
-			var step []string
 			script := sdk.ParameterFind(&act.Parameters, "script")
 			if script != nil {
-				step = strings.SplitN(script.Value, "\n", -1)
-			}
-			if len(step) == 1 {
-				s.Script = step[0]
-			} else {
-				s.Script = step
+				s.Script = strings.SplitN(script.Value, "\n", -1)
 			}
 		case sdk.CoverageAction:
 			s.Coverage = &StepCoverage{}
@@ -96,6 +90,10 @@ func newStep(act sdk.Action) Step {
 				if destination != nil {
 				  s.ArtifactUpload.Destination = destination.Value
 				}
+				enabled := sdk.ParameterFind(&act.Parameters, "enabled")
+				if enabled != nil && enabled.Value != "true" {
+				  s.ArtifactUpload.Enabled = enabled.Value
+				}
 			*/
 			step := make(map[string]string)
 			s.ArtifactUpload = &StepArtifactUpload{}
@@ -110,6 +108,10 @@ func newStep(act sdk.Action) Step {
 			destination := sdk.ParameterFind(&act.Parameters, "destination")
 			if destination != nil {
 				step["destination"] = destination.Value
+			}
+			enabled := sdk.ParameterFind(&act.Parameters, "enabled")
+			if enabled != nil && enabled.Value != "true" {
+				step["enabled"] = enabled.Value
 			}
 			s.ArtifactUpload = step
 		case sdk.ServeStaticFiles:
@@ -280,22 +282,23 @@ type StepArtifactDownload struct {
 	Enabled string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Path    string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
 	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty"`
+	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
 }
 
 // StepArtifactUpload represents exported artifact upload step.
 type StepArtifactUpload struct {
+	Enabled     string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 	Path        string `json:"path,omitempty" yaml:"name,omitempty" jsonschema:"required"`
-	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty"`
+	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
 }
 
 // StepServeStaticFiles represents exported serve static files step.
 type StepServeStaticFiles struct {
 	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 	Entrypoint  string `json:"entrypoint,omitempty" yaml:"entrypoint,omitempty"`
-	Name        string `json:"name,omitempty" yaml:"name,omitempty"`
-	Path        string `json:"path,omitempty" yaml:"path,omitempty"`
+	Name        string `json:"name,omitempty" yaml:"name,omitempty" jsonschema:"required"`
+	Path        string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
 	StaticKey   string `json:"static-key,omitempty" yaml:"static-key,omitempty"`
 }
 
@@ -309,7 +312,7 @@ type StepGitClone struct {
 	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
 	SubModules string `json:"submodules,omitempty" yaml:"submodules,omitempty"`
 	Tag        string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	URL        string `json:"url,omitempty" yaml:"url,omitempty"`
+	URL        string `json:"url,omitempty" yaml:"url,omitempty" jsonschema:"required"`
 	User       string `json:"user,omitempty" yaml:"user,omitempty"`
 }
 
@@ -317,15 +320,15 @@ type StepGitClone struct {
 type StepRelease struct {
 	Artifacts   string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
 	ReleaseNote string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
-	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty" jsonschema:"required"`
 }
 
 // StepGitTag represents exported git tag step.
 type StepGitTag struct {
 	Path          string `json:"path,omitempty" yaml:"path,omitempty"`
 	Prefix        string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
-	TagLevel      string `json:"tagLevel,omitempty" yaml:"tagLevel,omitempty"`
+	TagLevel      string `json:"tagLevel,omitempty" yaml:"tagLevel,omitempty" jsonschema:"required"`
 	TagMessage    string `json:"tagMessage,omitempty" yaml:"tagMessage,omitempty"`
 	TagMetadata   string `json:"tagMetadata,omitempty" yaml:"tagMetadata,omitempty"`
 	TagPrerelease string `json:"tagPrerelease,omitempty" yaml:"tagPrerelease,omitempty"`
@@ -523,8 +526,9 @@ func (s Step) isScript() bool { return s.Script != nil }
 
 func (s Step) asScript() (sdk.Action, error) {
 	var a sdk.Action
+	// TODO use typed value for script
 	/*
-	   val := strings.Join(*s.Script, "\n")
+		val := strings.Join(*s.Script, "\n")
 	*/
 
 	var val string

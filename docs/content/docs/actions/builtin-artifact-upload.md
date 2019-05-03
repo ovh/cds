@@ -12,7 +12,7 @@ This action can be used to upload artifacts in CDS. This is the recommended way 
 ## Parameters
 
 * **destination**: (optional) Destination of this artifact. Use the name of integration attached on your project.
-* **enabled**: Enable artifact upload, "true" or "false".
+* **enabled**: (optional) Enable artifact upload, "true" or "false".
 * **path**: Path of file to upload, example: ./src/yourFile.json.
 * **tag**: Artifact will be uploaded with a tag, generally {{.cds.version}}.
 
@@ -45,7 +45,6 @@ jobs:
 * Create a file `myfile` and upload it.
 
 ![img](../images/artifact-upload-job.png)
-
 
 * Launch pipeline, check logs
 

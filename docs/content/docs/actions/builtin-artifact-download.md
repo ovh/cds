@@ -11,9 +11,9 @@ This action can be used to retrieve an artifact previously uploaded by an Artifa
 
 ## Parameters
 
-* **enabled**: Enable artifact download.
+* **enabled**: (optional) Enable artifact download.
 * **path**: Path where artifacts will be downloaded.
-* **pattern**: Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB).
+* **pattern**: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB).
 * **tag**: Artifact are uploaded with a tag, generally {{.cds.version}}.
 
 
@@ -35,8 +35,8 @@ jobs:
   steps:
   - artifactDownload:
       path: '{{.cds.workspace}}'
-      tag: '{{.cds.version}}'
       pattern: '*.tag.gz'
+      tag: '{{.cds.version}}'
 
 ```
 

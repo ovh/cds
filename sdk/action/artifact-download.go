@@ -25,14 +25,14 @@ var ArtifactDownload = Manifest{
 			{
 				Name:        "enabled",
 				Type:        sdk.BooleanParameter,
-				Description: "Enable artifact download.",
+				Description: "(optional) Enable artifact download.",
 				Value:       "true",
 				Advanced:    true,
 			},
 			{
 				Name:        "pattern",
 				Type:        sdk.StringParameter,
-				Description: "Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB).",
+				Description: "(optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB).",
 				Value:       "",
 				Advanced:    true,
 			},
