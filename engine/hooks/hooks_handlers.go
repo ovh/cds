@@ -463,7 +463,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.WorkflowNodeHook) error
 	}
 
 	task.Config = t.Config
-	s.stopTask(t)
+	_ = s.stopTask(t)
 	execs, _ := s.Dao.FindAllTaskExecutions(t)
 	for _, e := range execs {
 		if e.Status == TaskExecutionScheduled {
