@@ -463,6 +463,16 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.WorkflowNodeHook) error
 	}
 
 	task.Config = t.Config
+	s.stopTask(t)
+	execs, _ := s.Dao.FindAllTaskExecutions(t)
+	for _, e := range execs {
+		if e.Status == TaskExecutionScheduled {
+			s.Dao.DeleteTaskExecution(&e)
+		}
+	}
+	if _, err := s.startTask(ctx, t); err != nil {
+		return sdk.WrapError(err, "Unable start task %+v", t)
+	}
 	// Save the task
 	s.Dao.SaveTask(t)
 	return nil
