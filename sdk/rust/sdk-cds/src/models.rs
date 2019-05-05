@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
-pub struct Line {
+pub struct StatusLine {
     pub status: String,
     pub component: String,
     pub value: String,
@@ -14,9 +14,9 @@ pub struct Line {
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
-pub struct Status {
-    pub now: String,
-    pub lines: Option<Vec<Line>>,
+pub struct MonitoringStatus {
+    pub now: Option<DateTime<Utc>>,
+    pub lines: Option<Vec<StatusLine>>,
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -562,7 +562,7 @@ pub struct Broadcast {
     pub level: String,
     pub project_key: String,
     pub created: String,
-    pub updated: String,
+    pub updated: Option<DateTime<Utc>>,
     pub project_id: Option<i64>,
     pub archived: bool,
     pub read: bool,

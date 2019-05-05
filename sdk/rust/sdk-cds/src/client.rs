@@ -34,7 +34,7 @@ impl Client {
         }
     }
 
-    pub fn status(&self) -> Result<models::Status, CdsError> {
+    pub fn status(&self) -> Result<models::MonitoringStatus, CdsError> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), "/mon/status".to_string(), body)
     }

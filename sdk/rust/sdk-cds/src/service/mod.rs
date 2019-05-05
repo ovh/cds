@@ -2,7 +2,7 @@ use chrono::prelude::*;
 use serde_json;
 use serde::{Deserialize,Serialize};
 
-use crate::models::{Group};
+use crate::models::{Group, MonitoringStatus};
 use crate::client::Client;
 use crate::error::{Error as CdsError};
 
@@ -18,7 +18,7 @@ pub struct Service {
     pub token: String,
     pub group_id: i64,
     pub group: Group,
-    // pub monitoring_status: monitoring_status,
+    pub monitoring_status: MonitoringStatus,
     pub config: serde_json::Value,
     pub is_shared_infra: bool,
     pub version: String,
@@ -50,9 +50,9 @@ impl ServiceSDK {
 pub trait ServiceTrait<T> {
     fn apply_configuration(&mut self, config: T) -> Result<(), CdsError>;
     fn check_configuration(&self, config: T) -> Result<(), CdsError>;
-    fn heartbeat(&mut self, status: String) -> Result<(), CdsError>;
-    fn register(&mut self, status: String, config: T) -> Result<(), CdsError>;
-    fn status(&self) -> Result<String, CdsError>;
+    fn heartbeat(&mut self, status: MonitoringStatus) -> Result<(), CdsError>;
+    fn register(&mut self, status: MonitoringStatus, config: T) -> Result<(), CdsError>;
+    fn status(&self) -> MonitoringStatus;
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
@@ -116,11 +116,11 @@ mod test {
             Ok(())
         }
 
-        fn heartbeat(&mut self, status: String) -> Result<(), CdsError> {
+        fn heartbeat(&mut self, status: MonitoringStatus) -> Result<(), CdsError> {
             Ok(())
         }
 
-        fn register(&mut self, status: String, config: Configuration) -> Result<(), CdsError> {
+        fn register(&mut self, _status: MonitoringStatus, config: Configuration) -> Result<(), CdsError> {
             let mut srv = Service{
                 name: self.name.to_owned(),
                 r#type: self.r#type.to_owned(),
@@ -136,8 +136,8 @@ mod test {
             Ok(())
         }
 
-        fn status(&self) -> Result<String, CdsError> {
-            Ok("ok".to_string())
+        fn status(&self) -> MonitoringStatus {
+            MonitoringStatus::default()
         }
     }
 
@@ -158,6 +158,6 @@ mod test {
         my_service.apply_configuration(my_conf.clone());
 
         assert_eq!(my_service.api, "http://localhost:8081".to_string());
-        assert_eq!(my_service.register("OK".to_string(), my_conf).is_ok(), true);
+        assert_eq!(my_service.register(MonitoringStatus::default(), my_conf).is_ok(), true);
     }
 }
