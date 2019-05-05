@@ -50,7 +50,7 @@ impl ServiceSDK {
 pub trait ServiceTrait<T> {
     fn apply_configuration(&mut self, config: T) -> Result<(), CdsError>;
     fn check_configuration(&self, config: T) -> Result<(), CdsError>;
-    fn heartbeat(&self, status: String, config: T) -> Result<(), CdsError>;
+    fn heartbeat(&mut self, status: String) -> Result<(), CdsError>;
     fn register(&mut self, status: String, config: T) -> Result<(), CdsError>;
     fn status(&self) -> Result<String, CdsError>;
 }
@@ -96,6 +96,7 @@ mod test {
             self.api = config.api_url;
             self.name = config.name;
             self.token = config.token;
+            self.max_heartbeat_failures = 10;
             Ok(())
         }
 
@@ -115,7 +116,7 @@ mod test {
             Ok(())
         }
 
-        fn heartbeat(&self, status: String, config: Configuration) -> Result<(), CdsError> {
+        fn heartbeat(&mut self, status: String) -> Result<(), CdsError> {
             Ok(())
         }
 
