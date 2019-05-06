@@ -54,8 +54,13 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 
 	var modelType string
 	if model != "" {
-		// Load the worker model
-		wm, err := worker.LoadWorkerModelByName(db, strings.Split(model, " ")[0])
+		// load the worker model, if there is group name in the model name, ignore it.
+		modelName := strings.Split(model, " ")[0]
+		modelPath := strings.SplitN(modelName, "/", 2)
+		if len(modelPath) == 2 {
+			modelName = modelPath[1]
+		}
+		wm, err := worker.LoadWorkerModelByName(db, modelName)
 		if err != nil {
 			log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
 			errm.Append(sdk.ErrNoWorkerModel)
