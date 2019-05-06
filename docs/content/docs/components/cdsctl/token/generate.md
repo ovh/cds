@@ -10,7 +10,7 @@ notoc: true
 ## Synopsis
 
 
-Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, uservices.
+Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, µServices.
 
 The expiration must be [daily|persistent|session].
 

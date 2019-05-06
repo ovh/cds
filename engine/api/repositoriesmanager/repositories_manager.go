@@ -84,7 +84,7 @@ func GetProjectVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 	return nil
 }
 
-// NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs uservices calls
+// NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs µServices calls
 func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
