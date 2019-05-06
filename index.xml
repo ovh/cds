@@ -39,7 +39,7 @@
       <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</guid>
       <description>Run with Docker-Compose The docker-compose.yml contains:
  cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;amp;&amp;amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up -d cds-api cds-ui   Create the first user with WebUI  Open a browser on http://localhost:2015/account/signup, then register a new user admin, with an email admin@localhost.</description>
+How to run $ mkdir /tmp/cdstest &amp;amp;&amp;amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:2015/account/signup, then register a new user admin, with an email admin@localhost.</description>
     </item>
     
     <item>
@@ -155,7 +155,7 @@ version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stag
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/hosting/requirements/</guid>
-      <description>CDS API is the core component of CDS. To start CDS API, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
+      <description>CDS API is the core component of CDS. To start CDS API, the only mandatory dependencies are a PostgreSQL database, a Redis server and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
  as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL database &amp;gt;= 9.5 and Redis &amp;gt;= 3.2. But for serious usage your may need:</description>
     </item>
@@ -2058,7 +2058,7 @@ cdsctl token find TOKEN [flags]  Examples cdsctl token find &amp;quot;myTokenVal
       
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/token/generate/</guid>
       <description>cdsctl token generate Generate a new token
-Synopsis Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, uservices.
+Synopsis Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, µservices.
 The expiration must be [daily|persistent|session].
 Daily expirate after one day.
 Persistent doesn&amp;rsquo;t expirate until you revoke them.
@@ -2777,8 +2777,11 @@ cdsctl xtoken new [flags]  Options  -d, --description string what is the purpose
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/engine/config/new/</guid>
-      <description> engine config new CDS configuration file assistant
-Synopsis generate the whole configuration file $ engine config new &amp;gt; conf.toml  you can compose your file configuration this will generate a file configuration containing api and hatchery:local µService $ engine config new api hatchery:local  For advanced usage, Debug and Tracing section can be generated as: $ engine config new debug tracing [µService(s)...]  All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]  engine config new [flags]  Options  --env Print configuration as environment variable  SEE ALSO  engine config - Manage CDS Configuration  </description>
+      <description>engine config new CDS configuration file assistant
+Synopsis Generate the whole configuration file $ engine config new &amp;gt; conf.toml
+you can compose your file configuration this will generate a file configuration containing api and hatchery:local µService $ engine config new api hatchery:local
+For advanced usage, Debug and Tracing section can be generated as: $ engine config new debug tracing [µService(s)&amp;hellip;]
+All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]</description>
     </item>
     
     <item>

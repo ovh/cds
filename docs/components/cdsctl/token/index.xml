@@ -40,7 +40,7 @@ cdsctl token find TOKEN [flags]  Examples cdsctl token find &amp;quot;myTokenVal
       
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/token/generate/</guid>
       <description>cdsctl token generate Generate a new token
-Synopsis Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, uservices.
+Synopsis Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, µservices.
 The expiration must be [daily|persistent|session].
 Daily expirate after one day.
 Persistent doesn&amp;rsquo;t expirate until you revoke them.
