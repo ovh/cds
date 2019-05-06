@@ -115,11 +115,12 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	if w.model.ID == 0 {
 		return false, nil
 	}
-	t := strings.Split(r.Value, " ")
-	if len(t) > 0 {
-		return t[0] == w.model.Name, nil
+	modelName := strings.Split(r.Value, " ")[0]
+	modelPath := strings.SplitN(modelName, "/", 2)
+	if len(modelPath) == 2 {
+		modelName = modelPath[1]
 	}
-	return false, nil
+	return modelName == w.model.Name, nil
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
