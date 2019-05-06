@@ -226,7 +226,7 @@ const (
 	HookConfigTypeWorkflow = "workflow"
 	// HookConfigTypeHook type hook
 	HookConfigTypeHook = "hook"
-	// HookConfigTypeMultiChoice
+	// HookConfigTypeMultiChoice type multiple
 	HookConfigTypeMultiChoice = "multiple"
 )
 
