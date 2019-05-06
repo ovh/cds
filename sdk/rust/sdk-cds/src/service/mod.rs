@@ -1,6 +1,5 @@
 use chrono::prelude::*;
 use serde_json;
-use serde::{Deserialize,Serialize};
 
 use crate::models::{Group, MonitoringStatus};
 use crate::client::Client;
@@ -116,7 +115,7 @@ mod test {
             Ok(())
         }
 
-        fn heartbeat(&mut self, status: MonitoringStatus) -> Result<(), CdsError> {
+        fn heartbeat(&mut self, _status: MonitoringStatus) -> Result<(), CdsError> {
             Ok(())
         }
 
@@ -148,14 +147,14 @@ mod test {
             name: "my_test".to_string(),
             url: "http://localhost:8088".to_string(),
             api_url: "http://localhost:8081".to_string(),
-            token: env::var("CDS_SERVICE_TOKEN").unwrap()
+            token: env::var("CDS_SERVICE_TOKEN").expect("Cannot read CDS_SERVICE_TOKEN env")
         };
         let mut my_service = ServiceSDK{
             name: "test".to_string(),
             ..Default::default()
         };
 
-        my_service.apply_configuration(my_conf.clone());
+        my_service.apply_configuration(my_conf.clone()).unwrap();
 
         assert_eq!(my_service.api, "http://localhost:8081".to_string());
         assert_eq!(my_service.register(MonitoringStatus::default(), my_conf).is_ok(), true);
