@@ -77,7 +77,9 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		h := &w.Root.Hooks[i]
 		if h.Ref != "" {
 			if oldH, has := oldHooks[h.Ref]; has {
-				h.Config = oldH.Config
+				if len(h.Config) == 0 {
+					h.Config = oldH.Config
+				}
 				h.UUID = oldH.UUID
 			}
 		}

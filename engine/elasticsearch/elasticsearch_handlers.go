@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) getEventsHandler() service.Handler {
@@ -35,7 +36,8 @@ func (s *Service) getEventsHandler() service.Handler {
 
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.IndexEvents).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
-			if strings.Contains(errR.Error(), "index_not_found_exception") {
+			if strings.Contains(errR.Error(), indexNotFoundException) {
+				log.Warning("elasticsearch> getEventsHandler> %v", errR.Error())
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			return sdk.WrapError(errR, "Cannot get result on index: %s", s.Cfg.ElasticSearch.IndexEvents)
@@ -90,6 +92,10 @@ func (s *Service) getMetricsHandler() service.Handler {
 			Size(10).
 			Do(context.Background())
 		if errR != nil {
+			if strings.Contains(errR.Error(), indexNotFoundException) {
+				log.Warning("elasticsearch> getMetricsHandler> %v", errR.Error())
+				return service.WriteJSON(w, nil, http.StatusOK)
+			}
 			return sdk.WrapError(errR, "Unable to get result")
 		}
 
@@ -145,6 +151,10 @@ func (s *Service) loadMetric(ID string) (sdk.Metric, error) {
 		Size(10).
 		Do(context.Background())
 	if errR != nil {
+		if strings.Contains(errR.Error(), indexNotFoundException) {
+			log.Warning("elasticsearch> loadMetric> %v", errR.Error())
+			return m, nil
+		}
 		return m, sdk.WrapError(errR, "unable to get result")
 	}
 

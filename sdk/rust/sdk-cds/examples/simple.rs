@@ -20,11 +20,11 @@ fn main() {
     );
     println!(
         "application name : {:?}",
-        my_client.application("TEST", "mytest").unwrap().icon
+        my_client.application("TEST", "test").unwrap().icon
     );
     println!("workflows : {:?}", my_client.workflows("TEST").unwrap());
     println!(
-        "workflow mytest : {:?}",
-        my_client.workflow("TEST", "mytest").unwrap()
+        "workflow test : {:?}",
+        my_client.workflow("TEST", "test").unwrap()
     );
 }
