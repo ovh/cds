@@ -284,10 +284,12 @@ const (
 )
 
 func (ui *Termui) staticRender() {
+	checking, checkingColor := statusShort(sdk.StatusChecking.String())
 	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
 	building, buildingColor := statusShort(sdk.StatusBuilding.String())
 	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend: ](fg-cyan) [Waiting:%s](%s) [Building:%s](%s) [Disabled:%s](%s)",
+	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend:](fg-cyan) [Checking:%s](%s) [Waiting:%s](%s) [Building:%s](%s) [Disabled:%s](%s)",
+		checking, checkingColor,
 		waiting, waitingColor,
 		building, buildingColor,
 		disabled, disabledColor)
@@ -493,30 +495,41 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
+	sort.Slice(statusTitle, func(i, j int) bool {
+		return statusWeight(statusTitle[i]) < statusWeight(statusTitle[j])
+	})
+
 	var items []string
 	sort.Strings(hatcheryNames)
 	for _, name := range hatcheryNames {
 		v := hatcheries[name]
 		var t string
+		var statusText []string
 		for _, status := range statusTitle {
 			if v[status] > 0 {
 				icon, color := statusShort(status)
-				t = fmt.Sprintf("%s[ %d%s ](%s)", t, v[status], icon, color)
+				statusText = append(statusText, fmt.Sprintf("[%d%s](%s)", v[status], icon, color))
 			}
 		}
-		if len(t) == 0 {
-			t = fmt.Sprintf("%s[ _ ](fg-white)", t)
+		if len(statusText) == 0 {
+			t = fmt.Sprintf(" [_ %s](fg-white)", name)
+		} else {
+			t = fmt.Sprintf(" %s [%s](fg-white)", strings.Join(statusText, " "), name)
 		}
-		t = fmt.Sprintf("%s[ %s](fg-white)", t, name)
 		items = append(items, t)
 	}
 	ui.statusHatcheriesWorkers.SetItems(items...)
 
-	sort.Strings(statusTitle)
-	title := " Hatcheries "
+	var titleStatusText []string
 	for _, s := range statusTitle {
-		icon, color := statusShort(s)
-		title = fmt.Sprintf("%s[%d%s](%s) ", title, status[s], icon, color)
+		if status[s] > 0 {
+			icon, color := statusShort(s)
+			titleStatusText = append(titleStatusText, fmt.Sprintf("[%d%s](%s)", status[s], icon, color))
+		}
+	}
+	title := " Hatcheries "
+	if len(titleStatusText) > 0 {
+		title = fmt.Sprintf("%s%s ", title, strings.Join(titleStatusText, " "))
 	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
@@ -632,11 +645,25 @@ func statusShort(status string) (string, string) {
 	case sdk.StatusBuilding.String():
 		return "b", "fg-blue"
 	case sdk.StatusDisabled.String():
-		return "d", "fg-grey"
+		return "d", "fg-white"
 	case sdk.StatusChecking.String():
 		return "c", "fg-yellow"
 	}
 	return status, "fg-default"
+}
+
+func statusWeight(status string) int {
+	switch status {
+	case sdk.StatusDisabled.String():
+		return 4
+	case sdk.StatusBuilding.String():
+		return 3
+	case sdk.StatusWaiting.String():
+		return 2
+	case sdk.StatusChecking.String():
+		return 1
+	}
+	return 0
 }
 
 func pad(t string, size int) string {

@@ -209,6 +209,55 @@ export class WorkflowsState {
         }));
     }
 
+    @Action(actionWorkflow.UpdateWorkflowIcon)
+    updateIcon(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.UpdateWorkflowIcon) {
+        return this._http.put<null>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/icon`,
+            action.payload.icon
+        ).pipe(tap(() => {
+            const state = ctx.getState();
+            const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+            let wfUpdated = {
+                ...state.workflows[wfKey],
+                icon: action.payload.icon
+            };
+
+            ctx.dispatch(new ActionProject.UpdateWorkflowInProject({
+                previousWorkflowName: action.payload.workflowName,
+                changes: wfUpdated
+            }));
+
+            return ctx.setState({
+                ...state,
+                workflows: Object.assign({}, state.workflows, { [wfKey]: wfUpdated }),
+            });
+        }));
+    }
+
+    @Action(actionWorkflow.DeleteWorkflowIcon)
+    deleteIcon(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.DeleteWorkflowIcon) {
+        return this._http.delete<null>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/icon`
+        ).pipe(tap(() => {
+            const state = ctx.getState();
+            const wfKey = action.payload.projectKey + '/' + action.payload.workflowName;
+            let wfUpdated = {
+                ...state.workflows[wfKey],
+                icon: ''
+            };
+
+            ctx.dispatch(new ActionProject.UpdateWorkflowInProject({
+                previousWorkflowName: action.payload.workflowName,
+                changes: wfUpdated
+            }));
+
+            return ctx.setState({
+                ...state,
+                workflows: Object.assign({}, state.workflows, { [wfKey]: wfUpdated }),
+            });
+        }));
+    }
+
     //  ------- Group Permission --------- //
     @Action(actionWorkflow.AddGroupInAllWorkflows)
     propagateProjectPermission(ctx: StateContext<WorkflowsStateModel>, action: actionWorkflow.AddGroupInAllWorkflows) {
@@ -478,6 +527,10 @@ export class WorkflowsState {
             ctx.dispatch(new actionWorkflow.LoadWorkflow({
                 projectKey: action.payload.projectKey,
                 workflow
+            }));
+            return ctx.dispatch(new actionWorkflow.FetchWorkflowAudits({
+                projectKey: action.payload.projectKey,
+                workflowName: workflow.name
             }));
         }));
     }

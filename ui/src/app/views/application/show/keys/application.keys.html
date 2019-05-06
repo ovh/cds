@@ -1,7 +1,14 @@
 <div id="Applicationkey">
+    <h3>{{ 'keys_list_title' | translate}}</h3>
+    <ng-container *ngIf="application.keys && application.keys.length === 0">
+        <div class="ui info message">
+            {{'keys_no' | translate}}
+        </div>
+    </ng-container>
     <ng-container *ngIf="application.keys && application.keys.length > 0">
-        <h3>{{ 'keys_list_title' | translate}}</h3>
-        <app-keys-list [keys]="application.keys" [loading]="loading" [edit]="!application.from_repository?application.permission:4" (deleteEvent)="manageKeyEvent($event)"></app-keys-list>
+        <app-keys-list [keys]="application.keys" [loading]="loading"
+            [edit]="!application.from_repository?application.permission:4" (deleteEvent)="manageKeyEvent($event)">
+        </app-keys-list>
     </ng-container>
     <ng-container *ngIf="!application.from_repository">
         <h3>{{ 'keys_add_title' | translate }}</h3>

@@ -256,11 +256,14 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				ExitOnError(err)
 			}
 
+			quiet, _ := cmd.Flags().GetBool("quiet")
 			verbose, _ := cmd.Flags().GetBool("verbose")
-			if !verbose {
-				i = listItem(i, nil, false, nil, verbose, map[string]string{})
+			fields, _ := cmd.Flags().GetString("fields")
+			var fs []string
+			if fields != "" {
+				fs = strings.Split(fields, ",")
 			}
-
+			i = listItem(i, nil, quiet, fs, verbose, map[string]string{})
 			switch format {
 			case "json":
 				b, err := json.Marshal(i)
@@ -270,6 +273,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				} else {
 					fmt.Println(string(b))
 				}
+
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
@@ -278,18 +282,25 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				} else {
 					fmt.Println(string(b))
 				}
+
 			default:
+				if quiet {
+					fmt.Println(i.(map[string]string)["key"])
+					return
+				}
 				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
-				e := dump.NewDefaultEncoder()
-				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-				e.ExtraFields.DetailedMap = false
-				e.ExtraFields.DetailedStruct = false
-				e.ExtraFields.Len = false
-				e.ExtraFields.Type = false
-				m, err := e.ToStringMap(i)
+				m, err := dump.ToStringMap(i)
 				ExitOnError(err)
-				for k, v := range m {
-					fmt.Fprintln(w, k+"\t"+v)
+
+				itemKeys := []string{}
+				for k := range m {
+					itemKeys = append(itemKeys, k)
+				}
+
+				sort.Strings(itemKeys)
+
+				for _, k := range itemKeys {
+					fmt.Fprintln(w, k+"\t"+m[k])
 				}
 				w.Flush()
 				return

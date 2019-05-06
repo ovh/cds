@@ -28,6 +28,36 @@ func (api *API) getWorkflowAsCodeHandler() service.Handler {
 	}
 }
 
+func (api *API) postResyncPRWorkflowAsCodeHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+
+		u := deprecatedGetUser(ctx)
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, u,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys)
+		if errP != nil {
+			return sdk.WrapError(errP, "unable to load project")
+		}
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, u, workflow.LoadOptions{
+			DeepPipeline:          false,
+			WithAsCodeUpdateEvent: true,
+		})
+		if errW != nil {
+			return sdk.WrapError(errW, "unable to load workflow")
+		}
+		if err := workflow.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, wf, u); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 // postWorkflowAsCodeHandler Make the workflow as code
 // @title Make the workflow as code
 func (api *API) postWorkflowAsCodeHandler() service.Handler {
@@ -55,25 +85,13 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WrapError(errW, "unable to load workflow")
 		}
 
-		// Workflow must have a repository webhook on root node
-		found := false
-		for _, h := range wf.WorkflowData.Node.Hooks {
-			if h.HookModelName == sdk.RepositoryWebHookModel.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Root node must have a repository web hook")
-		}
-
 		// Sync as code event
 		if len(wf.AsCodeEvent) > 0 {
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WrapError(err, "unable to start transaction")
 			}
-			if err := workflow.SyncAsCodeEvent(ctx, tx, api.Cache, proj, wf); err != nil {
+			if err := workflow.SyncAsCodeEvent(ctx, tx, api.Cache, proj, wf, u); err != nil {
 				tx.Rollback() // nolint
 				return err
 			}

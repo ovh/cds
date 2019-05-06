@@ -10,12 +10,12 @@ The OpenStack Swift Integration is a Self-Service integration that can be config
 With this integration, you can use a dedicated OpenStack Swift Storage on :
 
 - action [Artifact Upload]({{< relref "/docs/actions/artifact-upload.md">}})
-- action [Artifact Downlaod]({{< relref "/docs/actions/artifact-download.md">}})
+- action [Artifact Download]({{< relref "/docs/actions/artifact-download.md">}})
 - action [Serve Static Files]({{< relref "/docs/actions/serve-static-files.md">}})
 - [worker cache command]({{< relref "/docs/components/worker/cache">}})
 
-Notice: per default, the storage is configured in CDS Configuration. This integration
-allows user to user their own OpenStack Storage and not use the shared storage.
+Notice: by default, the storage is configured in CDS Configuration. This integration
+allows user to use their own OpenStack Storage and not use the shared storage.
 
 ## Configure with WebUI
 
@@ -75,7 +75,7 @@ this allows you to propose a Public OpenStack Swift, available on all CDS Projec
 Create a file public-configuration.yml:
 
 ```yml
-name: your-public-openstack-integration
+name: Openstack
 storage: true
 public: true
 public_configurations:

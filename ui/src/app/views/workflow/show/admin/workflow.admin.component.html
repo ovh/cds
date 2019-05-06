@@ -1,43 +1,4 @@
 <div id="WorkflowAdmin">
-    <app-zone header="{{ 'workflow_rename_title' | translate }}">
-        <app-zone-content class="bottom">
-            <form class="ui form" (ngSubmit)="onSubmitWorkflowUpdate()" #workflowUpdateFrom="ngForm">
-                <div class="fields">
-                    <div class="seven wide field">
-                        <input type="text" name="formWorkflowUpdateName" placeholder="{{ 'workflow_name' | translate}}"
-                            [(ngModel)]="workflow.name" [disabled]="loading" required #formWorkflowUpdateName="ngModel"
-                            pattern="^[a-zA-Z0-9._-]{1,}$">
-                        <div *ngIf="formWorkflowUpdateName && formWorkflowUpdateName.invalid && !formWorkflowUpdateName.pristine"
-                            class="ui error message">
-                            <p>{{'workflow_update_name_error' | translate}}</p>
-                        </div>
-                    </div>
-                    <div class="nine wide right aligned field">
-                        <button class="ui green button" name="btnrename" [class.loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || workflowUpdateFrom.invalid">{{
-                            'btn_rename' | translate }}</button>
-                    </div>
-                </div>
-            </form>
-            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')"
-                (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="{{ 'common_description' | translate }}">
-        <app-zone-content class="bottom">
-            <div class="ui form">
-                <div class="fields">
-                    <div class="fourteen wide field">
-                        <textarea name="description" class="ui" [(ngModel)]="_workflow.description"></textarea>
-                    </div>
-                    <div class="two wide right aligned field">
-                        <button id="descButton" class="ui selection green button" name="btnsavedesc" (click)="updateWorkflow()"
-                            [class.loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)">{{
-                            'btn_save' | translate }}</button>
-                    </div>
-                </div>
-            </div>
-        </app-zone-content>
-    </app-zone>
     <app-zone header="{{ 'common_icon' | translate }}">
         <app-zone-content class="bottom">
             <div class="ui form">
@@ -49,82 +10,95 @@
                         <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
                         </app-upload-button>
                     </div>
-                    <div class="ui sixteen wide red message field center aligned" *ngIf="fileTooLarge" [textContent]="'common_file_too_large' | translate"></div>
+                    <div class="ui sixteen wide red message field center aligned" *ngIf="fileTooLarge"
+                        [textContent]="'common_file_too_large' | translate"></div>
                     <div class="five wide right aligned field" *ngIf="!fileTooLarge">
-                        <button class="ui green button" [class.loading]="loading" name="updateiconButton" (click)="updateWorkflow()"
-                            [class.loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)">{{
+                        <button class="ui green button" [class.loading]="loading" name="updateiconButton"
+                            (click)="updateIcon()" [class.loading]="loading" [disabled]="loading">{{
                             'btn_save' | translate }}
                         </button>
-                    </div>
-                </div>
-            </div>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="{{ 'workflow_sidebar_tag_zone' | translate }}">
-        <app-zone-content class="bottom">
-            <div class="ui form">
-                <div class="fields">
-                    <div class="fourteen wide field">
-                        <sui-multi-select class="selection" *ngIf="existingTags.length > 0" [(ngModel)]="selectedTags"
-                            [options]="existingTags" [isSearchable]="true" (ngModelChange)="updateTagMetadata($event)"
-                            #multiSelect>
-                            <sui-select-option *ngFor="let i of multiSelect.filteredOptions" [value]="i">
-                            </sui-select-option>
-                        </sui-multi-select>
-                    </div>
-                    <div class="two wide right aligned field">
-                        <button id="tagButton" class="ui selection green button" name="btnsavetag" (click)="updateWorkflow()"
-                            [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)">{{
-                            'btn_save' | translate }}</button>
-                    </div>
-                </div>
-            </div>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="{{ 'workflow_history_length_title' | translate }}">
-        <app-zone-content class="bottom">
-            <div class="ui form">
-                <div class="fields">
-                    <div class="three wide field">
-                        <input type="number" name="formWorkflowUpdateHistory" placeholder="{{ 'workflow_history_length' | translate}}"
-                            [(ngModel)]="_workflow.history_length" [disabled]="loading" required
-                            #formWorkflowUpdateHistory="ngModel" min="1" max="500">
-                    </div>
-                    <div class="ten wide field">
-                        <sui-select class="selection" *ngIf="existingTags.length > 0" [(ngModel)]="purgeTag" [options]="existingTags"
-                            [isSearchable]="true" #SelectPurge>
-                            <sui-select-option *ngFor="let i of SelectPurge.filteredOptions" [value]="i">
-                            </sui-select-option>
-                        </sui-select>
-                    </div>
-                    <div class="three wide right aligned field">
-                        <button class="ui green button" name="btnhistorylength" [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)"
-                            (click)="updateWorkflow()">
-                            {{ 'btn_save' | translate }}
+                        <button class="ui red button" [class.loading]="loading" *ngIf="!iconUpdated && workflow.icon"
+                            name="deleteiconButton" (click)="deleteIcon()" [class.loading]="loading"
+                            [disabled]="loading">{{
+                            'btn_delete' | translate }}
                         </button>
                     </div>
                 </div>
             </div>
-            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')"
-                (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
-    <app-zone header="{{ 'workflow_runnumber_title' | translate }}">
+    <app-zone header="Administration">
         <app-zone-content class="bottom">
-            <form class="ui form" (ngSubmit)="onSubmitWorkflowRunNumUpdate()" #workflowRunNumUpdateFrom="ngForm">
-                <div class="fields">
-                    <div class="seven wide field">
-                        <input type="number" name="formWorkflowRunNumUpdateNumber" placeholder="{{ 'common_loading' | translate}}"
-                            [(ngModel)]="runnumber" [disabled]="loading" required #formWorkflowRunNumUpdateNumber="ngModel">
-                    </div>
-                    <div class="nine wide right aligned field">
-                        <button class="ui green button" name="btnrename" [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)">{{
-                            'btn_save' | translate }}</button>
+            <form class="ui form" (ngSubmit)="onSubmitWorkflowUpdate()" #workflowUpdateFrom="ngForm">
+                <div class="field">
+                    <label>{{'workflow_name' | translate}}</label>
+                    <input type="text" name="formWorkflowUpdateName" placeholder="{{ 'workflow_name' | translate}}"
+                        [(ngModel)]="workflow.name" [disabled]="loading" required #formWorkflowUpdateName="ngModel"
+                        pattern="^[a-zA-Z0-9._-]{1,}$">
+                    <div *ngIf="formWorkflowUpdateName && formWorkflowUpdateName.invalid && !formWorkflowUpdateName.pristine"
+                        class="ui error message">
+                        <p>{{'workflow_update_name_error' | translate}}</p>
                     </div>
                 </div>
+                <div class="field">
+                    <label>{{'common_description' | translate}}</label>
+                    <textarea name="description" class="ui" [(ngModel)]="_workflow.description"></textarea>
+                </div>
+                <div class="field">
+                    <label>{{ 'workflow_sidebar_tag_zone' | translate }}</label>
+                    <sui-multi-select name="sidebartagzone" class="selection" *ngIf="existingTags.length > 0"
+                        [(ngModel)]="selectedTags" [options]="existingTags" [isSearchable]="true"
+                        (ngModelChange)="updateTagMetadata($event)" #multiSelect>
+                        <sui-select-option *ngFor="let i of multiSelect.filteredOptions" [value]="i">
+                        </sui-select-option>
+                    </sui-multi-select>
+                </div>
+                <div class="field">
+                    <label>{{ 'workflow_history_length_title' | translate }}</label>
+                    <div class="fields">
+                        <div class="three wide field">
+                            <input type="number" name="formWorkflowUpdateHistory"
+                                placeholder="{{ 'workflow_history_length' | translate}}"
+                                [(ngModel)]="_workflow.history_length" [disabled]="loading" required
+                                #formWorkflowUpdateHistory="ngModel" min="1" max="500">
+                        </div>
+                        <div class="thirteen wide field">
+                            <sui-select name="sidebartagzonehistory" class="selection" *ngIf="existingTags.length > 0"
+                                [(ngModel)]="purgeTag" [options]="existingTags" [isSearchable]="true" #SelectPurge>
+                                <sui-select-option *ngFor="let i of SelectPurge.filteredOptions" [value]="i">
+                                </sui-select-option>
+                            </sui-select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>{{ 'workflow_runnumber_title' | translate }}</label>
+                    <input type="number" name="formWorkflowRunNumUpdateNumber"
+                        placeholder="{{ 'common_loading' | translate}}" [(ngModel)]="runnumber" [disabled]="loading"
+                        required #formWorkflowRunNumUpdateNumber="ngModel">
+                </div>
+                <div class="submitbutton">
+                    <ng-container *ngIf="workflow.from_repository && workflow.from_repository.length > 0">
+                        <div class="ui right floated" suiPopup [popupText]="'workflow_as_code_no_edit' | translate"
+                            popupPlacement="left">
+                            <button class="ui green button" type="submit" name="savebtn" [class.loading]="loading"
+                                [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)">
+                                {{'btn_save' | translate}}
+                            </button>
+                        </div>
+                    </ng-container>
+                    <ng-container *ngIf="!workflow.from_repository || workflow.from_repository.length === 0">
+                        <button class="ui green right floated button" type="submit" name="savebtn"
+                            [class.loading]="loading" [disabled]="loading">
+                            {{'btn_save' | translate}}
+                        </button>
+                    </ng-container>
+                </div>
+                <app-warning-modal [title]="_translate.instant('warning_modal_title')"
+                    [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)"
+                    #updateWarning>
+                </app-warning-modal>
             </form>
-            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')"
-                (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
     <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">

@@ -81,7 +81,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	apiURL := c.getFullAPIURL(api)
 	uri, err := url.Parse(apiURL + path)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if params != nil && len(params) > 0 {
@@ -139,7 +139,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	// Check for an http error status (ie not 200 StatusOK)

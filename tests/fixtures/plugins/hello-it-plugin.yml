@@ -1,5 +1,5 @@
 name: hello-it-plugin
-type: integration
+type: integration-deploy_application
 integration: HelloIT
 author: "me"
 description: "this is a test plugin"

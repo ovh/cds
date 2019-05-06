@@ -1,2 +1,25 @@
 name: HelloIT
 public: true
+deployment: true
+deployment_default_config:
+  version:
+    type: string
+    value: "{{.cds.version}}"
+  deployment.token:
+    type: password
+  retry.max:
+    type: string
+    value: 10
+  retry.delay:
+    type: string
+    value: 5
+public: true
+public_configurations: 
+  hello-it-dev: 
+    host: 
+      type: string
+      value: hello-it-dev-host
+  hello-it-prod: 
+    host: 
+      type: string
+      value: hello-it-prod-host

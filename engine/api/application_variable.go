@@ -162,7 +162,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 
 		variableBefore, err := application.LoadVariableByID(api.mustDB(), app.ID, newVar.ID, application.WithClearPassword())
 		if err != nil {
-			return sdk.WrapError(err, "cannot load variable %d", variableBefore.ID)
+			return sdk.WrapError(err, "cannot load variable with id %d", newVar.ID)
 		}
 
 		tx, err := api.mustDB().Begin()

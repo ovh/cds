@@ -28,7 +28,8 @@ func (s *Service) processGitClone(op *sdk.Operation) (repo.Repo, string, string,
 	gitRepo, err := repo.New(r.Basedir, opts...)
 	if err != nil {
 		log.Info("Repositories> processGitClone> cloning %s into %s", r.URL, r.Basedir)
-		if _, err = repo.Clone(r.Basedir, r.URL, opts...); err != nil {
+		gitRepo, err = repo.Clone(r.Basedir, r.URL, opts...)
+		if err != nil {
 			log.Error("Repositories> processGitClone> Clone> [%s] error %v", op.UUID, err)
 			return gitRepo, "", "", err
 		}
@@ -39,6 +40,7 @@ func (s *Service) processGitClone(op *sdk.Operation) (repo.Repo, string, string,
 		log.Error("Repositories> processGitClone> gitRepo.FetchURL> [%s] Error: %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
+
 	d, err := gitRepo.DefaultBranch()
 	if err != nil {
 		log.Error("Repositories> processGitClone> DefaultBranch> [%s] Error: %v", op.UUID, err)

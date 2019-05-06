@@ -49,3 +49,10 @@ func (d *Display) Do(ctx context.Context) {
 		}
 	}(d)
 }
+
+func Ellipsis(s string, i int) string {
+	if len(s) > i {
+		return s[:i] + "…"
+	}
+	return s
+}

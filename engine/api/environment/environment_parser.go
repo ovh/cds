@@ -45,7 +45,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities
 	}
 
 	if oldEnv != nil && oldEnv.FromRepository != "" && opts.FromRepository != oldEnv.FromRepository {
-		return nil, nil, sdk.WithStack(sdk.ErrForbidden)
+		return nil, nil, sdk.WrapError(sdk.ErrEnvironmentAsCodeOverride, "unable to update as code environment %s/%s.", oldEnv.FromRepository, opts.FromRepository)
 	}
 
 	env := new(sdk.Environment)

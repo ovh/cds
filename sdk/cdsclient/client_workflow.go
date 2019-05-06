@@ -274,12 +274,12 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 	return nodeRun, nil
 }
 
-func (c *client) WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader) error {
+func (c *client) WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
 	store := new(sdk.ArtifactsStore)
 	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
 	_, _ = c.GetJSON(context.Background(), uri, store)
 	if store.TemporaryURLSupported {
-		err := c.workflowCachePushIndirectUpload(projectKey, integrationName, ref, tarContent)
+		err := c.workflowCachePushIndirectUpload(projectKey, integrationName, ref, tarContent, size)
 		return err
 	}
 	return c.workflowCachePushDirectUpload(projectKey, integrationName, ref, tarContent)
@@ -305,10 +305,10 @@ func (c *client) workflowCachePushDirectUpload(projectKey, integrationName, ref 
 	return nil
 }
 
-func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, ref string, tarContent io.Reader) error {
+func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
 	uri := fmt.Sprintf("/project/%s/storage/%s/cache/%s/url", projectKey, integrationName, ref)
 	cacheObj := sdk.Cache{}
-	code, err := c.PostJSON(context.Background(), uri, nil, &cacheObj)
+	code, err := c.PostJSON(context.Background(), uri, cacheObj, &cacheObj)
 	if err != nil {
 		return err
 	}
@@ -317,10 +317,10 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, re
 		return fmt.Errorf("HTTP Code %d", code)
 	}
 
-	return c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent)
+	return c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent, size)
 }
 
-func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.Reader) error {
+func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.Reader, size int) error {
 	//Post the file to the temporary URL
 	var retry = 10
 	var globalErr error
@@ -331,9 +331,11 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 			return errRequest
 		}
 		req.Header.Set("Content-Type", "application/tar")
+		req.ContentLength = int64(size)
 
 		var resp *http.Response
 		resp, globalErr = http.DefaultClient.Do(req)
+
 		if globalErr == nil {
 			defer resp.Body.Close()
 

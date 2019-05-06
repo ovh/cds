@@ -15,7 +15,7 @@ Let’s take an example. One workflow for building and deploying three micro-ser
 - Run integration tests on preproduction environment 
 - Deploy them in production, then re-run integration tests in production
 
-![Worklow](./images/workflow.png?width=1000px)
+![Workflow](./images/workflow.png?width=1000px)
 
 For the building part, there is only one pipeline to manage, which is used three times in the workflow with a different application/environment context each time. This is called the [pipeline context]({{< relref "/docs/concepts/workflow/pipeline-context.md" >}}). 
 

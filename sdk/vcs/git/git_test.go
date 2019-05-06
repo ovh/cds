@@ -195,7 +195,7 @@ func Test_gitCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "Clone public repo over http with options and checkout commit",
+			name: "Clone public repo over http with branch and checkout commit",
 			args: args{
 				repo: "https://github.com/ovh/cds.git",
 				path: "/tmp/Test_gitCommand-3",
@@ -207,6 +207,21 @@ func Test_gitCommand(t *testing.T) {
 			},
 			want: []string{
 				"git clone --quiet --branch master https://github.com/ovh/cds.git /tmp/Test_gitCommand-3",
+				"git reset --hard eb8b87a",
+			},
+		},
+		{
+			name: "Clone public repo over http with only checkout commit",
+			args: args{
+				repo: "https://github.com/ovh/cds.git",
+				path: "/tmp/Test_gitCommand-3",
+				opts: &CloneOpts{
+					Quiet:          true,
+					CheckoutCommit: "eb8b87a",
+				},
+			},
+			want: []string{
+				"git clone --quiet https://github.com/ovh/cds.git /tmp/Test_gitCommand-3",
 				"git fetch origin eb8b87a",
 				"git reset --hard eb8b87a",
 			},

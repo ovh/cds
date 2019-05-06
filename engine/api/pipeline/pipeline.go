@@ -237,13 +237,13 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) 
 }
 
 // LoadAllNames returns all pipeline names
-func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64) ([]sdk.IDName, error) {
+func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64) (sdk.IDNames, error) {
 	query := `SELECT pipeline.id, pipeline.name, pipeline.description
 			  FROM pipeline
 			  WHERE project_id = $1
 			  ORDER BY pipeline.name`
 
-	var res []sdk.IDName
+	var res sdk.IDNames
 	if _, err := db.Select(&res, query, projID); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil

@@ -1,15 +1,18 @@
 version: v1.0
 name: pipeline-play-worker-cache
+parameters:
+  integration:
+    type: string
 jobs:
 - job: workerCache
   steps:
   - script:
     - '#!/bin/bash'
     - tag="foo"
-    - if worker cache pull --from=myOpenstackIntegration $tag; then
+    - if worker cache pull --from={{.cds.pip.integration}} $tag; then
     - '    echo "getted from cache";'
     - '    ls -lart .m2'
     - fi
     - mkdir -p .m2
     - echo "foo"> .m2/bar
-    - worker cache push --destination=myOpenstackIntegration $tag .m2/
+    - worker cache push --destination={{.cds.pip.integration}} $tag .m2/

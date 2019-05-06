@@ -1,5 +1,8 @@
 version: v1.0
 name: pipeline-play-staticfiles
+parameters:
+  integration:
+    type: string
 jobs:
 - job: New Job
   steps:
@@ -8,6 +11,6 @@ jobs:
     - echo "<html>coucou</html>" > website/sub/index.html
     - ""
   - serveStaticFiles:
-      destination: myOpenstackIntegration
+      destination: "{{.cds.pip.integration}}"
       name: my website
       path: website/*

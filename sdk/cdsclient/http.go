@@ -166,7 +166,6 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
-
 	var savederror error
 
 	var bodyContent []byte

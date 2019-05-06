@@ -240,4 +240,13 @@ export class WorkflowComponent {
                 this.saveAsCode.show(ope);
             });
     }
+
+    resyncPR(): void {
+        this.loadingPopupButton = true;
+        this._workflowService.resyncPRAsCode(this.project.key, this.workflow.name)
+            .pipe(finalize(() => this.loadingPopupButton = false))
+            .subscribe(() => {
+                this.popupFromlRepository.close();
+            });
+    }
 }

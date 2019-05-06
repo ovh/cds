@@ -199,6 +199,104 @@ describe('Workflows', () => {
         });
     }));
 
+    it('update a workflow icon', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let workflow = new Workflow();
+        workflow.name = 'wf1';
+        workflow.project_key = testProjectKey;
+        store.dispatch(new workflowsActions.AddWorkflow({
+            projectKey: testProjectKey,
+            workflow
+        }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/workflows';
+        })).flush(workflow);
+        store.selectOnce(WorkflowsState).subscribe(state => {
+            expect(Object.keys(state.workflows).length).toEqual(1);
+        });
+        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+            expect(wf).toBeTruthy();
+            expect(wf.name).toEqual('wf1');
+            expect(wf.project_key).toEqual(testProjectKey);
+            expect(wf.icon).toBeFalsy();
+        });
+
+        store.dispatch(new workflowsActions.UpdateWorkflowIcon({
+            projectKey: testProjectKey,
+            workflowName: 'wf1',
+            icon: 'testicon'
+        }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/workflows/wf1/icon';
+        })).flush(null);
+        store.selectOnce(WorkflowsState).subscribe(state => {
+            expect(Object.keys(state.workflows).length).toEqual(1);
+        });
+        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+            expect(wf).toBeTruthy();
+            expect(wf.name).toEqual('wf1');
+            expect(wf.project_key).toEqual(testProjectKey);
+            expect(wf.icon).toEqual('testicon');
+        });
+
+        store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
+            expect(projState.project).toBeTruthy();
+            expect(projState.project.workflow_names).toBeTruthy();
+            expect(projState.project.workflow_names.length).toEqual(1);
+            expect(projState.project.workflow_names[0].name).toEqual('wf1');
+            expect(projState.project.workflow_names[0].icon).toEqual('testicon');
+        });
+    }));
+
+    it('delete a workflow icon', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let workflow = new Workflow();
+        workflow.name = 'wf1';
+        workflow.project_key = testProjectKey;
+        workflow.icon = 'testicon';
+        store.dispatch(new workflowsActions.AddWorkflow({
+            projectKey: testProjectKey,
+            workflow
+        }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/workflows';
+        })).flush(workflow);
+        store.selectOnce(WorkflowsState).subscribe(state => {
+            expect(Object.keys(state.workflows).length).toEqual(1);
+        });
+        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+            expect(wf).toBeTruthy();
+            expect(wf.name).toEqual('wf1');
+            expect(wf.project_key).toEqual(testProjectKey);
+            expect(wf.icon).toEqual('testicon');
+        });
+
+        store.dispatch(new workflowsActions.DeleteWorkflowIcon({
+            projectKey: testProjectKey,
+            workflowName: 'wf1'
+        }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/workflows/wf1/icon';
+        })).flush(null);
+        store.selectOnce(WorkflowsState).subscribe(state => {
+            expect(Object.keys(state.workflows).length).toEqual(1);
+        });
+        store.selectOnce(WorkflowsState.selectWorkflow(testProjectKey, 'wf1')).subscribe((wf: Workflow) => {
+            expect(wf).toBeTruthy();
+            expect(wf.name).toEqual('wf1');
+            expect(wf.project_key).toEqual(testProjectKey);
+            expect(wf.icon).toBeFalsy();
+        });
+
+        store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
+            expect(projState.project).toBeTruthy();
+            expect(projState.project.workflow_names).toBeTruthy();
+            expect(projState.project.workflow_names.length).toEqual(1);
+            expect(projState.project.workflow_names[0].name).toEqual('wf1');
+            expect(projState.project.workflow_names[0].icon).toBeFalsy();
+        });
+    }));
+
     it('fetch audits', async(() => {
         const http = TestBed.get(HttpTestingController);
         let workflow = new Workflow();

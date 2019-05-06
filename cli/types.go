@@ -155,6 +155,19 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Usage: "Display all object fields",
 				Type:  FlagBool,
 			},
+			{
+				Name:      "quiet",
+				ShortHand: "q",
+				Default:   "",
+				Usage:     "Only display object's key",
+				Type:      FlagBool,
+			},
+			{
+				Name:    "fields",
+				Default: "",
+				Usage:   "Only display specified object fields. 'empty' will display all fields, 'all' will display all object fields, 'field1,field2' to select multiple fields",
+				Type:    FlagString,
+			},
 		}
 	case RunListFunc:
 		extraFlags = []Flag{

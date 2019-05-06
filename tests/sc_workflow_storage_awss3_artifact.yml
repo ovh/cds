@@ -1,0 +1,36 @@
+name: Workflow (ITSCWRKFLW11) should use the action artifact upload / download with integration aws s3
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW11/pipeline-play-action-artifact.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW11/test-action-artifact.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW11"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW11 "
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW11 ITSCWRKFLW11"
+
+- name: import integration
+  steps:
+  - script:  {{.cds.build.cdsctl}} project integration import ITSCWRKFLW11 ./myAWSS3Integration.yml
+
+- name: import workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW11 ./tests/fixtures/ITSCWRKFLW11/*.yml --skip-update-files
+
+- name: run workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW11 test-action-artifact -p integration=myAWSS3Integration
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow test-action-artifact #1 has been launched"
+
+- name: the workflow should be successful
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW11 test-action-artifact 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 30
+    delay: 10

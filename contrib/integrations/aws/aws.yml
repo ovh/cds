@@ -1,0 +1,20 @@
+name: MyAWS
+model:
+  name: AWS
+  public: false
+config:
+  region:
+    value: your-region
+    type: string
+  bucket_name:
+    value: your-bucket-name
+    type: string
+  prefix:
+    value: cds-prefix-
+    type: string
+  access_key_id:
+    value: your-access-key
+    type: string
+  secret_access_key:
+    value: 'your-secret-access-key'
+    type: password

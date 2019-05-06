@@ -139,22 +139,22 @@ func (g *githubClient) repoByFullname(fullname string) (Repository, error) {
 	return repo, nil
 }
 
-func (g *githubClient) GrantReadPermission(ctx context.Context, fullname string) error {
+func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string) error {
 	owner := strings.SplitN(fullname, "/", 2)[0]
 	if g.username == "" || owner == g.username {
-		log.Debug("githubClient.GrantReadPermission> nothing to do ¯\\_(ツ)_/¯")
+		log.Debug("githubClient.GrantWritePermission> nothing to do ¯\\_(ツ)_/¯")
 		return nil
 	}
 	url := "/repos/" + fullname + "/collaborators/" + g.username + "?permission=push"
 	resp, err := g.put(url, "application/json", nil, nil)
 	if err != nil {
-		log.Warning("githubClient.GrantReadPermission> Error (%s) %s", url, err)
+		log.Warning("githubClient.GrantWritePermission> Error (%s) %s", url, err)
 		return err
 	}
 
 	// Response when person is already a collaborator
 	if resp.StatusCode == 204 {
-		log.Info("githubClient.GrantReadPermission> %s is already a collaborator", g.username)
+		log.Info("githubClient.GrantWritePermission> %s is already a collaborator", g.username)
 		return nil
 	}
 
@@ -164,13 +164,13 @@ func (g *githubClient) GrantReadPermission(ctx context.Context, fullname string)
 	}
 	defer resp.Body.Close() // nolint
 
-	log.Debug("githubClient.GrantReadPermission> invitation response: %v", string(body))
+	log.Debug("githubClient.GrantWritePermission> invitation response: %v", string(body))
 
 	// Response when a new invitation is created
 	if resp.StatusCode == 201 {
 		invit := RepositoryInvitation{}
 		if err := json.Unmarshal(body, &invit); err != nil {
-			log.Warning("githubClient.GrantReadPermission> unable to unmarshal invitation %s", err)
+			log.Warning("githubClient.GrantWritePermission> unable to unmarshal invitation %s", err)
 			return err
 		}
 
@@ -178,7 +178,7 @@ func (g *githubClient) GrantReadPermission(ctx context.Context, fullname string)
 		url := fmt.Sprintf("/user/repository_invitations/%d", invit.ID)
 		resp, err := g.patch(url, &postOptions{asUser: true})
 		if err != nil {
-			log.Warning("githubClient.GrantReadPermission> Error (%s) %s", url, err)
+			log.Warning("githubClient.GrantWritePermission> Error (%s) %s", url, err)
 			return err
 		}
 		body, err := ioutil.ReadAll(resp.Body)
@@ -186,7 +186,7 @@ func (g *githubClient) GrantReadPermission(ctx context.Context, fullname string)
 			return err
 		}
 		_ = resp.Body.Close()
-		log.Debug("githubClient.GrantReadPermission> accept invitation response: %v", string(body))
+		log.Debug("githubClient.GrantWritePermission> accept invitation response: %v", string(body))
 
 		// All is fine
 		if resp.StatusCode == 204 {

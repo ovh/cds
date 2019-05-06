@@ -14,12 +14,16 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64) (sdk.RequirementList, bool, string, *sdk.MultiError) {
+func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, string, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
 	var model string
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
+
+	for i := range integrationPluginBinaries {
+		j.Action.Requirements = append(j.Action.Requirements, integrationPluginBinaries[i].Requirements...)
+	}
 
 	for _, v := range j.Action.Requirements {
 		name, errName := interpolate.Do(v.Name, tmp)

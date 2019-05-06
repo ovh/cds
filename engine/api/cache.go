@@ -124,7 +124,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 			Tag:     tag,
 		}
 
-		url, key, errO := store.StoreURL(&cacheObject)
+		url, key, errO := store.StoreURL(&cacheObject, "application/tar")
 		if errO != nil {
 			return sdk.WrapError(errO, "postPushCacheWithTempURLHandler>Cannot store cache")
 		}
