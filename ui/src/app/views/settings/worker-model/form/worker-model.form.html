@@ -156,11 +156,43 @@
                         </div>
                     </div>
                     <ng-container *ngIf="workerModel.type === 'docker'">
-                        <div class="field">
-                            <label>{{'worker_model_image' | translate}} *</label>
-                            <input class="ui input" type="text" name="image"
-                                [(ngModel)]="workerModel.model_docker.image" [readonly]="!workerModel.editable">
+                        <div class="two fields">
+                            <div class="fifteen wide field">
+                                <label>{{'worker_model_image' | translate}} *</label>
+                                <input class="ui input" type="text" name="image"
+                                    [(ngModel)]="workerModel.model_docker.image" [readonly]="!workerModel.editable">
+                            </div>
+                            <div class="one wide field">
+                                <label suiPopup [popupText]="'worker_model_private_tooltip' | translate"
+                                    popupPlacement="top left">
+                                    Private Registry <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+                                </label>
+                                <sui-checkbox name="private" [(ngModel)]="workerModel.model_docker.private"
+                                    [isDisabled]="!workerModel.editable" [isReadonly]="!workerModel.editable">
+                                </sui-checkbox>
+                            </div>
                         </div>
+                        <ng-container *ngIf="workerModel.model_docker.private">
+                            <div class="field">
+                                <label>Registry URL</label>
+                                <input class="ui input" type="text" name="registry_url"
+                                    placeholder="https://index.docker.io/v1/"
+                                    [(ngModel)]="workerModel.model_docker.registry"
+                                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                            </div>
+                            <div class="field">
+                                <label>Username</label>
+                                <input class="ui input" type="text" name="registry_username"
+                                    [(ngModel)]="workerModel.model_docker.username"
+                                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <input class="ui input" type="password" name="registry_password"
+                                    [(ngModel)]="workerModel.model_docker.password"
+                                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                            </div>
+                        </ng-container>
                         <div class="field" *ngIf="workerModel.editable">
                             <label>{{'worker_model_pattern_title' | translate}}</label>
                             <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}"

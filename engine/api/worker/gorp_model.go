@@ -32,6 +32,18 @@ func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 	case sdk.Docker:
 		m.ModelDocker.Envs = mergeWithDefaultEnvs(m.ModelDocker.Envs)
 		var err error
+		if m.ModelDocker.Private {
+			if m.ModelDocker.Password != "" {
+				m.ModelDocker.Password, err = encryptValue(m.ModelDocker.Password)
+				if err != nil {
+					return sdk.WrapError(err, "cannot encrypt docker password")
+				}
+			}
+		} else {
+			m.ModelDocker.Username = ""
+			m.ModelDocker.Password = ""
+			m.ModelDocker.Registry = ""
+		}
 		if modelBtes, err = json.Marshal(m.ModelDocker); err != nil {
 			return err
 		}

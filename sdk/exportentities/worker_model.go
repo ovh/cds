@@ -11,6 +11,9 @@ type WorkerModel struct {
 	Communication string            `json:"communication,omitempty" yaml:"communication,omitempty"`
 	Provision     int64             `json:"provision,omitempty" yaml:"provision,omitempty"`
 	Image         string            `json:"image" yaml:"image"`
+	Registry      string            `json:"registry,omitempty" yaml:"registry,omitempty"`
+	Username      string            `json:"username,omitempty" yaml:"username,omitempty"`
+	Password      string            `json:"password,omitempty" yaml:"password,omitempty"`
 	Description   string            `json:"description" yaml:"description"`
 	Type          string            `json:"type" yaml:"type"`
 	Flavor        string            `json:"flavor,omitempty" yaml:"flavor,omitempty"`
@@ -62,6 +65,11 @@ func NewWorkerModel(wm sdk.Model, opts ...WorkerModelOption) WorkerModel {
 		model.Image = wm.ModelDocker.Image
 		model.Cmd = wm.ModelDocker.Cmd
 		model.Envs = wm.ModelDocker.Envs
+		if wm.ModelDocker.Private {
+			model.Registry = wm.ModelDocker.Registry
+			model.Username = wm.ModelDocker.Username
+			model.Password = wm.ModelDocker.Password
+		}
 	case sdk.VSphere, sdk.Openstack:
 		model.Flavor = wm.ModelVirtualMachine.Flavor
 		model.Image = wm.ModelVirtualMachine.Image
@@ -98,6 +106,12 @@ func (wm WorkerModel) GetWorkerModel() (sdk.Model, error) {
 			Image: wm.Image,
 			Cmd:   wm.Cmd,
 			Envs:  wm.Envs,
+		}
+		if wm.Username != "" || wm.Registry != "" || wm.Password != "" {
+			model.ModelDocker.Registry = wm.Registry
+			model.ModelDocker.Username = wm.Username
+			model.ModelDocker.Password = wm.Password
+			model.ModelDocker.Private = true
 		}
 	case sdk.VSphere, sdk.Openstack:
 		model.ModelVirtualMachine = sdk.ModelVirtualMachine{

@@ -221,6 +221,10 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 			}
 		}
 
+		if model.ModelDocker.Password == sdk.PasswordPlaceholder {
+			model.ModelDocker.Password = old.ModelDocker.Password
+		}
+
 		//If the model image has not been set, keep the old image
 		if model.ModelDocker.Image == "" && model.ModelVirtualMachine.Image == "" {
 			switch model.Type {

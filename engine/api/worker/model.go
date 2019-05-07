@@ -2,6 +2,7 @@ package worker
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"sort"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -81,10 +83,16 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	dbmodel := WorkerModel(*model)
 	dbmodel.NeedRegistration = true
 	model.UserLastModified = time.Now()
+	if model.ModelDocker.Password == sdk.PasswordPlaceholder {
+		return sdk.WithStack(sdk.ErrInvalidPassword)
+	}
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}
 	*model = sdk.Model(dbmodel)
+	if model.ModelDocker.Password != "" {
+		model.ModelDocker.Password = sdk.PasswordPlaceholder
+	}
 	return nil
 }
 
@@ -100,6 +108,9 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 		return err
 	}
 	*model = sdk.Model(dbmodel)
+	if model.ModelDocker.Password != "" {
+		model.ModelDocker.Password = sdk.PasswordPlaceholder
+	}
 	return nil
 }
 
@@ -240,6 +251,13 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, group
 		if err := ms[i].PostSelect(db); err != nil {
 			return nil, sdk.WithStack(err)
 		}
+		if ms[i].ModelDocker.Private && ms[i].ModelDocker.Password != "" {
+			var err error
+			ms[i].ModelDocker.Password, err = decryptValue(ms[i].ModelDocker.Password)
+			if err != nil {
+				return models, sdk.WrapError(err, "cannot decrypt value for model %s", ms[i].Name)
+			}
+		}
 		models = append(models, sdk.Model(ms[i]))
 	}
 
@@ -290,6 +308,9 @@ func scanWorkerModels(db gorp.SqlExecutor, rows []dbResultWMS) ([]sdk.Model, err
 		m.Group = sdk.Group{ID: m.GroupID, Name: row.GroupName}
 		if err := m.PostSelect(db); err != nil {
 			return nil, err
+		}
+		if m.ModelDocker.Password != "" {
+			m.ModelDocker.Password = sdk.PasswordPlaceholder
 		}
 		models = append(models, sdk.Model(m))
 	}
@@ -503,4 +524,24 @@ func getAdditionalSQLFilters(opts *StateLoadOption) []string {
 		}
 	}
 	return additionalFilters
+}
+
+func decryptValue(v string) (string, error) {
+	b, err64 := base64.StdEncoding.DecodeString(v)
+	if err64 != nil {
+		return "", sdk.WrapError(err64, "cannot decode string")
+	}
+	secret, errD := secret.Decrypt(b)
+	if errD != nil {
+		return "", sdk.WrapError(errD, "Cannot decrypt password")
+	}
+	return string(secret), nil
+}
+
+func encryptValue(v string) (string, error) {
+	encryptedSecret, errE := secret.Encrypt([]byte(v))
+	if errE != nil {
+		return "", sdk.WrapError(errE, "Cannot encrypt password")
+	}
+	return base64.StdEncoding.EncodeToString(encryptedSecret), nil
 }

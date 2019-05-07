@@ -929,6 +929,8 @@
   "worker_model_arch": "Architecture",
   "worker_model_pattern_title": "Patterns des scripts de configuration",
   "worker_model_pre_cmd": "Commande avant exécution du worker",
+  "worker_model_private": "Registry privée",
+  "worker_model_private_tooltip": "Si votre image provient d'une registry privée qui requiert une authentification",
   "worker_model_cmd": "Commande principale du worker",
   "worker_model_cmd_tooltip": "La commande doit terminer par ./worker",
   "worker_model_cmd_docker": "Commande",

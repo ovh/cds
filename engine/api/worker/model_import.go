@@ -124,6 +124,9 @@ currentUGroup:
 					img := sdkWm.ModelDocker.Image
 					sdkWm.ModelDocker = existingWm.ModelDocker
 					sdkWm.ModelDocker.Image = img
+					if sdkWm.ModelDocker.Password == sdk.PasswordPlaceholder {
+						sdkWm.ModelDocker.Password = existingWm.ModelDocker.Password
+					}
 				default:
 					img := sdkWm.ModelVirtualMachine.Image
 					flavor := sdkWm.ModelVirtualMachine.Flavor
