@@ -4,12 +4,12 @@ import {
     Input,
     Output
 } from '@angular/core';
-import {WorkflowNodeRun} from '@cds/model/workflow.run.model';
 import {PermissionValue} from 'app/model/permission.model';
 import {
     WNode,
     Workflow,
 } from 'app/model/workflow.model';
+import {WorkflowNodeRun} from 'app/model/workflow.run.model';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {IPopup} from 'ng2-semantic-ui';
 

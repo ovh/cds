@@ -1,15 +1,14 @@
 import {Component, Input, NgZone, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {PipelineStatus} from '@cds/model/pipeline.model';
-import {Project} from '@cds/model/project.model';
-import {WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from '@cds/model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
-import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
-import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {Project} from 'app/model/project.model';
+import {WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from 'app/model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {WorkflowCoreService} from 'app/service/workflow/workflow.core.service';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {WorkflowWNodeMenuEditComponent} from 'app/shared/workflow/menu/edit-node/menu.edit.node.component';
 import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
@@ -23,6 +22,7 @@ import {
     UpdateHookWorkflow,
     UpdateWorkflow
 } from 'app/store/workflow.action';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import {IPopup} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';

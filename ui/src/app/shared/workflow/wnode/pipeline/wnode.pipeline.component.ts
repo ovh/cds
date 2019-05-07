@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {PipelineStatus} from '@cds/model/pipeline.model';
-import {Project} from '@cds/model/project.model';
-import {WNode, Workflow} from '@cds/model/workflow.model';
-import {WorkflowNodeRun} from '@cds/model/workflow.run.model';
-import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {Project} from 'app/model/project.model';
+import {WNode, Workflow} from 'app/model/workflow.model';
+import {WorkflowNodeRun} from 'app/model/workflow.run.model';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-wnode-pipeline',

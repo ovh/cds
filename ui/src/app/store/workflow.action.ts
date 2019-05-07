@@ -1,7 +1,7 @@
-import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
 import { GroupPermission } from 'app/model/group.model';
 import { Label } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 
 // ---------  MODAL  -----
 

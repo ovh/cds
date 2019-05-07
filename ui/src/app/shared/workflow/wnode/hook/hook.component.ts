@@ -1,5 +1,4 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import { Project } from 'app/model/project.model';
@@ -9,6 +8,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {DeleteHookWorkflow, OpenEditModal, SelectHook} from 'app/store/workflow.action';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {finalize} from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';

@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {Store} from '@ngxs/store';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import {cloneDeep} from 'lodash';
 import { Subscription } from 'rxjs';
 import { PipelineStatus } from '../../../../model/pipeline.model';

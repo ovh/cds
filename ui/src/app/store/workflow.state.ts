@@ -1,14 +1,13 @@
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {PermissionValue} from '@cds/model/permission.model';
-import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
-import {WorkflowRunService} from '@cds/service/workflow/run/workflow.run.service';
-import {WorkflowService} from '@cds/service/workflow/workflow.service';
-import {WorkflowSidebarMode} from '@cds/service/workflow/workflow.sidebar.store';
 import {Action, createSelector, State, StateContext} from '@ngxs/store';
 import {GroupPermission} from 'app/model/group.model';
+import {PermissionValue} from 'app/model/permission.model';
 import {Label} from 'app/model/project.model';
 import {WNode, WNodeHook, WNodeTrigger, Workflow} from 'app/model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {NavbarService} from 'app/service/navbar/navbar.service';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
+import {WorkflowSidebarMode} from 'app/service/workflow/workflow.sidebar.store';
 import {cloneDeep} from 'lodash';
 import {finalize, first, tap} from 'rxjs/operators';
 import * as ActionProject from './project.action';
