@@ -8,6 +8,7 @@ import {Project} from 'app/model/project.model';
 import {WNode, Workflow} from 'app/model/workflow.model';
 import {WorkflowRun} from 'app/model/workflow.run.model';
 import {NotificationService} from 'app/service/notification/notification.service';
+import {WorkflowStore} from 'app/service/workflow/workflow.store';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {WorkflowNodeRunParamComponent} from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -16,7 +17,6 @@ import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import {WorkflowStore} from 'app/service/workflow/workflow.store';
 
 @Component({
     selector: 'app-workflow-run',

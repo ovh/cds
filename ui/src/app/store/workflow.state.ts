@@ -6,6 +6,7 @@ import {Label} from 'app/model/project.model';
 import {WNode, WNodeHook, WNodeTrigger, Workflow} from 'app/model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {NavbarService} from 'app/service/navbar/navbar.service';
+import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
 import {WorkflowService} from 'app/service/workflow/workflow.service';
 import {WorkflowSidebarMode} from 'app/service/workflow/workflow.sidebar.store';
 import {cloneDeep} from 'lodash';
@@ -13,7 +14,6 @@ import {finalize, first, tap} from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
 import {UpdateModal, UpdateWorkflowRunList} from './workflow.action';
-import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
