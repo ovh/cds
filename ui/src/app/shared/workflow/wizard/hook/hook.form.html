@@ -11,7 +11,7 @@
                             (ngModelChange)="updateHookModel()"
                             [options]="hooksModel"
                             [isSearchable]="true"
-                            [isDisabled]="hook.uuid"
+                            [isDisabled]="hook.uuid || mode === 'ro'"
                             labelField="name" #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                     </sui-select-option>
@@ -30,12 +30,12 @@
                         <div class="twelve wide field">
                             <!-- STRING -->
                             <ng-container *ngIf="k !== 'payload' && (_hook.config[k].type === 'string' || !_hook.config[k].type)">
-                                <input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable || readonly"/>
+                                <input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable || mode === 'ro'"/>
                             </ng-container>
                             <!-- PASSWORD -->
                             <ng-container  *ngIf="k !== 'payload' && _hook.config[k].type === 'password'">
                                 <input type="password" [(ngModel)]="_hook.config[k].value"
-                                       [readonly]="!_hook.config[k].configurable || readonly"/>
+                                       [readonly]="!_hook.config[k].configurable || mode === 'ro'"/>
                             </ng-container>
                             <!-- MULTICHOICE -->
                             <ng-container *ngIf="k !== 'payload' && _hook.config[k].type === 'multiple'">
@@ -78,7 +78,7 @@
                 </ng-container>
                 <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
             </ng-container>
-            <button class="ui right floated green button" type="button" *ngIf="formMode" (click)="updateHook()"
+            <button class="ui right floated green button" type="button" *ngIf="mode === 'update'" (click)="updateHook()"
                     [disabled]="loading" [class.loading]="loading">
                 {{ 'btn_save' | translate }}
             </button>

@@ -41,11 +41,10 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     // Enable form button to update hook
-    @Input() formMode = false;
+    @Input() mode = 'create'; // create  update ro
 
     hooksModel: Array<WorkflowHookModel>;
     selectedHookModel: WorkflowHookModel;
-    readonly = false;
     loadingModels = true;
     displayConfig = false;
     invalidJSON = false;
@@ -144,7 +143,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             mode: 'application/json',
             lineWrapping: true,
             autoRefresh: true,
-            readOnly: this.readonly,
+            readOnly: this.mode === 'ro',
         };
         this.loadingModels = true;
         if (!this.node && this.hook) {

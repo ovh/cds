@@ -9,9 +9,8 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../model/permission.model';
 import { Project } from '../../../model/project.model';
-import { WNode, Workflow } from '../../../model/workflow.model';
+import { Workflow } from '../../../model/workflow.model';
 import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
-import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
 import { WorkflowStore } from '../../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
@@ -45,9 +44,6 @@ export class WorkflowShowComponent implements OnInit {
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
 
-    selectedNode: WNode;
-    selectedNodeID: number;
-    selectedNodeRef: string;
     selectedHookRef: string;
 
     selectedTab = 'workflows';
@@ -66,8 +62,7 @@ export class WorkflowShowComponent implements OnInit {
         private _router: Router,
         private _translate: TranslateService,
         private _toast: ToastService,
-        private _workflowCoreService: WorkflowCoreService,
-        private _workflowEventStore: WorkflowEventStore
+        private _workflowCoreService: WorkflowCoreService
     ) {
     }
 
@@ -99,10 +94,6 @@ export class WorkflowShowComponent implements OnInit {
         this.paramsSubs = this.activatedRoute.params.subscribe(() => {
             this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
             this._workflowCoreService.setWorkflowPreview(null);
-
-            if (!this.activatedRoute.snapshot.queryParams['node_ref']) {
-                this._workflowEventStore.unselectAll();
-            }
         });
 
         this.qpsSubs = this.activatedRoute.queryParams.subscribe(params => {
@@ -114,7 +105,6 @@ export class WorkflowShowComponent implements OnInit {
             } else {
                 delete this.selectedHookRef;
             }
-            this.selectNode();
         });
 
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
@@ -123,36 +113,6 @@ export class WorkflowShowComponent implements OnInit {
                     this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
                 }
             });
-    }
-
-    selectNode() {
-        if (!this.detailedWorkflow) {
-            return;
-        }
-        if (this.selectedNodeID) {
-            let n = Workflow.getNodeByID(this.selectedNodeID, this.detailedWorkflow);
-            if (n) {
-                this.selectedNode = n;
-                this._workflowEventStore.setSelectedNode(n, true);
-                return;
-            }
-        }
-        if (this.selectedNodeRef) {
-            let n = Workflow.getNodeByRef(this.selectedNodeRef, this.detailedWorkflow);
-            if (n) {
-                this.selectedNode = n;
-                this._workflowEventStore.setSelectedNode(n, true);
-                return;
-            }
-        }
-        if (this.selectedHookRef) {
-            let h = Workflow.getHookByRef(this.selectedHookRef, this.detailedWorkflow)
-            if (h) {
-                this._workflowEventStore.setSelectedHook(h);
-                return;
-            }
-        }
-        this._workflowEventStore.setSelectedNode(null, true);
     }
 
     savePreview() {

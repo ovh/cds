@@ -4,6 +4,7 @@ import {
     Input,
     Output
 } from '@angular/core';
+import {WorkflowNodeRun} from '@cds/model/workflow.run.model';
 import {PermissionValue} from 'app/model/permission.model';
 import {
     WNode,
@@ -24,7 +25,9 @@ export class WorkflowWNodeMenuEditComponent {
     // Project that contains the workflow
     @Input() workflow: Workflow;
     @Input() node: WNode;
+    @Input() noderun: WorkflowNodeRun;
     @Input() popup: IPopup;
+    @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
     permissionEnum = PermissionValue;
 

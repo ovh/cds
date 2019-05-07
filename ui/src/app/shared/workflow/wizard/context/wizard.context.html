@@ -18,7 +18,7 @@
             <div class="twelve wide field">
                 <ng-container>
                     <div class="ui input">
-                        <input type="text" [(ngModel)]="node.name" (ngModelChange)="pushChange()">
+                        <input type="text" [(ngModel)]="node.name" (ngModelChange)="pushChange()" [disabled]="readonly">
                     </div>
                 </ng-container>
             </div>
@@ -35,7 +35,7 @@
                             labelField="name"
                             valueField="id"
                             [isSearchable]="true"
-                            [isDisabled]="false"
+                            [isDisabled]="readonly"
                             #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions"
                                        [value]="option">
@@ -50,7 +50,9 @@
             </div>
             <div class="twelve wide field">
                 <div class="ui toggle checkbox ml10">
-                    <input type="checkbox" id="vcs_status" name="vcs_status" [(ngModel)]="node.context.disable_vcs_status" (ngModelChange)="pushChange()">
+                    <input type="checkbox" id="vcs_status" name="vcs_status"
+                           [disabled]="readonly"
+                           [(ngModel)]="node.context.disable_vcs_status" (ngModelChange)="pushChange()">
                     <label></label>
                 </div>
             </div>
@@ -63,11 +65,12 @@
                 <sui-select class="fluid selection"
                             name="selectIntegration"
                             [(ngModel)]="node.context.project_integration_id"
-                            (ngModelChange)="pushChange($event)"
+                            (ngModelChange)="pushChange()"
                             [options]="integrations"
                             labelField="name"
                             valueField="id"
                             [isSearchable]="true"
+                            [isDisabled]="readonly"
                             #selectIntegration>
                     <sui-select-option *ngFor="let t of selectIntegration.filteredOptions"
                                        [value]="t">
@@ -83,11 +86,12 @@
                 <sui-select class="fluid selection"
                             name="selectIntegration"
                             [(ngModel)]="node.context.environment_id"
-                            (ngModelChange)="pushChange($event)"
+                            (ngModelChange)="pushChange()"
                             [options]="environments"
                             labelField="name"
                             valueField="id"
                             [isSearchable]="true"
+                            [isDisabled]="readonly"
                             #selectEnv>
                     <sui-select-option *ngFor="let t of selectEnv.filteredOptions"
                                        [value]="t">
@@ -107,7 +111,9 @@
             </div>
             <div class="twelve wide field">
                 <div class="ui toggle checkbox ml10">
-                    <input type="checkbox" id="mutex" name="mutex" [(ngModel)]="node.context.mutex" (ngModelChange)="pushChange()">
+                    <input type="checkbox" id="mutex" name="mutex"
+                           [disabled]="readonly"
+                           [(ngModel)]="node.context.mutex" (ngModelChange)="pushChange()">
                     <label></label>
                 </div>
             </div>
@@ -116,7 +122,7 @@
 
 
     <button class="ui right floated green button"
-            *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE"
+            *ngIf="!readonly"
             [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
             [class.loading]="loading" (click)="updateWorkflow()">
         {{ 'btn_save' | translate }}

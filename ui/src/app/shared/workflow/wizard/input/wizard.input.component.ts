@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {Store} from '@ngxs/store';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {finalize, flatMap} from 'rxjs/operators';
@@ -26,7 +26,7 @@ declare var CodeMirror: any;
     styleUrls: ['./wizard.input.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowWizardNodeInputComponent {
+export class WorkflowWizardNodeInputComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -41,6 +41,7 @@ export class WorkflowWizardNodeInputComponent {
     get node(): WNode {
         return this.editableNode;
     }
+    @Input() readonly = true;
 
     @Output() inputChange = new EventEmitter<boolean>();
 
@@ -64,14 +65,18 @@ export class WorkflowWizardNodeInputComponent {
         private store: Store, private _variableService: VariableService,
         private _appWorkflowService: ApplicationWorkflowService, private _translate: TranslateService,
         private _toast: ToastService
-    ) {
+    ) {}
+
+    ngOnInit(): void {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
             mode: 'application/json',
             lineWrapping: true,
-            autoRefresh: true
+            autoRefresh: true,
+            readOnly: this.readonly
         };
+
     }
 
     init(data: WNode): void {

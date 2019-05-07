@@ -1,3 +1,4 @@
+import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
 import { GroupPermission } from 'app/model/group.model';
 import { Label } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
@@ -5,18 +6,60 @@ import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from '
 // ---------  MODAL  -----
 
 export class OpenEditModal {
-    static readonly type = '[WorkflowView] Open Edit Modal';
+    static readonly type = '[Workflow] Open Edit Modal';
     constructor(public payload: { node: WNode, hook: WNodeHook}) { }
 }
 
 export class CloseEditModal {
-    static readonly type = '[WorkflowView] Close Edit Modal';
+    static readonly type = '[Workflow] Close Edit Modal';
     constructor(public payload: {}) { }
 }
 
 export class UpdateModal {
-    static readonly type = '[WorkflowView] UpdateModal';
+    static readonly type = '[Workflow] UpdateModal';
     constructor(public payload: { workflow: Workflow }) {}
+}
+
+// ---------  Sidebar -----
+export class SidebarRunsMode {
+    static readonly type = '[Workflow] Sidebar run mode';
+    constructor(public payload: {}) {}
+}
+
+// ---------  Workflow Run ---
+export class ChangeToRunView {
+    static readonly  type = '[Workflow] Change to Run View';
+    constructor(public payload: {}) {}
+}
+
+export class GetWorkflowRun {
+    static readonly  type = '[Workflow] Get Workflow Run';
+    constructor(public payload: { projectKey: string, workflowName: string, num: number, updateRunsList?: boolean }) {}
+}
+
+export class GetWorkflowRuns {
+    static readonly  type = '[Workflow] Get Workflow Runs';
+    constructor(public payload: { projectKey: string, workflowName: string, limit: string }) {}
+}
+
+export class CleanWorkflowRun {
+    static readonly  type = '[Workflow] Clean Workflow Run';
+    constructor(public payload: {}) {}
+}
+
+export class GetWorkflowNodeRun {
+    static readonly  type = '[Workflow] Get Workflow Node Run';
+    constructor(public payload: { projectKey: string, workflowName: string, num: number, nodeRunID: number }) {}
+}
+
+export class SelectWorkflowNodeRun {
+    static readonly  type = '[Workflow] Select Workflow Node Run';
+    constructor(public payload: { workflowNodeRun: WorkflowNodeRun, node: WNode }) {}
+}
+
+export class UpdateWorkflowRunList {
+    static readonly  type = '[Workflow] Update Workflow Run List';
+    constructor(public payload: { workflowRun: WorkflowRun }) {}
 }
 
 // ---------  Workflow  -----
@@ -102,6 +145,10 @@ export class AddJoinWorkflow {
 }
 
 //  ------- Hooks --------- //
+export class SelectHook {
+    static readonly type = '[Workflow] Select hook';
+    constructor(public payload: { hook: WNodeHook, node: WNode }) { }
+}
 export class AddHookWorkflow {
     static readonly type = '[Workflow] Add Hook in Workflow';
     constructor(public payload: {

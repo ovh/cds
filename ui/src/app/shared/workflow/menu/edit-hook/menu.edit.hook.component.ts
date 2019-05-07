@@ -24,6 +24,7 @@ export class WorkflowHookMenuEditComponent {
     @Input() workflow: Workflow;
     @Input() hook: WNodeHook;
     @Input() popup: IPopup;
+    @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
     permissionEnum = PermissionValue;
 

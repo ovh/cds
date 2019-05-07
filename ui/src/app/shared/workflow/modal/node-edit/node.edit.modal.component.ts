@@ -47,6 +47,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
     projectSubscriber: Subscription;
     storeSub: Subscription;
+    readonly = true;
 
     constructor(private _modalService: SuiModalService, private _store: Store,
                 private _translate: TranslateService, private _toast: ToastService) {
@@ -62,6 +63,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
             if (!s.editModal) {
                 this.hook = undefined;
                 this.node = undefined;
+                this.readonly = true;
                 delete this.selected;
                 if (this.modal) {
                     this.modal.approve(true);
@@ -74,6 +76,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 this.node = cloneDeep(s.node);
                 this.groups = cloneDeep(this.node.groups);
                 this.beforeNode = cloneDeep(s.node);
+                this.readonly = !s.canEdit;
                 if (s.hook) {
                     this.hook = cloneDeep(s.hook);
                 }

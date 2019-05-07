@@ -10,7 +10,7 @@
                         (ngModelChange)="updateOutgoingHook()"
                         [options]="outgoingHookModels"
                         [isSearchable]="true"
-                        [isDisabled]="updateMode"
+                        [isDisabled]="mode === 'update' || mode === 'ro'"
                         labelField="name" #select>
                 <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                 </sui-select-option>
@@ -30,11 +30,11 @@
                     <div class="twelve wide field">
                         <input type="text" [(ngModel)]="hook.outgoing_hook.config[k].value"
                                (ngModelChange)="pushChange()"
-                               [readonly]="!hook.outgoing_hook.config[k].configurable || readonly"
+                               [readonly]="!hook.outgoing_hook.config[k].configurable || mode === 'ro'"
                                *ngIf="k !== 'payload' && (hook.outgoing_hook.config[k].type === 'string' || !hook.outgoing_hook.config[k].type)"/>
                         <input type="password" [(ngModel)]="hook.outgoing_hook.config[k].value"
                                (ngModelChange)="pushChange()"
-                               [readonly]="!hook.outgoing_hook.config[k].configurable || readonly"
+                               [readonly]="!hook.outgoing_hook.config[k].configurable || mode === 'ro'"
                                *ngIf="k !== 'payload' && hook.outgoing_hook.config[k].type === 'password'"/>
                         <ng-container *ngIf="k === 'payload' && hook.outgoing_hook.config[k].type === 'string'">
                             <codemirror
@@ -65,6 +65,7 @@
                                     (ngModelChange)="updateWorkflowData(true)"
                                     [options]="availableWorkflows"
                                     [isSearchable]="true"
+                                    [isDisabled]="mode === 'ro'"
                                     labelField="name" #selectWorkflow
                                     valueField="name">
                             <sui-select-option *ngFor="let option of selectWorkflow.filteredOptions" [value]="option">{{option.name}}</sui-select-option>
@@ -79,6 +80,7 @@
                                     (ngModelChange)="updateWorkflowOutgoingHook()"
                                     [options]="availableHooks"
                                     [isSearchable]="true"
+                                    [isDisabled]="mode === 'ro'"
                                     labelField="uuid"
                                     valueField="uuid"
                                     #selectHook>
@@ -101,7 +103,7 @@
             </ng-container>
             <div class="ui info message" *ngIf="!hook.outgoing_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
         </ng-container>
-        <ng-container *ngIf="updateMode && workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+        <ng-container *ngIf="mode === 'update' && workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
             <button class="ui right floated green button"
                     *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE"
                     [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"

@@ -24,7 +24,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() updateMode = false;
+    @Input() mode = 'create'; // create / edit / ro
 
     _outgoingHook: WNode;
     @Input('hook')
@@ -66,6 +66,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
             mode: 'application/json',
             lineWrapping: true,
             autoRefresh: true,
+            readOnly: this.mode === 'ro'
         };
 
         this.loadingModels = true;

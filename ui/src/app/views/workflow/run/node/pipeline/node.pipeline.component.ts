@@ -24,13 +24,16 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     @Input() project: Project;
     @Input('run')
     set run(data: WorkflowNodeRun) {
-         this.refreshNodeRun(data);
+        if (data) {
+            this.refreshNodeRun(data);
 
-         this.deleteInterval();
-         this.updateTime();
-         this.durationIntervalID = window.setInterval(() => {
-             this.updateTime();
-         }, 5000);
+            this.deleteInterval();
+            this.updateTime();
+            this.durationIntervalID = window.setInterval(() => {
+                this.updateTime();
+            }, 5000);
+        }
+
     }
 
     queryParamsSub: Subscription;
@@ -51,10 +54,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _durationService: DurationService,
         private _route: ActivatedRoute,
         private _router: Router
-    ) {
-
-
-    }
+    ) {}
 
     ngOnInit() {
         this.updateSelectedItems(this._route.snapshot.queryParams);

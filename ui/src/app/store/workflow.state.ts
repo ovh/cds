@@ -1,16 +1,19 @@
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {PermissionValue} from '@cds/model/permission.model';
+import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
+import {WorkflowRunService} from '@cds/service/workflow/run/workflow.run.service';
 import {WorkflowService} from '@cds/service/workflow/workflow.service';
+import {WorkflowSidebarMode} from '@cds/service/workflow/workflow.sidebar.store';
 import {Action, createSelector, State, StateContext} from '@ngxs/store';
 import {GroupPermission} from 'app/model/group.model';
 import {Label} from 'app/model/project.model';
 import {WNode, WNodeHook, WNodeTrigger, Workflow} from 'app/model/workflow.model';
 import {NavbarService} from 'app/service/navbar/navbar.service';
 import {cloneDeep} from 'lodash';
-import {first, tap} from 'rxjs/operators';
+import {finalize, first, tap} from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
-import {UpdateModal} from './workflow.action';
+import {UpdateModal, UpdateWorkflowRunList} from './workflow.action';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
@@ -18,8 +21,16 @@ export class WorkflowStateModel {
     node: WNode; // selected node
     hook: WNodeHook; // selected hook
     editModal: boolean; // is edit modal is opened
-    loading: boolean; // loading
+    loadingWorkflow: boolean;
+    loadingWorkflowRuns: boolean;
+    loadingWorkflowRun: boolean;
+    loadingWorkflowNodeRun: boolean;
     canEdit: boolean; // user permission
+
+    sidebar: string;
+    workflowRun: WorkflowRun;
+    workflowNodeRun: WorkflowNodeRun;
+    listRuns: Array<WorkflowRun>;
 }
 
 export function getInitialWorkflowState(): WorkflowStateModel {
@@ -29,8 +40,15 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         node: null,
         hook: null,
         editModal: false,
-        loading: true,
-        canEdit: false
+        loadingWorkflow: false,
+        loadingWorkflowRuns: false,
+        loadingWorkflowRun: false,
+        loadingWorkflowNodeRun: false,
+        canEdit: false,
+        workflowRun: null,
+        workflowNodeRun: null,
+        listRuns: new Array<WorkflowRun>(),
+        sidebar: WorkflowSidebarMode.RUNS
     };
 }
 
@@ -48,7 +66,7 @@ export class WorkflowState {
     }
 
     constructor(private _http: HttpClient, private _navbarService: NavbarService,
-                private _workflowService: WorkflowService) {
+                private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService) {
     }
 
     @Action(actionWorkflow.OpenEditModal)
@@ -66,10 +84,16 @@ export class WorkflowState {
     @Action(actionWorkflow.CloseEditModal)
     closeEditModal(ctx: StateContext<WorkflowStateModel>) {
         const state = ctx.getState();
+        let node = state.node;
+        let hook = state.hook;
+        if (!state.workflowNodeRun) {
+            node = null;
+            hook = null;
+        }
         ctx.setState({
             ...state,
-            node: null,
-            hook: null,
+            node: node,
+            hook: hook,
             editModal: false
         })
     }
@@ -86,7 +110,7 @@ export class WorkflowState {
                 projectKey: action.payload.projectKey,
                 workflow: wf,
                 canEdit: true,
-                loading: false
+                loadingWorkflow: false
             });
             ctx.dispatch(new ActionProject.AddWorkflowInProject(wf));
         }));
@@ -102,7 +126,7 @@ export class WorkflowState {
                 ...state,
                 projectKey: action.payload.projectKey,
                 workflow: null,
-                loading: false,
+                loadingWorkflow: false,
             });
         }
 
@@ -193,7 +217,7 @@ export class WorkflowState {
                 editModal: false,
                 hook: null,
                 node: null,
-                loading: false,
+                loadingWorkflow: false,
                 canEdit: false
             });
 
@@ -407,6 +431,17 @@ export class WorkflowState {
     }
 
     //  ------- Hooks --------- //
+    @Action(actionWorkflow.SelectHook)
+    selectHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectHook) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            node: action.payload.node,
+            hook: action.payload.hook,
+            sidebar: WorkflowSidebarMode.EDIT_HOOK
+        });
+    }
+
     @Action(actionWorkflow.AddHookWorkflow)
     addHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddHookWorkflow) {
         const state = ctx.getState();
@@ -465,7 +500,7 @@ export class WorkflowState {
             ...state.workflow,
             workflow_data: {
                 ...state.workflow.workflow_data,
-                node: root
+                node: root,
             }
         };
 
@@ -473,6 +508,12 @@ export class WorkflowState {
             projectKey: action.payload.projectKey,
             workflowName: action.payload.workflowName,
             changes: workflow
+        })).pipe(tap( () => {
+            const stateD = ctx.getState();
+            ctx.setState({
+                ...stateD,
+                hook: null,
+            });
         }));
     }
 
@@ -611,11 +652,15 @@ export class WorkflowState {
         return this._workflowService.getWorkflow(action.payload.projectKey, action.payload.workflowName).pipe(first(),
             tap(wf => {
                 const state = ctx.getState();
+                let canEdit = wf.permission === PermissionValue.READ_WRITE_EXECUTE;
                 ctx.setState({
                     ...state,
                     projectKey: action.payload.projectKey,
                     workflow: wf,
-                    canEdit: wf.permission === PermissionValue.READ_WRITE_EXECUTE
+                    workflowRun: null,
+                    workflowNodeRun: null,
+                    canEdit: state.workflowRun ? false : canEdit,
+                    sidebar: WorkflowSidebarMode.RUNS
                 });
             }));
     }
@@ -667,4 +712,162 @@ export class WorkflowState {
     clearCache(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CleanWorkflowState) {
         ctx.setState(getInitialWorkflowState());
     }
+
+    @Action(actionWorkflow.ChangeToRunView)
+    changeToRunView(ctx: StateContext<WorkflowStateModel>) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            workflowNodeRun: null,
+            canEdit: false,
+            sidebar: WorkflowSidebarMode.RUNS
+        });
+    }
+
+
+    @Action(actionWorkflow.GetWorkflowRun)
+    getWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            loadingWorkflowRun: true,
+        });
+        return this._workflowRunService
+            .getWorkflowRun(action.payload.projectKey, action.payload.workflowName, action.payload.num).pipe(first(),
+                finalize(() => {
+                    const stateFin = ctx.getState();
+                    ctx.setState({
+                        ...stateFin,
+                        loadingWorkflowRun: false
+                    });
+                }),
+            tap((wr: WorkflowRun) => {
+                const stateRun = ctx.getState();
+                let wnr = stateRun.workflowNodeRun;
+                if (wnr && wr.nodes && wr.nodes[wnr.workflow_node_id]) {
+                    let wnrUpdated = wr.nodes[wnr.workflow_node_id].find(wnnr => wnnr.id === wnr.id);
+                    if (wnrUpdated) {
+                        wnr = wnrUpdated;
+                    }
+                }
+                ctx.setState({
+                    ...stateRun,
+                    projectKey: action.payload.projectKey,
+                    workflowRun: wr,
+                    workflowNodeRun: wnr
+                });
+                if (action.payload.updateRunsList) {
+                    ctx.dispatch(new UpdateWorkflowRunList({workflowRun: wr}));
+                }
+                return wr;
+            }));
+
+    }
+
+    @Action(actionWorkflow.GetWorkflowRuns)
+    getWorkflowRuns(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRuns) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            loadingWorkflowRuns: true,
+        });
+        return this._workflowRunService
+            .runs(action.payload.projectKey, action.payload.workflowName, action.payload.limit).pipe(first(),
+                finalize(() => {
+                    const stateFin = ctx.getState();
+                    ctx.setState({
+                        ...stateFin,
+                        loadingWorkflowRuns: false
+                    });
+                }),
+                tap((wrs: Array<WorkflowRun>) => {
+                    const stateRun = ctx.getState();
+                    ctx.setState({
+                        ...stateRun,
+                        projectKey: action.payload.projectKey,
+                        listRuns: wrs,
+                    });
+                }));
+
+    }
+
+    @Action(actionWorkflow.GetWorkflowNodeRun)
+    getWorkflowNodeRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowNodeRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            loadingWorkflowNodeRun: true,
+        });
+        return this._workflowRunService
+            .getWorkflowNodeRun(action.payload.projectKey, action.payload.workflowName,
+                action.payload.num, action.payload.nodeRunID)
+            .pipe(first(), finalize(() => {
+                const stateFin = ctx.getState();
+                ctx.setState({
+                    ...stateFin,
+                    loadingWorkflowNodeRun: false
+                });
+            }), tap((wnr: WorkflowNodeRun) => {
+                const stateNR = ctx.getState();
+                let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
+                ctx.setState({
+                    ...stateNR,
+                    projectKey: action.payload.projectKey,
+                    workflowNodeRun: wnr,
+                    node: node,
+                    sidebar: WorkflowSidebarMode.RUN_NODE
+                });
+            }));
+    }
+
+    @Action(actionWorkflow.CleanWorkflowRun)
+    cleanWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CleanWorkflowRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            workflowRun: null,
+            workflowNodeRun: null,
+            canEdit: state.workflow.permission === PermissionValue.READ_WRITE_EXECUTE,
+            sidebar: WorkflowSidebarMode.RUNS
+        });
+
+    }
+
+    @Action(actionWorkflow.UpdateWorkflowRunList)
+    updateWorkflowRunList(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateWorkflowRunList) {
+        const state = ctx.getState();
+        let runs = cloneDeep(state.listRuns);
+        let index = runs.findIndex(wr => wr.id === action.payload.workflowRun.id);
+        if (index === -1) {
+            runs.push(action.payload.workflowRun);
+
+        } else {
+            runs[index] = action.payload.workflowRun;
+        }
+        ctx.setState({
+            ...state,
+            listRuns: runs,
+        });
+    }
+
+    @Action(actionWorkflow.SelectWorkflowNodeRun)
+    selectWorkflowNodeRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectWorkflowNodeRun) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            workflowNodeRun: action.payload.workflowNodeRun,
+            node: action.payload.node,
+            sidebar: WorkflowSidebarMode.RUN_NODE
+        });
+    }
+
+    @Action(actionWorkflow.SidebarRunsMode)
+    sidebarRunsMode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SidebarRunsMode) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            sidebar: WorkflowSidebarMode.RUNS
+        });
+    }
+
 }

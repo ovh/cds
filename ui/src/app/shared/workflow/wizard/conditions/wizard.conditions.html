@@ -9,7 +9,7 @@
              *ngIf="!editableNode || !editableNode.context || !editableNode.context.conditions || !editableNode.context.conditions.plain || editableNode.context.conditions.plain.length === 0">
                 <div class="empty">
                 {{ 'workflow_node_trigger_condition_no' | translate }}
-                <button class="ui right floated blue button" (click)="addEmptyCondition()">
+                <button class="ui right floated blue button" (click)="addEmptyCondition()" *ngIf="!readonly">
                     {{ 'btn_add' | translate }}
                 </button>
                 </div>
@@ -21,7 +21,7 @@
                     <th class="four wide">{{ 'workflow_node_trigger_condition_name' | translate }}</th>
                     <th class="three wide">{{ 'workflow_node_trigger_condition_operator' | translate }}</th>
                     <th class="five wide">{{ 'workflow_node_trigger_condition_value' | translate }}</th>
-                    <th class="three wide" *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE">
+                    <th class="three wide" *ngIf="!readonly">
                         <button class="ui right floated blue icon button" (click)="addEmptyCondition()">
                             <i class="plus icon"></i>
                         </button>
@@ -38,7 +38,7 @@
                                             (ngModelChange)="pushChange('name')"
                                             [options]="conditionNames"
                                             [isSearchable]="true"
-                                            [isDisabled]="false"
+                                            [isDisabled]="readonly"
                                             #selectName>
                                     <sui-select-option *ngFor="let option of selectName.filteredOptions"
                                                        [value]="option">
@@ -56,7 +56,7 @@
                                 (ngModelChange)="pushChange('operator')"
                                 [options]="operators"
                                 [isSearchable]="true"
-                                [isDisabled]="false"
+                                [isDisabled]="readonly"
                                 labelField="value"
                                 valueField="key"
                                         #operatorSelect
@@ -71,7 +71,7 @@
                     </td>
                     <td>
                         <div
-                            *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE; then valueWrite;else valueRead"></div>
+                            *ngIf="!readonly; then valueWrite;else valueRead"></div>
                         <ng-template #valueWrite>
                             <div class="ui fluid input">
                                 <ng-container *ngIf="c.variable === 'cds.status' && statuses">
@@ -96,7 +96,7 @@
                             <div class="ui input">{{c.value}}</div>
                         </ng-template>
                     </td>
-                    <td class="center" *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE">
+                    <td class="center" *ngIf="!readonly">
                         <app-delete-button (event)="removeCondition(i)"></app-delete-button>
                     </td>
                 </tr>
@@ -145,6 +145,7 @@
         </div>
     </ng-container>
     <button class="ui right floated green button" (click)="updateWorkflow()"
+            *ngIf="!readonly"
             [class.loading]="loading" [disabled]="loading">
         {{ 'btn_save' | translate }}
     </button>

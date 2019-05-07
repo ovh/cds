@@ -989,6 +989,7 @@
   "workflow_node_context_payload_read_only": "Payload utilisé (lecture seule)",
   "workflow_node_menu_trigger": "Déclencher",
   "workflow_node_menu_edit": "Editer",
+  "workflow_node_menu_edit_ro": "Voir la configuration",
   "workflow_run_node_job_queued": "Attente depuis {{time}}",
   "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : ^[a-zA-Z0-9._-]{1,}$",
   "workflow_wizard_description": "Choisissez vos options de workflow",

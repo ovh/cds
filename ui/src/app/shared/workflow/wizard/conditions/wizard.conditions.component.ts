@@ -51,7 +51,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     get node(): WNode {
         return this.editableNode;
     }
-    @Input() editMode = true;
+    @Input() readonly = true;
 
     @Output() conditionsChange = new EventEmitter<boolean>();
 
@@ -68,15 +68,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     constructor(private store: Store, private _variableService: VariableService, private _workflowService: WorkflowService,
                 private _toast: ToastService, private _translate: TranslateService) {
         super();
-        this.codeMirrorConfig = {
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            mode: 'lua',
-            lineWrapping: true,
-            lineNumbers: true,
-            autoRefresh: true,
-            readOnly: true,
-        };
     }
 
     getData(): Array<WorkflowNodeCondition> {
@@ -84,9 +75,15 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     }
 
     ngOnInit(): void {
-        if (this.editMode) {
-            this.codeMirrorConfig['readOnly'] = false;
-        }
+        this.codeMirrorConfig = {
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            mode: 'lua',
+            lineWrapping: true,
+            lineNumbers: true,
+            autoRefresh: true,
+            readOnly: this.readonly,
+        };
         this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
             .subscribe((suggest) => this.suggest = suggest);
 

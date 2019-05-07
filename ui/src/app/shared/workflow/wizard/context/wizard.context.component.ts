@@ -35,6 +35,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     get node(): WNode {
         return this.editableNode;
     }
+    @Input() readonly = true;
 
     @Output() contextChange = new EventEmitter<boolean>();
 
@@ -46,7 +47,8 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     showCheckStatus = false;
 
     constructor(private _store: Store, private _appService: ApplicationService, private _translate: TranslateService,
-                private _toast: ToastService) {}
+                private _toast: ToastService) {
+    }
 
     ngOnInit() {
         let voidEnv = new Environment();

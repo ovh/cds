@@ -989,6 +989,7 @@
   "workflow_node_context_payload": "Default payload",
   "workflow_node_context_payload_read_only": "Current Payload (read-only)",
   "workflow_node_menu_edit": "Edit",
+  "workflow_node_menu_edit_ro": "Show configuration",
   "workflow_run_node_job_queued": "Queued {{time}} ago",
   "workflow_update_name_error": "Invalid workflow name. Allowed pattern is: ^[a-zA-Z0-9._-]{1,}$",
   "workflow_wizard_description": "Choose your workflow options",

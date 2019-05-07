@@ -60,9 +60,7 @@ import { WorkerModelService } from './worker-model/worker-model.service';
 import { WorkflowTemplateService } from './workflow-template/workflow-template.service';
 import { WorkflowRunService } from './workflow/run/workflow.run.service';
 import { WorkflowCoreService } from './workflow/workflow.core.service';
-import { WorkflowEventStore } from './workflow/workflow.event.store';
 import { WorkflowService } from './workflow/workflow.service';
-import { WorkflowSidebarStore } from './workflow/workflow.sidebar.store';
 import { WorkflowStore } from './workflow/workflow.store';
 
 @NgModule({})
@@ -121,8 +119,6 @@ export class ServicesModule {
                 WarningStore,
                 WorkerModelService,
                 WorkflowTemplateService,
-                WorkflowEventStore,
-                WorkflowSidebarStore,
                 WorkflowService,
                 WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
@@ -187,8 +183,7 @@ export {
     WorkflowTemplateService,
     WorkflowStore,
     WorkflowRunService,
-    WorkflowCoreService,
-    WorkflowSidebarStore,
-    WorkflowEventStore
+    WorkflowCoreService
+
 };
 

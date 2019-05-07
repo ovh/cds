@@ -10,7 +10,6 @@ import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { WorkflowCoreService } from '../../../../service/workflow/workflow.core.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -61,7 +60,6 @@ export class WorkflowSidebarCodeComponent {
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _workflowCore: WorkflowCoreService,
-        private _workflowEventStore: WorkflowEventStore,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
@@ -102,7 +100,6 @@ export class WorkflowSidebarCodeComponent {
     }
 
     unselectAll() {
-        this._workflowEventStore.unselectAll();
         let url = this._router.createUrlTree(['./'], {
             relativeTo: this._activatedRoute,
             queryParams: {}

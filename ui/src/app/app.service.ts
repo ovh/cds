@@ -1,21 +1,17 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { cloneDeep } from 'lodash';
-import { filter } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
+import {filter, first} from 'rxjs/operators';
 import { Broadcast, BroadcastEvent } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
-import { PipelineStatus } from './model/pipeline.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
-import { WorkflowNodeRun, WorkflowRun } from './model/workflow.run.model';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { BroadcastStore } from './service/broadcast/broadcast.store';
 import { RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from './service/workflow/workflow.event.store';
 import { ToastService } from './shared/toast/ToastService';
 import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
 import { ApplicationsState, ApplicationsStateModel } from './store/applications.state';
@@ -23,7 +19,12 @@ import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from 
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
-import {ExternalChangeWorkflow, GetWorkflow} from './store/workflow.action';
+import {
+    ExternalChangeWorkflow,
+    GetWorkflow,
+    GetWorkflowRun,
+    UpdateWorkflowRunList
+} from './store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from './store/workflow.state';
 
 @Injectable()
@@ -32,7 +33,6 @@ export class AppService {
     // Information about current route
     routeParams: {};
 
-    filterSub: Subscription;
     filter: TimelineFilter;
 
     constructor(
@@ -40,12 +40,11 @@ export class AppService {
         private _routeActivated: ActivatedRoute,
         private _authStore: AuthentificationStore,
         private _translate: TranslateService,
-        private _workflowEventStore: WorkflowEventStore,
         private _broadcastStore: BroadcastStore,
         private _timelineStore: TimelineStore,
         private _toast: ToastService,
         private _workflowRunService: WorkflowRunService,
-        private store: Store
+        private _store: Store
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
@@ -116,7 +115,7 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        this.store.selectOnce(ProjectState)
+        this._store.selectOnce(ProjectState)
             .pipe(
                 filter((projState: ProjectStateModel) => {
                     return projState && projState.project && projState.project.key === event.project_key;
@@ -128,18 +127,18 @@ export class AppService {
                 if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
                     // if modification from another user, display a notification
                     if (event.username !== this._authStore.getUser().username) {
-                        this.store.dispatch(new projectActions.ExternalChangeProject({ projectKey: projectInCache.key }));
+                        this._store.dispatch(new projectActions.ExternalChangeProject({ projectKey: projectInCache.key }));
                         this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
                         return;
                     }
                 } else {
                     // If no working on current project, remove from cache
-                    this.store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key }));
+                    this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key }));
                     return;
                 }
 
                 if (event.type_event === EventType.PROJECT_DELETE) {
-                    this.store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key }));
+                    this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key }));
                     return;
                 }
 
@@ -162,7 +161,7 @@ export class AppService {
                     opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
                     opts.push(new LoadOpts('withLabels', 'labels'));
                 }
-                this.store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts }));
+                this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts }));
             });
     }
 
@@ -173,7 +172,7 @@ export class AppService {
         const payload = { projectKey: event.project_key, applicationName: event.application_name };
         const appKey = event.project_key + '/' + event.application_name;
 
-        this.store.selectOnce(ApplicationsState).subscribe((appState: ApplicationsStateModel) => {
+        this._store.selectOnce(ApplicationsState).subscribe((appState: ApplicationsStateModel) => {
             if (!appState.applications || !Object.keys(appState.applications).length) {
                 return;
             }
@@ -183,8 +182,8 @@ export class AppService {
             }
 
             if (event.type_event === EventType.APPLICATION_DELETE) {
-                this.store.dispatch(new DeleteFromCacheApplication(payload));
-                this.store.dispatch(new projectActions.DeleteApplicationInProject({ applicationName: event.application_name }));
+                this._store.dispatch(new DeleteFromCacheApplication(payload));
+                this._store.dispatch(new projectActions.DeleteApplicationInProject({ applicationName: event.application_name }));
                 return;
             }
 
@@ -193,16 +192,16 @@ export class AppService {
                 && this.routeParams['appName'] === event.application_name) {
                 // modification by another user
                 if (event.username !== this._authStore.getUser().username) {
-                    this.store.dispatch(new ExternalChangeApplication(payload));
+                    this._store.dispatch(new ExternalChangeApplication(payload));
                     this._toast.info('', this._translate.instant('warning_application', { username: event.username }));
                     return;
                 }
             } else {
-                this.store.dispatch(new DeleteFromCacheApplication(payload))
+                this._store.dispatch(new DeleteFromCacheApplication(payload))
                 return;
             }
 
-            this.store.dispatch(new ResyncApplication(payload));
+            this._store.dispatch(new ResyncApplication(payload));
         });
 
     }
@@ -213,17 +212,17 @@ export class AppService {
         }
 
         const pipKey = event.project_key + '-' + event.pipeline_name;
-        this.store.selectOnce(PipelinesState).subscribe((pips: PipelinesStateModel) => {
+        this._store.selectOnce(PipelinesState).subscribe((pips: PipelinesStateModel) => {
             if (!pips || !pips.pipelines || !pips.pipelines[pipKey]) {
                 return;
             }
 
             if (event.type_event === EventType.PIPELINE_DELETE) {
-                this.store.dispatch(new DeleteFromCachePipeline({
+                this._store.dispatch(new DeleteFromCachePipeline({
                     projectKey: event.project_key,
                     pipelineName: event.pipeline_name
                 }));
-                this.store.dispatch(new projectActions.DeletePipelineInProject({ pipelineName: event.pipeline_name }));
+                this._store.dispatch(new projectActions.DeletePipelineInProject({ pipelineName: event.pipeline_name }));
                 return;
             }
 
@@ -231,7 +230,7 @@ export class AppService {
             if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
                 && this.routeParams['pipName'] === event.pipeline_name) {
                 if (event.username !== this._authStore.getUser().username) {
-                    this.store.dispatch(new ExternalChangePipeline({
+                    this._store.dispatch(new ExternalChangePipeline({
                         projectKey: event.project_key,
                         pipelineName: event.pipeline_name
                     }));
@@ -239,14 +238,14 @@ export class AppService {
                     return;
                 }
             } else {
-                this.store.dispatch(new DeleteFromCachePipeline({
+                this._store.dispatch(new DeleteFromCachePipeline({
                     projectKey: event.project_key,
                     pipelineName: event.pipeline_name
                 }));
                 return;
             }
 
-            this.store.dispatch(new ResyncPipeline({
+            this._store.dispatch(new ResyncPipeline({
                 projectKey: event.project_key,
                 pipelineName: event.pipeline_name
             }))
@@ -257,7 +256,7 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        this.store.selectOnce(WorkflowState)
+        this._store.selectOnce(WorkflowState)
             .pipe(filter((wf) => wf != null))
             .subscribe((wfs: WorkflowStateModel) => {
                 if (!wfs || !wfs.workflow ) {
@@ -267,7 +266,7 @@ export class AppService {
                     return;
                 }
                 if (event.type_event === EventType.WORKFLOW_DELETE) {
-                    this.store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name }));
+                    this._store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name }));
                     return;
                 }
 
@@ -275,7 +274,7 @@ export class AppService {
                 if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
                     && this.routeParams['workflowName'] === event.workflow_name) {
                     if (event.username !== this._authStore.getUser().username) {
-                        this.store.dispatch(new ExternalChangeWorkflow({
+                        this._store.dispatch(new ExternalChangeWorkflow({
                             projectKey: event.project_key,
                             workflowName: event.workflow_name
                         }));
@@ -286,7 +285,7 @@ export class AppService {
                     return;
                 }
 
-                this.store.dispatch(new GetWorkflow({
+                this._store.dispatch(new GetWorkflow({
                     projectKey: event.project_key,
                     workflowName: event.workflow_name
                 }));
@@ -302,23 +301,29 @@ export class AppService {
         }
         switch (event.type_event) {
             case EventType.RUN_WORKFLOW_PREFIX:
-                let wr = WorkflowRun.fromEventRunWorkflow(event);
-                this._workflowEventStore.broadcastWorkflowRun(event.project_key, event.workflow_name, wr);
+                if (this.routeParams['number'] === event.workflow_run_num.toString()) {
+                    // if same run number , then update store
+                    this._store.dispatch(
+                        new GetWorkflowRun({
+                                projectKey: event.project_key,
+                                workflowName: event.workflow_name,
+                                num: event.workflow_run_num,
+                                updateRunsList: true
+                        }));
+                } else {
+                    this._workflowRunService
+                        .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)
+                        .pipe(first())
+                        .subscribe(wr => {
+                        this._store.dispatch(new UpdateWorkflowRunList({workflowRun: wr}));
+                    });
+                }
                 break;
             case EventType.RUN_WORKFLOW_NODE:
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
-                    let wnr = WorkflowNodeRun.fromEventRunWorkflowNode(event);
-                    if (PipelineStatus.isDone(wnr.status)) {
-                        // Usefull to load tests and artifacts
-                        this._workflowRunService.getWorkflowNodeRun(
-                            event.project_key,
-                            event.workflow_name,
-                            wnr.num,
-                            wnr.id
-                        ).subscribe((wfNodeRun) => this._workflowEventStore.broadcastNodeRunEvents(<WorkflowNodeRun>wfNodeRun));
-                    } else {
-                        this._workflowEventStore.broadcastNodeRunEvents(wnr);
-                    }
+                    this._store.dispatch(new GetWorkflowRun(
+                        {projectKey: event.project_key, workflowName: event.workflow_name,
+                            num: event.workflow_run_num}));
                 }
                 break;
         }

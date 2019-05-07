@@ -1,9 +1,15 @@
 import { Component, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import {CleanWorkflowState, GetWorkflow, UpdateFavoriteWorkflow} from 'app/store/workflow.action';
+import {
+    CleanWorkflowRun,
+    CleanWorkflowState,
+    GetWorkflow, GetWorkflowRuns, SelectHook,
+    SidebarRunsMode,
+    UpdateFavoriteWorkflow
+} from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
@@ -12,12 +18,9 @@ import { filter, finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
 import { Workflow } from '../../model/workflow.model';
 import { WorkflowRun } from '../../model/workflow.run.model';
-import { RouterService } from '../../service/router/router.service';
-import { WorkflowRunService } from '../../service/workflow/run/workflow.run.service';
 import { WorkflowCoreService } from '../../service/workflow/workflow.core.service';
-import { WorkflowEventStore } from '../../service/workflow/workflow.event.store';
 import { WorkflowService } from '../../service/workflow/workflow.service';
-import { WorkflowSidebarMode, WorkflowSidebarStore } from '../../service/workflow/workflow.sidebar.store';
+import { WorkflowSidebarMode } from '../../service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from '../../shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
@@ -46,7 +49,6 @@ export class WorkflowComponent {
     loadingFav = false;
 
     // Sidebar data
-    sideBarModeSubscription: Subscription;
     sidebarMode = WorkflowSidebarMode.RUNS;
     sidebarModes = WorkflowSidebarMode;
 
@@ -75,11 +77,7 @@ export class WorkflowComponent {
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _workflowService: WorkflowService,
-        private _workflowRunService: WorkflowRunService,
-        private _workflowEventStore: WorkflowEventStore,
         private _router: Router,
-        private _routerService: RouterService,
-        public _sidebarStore: WorkflowSidebarStore,
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
@@ -100,8 +98,6 @@ export class WorkflowComponent {
                 }
             });
 
-        this.initSidebar();
-
         this.qpRouteSubscription = this._activatedRoute.queryParams.subscribe(qps => {
             if (qps['node_id']) {
                 this.selectedNodeID = Number(qps['node_id']);
@@ -120,19 +116,24 @@ export class WorkflowComponent {
 
         this._store.dispatch(new CleanWorkflowState());
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+            this.sidebarMode = s.sidebar;
             if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
                 this.initRuns(s.projectKey, s.workflow.name);
             }
             if (s.workflow) {
-                console.log('Update workflow');
                 this.workflow = s.workflow;
 
                 if (this.selectecHookRef) {
                     let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
                     if (h) {
-                        this._workflowEventStore.setSelectedHook(h);
+                        this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
                     }
                 }
+            }
+            if (s.workflowRun) {
+                this.workflowRun = s.workflowRun;
+            } else {
+                delete this.workflowRun;
             }
         });
 
@@ -150,39 +151,18 @@ export class WorkflowComponent {
             }
         });
 
-
-
         // unselect all when returning on workflow main page
         this.eventsRouteSubscription = this._router.events.subscribe(e => {
             if (e instanceof NavigationStart && this.workflow) {
                 if (e.url.indexOf('/project/' + this.project.key + '/workflow/') === 0 && e.url.indexOf('/run/') === -1) {
-                    this._workflowEventStore.setSelectedRun(null);
+                    this._store.dispatch(new CleanWorkflowRun({}));
                 }
-            }
-        });
-
-        this.runSubscription = this._workflowEventStore.selectedRun().subscribe(wr => {
-            if (wr) {
-                this.workflowRun = wr;
-            } else {
-                delete this.workflowRun;
             }
         });
     }
 
     initRuns(key: string, workflowName: string): void {
-        this._workflowEventStore.setListingRuns(true);
-        this._workflowRunService.runs(key, workflowName, '50')
-            .subscribe(wrs => {
-                this._workflowEventStore.setListingRuns(false);
-                this._workflowEventStore.pushWorkflowRuns(wrs);
-            });
-    }
-
-    initSidebar(): void {
-        // Mode of sidebar
-        this.sideBarModeSubscription = this._sidebarStore.sidebarMode()
-            .subscribe(m => this.sidebarMode = m);
+        this._store.dispatch(new GetWorkflowRuns({projectKey: key, workflowName: workflowName, limit: '50'}));
     }
 
     updateFav() {
@@ -198,20 +178,7 @@ export class WorkflowComponent {
     }
 
     changeToRunsMode(): void {
-        let activatedRoute = this._routerService.getActivatedRoute(this._activatedRoute);
-        let queryParams: Params;
-        if (activatedRoute.snapshot.params['nodeId'] && activatedRoute.snapshot.queryParams['name']) {
-            queryParams = {
-                'name': activatedRoute.snapshot.queryParams['name'],
-            };
-        }
-
-        this._router.navigate([], { relativeTo: activatedRoute, queryParams });
-        if (!activatedRoute.snapshot.params['nodeId']) {
-            this._workflowEventStore.setSelectedNode(null, true);
-            this._workflowEventStore.setSelectedNodeRun(null, true);
-        }
-        this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
+        this._store.dispatch(new SidebarRunsMode({}));
     }
 
     showTemplateFrom(): void {

@@ -1,4 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
+import {Store} from '@ngxs/store';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { PermissionValue } from '../../../../model/permission.model';
@@ -6,7 +8,6 @@ import { Project } from '../../../../model/project.model';
 import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
 import { WNode, WNodeHook, Workflow } from '../../../../model/workflow.model';
 import { HookService } from '../../../../service/hook/hook.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { DeleteModalComponent } from '../../../modal/delete/delete.component';
 import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
@@ -39,13 +40,13 @@ export class WorkflowSidebarHookComponent implements OnInit {
 
     constructor(
         private _hookService: HookService,
-        private _workflowEventStore: WorkflowEventStore,
+        private _store: Store,
     ) {
     }
 
     ngOnInit(): void {
-        this.subHook = this._workflowEventStore.selectedHook().subscribe(h => {
-            this.hook = h;
+        this.subHook = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this.hook = s.hook;
             if (this.hook) {
                 this.node = Workflow.getNodeByID(this.hook.node_id, this.workflow);
                 this.loadHookDetails();

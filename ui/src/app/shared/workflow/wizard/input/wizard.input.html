@@ -6,7 +6,7 @@
             [project]="project"
             [parameters]="editableNode.context.default_pipeline_parameters"
             [paramsRef]="currentPipeline.parameters"
-            mode="launcher"
+            [mode]="readonly?'ro':'launcher'"
             [suggest]="suggest"
             [canDelete]="false"
             (event)="parameterEvent($event)">
@@ -39,11 +39,11 @@
             </ng-container>
         </div>
     </ng-container>
-    <button class="ui right floated green button"
-            *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE"
-            [disabled]="loadingBranches || loading || (workflow.from_repository && workflow.from_repository.length > 0)"
-            [class.loading]="loading" (click)="updateWorkflow()">
-        {{ 'btn_save' | translate }}
-    </button>
-
+    <ng-container *ngIf="!readonly">
+        <button class="ui right floated green button"
+                [disabled]="loadingBranches || loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.loading]="loading" (click)="updateWorkflow()">
+            {{ 'btn_save' | translate }}
+        </button>
+    </ng-container>
 </div>

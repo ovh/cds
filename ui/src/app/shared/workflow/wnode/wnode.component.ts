@@ -4,8 +4,8 @@ import {PipelineStatus} from '@cds/model/pipeline.model';
 import {Project} from '@cds/model/project.model';
 import {WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from '@cds/model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '@cds/model/workflow.run.model';
-import {WorkflowEventStore} from '@cds/service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
+import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import {PermissionValue} from 'app/model/permission.model';
@@ -19,7 +19,7 @@ import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edi
 import {
     AddHookWorkflow,
     AddJoinWorkflow,
-    AddNodeTriggerWorkflow, OpenEditModal,
+    AddNodeTriggerWorkflow, OpenEditModal, SelectWorkflowNodeRun,
     UpdateHookWorkflow,
     UpdateWorkflow
 } from 'app/store/workflow.action';
@@ -43,17 +43,15 @@ export class WorkflowWNodeComponent implements OnInit {
     @ViewChild('menu')
     menu: WorkflowWNodeMenuEditComponent;
 
-    // Selected node
-    isSelected = false;
-
     // Selected workflow run
     workflowRun: WorkflowRun;
     currentNodeRun: WorkflowNodeRun;
     warnings = 0;
     loading: boolean;
 
+    readonly = true;
+
     // Subscription
-    subSelectedNode: Subscription;
     subNodeRun: Subscription;
     subWorkflowRun: Subscription;
 
@@ -72,76 +70,52 @@ export class WorkflowWNodeComponent implements OnInit {
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
-        private _workflowEventStore: WorkflowEventStore,
         private _store: Store,
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-    ) { }
+    ) {
+
+    }
 
     ngOnInit(): void {
-        // Subscribe to node run events
-        this.subNodeRun = this._workflowEventStore.nodeRunEvents().subscribe(wnr => {
-            if (wnr) {
-                if (!this.workflowRun || this.workflowRun.id !== wnr.workflow_run_id) {
-                    return;
-                }
-                if (wnr.workflow_node_id !== this.node.id) {
-                    return;
-                }
-                this.currentNodeRun = wnr;
-            }
-        });
-
-        this.subSelectedNode = this._workflowEventStore.selectedNode()
-            .subscribe(n => {
-                if (n) {
-                    this.isSelected = (n.id === this.node.id);
-                } else {
-                    this.isSelected = false;
-                }
-            });
-
-        // Subscribe to workflow run events
-        this.subWorkflowRun = this._workflowEventStore.selectedRun().subscribe(wr => {
-            this.warnings = 0;
-            if (!wr && !this.workflowRun) {
-                return;
-            }
-            if (wr) {
-                if (this.workflowRun && this.workflowRun.id !== wr.id) {
+        this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this.readonly = !s.canEdit;
+            if (s.workflowRun) {
+                if (this.workflowRun && this.workflowRun.id !== s.workflowRun.id) {
                     this.currentNodeRun = null;
                 }
-                this.workflowRun = wr;
-                if (wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
-                    if (!this.currentNodeRun ||
-                        ((new Date(wr.nodes[this.node.id][0].last_modified)) > (new Date(this.currentNodeRun.last_modified)))) {
-                        this.currentNodeRun = wr.nodes[this.node.id][0];
-                    }
+                this.workflowRun = s.workflowRun;
+
+                if (this.workflowRun.nodes && this.workflowRun.nodes[this.node.id] && this.workflowRun.nodes[this.node.id].length > 0) {
+                    this.currentNodeRun = this.workflowRun.nodes[this.node.id][0];
+                }
+                if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
+                    this.computeWarnings();
                 }
             } else {
                 this.workflowRun = null;
-            }
-
-            if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
-                this.computeWarnings();
             }
         });
     }
 
     clickOnNode(popup: IPopup): void {
-
         if (this.workflow.previewMode || !popup) {
             return;
         }
         popup.open();
-
+        if (this.currentNodeRun) {
+            this._store.dispatch(new SelectWorkflowNodeRun({
+                workflowNodeRun: this.currentNodeRun,
+                node: this.node
+            }));
+        }
     }
 
     dblClickOnNode() {
         switch (this.node.type) {
             case WNodeType.PIPELINE:
-                if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
+                if (this.workflowRun && this.currentNodeRun) {
                     this._router.navigate([
                         'node', this.currentNodeRun.id
                     ], {
@@ -158,7 +132,7 @@ export class WorkflowWNodeComponent implements OnInit {
                 }
                 break;
             case WNodeType.OUTGOINGHOOK:
-                if (this._workflowEventStore.isRunSelected()
+                if (this.workflowRun
                     && this.currentNodeRun
                     && this.node.outgoing_hook.config['target_workflow']
                     && this.currentNodeRun.callback) {
@@ -203,7 +177,12 @@ export class WorkflowWNodeComponent implements OnInit {
                 break;
             case 'delete':
                 this.openDeleteNodeModal();
-                break
+                break;
+            case 'logs':
+                this._router.navigate(['node', this.currentNodeRun.id], {
+                    relativeTo: this._activatedRoute,
+                });
+                break;
         }
     }
 

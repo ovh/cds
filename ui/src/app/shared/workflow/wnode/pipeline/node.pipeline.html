@@ -4,7 +4,7 @@
     [class.active]="selected">
     <div class="title">
         <div class="name ellipsis" title="{{node.name}}">
-            {{node.name}}
+            {{node.name + ' ' + noderun?.status}}
         </div>
         <div *ngIf="warnings > 0" suiPopup popupPlacement="right center" [popupText]="'warning_build_title' | translate: {nb: warnings}"
             class="warn">

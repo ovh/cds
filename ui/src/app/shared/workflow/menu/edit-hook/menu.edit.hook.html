@@ -8,12 +8,13 @@
         <hr>
         <a class="item" (click)="sendEvent('edit')">
             <div class="content">
-                {{ 'workflow_node_menu_edit' | translate }}
+                <span *ngIf="readonly">{{ 'workflow_node_menu_edit_ro' | translate }}</span>
+                <span *ngIf="!readonly">{{ 'workflow_node_menu_edit' | translate }}</span>
             </div>
         </a>
         <hr>
         <a class="item" (click)="sendEvent('delete')"
-           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly">
             <div class="content">
                 {{ 'btn_delete' | translate }}
             </div>
