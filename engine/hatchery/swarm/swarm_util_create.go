@@ -199,7 +199,7 @@ func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk
 
 func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req sdk.Requirement) error {
 	// args are separated by a space
-	// example: golang:1.9.1 --port=8080:8080/tcp
+	// example: myGroup/golang:1.9.1 --port=8080:8080/tcp
 	for idx, opt := range strings.Split(req.Value, " ") {
 		if idx == 0 || strings.TrimSpace(opt) == "" {
 			continue // it's image name
