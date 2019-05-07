@@ -313,7 +313,7 @@ func TestManualRun3(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(db, "TestManualRun")
+	model, _ := worker.LoadWorkerModelByNameAndGroupID(db, "TestManualRun", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "TestManualRun",

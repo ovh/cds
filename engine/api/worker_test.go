@@ -37,7 +37,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
+	model, _ := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), "Test1", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -122,7 +122,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
+	model, _ := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), "Test1", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",

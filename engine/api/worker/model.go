@@ -190,13 +190,19 @@ func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*s
 	return &r[0], nil
 }
 
-// LoadWorkerModelByName retrieves a specific worker model in database
-func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, modelColumns)
-	return loadWorkerModel(db, query, name)
+// LoadWorkerModelsByNameAndGroupIDs retrieves all worker model with given name for group ids in database.
+func LoadWorkerModelsByNameAndGroupIDs(db gorp.SqlExecutor, name string, groupIDs []int64) ([]sdk.Model, error) {
+	query := `
+    SELECT worker_model.*, "group".name as groupname
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    WHERE worker_model.name = $1
+    AND worker_model.group_id = ANY(string_to_array($2, ',')::int[])
+  `
+	return loadWorkerModels(db, query, name, gorpmapping.IDsToQueryString(groupIDs))
 }
 
-// LoadWorkerModelByID retrieves a specific worker model in database
+// LoadWorkerModelByID retrieves a specific worker model in database.
 func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, modelColumns)
 	return loadWorkerModel(db, query, ID)
@@ -210,14 +216,14 @@ func LoadWorkerModelByNameAndGroupID(db gorp.SqlExecutor, name string, groupID i
 
 // LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs retrieves models for given group ids.
 func LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
+	query := `
+    SELECT worker_model.*, "group".name as groupname
     FROM worker_model
     JOIN "group" ON worker_model.group_id = "group".id
     WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
     AND worker_model.is_deprecated = false
     AND worker_model.disabled = false
-  `, modelColumns)
+  `
 	return loadWorkerModels(db, query, gorpmapping.IDsToQueryString(groupIDs))
 }
 
@@ -276,31 +282,38 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
 	key := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", groupID))
 
-	ms := []WorkerModel{}
-	var err error
-	models := []sdk.Model{}
+	models := make([]sdk.Model, 0)
 	if store.Get(key, &models) {
 		return models, nil
 	}
 
 	// note about restricted field on worker model:
 	// if restricted = true, worker model can be launched by a user hatchery only
-	// so, a 'shared.infra' hatchery need all worker models, with restricted = false
+	// so, a 'shared.infra' hatchery need all its worker models and all others with restricted = false
 
+	var query string
 	if sharedinfraGroupID == groupID { // shared infra, return all models, excepts restricted
-		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND restricted = FALSE ORDER by name`)
+		query = fmt.Sprintf(`
+      SELECT %s
+      FROM worker_model
+      JOIN "group" ON worker_model.group_id = "group".id
+      WHERE (worker_model.restricted = false OR worker_model.group_id = $1)
+      AND worker_model.disabled = false
+      ORDER by name
+    `, modelColumns)
 	} else { // not shared infra, returns only selected worker models
-		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND group_id = $1 ORDER by name`, groupID)
+		query = fmt.Sprintf(`
+      SELECT %s
+      FROM worker_model
+      JOIN "group" ON worker_model.group_id = "group".id
+      WHERE worker_model.group_id = $1
+      AND worker_model.disabled = false
+      ORDER by name
+    `, modelColumns)
 	}
+	models, err := loadWorkerModels(db, query, groupID)
 	if err != nil {
 		return nil, sdk.WithStack(err)
-	}
-
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, sdk.WithStack(err)
-		}
-		models = append(models, sdk.Model(ms[i]))
 	}
 
 	store.SetWithTTL(key, models, modelsCacheTTLInSeconds)
@@ -522,7 +535,7 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.S
 		store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds)
 		return nil, nil
 	}
-	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "BookForRegister> worker model %d already booked by %s (%d)", id, h.Name, h.ID)
+	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "worker model %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
 // UnbookForRegister release the book

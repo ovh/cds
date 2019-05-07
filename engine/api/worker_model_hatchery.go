@@ -73,12 +73,14 @@ func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		h := getHatchery(ctx)
 		if h == nil || h.GroupID == nil || *h.GroupID == 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModelsEnabled> this route can be called only by hatchery: %+v", h)
+			return sdk.WrapError(sdk.ErrWrongRequest, "this route can be called only by hatchery: %+v", h)
 		}
-		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(api.mustDB(), api.Cache, *h.GroupID, group.SharedInfraGroup.ID)
-		if errgroup != nil {
-			return sdk.WrapError(errgroup, "getWorkerModelsEnabled> cannot load worker models for hatchery %d with group %d", h.ID, *h.GroupID)
+
+		models, err := worker.LoadWorkerModelsUsableOnGroup(api.mustDB(), api.Cache, *h.GroupID, group.SharedInfraGroup.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker models for hatchery %d with group %d", h.ID, *h.GroupID)
 		}
+
 		return service.WriteJSON(w, models, http.StatusOK)
 	}
 }

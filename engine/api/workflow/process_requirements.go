@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -14,7 +15,7 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, string, *sdk.MultiError) {
+func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
@@ -52,53 +53,37 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
 
-	var modelType string
-	if model != "" {
-		// load the worker model, if there is group name in the model name, ignore it.
-		modelName := strings.Split(model, " ")[0]
-		modelPath := strings.SplitN(modelName, "/", 2)
-		if len(modelPath) == 2 {
-			modelName = modelPath[1]
-		}
-		wm, err := worker.LoadWorkerModelByName(db, modelName)
-		if err != nil {
-			log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
-			errm.Append(sdk.ErrNoWorkerModel)
-		} else {
-			// Check that the worker model is in an exec group
-			if !sdk.IsInInt64Array(wm.GroupID, execsGroupIDs) {
-				errm.Append(sdk.ErrInvalidJobRequirementWorkerModelPermission)
-			}
-
-			// Check that the worker model has the binaries capabilitites
-			// only if the worker model doesn't need registration
-			if !wm.NeedRegistration && !wm.CheckRegistration {
-				for _, req := range requirements {
-					if req.Type == sdk.BinaryRequirement {
-						var hasCapa bool
-						for _, cap := range wm.RegisteredCapabilities {
-							if cap.Value == req.Value {
-								hasCapa = true
-								break
-							}
-						}
-						if !hasCapa {
-							errm.Append(sdk.ErrInvalidJobRequirementWorkerModelCapabilitites)
+	wm, err := processNodeJobRunRequirementsGetModel(db, model, execsGroupIDs)
+	if err != nil {
+		log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
+		errm.Append(err)
+	}
+	if wm != nil {
+		// Check that the worker model has the binaries capabilitites
+		// only if the worker model doesn't need registration
+		if !wm.NeedRegistration && !wm.CheckRegistration {
+			for _, req := range requirements {
+				if req.Type == sdk.BinaryRequirement {
+					var hasCapa bool
+					for _, cap := range wm.RegisteredCapabilities {
+						if cap.Value == req.Value {
+							hasCapa = true
 							break
 						}
 					}
+					if !hasCapa {
+						errm.Append(sdk.ErrInvalidJobRequirementWorkerModelCapabilitites)
+						break
+					}
 				}
 			}
-
-			modelType = wm.Type
 		}
-
 	}
 
 	if errm.IsEmpty() {
-		return requirements, containsService, modelType, nil
+		return requirements, containsService, wm, nil
 	}
-	return requirements, containsService, modelType, &errm
+	return requirements, containsService, wm, &errm
 }
 
 func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {
@@ -116,4 +101,56 @@ func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.P
 		sdk.AddParameter(&params, k, sdk.StringParameter, r.Value)
 	}
 	return params
+}
+
+func processNodeJobRunRequirementsGetModel(db gorp.SqlExecutor, model string, execsGroupIDs []int64) (*sdk.Model, error) {
+	if model == "" {
+		return nil, nil
+	}
+
+	var wm *sdk.Model
+
+	modelName := strings.Split(model, " ")[0]
+	modelPath := strings.SplitN(modelName, "/", 2)
+	if len(modelPath) == 2 {
+		// if model contains group name (myGroup/myModel), try to find the model for the
+		g, err := group.LoadGroupByName(db, modelPath[0])
+		if err != nil {
+			return nil, err
+		}
+
+		if !sdk.IsInInt64Array(g.ID, execsGroupIDs) {
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidJobRequirementWorkerModelPermission, "group %s should have execution permission", g.Name)
+		}
+
+		wm, err = worker.LoadWorkerModelByNameAndGroupID(db, modelPath[1], g.ID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		var err error
+
+		// if there is no group info, try to find a shared.infra model for given name
+		wm, err = worker.LoadWorkerModelByNameAndGroupID(db, modelName, group.SharedInfraGroup.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoWorkerModel) {
+			return nil, err
+		}
+
+		// if there is no shared.infra model we will try to find one for exec groups, backward compatibility for existing workflow runs.
+		if wm == nil {
+			wms, err := worker.LoadWorkerModelsByNameAndGroupIDs(db, modelName, execsGroupIDs)
+			if err != nil {
+				return nil, err
+			}
+			if len(wms) > 1 {
+				return nil, sdk.NewErrorFrom(sdk.ErrNoWorkerModel, "invalid given model name \"%s\", missing group name in requirement", modelName)
+			}
+			if len(wms) == 0 {
+				return nil, sdk.NewErrorFrom(sdk.ErrNoWorkerModel, "can not find a model with name \"%s\" for workflow's exec groups", modelName)
+			}
+			wm = &wms[0]
+		}
+	}
+
+	return wm, nil
 }

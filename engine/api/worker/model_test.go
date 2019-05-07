@@ -137,7 +137,7 @@ func TestLoadWorkerModel(t *testing.T) {
 	}
 	insertWorkerModel(t, db, "Foo", g.ID)
 
-	m, err := worker.LoadWorkerModelByName(db, "Foo")
+	m, err := worker.LoadWorkerModelByNameAndGroupID(db, "Foo", g.ID)
 	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
@@ -145,8 +145,36 @@ func TestLoadWorkerModel(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m.Type)
 
-	_, errNotExist := worker.LoadWorkerModelByName(db, "NotExisting")
+	_, errNotExist := worker.LoadWorkerModelByNameAndGroupID(db, "NotExisting", g.ID)
 	assert.True(t, sdk.ErrorIs(errNotExist, sdk.ErrNoWorkerModel))
+}
+
+func TestLoadWorkerModelsByNameAndGroupIDs(t *testing.T) {
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+	deleteAllWorkerModel(t, db)
+
+	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	insertWorkerModel(t, db, "SameName", g1.ID)
+	insertWorkerModel(t, db, "SameName", g2.ID)
+	insertWorkerModel(t, db, "DiffName", g2.ID)
+
+	wms, err := worker.LoadWorkerModelsByNameAndGroupIDs(db, "SameName", []int64{g1.ID})
+	test.NoError(t, err)
+	assert.Equal(t, 1, len(wms))
+
+	wms, err = worker.LoadWorkerModelsByNameAndGroupIDs(db, "SameName", []int64{g1.ID, g2.ID})
+	test.NoError(t, err)
+	assert.Equal(t, 2, len(wms))
+
+	wms, err = worker.LoadWorkerModelsByNameAndGroupIDs(db, "DiffName", []int64{g1.ID, g2.ID})
+	test.NoError(t, err)
+	assert.Equal(t, 1, len(wms))
+
+	wms, err = worker.LoadWorkerModelsByNameAndGroupIDs(db, "Unknown", []int64{g1.ID, g2.ID})
+	test.NoError(t, err)
+	assert.Equal(t, 0, len(wms))
 }
 
 func TestLoadWorkerModels(t *testing.T) {
@@ -273,7 +301,7 @@ func TestUpdateWorkerModel(t *testing.T) {
 		t.Fatalf("Error : %s", err)
 	}
 
-	m3, err := worker.LoadWorkerModelByName(db, "lol")
+	m3, err := worker.LoadWorkerModelByNameAndGroupID(db, "lol", g.ID)
 	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)

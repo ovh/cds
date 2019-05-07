@@ -356,12 +356,12 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
 		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
 		// only modelName
-		modelName := strings.Split(r.Value, " ")[0]
 		if r.Type == sdk.ModelRequirement {
-			isNotGroupModel := modelName != fmt.Sprintf("%s/%s", model.Group.Name, model.Name)
-			isNotSharedInfraModel := !(model.Group.Name == sdk.SharedInfraGroupName && modelName == model.Name)
-			isNotSameName := modelName != model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
-			if isNotGroupModel && isNotSharedInfraModel && isNotSameName {
+			modelName := strings.Split(r.Value, " ")[0]
+			isGroupModel := modelName == fmt.Sprintf("%s/%s", model.Group.Name, model.Name)
+			isSharedInfraModel := model.Group.Name == sdk.SharedInfraGroupName && modelName == model.Name
+			isSameName := modelName == model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
+			if !isGroupModel && !isSharedInfraModel && !isSameName {
 				log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
 				return false
 			}

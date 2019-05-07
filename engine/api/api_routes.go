@@ -360,12 +360,6 @@ func (api *API) InitRouter() {
 
 	// Worker models
 	r.Handle("/worker/model", r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
-	r.Handle("/worker/model/import", r.POST(api.postWorkerModelImportHandler))
-	r.Handle("/worker/model/{groupName}/{permModelName}", r.GET(api.getWorkerModelHandler), r.PUT(api.putWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
-	r.Handle("/worker/model/{groupName}/{permModelName}/export", r.GET(api.getWorkerModelExportHandler))
-	r.Handle("/worker/model/{groupName}/{permModelName}/usage", r.GET(api.getWorkerModelUsageHandler))
-	r.Handle("/project/{permProjectKey}/worker/model", r.GET(api.getWorkerModelsForProjectHandler))
-	r.Handle("/group/{groupID}/worker/model", r.GET(api.getWorkerModelsForGroupHandler))
 	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/error/{permModelID}", r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/enabled", r.GET(api.getWorkerModelsEnabledHandler, NeedHatchery()))
@@ -374,6 +368,12 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 	r.Handle("/worker/model/pattern", r.POST(api.postAddWorkerModelPatternHandler, NeedAdmin(true)), r.GET(api.getWorkerModelPatternsHandler))
 	r.Handle("/worker/model/pattern/{type}/{name}", r.GET(api.getWorkerModelPatternHandler), r.PUT(api.putWorkerModelPatternHandler, NeedAdmin(true)), r.DELETE(api.deleteWorkerModelPatternHandler, NeedAdmin(true)))
+	r.Handle("/worker/model/import", r.POST(api.postWorkerModelImportHandler))
+	r.Handle("/worker/model/{groupName}/{permModelName}", r.GET(api.getWorkerModelHandler), r.PUT(api.putWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
+	r.Handle("/worker/model/{groupName}/{permModelName}/export", r.GET(api.getWorkerModelExportHandler))
+	r.Handle("/worker/model/{groupName}/{permModelName}/usage", r.GET(api.getWorkerModelUsageHandler))
+	r.Handle("/project/{permProjectKey}/worker/model", r.GET(api.getWorkerModelsForProjectHandler))
+	r.Handle("/group/{groupID}/worker/model", r.GET(api.getWorkerModelsForGroupHandler))
 
 	// Workflows
 	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))
