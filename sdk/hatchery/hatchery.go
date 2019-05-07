@@ -363,7 +363,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 				modelName = modelPath[1]
 			}
 			if modelName != model.Name {
-				log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name)
+				log.Debug("canRunJob> %d - job %d - model requirement from requirement r.Value(%s) don't match model.Name(%s)", j.timestamp, j.id, r.Value, model.Name)
 				return false
 			}
 		}
