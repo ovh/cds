@@ -16,6 +16,7 @@ import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import {WorkflowStore} from 'app/service/workflow/workflow.store';
 
 @Component({
     selector: 'app-workflow-run',

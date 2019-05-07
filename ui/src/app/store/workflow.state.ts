@@ -13,6 +13,7 @@ import {finalize, first, tap} from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
 import {UpdateModal, UpdateWorkflowRunList} from './workflow.action';
+import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
