@@ -307,8 +307,7 @@ export class AppService {
                         new GetWorkflowRun({
                                 projectKey: event.project_key,
                                 workflowName: event.workflow_name,
-                                num: event.workflow_run_num,
-                                updateRunsList: true
+                                num: event.workflow_run_num
                         }));
                 } else {
                     this._workflowRunService

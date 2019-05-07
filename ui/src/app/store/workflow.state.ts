@@ -756,9 +756,7 @@ export class WorkflowState {
                     workflowRun: wr,
                     workflowNodeRun: wnr
                 });
-                if (action.payload.updateRunsList) {
-                    ctx.dispatch(new UpdateWorkflowRunList({workflowRun: wr}));
-                }
+                ctx.dispatch(new UpdateWorkflowRunList({workflowRun: wr}));
                 return wr;
             }));
 

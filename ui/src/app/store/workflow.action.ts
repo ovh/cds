@@ -34,7 +34,7 @@ export class ChangeToRunView {
 
 export class GetWorkflowRun {
     static readonly  type = '[Workflow] Get Workflow Run';
-    constructor(public payload: { projectKey: string, workflowName: string, num: number, updateRunsList?: boolean }) {}
+    constructor(public payload: { projectKey: string, workflowName: string, num: number}) {}
 }
 
 export class GetWorkflowRuns {
