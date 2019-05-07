@@ -225,18 +225,4 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             this.durationIntervalID = 0;
         }
     }
-
-    goToEditNode(): void {
-        // TODO
-        /*
-        this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
-        this._workflowEventStore.setSelectedNodeRun(null, false);
-        this._workflowEventStore.setSelectedRun(null);
-        this._store.dispatch()
-        this._router.navigate(
-            ['/project', this.project.key, 'workflow', this.workflow.name],
-            { queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref } });
-
-         */
-    }
 }

@@ -9,7 +9,6 @@ import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/w
 import { WNode, WNodeHook, Workflow } from '../../../../model/workflow.model';
 import { HookService } from '../../../../service/hook/hook.service';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { DeleteModalComponent } from '../../../modal/delete/delete.component';
 import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
 
 @Component({
@@ -30,8 +29,6 @@ export class WorkflowSidebarHookComponent implements OnInit {
     loading = false;
     hookDetails: WorkflowHookTask;
 
-    @ViewChild('deleteHookModal')
-    deleteHookModal: DeleteModalComponent;
     @ViewChild('workflowDetailsHook')
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 

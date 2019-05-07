@@ -32,8 +32,5 @@
     <div class="ui active centered inline loader" *ngIf="loading"></div>
 </div>
 <div class="ui text active loader" *ngIf="!hook">{{ 'workflow_loading' | translate }}</div>
-<app-delete-modal [title]="'workflow_hook_delete_title' | translate" [msg]="'workflow_hook_delete_msg' | translate"
-    [autoclose]="false" (event)="deleteHook(deleteHookModal.modal)" #deleteHookModal>
-</app-delete-modal>
 <app-workflow-node-hook-details #workflowDetailsHook>
 </app-workflow-node-hook-details>
