@@ -17,7 +17,7 @@ import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import * as ProjectAction from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
-import { WorkflowState } from './workflows.state';
+import { WorkflowState } from './workflow.state';
 
 describe('Project', () => {
     let store: Store;

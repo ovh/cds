@@ -8,14 +8,13 @@ import { Parameter } from 'app/model/parameter.model';
 import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
-import { User } from 'app/model/user.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ApplicationsState } from './applications.state';
 import * as pipelinesActions from './pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
-import { WorkflowState } from './workflows.state';
+import { WorkflowState } from './workflow.state';
 
 describe('Pipelines', () => {
     let store: Store;
