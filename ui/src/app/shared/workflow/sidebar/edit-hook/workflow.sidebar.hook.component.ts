@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {Store} from '@ngxs/store';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { PermissionValue } from '../../../../model/permission.model';

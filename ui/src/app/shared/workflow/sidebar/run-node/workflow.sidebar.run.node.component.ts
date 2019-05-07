@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {Store} from '@ngxs/store';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import 'rxjs/add/observable/zip';
 import { first } from 'rxjs/operators';

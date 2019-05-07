@@ -1,16 +1,16 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {PermissionValue} from '@cds/model/permission.model';
-import {PipelineStatus} from '@cds/model/pipeline.model';
-import {Project} from '@cds/model/project.model';
-import {Workflow} from '@cds/model/workflow.model';
-import {WorkflowRun} from '@cds/model/workflow.run.model';
-import {WorkflowRunService} from '@cds/service/workflow/run/workflow.run.service';
-import {AutoUnsubscribe} from '@cds/shared/decorator/autoUnsubscribe';
-import {ToastService} from '@cds/shared/toast/ToastService';
-import {WorkflowState, WorkflowStateModel} from '@cds/store/workflow.state';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import * as AU from 'ansi_up';
+import {PermissionValue} from 'app/model/permission.model';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {Project} from 'app/model/project.model';
+import {Workflow} from 'app/model/workflow.model';
+import {WorkflowRun} from 'app/model/workflow.run.model';
+import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
 
