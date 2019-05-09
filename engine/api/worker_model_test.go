@@ -117,7 +117,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 	test.NotNil(t, gr)
 
 	model := sdk.Model{
-		Name:    "Test1" + grName,
+		Name:    sdk.RandomString(10),
 		GroupID: gr.ID,
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
@@ -165,9 +165,9 @@ func Test_WorkerModelUsage(t *testing.T) {
 			Enabled: true,
 			Requirements: []sdk.Requirement{
 				{
-					Name:  "Test1" + grName,
+					Name:  fmt.Sprintf("%s/%s", grName, model.Name),
 					Type:  sdk.ModelRequirement,
-					Value: "Test1" + grName,
+					Value: fmt.Sprintf("%s/%s", grName, model.Name),
 				},
 			},
 		},
