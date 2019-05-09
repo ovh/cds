@@ -181,13 +181,13 @@
                                     [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
                             </div>
                             <div class="field">
-                                <label>Username</label>
+                                <label>{{'worker_model_username' | translate}}</label>
                                 <input class="ui input" type="text" name="registry_username"
                                     [(ngModel)]="workerModel.model_docker.username"
                                     [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
                             </div>
                             <div class="field">
-                                <label>Password</label>
+                                <label>{{'worker_model_password' | translate}}</label>
                                 <input class="ui input" type="password" name="registry_password"
                                     [(ngModel)]="workerModel.model_docker.password"
                                     [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">

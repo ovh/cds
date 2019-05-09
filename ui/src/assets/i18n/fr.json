@@ -938,6 +938,9 @@
   "worker_model_post_cmd": "Commande après exécution du worker",
   "worker_model_shell_cmd": "Commande principale du shell",
   "worker_model_no_usage": "Ce modèle de worker n'est pas utilisé explicitement dans un pipeline",
+  "worker_model_private_registry": "Registry privée",
+  "worker_model_username": "Nom d'utilisateur",
+  "worker_model_password": "Mot de passe",
 
 
   "workflow_save_as_code_title": "Sauvegarde du workflow as code",

@@ -384,7 +384,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	}
 
 	// Check here to add secret if needed
-	secretName := spawnArgs.Model.Name + "-credreg"
+	secretName := "cds-credreg-" + spawnArgs.Model.Name
 	if spawnArgs.Model.ModelDocker.Private {
 		if err := h.createSecret(secretName, spawnArgs.Model); err != nil {
 			return "", sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Name)

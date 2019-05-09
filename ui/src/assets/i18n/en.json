@@ -939,6 +939,9 @@
   "worker_model_post_cmd": "Post worker command",
   "worker_model_shell_cmd": "Main shell command",
   "worker_model_no_usage": "This worker model is not explicitly used in a pipeline",
+  "worker_model_private_registry": "Private registry",
+  "worker_model_username": "Username",
+  "worker_model_password": "Password",
 
   "workflow_save_as_code_title": "Save workflow as code",
   "workflow_save_as_code_pending": "Pushing files...",
