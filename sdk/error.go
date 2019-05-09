@@ -350,7 +350,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowPermInsufficient.ID:                      "Cannot add this permission group on your workflow because you can't have less rights than rights in your project when you are in RWX",
 	ErrApplicationUsedByWorkflow.ID:                     "Application still used by a workflow",
 	ErrLocked.ID:                                        "Resource locked",
-	ErrInvalidJobRequirementWorkerModelPermission.ID:    "Invalid job requirements: unable to use worker model \"%s\" due to permissions",
+	ErrInvalidJobRequirementWorkerModelPermission.ID:    "Invalid job requirements: unable to use worker model due to permissions",
 	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Invalid job requirements: the worker model does't match with the binary requirements",
 	ErrMalformattedStep.ID:                              "Malformatted step",
 	ErrVCSUsedByApplication.ID:                          "Repository manager still used by an application",
