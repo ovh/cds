@@ -33,14 +33,14 @@ func (s *Service) getEventsHandler() service.Handler {
 			}
 
 		}
-
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.IndexEvents).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
 			if strings.Contains(errR.Error(), indexNotFoundException) {
 				log.Warning("elasticsearch> getEventsHandler> %v", errR.Error())
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
-			return sdk.WrapError(errR, "Cannot get result on index: %s", s.Cfg.ElasticSearch.IndexEvents)
+			esReq := fmt.Sprintf(`esClient.Search().Index(%+v).Type("sdk.EventRunWorkflow").Query(%+v).Sort("timestamp", false).From(%+v).Size(15)`, s.Cfg.ElasticSearch.IndexEvents, boolQuery, filters.CurrentItem)
+			return sdk.WrapError(errR, "Cannot get result on index: %s : query -> %s", s.Cfg.ElasticSearch.IndexEvents, esReq)
 		}
 		return service.WriteJSON(w, result.Hits.Hits, http.StatusOK)
 	}
