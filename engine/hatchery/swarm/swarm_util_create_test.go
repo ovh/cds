@@ -180,7 +180,7 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 		},
 	}
 
-	err := h.pullImage(h.dockerClients["default"], args.image, timeoutPullImage)
+	err := h.pullImage(h.dockerClients["default"], args.image, timeoutPullImage, sdk.Model{})
 	test.NoError(t, err)
 
 	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}

@@ -195,7 +195,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		old, errLoad := worker.LoadWorkerModelByID(api.mustDB(), workerModelID)
+		old, errLoad := worker.LoadWorkerModelByIDWithPassword(api.mustDB(), workerModelID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "cannot load worker model by id")
 		}
@@ -222,7 +222,11 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		}
 
 		if model.ModelDocker.Password == sdk.PasswordPlaceholder {
-			model.ModelDocker.Password = old.ModelDocker.Password
+			decryptedPw, err := worker.DecryptValue(old.ModelDocker.Password)
+			if err != nil {
+				return sdk.WrapError(err, "cannot descrypt password")
+			}
+			model.ModelDocker.Password = decryptedPw
 		}
 
 		//If the model image has not been set, keep the old image

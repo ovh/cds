@@ -111,6 +111,77 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	test.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
 }
 
+func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
+	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	//Loading all models
+	models, errlw := worker.LoadWorkerModels(api.mustDB())
+	if errlw != nil {
+		t.Fatalf("Error getting models : %s", errlw)
+	}
+
+	//Delete all of them
+	for _, m := range models {
+		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+			t.Fatalf("Error deleting model : %s", err)
+		}
+	}
+
+	//Create admin user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
+
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	if err != nil {
+		t.Fatalf("Error getting group : %s", err)
+	}
+
+	model := sdk.Model{
+		Name:    "Test1",
+		GroupID: g.ID,
+		Type:    sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Shell: "sh -c",
+			Cmd:   "worker --api={{.API}}",
+			Envs: map[string]string{
+				"CDS_TEST": "THIS IS A TEST",
+			},
+			Private:  true,
+			Username: "test",
+			Password: "pwtest",
+		},
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa1",
+				Type:  sdk.BinaryRequirement,
+				Value: "1",
+			},
+		},
+	}
+
+	//Prepare request
+	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	var newModel sdk.Model
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+
+	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
+	test.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
+	test.Equal(t, sdk.PasswordPlaceholder, newModel.ModelDocker.Password, "Worker model password returned are not placeholder")
+}
+
 func Test_WorkerModelUsage(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)

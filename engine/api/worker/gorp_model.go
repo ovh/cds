@@ -34,7 +34,7 @@ func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 		var err error
 		if m.ModelDocker.Private {
 			if m.ModelDocker.Password != "" {
-				m.ModelDocker.Password, err = encryptValue(m.ModelDocker.Password)
+				m.ModelDocker.Password, err = EncryptValue(m.ModelDocker.Password)
 				if err != nil {
 					return sdk.WrapError(err, "cannot encrypt docker password")
 				}
