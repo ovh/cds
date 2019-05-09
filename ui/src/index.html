@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>CDS</title>
@@ -12,9 +13,17 @@
         window.cds_version = '';
     </script>
 </head>
+
 <body>
     <app-root>
         <div class="ui active massive text loader">CDS is loading</div>
     </app-root>
+    <script>
+        var theme = localStorage.getItem('CDS-Theme');
+        if (theme) {
+            document.body.className += ' ' + theme;
+        }
+    </script>
 </body>
+
 </html>
