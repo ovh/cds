@@ -240,7 +240,7 @@ No need to go to the UI of CDS or your repository manager to check the status of
 
 #### REST API & SDK
 
-Do you have even more advanced automation needs, or the desire to develop an application that queries CDS? the [REST API](https://ovh.github.io/cds/cli/api/) and the [SDK](https://ovh.github.io/cds/cli/sdk/) will allow you to easily develop your software.
+Do you have even more advanced automation needs, or the desire to develop an application that queries CDS? the [REST API](https://ovh.github.io/cds/development/rest/) and the [SDK](https://ovh.github.io/cds/development/sdk/golang/) will allow you to easily develop your software.
 
 ### CDS Administration features
 
@@ -276,7 +276,7 @@ Auto-Scale on Demand!
 
 Thus, you can have hundreds of workers model and when necessary, CDS will start the workers using the hatcheries.
 
-A [hatchery](https://ovh.github.io/cds/hatchery/) is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
+A [hatchery](https://ovh.github.io/cds/docs/components/hatchery/) is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
 
 Several types of hatchery are available:
 
