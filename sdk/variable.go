@@ -92,3 +92,23 @@ func VariablesPrefix(vars []Variable, prefix string) []Variable {
 	}
 	return res
 }
+
+// VariablesMerge adds data from right list to the left one and overrides existing variables.
+func VariablesMerge(left []Variable, right []Variable) []Variable {
+	m := make(map[string]Variable)
+
+	for i := range left {
+		m[left[i].Name] = left[i]
+	}
+
+	for i := range right {
+		m[right[i].Name] = right[i]
+	}
+
+	res := make([]Variable, 0, len(m))
+	for _, v := range m {
+		res = append(res, v)
+	}
+
+	return res
+}

@@ -436,7 +436,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 
 	var app *sdk.Application
 	var env *sdk.Environment
-	var pp *sdk.ProjectIntegration
+	var pint *sdk.ProjectIntegration
 
 	// Load node definition
 	if nodeRun != nil {
@@ -451,85 +451,114 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 				env = &e
 			}
 			if node.Context.ProjectIntegrationID != 0 {
-				p := w.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
-				pp = &p
+				pi := w.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
+				pint = &pi
 			}
 		}
 
 		// Application variables
-		av := []sdk.Variable{}
 		if app != nil {
-			appv, errA := application.GetAllVariableByID(db, app.ID, application.WithClearPassword())
-			if errA != nil {
-				return nil, sdk.WrapError(errA, "LoadSecrets> Cannot load application variables")
+			appvDB, err := application.GetAllVariableByID(db, app.ID, application.WithClearPassword())
+			if err != nil {
+				return nil, sdk.WrapError(err, "cannot load application variables for %d", app.ID)
 			}
-			av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
-			av = sdk.VariablesPrefix(av, "cds.app.")
+			appvDB = sdk.VariablesFilter(appvDB, sdk.SecretVariable, sdk.KeyVariable)
+			appvDB = sdk.VariablesPrefix(appvDB, "cds.app.")
+
+			appv := sdk.VariablesFilter(app.Variable, sdk.SecretVariable, sdk.KeyVariable)
+			appv = sdk.VariablesPrefix(appv, "cds.app.")
 
 			if err := application.DecryptVCSStrategyPassword(app); err != nil {
-				return nil, sdk.WrapError(err, "LoadSecrets> Cannot decrypt vcs configuration")
+				return nil, sdk.WrapError(err, "cannot decrypt vcs configuration")
 			}
-			av = append(av, sdk.Variable{
+			appv = append(appv, sdk.Variable{
 				Name:  "git.http.password",
 				Type:  sdk.SecretVariable,
 				Value: app.RepositoryStrategy.Password,
 			})
+
+			secrets = append(secrets, sdk.VariablesMerge(appvDB, appv)...)
 		}
-		secrets = append(secrets, av...)
 
 		// Environment variables
-		ev := []sdk.Variable{}
 		if env != nil {
-			envv, errE := environment.GetAllVariableByID(db, env.ID, environment.WithClearPassword())
-			if errE != nil {
-				return nil, sdk.WrapError(errE, "LoadSecrets> Cannot load environment variables")
-			}
-			ev = sdk.VariablesFilter(envv, sdk.SecretVariable, sdk.KeyVariable)
-			ev = sdk.VariablesPrefix(ev, "cds.env.")
-		}
-		secrets = append(secrets, ev...)
-
-		if pp != nil {
-			projectIntegration, err := integration.LoadProjectIntegrationByID(db, pp.ID, true)
+			envvDB, err := environment.GetAllVariableByID(db, env.ID, environment.WithClearPassword())
 			if err != nil {
-				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load integration %d", pp.ID)
+				return nil, sdk.WrapError(err, "cannot load environment variables for %d", env.ID)
+			}
+			envvDB = sdk.VariablesFilter(envvDB, sdk.SecretVariable, sdk.KeyVariable)
+			envvDB = sdk.VariablesPrefix(envvDB, "cds.env.")
+
+			envv := sdk.VariablesFilter(env.Variable, sdk.SecretVariable, sdk.KeyVariable)
+			envv = sdk.VariablesPrefix(envv, "cds.env.")
+
+			secrets = append(secrets, sdk.VariablesMerge(envvDB, envv)...)
+		}
+
+		if pint != nil {
+			pintDB, err := integration.LoadProjectIntegrationByID(db, pint.ID, true)
+			if err != nil {
+				return nil, sdk.WrapError(err, "cannot load integration for %d", pint.ID)
 			}
 
-			// Project integration variable
-			pfv := make([]sdk.Variable, 0, len(projectIntegration.Config))
-			for k, v := range projectIntegration.Config {
-				pfv = append(pfv, sdk.Variable{
+			pintvDB := make([]sdk.Variable, 0, len(pintDB.Config))
+			for k, v := range pintDB.Config {
+				pintvDB = append(pintvDB, sdk.Variable{
 					Name:  k,
 					Type:  v.Type,
 					Value: v.Value,
 				})
 			}
-			pfv = sdk.VariablesPrefix(pfv, "cds.integration.")
-			pfv = sdk.VariablesFilter(pfv, sdk.SecretVariable)
+			pintvDB = sdk.VariablesPrefix(pintvDB, "cds.integration.")
+			pintvDB = sdk.VariablesFilter(pintvDB, sdk.SecretVariable)
 
-			if app != nil && app.DeploymentStrategies != nil {
-				strats, err := application.LoadDeploymentStrategies(db, app.ID, true)
-				if err != nil {
-					return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application deployment strategies %d", app.ID)
-				}
-				strat, has := strats[pp.Name]
-
-				// Application deployment strategies variables
-				apv := []sdk.Variable{}
-				if has {
-					for k, v := range strat {
-						apv = append(apv, sdk.Variable{
-							Name:  k,
-							Type:  v.Type,
-							Value: v.Value,
-						})
-					}
-				}
-				apv = sdk.VariablesPrefix(apv, "cds.integration.")
-				apv = sdk.VariablesFilter(apv, sdk.SecretVariable)
-				secrets = append(secrets, apv...)
+			pintv := make([]sdk.Variable, 0, len(pint.Config))
+			for k, v := range pint.Config {
+				pintv = append(pintv, sdk.Variable{
+					Name:  k,
+					Type:  v.Type,
+					Value: v.Value,
+				})
 			}
-			secrets = append(secrets, pfv...)
+			pintv = sdk.VariablesPrefix(pintv, "cds.integration.")
+			pintv = sdk.VariablesFilter(pintv, sdk.SecretVariable)
+
+			secrets = append(secrets, sdk.VariablesMerge(pintvDB, pintv)...)
+		}
+
+		if app != nil && app.DeploymentStrategies != nil && pint != nil {
+			stratsDB, err := application.LoadDeploymentStrategies(db, app.ID, true)
+			if err != nil {
+				return nil, sdk.WrapError(err, "cannot load application deployment strategies %d", app.ID)
+			}
+
+			var appvDB []sdk.Variable
+			if stratDB, has := stratsDB[pint.Name]; has {
+				for k, v := range stratDB {
+					appvDB = append(appvDB, sdk.Variable{
+						Name:  k,
+						Type:  v.Type,
+						Value: v.Value,
+					})
+				}
+				appvDB = sdk.VariablesPrefix(appvDB, "cds.integration.")
+				appvDB = sdk.VariablesFilter(appvDB, sdk.SecretVariable)
+			}
+
+			var appv []sdk.Variable
+			if strat, has := app.DeploymentStrategies[pint.Name]; has {
+				for k, v := range strat {
+					appv = append(appv, sdk.Variable{
+						Name:  k,
+						Type:  v.Type,
+						Value: v.Value,
+					})
+				}
+				appv = sdk.VariablesPrefix(appv, "cds.integration.")
+				appv = sdk.VariablesFilter(appv, sdk.SecretVariable)
+			}
+
+			secrets = append(secrets, sdk.VariablesMerge(appvDB, appv)...)
 		}
 	}
 
