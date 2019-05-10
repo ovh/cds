@@ -311,17 +311,17 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 
 		hr := wr.GetOutgoingHookRun(hookRunID)
 		if hr == nil {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		pv, err := project.GetAllVariableInProject(db, wr.Workflow.ProjectID, project.WithClearPassword())
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load project variable")
+			return sdk.WrapError(err, "cannot load project variable")
 		}
 
 		secrets, errSecret := workflow.LoadSecrets(db, api.Cache, nil, wr, pv)
 		if errSecret != nil {
-			return sdk.WrapError(errSecret, "getWorkflowJobHookDetailsHandler> Cannot load secrets")
+			return sdk.WrapError(errSecret, "cannot load secrets")
 		}
 		hr.BuildParameters = append(hr.BuildParameters, sdk.VariablesToParameters("", secrets)...)
 		return service.WriteJSON(w, hr, http.StatusOK)
