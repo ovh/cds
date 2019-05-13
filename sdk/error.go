@@ -189,7 +189,8 @@ var (
 	ErrWorkflowAsCodeOverride                        = Error{ID: 172, Status: http.StatusForbidden}
 	ErrProjectSecretDataUnknown                      = Error{ID: 173, Status: http.StatusBadRequest}
 	ErrApplicationMandatoryOnWorkflowAsCode          = Error{ID: 174, Status: http.StatusBadRequest}
-	ErrInvalidPayloadVariable                        = Error{ID: 175, Status: http.StatusBadRequest}
+	ErrInvalidPassword                               = Error{ID: 175, Status: http.StatusBadRequest}
+	ErrInvalidPayloadVariable                        = Error{ID: 176, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -362,6 +363,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrProjectSecretDataUnknown.ID:                      "Invalid encrypted data",
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application linked to a git repository is mandatory on the workflow root",
 	ErrInvalidPayloadVariable.ID:                        "Your payload cannot contain keys like cds.*",
+	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
 }
 
 var errorsFrench = map[int]string{
@@ -534,6 +536,7 @@ var errorsFrench = map[int]string{
 	ErrProjectSecretDataUnknown.ID:                      "Donnée chiffrée non valide",
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Une application liée à un dépôt git est obligatoire à la racine du workflow",
 	ErrInvalidPayloadVariable.ID:                        "Le payload du workflow ne peut pas contenir de clés nommées cds.*",
+	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
 }
 
 var errorsLanguages = []map[int]string{

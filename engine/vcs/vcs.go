@@ -108,7 +108,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		return gitlab.New(serverCfg.Gitlab.AppID,
 			serverCfg.Gitlab.Secret,
 			serverCfg.URL,
-			serverCfg.Gitlab.OAuthCallbackURL,
+			serverCfg.Gitlab.CallbackURL,
 			s.Cfg.UI.HTTP.URL,
 			serverCfg.Gitlab.ProxyWebhook,
 			s.Cache,

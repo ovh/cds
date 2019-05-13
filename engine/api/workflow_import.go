@@ -179,7 +179,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		key := vars["key"]
 		wfName := vars["permWorkflowName"]
 
-		//Load project
+		// Load project
 		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,

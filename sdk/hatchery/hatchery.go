@@ -236,9 +236,9 @@ func Create(ctx context.Context, h Interface) error {
 			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 			//Check bookedBy current hatchery
-			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
-				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
-				endTrace("booked by someone else")
+			if j.BookedBy.ID != 0 {
+				log.Debug("hatchery> job %d is booked by someone (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				endTrace("booked by someone")
 				continue
 			}
 
@@ -356,9 +356,16 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
 		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
 		// only modelName
-		if r.Type == sdk.ModelRequirement && strings.Split(r.Value, " ")[0] != model.Name {
-			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name)
-			return false
+		if r.Type == sdk.ModelRequirement {
+			modelName := strings.Split(r.Value, " ")[0]
+			modelPath := strings.SplitN(modelName, "/", 2)
+			if len(modelPath) == 2 {
+				modelName = modelPath[1]
+			}
+			if modelName != model.Name {
+				log.Debug("canRunJob> %d - job %d - model requirement from requirement r.Value(%s) don't match model.Name(%s)", j.timestamp, j.id, r.Value, model.Name)
+				return false
+			}
 		}
 
 		// If requirement is an hostname requirement, it's for a specific worker

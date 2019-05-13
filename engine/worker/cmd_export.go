@@ -37,7 +37,7 @@ You can use the build variable in :
 
 * another step of the current job with ` + "`{{.cds.build.varname}}`" + `
 * the next stages in same pipeline ` + "`{{.cds.build.varname}}`" + `
-* the next pipelines ` + "`{{.workflow.pipelineName.build.varname}}`" + ` with ` + "`pipelineName`" + ` the name of the pipeline in your worklow
+* the next pipelines ` + "`{{.workflow.pipelineName.build.varname}}`" + ` with ` + "`pipelineName`" + ` the name of the pipeline in your workflow
 	
 	`,
 	Run: exportCmd,

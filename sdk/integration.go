@@ -5,6 +5,7 @@ const (
 	KafkaIntegrationModel         = "Kafka"
 	RabbitMQIntegrationModel      = "RabbitMQ"
 	OpenstackIntegrationModel     = "Openstack"
+	AWSIntegrationModel           = "AWS"
 	DefaultStorageIntegrationName = "shared.infra"
 )
 
@@ -14,6 +15,7 @@ var (
 		&KafkaIntegration,
 		&RabbitMQIntegration,
 		&OpenstackIntegration,
+		&AWSIntegration,
 	}
 	// KafkaIntegration represents a kafka integration
 	KafkaIntegration = IntegrationModel{
@@ -85,6 +87,33 @@ var (
 			},
 			"storage_temporary_url_supported": IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
+			},
+		},
+		Storage:  true,
+		Disabled: false,
+		Hook:     false,
+	}
+	// AWSIntegration represents an aws integration
+	AWSIntegration = IntegrationModel{
+		Name:       AWSIntegrationModel,
+		Author:     "CDS",
+		Identifier: "github.com/ovh/cds/integration/builtin/aws",
+		Icon:       "",
+		DefaultConfig: IntegrationConfig{
+			"region": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"bucket_name": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"prefix": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"access_key_id": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"secret_access_key": IntegrationConfigValue{
+				Type: IntegrationConfigTypePassword,
 			},
 		},
 		Storage:  true,

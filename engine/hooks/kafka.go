@@ -45,7 +45,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 	}
 	pf, err := s.Client.ProjectIntegrationGet(projectKey, kafkaIntegration, true)
 	if err != nil {
-		s.stopTask(t)
+		_ = s.stopTask(t)
 		return sdk.WrapError(err, "Cannot get kafka configuration for %s/%s", projectKey, kafkaIntegration)
 	}
 
@@ -84,7 +84,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		clusterConfig)
 
 	if errConsumer != nil {
-		s.stopTask(t)
+		_ = s.stopTask(t)
 		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", broker, consumerGroup, topic, kafkaUser, errConsumer)
 	}
 

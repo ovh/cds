@@ -97,6 +97,8 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			}
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
+			// increment nbRegisteringWorkerModels, but no decrement.
+			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			if _, err := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); err != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
@@ -108,7 +110,6 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				}
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
-			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
 		}
 	}
 }

@@ -1,5 +1,8 @@
 version: v1.0
 name: pipeline-play-worker-artifact
+parameters:
+  integration:
+    type: string
 stages:
 - Stage 1
 - Stage 2
@@ -10,7 +13,7 @@ jobs:
   - script:
     - echo "withIntegration" > bar
     - echo "withShared" > bar2
-    - worker upload --tag={{.cds.version}} --destination=myOpenstackIntegration bar
+    - worker upload --tag={{.cds.version}} --destination={{.cds.pip.integration}} bar
     - worker upload --tag={{.cds.version}} bar2
 - job: workerDownload
   stage: Stage 2

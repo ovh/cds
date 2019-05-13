@@ -14,12 +14,16 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64) (sdk.RequirementList, bool, string, *sdk.MultiError) {
+func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, string, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
 	var model string
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
+
+	for i := range integrationPluginBinaries {
+		j.Action.Requirements = append(j.Action.Requirements, integrationPluginBinaries[i].Requirements...)
+	}
 
 	for _, v := range j.Action.Requirements {
 		name, errName := interpolate.Do(v.Name, tmp)
@@ -50,8 +54,13 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 
 	var modelType string
 	if model != "" {
-		// Load the worker model
-		wm, err := worker.LoadWorkerModelByName(db, strings.Split(model, " ")[0])
+		// load the worker model, if there is group name in the model name, ignore it.
+		modelName := strings.Split(model, " ")[0]
+		modelPath := strings.SplitN(modelName, "/", 2)
+		if len(modelPath) == 2 {
+			modelName = modelPath[1]
+		}
+		wm, err := worker.LoadWorkerModelByName(db, modelName)
 		if err != nil {
 			log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
 			errm.Append(sdk.ErrNoWorkerModel)

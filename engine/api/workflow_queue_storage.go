@@ -352,7 +352,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		var errorStoreURL error
 
 		for i := 0; i < retryURL; i++ {
-			url, key, errorStoreURL = store.StoreURL(&art)
+			url, key, errorStoreURL = store.StoreURL(&art, "")
 			if errorStoreURL != nil {
 				log.Warning("Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
 			} else {

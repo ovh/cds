@@ -99,22 +99,46 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			fmt.Printf("File %s is excluded from download\n", a.Name)
 			continue
 		}
-		f, err := os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
-		if err != nil {
-			return err
+
+		var f *os.File
+		var toDownload bool
+		if _, err := os.Stat(a.Name); os.IsNotExist(err) {
+			toDownload = true
+		} else {
+			// file exists, check sha512
+			var errf error
+			f, errf = os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			if errf != nil {
+				return errf
+			}
+			sha512sum, err512 := sdk.FileSHA512sum(a.Name)
+			if err512 != nil {
+				return err512
+			}
+
+			if sha512sum != a.SHA512sum {
+				toDownload = true
+			}
 		}
-		fmt.Printf("Downloading %s...\n", a.Name)
-		if err := client.WorkflowNodeRunArtifactDownload(v.GetString(_ProjectKey), v.GetString(_WorkflowName), a, f); err != nil {
-			return err
+
+		if toDownload {
+			var errf error
+			f, errf = os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			if errf != nil {
+				return errf
+			}
+			fmt.Printf("Downloading %s...\n", a.Name)
+			if err := client.WorkflowNodeRunArtifactDownload(v.GetString(_ProjectKey), v.GetString(_WorkflowName), a, f); err != nil {
+				return err
+			}
+			if err := f.Close(); err != nil {
+				return err
+			}
 		}
 
 		sha512sum, err512 := sdk.FileSHA512sum(a.Name)
 		if err512 != nil {
 			return err512
-		}
-
-		if err := f.Close(); err != nil {
-			return err
 		}
 
 		if sha512sum != a.SHA512sum {
@@ -130,7 +154,12 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			return fmt.Errorf("Invalid md5sum \ndownloaded file:%s\n%s:%s", md5sum, f.Name(), a.MD5sum)
 		}
 
-		fmt.Printf("File %s created, checksum OK\n", f.Name())
+		if toDownload {
+			fmt.Printf("File %s created, checksum OK\n", f.Name())
+		} else {
+			fmt.Printf("File %s already downloaded, checksum OK\n", f.Name())
+		}
+
 		ok = true
 	}
 

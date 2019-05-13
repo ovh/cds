@@ -28,3 +28,7 @@ or with a remote file:
 ```bash
 cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
 ```
+
+{{< note >}}
+If you want to specify an image using a private registry or a private image. You need to fill credentials in field `username` and `password` to access to your image. And if your image is not on docker hub but from a private registry you need to fill the `registry` info (the registry api url, for example for docker hub it's https://index.docker.io/v1/ but we fill it by default).
+{{< /note >}}

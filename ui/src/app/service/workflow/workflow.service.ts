@@ -215,4 +215,13 @@ export class WorkflowService {
     migrateAsCode(projectKey: string, workflowName: string): Observable<Operation> {
         return this._http.post<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode`, null);
     }
+
+    /**
+     * Resync As Code PR
+     * @param projectKey
+     * @param workflowName
+     */
+    resyncPRAsCode(projectKey: string, workflowName: string) {
+        return this._http.post(`/project/${projectKey}/workflows/${workflowName}/ascode/resync/pr`, null)
+    }
 }

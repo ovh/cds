@@ -1,0 +1,13 @@
+version: v1.0
+name: ITSCWRKFLW15-APPLICATION
+deployments:
+  hello-it-dev:
+    retry.delay:
+      type: string
+      value: "5"
+    retry.max:
+      type: string
+      value: "10"
+    version:
+      type: string
+      value: '{{.cds.version}}'

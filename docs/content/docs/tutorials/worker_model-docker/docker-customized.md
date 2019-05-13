@@ -104,3 +104,7 @@ docker push registry.my.infra.net/my/beautiful/worker:latest
 * Click on *Add* button and that's it
 
 Now you can specify this model in prerequisite on your job. Create a new prerequisite of type "model", then choose your worker model in list
+
+{{< note >}}
+If you want to specify an image using a private registry or a private image. You need to check the private checkbox and fill credentials in username and password to access to your image. And if your image is not on docker hub but from a private registry you need to fill the registry info (the registry api url, for example for docker hub it's https://index.docker.io/v1/ but we fill it by default).
+{{< /note >}}
