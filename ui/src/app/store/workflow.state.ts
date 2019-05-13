@@ -167,7 +167,7 @@ export class WorkflowState {
         ).pipe(tap((wf) => {
             const state = ctx.getState();
             let oldWorkflow = cloneDeep(state.workflow);
-            if (oldWorkflow.name !== wf.name) {
+            if (action.payload.workflowName !== wf.name) {
                 wf.audits = cloneDeep(oldWorkflow.audits);
                 wf.from_template = cloneDeep(oldWorkflow.from_template);
                 wf.template_up_to_date = cloneDeep(oldWorkflow.template_up_to_date);
