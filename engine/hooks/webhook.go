@@ -53,9 +53,9 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		}
 		if pushEvent.Deleted {
 			branch := strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
-			s.enqueueBranchDeletion(t.UUID, projectKey, workflowName, branch)
+			err := s.enqueueBranchDeletion(t.UUID, projectKey, workflowName, branch)
 
-			return nil, nil
+			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 		}
 		payload["git.author"] = pushEvent.HeadCommit.Author.Username
 		payload["git.author.email"] = pushEvent.HeadCommit.Author.Email
