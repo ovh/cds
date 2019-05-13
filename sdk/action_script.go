@@ -3,6 +3,7 @@ package sdk
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 //ActionScript represents the structure of a HCL action file
@@ -187,22 +188,30 @@ func NewStepPlugin(v map[string]map[string]string) (*Action, error) {
 }
 
 // NewStepDefault returns an action (basically used as a step of a job) of default type
-func NewStepDefault(n string, args map[string]string) (*Action, error) {
+func NewStepDefault(n string, args map[string]string) *Action {
 	newAction := Action{
 		Name:       n,
 		Parameters: []Parameter{},
 	}
+
+	splitted := strings.Split(n, "/")
+	if len(splitted) == 2 {
+		newAction.Name = splitted[1]
+		newAction.Group = &Group{Name: splitted[0]}
+	}
+
 	for p, val := range args {
 		newAction.Parameters = append(newAction.Parameters, Parameter{
 			Name:  p,
 			Value: val,
 		})
 	}
-	return &newAction, nil
+
+	return &newAction
 }
 
 // ActionInfoMarkdown returns string formatted with markdown
-func ActionInfoMarkdown(a *Action, filename string) string {
+func ActionInfoMarkdown(a Action, filename string) string {
 	var sp, rq string
 	ps := a.Parameters
 	sort.Slice(ps, func(i, j int) bool { return ps[i].Name < ps[j].Name })

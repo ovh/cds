@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) postPGRPCluginHandler() service.Handler {
+func (api *API) postGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 		db := api.mustDB()
@@ -32,30 +32,31 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 
 		tx, err := db.Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() //nolint
 
-		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
-		if err != nil {
-			return err
+		// a plugin can be attached to a integration model OR not, for "action plugin"
+		if p.Integration != "" {
+			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+			if err != nil {
+				return err
+			}
+			p.IntegrationModelID = &integrationModel.ID
 		}
-		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
-			// Check that action does not already exists
-			conflict, err := action.Exists(db, p.Name)
+			old, err := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
 			if err != nil {
-				return sdk.WrapError(err, "%v", err)
+				return sdk.WithStack(err)
 			}
-			if conflict {
+			if old != nil {
 				if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, u.ID); err != nil {
-					return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
+					return sdk.WrapError(err, "error while updating action %s in database", p.Name)
 				}
 			} else {
-				//Insert in database
 				if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Parameters); err != nil {
-					return sdk.WrapError(err, "Error while inserting action %s in database", p.Name)
+					return sdk.WrapError(err, "error while inserting action %s in database", p.Name)
 				}
 			}
 		}
@@ -65,7 +66,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -120,11 +121,14 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot get integration model")
+		// a plugin can be attached to a integration model OR not, for "action plugin"
+		if p.Integration != "" {
+			integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+			if err != nil {
+				return err
+			}
+			p.IntegrationModelID = &integrationModel.ID
 		}
-		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
 			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {

@@ -1,5 +1,8 @@
 version: v1.0
 name: pipeline-play-action-artifact
+parameters:
+  integration:
+    type: string
 stages:
 - Stage 1
 - Stage 2
@@ -10,7 +13,7 @@ jobs:
   - script:
     - echo "foo"> bar
   - artifactUpload:
-      destination: myOpenstackIntegration
+      destination: "{{.cds.pip.integration}}"
       path: bar
       tag: '{{.cds.version}}'
 - job: DownloadJob

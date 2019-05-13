@@ -1,4 +1,4 @@
-// +build dragonfly freebsd netbsd openbsd linux,386 windows,386
+// +build freebsd openbsd linux,386 linux,arm windows,386 windows,arm nokeychain
 
 package main
 
@@ -7,6 +7,8 @@ import (
 
 	toml "github.com/pelletier/go-toml"
 )
+
+var keychainEnabled = false
 
 func storeSecret(configFile io.Writer, c *config) error {
 	enc := toml.NewEncoder(configFile)

@@ -1,17 +1,19 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { FetchPipeline } from 'app/store/pipelines.action';
+import { PipelinesState } from 'app/store/pipelines.state';
 import { cloneDeep } from 'lodash';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, flatMap } from 'rxjs/operators';
 import { Application } from '../../../../model/application.model';
 import { PermissionValue } from '../../../../model/permission.model';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
 import { WNode, Workflow } from '../../../../model/workflow.model';
 import { ApplicationWorkflowService } from '../../../../service/application/application.workflow.service';
-import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
 import { VariableService } from '../../../../service/variable/variable.service';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { ParameterEvent } from '../../../parameter/parameter.event.model';
@@ -57,10 +59,10 @@ export class WorkflowNodeContextComponent {
     permissionEnum = PermissionValue;
 
     constructor(
-      private _pipelineStore: PipelineStore,
-      private _variableService: VariableService,
-      private _modalService: SuiModalService,
-      private _appWorkflowService: ApplicationWorkflowService
+        private store: Store,
+        private _variableService: VariableService,
+        private _modalService: SuiModalService,
+        private _appWorkflowService: ApplicationWorkflowService
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -75,7 +77,7 @@ export class WorkflowNodeContextComponent {
         if (this.nodeContextModal) {
             this.suggest = [];
             this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
-              .subscribe((suggest) => this.suggest = suggest);
+                .subscribe((suggest) => this.suggest = suggest);
 
             // TODO delete .repository_fullname condition and update handler to get history branches of node_run (issue: #1815)
             let app = Workflow.getApplication(this.workflow, this.node);
@@ -96,25 +98,24 @@ export class WorkflowNodeContextComponent {
 
             let pipeline = Workflow.getPipeline(this.workflow, this.node);
             if (pipeline) {
-                this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, pipeline.name).subscribe(pips => {
-                    let pip = pips.get(this.project.key + '-' + pipeline.name);
-                    if (pip) {
-                        this.currentPipeline = pip;
-                        this.pipParamsReady = true;
-                        this.editableNode.context.default_pipeline_parameters =
-                            cloneDeep(Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters));
-                        try {
-                            this.editableNode.context.default_payload = JSON.parse(this.payloadString);
-                            this.invalidJSON = false;
-                        } catch (e) {
-                            this.invalidJSON = true;
-                        }
-                        if (!this.editableNode.context.default_payload) {
-                            this.editableNode.context.default_payload = {};
-                        }
+                this.store.dispatch(new FetchPipeline({
+                    projectKey: this.project.key,
+                    pipelineName: pipeline.name
+                })).pipe(
+                    flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, pipeline.name)))
+                ).subscribe((pip) => {
+                    this.currentPipeline = pip;
+                    this.pipParamsReady = true;
+                    this.editableNode.context.default_pipeline_parameters =
+                        cloneDeep(Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters));
+                    try {
+                        this.editableNode.context.default_payload = JSON.parse(this.payloadString);
+                        this.invalidJSON = false;
+                    } catch (e) {
+                        this.invalidJSON = true;
                     }
-                    if (this.pipelineSubscription) {
-                        this.pipelineSubscription.unsubscribe();
+                    if (!this.editableNode.context.default_payload) {
+                        this.editableNode.context.default_payload = {};
                     }
                 });
             }
@@ -160,7 +161,7 @@ export class WorkflowNodeContextComponent {
     updateValue(payload): void {
         let newPayload: {};
         if (!payload) {
-          return;
+            return;
         }
 
         try {
@@ -197,9 +198,9 @@ export class WorkflowNodeContextComponent {
             completeSingle: true,
             closeCharacters: / /,
             payloadCompletionList: {
-              branches: this.branches,
-              repositories: this.remotes,
-              tags: this.tags,
+                branches: this.branches,
+                repositories: this.remotes,
+                tags: this.tags,
             },
             specialChars: ''
         });
@@ -208,10 +209,10 @@ export class WorkflowNodeContextComponent {
     parameterEvent(event: ParameterEvent) {
         switch (event.type) {
             case 'delete':
-            this.editableNode.context.default_pipeline_parameters =
-                this.editableNode.context.default_pipeline_parameters.filter((param) => param.name !== event.parameter.name);
-            event.parameter.updating = false;
-            break;
+                this.editableNode.context.default_pipeline_parameters =
+                    this.editableNode.context.default_pipeline_parameters.filter((param) => param.name !== event.parameter.name);
+                event.parameter.updating = false;
+                break;
         }
     }
 }

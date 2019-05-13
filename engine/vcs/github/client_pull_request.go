@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -14,42 +15,49 @@ import (
 )
 
 func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int) (sdk.VCSPullRequest, error) {
-	cachePullRequestKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, fmt.Sprintf("/repos/%s/pulls/%d"+fullname, id))
-
-	url := fmt.Sprintf("/repos/%s/pulls/%d"+fullname, id)
-	status, body, _, err := g.get(url)
-	if err != nil {
-		g.Cache.Delete(cachePullRequestKey)
-		return sdk.VCSPullRequest{}, err
-	}
-	if status >= 400 {
-		g.Cache.Delete(cachePullRequestKey)
-		return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-	}
-
-	//Github may return 304 status because we are using conditional request with ETag based headers
 	var pr PullRequest
-	if status == http.StatusNotModified {
-		//If repos aren't updated, lets get them from cache
-		if !g.Cache.Get(cachePullRequestKey, &pr) {
-			log.Error("Unable to get pullrequest (%s) from the cache", cachePullRequestKey)
-		}
+	cachePullRequestKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, fmt.Sprintf("/repos/%s/pulls/%d", fullname, id))
+	opts := []getArgFunc{withETag}
 
-	} else {
-		if err := json.Unmarshal(body, &pr); err != nil {
-			log.Warning("githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
+	for {
+		url := fmt.Sprintf("/repos/%s/pulls/%d", fullname, id)
+
+		status, body, _, err := g.get(url, opts...)
+		if err != nil {
+			g.Cache.Delete(cachePullRequestKey)
 			return sdk.VCSPullRequest{}, err
 		}
-	}
+		if status >= 400 {
+			g.Cache.Delete(cachePullRequestKey)
+			return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		}
 
-	if pr.ID != id {
-		log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
-		g.Cache.Delete(cachePullRequestKey)
-		return sdk.VCSPullRequest{}, fmt.Errorf("githubClient.PullRequest > Cannot find pullrequest %d", id)
-	}
+		//Github may return 304 status because we are using conditional request with ETag based headers
+		if status == http.StatusNotModified {
+			//If repos aren't updated, lets get them from cache
+			if !g.Cache.Get(cachePullRequestKey, &pr) {
+				opts = []getArgFunc{withoutETag}
+				log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cachePullRequestKey, g.OAuthToken, ""))
+				continue
+			}
 
-	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60)
+		} else {
+			if err := json.Unmarshal(body, &pr); err != nil {
+				log.Warning("githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
+				return sdk.VCSPullRequest{}, sdk.WithStack(err)
+			}
+		}
+
+		if pr.Number != id {
+			log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
+			g.Cache.Delete(cachePullRequestKey)
+			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %d", id))
+		}
+
+		//Put the body on cache for one hour and one minute
+		g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60)
+		break
+	}
 
 	return pr.ToVCSPullRequest(), nil
 }
@@ -58,10 +66,12 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
 	var nextPage = "/repos/" + fullname + "/pulls"
+	cacheKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
+	opts := []getArgFunc{withETag}
 
 	for {
 		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage)
+			status, body, headers, err := g.get(nextPage, opts...)
 			if err != nil {
 				log.Warning("githubClient.PullRequests> Error %s", err)
 				return nil, err
@@ -69,12 +79,17 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 			if status >= 400 {
 				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 			}
+			opts[0] = withETag
 			nextPullRequests := []PullRequest{}
 
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				g.Cache.Get(cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), &pullRequests)
+				if !g.Cache.Get(cacheKey, &pullRequests) {
+					opts[0] = withoutETag
+					log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
+					continue
+				}
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
@@ -204,7 +219,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 				Timestamp: pullr.UpdatedAt.Unix(),
 			},
 		},
-		URL: pullr.URL,
+		URL: pullr.HTMLURL,
 		User: sdk.VCSAuthor{
 			Avatar:      pullr.User.AvatarURL,
 			DisplayName: pullr.User.Login,

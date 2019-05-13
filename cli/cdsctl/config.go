@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/fsamin/go-repo"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -37,17 +38,17 @@ func userHomeDir() string {
 	return os.Getenv(env)
 }
 
-func loadConfig(configFile string) (*cdsclient.Config, error) {
-	var verbose = os.Getenv("CDS_VERBOSE") == "true"
+func loadConfig(cmd *cobra.Command, configFile string) (*cdsclient.Config, error) {
+	var verbose, _ = cmd.Flags().GetBool("verbose")
+	verbose = verbose || os.Getenv("CDS_VERBOSE") == "true"
+	var insecureSkipVerifyTLS, _ = cmd.Flags().GetBool("insecure")
+	insecureSkipVerifyTLS = insecureSkipVerifyTLS || os.Getenv("CDS_INSECURE") == "true"
 
 	c := &config{}
 	c.Host = os.Getenv("CDS_API_URL")
 	c.User = os.Getenv("CDS_USER")
 	c.Token = os.Getenv("CDS_TOKEN")
-	c.InsecureSkipVerifyTLS, _ = strconv.ParseBool(os.Getenv("CDS_INSECURE"))
-	if insecureSkipVerifyTLS { // if set from command line
-		c.InsecureSkipVerifyTLS = true
-	}
+	c.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
 
 	if c.Host != "" && c.User != "" {
 		if verbose {
@@ -192,11 +193,11 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		if needConfirmation {
 			fetchURL, err := r.FetchURL()
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot get url from local git repository")
 			}
 			name, err := r.Name()
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot get name from local git repository")
 			}
 			repoExists = cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
 		}
@@ -227,7 +228,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		if repoExists {
 			name, err := r.Name()
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot get name from current repository")
 			}
 			ps, err := client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
 			if err != nil {
@@ -267,7 +268,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project '%s - %s'. Is it correct?", projects[0].Key, projects[0].Name)) {
 					// there is no filter on repo so there was only one choice possible
 					if !repoExists {
-						return nil, fmt.Errorf("Can't find a project to use")
+						return nil, errors.New("can't find a project to use")
 					}
 				} else {
 					project = &projects[0]
@@ -296,7 +297,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		projectKey = project.Key
 		if repoExists {
 			if err := r.LocalConfigSet("cds", "project", projectKey); err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "cannot set local git configuration")
 			}
 		}
 
@@ -325,7 +326,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				}
 			}
 			if application == nil && !mctx[_ApplicationName].AllowEmpty {
-				return nil, fmt.Errorf("Can't find an application to use")
+				return nil, errors.New("can't find an application to use")
 			}
 
 			// set application name and override repository config if exists
@@ -333,7 +334,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 			if application != nil {
 				if repoExists {
 					if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
-						return nil, err
+						return nil, errors.Wrap(err, "cannot set local git configuration")
 					}
 				}
 			}
@@ -364,7 +365,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				}
 			}
 			if workflow == nil && !mctx[_WorkflowName].AllowEmpty {
-				return nil, fmt.Errorf("Can't find a workflow to use")
+				return nil, errors.New("can't find a workflow to use")
 			}
 
 			// set workflow name and override repository config if exists
@@ -372,7 +373,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				workflowName = workflow.Name
 				if repoExists {
 					if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
-						return nil, err
+						return nil, errors.Wrap(err, "cannot set local git configuration")
 					}
 				}
 			}

@@ -1,6 +1,8 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { FetchAsCodeWorkflow, ImportWorkflow, PreviewWorkflow, ResyncWorkflow } from 'app/store/workflows.action';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -9,8 +11,6 @@ import { Project } from '../../../../model/project.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { WorkflowCoreService } from '../../../../service/workflow/workflow.core.service';
 import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
-import { WorkflowService } from '../../../../service/workflow/workflow.service';
-import { WorkflowStore } from '../../../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -30,9 +30,11 @@ export class WorkflowSidebarCodeComponent {
     set open(data: boolean) {
         if (data && !this.updated) {
             this.loadingGet = true;
-            this._workflowService.getWorkflowExport(this.project.key, this.workflow.name)
-                .pipe(finalize(() => this.loadingGet = false))
-                .subscribe((wf) => this.exportedWf = wf);
+            this.store.dispatch(new FetchAsCodeWorkflow({
+                projectKey: this.project.key,
+                workflowName: this.workflow.name
+            })).pipe(finalize(() => this.loadingGet = false))
+                .subscribe(() => this.exportedWf = this.workflow.asCode);
         }
         this._open = data;
     }
@@ -51,15 +53,15 @@ export class WorkflowSidebarCodeComponent {
     updated = false;
     loading = false;
     loadingGet = true;
+    previewMode = false;
     permissionEnum = PermissionValue;
 
     constructor(
+        private store: Store,
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _workflowCore: WorkflowCoreService,
         private _workflowEventStore: WorkflowEventStore,
-        private _workflowService: WorkflowService,
-        private _workflowStore: WorkflowStore,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
@@ -79,16 +81,24 @@ export class WorkflowSidebarCodeComponent {
     }
 
     keyEvent(event: KeyboardEvent) {
-      if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
-          this.save();
-          event.preventDefault();
-      }
+        if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+            this.save();
+            event.preventDefault();
+        }
     }
 
     cancel() {
+        if (this.previewMode) {
+            this.store.dispatch(new ResyncWorkflow({
+                projectKey: this.project.key,
+                workflowName: this.workflow.name
+            })).subscribe(() => this._workflowCore.toggleAsCodeEditor({ open: false, save: false }));
+            this.previewMode = false;
+        } else {
+            this._workflowCore.setWorkflowPreview(null);
+            this._workflowCore.toggleAsCodeEditor({ open: false, save: false });
+        }
         this.updated = false;
-        this._workflowCore.setWorkflowPreview(null);
-        this._workflowCore.toggleAsCodeEditor({open: false, save: false});
     }
 
     unselectAll() {
@@ -103,19 +113,27 @@ export class WorkflowSidebarCodeComponent {
     preview() {
         this.unselectAll();
         this.loading = true;
-        this._workflowService.previewWorkflowImport(this.project.key, this.exportedWf)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe((wf) => this._workflowCore.setWorkflowPreview(wf));
+        this.previewMode = true;
+        this.store.dispatch(new PreviewWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            wfCode: this.exportedWf
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => this._workflowCore.toggleAsCodeEditor({ open: false, save: false }));
     }
 
     save() {
         this.unselectAll();
         this.loading = true;
-        this._workflowStore.importWorkflow(this.project.key, this.workflow.name, this.exportedWf)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe((wf) => {
+        this.store.dispatch(new ImportWorkflow({
+            projectKey: this.project.key,
+            wfName: this.workflow.name,
+            workflowCode: this.exportedWf
+        })).pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this.previewMode = false;
                 this.updated = false;
-                this._workflowCore.toggleAsCodeEditor({open: false, save: false});
+                this._workflowCore.toggleAsCodeEditor({ open: false, save: false });
                 this._workflowCore.setWorkflowPreview(null);
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });

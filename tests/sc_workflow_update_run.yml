@@ -32,6 +32,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
+    retry: 10
+    delay: 3
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -55,6 +57,8 @@ testcases:
 - name: check workflow run 2
   steps:
   - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2 --format json
+    retry: 10
+    delay: 3
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty

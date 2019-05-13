@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import {Action} from '../../../model/action.model';
-import {AllKeys} from '../../../model/keys.model';
-import {Parameter} from '../../../model/parameter.model';
-import {StepEvent} from './step.event';
+import { Action } from '../../../model/action.model';
+import { AllKeys } from '../../../model/keys.model';
+import { Parameter } from '../../../model/parameter.model';
+import { StepEvent } from './step.event';
 
 @Component({
     selector: 'app-action-step',
@@ -12,15 +12,21 @@ import {StepEvent} from './step.event';
 export class ActionStepComponent {
 
     _step: Action;
+    stepURL: Array<string>;
     withAdvanced: boolean;
     @Input('step')
     set step(step: Action) {
         this._step = step;
         if (step) {
-          this._step.step_name = this._step.step_name || this._step.name;
-          if (step.parameters) {
-            this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
-          }
+            this.stepURL = ['/settings', step.group ? 'action' : 'action-builtin'];
+            if (step.group) {
+                this.stepURL.push(step.group.name);
+            }
+            this.stepURL.push(step.name);
+            this._step.step_name = this._step.step_name || this._step.name;
+            if (step.parameters) {
+                this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
+            }
         }
     }
     get step(): Action {
@@ -51,7 +57,7 @@ export class ActionStepComponent {
     originalParam = new Map<string, Parameter>();
     editStepName = false;
     constructor() {
-         this.collapsed = true;
+        this.collapsed = true;
     }
     updateStepBool(b: boolean): boolean {
         this.action.hasChanged = true;

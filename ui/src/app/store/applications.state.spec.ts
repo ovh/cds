@@ -1,17 +1,21 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { async, TestBed } from '@angular/core/testing';
+import { XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import * as ActionApplication from './applications.action';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
+import { WorkflowsState } from './workflows.state';
 
 describe('Applications', () => {
     let store: Store;
@@ -19,8 +23,12 @@ describe('Applications', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
+            providers: [
+                { provide: XHRBackend, useClass: MockBackend },
+                NavbarService
+            ],
             imports: [
-                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState]),
+                NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowsState]),
                 HttpClientTestingModule
             ],
         }).compileComponents();
@@ -272,30 +280,6 @@ describe('Applications', () => {
 
     it('fetch an overview application', async(() => {
         const http = TestBed.get(HttpTestingController);
-        let application = new Application();
-        application.name = 'app1';
-        application.project_key = testProjectKey;
-        store.dispatch(new ActionApplication.AddApplication({
-            projectKey: testProjectKey,
-            application
-        }));
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/test1/applications';
-        })).flush({
-            name: 'app1',
-            project_key: testProjectKey,
-            vcs_strategy: {}
-        });
-        store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
-        });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.overview).toBeFalsy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-        });
-
         store.dispatch(new ActionApplication.FetchApplicationOverview({
             projectKey: testProjectKey,
             applicationName: 'app1'
@@ -306,14 +290,11 @@ describe('Applications', () => {
             return req.url === '/ui/project/test1/application/app1/overview';
         })).flush(overview);
         store.selectOnce(ApplicationsState).subscribe(state => {
-            expect(Object.keys(state.applications).length).toEqual(1);
+            expect(Object.keys(state.overviews).length).toEqual(1);
         });
-        store.selectOnce(ApplicationsState.selectApplication(testProjectKey, 'app1')).subscribe(app => {
-            expect(app).toBeTruthy();
-            expect(app.overview).toBeTruthy();
-            expect(app.name).toEqual('app1');
-            expect(app.project_key).toEqual(testProjectKey);
-            expect(app.overview.git_url).toEqual('git+ssh://thisisatest');
+        store.selectOnce(ApplicationsState.selectOverview(testProjectKey, 'app1')).subscribe(o => {
+            expect(o).toBeTruthy();
+            expect(o.git_url).toEqual('git+ssh://thisisatest');
         });
     }));
 

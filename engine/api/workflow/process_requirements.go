@@ -12,17 +12,17 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// getNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
+// processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) (sdk.RequirementList, bool, string, *sdk.MultiError) {
-	requirements := sdk.RequirementList{}
-	tmp := map[string]string{}
-	errm := &sdk.MultiError{}
-
+func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, string, *sdk.MultiError) {
+	var requirements sdk.RequirementList
+	var errm sdk.MultiError
 	var containsService bool
 	var model string
-	for _, v := range run.BuildParameters {
-		tmp[v.Name] = v.Value
+	var tmp = sdk.ParametersToMap(run.BuildParameters)
+
+	for i := range integrationPluginBinaries {
+		j.Action.Requirements = append(j.Action.Requirements, integrationPluginBinaries[i].Requirements...)
 	}
 
 	for _, v := range j.Action.Requirements {
@@ -36,29 +36,69 @@ func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Workflow
 			errm.Append(errValue)
 			continue
 		}
-		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
+
 		if v.Type == sdk.ServiceRequirement {
 			containsService = true
 		}
 		if v.Type == sdk.ModelRequirement {
+			// It is forbidden to have more than one model requirement.
+			if model != "" {
+				errm.Append(sdk.ErrInvalidJobRequirementDuplicateModel)
+				break
+			}
 			model = value
 		}
+
+		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
 
 	var modelType string
 	if model != "" {
-		wm, err := worker.LoadWorkerModelByName(db, model)
+		// load the worker model, if there is group name in the model name, ignore it.
+		modelName := strings.Split(model, " ")[0]
+		modelPath := strings.SplitN(modelName, "/", 2)
+		if len(modelPath) == 2 {
+			modelName = modelPath[1]
+		}
+		wm, err := worker.LoadWorkerModelByName(db, modelName)
 		if err != nil {
 			log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
+			errm.Append(sdk.ErrNoWorkerModel)
 		} else {
+			// Check that the worker model is in an exec group
+			if !sdk.IsInInt64Array(wm.GroupID, execsGroupIDs) {
+				errm.Append(sdk.ErrInvalidJobRequirementWorkerModelPermission)
+			}
+
+			// Check that the worker model has the binaries capabilitites
+			// only if the worker model doesn't need registration
+			if !wm.NeedRegistration && !wm.CheckRegistration {
+				for _, req := range requirements {
+					if req.Type == sdk.BinaryRequirement {
+						var hasCapa bool
+						for _, cap := range wm.RegisteredCapabilities {
+							if cap.Value == req.Value {
+								hasCapa = true
+								break
+							}
+						}
+						if !hasCapa {
+							errm.Append(sdk.ErrInvalidJobRequirementWorkerModelCapabilitites)
+							break
+						}
+					}
+				}
+			}
+
 			modelType = wm.Type
 		}
+
 	}
 
 	if errm.IsEmpty() {
 		return requirements, containsService, modelType, nil
 	}
-	return requirements, containsService, modelType, errm
+	return requirements, containsService, modelType, &errm
 }
 
 func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {

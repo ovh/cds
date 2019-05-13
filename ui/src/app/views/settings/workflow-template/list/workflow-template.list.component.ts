@@ -3,7 +3,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Column, ColumnType } from '../../../../shared/table/data-table.component';
+import { Column, ColumnType, Filter } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-workflow-template-list',
@@ -14,12 +14,20 @@ export class WorkflowTemplateListComponent {
     loading: boolean;
     columns: Array<Column<WorkflowTemplate>>;
     workflowTemplates: Array<WorkflowTemplate>;
-
-    path: Array<PathItem>
+    path: Array<PathItem>;
+    filter: Filter<WorkflowTemplate>;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService
     ) {
+        this.filter = f => {
+            const lowerFilter = f.toLowerCase();
+            return d => {
+                let s = `${d.group.name}/${d.name}`.toLowerCase();
+                return s.indexOf(lowerFilter) !== -1;
+            }
+        };
+
         this.columns = [
             <Column<WorkflowTemplate>>{
                 type: ColumnType.ROUTER_LINK,
@@ -32,13 +40,13 @@ export class WorkflowTemplateListComponent {
                 }
             },
             <Column<WorkflowTemplate>>{
+                name: 'common_group',
+                selector: (wt: WorkflowTemplate) => wt.group.name
+            },
+            <Column<WorkflowTemplate>>{
                 type: ColumnType.MARKDOWN,
                 name: 'common_description',
                 selector: (wt: WorkflowTemplate) => wt.description
-            },
-            <Column<WorkflowTemplate>>{
-                name: 'common_group',
-                selector: (wt: WorkflowTemplate) => wt.group.name
             }
         ];
         this.getTemplates();

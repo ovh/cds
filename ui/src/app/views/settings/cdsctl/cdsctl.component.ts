@@ -16,6 +16,7 @@ export class CdsctlComponent {
     apiURL: string;
     arch: Array<string>;
     os: Array<string>;
+    withKeychain: boolean;
     path: Array<PathItem>;
     codeMirrorConfig: any;
     tutorials: Array<string> = new Array();
@@ -29,6 +30,7 @@ export class CdsctlComponent {
         private _translate: TranslateService
     ) {
         this.loading = true;
+        this.withKeychain = true
         this._configService.getConfig().subscribe(r => {
             this.apiURL = r['url.api'];
             this.loading = false;
@@ -43,7 +45,7 @@ export class CdsctlComponent {
             };
 
             this.os = new Array<string>('windows', 'linux', 'darwin', 'freebsd');
-            this.arch = new Array<string>('amd64', '386');
+            this.arch = new Array<string>('amd64', '386', 'arm', 'arm64');
             this.osChoice = 'linux';
             this.archChoice = 'amd64'
             this.currentUser = this._authentificationStore.getUser();
@@ -52,8 +54,12 @@ export class CdsctlComponent {
     }
 
     buildData(): void {
+        let variant = '';
+        if (!this.withKeychain) {
+            variant = '?variant=nokeychain'
+        }
         this.tutorials['part1'] = this._translate.instant('cdsctl_part_1',
-            {apiURL: this.apiURL, osChoice: this.osChoice, archChoice: this.archChoice});
+            {apiURL: this.apiURL, osChoice: this.osChoice, archChoice: this.archChoice, variant: variant});
         this.tutorials['part2'] = this._translate.instant('cdsctl_part_2',
             {apiURL: this.apiURL, username: this.currentUser.username});
         this.tutorials['part3'] = this._translate.instant('cdsctl_part_3');

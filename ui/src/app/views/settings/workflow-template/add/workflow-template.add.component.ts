@@ -37,9 +37,6 @@ export class WorkflowTemplateAddComponent implements OnInit {
         private _translate: TranslateService,
         private _route: ActivatedRoute
     ) {
-        this.workflowTemplate = <WorkflowTemplate>{ editable: true };
-        this.getGroups();
-
         this.path = [<PathItem>{
             translate: 'common_settings'
         }, <PathItem>{
@@ -48,13 +45,18 @@ export class WorkflowTemplateAddComponent implements OnInit {
         }, <PathItem>{
             translate: 'common_create'
         }];
+
+        this.workflowTemplate = <WorkflowTemplate>{ editable: true };
+        this.getGroups();
     }
 
     ngOnInit() {
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
             if (params['from']) {
                 let path = params['from'].split('/');
-                this.initFromWorkflow(path[0], path[1]);
+                if (path.length === 2) {
+                    this.initFromWorkflow(path[0], path[1]);
+                }
             }
         });
     }
@@ -63,13 +65,20 @@ export class WorkflowTemplateAddComponent implements OnInit {
         this._workflowService.pullWorkflow(projectKey, workflowName).subscribe(w => {
             this.projectKey = projectKey;
             this.workflowName = workflowName;
-            this.workflowTemplate = <WorkflowTemplate>{
+            let wt = <WorkflowTemplate>{
                 editable: true,
-                value: w.workflow.value,
-                pipelines: w.pipelines.map(p => <PipelineTemplate>{ value: p.value }),
-                applications: w.applications.map(a => <PipelineTemplate>{ value: a.value }),
-                environments: w.environments.map(e => <PipelineTemplate>{ value: e.value })
-            };
+                value: w.workflow.value
+            }
+            if (w.pipelines) {
+                wt.pipelines = w.pipelines.map(p => <PipelineTemplate>{ value: p.value });
+            }
+            if (w.applications) {
+                wt.applications = w.applications.map(a => <PipelineTemplate>{ value: a.value });
+            }
+            if (w.environments) {
+                wt.environments = w.environments.map(e => <PipelineTemplate>{ value: e.value });
+            }
+            this.workflowTemplate = wt;
         });
     }
 

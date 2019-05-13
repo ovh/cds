@@ -17,6 +17,15 @@ type BuildNumberAndHash struct {
 	RemoteURL   string
 }
 
+// VCSConfiguration represent a small vcs configuration
+type VCSConfiguration struct {
+	Type     string `json:"type"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	URL      string `json:"url"`
+	SSHPort  int    `json:"sshport"`
+}
+
 // VCSServer is an interce for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient
 type VCSServer interface {
 	AuthorizeRedirect(context.Context) (string, string, error)
@@ -73,7 +82,7 @@ type VCSAuthorizedClient interface {
 	ListForks(ctx context.Context, repo string) ([]VCSRepo, error)
 
 	// Permissions
-	GrantReadPermission(ctx context.Context, repo string) error
+	GrantWritePermission(ctx context.Context, repo string) error
 }
 
 // GetDefaultBranch return the default branch

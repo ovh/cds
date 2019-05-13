@@ -18,7 +18,9 @@ github.com/Microsoft/go-winio
 github.com/Nvveen/Gotty
 # github.com/Shopify/sarama v1.17.0
 github.com/Shopify/sarama
-# github.com/aokoli/goutils v1.0.1
+# github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
+github.com/andygrunwald/go-gerrit
+# github.com/aokoli/goutils v1.1.0
 github.com/aokoli/goutils
 # github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05
 github.com/araddon/gou
@@ -26,6 +28,43 @@ github.com/araddon/gou
 github.com/armon/consul-api
 # github.com/artyom/untar v0.0.0-20160228112026-02ed5a2449a6
 github.com/artyom/untar
+# github.com/aws/aws-sdk-go v1.19.11
+github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/credentials
+github.com/aws/aws-sdk-go/aws/session
+github.com/aws/aws-sdk-go/service/s3
+github.com/aws/aws-sdk-go/service/s3/s3manager
+github.com/aws/aws-sdk-go/aws/awserr
+github.com/aws/aws-sdk-go/aws/endpoints
+github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/ini
+github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/aws/client
+github.com/aws/aws-sdk-go/aws/corehandlers
+github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/stscreds
+github.com/aws/aws-sdk-go/aws/csm
+github.com/aws/aws-sdk-go/aws/defaults
+github.com/aws/aws-sdk-go/aws/request
+github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/client/metadata
+github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/s3err
+github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/eventstream
+github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi
+github.com/aws/aws-sdk-go/private/protocol/rest
+github.com/aws/aws-sdk-go/private/protocol/restxml
+github.com/aws/aws-sdk-go/service/s3/s3iface
+github.com/aws/aws-sdk-go/internal/sdkrand
+github.com/aws/aws-sdk-go/service/sts
+github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
+github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
+github.com/aws/aws-sdk-go/aws/ec2metadata
+github.com/aws/aws-sdk-go/private/protocol/query
+github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+github.com/aws/aws-sdk-go/internal/sdkuri
+github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 # github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a
 github.com/beorn7/perks/quantile
 # github.com/bgentry/speakeasy v0.0.0-20160813190634-a1ccbf2c40df
@@ -68,8 +107,6 @@ github.com/coreos/clair/pkg/stopper
 github.com/coreos/go-etcd/etcd
 # github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea
 github.com/coreos/pkg/timeutil
-# github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf
-github.com/cpuguy83/go-md2man/md2man
 # github.com/danieljoos/wincred v1.0.1
 github.com/danieljoos/wincred
 # github.com/davecgh/go-spew v1.1.1
@@ -148,7 +185,7 @@ github.com/docker/docker/pkg/reexec
 github.com/docker/docker/pkg/plugins/transport
 github.com/docker/docker/oci
 github.com/docker/docker/pkg/term/windows
-# github.com/docker/docker-credential-helpers v0.6.1 => github.com/yesnault/docker-credential-helpers v0.0.0-20180831150006-4dd7c3df8875
+# github.com/docker/docker-credential-helpers v0.6.1
 github.com/docker/docker-credential-helpers/credentials
 github.com/docker/docker-credential-helpers/osxkeychain
 github.com/docker/docker-credential-helpers/secretservice
@@ -189,7 +226,7 @@ github.com/fatih/structs
 github.com/fernet/fernet-go
 # github.com/fsamin/go-dump v1.0.8
 github.com/fsamin/go-dump
-# github.com/fsamin/go-repo v0.0.0-20190227101938-952eab8f1609
+# github.com/fsamin/go-repo v0.1.1
 github.com/fsamin/go-repo
 # github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 github.com/fsamin/go-shredder
@@ -235,7 +272,7 @@ github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/snappy
 # github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a
 github.com/google/btree
-# github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135
+# github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
 # github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 github.com/google/gofuzz
@@ -247,7 +284,7 @@ github.com/google/gops/signal
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
-# github.com/gophercloud/gophercloud v0.0.0-20181102031606-aa00757ee3ab
+# github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks
@@ -295,7 +332,7 @@ github.com/hashicorp/vault/helper/jsonutil
 github.com/hashicorp/vault/helper/compressutil
 # github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288
 github.com/howeyc/gopass
-# github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1
+# github.com/huandu/xstrings v1.2.0
 github.com/huandu/xstrings
 # github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19
 github.com/imdario/mergo
@@ -309,6 +346,8 @@ github.com/inconshreveable/mousetrap
 github.com/itsjamie/gin-cors
 # github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2
 github.com/jgsqware/xnet
+# github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
+github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v1.1.5
 github.com/json-iterator/go
 # github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f
@@ -354,7 +393,7 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/mcuadros/go-defaults
 # github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
 github.com/mgutz/ansi
-# github.com/mholt/archiver v2.1.0+incompatible
+# github.com/mholt/archiver v3.1.1+incompatible
 github.com/mholt/archiver
 # github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
 github.com/mitchellh/go-homedir
@@ -390,6 +429,8 @@ github.com/opencontainers/runc/libcontainer/configs
 github.com/opencontainers/runc/libcontainer/devices
 # github.com/opencontainers/runtime-spec v1.0.1
 github.com/opencontainers/runtime-spec/specs-go
+# github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
+github.com/ovh/cds/sdk/interpolate
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
 # github.com/ovh/venom v0.25.0
@@ -421,10 +462,9 @@ github.com/pelletier/go-toml
 github.com/peterbourgon/diskv
 # github.com/phayes/permbits v0.0.0-20160816172359-32459f104210
 github.com/phayes/permbits
-# github.com/pierrec/lz4 v0.0.0-20161206202305-5c9560bfa9ac
+# github.com/pierrec/lz4 v0.0.0-20190222153722-062282ea0dcf
 github.com/pierrec/lz4
-# github.com/pierrec/xxHash v0.0.0-20160112165351-5a004441f897
-github.com/pierrec/xxHash/xxHash32
+github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 github.com/pkg/browser
 # github.com/pkg/errors v0.0.0-20171216070316-e881fd58d78e
@@ -450,8 +490,6 @@ github.com/rcrowley/go-metrics
 # github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 github.com/rubenv/sql-migrate
 github.com/rubenv/sql-migrate/sqlparse
-# github.com/russross/blackfriday v0.0.0-20170728175326-4048872b16cc
-github.com/russross/blackfriday
 # github.com/sclevine/agouti v0.0.0-20171003013254-8cf0313221cb
 github.com/sclevine/agouti
 github.com/sclevine/agouti/api
@@ -482,7 +520,6 @@ github.com/spf13/afero/sftp
 github.com/spf13/cast
 # github.com/spf13/cobra v0.0.0-20171231101556-b95ab734e27d
 github.com/spf13/cobra
-github.com/spf13/cobra/doc
 # github.com/spf13/jwalterweatherman v0.0.0-20160311093646-33c24e77fb80
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v0.0.0-20171106142849-4c012f6dcd95
@@ -528,7 +565,9 @@ github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/debug
 github.com/vmware/govmomi/vim25/xml
-# github.com/xanzy/go-gitlab v0.7.5
+# github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
+github.com/whilp/git-urls
+# github.com/xanzy/go-gitlab v0.15.0
 github.com/xanzy/go-gitlab
 # github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076
 github.com/xeipuuv/gojsonpointer
@@ -536,6 +575,8 @@ github.com/xeipuuv/gojsonpointer
 github.com/xeipuuv/gojsonreference
 # github.com/xeipuuv/gojsonschema v0.0.0-20161231055540-f06f290571ce
 github.com/xeipuuv/gojsonschema
+# github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
+github.com/xi2/xz
 # github.com/xordataexchange/crypt v0.0.0-20150523230031-749e360c8f23
 github.com/xordataexchange/crypt/config
 github.com/xordataexchange/crypt/backend
@@ -568,7 +609,7 @@ go.opencensus.io/internal
 go.opencensus.io/internal/tagencoding
 go.opencensus.io/trace/internal
 go.opencensus.io
-# golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
+# golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ssh
 golang.org/x/crypto/openpgp
@@ -585,7 +626,7 @@ golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
-# golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
+# golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http2
@@ -596,30 +637,33 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/internal/socks
-# golang.org/x/oauth2 v0.0.0-20181017192945-9dcd33a902f4
+# golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/google
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
+# golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
+# golang.org/x/sys v0.0.0-20190502175342-a43fa875dd82
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+golang.org/x/sys/cpu
 golang.org/x/sys/windows/registry
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.2
 golang.org/x/text/language
-golang.org/x/text/internal/tag
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+golang.org/x/text/internal/tag
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 # golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
 golang.org/x/time/rate
 # google.golang.org/api v0.0.0-20180517000435-aedc137bffca
 google.golang.org/api/support/bundler
-# google.golang.org/appengine v1.1.0
+# google.golang.org/appengine v1.3.0
 google.golang.org/appengine/cloudsql
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine
@@ -692,7 +736,7 @@ gopkg.in/square/go-jose.v2/json
 gopkg.in/testfixtures.v2
 # gopkg.in/urfave/cli.v1 v1.18.1
 gopkg.in/urfave/cli.v1
-# gopkg.in/yaml.v2 v2.2.1
+# gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
 # k8s.io/api v0.0.0-20181204000039-89a74a8d264d
 k8s.io/api/core/v1

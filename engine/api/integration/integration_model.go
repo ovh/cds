@@ -13,6 +13,7 @@ var (
 		sdk.KafkaIntegration,
 		sdk.RabbitMQIntegration,
 		sdk.OpenstackIntegration,
+		sdk.AWSIntegration,
 	}
 )
 

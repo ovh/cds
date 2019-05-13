@@ -19,7 +19,9 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type mockHTTPClient struct{}
+type mockHTTPClient struct {
+	f func(r *http.Request) (*http.Response, error) // nolint
+}
 
 func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
 	body := ioutil.NopCloser(bytes.NewReader([]byte("{}")))
@@ -476,7 +478,7 @@ func TestImport(t *testing.T) {
 				}
 			}
 
-			if err := workflow.Import(context.TODO(), db, cache, proj, wf, tt.args.w, u, tt.args.force, nil, false); err != nil {
+			if err := workflow.Import(context.TODO(), db, cache, proj, wf, tt.args.w, u, tt.args.force, nil); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {

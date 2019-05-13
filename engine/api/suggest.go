@@ -135,10 +135,10 @@ func (api *API) getVariablesHandler() service.Handler {
 		// add git variable
 		gitVar := []string{
 			"{{.git.hash}}",
+			"{{.git.hash.short}}",
 			"{{.git.branch}}",
 			"{{.git.tag}}",
 			"{{.git.author}}",
-			"{{.git.project}}",
 			"{{.git.repository}}",
 			"{{.git.url}}",
 			"{{.git.http_url}}",

@@ -1,10 +1,7 @@
 package exportentities
 
 import (
-	"archive/tar"
-	"encoding/base64"
 	"fmt"
-	"io"
 	"math/rand"
 	"sort"
 	"strings"
@@ -13,7 +10,6 @@ import (
 	"github.com/fsamin/go-dump"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Name pattern for pull files.
@@ -64,84 +60,6 @@ type WorkflowPulled struct {
 type WorkflowPulledItem struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
-}
-
-// Tar returns a tar containing all files for a pulled workflow.
-func (w WorkflowPulled) Tar(writer io.Writer) error {
-	tw := tar.NewWriter(writer)
-	defer func() {
-		if err := tw.Close(); err != nil {
-			log.Error("%v", sdk.WrapError(err, "unable to close tar writer"))
-		}
-	}()
-
-	bs, err := base64.StdEncoding.DecodeString(w.Workflow.Value)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	if err := tw.WriteHeader(&tar.Header{
-		Name: fmt.Sprintf(PullWorkflowName, w.Workflow.Name),
-		Mode: 0644,
-		Size: int64(len(bs)),
-	}); err != nil {
-		return sdk.WrapError(err, "unable to write workflow header for %s", w.Workflow.Name)
-	}
-	if _, err := tw.Write(bs); err != nil {
-		return sdk.WrapError(err, "unable to write workflow value")
-	}
-
-	for _, a := range w.Applications {
-		bs, err := base64.StdEncoding.DecodeString(a.Value)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf(PullApplicationName, a.Name),
-			Mode: 0644,
-			Size: int64(len(bs)),
-		}); err != nil {
-			return sdk.WrapError(err, "unable to write application header for %s", a.Name)
-		}
-		if _, err := tw.Write(bs); err != nil {
-			return sdk.WrapError(err, "unable to write application value")
-		}
-	}
-
-	for _, e := range w.Environments {
-		bs, err := base64.StdEncoding.DecodeString(e.Value)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf(PullEnvironmentName, e.Name),
-			Mode: 0644,
-			Size: int64(len(bs)),
-		}); err != nil {
-			return sdk.WrapError(err, "unable to write env header for %s", e.Name)
-		}
-		if _, err := tw.Write(bs); err != nil {
-			return sdk.WrapError(err, "unable to copy env buffer")
-		}
-	}
-
-	for _, p := range w.Pipelines {
-		bs, err := base64.StdEncoding.DecodeString(p.Value)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf(PullPipelineName, p.Name),
-			Mode: 0644,
-			Size: int64(len(bs)),
-		}); err != nil {
-			return sdk.WrapError(err, "unable to write pipeline header for %s", p.Name)
-		}
-		if _, err := tw.Write(bs); err != nil {
-			return sdk.WrapError(err, "unable to write pipeline value")
-		}
-	}
-
-	return nil
 }
 
 // NodeEntry represents a node as code
@@ -324,10 +242,13 @@ func WorkflowWithPermissions(w sdk.Workflow, exportedWorkflow *Workflow) error {
 }
 
 // WorkflowSkipIfOnlyOneRepoWebhook skips the repo webhook if it's the only one
+// It also won't export the default payload
 func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow) error {
 	if len(exportedWorkflow.Workflow) == 0 {
 		if len(exportedWorkflow.PipelineHooks) == 1 && exportedWorkflow.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
 			exportedWorkflow.PipelineHooks = nil
+			exportedWorkflow.Payload = nil
+
 		}
 		return nil
 	}
@@ -336,6 +257,16 @@ func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow
 		if nodeName == w.Root.Name && len(hs) == 1 {
 			if hs[0].Model == sdk.RepositoryWebHookModelName {
 				delete(exportedWorkflow.Hooks, nodeName)
+				if exportedWorkflow.Workflow != nil {
+					for nodeName := range exportedWorkflow.Workflow {
+						if nodeName == w.Root.Name {
+							entry := exportedWorkflow.Workflow[nodeName]
+							entry.Payload = nil
+							exportedWorkflow.Workflow[nodeName] = entry
+							break
+						}
+					}
+				}
 				break
 			}
 		}
@@ -829,7 +760,7 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	case 1:
 		w.AddTrigger(ancestors[0].Name, *n)
 		return true, nil
-	case 2:
+	default:
 		if n != nil && n.Type == sdk.NodeTypeJoin && joinAsNode(n) {
 			w.WorkflowData.Joins = append(w.WorkflowData.Joins, *n)
 			return true, nil

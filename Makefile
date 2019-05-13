@@ -6,6 +6,7 @@ doc:
 ifndef GEN_PATH
 	$(error GEN_PATH is undefined)
 endif
+    # export GEN_PATH=$HOME/src/github.com/ovh/cds/docs/content/docs/components
 	$(TARGET_CDSCTL) doc $(GEN_PATH)
 	$(TARGET_WORKER) doc $(GEN_PATH)
 	$(TARGET_ENGINE) doc $(GEN_PATH) ./
@@ -13,7 +14,7 @@ endif
 
 modclean:
 	@echo "removing vendor directory... " && rm -rf vendor
-	@echo "cleaning modcache... " && GO111MODULE=on go clean -modcache || true
+	@echo "cleaning modcache... " && GO111MODULE=off go clean -modcache || true
 
 mod:
 	@echo "running go mod tidy... " && GO111MODULE=on go mod tidy
@@ -24,6 +25,11 @@ mod:
 	# when docker update their vendor, it will be possible to remove this line.
 	# this will fix the plugin-clair for the moment
 	@echo "removing file /vendor/github.com/docker/docker/distribution/oci.go..." && rm -f vendor/github.com/docker/docker/distribution/oci.go
+	@echo "removing subpackages vendors" &&  rm -rf vendor/github.com/ovh/cds
 
 install:
 	go install $$(go list ./...)
+
+build:
+	$(MAKE) build -C engine
+	$(MAKE) build -C cli/cdsctl

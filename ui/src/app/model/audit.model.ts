@@ -28,3 +28,10 @@ export class AuditWorkflowTemplateInstance extends Audit {
     data_before: string;
     data_after: string;
 }
+
+export class AuditAction extends Audit {
+    action_id: string;
+    data_type: string;
+    data_before: string;
+    data_after: string;
+}

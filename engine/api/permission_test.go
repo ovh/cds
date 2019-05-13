@@ -297,7 +297,8 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 		ctx := context.WithValue(context.Background(), auth.ContextUser, tt.args.u)
 		m := map[string]string{}
 		m["key"] = tt.args.pKey
-		got := api.checkWorkflowPermissions(ctx, tt.args.wName, tt.args.p, m)
+		err := api.checkWorkflowPermissions(ctx, tt.args.wName, tt.args.p, m)
+		got := err == nil
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%q. checkWorkerModelPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
 		}

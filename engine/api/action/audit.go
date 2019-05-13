@@ -1,46 +1,105 @@
 package action
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/mitchellh/mapstructure"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// LoadAuditAction loads from database the last 10 versions of an action definition
-func LoadAuditAction(db gorp.SqlExecutor, actionID int, public bool) ([]sdk.ActionAudit, error) {
-	audits := []sdk.ActionAudit{}
-	query := `
-		SELECT
-			action_audit.change, action_audit.versionned, action_audit.action_json,
-			"user".username
-		FROM action_audit
-		JOIN "user" ON "user".id = action_audit.user_id
-		JOIN action ON action.id = action_audit.action_id
-		WHERE action_audit.action_id = $1 AND action.public = $2
-		ORDER by action_audit.versionned DESC
-	`
-	rows, err := db.Query(query, actionID, public)
+var (
+	audits = map[string]sdk.Audit{
+		fmt.Sprintf("%T", sdk.EventActionAdd{}):    addActionAudit{},
+		fmt.Sprintf("%T", sdk.EventActionUpdate{}): updateActionAudit{},
+	}
+)
+
+// ComputeAudit compute audit on action.
+func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
+	chanEvent := make(chan sdk.Event)
+	event.Subscribe(chanEvent)
+
+	db := DBFunc()
+	for {
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("%v", sdk.WithStack(c.Err()))
+				return
+			}
+		case e := <-chanEvent:
+			if !strings.HasPrefix(e.EventType, "sdk.EventAction") {
+				continue
+			}
+
+			if audit, ok := audits[e.EventType]; ok {
+				if err := audit.Compute(db, e); err != nil {
+					log.Warning("%v", sdk.WrapError(err, "unable to compute audit on event %s", e.EventType))
+				}
+			}
+		}
+	}
+}
+
+type addActionAudit struct{}
+
+func (a addActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+	var aEvent sdk.EventActionAdd
+	if err := mapstructure.Decode(e.Payload, &aEvent); err != nil {
+		return sdk.WrapError(err, "unable to decode payload")
+	}
+
+	b, err := json.Marshal(aEvent.Action)
 	if err != nil {
-		return nil, err
+		return sdk.WrapError(err, "unable to marshal action")
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var audit sdk.ActionAudit
-		var actionData string
-		err = rows.Scan(&audit.Change, &audit.Versionned, &actionData, &audit.User.Username)
-		if err != nil {
-			return nil, err
-		}
 
-		a := &sdk.Action{}
-		if err := json.Unmarshal([]byte(actionData), a); err != nil {
-			return nil, err
-		}
+	return InsertAudit(db, &sdk.AuditAction{
+		AuditCommon: sdk.AuditCommon{
+			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			Created:     e.Timestamp,
+			TriggeredBy: e.Username,
+		},
+		ActionID:  aEvent.Action.ID,
+		DataType:  "json",
+		DataAfter: string(b),
+	})
+}
 
-		audit.Action = *a
-		audits = append(audits, audit)
+type updateActionAudit struct{}
+
+func (a updateActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+	var aEvent sdk.EventActionUpdate
+	if err := mapstructure.Decode(e.Payload, &aEvent); err != nil {
+		return sdk.WrapError(err, "unable to decode payload")
 	}
-	return audits, nil
+
+	before, err := json.Marshal(aEvent.OldAction)
+	if err != nil {
+		return sdk.WrapError(err, "unable to marshal action")
+	}
+
+	after, err := json.Marshal(aEvent.NewAction)
+	if err != nil {
+		return sdk.WrapError(err, "unable to marshal action")
+	}
+
+	return InsertAudit(db, &sdk.AuditAction{
+		AuditCommon: sdk.AuditCommon{
+			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			Created:     e.Timestamp,
+			TriggeredBy: e.Username,
+		},
+		ActionID:   aEvent.NewAction.ID,
+		DataType:   "json",
+		DataBefore: string(before),
+		DataAfter:  string(after),
+	})
 }

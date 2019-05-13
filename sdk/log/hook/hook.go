@@ -258,7 +258,7 @@ func (hook *Hook) messageFromEntry(entry *logrus.Entry, file string, line int) *
 		Host:     hook.Hostname,
 		Short:    short,
 		Full:     full,
-		Time:     float64(entry.Time.UnixNano()) / 1E9,
+		Time:     float64(entry.Time.UnixNano()) / 1e9,
 		Level:    int32(priorities[entry.Level]),
 		Pid:      hook.pid,
 		Facility: hook.Facility,

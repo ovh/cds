@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,6 +38,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
@@ -111,7 +113,7 @@ type Configuration struct {
 		From     string `toml:"from" default:"no-reply@cds.local" json:"from"`
 	} `toml:"smtp" comment:"#####################\n# CDS SMTP Settings \n####################" json:"smtp"`
 	Artifact struct {
-		Mode  string `toml:"mode" default:"local" comment:"swift or local" json:"mode"`
+		Mode  string `toml:"mode" default:"local" comment:"swift, awss3 or local" json:"mode"`
 		Local struct {
 			BaseDirectory string `toml:"baseDirectory" default:"/tmp/cds/artifacts" json:"baseDirectory"`
 		} `toml:"local"`
@@ -125,6 +127,17 @@ type Configuration struct {
 			ContainerPrefix string `toml:"containerPrefix" comment:"Use if your want to prefix containers for CDS Artifacts" json:"containerPrefix"`
 			DisableTempURL  bool   `toml:"disableTempURL" default:"false" commented:"true" comment:"True if you want to disable Temporary URL in file upload" json:"disableTempURL"`
 		} `toml:"openstack" json:"openstack"`
+		AWSS3 struct {
+			BucketName          string `toml:"bucketName" json:"bucketName" comment:"Name of the S3 bucket to use when storing artifacts"`
+			Region              string `toml:"region" json:"region" default:"us-east-1" comment:"The AWS region"`
+			Prefix              string `toml:"prefix" json:"prefix" comment:"A subfolder of the bucket to store objects in, if left empty will store at the root of the bucket"`
+			AuthFromEnvironment bool   `toml:"authFromEnv" json:"authFromEnv" default:"false" comment:"Pull S3 auth information from env vars AWS_SECRET_ACCESS_KEY and AWS_SECRET_KEY_ID"`
+			SharedCredsFile     string `toml:"sharedCredsFile" json:"sharedCredsFile" comment:"The path for the AWS credential file, used with profile"`
+			Profile             string `toml:"profile" json:"profile" comment:"The profile within the AWS credentials file to use"`
+			AccessKeyID         string `toml:"accessKeyId" json:"accessKeyId" comment:"A static AWS Secret Key ID"`
+			SecretAccessKey     string `toml:"secretAccessKey" json:"-" comment:"A static AWS Secret Access Key"`
+			SessionToken        string `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
+		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
 	Events struct {
 		Kafka struct {
@@ -306,7 +319,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if aConfig.Directories.Download == "" {
-		return fmt.Errorf("Invalid download directory")
+		return fmt.Errorf("Invalid download directory (empty)")
 	}
 
 	if ok, err := DirectoryExists(aConfig.Directories.Download); !ok {
@@ -315,7 +328,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		}
 		log.Info("Directory %s has been created", aConfig.Directories.Download)
 	} else if err != nil {
-		return fmt.Errorf("Invalid download directory: %v", err)
+		return fmt.Errorf("Invalid download directory %s: %v", aConfig.Directories.Download, err)
 	}
 
 	if aConfig.Directories.Keys == "" {
@@ -332,14 +345,14 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	switch aConfig.Artifact.Mode {
-	case "local", "openstack", "swift":
+	case "local", "awss3", "openstack", "swift":
 	default:
 		return fmt.Errorf("Invalid artifact mode")
 	}
 
 	if aConfig.Artifact.Mode == "local" {
 		if aConfig.Artifact.Local.BaseDirectory == "" {
-			return fmt.Errorf("Invalid artifact local base directory")
+			return fmt.Errorf("Invalid artifact local base directory (empty name)")
 		}
 		if ok, err := DirectoryExists(aConfig.Artifact.Local.BaseDirectory); !ok {
 			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0700)); err != nil {
@@ -347,7 +360,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 			}
 			log.Info("Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
 		} else if err != nil {
-			return fmt.Errorf("Invalid artifact local base directory: %v", err)
+			return fmt.Errorf("Invalid artifact local base directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 		}
 	}
 
@@ -492,6 +505,33 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.StartupTime = time.Now()
 
+	// Checking downloadable binaries
+	resources := sdk.AllDownloadableResourcesWithAvailability(a.Config.Directories.Download)
+	var hasWorker, hasCtl, hasEngine bool
+	for _, r := range resources {
+		if r.Available != nil && *r.Available {
+			switch r.Name {
+			case "worker":
+				hasWorker = true
+			case "cdsctl":
+				hasCtl = true
+			case "engine":
+				hasEngine = true
+			}
+		}
+	}
+	if !hasEngine {
+		log.Error("engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+	}
+	if !hasCtl {
+		log.Error("cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+	}
+	if !hasWorker {
+		// If no worker, let's exit because CDS for run anything
+		log.Error("worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		return errors.New("worker binary unavailabe")
+	}
+
 	//Initialize secret driver
 	secret.Init(a.Config.Secrets.Key)
 
@@ -528,6 +568,8 @@ func (a *API) Serve(ctx context.Context) error {
 		objectstoreKind = objectstore.Openstack
 	case "swift":
 		objectstoreKind = objectstore.Swift
+	case "awss3":
+		objectstoreKind = objectstore.AWSS3
 	case "filesystem", "local":
 		objectstoreKind = objectstore.Filesystem
 	default:
@@ -537,6 +579,17 @@ func (a *API) Serve(ctx context.Context) error {
 	cfg := objectstore.Config{
 		Kind: objectstoreKind,
 		Options: objectstore.ConfigOptions{
+			AWSS3: objectstore.ConfigOptionsAWSS3{
+				Prefix:              a.Config.Artifact.AWSS3.Prefix,
+				SecretAccessKey:     a.Config.Artifact.AWSS3.SecretAccessKey,
+				AccessKeyID:         a.Config.Artifact.AWSS3.AccessKeyID,
+				Profile:             a.Config.Artifact.AWSS3.Profile,
+				SharedCredsFile:     a.Config.Artifact.AWSS3.SharedCredsFile,
+				AuthFromEnvironment: a.Config.Artifact.AWSS3.AuthFromEnvironment,
+				BucketName:          a.Config.Artifact.AWSS3.BucketName,
+				Region:              a.Config.Artifact.AWSS3.Region,
+				SessionToken:        a.Config.Artifact.AWSS3.SessionToken,
+			},
 			Openstack: objectstore.ConfigOptionsOpenstack{
 				Address:         a.Config.Artifact.Openstack.URL,
 				Username:        a.Config.Artifact.Openstack.Username,
@@ -691,6 +744,12 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Error("error while initializing workers routine: %s", err)
 		}
 	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
+		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "pipeline.ComputeAudit", func(ctx context.Context) {
+		pipeline.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
@@ -705,9 +764,6 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
-		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
@@ -725,11 +781,17 @@ func (a *API) Serve(ctx context.Context) error {
 		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	}, a.PanicDump())
 
-	migrate.Add(sdk.Migration{Name: "WorkflowData", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
-	}})
 	migrate.Add(sdk.Migration{Name: "Permissions", Release: "0.37.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.Permissions(a.DBConnectionFactory.GetDBMap, a.Cache)
+	}})
+	migrate.Add(sdk.Migration{Name: "WorkflowOldStruct", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.WorkflowRunOldModel(ctx, a.DBConnectionFactory.GetDBMap)
+	}})
+	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
+	}})
+	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.CleanArtifactBuiltinActions(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {

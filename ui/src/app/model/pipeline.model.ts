@@ -2,7 +2,6 @@ import { Environment } from './environment.model';
 import { Parameter } from './parameter.model';
 import { Stage } from './stage.model';
 import { Usage } from './usage.model';
-import { User } from './user.model';
 
 export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -32,7 +31,7 @@ export class PipelineStatus {
 
 export class PipelineAudit {
     id: number;
-    user: User;
+    username: string;
     versionned: Date;
     pipeline: Pipeline;
     action: string;
@@ -59,6 +58,7 @@ export class Pipeline {
     audits: Array<PipelineAudit>;
     preview: Pipeline;
     asCode: string;
+    from_repository: string;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;

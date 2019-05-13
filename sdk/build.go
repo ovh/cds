@@ -96,7 +96,7 @@ type BuildState struct {
 	Status   Status  `json:"status"`
 }
 
-// Status reprensents a Build Action or Build Pipeline Status
+// Status represents a Build Action or Build Pipeline Status
 type Status string
 
 // StatusFromString returns a Status from a given string

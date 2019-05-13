@@ -5,18 +5,22 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -31,8 +35,9 @@ type PushOption struct {
 	IsDefaultBranch    bool
 	RepositoryName     string
 	RepositoryStrategy sdk.RepositoryStrategy
-	DryRun             bool
 	HookUUID           string
+	Force              bool
+	OldWorkflow        *sdk.Workflow
 }
 
 // CreateFromRepository a workflow from a repository
@@ -93,8 +98,8 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		Branch:             ope.Setup.Checkout.Branch,
 		FromRepository:     ope.RepositoryInfo.FetchURL,
 		IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
-		DryRun:             true,
 		HookUUID:           hookUUID,
+		OldWorkflow:        w,
 	}
 
 	allMsg, workflowPushed, errP := Push(ctx, db, store, p, tr, opt, u, decryptFunc)
@@ -102,6 +107,11 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		return nil, sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")
 	}
 	*w = *workflowPushed
+
+	if w.Name != workflowPushed.Name {
+		log.Debug("workflow.extractWorkflow> Workflow has been renamed from %s to %s", w.Name, workflowPushed.Name)
+	}
+
 	return allMsg, nil
 }
 
@@ -134,6 +144,91 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	}
 
 	return tar.NewReader(buf), nil
+}
+
+type ExportedEntities struct {
+	wrkflw exportentities.Workflow
+	apps   map[string]exportentities.Application
+	pips   map[string]exportentities.PipelineV1
+	envs   map[string]exportentities.Environment
+}
+
+func ExtractFromCDSFiles(tr *tar.Reader) (*ExportedEntities, error) {
+	var res = ExportedEntities{
+		apps: make(map[string]exportentities.Application),
+		pips: make(map[string]exportentities.PipelineV1),
+		envs: make(map[string]exportentities.Environment),
+	}
+
+	mError := new(sdk.MultiError)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
+			return nil, sdk.WithStack(err)
+		}
+
+		log.Debug("Push> Reading %s", hdr.Name)
+
+		buff := new(bytes.Buffer)
+		if _, err := io.Copy(buff, tr); err != nil {
+			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
+			return nil, sdk.WithStack(err)
+		}
+
+		var workflowFileName string
+		b := buff.Bytes()
+		switch {
+		case strings.Contains(hdr.Name, ".app."):
+			var app exportentities.Application
+			if err := yaml.Unmarshal(b, &app); err != nil {
+				log.Error("Push> Unable to unmarshal application %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal application %s: %v", hdr.Name, err))
+				continue
+			}
+			res.apps[hdr.Name] = app
+		case strings.Contains(hdr.Name, ".pip."):
+			var pip exportentities.PipelineV1
+			if err := yaml.Unmarshal(b, &pip); err != nil {
+				log.Error("Push> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal pipeline %s: %v", hdr.Name, err))
+				continue
+			}
+			res.pips[hdr.Name] = pip
+		case strings.Contains(hdr.Name, ".env."):
+			var env exportentities.Environment
+			if err := yaml.Unmarshal(b, &env); err != nil {
+				log.Error("Push> Unable to unmarshal environment %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal environment %s: %v", hdr.Name, err))
+				continue
+			}
+			res.envs[hdr.Name] = env
+		default:
+			// if a workflow was already found, it's a mistake
+			if workflowFileName != "" {
+				log.Error("two workflows files found: %s and %s", workflowFileName, hdr.Name)
+				mError.Append(fmt.Errorf("two workflows files found: %s and %s", workflowFileName, hdr.Name))
+				break
+			}
+			if err := yaml.Unmarshal(b, &res.wrkflw); err != nil {
+				log.Error("Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
+				continue
+			}
+		}
+	}
+
+	// We only use the multiError during unmarshalling steps.
+	// When a DB transaction has been started, just return at the first error
+	// because transaction may have to be aborted
+	if !mError.IsEmpty() {
+		return nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
+	}
+
+	return &res, nil
 }
 
 func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
@@ -231,6 +326,11 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 				break
 			}
 		}
+		ope.RepositoryStrategy.User = ""
+		ope.RepositoryStrategy.Password = ""
+	} else {
+		ope.RepositoryStrategy.SSHKey = ""
+		ope.RepositoryStrategy.SSHKeyContent = ""
 	}
 
 	if multipartData == nil {

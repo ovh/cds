@@ -40,7 +40,7 @@ var (
 
 	loadApplicationNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var apps []sdk.IDName
+		var apps sdk.IDNames
 
 		if apps, err = application.LoadAllNames(db, proj.ID); err != nil {
 			return sdk.WrapError(err, "application.loadApplications")
@@ -130,17 +130,13 @@ var (
 
 	loadWorkflowNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var wfs []sdk.IDName
+		var wfs sdk.IDNames
 
 		if wfs, err = workflow.LoadAllNames(db, proj.ID, u); err != nil {
 			return sdk.WrapError(err, "workflow.loadworkflownames")
 		}
 		proj.WorkflowNames = wfs
 
-		return nil
-	}
-
-	lockProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		return nil
 	}
 
@@ -186,7 +182,7 @@ var (
 
 	loadPipelineNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var pips []sdk.IDName
+		var pips sdk.IDNames
 
 		if pips, err = pipeline.LoadAllNames(db, store, proj.ID); err != nil {
 			return sdk.WrapError(err, "pipeline.loadpipelinenames")

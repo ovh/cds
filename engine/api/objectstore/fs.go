@@ -17,13 +17,13 @@ type FilesystemStore struct {
 }
 
 // newFilesystemStore creates a new ObjectStore with filesystem driver
-func newFilesystemStore(projectIntegration sdk.ProjectIntegration, basedir string) (*FilesystemStore, error) {
-	log.Info("Objectstore> Initialize Filesystem driver on directory: %s", basedir)
-	if basedir == "" {
+func newFilesystemStore(projectIntegration sdk.ProjectIntegration, conf ConfigOptionsFilesystem) (*FilesystemStore, error) {
+	log.Info("ObjectStore> Initialize Filesystem driver on directory: %s", conf.Basedir)
+	if conf.Basedir == "" {
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
 	}
 
-	fss := &FilesystemStore{projectIntegration: projectIntegration, basedir: basedir}
+	fss := &FilesystemStore{projectIntegration: projectIntegration, basedir: conf.Basedir}
 	return fss, nil
 }
 

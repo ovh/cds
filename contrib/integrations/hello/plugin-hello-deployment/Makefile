@@ -19,7 +19,7 @@ export PLUGIN_MANIFEST_BINARY
 
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_NAME)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd openbsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
 GO_BUILD = go build -v
 
@@ -56,10 +56,14 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			FILENAME=deployment-plugin-$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
-			echo "Updating plugin binary $$FILENAME"; \
-			PLUGIN_YML=$(TARGET_DIR)/plugin.yml; \
-			NAME_PLUGIN=`grep 'name:' $$PLUGIN_YML|cut -d ':' -f2;`; \
-			echo "Updating plugin $$NAME_PLUGIN with binary $$FILENAME"; \
-			cdsctl admin plugins binary-add $$NAME_PLUGIN $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$$FILENAME; \
+      if [ -f "$(TARGET_DIR)/$$FILENAME" ]; then \
+        echo "Updating plugin binary $$FILENAME"; \
+        PLUGIN_YML=$(TARGET_DIR)/plugin.yml; \
+        NAME_PLUGIN=`grep 'name:' $$PLUGIN_YML|cut -d ':' -f2;`; \
+        echo "Updating plugin $$NAME_PLUGIN with binary $$FILENAME"; \
+        cdsctl admin plugins binary-add $$NAME_PLUGIN $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$$FILENAME; \
+      else \
+        echo "$$FILENAME is missing"; \
+      fi \
 		done; \
 	done

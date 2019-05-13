@@ -10,14 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/gorilla/mux"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-  _ "k8s.io/client-go/plugin/pkg/client/auth"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
@@ -59,8 +60,9 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	var errCl error
-	var clientset *kubernetes.Clientset
+	var clientSet *kubernetes.Clientset
 	k8sTimeout := time.Second * 10
+
 	if h.Config.KubernetesConfigFile != "" {
 		cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
 		if err != nil {
@@ -68,11 +70,11 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 		cfg.Timeout = k8sTimeout
 
-		clientset, errCl = kubernetes.NewForConfig(cfg)
+		clientSet, errCl = kubernetes.NewForConfig(cfg)
 		if errCl != nil {
 			return sdk.WrapError(errCl, "Cannot create client with newForConfig")
 		}
-	} else {
+	} else if h.Config.KubernetesMasterURL != "" {
 		configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot build config from config getter")
@@ -88,18 +90,30 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 
 		// creates the clientset
-		clientset, errCl = kubernetes.NewForConfig(configK8s)
+		clientSet, errCl = kubernetes.NewForConfig(configK8s)
 		if errCl != nil {
 			return sdk.WrapError(errCl, "Cannot create new config")
 		}
+	} else {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			return sdk.WrapError(err, "Unable to configure k8s InClusterConfig")
+		}
+
+		clientSet, errCl = kubernetes.NewForConfig(config)
+		if errCl != nil {
+			return sdk.WrapError(errCl, "Unable to configure k8s client with InClusterConfig")
+		}
+
 	}
-	h.k8sClient = clientset
+
+	h.k8sClient = clientSet
 
 	if h.Config.Namespace != apiv1.NamespaceDefault {
-		if _, err := clientset.CoreV1().Namespaces().Get(h.Config.Namespace, metav1.GetOptions{}); err != nil {
+		if _, err := clientSet.CoreV1().Namespaces().Get(h.Config.Namespace, metav1.GetOptions{}); err != nil {
 			ns := apiv1.Namespace{}
 			ns.SetName(h.Config.Namespace)
-			if _, errC := clientset.CoreV1().Namespaces().Create(&ns); errC != nil {
+			if _, errC := clientSet.CoreV1().Namespaces().Create(&ns); errC != nil {
 				return sdk.WrapError(errC, "Cannot create namespace %s in kubernetes", h.Config.Namespace)
 			}
 		}
@@ -173,10 +187,6 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("please enter a valid kubernetes namespace")
 	}
 
-	if hconfig.KubernetesMasterURL == "" {
-		return fmt.Errorf("please enter a valid kubernetes master URL")
-	}
-
 	return nil
 }
 
@@ -233,6 +243,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		label = "register"
 	}
 
+	// Kubernetes pod name must not be > 63 chars
+	if len(name) > 63 {
+		name = name[:60]
+	}
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s", name)
 
 	var logJob string
@@ -290,6 +304,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	}
 	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "1"
+	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
@@ -366,6 +381,16 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases = make([]apiv1.HostAlias, 1)
 		podSchema.Spec.HostAliases[0] = apiv1.HostAlias{IP: "127.0.0.1", Hostnames: make([]string, len(services)+1)}
 		podSchema.Spec.HostAliases[0].Hostnames[0] = "worker"
+	}
+
+	// Check here to add secret if needed
+	secretName := "cds-credreg-" + spawnArgs.Model.Name
+	if spawnArgs.Model.ModelDocker.Private {
+		if err := h.createSecret(secretName, spawnArgs.Model); err != nil {
+			return "", sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Name)
+		}
+		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretName}}
+		podSchema.ObjectMeta.Labels[LABEL_SECRET] = secretName
 	}
 
 	for i, serv := range services {
@@ -469,6 +494,12 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 
 			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorkers()
+			})
+
+			sdk.GoRoutine(ctx, "deleteSecrets", func(ctx context.Context) {
+				if err := h.deleteSecrets(); err != nil {
+					log.Error("hatchery> kubernetes> cannot handle secrets : %v", err)
+				}
 			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {

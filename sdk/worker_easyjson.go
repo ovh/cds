@@ -74,7 +74,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *Model) {
 				}
 				for !in.IsDelim(']') {
 					var v1 Requirement
-					(v1).UnmarshalEasyJSON(in)
+					if data := in.Raw(); in.Ok() {
+						in.AddError((v1).UnmarshalJSON(data))
+					}
 					out.RegisteredCapabilities = append(out.RegisteredCapabilities, v1)
 					in.WantComma()
 				}
@@ -266,7 +268,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in Model) {
 				if v2 > 0 {
 					out.RawByte(',')
 				}
-				(v3).MarshalEasyJSON(out)
+				out.Raw((v3).MarshalJSON())
 			}
 			out.RawByte(']')
 		}
@@ -871,7 +873,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk3(in *jlexer.Lexer, out *User) {
 				in.Delim(']')
 			}
 		case "permissions":
-			(out.Permissions).UnmarshalEasyJSON(in)
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Permissions).UnmarshalJSON(data))
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -994,7 +998,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in User) {
 		} else {
 			out.RawString(prefix)
 		}
-		(in.Permissions).MarshalEasyJSON(out)
+		out.Raw((in.Permissions).MarshalJSON())
 	}
 	out.RawByte('}')
 }
@@ -1142,6 +1146,14 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk2(in *jlexer.Lexer, out *ModelDocke
 		switch key {
 		case "image":
 			out.Image = string(in.String())
+		case "private":
+			out.Private = bool(in.Bool())
+		case "registry":
+			out.Registry = string(in.String())
+		case "username":
+			out.Username = string(in.String())
+		case "password":
+			out.Password = string(in.String())
 		case "memory":
 			out.Memory = int64(in.Int64())
 		case "envs":
@@ -1191,6 +1203,46 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in ModelDock
 			out.RawString(prefix)
 		}
 		out.String(string(in.Image))
+	}
+	if in.Private {
+		const prefix string = ",\"private\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Private))
+	}
+	if in.Registry != "" {
+		const prefix string = ",\"registry\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Registry))
+	}
+	if in.Username != "" {
+		const prefix string = ",\"username\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Username))
+	}
+	if in.Password != "" {
+		const prefix string = ",\"password\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Password))
 	}
 	if in.Memory != 0 {
 		const prefix string = ",\"memory\":"

@@ -25,7 +25,13 @@ type TaskExecution struct {
 	Kafka               *KafkaTaskExecution     `json:"kafka,omitempty" cli:"-"`
 	RabbitMQ            *RabbitMQTaskExecution  `json:"rabbitmq,omitempty" cli:"-"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty" cli:"-"`
+	GerritEvent         *GerritEventExecution   `json:"gerrit,omitempty" cli:"-"`
 	Status              string                  `json:"status" cli:"status"`
+}
+
+// GerritEventExecution contains specific data for a gerrit event execution
+type GerritEventExecution struct {
+	Message []byte `json:"message"`
 }
 
 // WebHookExecution contains specific data for a webhook execution

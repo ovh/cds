@@ -34,10 +34,6 @@ func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) er
 		return sdk.WrapError(err, "Cannot InitializeDefaultGroupName")
 	}
 
-	if err := action.CreateBuiltinArtifactActions(dbGorp); err != nil {
-		return sdk.WrapError(err, "Cannot setup builtin Artifact actions")
-	}
-
 	if err := action.CreateBuiltinActions(dbGorp); err != nil {
 		return sdk.WrapError(err, "Cannot setup builtin actions")
 	}

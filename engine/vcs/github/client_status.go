@@ -143,7 +143,7 @@ func processGithubState(s Status) string {
 	}
 }
 
-func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStatusDetail bool) (statusData, error) {
+func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatusDetail bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
@@ -172,7 +172,7 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 	data.pipName = eventNR.NodeName
 
 	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-		githubURL,
+		cdsUIURL,
 		event.ProjectKey,
 		event.WorkflowName,
 		eventNR.Number,

@@ -14,3 +14,12 @@ type Job struct {
 	Action           Action                 `json:"action"`
 	Warnings         []PipelineBuildWarning `json:"warnings"`
 }
+
+// IsValid returns job's validity.
+func (j Job) IsValid() error {
+	if j.PipelineStageID == 0 {
+		return NewErrorFrom(ErrWrongRequest, "invalid given stage id")
+	}
+
+	return j.Action.IsValid()
+}

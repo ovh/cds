@@ -25,21 +25,23 @@
                             <label>{{ 'application_icon' | translate }} ({{'common_optional' | translate}})</label>
                             <div>
                                 <div *ngIf="!fileTooLarge && img">
-                                    <img class="app-icon" [src]="img" alt="icon"/>
+                                    <img class="app-icon" [src]="img" alt="icon" />
                                 </div>
                                 <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
                                 </app-upload-button>
                             </div>
                         </div>
-                        <div class="ui red message field" *ngIf="fileTooLarge"  [textContent]="'common_file_too_large' | translate"></div>
+                        <div class="ui red message field" *ngIf="fileTooLarge" [textContent]="'common_file_too_large' | translate"></div>
 
                         <div class="grouped fields">
                             <label>{{ 'application_new_title' | translate }}</label>
                             <div class="field">
-                                <input type="radio" name="creation" value="empty" [(ngModel)]="typeofCreation" (change)="updateSelection('empty')"> {{ 'wizard_app_empty' | translate }}
+                                <input type="radio" name="creation" value="empty" [(ngModel)]="typeofCreation" (change)="updateSelection('empty')">
+                                {{ 'wizard_app_empty' | translate }}
                             </div>
-                            <div class="field" *ngIf="project.applications && project.applications.length > 0">
-                                <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation" (change)="updateSelection('clone')"> {{ 'wizard_app_clone' | translate }}
+                            <div class="field" *ngIf="project.application_names && project.application_names.length > 0">
+                                <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation" (change)="updateSelection('clone')">
+                                {{ 'wizard_app_clone' | translate }}
                             </div>
                         </div>
 
@@ -47,8 +49,9 @@
                             <div class="wide column sixteen">
 
                                 <div class="field" *ngIf="typeofCreation === 'clone'">
-                                    <sm-select [options]="{'fullTextSearch': true}" [model]="selectedApplicationName" (modelChange)="updateSelectedApplicationToClone($event)">
-                                        <option *ngFor="let app of project.applications" [value]="app.name">{{app.name}}</option>
+                                    <sm-select [options]="{'fullTextSearch': true}" [model]="selectedApplicationName"
+                                        (modelChange)="updateSelectedApplicationToClone($event)">
+                                        <option *ngFor="let app of project.application_names" [value]="app.name">{{app.name}}</option>
                                     </sm-select>
                                 </div>
 
@@ -56,8 +59,11 @@
                                     <app-variable [variables]="variables" mode="launcher"></app-variable>
                                 </div>
                                 <div class="field">
-                                    <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{ 'btn_cancel' | translate }}</a>
-                                    <button class="ui green right floated button" [class.loading]="loadingCreate" [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' | translate }}
+                                    <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{
+                                        'btn_cancel' | translate }}</a>
+                                    <button class="ui green right floated button" [class.loading]="loadingCreate"
+                                        [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' |
+                                        translate }}
                                     </button>
                                 </div>
                             </div>

@@ -236,7 +236,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         for (let elt of list) {
             if (query === elt.projectKey) {
                 found.push(elt);
-            } else if (elt.title.toLowerCase().indexOf(queryLowerCase) !== -1) {
+            } else if (elt.title && elt.title.toLowerCase().indexOf(queryLowerCase) !== -1) {
                 found.push(elt);
             }
         }

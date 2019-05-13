@@ -208,7 +208,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		if c.PreRun != nil {
 			if err := c.PreRun(&c, &args); err != nil {
-				ExitOnError(ErrWrongUsage, cmd.Help)
+				ExitOnError(err)
 				return
 			}
 		}
@@ -231,6 +231,10 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		}
 
 		vals := argsToVal(args)
+		b, _ := cmd.Flags().GetBool("insecure")
+		v, _ := cmd.Flags().GetBool("verbose")
+		vals["insecure"] = append(vals["insecure"], fmt.Sprintf("%v", b))
+		vals["verbose"] = append(vals["verbose"], fmt.Sprintf("%v", v))
 
 		format, _ := cmd.Flags().GetString("format")
 
@@ -252,11 +256,14 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				ExitOnError(err)
 			}
 
+			quiet, _ := cmd.Flags().GetBool("quiet")
 			verbose, _ := cmd.Flags().GetBool("verbose")
-			if !verbose {
-				i = listItem(i, nil, false, nil, verbose, map[string]string{})
+			fields, _ := cmd.Flags().GetString("fields")
+			var fs []string
+			if fields != "" {
+				fs = strings.Split(fields, ",")
 			}
-
+			i = listItem(i, nil, quiet, fs, verbose, map[string]string{})
 			switch format {
 			case "json":
 				b, err := json.Marshal(i)
@@ -266,6 +273,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				} else {
 					fmt.Println(string(b))
 				}
+
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
@@ -274,18 +282,25 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				} else {
 					fmt.Println(string(b))
 				}
+
 			default:
+				if quiet {
+					fmt.Println(i.(map[string]string)["key"])
+					return
+				}
 				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
-				e := dump.NewDefaultEncoder()
-				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-				e.ExtraFields.DetailedMap = false
-				e.ExtraFields.DetailedStruct = false
-				e.ExtraFields.Len = false
-				e.ExtraFields.Type = false
-				m, err := e.ToStringMap(i)
+				m, err := dump.ToStringMap(i)
 				ExitOnError(err)
-				for k, v := range m {
-					fmt.Fprintln(w, k+"\t"+v)
+
+				itemKeys := []string{}
+				for k := range m {
+					itemKeys = append(itemKeys, k)
+				}
+
+				sort.Strings(itemKeys)
+
+				for _, k := range itemKeys {
+					fmt.Fprintln(w, k+"\t"+m[k])
 				}
 				w.Flush()
 				return
@@ -306,6 +321,9 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				t := strings.Split(filter, " ")
 				for i := range t {
 					s := strings.SplitN(t[i], "=", 2)
+					if len(s) != 2 {
+						ExitOnError(fmt.Errorf("Filter should be formatted like name=value"))
+					}
 					filters[s[0]] = s[1]
 				}
 			}
@@ -434,8 +452,7 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 		t = reflect.TypeOf(reflect.ValueOf(i).Elem().Interface())
 	}
 
-	var ok = true
-	for i := 0; i < s.NumField() && ok; i++ {
+	for i := 0; i < s.NumField(); i++ {
 		f := s.Field(i)
 		structField := t.Field(i)
 		if f.Kind() == reflect.Ptr {
@@ -450,61 +467,71 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 				continue
 			}
 			if s.IsValid() && s.CanInterface() {
-				var isKey bool
 				tag := structField.Tag.Get("cli")
 				if tag == "-" {
 					continue
 				}
 
+				var isKey bool
 				if strings.HasSuffix(tag, ",key") {
 					isKey = true
 					tag = strings.Replace(tag, ",key", "", -1)
 				}
-
 				if !verbose && tag == "" {
 					continue
 				}
-
 				if tag == "" {
 					tag = structField.Name
 				}
 
+				// if there are filters and current tag value not match return nil item
 				if len(filters) > 0 {
 					for k, v := range filters {
+						// filter only if tag match
+						matchTag := k == tag || strings.ToUpper(k) == strings.ToUpper(tag)
+						if !matchTag {
+							continue
+						}
+
+						// transform filter to regex
 						if !strings.HasPrefix(v, "^") {
 							v = "^" + v
 						}
 						if !strings.HasSuffix(v, "$") {
 							v = v + "$"
 						}
-						match, err := regexp.MatchString(v, fmt.Sprintf("%v", f.Interface()))
+
+						// if the value don't match the item will not be displayed
+						matchValue, err := regexp.MatchString(v, fmt.Sprintf("%v", f.Interface()))
 						if err != nil {
 							panic(err)
 						}
-						if k == tag && !match {
-							ok = false
-							continue
+						if !matchValue {
+							return nil
 						}
 					}
-					if ok {
-						res[tag] = fmt.Sprintf("%v", f.Interface())
-					}
-				} else {
-					if quiet && isKey {
-						res["key"] = fmt.Sprintf("%v", f.Interface())
-						break
-					}
+				}
 
-					if len(fields) > 0 {
-						for _, ff := range fields {
-							if ff == tag || strings.ToUpper(ff) == tag || strings.ToLower(ff) == tag {
-								res[tag] = fmt.Sprintf("%v", f.Interface())
-								continue
-							}
+				// if there are fields list, add only tag that match in result (ignore for quiet mode)
+				if !quiet && len(fields) > 0 {
+					var visible bool
+					for _, ff := range fields {
+						matchTag := ff == tag || strings.ToUpper(ff) == tag || strings.ToLower(ff) == tag
+						if matchTag {
+							visible = true
+							break
 						}
+					}
+					if !visible {
 						continue
 					}
+				}
+
+				// if not quiet mode add the key:value to result else if quiet add only the key
+				if !quiet {
 					res[tag] = fmt.Sprintf("%v", f.Interface())
+				} else if isKey {
+					res["key"] = fmt.Sprintf("%v", f.Interface())
 				}
 			}
 		}

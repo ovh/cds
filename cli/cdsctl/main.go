@@ -12,13 +12,10 @@ import (
 )
 
 var (
-	configFile            string
-	cfg                   *cdsclient.Config
-	verbose               bool
-	noWarnings            bool
-	insecureSkipVerifyTLS bool
-	client                cdsclient.Interface
-	root                  *cobra.Command
+	configFile string
+	cfg        *cdsclient.Config
+	client     cdsclient.Interface
+	root       *cobra.Command
 )
 
 func main() {
@@ -57,21 +54,26 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 	root := cli.NewCommand(mainCmd, mainRun, cmds)
 
 	root.PersistentFlags().StringVarP(&configFile, "file", "f", "", "set configuration file")
-	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-	root.PersistentFlags().BoolVarP(&noWarnings, "no-warnings", "w", false, "do not display warnings")
-	root.PersistentFlags().BoolVarP(&insecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
+	root.PersistentFlags().BoolP("verbose", "", false, "verbose output")
+	root.PersistentFlags().BoolP("insecure", "", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		var err error
+		cfg, err = loadConfig(cmd, configFile)
+
+		if err == nil && cfg != nil {
+			client = cdsclient.New(*cfg)
+		}
+
 		//Do not load config on login
-		if cmd.Name() == "login" || cmd.Name() == "signup" || cmd.Name() == "doc" || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
+		if cmd.Name() == "login" ||
+			cmd.Name() == "signup" ||
+			cmd.Name() == "version" ||
+			cmd.Name() == "doc" || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
 
-		var err error
-		cfg, err = loadConfig(configFile)
 		cli.ExitOnError(err, login().Help)
-
-		client = cdsclient.New(*cfg)
 	}
 
 	return root
@@ -84,7 +86,7 @@ var mainCmd = cli.Command{
 
 ## Download
 
-You'll find last release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+You will find lastest release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
 
 
 ## Authentication

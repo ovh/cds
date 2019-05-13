@@ -25,8 +25,7 @@ export class Application {
     deployment_strategies: Map<string, any>;
     vulnerabilities: Array<Vulnerability>;
     project_key: string; // project unique key
-
-    overview: Overview;
+    from_repository: string;
 
     // true if someone has updated the application ( used for warnings )
     externalChange: boolean;

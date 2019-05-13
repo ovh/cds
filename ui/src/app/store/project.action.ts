@@ -129,7 +129,7 @@ export class DeletePipelineInProject {
 //  ------- Group Permission --------- //
 export class AddGroupInProject {
     static readonly type = '[Project] Add Group in Project';
-    constructor(public payload: { projectKey: string, group: GroupPermission }) { }
+    constructor(public payload: { projectKey: string, group: GroupPermission, onlyProject?: boolean }) { }
 }
 export class UpdateGroupInProject {
     static readonly type = '[Project] Update Group in Project';
@@ -141,6 +141,10 @@ export class DeleteGroupInProject {
 }
 
 //  ------- Label --------- //
+export class SaveLabelsInProject {
+    static readonly type = '[Project] Save Labels in Project';
+    constructor(public payload: { projectKey: string, labels: Label[] }) { }
+}
 export class AddLabelInProject {
     static readonly type = '[Project] Add Label in Project';
     constructor(public payload: { projectKey: string, label: Label }) { }
@@ -247,6 +251,10 @@ export class DeleteEnvironmentVariableInProject {
     static readonly type = '[Project] Delete Environment Variable in Project';
     constructor(public payload: { projectKey: string, environmentName: string, variable: Variable }) { }
 }
+export class FetchEnvironmentUsageInProject {
+    static readonly type = '[Project] Fetch Environment usage in Project';
+    constructor(public payload: { projectKey: string, environmentName: string }) { }
+}
 //  ------- Repository Manager --------- //
 export class ConnectRepositoryManagerInProject {
     static readonly type = '[Project] Connect Repository Manager in Project';
@@ -255,6 +263,10 @@ export class ConnectRepositoryManagerInProject {
 export class CallbackRepositoryManagerInProject {
     static readonly type = '[Project] Callback Repository Manager in Project';
     constructor(public payload: { projectKey: string, repoManager: string, requestToken: string, code: string }) { }
+}
+export class CallbackRepositoryManagerBasicAuthInProject {
+    static readonly type = '[Project] Callback Repository Basic Auth Manager in Project';
+    constructor(public payload: { projectKey: string, repoManager: string, basicUser: string, basicPassword: string }) { }
 }
 export class DisconnectRepositoryManagerInProject {
     static readonly type = '[Project] Disconnect Repository Manager in Project';

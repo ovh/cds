@@ -53,3 +53,12 @@ type AuditWorkflowTemplateInstance struct {
 	DataBefore                 string `json:"data_before" db:"data_before"`
 	DataAfter                  string `json:"data_after" db:"data_after"`
 }
+
+// AuditAction represents an audit data on a action.
+type AuditAction struct {
+	AuditCommon
+	ActionID   int64  `json:"action_id" db:"action_id"`
+	DataType   string `json:"data_type" db:"data_type"`
+	DataBefore string `json:"data_before" db:"data_before"`
+	DataAfter  string `json:"data_after" db:"data_after"`
+}

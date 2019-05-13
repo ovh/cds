@@ -1,10 +1,17 @@
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
+import {
+    ModuleWithProviders,
+    NgModule,
+    Optional,
+    SkipSelf
+} from '@angular/core';
 import { ActionService } from './action/action.service';
-import { ActionStore } from './action/action.store';
 import { ApplicationAuditService } from './application/application.audit.service';
 import { ApplicationNoCacheService } from './application/application.nocache.service';
-import { ApplicationQueryParamResolver, ApplicationResolver } from './application/application.resolver';
+import {
+    ApplicationQueryParamResolver,
+    ApplicationResolver
+} from './application/application.resolver';
 import { ApplicationService } from './application/application.service';
 import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
@@ -30,13 +37,12 @@ import { MonitoringService } from './monitoring/monitoring.service';
 import { NavbarService } from './navbar/navbar.service';
 import { NotificationService } from './notification/notification.service';
 import { ParameterService } from './parameter/parameter.service';
-import { PipelineAuditService } from './pipeline/pipeline.audit.service';
 import { PipelineCoreService } from './pipeline/pipeline.core.service';
-import { PipelineResolver } from './pipeline/pipeline.resolver';
 import { PipelineService } from './pipeline/pipeline.service';
-import { PipelineStore } from './pipeline/pipeline.store';
 import { ProjectAuditService } from './project/project.audit.service';
-import { ProjectForApplicationResolver, ProjectForWorkflowResolver, ProjectResolver } from './project/project.resolver';
+import { ProjectForApplicationResolver,
+    ProjectForWorkflowResolver,
+    ProjectResolver } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
 import { RepoManagerService } from './repomanager/project.repomanager.service';
@@ -70,7 +76,6 @@ export class ServicesModule {
                 ApplicationResolver,
                 ApplicationQueryParamResolver,
                 ActionService,
-                ActionStore,
                 ApplicationWorkflowService,
                 ApplicationService,
                 ApplicationNoCacheService,
@@ -94,11 +99,8 @@ export class ServicesModule {
                 NotificationService,
                 ParameterService,
                 MonitoringService,
-                PipelineResolver,
                 PipelineCoreService,
                 PipelineService,
-                PipelineAuditService,
-                PipelineStore,
                 IntegrationService,
                 ProjectResolver,
                 ProjectForApplicationResolver,
@@ -121,7 +123,8 @@ export class ServicesModule {
                 WorkflowTemplateService,
                 WorkflowEventStore,
                 WorkflowSidebarStore,
-                WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
+                WorkflowService,
+                WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
                     useClass: AuthentificationInterceptor,
@@ -136,7 +139,7 @@ export class ServicesModule {
         };
     }
 
-    constructor (@Optional() @SkipSelf() parentModule: ServicesModule) {
+    constructor(@Optional() @SkipSelf() parentModule: ServicesModule) {
         if (parentModule) {
             throw new Error(
                 'ServicesModule is already loaded. Import it in the AppModule only');
@@ -146,7 +149,6 @@ export class ServicesModule {
 
 export {
     ApplicationAuditService,
-    ActionStore,
     ApplicationWorkflowService,
     ApplicationResolver,
     ApplicationNoCacheService,
@@ -166,10 +168,7 @@ export {
     LanguageStore,
     ParameterService,
     MonitoringService,
-    PipelineResolver,
     PipelineCoreService,
-    PipelineStore,
-    PipelineAuditService,
     IntegrationService,
     ProjectResolver,
     ProjectForApplicationResolver,

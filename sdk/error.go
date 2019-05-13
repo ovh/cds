@@ -16,167 +16,180 @@ import (
 // Existing CDS errors
 // Note: the error id is useless except to ensure objects are different in map
 var (
-	ErrUnknownError                           = Error{ID: 1, Status: http.StatusInternalServerError}
-	ErrActionAlreadyUpdated                   = Error{ID: 2, Status: http.StatusBadRequest}
-	ErrNoAction                               = Error{ID: 3, Status: http.StatusNotFound}
-	ErrActionLoop                             = Error{ID: 4, Status: http.StatusBadRequest}
-	ErrInvalidID                              = Error{ID: 5, Status: http.StatusBadRequest}
-	ErrInvalidProject                         = Error{ID: 6, Status: http.StatusBadRequest}
-	ErrInvalidProjectKey                      = Error{ID: 7, Status: http.StatusBadRequest}
-	ErrProjectHasPipeline                     = Error{ID: 8, Status: http.StatusConflict}
-	ErrProjectHasApplication                  = Error{ID: 9, Status: http.StatusConflict}
-	ErrUnauthorized                           = Error{ID: 10, Status: http.StatusUnauthorized}
-	ErrForbidden                              = Error{ID: 11, Status: http.StatusForbidden}
-	ErrPipelineNotFound                       = Error{ID: 12, Status: http.StatusBadRequest}
-	ErrPipelineNotAttached                    = Error{ID: 13, Status: http.StatusBadRequest}
-	ErrNoEnvironmentProvided                  = Error{ID: 14, Status: http.StatusBadRequest}
-	ErrEnvironmentProvided                    = Error{ID: 15, Status: http.StatusBadRequest}
-	ErrUnknownEnv                             = Error{ID: 16, Status: http.StatusBadRequest}
-	ErrEnvironmentExist                       = Error{ID: 17, Status: http.StatusConflict}
-	ErrNoPipelineBuild                        = Error{ID: 18, Status: http.StatusNotFound}
-	ErrApplicationNotFound                    = Error{ID: 19, Status: http.StatusNotFound}
-	ErrGroupNotFound                          = Error{ID: 20, Status: http.StatusNotFound}
-	ErrInvalidUsername                        = Error{ID: 21, Status: http.StatusBadRequest}
-	ErrInvalidEmail                           = Error{ID: 22, Status: http.StatusBadRequest}
-	ErrGroupPresent                           = Error{ID: 23, Status: http.StatusBadRequest}
-	ErrInvalidName                            = Error{ID: 24, Status: http.StatusBadRequest}
-	ErrInvalidUser                            = Error{ID: 25, Status: http.StatusBadRequest}
-	ErrBuildArchived                          = Error{ID: 26, Status: http.StatusBadRequest}
-	ErrNoEnvironment                          = Error{ID: 27, Status: http.StatusNotFound}
-	ErrModelNameExist                         = Error{ID: 28, Status: http.StatusConflict}
-	ErrNoWorkerModel                          = Error{ID: 29, Status: http.StatusNotFound}
-	ErrNoProject                              = Error{ID: 30, Status: http.StatusNotFound}
-	ErrVariableExists                         = Error{ID: 31, Status: http.StatusConflict}
-	ErrInvalidGroupPattern                    = Error{ID: 32, Status: http.StatusBadRequest}
-	ErrGroupExists                            = Error{ID: 33, Status: http.StatusConflict}
-	ErrNotEnoughAdmin                         = Error{ID: 34, Status: http.StatusBadRequest}
-	ErrInvalidProjectName                     = Error{ID: 35, Status: http.StatusBadRequest}
-	ErrInvalidApplicationPattern              = Error{ID: 36, Status: http.StatusBadRequest}
-	ErrInvalidPipelinePattern                 = Error{ID: 37, Status: http.StatusBadRequest}
-	ErrNotFound                               = Error{ID: 38, Status: http.StatusNotFound}
-	ErrNoWorkerModelCapa                      = Error{ID: 39, Status: http.StatusNotFound}
-	ErrNoHook                                 = Error{ID: 40, Status: http.StatusNotFound}
-	ErrNoAttachedPipeline                     = Error{ID: 41, Status: http.StatusNotFound}
-	ErrNoReposManager                         = Error{ID: 42, Status: http.StatusNotFound}
-	ErrNoReposManagerAuth                     = Error{ID: 43, Status: http.StatusUnauthorized}
-	ErrNoReposManagerClientAuth               = Error{ID: 44, Status: http.StatusForbidden}
-	ErrRepoNotFound                           = Error{ID: 45, Status: http.StatusNotFound}
-	ErrSecretStoreUnreachable                 = Error{ID: 46, Status: http.StatusMethodNotAllowed}
-	ErrSecretKeyFetchFailed                   = Error{ID: 47, Status: http.StatusMethodNotAllowed}
-	ErrInvalidGoPath                          = Error{ID: 48, Status: http.StatusBadRequest}
-	ErrCommitsFetchFailed                     = Error{ID: 49, Status: http.StatusNotFound}
-	ErrInvalidSecretFormat                    = Error{ID: 50, Status: http.StatusInternalServerError}
-	ErrNoPreviousSuccess                      = Error{ID: 52, Status: http.StatusNotFound}
-	ErrNoPermExecution                        = Error{ID: 53, Status: http.StatusForbidden}
-	ErrSessionNotFound                        = Error{ID: 54, Status: http.StatusUnauthorized}
-	ErrInvalidSecretValue                     = Error{ID: 55, Status: http.StatusBadRequest}
-	ErrPipelineHasApplication                 = Error{ID: 56, Status: http.StatusBadRequest}
-	ErrNoDirectSecretUse                      = Error{ID: 57, Status: http.StatusForbidden}
-	ErrNoBranch                               = Error{ID: 58, Status: http.StatusNotFound}
-	ErrLDAPConn                               = Error{ID: 59, Status: http.StatusInternalServerError}
-	ErrServiceUnavailable                     = Error{ID: 60, Status: http.StatusServiceUnavailable}
-	ErrParseUserNotification                  = Error{ID: 61, Status: http.StatusBadRequest}
-	ErrNotSupportedUserNotification           = Error{ID: 62, Status: http.StatusBadRequest}
-	ErrGroupNeedAdmin                         = Error{ID: 63, Status: http.StatusBadRequest}
-	ErrGroupNeedWrite                         = Error{ID: 64, Status: http.StatusBadRequest}
-	ErrNoVariable                             = Error{ID: 65, Status: http.StatusNotFound}
-	ErrPluginInvalid                          = Error{ID: 66, Status: http.StatusBadRequest}
-	ErrConflict                               = Error{ID: 67, Status: http.StatusConflict}
-	ErrPipelineAlreadyAttached                = Error{ID: 68, Status: http.StatusConflict}
-	ErrApplicationExist                       = Error{ID: 69, Status: http.StatusConflict}
-	ErrBranchNameNotProvided                  = Error{ID: 70, Status: http.StatusBadRequest}
-	ErrInfiniteTriggerLoop                    = Error{ID: 71, Status: http.StatusBadRequest}
-	ErrInvalidResetUser                       = Error{ID: 72, Status: http.StatusBadRequest}
-	ErrUserConflict                           = Error{ID: 73, Status: http.StatusBadRequest}
-	ErrWrongRequest                           = Error{ID: 74, Status: http.StatusBadRequest}
-	ErrAlreadyExist                           = Error{ID: 75, Status: http.StatusConflict}
-	ErrInvalidType                            = Error{ID: 76, Status: http.StatusBadRequest}
-	ErrParentApplicationAndPipelineMandatory  = Error{ID: 77, Status: http.StatusBadRequest}
-	ErrNoParentBuildFound                     = Error{ID: 78, Status: http.StatusNotFound}
-	ErrParameterExists                        = Error{ID: 79, Status: http.StatusConflict}
-	ErrNoHatchery                             = Error{ID: 80, Status: http.StatusNotFound}
-	ErrInvalidWorkerStatus                    = Error{ID: 81, Status: http.StatusNotFound}
-	ErrInvalidToken                           = Error{ID: 82, Status: http.StatusUnauthorized}
-	ErrAppBuildingPipelines                   = Error{ID: 83, Status: http.StatusForbidden}
-	ErrInvalidTimezone                        = Error{ID: 84, Status: http.StatusBadRequest}
-	ErrEnvironmentCannotBeDeleted             = Error{ID: 85, Status: http.StatusForbidden}
-	ErrInvalidPipeline                        = Error{ID: 86, Status: http.StatusBadRequest}
-	ErrKeyNotFound                            = Error{ID: 87, Status: http.StatusNotFound}
-	ErrPipelineAlreadyExists                  = Error{ID: 88, Status: http.StatusConflict}
-	ErrJobAlreadyBooked                       = Error{ID: 89, Status: http.StatusConflict}
-	ErrPipelineBuildNotFound                  = Error{ID: 90, Status: http.StatusNotFound}
-	ErrAlreadyTaken                           = Error{ID: 91, Status: http.StatusGone}
-	ErrWorkflowNotFound                       = Error{ID: 92, Status: http.StatusNotFound}
-	ErrWorkflowNodeNotFound                   = Error{ID: 93, Status: http.StatusNotFound}
-	ErrWorkflowInvalidRoot                    = Error{ID: 94, Status: http.StatusBadRequest}
-	ErrWorkflowNodeRef                        = Error{ID: 95, Status: http.StatusBadRequest}
-	ErrWorkflowInvalid                        = Error{ID: 96, Status: http.StatusBadRequest}
-	ErrWorkflowNodeJoinNotFound               = Error{ID: 97, Status: http.StatusNotFound}
-	ErrInvalidJobRequirement                  = Error{ID: 98, Status: http.StatusBadRequest}
-	ErrNotImplemented                         = Error{ID: 99, Status: http.StatusNotImplemented}
-	ErrParameterNotExists                     = Error{ID: 100, Status: http.StatusNotFound}
-	ErrUnknownKeyType                         = Error{ID: 101, Status: http.StatusBadRequest}
-	ErrInvalidKeyPattern                      = Error{ID: 102, Status: http.StatusBadRequest}
-	ErrWebhookConfigDoesNotMatch              = Error{ID: 103, Status: http.StatusBadRequest}
-	ErrPipelineUsedByWorkflow                 = Error{ID: 104, Status: http.StatusBadRequest}
-	ErrMethodNotAllowed                       = Error{ID: 105, Status: http.StatusMethodNotAllowed}
-	ErrInvalidNodeNamePattern                 = Error{ID: 106, Status: http.StatusBadRequest}
-	ErrWorkflowNodeParentNotRun               = Error{ID: 107, Status: http.StatusForbidden}
-	ErrHookNotFound                           = Error{ID: 108, Status: http.StatusNotFound}
-	ErrDefaultGroupPermission                 = Error{ID: 109, Status: http.StatusBadRequest}
-	ErrLastGroupWithWriteRole                 = Error{ID: 110, Status: http.StatusForbidden}
-	ErrInvalidEmailDomain                     = Error{ID: 111, Status: http.StatusForbidden}
-	ErrWorkflowNodeRunJobNotFound             = Error{ID: 112, Status: http.StatusNotFound}
-	ErrBuiltinKeyNotFound                     = Error{ID: 113, Status: http.StatusInternalServerError}
-	ErrStepNotFound                           = Error{ID: 114, Status: http.StatusNotFound}
-	ErrWorkerModelAlreadyBooked               = Error{ID: 115, Status: http.StatusConflict}
-	ErrConditionsNotOk                        = Error{ID: 116, Status: http.StatusBadRequest}
-	ErrDownloadInvalidOS                      = Error{ID: 117, Status: http.StatusNotFound}
-	ErrDownloadInvalidArch                    = Error{ID: 118, Status: http.StatusNotFound}
-	ErrDownloadInvalidName                    = Error{ID: 119, Status: http.StatusNotFound}
-	ErrDownloadDoesNotExist                   = Error{ID: 120, Status: http.StatusNotFound}
-	ErrTokenNotFound                          = Error{ID: 121, Status: http.StatusNotFound}
-	ErrWorkflowNotificationNodeRef            = Error{ID: 122, Status: http.StatusBadRequest}
-	ErrInvalidJobRequirementDuplicateModel    = Error{ID: 123, Status: http.StatusBadRequest}
-	ErrInvalidJobRequirementDuplicateHostname = Error{ID: 124, Status: http.StatusBadRequest}
-	ErrInvalidKeyName                         = Error{ID: 125, Status: http.StatusBadRequest}
-	ErrRepoOperationTimeout                   = Error{ID: 126, Status: http.StatusRequestTimeout}
-	ErrInvalidGitBranch                       = Error{ID: 127, Status: http.StatusBadRequest}
-	ErrInvalidFavoriteType                    = Error{ID: 128, Status: http.StatusBadRequest}
-	ErrUnsupportedOSArchPlugin                = Error{ID: 129, Status: http.StatusNotFound}
-	ErrNoBroadcast                            = Error{ID: 130, Status: http.StatusNotFound}
-	ErrBroadcastNotFound                      = Error{ID: 131, Status: http.StatusNotFound}
-	ErrInvalidPatternModel                    = Error{ID: 132, Status: http.StatusBadRequest}
-	ErrWorkerModelNoAdmin                     = Error{ID: 133, Status: http.StatusForbidden}
-	ErrWorkerModelNoPattern                   = Error{ID: 134, Status: http.StatusForbidden}
-	ErrJobNotBooked                           = Error{ID: 135, Status: http.StatusBadRequest}
-	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
-	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
-	ErrKeyAlreadyExist                        = Error{ID: 138, Status: http.StatusConflict}
-	ErrPipelineNameImport                     = Error{ID: 139, Status: http.StatusBadRequest}
-	ErrWorkflowNameImport                     = Error{ID: 140, Status: http.StatusBadRequest}
-	ErrIconBadFormat                          = Error{ID: 141, Status: http.StatusBadRequest}
-	ErrIconBadSize                            = Error{ID: 142, Status: http.StatusBadRequest}
-	ErrWorkflowConditionBadOperator           = Error{ID: 143, Status: http.StatusBadRequest}
-	ErrColorBadFormat                         = Error{ID: 144, Status: http.StatusBadRequest}
-	ErrInvalidHookConfiguration               = Error{ID: 145, Status: http.StatusBadRequest}
-	ErrWorkerModelDeploymentFailed            = Error{ID: 146, Status: http.StatusBadRequest}
-	ErrJobLocked                              = Error{ID: 147, Status: http.StatusConflict}
-	ErrWorkflowNodeRunLocked                  = Error{ID: 148, Status: http.StatusConflict}
-	ErrInvalidData                            = Error{ID: 149, Status: http.StatusBadRequest}
-	ErrInvalidGroupAdmin                      = Error{ID: 150, Status: http.StatusForbidden}
-	ErrInvalidGroupMember                     = Error{ID: 151, Status: http.StatusForbidden}
-	ErrWorkflowNotGenerated                   = Error{ID: 152, Status: http.StatusForbidden}
-	ErrAlreadyLatestTemplate                  = Error{ID: 153, Status: http.StatusForbidden}
-	ErrInvalidNodeDefaultPayload              = Error{ID: 154, Status: http.StatusBadRequest}
-	ErrInvalidApplicationRepoStrategy         = Error{ID: 155, Status: http.StatusBadRequest}
-	ErrWorkflowNodeRootUpdate                 = Error{ID: 156, Status: http.StatusBadRequest}
-	ErrWorkflowAlreadyAsCode                  = Error{ID: 157, Status: http.StatusBadRequest}
-	ErrNoDBMigrationID                        = Error{ID: 158, Status: http.StatusNotFound}
-	ErrCannotParseTemplate                    = Error{ID: 159, Status: http.StatusBadRequest}
-	ErrGroupNotFoundInProject                 = Error{ID: 160, Status: http.StatusBadRequest}
-	ErrGroupNotFoundInWorkflow                = Error{ID: 161, Status: http.StatusBadRequest}
-	ErrWorkflowPermInsufficient               = Error{ID: 162, Status: http.StatusBadRequest}
+	ErrUnknownError                                  = Error{ID: 1, Status: http.StatusInternalServerError}
+	ErrActionAlreadyUpdated                          = Error{ID: 2, Status: http.StatusBadRequest}
+	ErrNoAction                                      = Error{ID: 3, Status: http.StatusNotFound}
+	ErrActionLoop                                    = Error{ID: 4, Status: http.StatusBadRequest}
+	ErrInvalidID                                     = Error{ID: 5, Status: http.StatusBadRequest}
+	ErrInvalidProject                                = Error{ID: 6, Status: http.StatusBadRequest}
+	ErrInvalidProjectKey                             = Error{ID: 7, Status: http.StatusBadRequest}
+	ErrProjectHasPipeline                            = Error{ID: 8, Status: http.StatusConflict}
+	ErrProjectHasApplication                         = Error{ID: 9, Status: http.StatusConflict}
+	ErrUnauthorized                                  = Error{ID: 10, Status: http.StatusUnauthorized}
+	ErrForbidden                                     = Error{ID: 11, Status: http.StatusForbidden}
+	ErrPipelineNotFound                              = Error{ID: 12, Status: http.StatusBadRequest}
+	ErrPipelineNotAttached                           = Error{ID: 13, Status: http.StatusBadRequest}
+	ErrNoEnvironmentProvided                         = Error{ID: 14, Status: http.StatusBadRequest}
+	ErrEnvironmentProvided                           = Error{ID: 15, Status: http.StatusBadRequest}
+	ErrUnknownEnv                                    = Error{ID: 16, Status: http.StatusBadRequest}
+	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusConflict}
+	ErrNoPipelineBuild                               = Error{ID: 18, Status: http.StatusNotFound}
+	ErrApplicationNotFound                           = Error{ID: 19, Status: http.StatusNotFound}
+	ErrGroupNotFound                                 = Error{ID: 20, Status: http.StatusNotFound}
+	ErrInvalidUsername                               = Error{ID: 21, Status: http.StatusBadRequest}
+	ErrInvalidEmail                                  = Error{ID: 22, Status: http.StatusBadRequest}
+	ErrGroupPresent                                  = Error{ID: 23, Status: http.StatusBadRequest}
+	ErrInvalidName                                   = Error{ID: 24, Status: http.StatusBadRequest}
+	ErrInvalidUser                                   = Error{ID: 25, Status: http.StatusBadRequest}
+	ErrBuildArchived                                 = Error{ID: 26, Status: http.StatusBadRequest}
+	ErrNoEnvironment                                 = Error{ID: 27, Status: http.StatusNotFound}
+	ErrModelNameExist                                = Error{ID: 28, Status: http.StatusConflict}
+	ErrNoWorkerModel                                 = Error{ID: 29, Status: http.StatusNotFound}
+	ErrNoProject                                     = Error{ID: 30, Status: http.StatusNotFound}
+	ErrVariableExists                                = Error{ID: 31, Status: http.StatusConflict}
+	ErrInvalidGroupPattern                           = Error{ID: 32, Status: http.StatusBadRequest}
+	ErrGroupExists                                   = Error{ID: 33, Status: http.StatusConflict}
+	ErrNotEnoughAdmin                                = Error{ID: 34, Status: http.StatusBadRequest}
+	ErrInvalidProjectName                            = Error{ID: 35, Status: http.StatusBadRequest}
+	ErrInvalidApplicationPattern                     = Error{ID: 36, Status: http.StatusBadRequest}
+	ErrInvalidPipelinePattern                        = Error{ID: 37, Status: http.StatusBadRequest}
+	ErrNotFound                                      = Error{ID: 38, Status: http.StatusNotFound}
+	ErrNoWorkerModelCapa                             = Error{ID: 39, Status: http.StatusNotFound}
+	ErrNoHook                                        = Error{ID: 40, Status: http.StatusNotFound}
+	ErrNoAttachedPipeline                            = Error{ID: 41, Status: http.StatusNotFound}
+	ErrNoReposManager                                = Error{ID: 42, Status: http.StatusNotFound}
+	ErrNoReposManagerAuth                            = Error{ID: 43, Status: http.StatusUnauthorized}
+	ErrNoReposManagerClientAuth                      = Error{ID: 44, Status: http.StatusForbidden}
+	ErrRepoNotFound                                  = Error{ID: 45, Status: http.StatusNotFound}
+	ErrSecretStoreUnreachable                        = Error{ID: 46, Status: http.StatusMethodNotAllowed}
+	ErrSecretKeyFetchFailed                          = Error{ID: 47, Status: http.StatusMethodNotAllowed}
+	ErrInvalidGoPath                                 = Error{ID: 48, Status: http.StatusBadRequest}
+	ErrCommitsFetchFailed                            = Error{ID: 49, Status: http.StatusNotFound}
+	ErrInvalidSecretFormat                           = Error{ID: 50, Status: http.StatusInternalServerError}
+	ErrNoPreviousSuccess                             = Error{ID: 52, Status: http.StatusNotFound}
+	ErrNoPermExecution                               = Error{ID: 53, Status: http.StatusForbidden}
+	ErrSessionNotFound                               = Error{ID: 54, Status: http.StatusUnauthorized}
+	ErrInvalidSecretValue                            = Error{ID: 55, Status: http.StatusBadRequest}
+	ErrPipelineHasApplication                        = Error{ID: 56, Status: http.StatusBadRequest}
+	ErrNoDirectSecretUse                             = Error{ID: 57, Status: http.StatusForbidden}
+	ErrNoBranch                                      = Error{ID: 58, Status: http.StatusNotFound}
+	ErrLDAPConn                                      = Error{ID: 59, Status: http.StatusInternalServerError}
+	ErrServiceUnavailable                            = Error{ID: 60, Status: http.StatusServiceUnavailable}
+	ErrParseUserNotification                         = Error{ID: 61, Status: http.StatusBadRequest}
+	ErrNotSupportedUserNotification                  = Error{ID: 62, Status: http.StatusBadRequest}
+	ErrGroupNeedAdmin                                = Error{ID: 63, Status: http.StatusBadRequest}
+	ErrGroupNeedWrite                                = Error{ID: 64, Status: http.StatusBadRequest}
+	ErrNoVariable                                    = Error{ID: 65, Status: http.StatusNotFound}
+	ErrPluginInvalid                                 = Error{ID: 66, Status: http.StatusBadRequest}
+	ErrConflict                                      = Error{ID: 67, Status: http.StatusConflict}
+	ErrPipelineAlreadyAttached                       = Error{ID: 68, Status: http.StatusConflict}
+	ErrApplicationExist                              = Error{ID: 69, Status: http.StatusConflict}
+	ErrBranchNameNotProvided                         = Error{ID: 70, Status: http.StatusBadRequest}
+	ErrInfiniteTriggerLoop                           = Error{ID: 71, Status: http.StatusBadRequest}
+	ErrInvalidResetUser                              = Error{ID: 72, Status: http.StatusBadRequest}
+	ErrUserConflict                                  = Error{ID: 73, Status: http.StatusBadRequest}
+	ErrWrongRequest                                  = Error{ID: 74, Status: http.StatusBadRequest}
+	ErrAlreadyExist                                  = Error{ID: 75, Status: http.StatusConflict}
+	ErrInvalidType                                   = Error{ID: 76, Status: http.StatusBadRequest}
+	ErrParentApplicationAndPipelineMandatory         = Error{ID: 77, Status: http.StatusBadRequest}
+	ErrNoParentBuildFound                            = Error{ID: 78, Status: http.StatusNotFound}
+	ErrParameterExists                               = Error{ID: 79, Status: http.StatusConflict}
+	ErrNoHatchery                                    = Error{ID: 80, Status: http.StatusNotFound}
+	ErrInvalidWorkerStatus                           = Error{ID: 81, Status: http.StatusNotFound}
+	ErrInvalidToken                                  = Error{ID: 82, Status: http.StatusUnauthorized}
+	ErrAppBuildingPipelines                          = Error{ID: 83, Status: http.StatusForbidden}
+	ErrInvalidTimezone                               = Error{ID: 84, Status: http.StatusBadRequest}
+	ErrEnvironmentCannotBeDeleted                    = Error{ID: 85, Status: http.StatusForbidden}
+	ErrInvalidPipeline                               = Error{ID: 86, Status: http.StatusBadRequest}
+	ErrKeyNotFound                                   = Error{ID: 87, Status: http.StatusNotFound}
+	ErrPipelineAlreadyExists                         = Error{ID: 88, Status: http.StatusConflict}
+	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusConflict}
+	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
+	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
+	ErrWorkflowNotFound                              = Error{ID: 92, Status: http.StatusNotFound}
+	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
+	ErrWorkflowInvalidRoot                           = Error{ID: 94, Status: http.StatusBadRequest}
+	ErrWorkflowNodeRef                               = Error{ID: 95, Status: http.StatusBadRequest}
+	ErrWorkflowInvalid                               = Error{ID: 96, Status: http.StatusBadRequest}
+	ErrWorkflowNodeJoinNotFound                      = Error{ID: 97, Status: http.StatusNotFound}
+	ErrInvalidJobRequirement                         = Error{ID: 98, Status: http.StatusBadRequest}
+	ErrNotImplemented                                = Error{ID: 99, Status: http.StatusNotImplemented}
+	ErrParameterNotExists                            = Error{ID: 100, Status: http.StatusNotFound}
+	ErrUnknownKeyType                                = Error{ID: 101, Status: http.StatusBadRequest}
+	ErrInvalidKeyPattern                             = Error{ID: 102, Status: http.StatusBadRequest}
+	ErrWebhookConfigDoesNotMatch                     = Error{ID: 103, Status: http.StatusBadRequest}
+	ErrPipelineUsedByWorkflow                        = Error{ID: 104, Status: http.StatusBadRequest}
+	ErrMethodNotAllowed                              = Error{ID: 105, Status: http.StatusMethodNotAllowed}
+	ErrInvalidNodeNamePattern                        = Error{ID: 106, Status: http.StatusBadRequest}
+	ErrWorkflowNodeParentNotRun                      = Error{ID: 107, Status: http.StatusForbidden}
+	ErrHookNotFound                                  = Error{ID: 108, Status: http.StatusNotFound}
+	ErrDefaultGroupPermission                        = Error{ID: 109, Status: http.StatusBadRequest}
+	ErrLastGroupWithWriteRole                        = Error{ID: 110, Status: http.StatusForbidden}
+	ErrInvalidEmailDomain                            = Error{ID: 111, Status: http.StatusForbidden}
+	ErrWorkflowNodeRunJobNotFound                    = Error{ID: 112, Status: http.StatusNotFound}
+	ErrBuiltinKeyNotFound                            = Error{ID: 113, Status: http.StatusInternalServerError}
+	ErrStepNotFound                                  = Error{ID: 114, Status: http.StatusNotFound}
+	ErrWorkerModelAlreadyBooked                      = Error{ID: 115, Status: http.StatusConflict}
+	ErrConditionsNotOk                               = Error{ID: 116, Status: http.StatusBadRequest}
+	ErrDownloadInvalidOS                             = Error{ID: 117, Status: http.StatusNotFound}
+	ErrDownloadInvalidArch                           = Error{ID: 118, Status: http.StatusNotFound}
+	ErrDownloadInvalidName                           = Error{ID: 119, Status: http.StatusNotFound}
+	ErrDownloadDoesNotExist                          = Error{ID: 120, Status: http.StatusNotFound}
+	ErrTokenNotFound                                 = Error{ID: 121, Status: http.StatusNotFound}
+	ErrWorkflowNotificationNodeRef                   = Error{ID: 122, Status: http.StatusBadRequest}
+	ErrInvalidJobRequirementDuplicateModel           = Error{ID: 123, Status: http.StatusBadRequest}
+	ErrInvalidJobRequirementDuplicateHostname        = Error{ID: 124, Status: http.StatusBadRequest}
+	ErrInvalidKeyName                                = Error{ID: 125, Status: http.StatusBadRequest}
+	ErrRepoOperationTimeout                          = Error{ID: 126, Status: http.StatusRequestTimeout}
+	ErrInvalidGitBranch                              = Error{ID: 127, Status: http.StatusBadRequest}
+	ErrInvalidFavoriteType                           = Error{ID: 128, Status: http.StatusBadRequest}
+	ErrUnsupportedOSArchPlugin                       = Error{ID: 129, Status: http.StatusNotFound}
+	ErrNoBroadcast                                   = Error{ID: 130, Status: http.StatusNotFound}
+	ErrBroadcastNotFound                             = Error{ID: 131, Status: http.StatusNotFound}
+	ErrInvalidPatternModel                           = Error{ID: 132, Status: http.StatusBadRequest}
+	ErrWorkerModelNoAdmin                            = Error{ID: 133, Status: http.StatusForbidden}
+	ErrWorkerModelNoPattern                          = Error{ID: 134, Status: http.StatusForbidden}
+	ErrJobNotBooked                                  = Error{ID: 135, Status: http.StatusBadRequest}
+	ErrUserNotFound                                  = Error{ID: 136, Status: http.StatusNotFound}
+	ErrInvalidNumber                                 = Error{ID: 137, Status: http.StatusBadRequest}
+	ErrKeyAlreadyExist                               = Error{ID: 138, Status: http.StatusConflict}
+	ErrPipelineNameImport                            = Error{ID: 139, Status: http.StatusBadRequest}
+	ErrWorkflowNameImport                            = Error{ID: 140, Status: http.StatusBadRequest}
+	ErrIconBadFormat                                 = Error{ID: 141, Status: http.StatusBadRequest}
+	ErrIconBadSize                                   = Error{ID: 142, Status: http.StatusBadRequest}
+	ErrWorkflowConditionBadOperator                  = Error{ID: 143, Status: http.StatusBadRequest}
+	ErrColorBadFormat                                = Error{ID: 144, Status: http.StatusBadRequest}
+	ErrInvalidHookConfiguration                      = Error{ID: 145, Status: http.StatusBadRequest}
+	ErrWorkerModelDeploymentFailed                   = Error{ID: 146, Status: http.StatusBadRequest}
+	ErrJobLocked                                     = Error{ID: 147, Status: http.StatusConflict}
+	ErrWorkflowNodeRunLocked                         = Error{ID: 148, Status: http.StatusConflict}
+	ErrInvalidData                                   = Error{ID: 149, Status: http.StatusBadRequest}
+	ErrInvalidGroupAdmin                             = Error{ID: 150, Status: http.StatusForbidden}
+	ErrInvalidGroupMember                            = Error{ID: 151, Status: http.StatusForbidden}
+	ErrWorkflowNotGenerated                          = Error{ID: 152, Status: http.StatusForbidden}
+	ErrAlreadyLatestTemplate                         = Error{ID: 153, Status: http.StatusForbidden}
+	ErrInvalidNodeDefaultPayload                     = Error{ID: 154, Status: http.StatusBadRequest}
+	ErrInvalidApplicationRepoStrategy                = Error{ID: 155, Status: http.StatusBadRequest}
+	ErrWorkflowNodeRootUpdate                        = Error{ID: 156, Status: http.StatusBadRequest}
+	ErrWorkflowAlreadyAsCode                         = Error{ID: 157, Status: http.StatusBadRequest}
+	ErrNoDBMigrationID                               = Error{ID: 158, Status: http.StatusNotFound}
+	ErrCannotParseTemplate                           = Error{ID: 159, Status: http.StatusBadRequest}
+	ErrGroupNotFoundInProject                        = Error{ID: 160, Status: http.StatusBadRequest}
+	ErrGroupNotFoundInWorkflow                       = Error{ID: 161, Status: http.StatusBadRequest}
+	ErrWorkflowPermInsufficient                      = Error{ID: 162, Status: http.StatusBadRequest}
+	ErrApplicationUsedByWorkflow                     = Error{ID: 163, Status: http.StatusBadRequest}
+	ErrLocked                                        = Error{ID: 164, Status: http.StatusConflict}
+	ErrInvalidJobRequirementWorkerModelPermission    = Error{ID: 165, Status: http.StatusBadRequest}
+	ErrInvalidJobRequirementWorkerModelCapabilitites = Error{ID: 166, Status: http.StatusBadRequest}
+	ErrMalformattedStep                              = Error{ID: 167, Status: http.StatusBadRequest}
+	ErrVCSUsedByApplication                          = Error{ID: 168, Status: http.StatusBadRequest}
+	ErrApplicationAsCodeOverride                     = Error{ID: 169, Status: http.StatusForbidden}
+	ErrPipelineAsCodeOverride                        = Error{ID: 170, Status: http.StatusForbidden}
+	ErrEnvironmentAsCodeOverride                     = Error{ID: 171, Status: http.StatusForbidden}
+	ErrWorkflowAsCodeOverride                        = Error{ID: 172, Status: http.StatusForbidden}
+	ErrProjectSecretDataUnknown                      = Error{ID: 173, Status: http.StatusBadRequest}
+	ErrApplicationMandatoryOnWorkflowAsCode          = Error{ID: 174, Status: http.StatusBadRequest}
+	ErrInvalidPassword                               = Error{ID: 175, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -282,7 +295,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUnknownKeyType.ID:                         "Unknown key type",
 	ErrInvalidKeyPattern.ID:                      "key name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWebhookConfigDoesNotMatch.ID:              "Webhook config does not match",
-	ErrPipelineUsedByWorkflow.ID:                 "pipeline still used by a workflow",
+	ErrPipelineUsedByWorkflow.ID:                 "Pipeline still used by a workflow",
 	ErrMethodNotAllowed.ID:                       "Method not allowed",
 	ErrInvalidNodeNamePattern.ID:                 "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:               "Cannot run a node if their parents have never been launched",
@@ -336,6 +349,19 @@ var errorsAmericanEnglish = map[int]string{
 	ErrGroupNotFoundInProject.ID:                 "Cannot add this permission group on your workflow because this group is not already in the project's permissions",
 	ErrGroupNotFoundInWorkflow.ID:                "Cannot add this permission group on your workflow node because this group is not already your workflow's permissions",
 	ErrWorkflowPermInsufficient.ID:               "Cannot add this permission group on your workflow because you can't have less rights than rights in your project when you are in RWX",
+	ErrApplicationUsedByWorkflow.ID:              "Application still used by a workflow",
+	ErrLocked.ID:                                 "Resource locked",
+	ErrInvalidJobRequirementWorkerModelPermission.ID:    "Invalid job requirements: unable to use worker model due to permissions",
+	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Invalid job requirements: the worker model does't match with the binary requirements",
+	ErrMalformattedStep.ID:                              "Malformatted step",
+	ErrVCSUsedByApplication.ID:                          "Repository manager still used by an application",
+	ErrApplicationAsCodeOverride.ID:                     "You cannot override application from this repository",
+	ErrPipelineAsCodeOverride.ID:                        "You cannot override pipeline from this repository",
+	ErrEnvironmentAsCodeOverride.ID:                     "You cannot override environment from this repository",
+	ErrWorkflowAsCodeOverride.ID:                        "You cannot override workflow from this repository",
+	ErrProjectSecretDataUnknown.ID:                      "Invalid encrypted data",
+	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application linked to a git repository is mandatory on the workflow root",
+	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
 }
 
 var errorsFrench = map[int]string{
@@ -441,7 +467,7 @@ var errorsFrench = map[int]string{
 	ErrUnknownKeyType.ID:                         "Le type de clé n'est pas connu",
 	ErrInvalidKeyPattern.ID:                      "le nom de la clé doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWebhookConfigDoesNotMatch.ID:              "la configuration du webhook ne correspond pas",
-	ErrPipelineUsedByWorkflow.ID:                 "le pipeline est utilisé par un workflow",
+	ErrPipelineUsedByWorkflow.ID:                 "Le pipeline est utilisé par un workflow",
 	ErrMethodNotAllowed.ID:                       "La méthode n'est pas autorisée",
 	ErrInvalidNodeNamePattern.ID:                 "Le nom du noeud du workflow doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:               "Il est interdit de lancer un noeuds si ses parents n'ont jamais été lancés",
@@ -495,6 +521,19 @@ var errorsFrench = map[int]string{
 	ErrGroupNotFoundInProject.ID:                 "Impossible d'ajouter ce groupe dans vos permissions de workflow car ce groupe n'est pas présent dans les permissions de votre projet",
 	ErrGroupNotFoundInWorkflow.ID:                "Impossible d'ajouter ce groupe dans vos permissions de noeud du workflow car ce groupe n'est pas présent dans les permissions de votre workflow",
 	ErrWorkflowPermInsufficient.ID:               "Impossible d'ajouter ce groupe dans vos permissions du workflow car ce groupe a des droits inférieurs (< RWX) à celui du workflow",
+	ErrApplicationUsedByWorkflow.ID:              "L'application est utilisée par un workflow",
+	ErrLocked.ID:                                 "La ressource est verrouillée",
+	ErrInvalidJobRequirementWorkerModelPermission.ID:    "Pré-requis de job invalide: Modèle de worker inutilisable en raison des permissions",
+	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Pré-requis de job invalide: Le modèle de worker ne dispose pas de binaires suffisants",
+	ErrMalformattedStep.ID:                              "Étape malformée",
+	ErrVCSUsedByApplication.ID:                          "Le gestionnaire de dépot est encore utilisé par une application",
+	ErrApplicationAsCodeOverride.ID:                     "Vous ne pouvez pas importer l'application depuis ce dépôt",
+	ErrPipelineAsCodeOverride.ID:                        "Vous ne pouvez pas importer le pipeline depuis ce dépôt",
+	ErrEnvironmentAsCodeOverride.ID:                     "Vous ne pouvez pas importer l'environment depuis ce dépôt",
+	ErrWorkflowAsCodeOverride.ID:                        "Vous ne pouvez pas importer le workflow depuis ce dépôt",
+	ErrProjectSecretDataUnknown.ID:                      "Donnée chiffrée non valide",
+	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Une application liée à un dépôt git est obligatoire à la racine du workflow",
+	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
 }
 
 var errorsLanguages = []map[int]string{
@@ -586,6 +625,14 @@ func (w errorWithStack) Format(s fmt.State, verb rune) {
 	default:
 		_, _ = io.WriteString(s, w.Error())
 	}
+}
+
+// ErrorWithFallback returns the current error if it's not a ErrUnknownError else it returns a new ErrorWithStack
+func ErrorWithFallback(err error, httpError Error, from string, args ...interface{}) error {
+	if ErrorIs(err, ErrUnknownError) {
+		return NewErrorWithStack(err, NewError(ErrWrongRequest, fmt.Errorf(from, args...)))
+	}
+	return err
 }
 
 // IsErrorWithStack returns true if given error is an errorWithStack.

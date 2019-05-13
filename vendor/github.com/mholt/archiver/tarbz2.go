@@ -3,104 +3,124 @@ package archiver
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/dsnet/compress/bzip2"
 )
 
-// TarBz2 is for TarBz2 format
-var TarBz2 tarBz2Format
+// TarBz2 facilitates bzip2 compression
+// (https://github.com/dsnet/compress/blob/master/doc/bzip2-format.pdf)
+// of tarball archives.
+type TarBz2 struct {
+	*Tar
 
-func init() {
-	RegisterFormat("TarBz2", TarBz2)
+	CompressionLevel int
 }
 
-type tarBz2Format struct{}
-
-func (tarBz2Format) Match(filename string) bool {
-	return strings.HasSuffix(strings.ToLower(filename), ".tar.bz2") ||
-		strings.HasSuffix(strings.ToLower(filename), ".tbz2") ||
-		isTarBz2(filename)
+// CheckExt ensures the file extension matches the format.
+func (*TarBz2) CheckExt(filename string) error {
+	if !strings.HasSuffix(filename, ".tar.bz2") &&
+		!strings.HasSuffix(filename, ".tbz2") {
+		return fmt.Errorf("filename must have a .tar.bz2 or .tbz2 extension")
+	}
+	return nil
 }
 
-// isTarBz2 checks the file has the bzip2 compressed Tar format header by
-// reading its beginning block.
-func isTarBz2(tarbz2Path string) bool {
-	f, err := os.Open(tarbz2Path)
+// Archive creates a compressed tar file at destination
+// containing the files listed in sources. The destination
+// must end with ".tar.bz2" or ".tbz2". File paths can be
+// those of regular files or directories; directories will
+// be recursively added.
+func (tbz2 *TarBz2) Archive(sources []string, destination string) error {
+	err := tbz2.CheckExt(destination)
 	if err != nil {
-		return false
+		return fmt.Errorf("output %s", err.Error())
 	}
-	defer f.Close()
-
-	bz2r, err := bzip2.NewReader(f, nil)
-	if err != nil {
-		return false
-	}
-	defer bz2r.Close()
-
-	buf := make([]byte, tarBlockSize)
-	n, err := bz2r.Read(buf)
-	if err != nil || n < tarBlockSize {
-		return false
-	}
-
-	return hasTarHeader(buf)
+	tbz2.wrapWriter()
+	return tbz2.Tar.Archive(sources, destination)
 }
 
-// Write outputs a .tar.bz2 file to a Writer containing
-// the contents of files listed in filePaths. File paths
-// can be those of regular files or directories. Regular
-// files are stored at the 'root' of the archive, and
-// directories are recursively added.
-func (tarBz2Format) Write(output io.Writer, filePaths []string) error {
-	return writeTarBz2(filePaths, output, "")
+// Unarchive unpacks the compressed tarball at
+// source to destination. Destination will be
+// treated as a folder name.
+func (tbz2 *TarBz2) Unarchive(source, destination string) error {
+	tbz2.wrapReader()
+	return tbz2.Tar.Unarchive(source, destination)
 }
 
-// Make creates a .tar.bz2 file at tarbz2Path containing
-// the contents of files listed in filePaths. File paths
-// can be those of regular files or directories. Regular
-// files are stored at the 'root' of the archive, and
-// directories are recursively added.
-func (tarBz2Format) Make(tarbz2Path string, filePaths []string) error {
-	out, err := os.Create(tarbz2Path)
-	if err != nil {
-		return fmt.Errorf("error creating %s: %v", tarbz2Path, err)
+// Walk calls walkFn for each visited item in archive.
+func (tbz2 *TarBz2) Walk(archive string, walkFn WalkFunc) error {
+	tbz2.wrapReader()
+	return tbz2.Tar.Walk(archive, walkFn)
+}
+
+// Create opens tbz2 for writing a compressed
+// tar archive to out.
+func (tbz2 *TarBz2) Create(out io.Writer) error {
+	tbz2.wrapWriter()
+	return tbz2.Tar.Create(out)
+}
+
+// Open opens t for reading a compressed archive from
+// in. The size parameter is not used.
+func (tbz2 *TarBz2) Open(in io.Reader, size int64) error {
+	tbz2.wrapReader()
+	return tbz2.Tar.Open(in, size)
+}
+
+// Extract extracts a single file from the tar archive.
+// If the target is a directory, the entire folder will
+// be extracted into destination.
+func (tbz2 *TarBz2) Extract(source, target, destination string) error {
+	tbz2.wrapReader()
+	return tbz2.Tar.Extract(source, target, destination)
+}
+
+func (tbz2 *TarBz2) wrapWriter() {
+	var bz2w *bzip2.Writer
+	tbz2.Tar.writerWrapFn = func(w io.Writer) (io.Writer, error) {
+		var err error
+		bz2w, err = bzip2.NewWriter(w, &bzip2.WriterConfig{
+			Level: tbz2.CompressionLevel,
+		})
+		return bz2w, err
 	}
-	defer out.Close()
-
-	return writeTarBz2(filePaths, out, tarbz2Path)
-}
-
-func writeTarBz2(filePaths []string, output io.Writer, dest string) error {
-	bz2w, err := bzip2.NewWriter(output, nil)
-	if err != nil {
-		return fmt.Errorf("error compressing bzip2: %v", err)
+	tbz2.Tar.cleanupWrapFn = func() {
+		bz2w.Close()
 	}
-	defer bz2w.Close()
-
-	return writeTar(filePaths, bz2w, dest)
 }
 
-// Read untars a .tar.bz2 file read from a Reader and decompresses
-// the contents into destination.
-func (tarBz2Format) Read(input io.Reader, destination string) error {
-	bz2r, err := bzip2.NewReader(input, nil)
-	if err != nil {
-		return fmt.Errorf("error decompressing bzip2: %v", err)
+func (tbz2 *TarBz2) wrapReader() {
+	var bz2r *bzip2.Reader
+	tbz2.Tar.readerWrapFn = func(r io.Reader) (io.Reader, error) {
+		var err error
+		bz2r, err = bzip2.NewReader(r, nil)
+		return bz2r, err
 	}
-	defer bz2r.Close()
-
-	return Tar.Read(bz2r, destination)
-}
-
-// Open untars source and decompresses the contents into destination.
-func (tarBz2Format) Open(source, destination string) error {
-	f, err := os.Open(source)
-	if err != nil {
-		return fmt.Errorf("%s: failed to open archive: %v", source, err)
+	tbz2.Tar.cleanupWrapFn = func() {
+		bz2r.Close()
 	}
-	defer f.Close()
-
-	return TarBz2.Read(f, destination)
 }
+
+func (tbz2 *TarBz2) String() string { return "tar.bz2" }
+
+// NewTarBz2 returns a new, default instance ready to be customized and used.
+func NewTarBz2() *TarBz2 {
+	return &TarBz2{
+		CompressionLevel: bzip2.DefaultCompression,
+		Tar:              NewTar(),
+	}
+}
+
+// Compile-time checks to ensure type implements desired interfaces.
+var (
+	_ = Reader(new(TarBz2))
+	_ = Writer(new(TarBz2))
+	_ = Archiver(new(TarBz2))
+	_ = Unarchiver(new(TarBz2))
+	_ = Walker(new(TarBz2))
+	_ = Extractor(new(TarBz2))
+)
+
+// DefaultTarBz2 is a convenient archiver ready to use.
+var DefaultTarBz2 = NewTarBz2()

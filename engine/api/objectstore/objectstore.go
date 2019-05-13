@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ncw/swift"
 
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
@@ -30,13 +29,11 @@ type Driver interface {
 // DriverWithRedirect has to be implemented if your storage backend supports temp url
 type DriverWithRedirect interface {
 	// StoreURL returns a temporary url and a secret key to store an object
-	StoreURL(o Object) (url string, key string, err error)
+	StoreURL(o Object, contentType string) (url string, key string, err error)
 	// FetchURL returns a temporary url and a secret key to fetch an object
 	FetchURL(o Object) (url string, key string, err error)
 	// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
 	ServeStaticFilesURL(o Object, entrypoint string) (string, string, error)
-	// GetPublicURL returns a public url to fetch an object (check your object ACLs before)
-	GetPublicURL(o Object) (url string, err error)
 }
 
 // Kind will define const defining all supported objecstore drivers
@@ -47,9 +44,10 @@ const (
 	Openstack Kind = iota
 	Filesystem
 	Swift
+	AWSS3
 )
 
-// Config represents all the configuration for all objecstore drivers
+// Config represents all the configuration for all objectstore drivers
 type Config struct {
 	IntegrationName string
 	ProjectName     string
@@ -59,8 +57,23 @@ type Config struct {
 
 // ConfigOptions is used by Config
 type ConfigOptions struct {
+	AWSS3      ConfigOptionsAWSS3
 	Openstack  ConfigOptionsOpenstack
 	Filesystem ConfigOptionsFilesystem
+}
+
+// ConfigOptionsAWSS3 is used by ConfigOptions
+type ConfigOptionsAWSS3 struct {
+	Region     string
+	BucketName string
+	Prefix     string
+	// Auth options, can provide a profile name, from environment or directly provide access keys
+	AuthFromEnvironment bool
+	SharedCredsFile     string
+	Profile             string
+	AccessKeyID         string
+	SecretAccessKey     string
+	SessionToken        string
 }
 
 // ConfigOptionsOpenstack is used by ConfigOptions
@@ -91,53 +104,40 @@ func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 		return nil, fmt.Errorf("projectIntegration.Model %t is not a storage integration", projectIntegration.Model.Storage)
 	}
 
-	if projectIntegration.Model.Name == sdk.OpenstackIntegrationModel {
-		s := SwiftStore{
-			Connection: swift.Connection{
-				AuthUrl:  projectIntegration.Config["address"].Value,
-				Region:   projectIntegration.Config["region"].Value,
-				Tenant:   projectIntegration.Config["tenant_name"].Value,
-				Domain:   projectIntegration.Config["domain"].Value,
-				UserName: projectIntegration.Config["username"].Value,
-				ApiKey:   projectIntegration.Config["password"].Value,
-			},
-			containerprefix:    projectIntegration.Config["storage_container_prefix"].Value,
-			disableTempURL:     projectIntegration.Config["storage_temporary_url_supported"].Value == "false",
-			projectIntegration: projectIntegration,
-		}
-
-		if err := s.Authenticate(); err != nil {
-			return nil, sdk.WrapError(err, "Unable to authenticate")
-		}
-		return &s, nil
+	switch projectIntegration.Model.Name {
+	case sdk.AWSIntegrationModel:
+		return newS3Store(projectIntegration, ConfigOptionsAWSS3{
+			Region:          projectIntegration.Config["region"].Value,
+			BucketName:      projectIntegration.Config["bucket_name"].Value,
+			Prefix:          projectIntegration.Config["prefix"].Value,
+			AccessKeyID:     projectIntegration.Config["access_key_id"].Value,
+			SecretAccessKey: projectIntegration.Config["secret_access_key"].Value,
+		})
+	case sdk.OpenstackIntegrationModel:
+		return newSwiftStore(projectIntegration, ConfigOptionsOpenstack{
+			Address:         projectIntegration.Config["address"].Value,
+			Region:          projectIntegration.Config["region"].Value,
+			Tenant:          projectIntegration.Config["tenant_name"].Value,
+			Domain:          projectIntegration.Config["domain"].Value,
+			Username:        projectIntegration.Config["username"].Value,
+			Password:        projectIntegration.Config["password"].Value,
+			ContainerPrefix: projectIntegration.Config["storage_container_prefix"].Value,
+			DisableTempURL:  projectIntegration.Config["storage_temporary_url_supported"].Value == "false",
+		})
+	default:
+		return nil, fmt.Errorf("Invalid Integration %s", projectIntegration.Model.Name)
 	}
-
-	return nil, fmt.Errorf("Invalid Integration %s", projectIntegration.Model.Name)
 }
 
 // Init initialise a new ArtifactStorage
 func Init(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack, Swift:
-		s := SwiftStore{
-			Connection: swift.Connection{
-				AuthUrl:  cfg.Options.Openstack.Address,
-				Region:   cfg.Options.Openstack.Region,
-				Tenant:   cfg.Options.Openstack.Tenant,
-				Domain:   cfg.Options.Openstack.Domain,
-				UserName: cfg.Options.Openstack.Username,
-				ApiKey:   cfg.Options.Openstack.Password,
-			},
-			containerprefix:    cfg.Options.Openstack.ContainerPrefix,
-			disableTempURL:     cfg.Options.Openstack.DisableTempURL,
-			projectIntegration: sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName},
-		}
-		if err := s.Authenticate(); err != nil {
-			return nil, sdk.WrapError(err, "Unable to authenticate on swift storage")
-		}
-		return &s, nil
+		return newSwiftStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Openstack)
+	case AWSS3:
+		return newS3Store(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.AWSS3)
 	case Filesystem:
-		return newFilesystemStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Filesystem.Basedir)
+		return newFilesystemStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Filesystem)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}

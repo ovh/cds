@@ -24,7 +24,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 		return nil, fmt.Errorf("unable to get registered workers: %v", err)
 	}
 
-	// Then: get all worker in the orchestrator queue
+	// Then: get all workers in the orchestrator queue
 	startedWorkers := h.WorkersStarted()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get started workers: %v", err)
@@ -53,9 +53,9 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 			if err := h.CDSClient().WorkerDisable(ctx, w.ID); err != nil {
 				log.Error("Hatchery > WorkerPool> Unable to disable worker [%s]%s", w.ID, w.Name)
 			}
-			w.Status = sdk.StatusDisabled
+			registeredWorkers[k].Status = sdk.StatusDisabled
 		}
-		allWorkers = append(allWorkers, w)
+		allWorkers = append(allWorkers, registeredWorkers[k])
 	}
 
 	// And add the other worker with status pending of registering
@@ -75,7 +75,6 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 		}
 
 		if strings.HasPrefix(w, "register-") {
-			name = strings.Replace(w, "register-", "", 1)
 			status = sdk.StatusWorkerRegistering
 		}
 

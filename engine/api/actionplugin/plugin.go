@@ -5,10 +5,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
-//InsertWithGRPCPlugin create action in database
+//InsertWithGRPCPlugin creates action in database
 func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,
@@ -25,15 +24,14 @@ func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.
 		Enabled:    true,
 	}
 
-	if err := action.InsertAction(db, &a, true); err != nil {
-		log.Warning("plugin.Insert> Action: Cannot insert action: %s\n", err)
+	if err := action.Insert(db, &a); err != nil {
 		return nil, err
 	}
 
 	return &a, nil
 }
 
-//UpdateGRPCPlugin create action in database
+//UpdateGRPCPlugin creates action in database
 func UpdateGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter, userID int64) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,
@@ -50,13 +48,13 @@ func UpdateGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Para
 		Enabled:    true,
 	}
 
-	oldA, err := action.LoadPublicAction(db, a.Name)
+	oldA, err := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, a.Name, action.LoadOptions.Default)
 	if err != nil {
 		return nil, err
 	}
 	a.ID = oldA.ID
 
-	if err := action.UpdateActionDB(db, &a, userID); err != nil {
+	if err := action.Update(db, &a); err != nil {
 		return nil, err
 	}
 

@@ -72,7 +72,7 @@ type WorkflowAsCodeInterface interface {
 
 // RepositoriesManagerInterface exposes all repostories manager functions
 type RepositoriesManagerInterface interface {
-	RepositoriesList(projectKey string, repoManager string) ([]sdk.VCSRepo, error)
+	RepositoriesList(projectKey string, repoManager string, resync bool) ([]sdk.VCSRepo, error)
 }
 
 // ApplicationClient exposes application related functions
@@ -138,18 +138,20 @@ type EventsClient interface {
 
 // DownloadClient exposes download related functions
 type DownloadClient interface {
-	Download() ([]sdk.Download, error)
-	DownloadURLFromAPI(name, os, arch string) string
+	Download() ([]sdk.DownloadableResource, error)
+	DownloadURLFromAPI(name, os, arch, variant string) string
 	DownloadURLFromGithub(filename string) (string, error)
 }
 
 // ActionClient exposes actions related functions
 type ActionClient interface {
-	ActionDelete(actionName string) error
-	ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error)
+	ActionDelete(groupName, name string) error
+	ActionGet(groupName, name string, mods ...RequestModifier) (*sdk.Action, error)
 	ActionList() ([]sdk.Action, error)
 	ActionImport(content io.Reader, format string) error
-	ActionExport(name string, format string) ([]byte, error)
+	ActionExport(groupName, name string, format string) ([]byte, error)
+	ActionBuiltinList() ([]sdk.Action, error)
+	ActionBuiltinGet(name string, mods ...RequestModifier) (*sdk.Action, error)
 }
 
 // GroupClient exposes groups related functions
@@ -282,6 +284,7 @@ type WorkerClient interface {
 // HookClient exposes functions used for hooks services
 type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
+	VCSConfiguration() (map[string]sdk.VCSConfiguration, error)
 }
 
 // WorkflowClient exposes workflows functions
@@ -293,6 +296,7 @@ type WorkflowClient interface {
 	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error
 	WorkflowGroupDelete(projectKey, name, groupName string) error
 	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
+	WorkflowRunsDeleteByBranch(projectKey string, workflowName string, branch string) error
 	WorkflowRunResync(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
@@ -308,7 +312,7 @@ type WorkflowClient interface {
 	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
-	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader) error
+	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
 	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
 	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
 	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)

@@ -5,15 +5,18 @@ import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { IdName, LoadOpts, Project } from 'app/model/project.model';
+import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
+import { AddGroupInAllWorkflows, ClearCacheWorkflow, DeleteFromCacheWorkflow } from './workflows.action';
 
 export class ProjectStateModel {
     public project: Project;
     public loading: boolean;
     public currentProjectKey: string;
-    public repoManager: { request_token?: string, url?: string };
+    public repoManager: { request_token?: string, url?: string, auth_type?: string };
 }
 
 @State<ProjectStateModel>({
@@ -27,7 +30,7 @@ export class ProjectStateModel {
 })
 export class ProjectState {
 
-    constructor(private _http: HttpClient) { }
+    constructor(private _http: HttpClient, private _navbarService: NavbarService) { }
 
 
     @Action(ProjectAction.LoadProject)
@@ -307,6 +310,23 @@ export class ProjectState {
 
 
     //  ------- Label --------- //
+    @Action(ProjectAction.SaveLabelsInProject)
+    saveLabels(ctx: StateContext<ProjectStateModel>, action: ProjectAction.SaveLabelsInProject) {
+        const state = ctx.getState();
+        return this._http.put<Project>(
+            '/project/' + action.payload.projectKey + '/labels',
+            action.payload.labels
+        ).pipe(tap((proj: Project) => {
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{
+                    workflow_names: proj.workflow_names,
+                    labels: proj.labels
+                }),
+            });
+        }));
+    }
+
     @Action(ProjectAction.AddLabelWorkflowInProject)
     addLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddLabelWorkflowInProject) {
         const state = ctx.getState();
@@ -367,10 +387,13 @@ export class ProjectState {
                 project_key: action.payload.projectKey
             }
         ).pipe(tap(() => {
-            ctx.setState({
-                ...state,
-                project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
-            });
+            this._navbarService.getData(); // TODO: to delete
+            if (state.project && state.project.key) {
+                ctx.setState({
+                    ...state,
+                    project: Object.assign({}, state.project, <Project>{ favorite: !state.project.favorite }),
+                });
+            }
             // TODO: dispatch action on global state to update project in list and user state
             // TODO: move this one on user state and just update state here, not XHR
         }));
@@ -575,13 +598,26 @@ export class ProjectState {
     @Action(ProjectAction.AddGroupInProject)
     addGroup(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddGroupInProject) {
         const state = ctx.getState();
-        return this._http.post<GroupPermission[]>('/project/' + action.payload.projectKey + '/group', action.payload.group)
-            .pipe(tap((groups: GroupPermission[]) => {
-                ctx.setState({
-                    ...state,
-                    project: Object.assign({}, state.project, <Project>{ groups }),
-                });
-            }));
+        let params = new HttpParams();
+        if (action.payload.onlyProject) {
+            params = params.append('onlyProject', 'true');
+        }
+
+        return this._http.post<GroupPermission[]>('/project/' + action.payload.projectKey + '/group', action.payload.group,
+            { params }
+        ).pipe(tap((groups: GroupPermission[]) => {
+            if (!action.payload.onlyProject) {
+                ctx.dispatch(new AddGroupInAllWorkflows({
+                    projectKey: action.payload.projectKey,
+                    group: action.payload.group
+                }));
+            }
+
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ groups }),
+            });
+        }));
     }
 
     @Action(ProjectAction.DeleteGroupInProject)
@@ -591,6 +627,8 @@ export class ProjectState {
             .pipe(tap(() => {
                 let groups = state.project.groups ? state.project.groups.concat([]) : [];
                 groups = groups.filter((group) => group.group.name !== action.payload.group.group.name);
+
+                ctx.dispatch(new ClearCacheWorkflow());
 
                 ctx.setState({
                     ...state,
@@ -829,7 +867,21 @@ export class ProjectState {
         return this._http.put<Project>(
             '/project/' + action.payload.projectKey + '/environment/' + action.payload.environmentName,
             action.payload.changes
-        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+        ).pipe(tap((project: Project) => {
+            const state = ctx.getState();
+            if (action.payload.environmentName !== action.payload.changes.name) {
+                const currentEnv = state.project.environments.find((env) => env.name === action.payload.environmentName);
+                if (currentEnv && currentEnv.usage && Array.isArray(currentEnv.usage.workflows)) {
+                    currentEnv.usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+            }
+            ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments));
+        }));
     }
 
     @Action(ProjectAction.AddEnvironmentVariableInProject)
@@ -858,21 +910,58 @@ export class ProjectState {
         ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
     }
 
+    @Action(ProjectAction.FetchEnvironmentUsageInProject)
+    fetchEnvironmentUsage(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchEnvironmentUsageInProject) {
+        return this._http
+            .get<Usage>(`/project/${action.payload.projectKey}/environment/${action.payload.environmentName}/usage`)
+            .pipe(tap((usage: Usage) => {
+                const state = ctx.getState();
+                const environments = state.project.environments.map((env) => {
+                    if (env.name === action.payload.environmentName) {
+                        return { ...env, usage };
+                    }
+                    return env;
+                });
+                return ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(environments));
+            }));
+    }
+
     //  ------- Repository Manager --------- //
     @Action(ProjectAction.ConnectRepositoryManagerInProject)
     connectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ConnectRepositoryManagerInProject) {
         const state = ctx.getState();
-        return this._http.post<{ request_token: string, url: string }>(
+        return this._http.post<{ request_token: string, url: string, auth_type: string }>(
             '/project/' + action.payload.projectKey + '/repositories_manager/' +
             action.payload.repoManager + '/authorize',
             null
-        ).pipe(tap(({ request_token, url }) => {
+        ).pipe(tap(({ request_token, url, auth_type }) => {
             ctx.setState({
                 ...state,
                 repoManager: {
                     request_token,
-                    url
+                    url,
+                    auth_type
                 },
+            });
+        }));
+    }
+
+    @Action(ProjectAction.CallbackRepositoryManagerBasicAuthInProject)
+    callbackRepositoryManagerBasicAuth(ctx: StateContext<ProjectStateModel>,
+                                       action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
+        const state = ctx.getState();
+        let data = {
+            'username': action.payload.basicUser,
+            'secret': action.payload.basicPassword
+        };
+        return this._http.post<Project>(
+            '/project/' + action.payload.projectKey + '/repositories_manager/' +
+            action.payload.repoManager + '/authorize/basicauth',
+            data
+        ).pipe(tap((project: Project) => {
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ vcs_servers: project.vcs_servers }),
             });
         }));
     }

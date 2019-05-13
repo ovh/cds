@@ -60,21 +60,21 @@ func TestParseAndImport(t *testing.T) {
 			input: &exportentities.Workflow{
 				Name: "test-1",
 				Workflow: map[string]exportentities.NodeEntry{
-					"root": exportentities.NodeEntry{
+					"root": {
 						PipelineName: "pipeline",
 					},
-					"first": exportentities.NodeEntry{
+					"first": {
 						PipelineName: "pipeline",
 						DependsOn:    []string{"root"},
 					},
-					"second": exportentities.NodeEntry{
+					"second": {
 						PipelineName: "pipeline",
 						DependsOn:    []string{"first"},
 					},
-					"fork": exportentities.NodeEntry{
+					"fork": {
 						DependsOn: []string{"root"},
 					},
-					"third": exportentities.NodeEntry{
+					"third": {
 						PipelineName: "pipeline",
 						DependsOn:    []string{"fork"},
 					},
@@ -84,7 +84,7 @@ func TestParseAndImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, tt.input, u, workflow.ImportOptions{DryRun: false, Force: true})
+			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, tt.input, u, workflow.ImportOptions{Force: true})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseAndImport() error = %v, wantErr %v", err, tt.wantErr)
 				return

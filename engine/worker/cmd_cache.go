@@ -75,10 +75,10 @@ func cmdCachePush(w *currentWorker) *cobra.Command {
 		Short:   "worker cache push tagValue {{.cds.workspace}}/pathToUpload",
 		Long: `
 Inside a project, you can create a cache from your worker with a tag (useful for vendors for example)
-	worker push <tagValue> dir/file
+	worker cache push <tagValue> dir/file
 
 You can use you storage integration: 
-	worker push --destination=MyStorageIntegration  <tagValue> dir/file
+	worker cache push --destination=MyStorageIntegration  <tagValue> dir/file
 		`,
 		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload",
 		Run:     cachePushCmd(w),
@@ -186,7 +186,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, errTar := sdk.CreateTarFromPaths(c.WorkingDirectory, c.Files, nil)
+	res, size, errTar := sdk.CreateTarFromPaths(c.WorkingDirectory, c.Files, nil)
 	if errTar != nil {
 		errTar = sdk.Error{
 			Message: "worker cache push > Cannot tar : " + errTar.Error(),
@@ -210,7 +210,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 
 	var errPush error
 	for i := 0; i < 10; i++ {
-		if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), vars["ref"], res); errPush == nil {
+		if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), vars["ref"], res, size); errPush == nil {
 			return
 		}
 		time.Sleep(3 * time.Second)
@@ -218,7 +218,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	err := sdk.Error{
-		Message: "worker cache push > Cannot push cache : " + errPush.Error(),
+		Message: "worker cache push > Cannot push cache: " + errPush.Error(),
 		Status:  http.StatusInternalServerError,
 	}
 	log.Error("%v", err)
@@ -233,7 +233,7 @@ func cmdCachePull(w *currentWorker) *cobra.Command {
 		Long: `
 Inside a project, you can fetch a cache from your worker with a tag
 
-	worker pull <tagValue>
+	worker cache pull <tagValue>
 
 If you push a cache with:
 
@@ -317,7 +317,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	bts, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
 	if err != nil {
 		err = sdk.Error{
-			Message: "worker cache pull > Cannot pull cache : " + err.Error(),
+			Message: "worker cache pull > Cannot pull cache: " + err.Error(),
 			Status:  http.StatusNotFound,
 		}
 		writeError(w, r, err)
@@ -333,7 +333,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 
 		if errH != nil {
 			errH = sdk.Error{
-				Message: "worker cache pull > Unable to read tar file : " + errH.Error(),
+				Message: "worker cache pull > Unable to read tar file: " + errH.Error(),
 				Status:  http.StatusBadRequest,
 			}
 			writeJSON(w, errH, http.StatusBadRequest)
@@ -364,7 +364,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 		case tar.TypeSymlink:
 			if err := os.Symlink(header.Linkname, target); err != nil {
 				err = sdk.Error{
-					Message: "worker cache pull > Unable to create symlink : " + err.Error(),
+					Message: "worker cache pull > Unable to create symlink: " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
 				writeJSON(w, err, http.StatusInternalServerError)
@@ -373,10 +373,22 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 
 			// if it's a file create it
 		case tar.TypeReg, tar.TypeLink:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			// if directory of file does not exist, create it before
+			if _, err := os.Stat(filepath.Dir(target)); err != nil {
+				if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+					err = sdk.Error{
+						Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
+						Status:  http.StatusInternalServerError,
+					}
+					writeJSON(w, err, http.StatusInternalServerError)
+					return
+				}
+			}
+
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
 			if err != nil {
 				sdkErr := sdk.Error{
-					Message: "worker cache pull > Unable to open file : " + err.Error(),
+					Message: "worker cache pull > Unable to open file: " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
 				writeJSON(w, sdkErr, sdkErr.Status)
@@ -387,7 +399,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 			if _, err := io.Copy(f, tr); err != nil {
 				_ = f.Close()
 				sdkErr := sdk.Error{
-					Message: "worker cache pull > Cannot copy content file : " + err.Error(),
+					Message: "worker cache pull > Cannot copy content file: " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
 				writeJSON(w, sdkErr, sdkErr.Status)

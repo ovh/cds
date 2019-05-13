@@ -373,12 +373,14 @@ func (h *HatcheryOpenstack) killErrorServers() {
 		//Remove server without IP Address
 		if s.Status == "ACTIVE" {
 			if len(s.Addresses) == 0 && time.Since(s.Updated) > 10*time.Minute {
+				log.Info("killErrorServers> len(s.Addresses):%d s.Updated: %v", len(s.Addresses), time.Since(s.Updated))
 				_ = h.deleteServer(s)
 			}
 		}
 
 		//Remove Error server
 		if s.Status == "ERROR" {
+			log.Info("killErrorServers> s.Status: %s", s.Status)
 			_ = h.deleteServer(s)
 		}
 	}
@@ -387,22 +389,21 @@ func (h *HatcheryOpenstack) killErrorServers() {
 func (h *HatcheryOpenstack) killDisabledWorkers() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	workers, err := h.CDSClient().WorkerList(ctx)
+
+	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)
 	if err != nil {
-		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
+		log.Error("killDisabledWorkers> Pool> Error: %v", err)
 		return
 	}
 
 	srvs := h.getServers()
 
-	for _, w := range workers {
-		if w.Status != sdk.StatusDisabled {
-			continue
-		}
-
+	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
+				log.Info("killDisabledWorkers> killDisabledWorkers %v", s.Name)
 				_ = h.deleteServer(s)
+				break
 			}
 		}
 	}

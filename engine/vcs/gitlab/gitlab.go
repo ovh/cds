@@ -37,14 +37,14 @@ type gitlabConsumer struct {
 // New instanciate a new gitlab consumer
 func New(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
 	return &gitlabConsumer{
-		URL:    URL,
-		secret: clientSecret,
-		cache:  store,
-		appID:  appID,
+		URL:                      URL,
+		secret:                   clientSecret,
+		cache:                    store,
+		appID:                    appID,
 		AuthorizationCallbackURL: callbackURL,
-		uiURL:               uiURL,
-		proxyURL:            proxyURL,
-		disableStatus:       disableStatus,
-		disableStatusDetail: disableStatusDetail,
+		uiURL:                    uiURL,
+		proxyURL:                 proxyURL,
+		disableStatus:            disableStatus,
+		disableStatusDetail:      disableStatusDetail,
 	}
 }

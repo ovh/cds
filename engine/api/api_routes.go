@@ -39,14 +39,19 @@ func (api *API) InitRouter() {
 	r.Handle("/accesstoken/group/{id}", r.GET(api.getAccessTokenByGroupHandler))
 
 	// Action
-	r.Handle("/action", r.GET(api.getActionsHandler))
-	r.Handle("/action/import", r.POST(api.importActionHandler, NeedAdmin(true)))
-
-	r.Handle("/action/requirement", r.GET(api.getActionsRequirements, Auth(false)))
-	r.Handle("/action/{permActionName}", r.GET(api.getActionHandler), r.POST(api.addActionHandler), r.PUT(api.updateActionHandler), r.DELETE(api.deleteActionHandler))
-	r.Handle("/action/{actionName}/using", r.GET(api.getPipelinesUsingActionHandler, NeedAdmin(true)))
-	r.Handle("/action/{permActionName}/export", r.GET(api.getActionExportHandler))
-	r.Handle("/action/{actionID}/audit", r.GET(api.getActionAuditHandler, NeedAdmin(true)))
+	r.Handle("/action", r.GET(api.getActionsHandler), r.POST(api.postActionHandler))
+	r.Handle("/action/import", r.POST(api.importActionHandler))
+	r.Handle("/action/{groupName}/{permActionName}", r.GET(api.getActionHandler), r.PUT(api.putActionHandler), r.DELETE(api.deleteActionHandler))
+	r.Handle("/action/{groupName}/{permActionName}/usage", r.GET(api.getActionUsageHandler))
+	r.Handle("/action/{groupName}/{permActionName}/export", r.GET(api.getActionExportHandler))
+	r.Handle("/action/{groupName}/{permActionName}/audit", r.GET(api.getActionAuditHandler))
+	r.Handle("/action/{groupName}/{permActionName}/audit/{auditID}/rollback", r.POST(api.postActionAuditRollbackHandler))
+	r.Handle("/action/requirement", r.GET(api.getActionsRequirements, Auth(false))) // FIXME add auth used by hatcheries
+	r.Handle("/project/{permProjectKey}/action", r.GET(api.getActionsForProjectHandler))
+	r.Handle("/group/{groupID}/action", r.GET(api.getActionsForGroupHandler))
+	r.Handle("/actionBuiltin", r.GET(api.getActionsBuiltinHandler))
+	r.Handle("/actionBuiltin/{permActionBuiltinName}", r.GET(api.getActionBuiltinHandler))
+	r.Handle("/actionBuiltin/{permActionBuiltinName}/usage", r.GET(api.getActionBuiltinUsageHandler))
 
 	// Admin
 	r.Handle("/admin/maintenance", r.POST(api.postMaintenanceHandler, NeedAdmin(true)))
@@ -61,7 +66,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)), r.GET(api.getProfileHandler, NeedAdmin(true)))
-	r.Handle("/admin/plugin", r.POST(api.postPGRPCluginHandler, NeedAdmin(true)), r.GET(api.getAllGRPCluginHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin", r.POST(api.postGRPCluginHandler, NeedAdmin(true)), r.GET(api.getAllGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}", r.GET(api.getGRPCluginHandler, NeedAdmin(true)), r.PUT(api.putGRPCluginHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary", r.POST(api.postGRPCluginBinaryHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, Auth(false)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
@@ -192,8 +197,10 @@ func (api *API) InitRouter() {
 
 	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler, EnableTracing()), r.GET(api.getWorkflowsHandler, AllowProvider(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler, AllowProvider(true), EnableTracing()), r.PUT(api.putWorkflowHandler, EnableTracing()), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/icon", r.PUT(api.putWorkflowIconHandler), r.DELETE(api.deleteWorkflowIconHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/{uuid}", r.GET(api.getWorkflowAsCodeHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode", r.POST(api.postWorkflowAsCodeHandler, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/resync/pr", r.POST(api.postResyncPRWorkflowAsCodeHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label", r.POST(api.postWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label/{labelID}", r.DELETE(api.deleteWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/rollback/{auditID}", r.POST(api.postWorkflowRollbackHandler))
@@ -223,6 +230,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/runs", r.GET(api.getWorkflowAllRunsHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler, EnableTracing()), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true), EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/branch/{branch}", r.DELETE(api.deleteWorkflowRunsBranchHandler, NeedService()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
@@ -302,6 +310,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/repositories_manager", r.GET(api.getRepositoriesManagerForProjectHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize", r.POST(api.repositoriesManagerAuthorizeHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/callback", r.POST(api.repositoriesManagerAuthorizeCallbackHandler))
+	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/basicauth", r.POST(api.repositoriesManagerAuthorizeBasicHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}", r.DELETE(api.deleteRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo", r.GET(api.getRepoFromRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", r.GET(api.getReposFromRepositoriesManagerHandler))
@@ -323,6 +332,7 @@ func (api *API) InitRouter() {
 
 	// config
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(false)))
+	r.Handle("/config/vcs", r.GET(api.ConfigVCShandler))
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
@@ -360,7 +370,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
-	r.Handle("/worker/model/{permModelID}/export", r.GET(api.getWorkerModelExportHandler))
+	r.Handle("/worker/model/{modelID}/export", r.GET(api.getWorkerModelExportHandler))
 	r.Handle("/worker/model/{modelID}/usage", r.GET(api.getWorkerModelUsageHandler))
 	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 

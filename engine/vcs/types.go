@@ -49,12 +49,14 @@ type ServerConfiguration struct {
 	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty" json:"github"`
 	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty" json:"gitlab"`
 	Bitbucket *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty" json:"bitbucket"`
+	Gerrit    *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty" json:"gerrit"`
 }
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
-	ClientSecret string `toml:"clientSecret" json:"-"  comment:"Github OAuth Application Client Secret"`
+	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
+	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Github OAuth Application Client Secret"`
+	APIURL       string `toml:"apiUrl" json:"-" comment:"The URL for the GitHub API."`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
@@ -83,9 +85,10 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
-	AppID  string `toml:"appId" json:"-" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/ \n#######"`
-	Secret string `toml:"secret" json:"-"`
-	Status struct {
+	AppID       string `toml:"appId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/ \n#######"`
+	Secret      string `toml:"secret" json:"-" default:"xxxxx"`
+	CallbackURL string `toml:"callbackUrl" json:"callbackUrl" default:"http://localhost:8081/repositories_manager/oauth2/callback" comment:"OAuth Application Callback URL"`
+	Status      struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
@@ -103,8 +106,8 @@ func (s GitlabServerConfiguration) check() error {
 
 // BitbucketServerConfiguration represents the bitbucket configuration
 type BitbucketServerConfiguration struct {
-	ConsumerKey string `toml:"consumerKey" json:"-" comment:"#######\n CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/ \n#######\n You can change the consumeKey if you want"`
-	PrivateKey  string `toml:"privateKey" json:"-"`
+	ConsumerKey string `toml:"consumerKey" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/ \n#######\n You can change the consumeKey if you want"`
+	PrivateKey  string `toml:"privateKey" json:"-" default:"xxxxx"`
 	Status      struct {
 		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 	}
@@ -166,4 +169,22 @@ func (s ServerConfiguration) check() error {
 	}
 
 	return nil
+}
+
+// GerritServerConfiguration represents the gerrit configuration
+type GerritServerConfiguration struct {
+	Status struct {
+		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
+	}
+	DisableGerritEvent bool `toml:"disableGerritEvent" comment:"Does gerrit event stream are supported by VCS Server" json:"disable_gerrit_event"`
+	SSHPort            int  `toml:"sshport" default:"29418" commented:"true" comment:"SSH port of gerrit"`
+	EventStream        struct {
+		User       string `toml:"user" default:"myuser" commented:"true" comment:"User to access to gerrit event stream"`
+		PrivateKey string `toml:"privateKey" default:"" commented:"true" comment:"Private key of the user who access to gerrit event stream"`
+	}
+	Reviewer struct {
+		User  string `toml:"user" default:"myreviewer" commented:"true" comment:"User that review changes"`
+		Token string `toml:"token" default:"" commented:"true" comment:"Token of the reviewer"`
+	}
 }

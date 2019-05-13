@@ -45,7 +45,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     groups: Array<Group>;
     audits: Array<AuditWorkflowTemplate>;
     instances: Array<WorkflowTemplateInstance>;
-    workflowsLinked: Array<Workflow>;
+    usages: Array<Workflow>;
     loading: boolean;
     loadingInstances: boolean;
     loadingAudits: boolean;
@@ -278,13 +278,13 @@ export class WorkflowTemplateEditComponent implements OnInit {
         }
     }
 
-    clickAudit(a: AuditWorkflowTemplate) {
+    clickAudit(a: AuditWorkflowTemplate): void {
         let before = a.data_before ? a.data_before : null;
         let after = a.data_after ? a.data_after : null;
         this.diffItems = calculateWorkflowTemplateDiff(before, after);
     }
 
-    clickRollback(a: AuditWorkflowTemplate) {
+    clickRollback(a: AuditWorkflowTemplate): void {
         let wt = a.data_before ? a.data_before : null;
         if (!wt) {
             wt = a.data_after ? a.data_after : null;
@@ -293,14 +293,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     getUsage() {
-        if (this.workflowsLinked) {
-            return;
-        }
         this.loadingUsage = true;
         this._workflowTemplateService.getUsage(this.groupName, this.templateSlug)
             .pipe(first())
             .pipe(finalize(() => this.loadingUsage = false))
-            .subscribe((workflows) => this.workflowsLinked = workflows);
+            .subscribe((workflows) => this.usages = workflows);
     }
 
     getInstances() {

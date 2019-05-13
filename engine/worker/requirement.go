@@ -28,30 +28,11 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 	sdk.OSArchRequirement:        checkOSArchRequirement,
 }
 
-func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, bookedJobID int64) (bool, []sdk.Requirement) {
+func checkRequirements(w *currentWorker, a *sdk.Action, bookedJobID int64) (bool, []sdk.Requirement) {
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
 
 	log.Debug("checkRequirements> for JobID:%d model of worker: %s", bookedJobID, w.model.Name)
-
-	// DEPRECATED
-	// this code is useful for pipelineBuildJob
-	// with CDS Workflows, the queue contains only jobs executable by worker
-	// after removing pbBuildJob, check execGroups here can be removed
-	if execGroups != nil && len(execGroups) > 0 && w.model.GroupID > 0 {
-		checkGroup := false
-		for _, g := range execGroups {
-			if g.ID == w.model.GroupID {
-				checkGroup = true
-				break
-			}
-		}
-		if !checkGroup {
-			requirementsOK = false
-			log.Debug("checkRequirements> model %s attached to group %d can't run this job", w.model.Name, w.model.GroupID)
-			return requirementsOK, nil
-		}
-	}
 
 	log.Debug("requirements for %s >>> %+v\n", a.Name, a.Requirements)
 	for _, r := range a.Requirements {
@@ -134,11 +115,12 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	if w.model.ID == 0 {
 		return false, nil
 	}
-	t := strings.Split(r.Value, " ")
-	if len(t) > 0 {
-		return t[0] == w.model.Name, nil
+	modelName := strings.Split(r.Value, " ")[0]
+	modelPath := strings.SplitN(modelName, "/", 2)
+	if len(modelPath) == 2 {
+		modelName = modelPath[1]
 	}
-	return false, nil
+	return modelName == w.model.Name, nil
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
@@ -177,19 +159,33 @@ func checkServiceRequirement(w *currentWorker, r sdk.Requirement) (bool, error) 
 }
 
 func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	v, err := mem.VirtualMemory()
-	if err != nil {
-		return false, err
-	}
-	totalMemory := v.Total
-
+	var totalMemory int64
 	neededMemory, err := strconv.ParseInt(r.Value, 10, 64)
 	if err != nil {
 		return false, err
 	}
+
+	switch w.model.Type {
+	// Check env variables in a docker is safer than mem.VirtualMemory
+	case sdk.Docker:
+		var err error
+		// Useful for provisioned worker
+		memoryEnv := os.Getenv("CDS_MODEL_MEMORY")
+		totalMemory, err = strconv.ParseInt(memoryEnv, 10, 64)
+		if err != nil {
+			return false, err
+		}
+		totalMemory = totalMemory * 1024 * 1024
+	default:
+		v, err := mem.VirtualMemory()
+		if err != nil {
+			return false, err
+		}
+		totalMemory = int64(v.Total)
+	}
 	//Assuming memory is in megabytes
 	//If we have more than 90% of neededMemory, lets do it
-	return int64(totalMemory) >= (neededMemory*1024*1024)*90/100, nil
+	return totalMemory >= (neededMemory*1024*1024)*90/100, nil
 }
 
 func checkVolumeRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {

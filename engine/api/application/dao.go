@@ -24,7 +24,8 @@ application.last_modified,
 application.metadata,
 application.vcs_server,
 application.vcs_strategy,
-application.description
+application.description,
+application.from_repository
 `
 
 // LoadOptionFunc is a type for all options in LoadOptions
@@ -80,10 +81,13 @@ func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...L
 	query := fmt.Sprintf(`
 		SELECT %s
 		FROM application
-		WHERE application.id = $1 FOR UPDATE NOWAIT`, appRows)
+		WHERE application.id = $1 FOR UPDATE SKIP LOCKED`, appRows)
 	args := []interface{}{id}
-
-	return load(db, store, "", opts, query, args...)
+	app, err := load(db, store, "", opts, query, args...)
+	if err != nil && sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
+		err = sdk.ErrLocked
+	}
+	return app, sdk.WithStack(err)
 }
 
 // LoadByID load an application from DB
@@ -121,7 +125,7 @@ func load(db gorp.SqlExecutor, store cache.Store, key string, opts []LoadOptionF
 	dbApp := dbApplication{}
 	if err := db.SelectOne(&dbApp, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WrapError(sdk.ErrApplicationNotFound, "application.load")
+			return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
 		}
 		return nil, sdk.WrapError(err, "application.load")
 	}
@@ -204,14 +208,14 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, opts ...LoadOpt
 }
 
 // LoadAllNames returns all application names
-func LoadAllNames(db gorp.SqlExecutor, projID int64) ([]sdk.IDName, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 	query := `
 		SELECT application.id, application.name, application.description, application.icon
 		FROM application
 		WHERE application.project_id= $1
 		ORDER BY application.name ASC`
 
-	var res []sdk.IDName
+	var res sdk.IDNames
 	if _, err := db.Select(&res, query, projID); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil

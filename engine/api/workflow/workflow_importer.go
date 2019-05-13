@@ -16,7 +16,7 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message) error {
 	ctx, end := observability.Span(ctx, "workflow.Import")
 	defer end()
 
@@ -77,7 +77,9 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		h := &w.Root.Hooks[i]
 		if h.Ref != "" {
 			if oldH, has := oldHooks[h.Ref]; has {
-				h.Config = oldH.Config
+				if len(h.Config) == 0 {
+					h.Config = oldH.Config
+				}
 				h.UUID = oldH.UUID
 			}
 		}
@@ -88,8 +90,10 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 
-	if !dryRun {
-		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
+	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
+	// Hook registration must only be done on default branch in case of workflow as-code
+	// The derivation branch is set in workflow parser it is not comming from the default branch
+	if w.DerivationBranch == "" {
 		if errHr := HookRegistration(ctx, db, store, oldW, *w, proj); errHr != nil {
 			return sdk.WrapError(errHr, "Cannot register hook")
 		}

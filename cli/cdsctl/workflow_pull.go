@@ -73,10 +73,13 @@ func workflowPullRun(c cli.Values) error {
 		return err
 	}
 
-	return workflowTarReaderToFiles(dir, tr, c.GetBool("force"), c.GetBool("quiet"))
+	return workflowTarReaderToFiles(c, dir, tr)
 }
 
-func workflowTarReaderToFiles(dir string, tr *tar.Reader, force, quiet bool) error {
+func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
+	force := v.GetBool("force")
+	yes := v.GetBool("yes")
+	quiet := v.GetBool("quiet")
 	if tr == nil {
 		return fmt.Errorf("Unable to read workflow")
 	}
@@ -92,14 +95,14 @@ func workflowTarReaderToFiles(dir string, tr *tar.Reader, force, quiet bool) err
 
 		fname := filepath.Join(dir, hdr.Name)
 		if _, err = os.Stat(fname); err == nil || os.IsExist(err) {
-			if !force {
+			if !force && !yes {
 				if !cli.AskForConfirmation(fmt.Sprintf("This will override %s. Do you want to continue?", fname)) {
 					os.Exit(0)
 				}
 			}
 		}
 
-		if verbose {
+		if v.GetBool("verbose") {
 			fmt.Println("Creating file", cli.Magenta(fname))
 		}
 		fi, err := os.Create(fname)

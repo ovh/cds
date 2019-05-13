@@ -7,35 +7,35 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
-type pipeliner interface {
-	Pipeline() (*sdk.Pipeline, error)
-}
-
 // ImportOptions are options to import pipeline
 type ImportOptions struct {
-	Force        bool
-	PipelineName string
+	Force          bool
+	PipelineName   string
+	FromRepository string
 }
 
 // ParseAndImport parse an exportentities.pipeline and insert or update the pipeline in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, epip pipeliner, u *sdk.User, opts ImportOptions) (*sdk.Pipeline, []sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, epip exportentities.Pipeliner, u *sdk.User, opts ImportOptions) (*sdk.Pipeline, []sdk.Message, error) {
 	//Transform payload to a sdk.Pipeline
 	pip, errP := epip.Pipeline()
 	if errP != nil {
-		return pip, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, errP), "ParseAndImport> Unable to parse pipeline")
+		return pip, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, errP), "unable to parse pipeline")
 	}
 
+	pip.FromRepository = opts.FromRepository
+
 	if opts.PipelineName != "" && pip.Name != opts.PipelineName {
-		return nil, nil, sdk.ErrPipelineNameImport
+		return nil, nil, sdk.WithStack(sdk.ErrPipelineNameImport)
 	}
 
 	// Check if pipeline exists
 	exist, errE := ExistPipeline(db, proj.ID, pip.Name)
 	if errE != nil {
-		return pip, nil, sdk.WrapError(errE, "ParseAndImport> Unable to check if pipeline %v exists", pip.Name)
+		return pip, nil, sdk.WrapError(errE, "unable to check if pipeline %v exists", pip.Name)
 	}
 
 	done := new(sync.WaitGroup)
@@ -64,7 +64,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	if globalError == nil {
 		if err := CreateAudit(db, pip, AuditUpdatePipeline, u); err != nil {
-			log.Error("%v", sdk.WrapError(err, "Cannot create audit"))
+			log.Error("%v", sdk.WrapError(err, "cannot create audit"))
 		}
 	}
 

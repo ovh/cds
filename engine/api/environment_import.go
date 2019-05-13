@@ -66,7 +66,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		_, msgList, globalError := environment.ParseAndImport(tx, api.Cache, proj, eenv, force, project.DecryptWithBuiltinKey, deprecatedGetUser(ctx))
+		_, msgList, globalError := environment.ParseAndImport(tx, proj, eenv, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, deprecatedGetUser(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", eenv.Name)
@@ -183,7 +183,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := environment.Lock(tx, key, envName); err != nil {
-			return sdk.WrapError(err, "Cannot lock env %s/%s", key, envName)
+			return sdk.WrapError(err, "cannot lock env %s/%s", key, envName)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(tx, key, envName)

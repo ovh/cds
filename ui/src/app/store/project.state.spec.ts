@@ -12,19 +12,22 @@ import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { RepositoriesManager } from 'app/model/repositories.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import * as ProjectAction from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
+import { WorkflowsState } from './workflows.state';
 
 describe('Project', () => {
     let store: Store;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
+            providers: [NavbarService],
             imports: [
-                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState]),
-                HttpClientTestingModule
+                HttpClientTestingModule,
+                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowsState])
             ],
         }).compileComponents();
 
@@ -1213,6 +1216,45 @@ describe('Project', () => {
             expect(state.repoManager.url).toEqual('https://github.com');
         });
     }));
+
+    it('callback repository manager basic auth in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+        });
+
+        store.dispatch(new ProjectAction.CallbackRepositoryManagerBasicAuthInProject({
+            projectKey: project.key,
+            basicUser: 'user',
+            repoManager: 'gerrit',
+            basicPassword: 'password'
+        }));
+        let repoMan = new RepositoriesManager();
+        repoMan.name = 'gerrit';
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/repositories_manager/gerrit/authorize/basicauth';
+        })).flush(<Project>{
+            ...project,
+            vcs_servers: [repoMan]
+        });
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.vcs_servers).toBeTruthy();
+            expect(state.project.vcs_servers.length).toEqual(1);
+            expect(state.project.vcs_servers[0].name).toEqual('gerrit');
+        });
+    }));
+
 
     it('callback repository manager variable in project', async(() => {
         const http = TestBed.get(HttpTestingController);

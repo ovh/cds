@@ -432,7 +432,7 @@ func templateBulkRun(v cli.Values) error {
 							// get the project and its repositories if not already loaded
 							if _, ok := projectRepositories[project.Key]; !ok {
 								for _, vcs := range project.VCSServers {
-									rs, err := client.RepositoriesList(project.Key, vcs.Name)
+									rs, err := client.RepositoriesList(project.Key, vcs.Name, false)
 									if err != nil {
 										return err
 									}

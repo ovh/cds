@@ -67,6 +67,23 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 	return f(w)(ctx, a, buildID, params, secrets, sendLog)
 }
 
+func cdsEnvVartoENV(p sdk.Parameter) []string {
+	var env []string
+	if !strings.HasPrefix(p.Name, "cds.env.") {
+		return nil
+	}
+
+	pName := strings.TrimPrefix(p.Name, "cds.env.")
+
+	envName := strings.Replace(pName, ".", "_", -1)
+	envName = strings.Replace(envName, "-", "_", -1)
+	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", strings.ToUpper(envName), p.Value)) // CDS_ENV_MYSTRINGVARIABLE
+	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", pName, p.Value))                    //CDS_ENV_MyStringVariable
+	env = append(env, fmt.Sprintf("%s=%s", pName, p.Value))                            // MyStringVariable
+	env = append(env, fmt.Sprintf("%s=%s", strings.ToUpper(envName), p.Value))         // MYSTRINGVARIABLE
+	return env
+}
+
 func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
 	log.Debug("runGRPCPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
 	defer func() {
@@ -90,6 +107,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
 				continue
 			}
+			envs = append(envs, cdsEnvVartoENV(p)...)
 			envName := strings.Replace(p.Name, ".", "_", -1)
 			envName = strings.ToUpper(envName)
 			envs = append(envs, fmt.Sprintf("%s=%s", envName, p.Value))

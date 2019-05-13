@@ -107,6 +107,7 @@ const deployData = `{
 func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
 	var application = q.GetOptions()["cds.application"]
 	var helloHost = q.GetOptions()["cds.integration.host"]
+	var deploymentToken = q.GetOptions()["cds.integration.deployment.token"]
 	var maxRetryStr = q.GetOptions()["cds.integration.retry.max"]
 	var delayRetryStr = q.GetOptions()["cds.integration.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)
@@ -126,6 +127,7 @@ func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin
 	}
 
 	fmt.Printf("Deploying %s on Hello at %s...\n", application, helloHost)
+	fmt.Printf("Deployment.token %s\n", reverse(deploymentToken))
 	fmt.Printf("Retry.max %d\n", maxRetry)
 	fmt.Printf("Retry.delay %d\n", delayRetry)
 	fmt.Printf("Metadata %v \n", deployData)
@@ -190,4 +192,12 @@ func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, 
 		Details: msg,
 		Status:  sdk.StatusFail.String(),
 	}, nil
+}
+
+func reverse(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }

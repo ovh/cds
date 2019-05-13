@@ -1,12 +1,13 @@
-+++
-title = "Requirements"
-weight = 2
-
-+++
+---
+title: "Requirements"
+weight: 2
+card: 
+  name: operate
+---
 
 
 CDS API is the core component of CDS.
-To start CDS API, the **only mandatory dependency is a PostgreSQL database** and a path to the directory containing other CDS binaries.
+To start CDS API, the **only mandatory dependencies are a PostgreSQL database, a Redis server** and a path to the directory containing other CDS binaries.
 
 There is are two ways to set up CDS:
 
@@ -30,8 +31,8 @@ See Configuration template for more details
 
 ## Supported Platforms
 
-- FreeBSD i386/amd64/arm
-- Linux i386/amd64/arm(Raspberry Pi)
+- FreeBSD i386/amd64/arm/arm64
+- Linux i386/amd64/arm(Raspberry Pi)/arm64
 - Windows/amd64
 - Darwin i386/amd64
 - OpenBSD amd64

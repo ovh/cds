@@ -66,7 +66,7 @@ func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
 	repo := sdk.VCSRepo{}
 
-	p, _, err := c.client.Projects.GetProject(fullname)
+	p, _, err := c.client.Projects.GetProject(fullname, nil)
 	if err != nil {
 		return repo, err
 	}
@@ -81,6 +81,6 @@ func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 	return repo, nil
 }
 
-func (c *gitlabClient) GrantReadPermission(ctx context.Context, repo string) error {
+func (c *gitlabClient) GrantWritePermission(ctx context.Context, repo string) error {
 	return nil
 }

@@ -59,16 +59,12 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	}
 	hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 
-	errmu := sdk.MultiError{}
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
 		if _, ok := hook.Config[k]; !ok {
 			// Add missing conf
 			hook.Config[k] = hook.WorkflowHookModel.DefaultConfig[k]
 		}
-	}
-	if len(errmu) > 0 {
-		return sdk.WrapError(&errmu, "insertHook> Invalid hook configuration")
 	}
 
 	// if it's a new hook
@@ -107,16 +103,13 @@ func (r *NodeHook) PostInsert(db gorp.SqlExecutor) error {
 
 //PostGet is a db hook
 func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		Config sql.NullString `db:"config"`
-	}{}
-	if err := db.SelectOne(&res, "select config from workflow_node_hook where id = $1", r.ID); err != nil {
+	configDB, err := db.SelectNullStr("select config from workflow_node_hook where id = $1", r.ID)
+	if err != nil {
 		return err
 	}
 
-	conf := sdk.WorkflowNodeHookConfig{}
-
-	if err := gorpmapping.JSONNullString(res.Config, &conf); err != nil {
+	var conf sdk.WorkflowNodeHookConfig
+	if err := gorpmapping.JSONNullString(configDB, &conf); err != nil {
 		return err
 	}
 
@@ -303,9 +296,14 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	//Checks minimal configuration upon its model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
 		if configuredValue, has := hook.Config[k]; !has {
-			return sdk.NewError(sdk.ErrInvalidHookConfiguration, fmt.Errorf("hook %s invalid configuration. %s is missing", hook.Name, k))
+			return sdk.NewErrorFrom(sdk.ErrInvalidHookConfiguration, "hook %s invalid configuration. %s is missing", hook.Name, k)
 		} else if configuredValue.Value == "" {
-			return sdk.NewError(sdk.ErrInvalidHookConfiguration, fmt.Errorf("hook %s invalid configuration. %s is missing", hook.Name, k))
+			if k == "payload" { // Workaround to handle empty payload
+				configuredValue.Value = "{}"
+				hook.Config[k] = configuredValue
+			} else {
+				return sdk.NewErrorFrom(sdk.ErrInvalidHookConfiguration, "hook %s invalid configuration. %s is missing", hook.Name, k)
+			}
 		}
 	}
 

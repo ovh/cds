@@ -25,4 +25,4 @@ jobs:
   - artifactUpload: /go/src/github.com/ovh/cds/engine/dist/cds-engine-linux-amd64.tar.gz
   requirements:
   - binary: git
-  - model: Go-official-1.9.1
+  - binary: go

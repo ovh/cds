@@ -26,17 +26,16 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 	var p sdk.Pipeline
 
 	var lastModified time.Time
-	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.last_modified
+	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.last_modified, pipeline.from_repository
 			FROM pipeline
 	 			JOIN project on pipeline.project_id = project.id
 	 		WHERE pipeline.name = $1 AND project.projectKey = $2`
 
-	err := db.QueryRow(query, name, projectKey).Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified)
-	if err != nil {
+	if err := db.QueryRow(query, name, projectKey).Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified, &p.FromRepository); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrPipelineNotFound
+			return nil, sdk.WithStack(sdk.ErrPipelineNotFound)
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	p.LastModified = lastModified.Unix()
 	p.ProjectKey = projectKey
@@ -67,12 +66,12 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 
 	var lastModified time.Time
 	var p sdk.Pipeline
-	query := `SELECT pipeline.name, pipeline.description, project.projectKey, pipeline.last_modified
+	query := `SELECT pipeline.name, pipeline.description, project.projectKey, pipeline.last_modified, pipeline.from_repository
 	FROM pipeline
 		JOIN project on pipeline.project_id = project.id
 	WHERE pipeline.id = $1`
 
-	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Description, &p.ProjectKey, &lastModified)
+	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Description, &p.ProjectKey, &lastModified, &p.FromRepository)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrPipelineNotFound
@@ -101,7 +100,7 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string, u *sdk.User) ([]sdk.Pipeline, error) {
 	var pips []sdk.Pipeline
 	query := `
-	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
 		FROM action_requirement
 			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
 			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
@@ -112,7 +111,7 @@ func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string, u *sdk.U
 
 	if !u.Admin {
 		query = `
-	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
 		FROM action_requirement
 			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
 			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
@@ -160,24 +159,6 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, er
 	return pips, nil
 }
 
-// LoadByNodeRunID loads pipelines from database for a given workflow id
-func LoadByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) (*sdk.Pipeline, error) {
-	var pip sdk.Pipeline
-	query := `SELECT pipeline.* FROM pipeline
-		JOIN workflow_node ON pipeline.id = workflow_node.pipeline_id
-		JOIN workflow_node_run ON workflow_node.id = workflow_node_run.workflow_node_id
-	WHERE workflow_node_run.id = $1`
-
-	if err := db.SelectOne(&pip, query, nodeRunID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "Unable to load pipelines linked to node run id %d", nodeRunID)
-	}
-
-	return &pip, nil
-}
-
 func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	if err := LoadPipelineStage(ctx, db, p); err != nil {
 		return err
@@ -193,7 +174,6 @@ func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.P
 
 // DeletePipeline remove given pipeline and all history from database
 func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
-
 	if err := DeleteAllStage(db, pipelineID, userID); err != nil {
 		return err
 	}
@@ -205,7 +185,7 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 	// Delete pipeline
 	query := `DELETE FROM pipeline WHERE id = $1`
 	if _, err := db.Exec(query, pipelineID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
@@ -214,7 +194,7 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 // LoadPipelines loads all pipelines in a project
 func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) ([]sdk.Pipeline, error) {
 	var pip []sdk.Pipeline
-	query := `SELECT id, name, description, project_id, last_modified
+	query := `SELECT id, name, description, project_id, last_modified, from_repository
 			  FROM pipeline
 			  WHERE project_id = $1
 			  ORDER BY pipeline.name`
@@ -230,7 +210,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) 
 		var lastModified time.Time
 
 		// scan pipeline id
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified, &p.FromRepository); err != nil {
 			return nil, err
 		}
 		p.LastModified = lastModified.Unix()
@@ -257,13 +237,13 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) 
 }
 
 // LoadAllNames returns all pipeline names
-func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64) ([]sdk.IDName, error) {
+func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64) (sdk.IDNames, error) {
 	query := `SELECT pipeline.id, pipeline.name, pipeline.description
 			  FROM pipeline
 			  WHERE project_id = $1
 			  ORDER BY pipeline.name`
 
-	var res []sdk.IDName
+	var res sdk.IDNames
 	if _, err := db.Select(&res, query, projID); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil
@@ -295,14 +275,14 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	}
 
 	//Update pipeline
-	query := `UPDATE pipeline SET name=$1, description = $2, last_modified=$4 WHERE id=$3`
-	_, err := db.Exec(query, p.Name, p.Description, p.ID, now)
+	query := `UPDATE pipeline SET name=$1, description = $2, last_modified=$4, from_repository=$5 WHERE id=$3`
+	_, err := db.Exec(query, p.Name, p.Description, p.ID, now, p.FromRepository)
 	return sdk.WithStack(err)
 }
 
 // InsertPipeline inserts pipeline informations in database
 func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
-	query := `INSERT INTO pipeline (name, description, project_id, last_modified) VALUES ($1, $2, $3, current_timestamp) RETURNING id`
+	query := `INSERT INTO pipeline (name, description, project_id, last_modified, from_repository) VALUES ($1, $2, $3, current_timestamp, $4) RETURNING id`
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
@@ -313,7 +293,7 @@ func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p
 		return sdk.WrapError(sdk.ErrInvalidProject, "InsertPipeline>")
 	}
 
-	if err := db.QueryRow(query, p.Name, p.Description, p.ProjectID).Scan(&p.ID); err != nil {
+	if err := db.QueryRow(query, p.Name, p.Description, p.ProjectID, p.FromRepository).Scan(&p.ID); err != nil {
 		return err
 	}
 

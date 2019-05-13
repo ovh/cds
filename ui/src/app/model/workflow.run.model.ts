@@ -1,4 +1,5 @@
 // WorkflowRun is an execution instance of a run
+import { WithKey } from 'app/shared/table/data-table.component';
 import { Action } from './action.model';
 import { Vulnerability } from './application.model';
 import { Event } from './event.model';
@@ -33,6 +34,7 @@ export class WorkflowRun {
     start: string;
     status: string;
     last_modified: string;
+    last_modified_nano: number;
     last_execution: string;
     nodes: { [key: string]: Array<WorkflowNodeRun>; };
     tags: Array<WorkflowRunTags>;
@@ -53,6 +55,7 @@ export class WorkflowRun {
         wr.start = new Date(event.payload['Start'] * 1000).toString();
         wr.last_execution = new Date(event.payload['LastExecution'] * 1000).toString();
         wr.last_modified = new Date(event.payload['LastModified'] * 1000).toString();
+        wr.last_modified_nano = event.payload['LastModifiedNano'];
         wr.tags = event.payload['Tags'].map(t => {
             return { tag: t.Tag, value: t.Value }
         });
@@ -66,7 +69,7 @@ export class WorkflowRunTags {
 }
 
 // WorkflowNodeRun is as execution instance of a node
-export class WorkflowNodeRun {
+export class WorkflowNodeRun implements WithKey {
     workflow_run_id: number;
     id: number;
     workflow_node_id: number;
@@ -94,7 +97,6 @@ export class WorkflowNodeRun {
     hook_execution_timestamp: number;
     execution_id: string;
     callback: WorkflowNodeOutgoingHookRunCallback;
-
 
     static fromEventRunWorkflowNode(e: Event): WorkflowNodeRun {
         let wnr = new WorkflowNodeRun();
@@ -138,10 +140,10 @@ export class WorkflowNodeRun {
                     let pSpawn = rjs['SpawnInfos'];
                     if (pSpawn) {
                         pSpawn.forEach(ps => {
-                           let spawn = new SpawnInfo();
-                           spawn.api_time = new Date(ps['APITime']);
-                           spawn.remote_time = new Date(ps['RemoteTime']);
-                           spawn.user_message = ps['UserMessage'];
+                            let spawn = new SpawnInfo();
+                            spawn.api_time = new Date(ps['APITime']);
+                            spawn.remote_time = new Date(ps['RemoteTime']);
+                            spawn.user_message = ps['UserMessage'];
                             wnjr.spawninfos.push(spawn);
                         });
                     }
@@ -182,29 +184,29 @@ export class WorkflowNodeRun {
             stage.jobs = new Array<Job>();
             if (s['Jobs']) {
                 s['Jobs'].forEach(j => {
-                   let job = new Job();
-                   job.enabled = j['Enabled'];
-                   job.pipeline_action_id = j['PipelineActionID'];
-                   job.pipeline_stage_id = j['PipelineStageID'];
-                   job.last_modified = (new Date(j['LastModified'] * 1000)).toString();
-                   job.action = new Action();
-                   let eventAction = j['Action'];
-                   job.action.enabled = eventAction['Enabled'];
-                   job.action.name = eventAction['Name'];
-                   job.action.description = eventAction['Description'];
-                   job.action.actions = new Array<Action>();
-                   if (eventAction['Actions']) {
-                       eventAction['Actions'].forEach(actionStep => {
-                          let jobStep = new Action();
-                          jobStep.name = actionStep['Name'];
-                          jobStep.enabled = actionStep['Enabled'];
-                          jobStep.id = actionStep['ID'];
+                    let job = new Job();
+                    job.enabled = j['Enabled'];
+                    job.pipeline_action_id = j['PipelineActionID'];
+                    job.pipeline_stage_id = j['PipelineStageID'];
+                    job.last_modified = (new Date(j['LastModified'] * 1000)).toString();
+                    job.action = new Action();
+                    let eventAction = j['Action'];
+                    job.action.enabled = eventAction['Enabled'];
+                    job.action.name = eventAction['Name'];
+                    job.action.description = eventAction['Description'];
+                    job.action.actions = new Array<Action>();
+                    if (eventAction['Actions']) {
+                        eventAction['Actions'].forEach(actionStep => {
+                            let jobStep = new Action();
+                            jobStep.name = actionStep['Name'];
+                            jobStep.enabled = actionStep['Enabled'];
+                            jobStep.id = actionStep['ID'];
 
-                           job.action.actions.push(jobStep);
-                       });
-                   }
+                            job.action.actions.push(jobStep);
+                        });
+                    }
 
-                   stage.jobs.push(job);
+                    stage.jobs.push(job);
                 });
             }
             wnr.stages.push(stage);
@@ -230,6 +232,10 @@ export class WorkflowNodeRun {
         wnr.hook_execution_timestamp = e.payload['HookExecutionTimeStamp'];
         wnr.uuid = e.payload['UUID'];
         return wnr;
+    }
+
+    key(): string {
+        return `${this.id}-${this.num}.${this.subnumber}`;
     }
 }
 
@@ -324,7 +330,7 @@ export class WorkflowNodeRunVulnerabilityReport {
 
 export class WorkflowNodeRunVulnerability {
     vulnerabilities: Array<Vulnerability>;
-    summary: { [key: string]: number};
-    default_branch_summary: { [key: string]: number};
-    previous_run_summary: { [key: string]: number};
+    summary: { [key: string]: number };
+    default_branch_summary: { [key: string]: number };
+    previous_run_summary: { [key: string]: number };
 }

@@ -1,38 +1,48 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { FetchApplicationOverview } from 'app/store/applications.action';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { Application, Overview, Severity } from '../../../../model/application.model';
 import { ChartData, ChartSeries, GraphConfiguration, GraphType } from '../../../../model/graph.model';
 import { Metric } from '../../../../model/metric.model';
 import { Tests } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
+import { FetchApplicationOverview } from '../../../../store/applications.action';
+import { ApplicationsState } from '../../../../store/applications.state';
 
 @Component({
     selector: 'app-home',
     templateUrl: './application.home.html',
     styleUrls: ['./application.home.scss']
 })
+@AutoUnsubscribe()
 export class ApplicationHomeComponent implements OnInit {
-
     @Input() project: Project;
     @Input() application: Application;
 
     dashboards: Array<GraphConfiguration>;
-    ready = false;
     overview: Overview;
+    overviewSubscription: Subscription;
 
     constructor(
         private _translate: TranslateService,
         private store: Store
-    ) {
-
-    }
+    ) { }
 
     ngOnInit(): void {
         this.store.dispatch(new FetchApplicationOverview({ projectKey: this.project.key, applicationName: this.application.name }));
+        this.overviewSubscription = this.store.select(ApplicationsState.selectOverview(this.project.key, this.application.name))
+            .pipe(filter((o) => o != null))
+            .subscribe((o: Overview) => {
+                this.overview = o;
+                this.renderGraph();
+            });
+    }
+
+    renderGraph(): void {
         this.dashboards = new Array<GraphConfiguration>();
-        this.overview = this.application.overview;
         if (this.overview && this.overview.graphs.length > 0) {
             this.overview.graphs.forEach(g => {
                 if (g.datas && g.datas.length) {
@@ -50,7 +60,6 @@ export class ApplicationHomeComponent implements OnInit {
                 }
             });
         }
-        this.ready = true;
     }
 
     createUnitTestDashboard(metrics: Array<Metric>): void {
@@ -98,7 +107,7 @@ export class ApplicationHomeComponent implements OnInit {
         cc.showXAxisLabel = true;
         cc.showYAxisLabel = true;
         cc.xAxisLabel = this._translate.instant('graph_vulnerability_x');
-        cc.yAxisLabel = this._translate.instant('graph_vulnerability_y'); ;
+        cc.yAxisLabel = this._translate.instant('graph_vulnerability_y');
         cc.datas = new Array<ChartData>();
 
         Severity.Severities.forEach(s => {

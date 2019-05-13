@@ -125,4 +125,9 @@ export class DeleteFromCachePipeline {
     constructor(public payload: { projectKey: string, pipelineName: string }) { }
 }
 
+export class ClearCachePipeline {
+    static readonly type = '[Pipeline] Clear cache Pipeline';
+    constructor() { }
+}
+
 

@@ -25,7 +25,8 @@ func main() {
 				b, _ := yaml.Marshal(p.Config())
 				return ioutil.WriteFile(".debpacker.yml", b, os.FileMode(0644))
 			},
-		}, {
+		},
+		{
 			Name:   "clean",
 			Action: func(c *cli.Context) error { return os.RemoveAll(c.String("target")) },
 			Flags: []cli.Flag{
@@ -35,7 +36,8 @@ func main() {
 					Usage: "Target output directory",
 				},
 			},
-		}, {
+		},
+		{
 			Name: "make",
 			Action: func(c *cli.Context) error {
 				b, err := ioutil.ReadFile(c.String("config"))

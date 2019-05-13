@@ -7,9 +7,10 @@
     <div class="runs scrollable" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
         [scrollWindow]="false" (scrolled)="scroll()">
         <ng-container *ngIf="workflowRuns.length > 0">
-            <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)" [class.active]="selectedWorkfowRun?.num === r.num"
+            <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)"
+                [class.active]="selectedWorkfowRun?.num === r.num"
                 [class.success]="r.status === pipelineStatusEnum.SUCCESS"
-                 [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
+                [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
                 [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
                 [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">
                 <div class="content">
@@ -17,14 +18,15 @@
                         <div class="number">
                             <span class="hash">#</span>
                             <span class="count" [class.success]="r.status === pipelineStatusEnum.SUCCESS"
-                                [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+                                [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING || r.status === pipelineStatusEnum.PENDING"
                                 [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
                                 [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.num}}</span>
                         </div>
                         <ng-template let-popup #popupTemplate>
                             <div class="content">
                                 <div class="ui bulleted list">
-                                    <div class="item" *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
+                                    <div class="item"
+                                        *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
                                         <b>{{t.tag}} : </b> {{t.value}}
                                     </div>
                                 </div>
@@ -37,7 +39,8 @@
                             </ng-container>
                         </div>
                     </div>
-                    <div class="loader" *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
+                    <div class="loader"
+                        *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
                         <app-status-icon [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
                     </div>
                 </div>
@@ -45,7 +48,7 @@
                     <div class="duration">
                         {{r.duration}}
                     </div>
-                    {{r.start | date:'short' }}
+                    {{r.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
                 </div>
             </div>
         </ng-container>

@@ -110,7 +110,7 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 	return repo, nil
 }
 
-func (b *bitbucketClient) GrantReadPermission(ctx context.Context, repo string) error {
+func (b *bitbucketClient) GrantWritePermission(ctx context.Context, repo string) error {
 	if b.username == "" {
 		return nil
 	}

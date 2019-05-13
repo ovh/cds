@@ -165,7 +165,7 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 		if getService(ctx) != nil {
 			return ctx, false, nil
 		}
-		return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> Need worker")
+		return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> Need service")
 	}
 
 	if rc.Options["needWorker"] == "true" {
@@ -181,9 +181,8 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 	}
 
 	if rc.Options["needAdmin"] != "true" {
-		permissionOk := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true"))
-		if !permissionOk {
-			return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
+		if err := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true")); err != nil {
+			return ctx, false, err
 		}
 	} else {
 		return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized (needAdmin)")

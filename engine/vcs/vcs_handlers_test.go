@@ -114,13 +114,17 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 }
 
 func Test_accessTokenAuth(t *testing.T) {
+	cfg := test.LoadTestingConf(t)
+
 	//Bootstrap the service
 	s, err := newTestService(t)
 	test.NoError(t, err)
 
+	checkConfigGithub(cfg, t)
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     "client_id",
 			ClientSecret: "client_secret",
 		},
@@ -156,8 +160,9 @@ func Test_getReposHandler(t *testing.T) {
 
 	checkConfigGithub(cfg, t)
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 		},
@@ -195,8 +200,9 @@ func Test_getRepoHandler(t *testing.T) {
 	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 		},
@@ -206,8 +212,8 @@ func Test_getRepoHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{
 		"name":  "github",
-		"owner": "ovh",
-		"repo":  "cds",
+		"owner": cfg["githubOwner"],
+		"repo":  cfg["githubRepo"],
 	}
 	uri := s.Router.GetRoute("GET", s.getRepoHandler, vars)
 	test.NotEmpty(t, uri)
@@ -236,8 +242,9 @@ func Test_getBranchesHandler(t *testing.T) {
 	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 		},
@@ -247,8 +254,8 @@ func Test_getBranchesHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{
 		"name":  "github",
-		"owner": "ovh",
-		"repo":  "cds",
+		"owner": cfg["githubOwner"],
+		"repo":  cfg["githubRepo"],
 	}
 	uri := s.Router.GetRoute("GET", s.getBranchesHandler, vars)
 	test.NotEmpty(t, uri)
@@ -277,8 +284,9 @@ func Test_getBranchHandler(t *testing.T) {
 	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 		},
@@ -288,14 +296,14 @@ func Test_getBranchHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{
 		"name":  "github",
-		"owner": "ovh",
-		"repo":  "cds",
+		"owner": cfg["githubOwner"],
+		"repo":  cfg["githubRepo"],
 	}
 	uri := s.Router.GetRoute("GET", s.getBranchHandler, vars)
 	test.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 	q := req.URL.Query()
-	q.Set("branch", "vcs/old-code")
+	q.Set("branch", cfg["githubBranch"])
 	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
@@ -321,8 +329,9 @@ func Test_getCommitsHandler(t *testing.T) {
 	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 		},
@@ -332,15 +341,16 @@ func Test_getCommitsHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{
 		"name":  "github",
-		"owner": "fsamin",
-		"repo":  "go-dump",
+		"owner": cfg["githubCommitOwner"],
+		"repo":  cfg["githubCommitRepo"],
 	}
+
 	uri := s.Router.GetRoute("GET", s.getCommitsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 	q := req.URL.Query()
-	q.Set("since", "61dc819dc47bc6b556b2c4e1293f919d492f1f5a")
-	q.Set("branch", "fsamin/fix-2017-07-28-10-07-56")
+	q.Set("since", cfg["githubCommitSince"])
+	q.Set("branch", cfg["githubCommitBranch"])
 	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
@@ -366,8 +376,9 @@ func Test_getCommitHandler(t *testing.T) {
 	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 		},
@@ -377,9 +388,9 @@ func Test_getCommitHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{
 		"name":   "github",
-		"owner":  "ovh",
-		"repo":   "cds",
-		"commit": "a38dfc7cc835aadf6a112e8a540dd52cca79cc29",
+		"owner":  cfg["githubOwner"],
+		"repo":   cfg["githubRepo"],
+		"commit": cfg["githubCommit"],
 	}
 	uri := s.Router.GetRoute("GET", s.getCommitHandler, vars)
 	test.NotEmpty(t, uri)
@@ -408,8 +419,9 @@ func Test_getCommitStatusHandler(t *testing.T) {
 	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 		},
@@ -419,9 +431,9 @@ func Test_getCommitStatusHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{
 		"name":   "github",
-		"owner":  "ovh",
-		"repo":   "cds",
-		"commit": "a38dfc7cc835aadf6a112e8a540dd52cca79cc29",
+		"owner":  cfg["githubOwner"],
+		"repo":   cfg["githubRepo"],
+		"commit": cfg["githubCommit"],
 	}
 	uri := s.Router.GetRoute("GET", s.getCommitStatusHandler, vars)
 	test.NotEmpty(t, uri)
@@ -443,6 +455,37 @@ func Test_getCommitStatusHandler(t *testing.T) {
 }
 
 func checkConfigGithub(cfg map[string]string, t *testing.T) {
+	if cfg["githubURL"] == "" {
+		cfg["githubURL"] = "https://github.com"
+	}
+	if cfg["githubAPIURL"] == "" {
+		cfg["githubAPIURL"] = "https://api.github.com"
+	}
+	if cfg["githubRepo"] == "" {
+		cfg["githubRepo"] = "cds"
+	}
+	if cfg["githubOwner"] == "" {
+		cfg["githubOwner"] = "ovh"
+	}
+	if cfg["githubBranch"] == "" {
+		cfg["githubBranch"] = "gh-pages"
+	}
+	if cfg["githubCommit"] == "" {
+		cfg["githubCommit"] = "a38dfc7cc835aadf6a112e8a540dd52cca79cc29"
+	}
+	if cfg["githubCommitOwner"] == "" {
+		cfg["githubCommitOwner"] = "fsamin"
+	}
+	if cfg["githubCommitRepo"] == "" {
+		cfg["githubCommitRepo"] = "go-dump"
+	}
+	if cfg["githubCommitSince"] == "" {
+		cfg["githubCommitSince"] = "6e06b7fed23aeed808b4d60e8a085f9b9c4b45af"
+	}
+	if cfg["githubCommitBranch"] == "" {
+		cfg["githubCommitBranch"] = "master"
+	}
+
 	if cfg["githubClientID"] == "" || cfg["githubClientSecret"] == "" {
 		log.Debug("Skip Github Test - no configuration")
 		t.SkipNow()
@@ -461,8 +504,9 @@ func Test_postRepoGrantHandler(t *testing.T) {
 	t.Logf("Testing grant with %s", cfg["githubUsername"])
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: "https://github.com",
+		URL: cfg["githubURL"],
 		Github: &GithubServerConfiguration{
+			APIURL:       cfg["githubAPIURL"],
 			ClientID:     cfg["githubClientID"],
 			ClientSecret: cfg["githubClientSecret"],
 			Username:     cfg["githubUsername"],
@@ -474,8 +518,8 @@ func Test_postRepoGrantHandler(t *testing.T) {
 	//Prepare request
 	vars := map[string]string{
 		"name":  "github",
-		"owner": "fsamin",
-		"repo":  "go-dump",
+		"owner": cfg["githubCommitOwner"],
+		"repo":  cfg["githubCommitRepo"],
 	}
 	uri := s.Router.GetRoute("POST", s.postRepoGrantHandler, vars)
 	test.NotEmpty(t, uri)

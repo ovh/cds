@@ -23,9 +23,13 @@ import (
 
 func (api *API) getRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		rms, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
+		vcsServers, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "error")
+		}
+		rms := make([]string, 0, len(vcsServers))
+		for k := range vcsServers {
+			rms = append(rms, k)
 		}
 		return service.WriteJSON(w, rms, http.StatusOK)
 	}
@@ -69,7 +73,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerAuth, "repositoriesManagerAuthorize> error with AuthorizeRedirect %s", err)
 		}
-		log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s", proj.Key, token, url)
+		log.Debug("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s", proj.Key, token, url)
 
 		data := map[string]string{
 			"project_key":          proj.Key,
@@ -78,6 +82,12 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"url":                  url,
 			"request_token":        token,
 			"username":             deprecatedGetUser(ctx).Username,
+		}
+
+		if token != "" {
+			data["auth_type"] = "oauth"
+		} else {
+			data["auth_type"] = "basic"
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -171,6 +181,73 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 	}
 }
 
+func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		rmName := vars["name"]
+
+		var tv map[string]interface{}
+		if err := service.UnmarshalBody(r, &tv); err != nil {
+			return err
+		}
+
+		var username, secret string
+		if tv["username"] != nil {
+			username = tv["username"].(string)
+		}
+		if tv["secret"] != nil {
+			secret = tv["secret"].(string)
+		}
+
+		if username == "" || secret == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot get token nor verifier from data")
+		}
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "cannot load project %s", projectKey)
+		}
+
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		vcsServerForProject := &sdk.ProjectVCSServer{
+			Name:     rmName,
+			Username: deprecatedGetUser(ctx).Username,
+			Data: map[string]string{
+				"token":  username,
+				"secret": secret,
+			},
+		}
+
+		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
+			return sdk.WrapError(err, "unable to set repository manager data for project %s", projectKey)
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, vcsServerForProject)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client for project %s: %v", proj.Key, err)
+		}
+
+		if _, err = client.Repos(ctx); err != nil {
+			return sdk.WrapError(err, "unable to connect %s to %s", proj.Key, rmName)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot commit transaction")
+		}
+
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, deprecatedGetUser(ctx))
+
+		return service.WriteJSON(w, proj, http.StatusOK)
+
+	}
+}
+
 func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -261,6 +338,17 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(errb, "deleteRepositoriesManagerHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
+
+		// Check that the VCS is not used by an application before removing it
+		apps, err := application.LoadAll(tx, api.Cache, projectKey)
+		if err != nil {
+			return err
+		}
+		for _, app := range apps {
+			if app.VCSServer == rmName {
+				return sdk.WithStack(sdk.ErrVCSUsedByApplication)
+			}
+		}
 
 		if err := repositoriesmanager.DeleteForProject(tx, p, vcsServer); err != nil {
 			return sdk.WrapError(err, "error deleting %s-%s", projectKey, rmName)

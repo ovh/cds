@@ -231,15 +231,7 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 // QueueJobSendSpawnInfo sends a spawn info on a job
 func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
 	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
-	var statusCode int
-	var err error
-	for retry := 0; retry < 10; retry++ {
-		statusCode, err = c.PostJSON(ctx, path, &in, nil)
-		if statusCode != http.StatusConflict {
-			break
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
+	_, err := c.PostJSON(ctx, path, &in, nil)
 	return err
 }
 
@@ -266,18 +258,8 @@ func (c *client) QueueJobRelease(id int64) error {
 }
 
 func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
-	var statusCode int
-	var err error
-
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
-	for retry := 0; retry < 10; retry++ {
-		statusCode, err = c.PostJSON(ctx, path, res, nil)
-		if statusCode != http.StatusConflict {
-			break
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-
+	_, err := c.PostJSON(ctx, path, res, nil)
 	return err
 }
 
@@ -344,7 +326,7 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 
 			break
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 	}
 
 	return globalErr

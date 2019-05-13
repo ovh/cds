@@ -63,8 +63,8 @@ func New(c Config) Interface {
 // NewService returns client for a service
 func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bool) Interface {
 	conf := Config{
-		Host:  endpoint,
-		Retry: 2,
+		Host:                  endpoint,
+		Retry:                 2,
 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
 	}
 	cli := new(client)

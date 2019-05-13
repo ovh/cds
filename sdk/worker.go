@@ -23,6 +23,7 @@ type Worker struct {
 
 // WorkerRegistrationForm represents the arguments needed to register a worker
 type WorkerRegistrationForm struct {
+	RegistrationOnly   bool
 	Name               string
 	Token              string
 	ModelID            int64
@@ -135,11 +136,15 @@ type ModelVirtualMachine struct {
 
 // ModelDocker for swarm, marathon and kubernetes
 type ModelDocker struct {
-	Image  string            `json:"image,omitempty"`
-	Memory int64             `json:"memory,omitempty"`
-	Envs   map[string]string `json:"envs,omitempty"`
-	Shell  string            `json:"shell,omitempty"`
-	Cmd    string            `json:"cmd,omitempty"`
+	Image    string            `json:"image,omitempty"`
+	Private  bool              `json:"private,omitempty"`
+	Registry string            `json:"registry,omitempty"`
+	Username string            `json:"username,omitempty"`
+	Password string            `json:"password,omitempty"`
+	Memory   int64             `json:"memory,omitempty"`
+	Envs     map[string]string `json:"envs,omitempty"`
+	Shell    string            `json:"shell,omitempty"`
+	Cmd      string            `json:"cmd,omitempty"`
 }
 
 // ModelPattern represent patterns for users and admin when creating a worker model

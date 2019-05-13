@@ -9,19 +9,19 @@ import (
 
 func Test_mergePermissions(t *testing.T) {
 	gps1 := []sdk.GroupPermission{
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 1,
 			},
 			Permission: 5,
 		},
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 2,
 			},
 			Permission: 3,
 		},
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 55,
 			},
@@ -29,19 +29,19 @@ func Test_mergePermissions(t *testing.T) {
 		},
 	}
 	gps2 := []sdk.GroupPermission{
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 1,
 			},
 			Permission: 3,
 		},
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 2,
 			},
 			Permission: 7,
 		},
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 66,
 			},
@@ -68,13 +68,13 @@ func Test_mergePermissions(t *testing.T) {
 
 func Test_diffPermissions(t *testing.T) {
 	gps1 := []sdk.GroupPermission{
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 1,
 			},
 			Permission: 5,
 		},
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 2,
 			},
@@ -82,19 +82,19 @@ func Test_diffPermissions(t *testing.T) {
 		},
 	}
 	gps2 := []sdk.GroupPermission{
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 1,
 			},
 			Permission: 3,
 		},
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 2,
 			},
 			Permission: 7,
 		},
-		sdk.GroupPermission{
+		{
 			Group: sdk.Group{
 				ID: 66,
 			},

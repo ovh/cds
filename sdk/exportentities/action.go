@@ -14,6 +14,7 @@ import (
 type Action struct {
 	Version      string                    `json:"version,omitempty" yaml:"version,omitempty"`
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Group        string                    `json:"group,omitempty" yaml:"group,omitempty"`
 	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
 	Enabled      *bool                     `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -30,12 +31,19 @@ const (
 )
 
 // NewAction returns a ready to export action
-func NewAction(act sdk.Action) (a Action) {
-	a.Name = act.Name
-	a.Version = ActionVersion1
-	a.Description = act.Description
-	a.Parameters = make(map[string]ParameterValue, len(act.Parameters))
-	for k, v := range act.Parameters {
+func NewAction(a sdk.Action) Action {
+	var ea Action
+
+	ea.Name = a.Name
+
+	if a.Group != nil {
+		ea.Group = a.Group.Name
+	}
+
+	ea.Version = ActionVersion1
+	ea.Description = a.Description
+	ea.Parameters = make(map[string]ParameterValue, len(a.Parameters))
+	for k, v := range a.Parameters {
 		param := ParameterValue{
 			Type:         string(v.Type),
 			DefaultValue: v.Value,
@@ -43,19 +51,20 @@ func NewAction(act sdk.Action) (a Action) {
 		}
 		// no need to export it if "Advanced" is false
 		if v.Advanced {
-			param.Advanced = &act.Parameters[k].Advanced
+			param.Advanced = &a.Parameters[k].Advanced
 		}
-		a.Parameters[v.Name] = param
+		ea.Parameters[v.Name] = param
 	}
-	a.Steps = newSteps(act)
-	a.Requirements = newRequirements(act.Requirements)
+	ea.Steps = newSteps(a)
+	ea.Requirements = newRequirements(a.Requirements)
 	// enabled is the default value
 	// set enable attribute only if it's disabled
 	// no need to export it if action is enabled
-	if !act.Enabled {
-		a.Enabled = &act.Enabled
+	if !a.Enabled {
+		ea.Enabled = &a.Enabled
 	}
-	return a
+
+	return ea
 }
 
 func newSteps(a sdk.Action) []Step {
@@ -109,10 +118,6 @@ func newSteps(a sdk.Action) []Step {
 				if tag != nil {
 					artifactDownloadArgs["tag"] = tag.Value
 				}
-				application := sdk.ParameterFind(&act.Parameters, "application")
-				if application != nil && application.Value != "" {
-					artifactDownloadArgs["application"] = application.Value
-				}
 				pattern := sdk.ParameterFind(&act.Parameters, "pattern")
 				if pattern != nil && pattern.Value != "" {
 					artifactDownloadArgs["pattern"] = pattern.Value
@@ -120,10 +125,6 @@ func newSteps(a sdk.Action) []Step {
 				enabled := sdk.ParameterFind(&act.Parameters, "enabled")
 				if enabled != nil && enabled.Value == "false" {
 					artifactDownloadArgs["enabled"] = enabled.Value
-				}
-				pipeline := sdk.ParameterFind(&act.Parameters, "pipeline")
-				if pipeline != nil && pipeline.Value != "" {
-					artifactDownloadArgs["pipeline"] = pipeline.Value
 				}
 				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
@@ -137,7 +138,7 @@ func newSteps(a sdk.Action) []Step {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				destination := sdk.ParameterFind(&act.Parameters, "destination")
-				if destination != nil {
+				if destination != nil && destination.Value != "" {
 					artifactUploadArgs["destination"] = destination.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
@@ -273,7 +274,15 @@ func newSteps(a sdk.Action) []Step {
 					args[p.Name] = p.Value
 				}
 			}
-			s[act.Name] = args
+
+			name := act.Name
+			// Do not export "shared.infra" group name
+			if act.Group != nil && act.Group.Name != sdk.SharedInfraGroupName {
+				name = fmt.Sprintf("%s/%s", act.Group.Name, act.Name)
+			}
+
+			s[name] = args
+
 		}
 		res[i] = s
 	}
@@ -284,7 +293,7 @@ func newSteps(a sdk.Action) []Step {
 //AsScript returns the step a sdk.Action
 func (s Step) AsScript() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsScript.Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	bI, ok := s["script"]
@@ -292,23 +301,21 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 		return nil, false, nil
 	}
 
-	bS, ok := bI.(string)
-
-	if !ok {
-		var arScript []interface{}
-		arScript, ok = bI.([]interface{})
-		var asScriptString = make([]string, len(arScript))
-		for i, s := range arScript {
-			asScriptString[i], ok = s.(string)
+	bS, isString := bI.(string)
+	if !isString {
+		asScript, ok := bI.([]interface{})
+		asScriptString := make([]string, len(asScript))
+		for i := range asScript {
+			asScriptString[i], ok = asScript[i].(string)
 			if !ok {
 				break
 			}
 		}
-		bS = strings.Join(asScriptString, "\n")
-	}
+		if !ok {
+			return nil, true, sdk.NewErrorFrom(sdk.ErrMalformattedStep, "script must be a string or a string array")
+		}
 
-	if !ok {
-		return nil, true, fmt.Errorf("Malformatted Step : script must be a string or a string array")
+		bS = strings.Join(asScriptString, "\n")
 	}
 
 	a := sdk.NewStepScript(bS)
@@ -337,7 +344,7 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 //AsAction returns the step a sdk.Action
 func (s Step) AsAction() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsAction.Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	actionName := s.key()
@@ -353,19 +360,17 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "AsAction.decode.Malformatted Step")
+		return nil, true, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
-	a, err := sdk.NewStepDefault(actionName, argss)
-	if err != nil {
-		return nil, true, err
-	}
+	a := sdk.NewStepDefault(actionName, argss)
 
-	a.Enabled, err = s.IsFlagged("enabled")
+	var err error
 	a.StepName, err = s.Name()
 	if err != nil {
 		return nil, true, err
 	}
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
@@ -383,7 +388,7 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 //AsJUnitReport returns the step a sdk.Action
 func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsJUnitReport.Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	bI, ok := s["jUnitReport"]
@@ -393,7 +398,7 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 
 	bS, ok := bI.(string)
 	if !ok {
-		return nil, true, fmt.Errorf("Malformatted Step : jUnitReport must be a string")
+		return nil, true, sdk.NewErrorFrom(sdk.ErrMalformattedStep, "jUnitReport must be a string")
 	}
 
 	a := sdk.NewStepJUnitReport(bS)
@@ -422,7 +427,7 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 //AsGitClone returns the step a sdk.Action
 func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsGitClone.Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	bI, ok := s["gitClone"]
@@ -436,7 +441,7 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "AsGitClone.Malformatted Step")
+		return nil, true, sdk.NewErrorWithStack(err, sdk.ErrMalformattedStep)
 	}
 
 	a := sdk.NewStepGitClone(argss)
@@ -465,7 +470,7 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 //AsArtifactUpload returns the step a sdk.Action
 func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsArtifactUpload.Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	bI, ok := s["artifactUpload"]
@@ -483,11 +488,11 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	} else if m, ok := bI.(map[interface{}]interface{}); ok {
 		argss := map[string]string{}
 		if err := mapstructure.Decode(m, &argss); err != nil {
-			return nil, true, sdk.WrapError(err, "Malformatted Step")
+			return nil, true, sdk.NewErrorWithStack(err, sdk.ErrMalformattedStep)
 		}
 		a = sdk.NewStepArtifactUpload(argss)
 	} else {
-		return nil, false, fmt.Errorf("AsArtifactUpload> Unknown type")
+		return nil, false, sdk.NewErrorFrom(sdk.ErrMalformattedStep, "unknown type")
 	}
 
 	var err error
@@ -514,7 +519,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 //AsServeStaticFiles returns the step a sdk.Action
 func (s Step) AsServeStaticFiles() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsServeStaticFiles.Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	bI, ok := s["serveStaticFiles"]
@@ -528,7 +533,7 @@ func (s Step) AsServeStaticFiles() (*sdk.Action, bool, error) {
 
 	var argss map[string]string
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "AsArtifactUpload.Malformatted Step")
+		return nil, true, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	a := sdk.NewStepServeStaticFiles(argss)
@@ -557,7 +562,7 @@ func (s Step) AsServeStaticFiles() (*sdk.Action, bool, error) {
 //AsArtifactDownload returns the step a sdk.Action
 func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsArtifactDownload.Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 
 	bI, ok := s["artifactDownload"]
@@ -567,8 +572,10 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "Malformatted Step")
+		return nil, true, sdk.NewErrorWithStack(err, sdk.ErrMalformattedStep)
 	}
+	delete(argss, "pipeline")    // we don't want to import these old values
+	delete(argss, "application") // we don't want to import these old values
 	a := sdk.NewStepArtifactDownload(argss)
 
 	var err error
@@ -595,7 +602,7 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 //AsCheckoutApplication returns the step as a sdk.Action
 func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsCheckoutApplication> Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 	bI, ok := s["checkout"]
 	if !ok {
@@ -604,7 +611,7 @@ func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 
 	bS, ok := bI.(string)
 	if !ok {
-		return nil, true, fmt.Errorf("Malformatted Step : checkout must be a string")
+		return nil, true, sdk.NewErrorFrom(sdk.ErrMalformattedStep, "checkout must be a string")
 	}
 	a := sdk.NewCheckoutApplication(bS)
 
@@ -632,7 +639,7 @@ func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 //AsCoverageAction returns the step as a sdk.Action
 func (s Step) AsCoverageAction() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsCoverageAction> Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 	bI, ok := s["coverage"]
 	if !ok {
@@ -641,7 +648,7 @@ func (s Step) AsCoverageAction() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "Malformatted Step")
+		return nil, true, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 	a := sdk.NewCoverage(argss)
 
@@ -669,7 +676,7 @@ func (s Step) AsCoverageAction() (*sdk.Action, bool, error) {
 //AsDeployApplication returns the step as a sdk.Action
 func (s Step) AsDeployApplication() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("AsDeployApplication> Malformatted Step")
+		return nil, false, sdk.WithStack(sdk.ErrMalformattedStep)
 	}
 	bI, ok := s["deploy"]
 	if !ok {
@@ -678,7 +685,7 @@ func (s Step) AsDeployApplication() (*sdk.Action, bool, error) {
 
 	bS, ok := bI.(string)
 	if !ok {
-		return nil, true, fmt.Errorf("Malformatted Step : deploy must be a string")
+		return nil, true, sdk.NewErrorFrom(sdk.ErrMalformattedStep, "deploy must be a string")
 	}
 	a := sdk.NewDeployApplication(bS)
 
@@ -712,7 +719,7 @@ func (s Step) IsFlagged(flag string) (bool, error) {
 	}
 	bS, ok := bI.(bool)
 	if !ok {
-		return false, fmt.Errorf("Malformatted Step : %s attribute must be true|false", flag)
+		return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s attribute must be true|false", flag)
 	}
 	return bS, nil
 }
@@ -723,53 +730,47 @@ func (s Step) Name() (string, error) {
 		if stepName, okName := stepAttr.(string); okName {
 			return stepName, nil
 		}
-		return "", fmt.Errorf("Malformatted Step : name must be a string")
+		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name must be a string")
 	}
 	return "", nil
 }
 
 // Action returns an sdk.Action
-func (act *Action) Action() (*sdk.Action, error) {
-	a := new(sdk.Action)
-	a.Name = act.Name
-	a.Type = sdk.DefaultAction
-	a.Description = act.Description
+func (ea *Action) Action() (sdk.Action, error) {
+	a := sdk.Action{
+		Name:        ea.Name,
+		Group:       &sdk.Group{Name: ea.Group},
+		Type:        sdk.DefaultAction,
+		Enabled:     true,
+		Description: ea.Description,
+		Parameters:  make([]sdk.Parameter, len(ea.Parameters)),
+	}
+	if ea.Group == "" {
+		a.Group.Name = sdk.SharedInfraGroupName
+	}
 
-	//Compute parameters
-	a.Parameters = make([]sdk.Parameter, len(act.Parameters))
 	var i int
-	for p, v := range act.Parameters {
-		param := sdk.Parameter{
+	for p, v := range ea.Parameters {
+		a.Parameters[i] = sdk.Parameter{
 			Name:        p,
 			Type:        v.Type,
 			Value:       v.DefaultValue,
 			Description: v.Description,
+			Advanced:    v.Advanced != nil && *v.Advanced,
 		}
-		if param.Type == "" {
-			param.Type = sdk.StringParameter
+		if v.Type == "" {
+			a.Parameters[i].Type = sdk.StringParameter
 		}
-		if v.Advanced != nil && *v.Advanced {
-			param.Advanced = true
-		}
-		a.Parameters[i] = param
 		i++
 	}
 
-	a.Requirements = computeJobRequirements(act.Requirements)
+	a.Requirements = computeJobRequirements(ea.Requirements)
 
-	//Compute steps for the jobs
-	children, err := computeSteps(act.Steps)
+	children, err := computeSteps(ea.Steps)
 	if err != nil {
-		return nil, err
+		return a, err
 	}
-
 	a.Actions = children
 
-	// if no flag enabled: the default value is true
-	if act.Enabled == nil {
-		a.Enabled = true
-	} else {
-		a.Enabled = *act.Enabled
-	}
 	return a, nil
 }

@@ -1,9 +1,12 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { AddWorkflow, ImportWorkflow } from 'app/store/workflows.action';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
-import { finalize, first } from 'rxjs/operators';
+import { filter, finalize, first } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { Operation, PerformAsCodeResponse } from '../../../model/operation.model';
 import { Project } from '../../../model/project.model';
@@ -15,7 +18,6 @@ import { AuthentificationStore } from '../../../service/auth/authentification.st
 import { ImportAsCodeService } from '../../../service/import-as-code/import.service';
 import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
 import { WorkflowTemplateService } from '../../../service/workflow-template/workflow-template.service';
-import { WorkflowStore } from '../../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { SharedService } from '../../../shared/shared.service';
 import { ToastService } from '../../../shared/toast/ToastService';
@@ -59,6 +61,7 @@ workflow:
     pollingResponse: Operation;
     webworkerSub: Subscription;
     asCodeResult: PerformAsCodeResponse;
+    projectSubscription: Subscription;
 
     templates: Array<WorkflowTemplate>;
     selectedTemplatePath: string;
@@ -72,15 +75,27 @@ workflow:
     duplicateWorkflowName = false;
     fileTooLarge = false;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-        private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
-        private _translate: TranslateService, private _toast: ToastService, private _repoManagerService: RepoManagerService,
-        private _workflowTemplateService: WorkflowTemplateService, private _sharedService: SharedService) {
+    constructor(
+        private store: Store,
+        private _activatedRoute: ActivatedRoute,
+        private _authStore: AuthentificationStore,
+        private _router: Router,
+        private _import: ImportAsCodeService,
+        private _translate: TranslateService,
+        private _toast: ToastService,
+        private _repoManagerService: RepoManagerService,
+        private _workflowTemplateService: WorkflowTemplateService,
+        private _sharedService: SharedService
+    ) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
+
+        this.projectSubscription = this.store.select(ProjectState)
+            .pipe(filter((projState) => projState.project && projState.project.key))
+            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -99,15 +114,15 @@ workflow:
     createWorkflow(node: WNode): void {
         this.loading = true;
         this.workflow.workflow_data.node = node;
-        this._workflowStore.addWorkflow(this.project.key, this.workflow)
-            .pipe(
-                first(),
-                finalize(() => this.loading = false)
-            )
-            .subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_added'));
-                this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);
-            });
+        this.store.dispatch(new AddWorkflow({
+            projectKey: this.project.key,
+            workflow: this.workflow
+        })).pipe(
+            finalize(() => this.loading = false)
+        ).subscribe(() => {
+            this._toast.success('', this._translate.instant('workflow_added'));
+            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);
+        });
     }
 
     goToNextStep(stepNum: number): void {
@@ -126,8 +141,11 @@ workflow:
 
     importWorkflow() {
         this.loading = true;
-        this._workflowStore.importWorkflow(this.project.key, this.workflow.name, this.wfToImport)
-            .pipe(finalize(() => this.loading = false))
+        this.store.dispatch(new ImportWorkflow({
+            projectKey: this.project.key,
+            wfName: null,
+            workflowCode: this.wfToImport
+        })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_added'));
                 this.goToProject();
@@ -140,7 +158,7 @@ workflow:
             this.loadingRepo = false
         })).subscribe(rs => {
             this.repos = rs;
-        })
+        });
     }
 
     filterRepo(options: Array<Repository>, query: string): Array<Repository> | false {
@@ -150,8 +168,25 @@ workflow:
         if (!query || query.length < 3) {
             return options.slice(0, 100);
         }
-        let results = options.filter(repo => repo.fullname.toLowerCase().indexOf(query.toLowerCase()) !== -1);
-        return results;
+        let lowerQuery = query.toLowerCase();
+        return options.filter(repo => repo.fullname.toLowerCase().indexOf(lowerQuery) !== -1);
+    }
+
+    filterTemplate(options: Array<WorkflowTemplate>, query: string): Array<WorkflowTemplate> | false {
+        if (!options) {
+            return false;
+        }
+        if (!query) {
+            return options.sort();
+        }
+
+        let lowerQuery = query.toLowerCase();
+        return options.filter(wt => {
+            return wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1;
+        }).sort();
     }
 
     createWorkflowFromRepo() {

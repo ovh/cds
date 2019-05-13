@@ -13,9 +13,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// ImportOptions are options to import application
+type ImportOptions struct {
+	Force          bool
+	FromRepository string
+}
+
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, force bool, decryptFunc keys.DecryptFunc, u *sdk.User) (*sdk.Application, []sdk.Message, error) {
-	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, force)
+func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u *sdk.User) (*sdk.Application, []sdk.Message, error) {
+	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
 
 	//Check valid application name
 	rx := sdk.NamePatternRegex
@@ -34,8 +40,12 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	}
 
 	//If the application exist and we don't want to force, raise an error
-	if oldApp != nil && !force {
+	if oldApp != nil && !opts.Force {
 		return nil, nil, sdk.ErrApplicationExist
+	}
+
+	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
+		return nil, nil, sdk.WrapError(sdk.ErrApplicationAsCodeOverride, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
 	}
 
 	//Craft the application
@@ -43,6 +53,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	app.Name = eapp.Name
 	app.VCSServer = eapp.VCSServer
 	app.RepositoryFullname = eapp.RepositoryName
+	app.FromRepository = opts.FromRepository
 
 	//Compute variables
 	for p, v := range eapp.Variables {
@@ -89,7 +100,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to parse key")
+			return app, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
 		}
 
 		k := sdk.ApplicationKey{

@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -14,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -97,7 +98,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 					return err
 				}
 				if w1.TemplateInstance.Template != nil {
-					if err := group.AggregateOnWorkflowTemplate(api.mustDB(), w1.TemplateInstance.Template); err != nil {
+					if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), w1.TemplateInstance.Template); err != nil {
 						return err
 					}
 					w1.FromTemplate = fmt.Sprintf("%s/%s", w1.TemplateInstance.Template.Group.Name, w1.TemplateInstance.Template.Slug)
@@ -121,6 +122,9 @@ func (api *API) getWorkflowHandler() service.Handler {
 				NodeID:        w1.WorkflowData.Node.ID,
 			})
 		}
+
+		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
+		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
@@ -375,6 +379,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
+		wf1.Permission = permission.PermissionReadWriteExecute
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
@@ -406,6 +411,10 @@ func (api *API) putWorkflowHandler() service.Handler {
 		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, deprecatedGetUser(ctx), workflow.LoadOptions{WithIcon: true})
 		if errW != nil {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
+		}
+
+		if oldW.FromRepository != "" {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		var wf sdk.Workflow
@@ -469,6 +478,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
+		wf1.Permission = permission.PermissionReadWriteExecute
 
 		usage, errU := loadWorkflowUsage(api.mustDB(), wf1.ID)
 		if errU != nil {
@@ -476,12 +486,90 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		wf1.Usage = &usage
 
+		// FIXME Sync hooks on new model. To delete when hooks will be compute on new model
+		hooks := wf1.GetHooks()
+		wf1.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
+		for _, h := range hooks {
+			wf1.WorkflowData.Node.Hooks = append(wf1.WorkflowData.Node.Hooks, sdk.NodeHook{
+				Ref:           h.Ref,
+				HookModelID:   h.WorkflowHookModelID,
+				Config:        h.Config,
+				UUID:          h.UUID,
+				HookModelName: h.WorkflowHookModel.Name,
+				NodeID:        wf1.WorkflowData.Node.ID,
+			})
+		}
+
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 		// TODO REMOVE
 		wf1.Root = nil
 		wf1.Joins = nil
 		return service.WriteJSON(w, wf1, http.StatusOK)
+	}
+}
+
+// putWorkflowIconHandler updates a workflow
+func (api *API) putWorkflowIconHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		if errP != nil {
+			return errP
+		}
+
+		imageBts, errr := ioutil.ReadAll(r.Body)
+		if errr != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		}
+		defer r.Body.Close()
+
+		icon := string(imageBts)
+		if !strings.HasPrefix(icon, sdk.IconFormat) {
+			return sdk.ErrIconBadFormat
+		}
+		if len(icon) > sdk.MaxIconSize {
+			return sdk.ErrIconBadSize
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.UpdateIcon(api.mustDB(), wf.ID, icon); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+// deleteWorkflowIconHandler updates a workflow
+func (api *API) deleteWorkflowIconHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		if errP != nil {
+			return errP
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.UpdateIcon(api.mustDB(), wf.ID, ""); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

@@ -1,8 +1,9 @@
-+++
-title = "Docker Compose"
-weight = 1
-
-+++
+---
+title: "Docker Compose"
+weight: 1
+card: 
+  name: ready-to-run
+---
 
 ## Run with Docker-Compose
 
@@ -39,8 +40,8 @@ $ docker-compose logs
 $ docker-compose up --no-recreate cds-migrate
 # You should have this log: "cds_cds-migrate_1 exited with code 0"
 
-# run API and UI
-$ docker-compose up -d cds-api cds-ui
+# run API, UI and hooks µservice
+$ docker-compose up -d cds-api cds-ui cds-hooks
 ```
 
 - Create the first user with WebUI
@@ -61,7 +62,7 @@ After registration on UI, keep the password displayed, we will use it in next st
 Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
 If you don't want to use the keychain, you can select the version i386.
 
-See: [cdsctl documentation]({{< relref "cli/cdsctl/_index.md" >}})
+See: [cdsctl documentation]({{< relref "/docs/components/cdsctl/_index.md" >}})
 
 You can download cdsctl CLI from http://localhost:2015/settings/downloads
 ```bash
@@ -183,10 +184,8 @@ The build pipeline contains two stages, with only one job in each stage
 $ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
 ```
 
-- Import plugins: Please read [Plugins]({{< relref "workflows/pipelines/actions/plugins/_index.md" >}})
+## Go further
 
-# Go further
-
-- How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "hatchery/openstack.md" >}})
-- Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
-- Learn more about CDS variables [read more]({{< relref "workflows/pipelines/variables.md" >}})
+- How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}})
+- Link CDS to a repository manager, as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}})
+- Learn more about CDS variables [read more]({{< relref "/docs/concepts/variables.md" >}})

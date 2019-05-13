@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -113,7 +114,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient, repoFullName string, prID int64) (bool, bool, error) {
 	pr, err := client.PullRequest(ctx, repoFullName, int(prID))
 	if err != nil {
-		if err == sdk.ErrNotFound {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return false, true, nil
 		}
 		return false, false, sdk.WrapError(err, "unable to check pull request status")
@@ -121,8 +122,8 @@ func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient,
 	return pr.Merged, pr.Closed, nil
 }
 
-// CheckAsCodeEvent checks if workflow as to become ascode
-func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow) error {
+// SyncAsCodeEvent checks if workflow as to become ascode
+func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u *sdk.User) error {
 	if len(wf.AsCodeEvent) == 0 {
 		return nil
 	}
@@ -151,9 +152,9 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				wf.FromRepository = repo.HTTPCloneURL
 			}
 			wf.LastModified = time.Now()
-			dbw := Workflow(*wf)
-			if _, err := db.Update(&dbw); err != nil {
-				return sdk.WrapError(err, "Unable to update workflow")
+
+			if err := updateFromRepository(db, wf.ID, wf.FromRepository); err != nil {
+				return sdk.WrapError(err, "unable to update workflow from_repository")
 			}
 		}
 		// If event ended, delete it from db
@@ -166,6 +167,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		}
 	}
 	wf.AsCodeEvent = eventLeft
+	event.PublishWorkflowUpdate(proj.Key, *wf, *wf, u)
 	return nil
 }
 
@@ -182,6 +184,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			continue
 		}
 		if ope.Status == sdk.OperationStatusError {
+			log.Error("operation in error %s: %s", ope.UUID, ope.Error)
 			break
 		}
 		if ope.Status == sdk.OperationStatusDone {
@@ -200,6 +203,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				ope.Error = "unable to create repositories manager client"
 				return
 			}
+
 			request := sdk.VCSPullRequest{
 				Title: ope.Setup.Push.Message,
 				Head: sdk.VCSPushEvent{

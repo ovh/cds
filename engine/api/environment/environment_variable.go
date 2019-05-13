@@ -320,13 +320,12 @@ func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 	return nil
 }
 
-// DeleteAllVariable Delete all variables from the given pipeline
+// DeleteAllVariable Delete all variables from the given environment.
 func DeleteAllVariable(db gorp.SqlExecutor, environmentID int64) error {
 	query := `DELETE FROM environment_variable
 	          WHERE environment_variable.environment_id = $1`
-	_, err := db.Exec(query, environmentID)
-	if err != nil {
-		return err
+	if _, err := db.Exec(query, environmentID); err != nil {
+		return sdk.WrapError(err, "cannot delete environment variable")
 	}
 	return nil
 }
@@ -339,7 +338,6 @@ func insertAudit(db gorp.SqlExecutor, eva *sdk.EnvironmentVariableAudit) error {
 	}
 	*eva = sdk.EnvironmentVariableAudit(dbEnvVarAudit)
 	return nil
-
 }
 
 // LoadVariableAudits Load audits for the given variable

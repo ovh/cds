@@ -10,9 +10,9 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Action } from '../../model/action.model';
 import { Parameter } from '../../model/parameter.model';
+import { Project } from '../../model/project.model';
 import { Requirement } from '../../model/requirement.model';
 import { ActionService } from '../../service/action/action.service';
-import { ActionStore } from '../../service/action/action.store';
 import { ParameterService } from '../../service/parameter/parameter.service';
 import { RepoManagerService } from '../../service/repomanager/project.repomanager.service';
 import { RequirementService } from '../../service/requirement/requirement.service';
@@ -38,7 +38,6 @@ describe('CDS: Action Component', () => {
                 RequirementService,
                 ParameterService,
                 RepoManagerService,
-                ActionStore,
                 ActionService,
                 WorkerModelService,
                 { provide: XHRBackend, useClass: MockBackend },
@@ -67,6 +66,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -103,6 +103,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -135,6 +136,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         action.id = 1;
         fixture.componentInstance.editableAction = action;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -171,6 +173,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
+        fixture.componentInstance.project = <Project>{ key: 'key' }
 
         fixture.detectChanges();
         tick(50);
@@ -199,12 +202,12 @@ describe('CDS: Action Component', () => {
         let actionMock = new Action();
         actionMock.name = 'action1';
 
-
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
+        fixture.componentInstance.project = <Project>{ key: 'key' }
+
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
-
 
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/requirement/types';
@@ -212,7 +215,7 @@ describe('CDS: Action Component', () => {
 
         fixture.componentInstance.ngOnInit();
         http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/action';
+            return req.url === '/project/key/action';
         })).flush(actionMock);
 
         let action: Action = new Action();

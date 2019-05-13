@@ -2,23 +2,15 @@
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <app-scrollview class="scrollview">
         <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
-        <table class="ui definition celled table" *ngIf="downloads && !loading">
-            <tbody>
-                <tr *ngFor="let line of downloads">
-                    <td class="center aligned">
-                        {{line.name}}
-                    </td>
-                    <td>
-                        <div class="ui grid" *ngFor="let osArch of line.osArchs">
-                            <div class="four wide column">{{osArch.os}}</div>
-                            <div class="four wide column" *ngFor="let a of osArch.archs">
-                                <a *ngIf="a.available" href="{{apiURL}}/download/{{line.name}}/{{osArch.os}}/{{a.arch}}">[{{a.arch}}]</a>
-                                <span *ngIf="!a.available" title="{{'common_ask_cds_administrator' | translate}}">{{a.arch}}: <strong>n.a</strong></span>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="ui bulleted list">
+                <ng-container *ngFor="let resource of resources">
+                <div class="item" *ngIf="resource.available"> 
+                    <strong>{{resource.name}}</strong> {{resource.os}} {{resource.arch}} <em>{{resource.variant}}</em>
+                    <a href="{{apiURL}}/download/{{resource.name}}/{{resource.os}}/{{resource.arch}}?variant={{resource.variant}}">
+                        ({{resource.filename}})
+                    </a>
+                </div>
+            </ng-container>
+        </div>
     </app-scrollview>
-</div>
+</div> 

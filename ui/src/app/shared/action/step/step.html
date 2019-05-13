@@ -6,20 +6,22 @@
             <i class="caret right icon" *ngIf="!collapsed"></i>
         </span>
         <div class="four wide inline field inputStepname" *ngIf="edit">
-            <input *ngIf="editStepName"
-                class="inline"
-                type="text"
-                name="stepName"
-                [(ngModel)]="step.step_name"
+            <input *ngIf="editStepName" class="inline" type="text" name="stepName" [(ngModel)]="step.step_name"
                 (keydown)="action.hasChanged = true">
             <span *ngIf="!editStepName">
-                {{step.step_name}}
-                <i class="stepname" *ngIf="step.step_name !== step.name">({{step.name}})</i>
+                <ng-container *ngIf="step.step_name === step.name">
+                    <span *ngIf="step.group">{{step.group.name}}/</span>{{step.name}}
+                </ng-container>
+                <span *ngIf="step.step_name !== step.name">
+                    {{step.step_name}}
+                    <i class="stepname">(<span *ngIf="step.group">{{step.group.name}}/</span>{{step.name}})</i>
+                </span>
             </span>
-            <a class="inline pointing ml5" title="{{ 'step_edit_title' | translate }}" (click)="editStepName = true" *ngIf="!editStepName">
+            <a class="inline pointing ml5" title="{{ 'step_edit_title' | translate }}" (click)="editStepName = true"
+                *ngIf="!editStepName">
                 <i class="pencil icon float"></i>
             </a>
-            <a class="inline pointing ml5" title="{{ 'common_documentation' | translate }}" [routerLink]="['/settings/action', step.name]">
+            <a class="inline pointing ml5" title="{{ 'common_documentation' | translate }}" [routerLink]="this.stepURL">
                 <i class="book icon float"></i>
             </a>
         </div>
@@ -38,16 +40,19 @@
             <ng-container *ngIf="edit">
                 <div class="five wide field">
                     <div class="ui checkbox">
-                        <input type="checkbox" id="enabled_step_{{order}}" name="enabled" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
+                        <input type="checkbox" id="enabled_step_{{order}}" name="enabled" [checked]="step.enabled"
+                            (change)="step.enabled = updateStepBool(step.enabled)">
                         <label for="enabled_step_{{order}}">{{ 'common_enable' | translate }}</label>
                     </div>
                 </div>
                 <div class="five wide field">
                     <div class="ui checkbox">
-                        <input type="checkbox" id="active_{{order}}" name="active" [checked]="step.optional" (change)="step.optional = updateStepBool(step.optional)">
+                        <input type="checkbox" id="active_{{order}}" name="active" [checked]="step.optional"
+                            (change)="step.optional = updateStepBool(step.optional)">
                         <label for="active_{{order}}">
                             {{ 'action_optional' | translate}}
-                            <span suiPopup [popupText]="'action_optional_details' | translate" popupPlacement="top center">
+                            <span suiPopup [popupText]="'action_optional_details' | translate"
+                                popupPlacement="top center">
                                 <i class="info circle icon"></i>
                             </span>
                         </label>
@@ -55,10 +60,13 @@
                 </div>
                 <div class="six wide field">
                     <div class="ui checkbox">
-                        <input type="checkbox" id="always_executed_{{order}}" name="always_executed" [checked]="step.always_executed" (change)="step.always_executed = updateStepBool(step.always_executed)">
+                        <input type="checkbox" id="always_executed_{{order}}" name="always_executed"
+                            [checked]="step.always_executed"
+                            (change)="step.always_executed = updateStepBool(step.always_executed)">
                         <label for="always_executed_{{order}}">
                             {{ 'action_always_executed' | translate}}
-                            <span suiPopup [popupText]="'action_always_executed_details' | translate" popupPlacement="top center">
+                            <span suiPopup [popupText]="'action_always_executed_details' | translate"
+                                popupPlacement="top center">
                                 <i class="info circle icon"></i>
                             </span>
                         </label>
@@ -102,28 +110,22 @@
         <ng-container *ngIf="!p.advanced">
             <div class="two wide column">
                 <label>
-                <b>{{p.name}}</b>
-                <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
-                    <i class="info circle icon"></i>
-                </span>
+                    <b>{{p.name}}</b>
+                    <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
+                        <i class="info circle icon"></i>
+                    </span>
                 </label>
             </div>
             <div class="fourteen wide column">
-                <app-parameter-value
-                  [edit]="edit"
-                  [type]="p.type"
-                  [keys]="keys"
-                  [(value)]="p.value"
-                  [editList]="false"
-                  [suggest]="suggest"
-                  (valueUpdating)="action.hasChanged = true"
-                  [ref]="originalParam.get(p.name)">
+                <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false"
+                    [suggest]="suggest" (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)">
                 </app-parameter-value>
             </div>
         </ng-container>
     </div>
 
-    <div class="sixteen wide right aligned field pointing" *ngIf="withAdvanced" (click)="collapsed_advanced = !collapsed_advanced">
+    <div class="sixteen wide right aligned field pointing" *ngIf="withAdvanced"
+        (click)="collapsed_advanced = !collapsed_advanced">
         {{'parameters_advanced' | translate}}
         <i class="caret down icon" *ngIf="collapsed_advanced"></i>
         <i class="caret right icon" *ngIf="!collapsed_advanced"></i>
@@ -134,22 +136,16 @@
             <ng-container *ngIf="p.advanced">
                 <div class="two wide column">
                     <label>
-                    <b>{{p.name}}</b>
-                    <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
-                        <i class="info circle icon"></i>
-                    </span>
+                        <b>{{p.name}}</b>
+                        <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
+                            <i class="info circle icon"></i>
+                        </span>
                     </label>
                 </div>
                 <div class="fourteen wide column">
-                    <app-parameter-value
-                      [edit]="edit"
-                      [type]="p.type"
-                      [keys]="keys"
-                      [(value)]="p.value"
-                      [editList]="false"
-                      [suggest]="suggest"
-                      (valueUpdating)="action.hasChanged = true"
-                      [ref]="originalParam.get(p.name)">
+                    <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value"
+                        [editList]="false" [suggest]="suggest" (valueUpdating)="action.hasChanged = true"
+                        [ref]="originalParam.get(p.name)">
                     </app-parameter-value>
                 </div>
             </ng-container>

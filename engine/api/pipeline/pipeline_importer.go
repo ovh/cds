@@ -5,8 +5,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -22,6 +24,18 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		pip.Name, true)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load pipeline %s %s", proj.Key, pip.Name)
+	}
+
+	if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
+		return sdk.WrapError(sdk.ErrPipelineAsCodeOverride, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
+	}
+
+	// check that action used by job can be used by pipeline's project
+	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
+	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
+	for i := range proj.ProjectGroups {
+		groupIDs = append(groupIDs, proj.ProjectGroups[i].Group.ID)
+
 	}
 
 	pip.ID = oldPipeline.ID
@@ -50,6 +64,9 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					log.Debug("CheckJob > %s", errs)
 					return errs
 				}
+				if err := action.CheckChildrenForGroupIDs(db, &jobAction.Action, groupIDs); err != nil {
+					return err
+				}
 				jobAction.PipelineStageID = s.ID
 				jobAction.Action.Type = sdk.JoinedAction
 				log.Debug("Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
@@ -75,11 +92,14 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					log.Debug(">> CheckJob > %s", errs)
 					return errs
 				}
+				if err := action.CheckChildrenForGroupIDs(db, &jobAction.Action, groupIDs); err != nil {
+					return err
+				}
 			}
 			// Delete all existing jobs in existing stage
 			for _, oj := range oldStage.Jobs {
-				if err := DeleteJob(db, oj, u.ID); err != nil {
-					return sdk.WrapError(err, "Unable to delete job %s in %s", oj.Action.Name, pip.Name)
+				if err := DeleteJob(db, oj); err != nil {
+					return sdk.WrapError(err, "unable to delete job %s in %s", oj.Action.Name, pip.Name)
 				}
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, oj.Action.Name, s.Name)
 			}
@@ -125,15 +145,15 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		if !stageFound {
 			for x := range os.Jobs {
 				j := os.Jobs[x]
-				if err := DeleteJob(db, j, u.ID); err != nil {
-					return sdk.WrapError(err, "Unable to delete job %s in %s", j.Action.Name, pip.Name)
+				if err := DeleteJob(db, j); err != nil {
+					return sdk.WrapError(err, "unable to delete job %s in %s", j.Action.Name, pip.Name)
 				}
 				if msgChan != nil {
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, j.Action.Name, os.Name)
 				}
 			}
 			if err := DeleteStageByID(db, &os, u.ID); err != nil {
-				return sdk.WrapError(err, "Unable to delete stage %d", os.ID)
+				return sdk.WrapError(err, "unable to delete stage %d", os.ID)
 			}
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeleted, os.Name)
@@ -191,6 +211,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 			msgChan <- sdk.NewMessage(sdk.MsgPipelineCreated, pip.Name)
 		}
 	}
+
 	//Reload the pipeline
 	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
 	if err != nil {
@@ -206,6 +227,13 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 }
 
 func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
+	// check that action used by job can be used by pipeline's project
+	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
+	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
+	for i := range proj.ProjectGroups {
+		groupIDs = append(groupIDs, proj.ProjectGroups[i].Group.ID)
+	}
+
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
 	if err := InsertPipeline(db, store, proj, pip, u); err != nil {
@@ -235,6 +263,9 @@ func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *s
 			if errs := CheckJob(db, jobAction); errs != nil {
 				log.Warning("pipeline.importNew.CheckJob > %s", errs)
 				return errs
+			}
+			if err := action.CheckChildrenForGroupIDs(db, &jobAction.Action, groupIDs); err != nil {
+				return err
 			}
 
 			jobAction.PipelineStageID = s.ID

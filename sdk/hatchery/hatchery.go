@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"strconv"
 	"strings"
@@ -237,9 +236,9 @@ func Create(ctx context.Context, h Interface) error {
 			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 			//Check bookedBy current hatchery
-			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
-				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
-				endTrace("booked by someone else")
+			if j.BookedBy.ID != 0 {
+				log.Debug("hatchery> job %d is booked by someone (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				endTrace("booked by someone")
 				continue
 			}
 
@@ -305,20 +304,6 @@ func Create(ctx context.Context, h Interface) error {
 // a docker container for register a worker model. 128 Mo
 const MemoryRegisterContainer int64 = 128
 
-// CheckRequirement checks binary requirement in path
-func CheckRequirement(r sdk.Requirement) (bool, error) {
-	switch r.Type {
-	case sdk.BinaryRequirement:
-		if _, err := exec.LookPath(r.Value); err != nil {
-			// Return nil because the error contains 'Exit status X', that's what we wanted
-			return false, nil
-		}
-		return true, nil
-	default:
-		return false, nil
-	}
-}
-
 func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	if model.Type != h.ModelType() {
 		log.Debug("canRunJob> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
@@ -371,9 +356,16 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
 		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
 		// only modelName
-		if r.Type == sdk.ModelRequirement && strings.Split(r.Value, " ")[0] != model.Name {
-			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name)
-			return false
+		if r.Type == sdk.ModelRequirement {
+			modelName := strings.Split(r.Value, " ")[0]
+			modelPath := strings.SplitN(modelName, "/", 2)
+			if len(modelPath) == 2 {
+				modelName = modelPath[1]
+			}
+			if modelName != model.Name {
+				log.Debug("canRunJob> %d - job %d - model requirement from requirement r.Value(%s) don't match model.Name(%s)", j.timestamp, j.id, r.Value, model.Name)
+				return false
+			}
 		}
 
 		// If requirement is an hostname requirement, it's for a specific worker
@@ -390,7 +382,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 
 		// Skip network access requirement as we can't check it
 		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
+			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't checkt it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 

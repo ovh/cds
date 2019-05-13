@@ -97,6 +97,8 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			}
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
+			// increment nbRegisteringWorkerModels, but no decrement.
+			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			if _, err := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); err != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
@@ -108,7 +110,6 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				}
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
-			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
 		}
 	}
 }
@@ -141,9 +142,9 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		return false, nil
 	}
 
-	_, next := observability.Span(ctx, "hatchery.QueueJobBook")
-	ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-	if err := h.CDSClient().QueueJobBook(ctxt, j.id); err != nil {
+	ctxQueueJobBook, next := observability.Span(ctx, "hatchery.QueueJobBook")
+	ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
+	if err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id); err != nil {
 		next()
 		// perhaps already booked by another hatchery
 		log.Info("hatchery> spawnWorkerForJob> %d - cannot book job %d %s: %s", j.timestamp, j.id, j.model.Name, err)
@@ -154,19 +155,21 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	cancel()
 	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d", j.timestamp, j.id, j.model.Name, h.ID())
 
+	ctxSendSpawnInfo, next := observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
 	start := time.Now()
-	SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
+	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 		ID:   sdk.MsgSpawnInfoHatcheryStarts.ID,
 		Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name},
 	})
+	next()
 
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
 	_, next = observability.Span(ctx, "hatchery.SpawnWorker")
 	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
 	next()
 	if errSpawn != nil {
-		_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"))
-		SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
+		ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"), observability.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
+		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
 			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
 		})
@@ -175,7 +178,8 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		return false, nil
 	}
 
-	SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
+	ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID))
+	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 		ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
 		Args: []interface{}{
 			h.Service().Name,
@@ -183,12 +187,15 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 			workerName,
 			sdk.Round(time.Since(start), time.Second).String()},
 	})
+	next()
 
 	if j.model.IsDeprecated {
-		SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
+		ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
+		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
 			Args: []interface{}{j.model.Name},
 		})
+		next()
 	}
 	return true, nil // ok for this job
 }

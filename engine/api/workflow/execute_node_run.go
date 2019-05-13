@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
@@ -132,12 +134,25 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				if err != nil {
 					return report, err
 				}
+				log.Debug("workflow.execute> stage %s status after call to addJobsToQueue %s", stage.Name, stage.Status)
+			}
+
+			// check for failure caused by action not usable or requirements problem
+			if sdk.StatusFail == stage.Status {
+				newStatus = sdk.StatusFail.String()
+				break
 			}
 
 			if sdk.StatusIsTerminated(stage.Status.String()) {
 				stagesTerminated++
 				continue
 			}
+			break
+		}
+
+		// check for failure caused by action not usable or requirements problem
+		if sdk.StatusFail == stage.Status {
+			newStatus = sdk.StatusFail.String()
 			break
 		}
 
@@ -214,7 +229,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 	// Save the node run in database
 	if err := updateNodeRunStatusAndStage(db, nr); err != nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", nr.ID, nr.Status, err), "workflow.execute> Unable to execute node")
+		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", nr.ID, nr.Status)
 	}
 
 	//Reload the workflow
@@ -232,7 +247,6 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
 			}
 			report, _ = report.Merge(r1, nil)
-
 		}
 
 		//Delete the line in workflow_node_run_job
@@ -321,7 +335,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
 	next()
 	if err != nil {
-		return report, sdk.WrapError(err, "Cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
+		return report, sdk.WrapError(err, "cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
 	}
 
 	if !conditionsOK {
@@ -339,42 +353,45 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	next()
 
 	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
-	groups, errGroups := getJobExecutablesGroups(wr, runContext)
-	if errGroups != nil {
-		return report, sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
+	groups, err := getJobExecutablesGroups(wr, runContext)
+	if err != nil {
+		return report, sdk.WrapError(err, "error getting job executables groups")
 	}
 	next()
 
 	skippedOrDisabledJobs := 0
+	failedJobs := 0
 	//Browse the jobs
 	for j := range stage.Jobs {
 		job := &stage.Jobs[j]
-		errs := sdk.MultiError{}
+
+		// errors generated in the loop will be added to job run spawn info
+		spawnErrs := sdk.MultiError{}
+
 		//Process variables for the jobs
 		_, next = observability.Span(ctx, "workflow..getNodeJobRunParameters")
-		jobParams, errParam := getNodeJobRunParameters(db, *job, run, stage)
+		jobParams, err := getNodeJobRunParameters(db, *job, run, stage)
 		next()
-
-		if errParam != nil {
-			errs.Join(*errParam)
+		if err != nil {
+			spawnErrs.Join(*err)
 		}
 
-		_, next = observability.Span(ctx, "workflow.getNodeJobRunRequirements")
-		jobRequirements, containsService, modelType, errReq := getNodeJobRunRequirements(db, *job, run)
+		_, next = observability.Span(ctx, "workflow.processNodeJobRunRequirements")
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(db, *job, run, sdk.GroupsToIDs(groups), integrationPluginBinaries)
 		next()
+		if err != nil {
+			spawnErrs.Join(*err)
+		}
 
-		if errReq != nil {
-			errs.Join(*errReq)
+		// check that children actions used by job can be used by the project
+		if err := action.CheckChildrenForGroupIDsWithLoop(db, &job.Action, sdk.GroupsToIDs(groups)); err != nil {
+			spawnErrs.Append(err)
 		}
 
 		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
 		_, next = observability.Span(ctx, "workflow.prepareRequirementsToNodeJobRunParameters")
 		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
 		next()
-
-		if errGroups != nil {
-			return report, sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
-		}
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
@@ -403,39 +420,40 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			skippedOrDisabledJobs++
 		}
 
-		if errParam != nil {
+		// If there is any error in the previous operation, mark the job as failed
+		if !spawnErrs.IsEmpty() {
+			failedJobs++
 			wjob.Status = sdk.StatusFail.String()
-			spawnInfos := sdk.SpawnMsg{
-				ID: sdk.MsgSpawnInfoJobError.ID,
-			}
 
-			for _, e := range *errParam {
-				spawnInfos.Args = append(spawnInfos.Args, e.Error())
+			for _, e := range spawnErrs {
+				msg := sdk.SpawnMsg{
+					ID: sdk.MsgSpawnInfoJobError.ID,
+				}
+				msg.Args = []interface{}{sdk.Cause(e).Error()}
+				wjob.SpawnInfos = append(wjob.SpawnInfos, sdk.SpawnInfo{
+					APITime:    time.Now(),
+					Message:    msg,
+					RemoteTime: time.Now(),
+				})
 			}
-
-			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
-				APITime:    time.Now(),
-				Message:    spawnInfos,
-				RemoteTime: time.Now(),
-			}}
 		} else {
-			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
+			wjob.SpawnInfos = []sdk.SpawnInfo{{
 				APITime:    time.Now(),
 				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
 				RemoteTime: time.Now(),
 			}}
 		}
 
-		//Insert in database
+		// insert in database
 		_, next = observability.Span(ctx, "workflow.insertWorkflowNodeJobRun")
 		if err := insertWorkflowNodeJobRun(db, &wjob); err != nil {
 			next()
-			return report, sdk.WrapError(err, "Unable to insert in table workflow_node_run_job")
+			return report, sdk.WrapError(err, "unable to insert in table workflow_node_run_job")
 		}
 		next()
 
 		if err := AddSpawnInfosNodeJobRun(db, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
-			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", wjob.ID)
+			return nil, sdk.WrapError(err, "cannot save spawn info job %d", wjob.ID)
 		}
 
 		//Put the job run in database
@@ -446,6 +464,10 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 	if skippedOrDisabledJobs == len(stage.Jobs) {
 		stage.Status = sdk.StatusSkipped
+	}
+
+	if failedJobs > 0 {
+		stage.Status = sdk.StatusFail
 	}
 
 	return report, nil
@@ -606,7 +628,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	res := []sdk.Parameter{}
 	if len(res) == 0 {
 		var err error
-		res, err = GetNodeBuildParameters(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
+		res, err = GetBuildParameterFromNodeContext(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}
@@ -883,7 +905,7 @@ func (i vcsInfos) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
 }
 
-func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string, isChildNode bool, previousGitRepo string) (i vcsInfos, err error) {
+func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]
@@ -894,10 +916,15 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	vcsInfos.URL = gitValues[tagGitURL]
 	vcsInfos.HTTPUrl = gitValues[tagGitHTTPURL]
 
-	if applicationName == "" || applicationVCSServer == "" {
-		return vcsInfos, nil
+	if vcsServer != nil {
+		vcsInfos.Server = vcsServer.Name
 	}
 
+	if applicationName == "" || applicationVCSServer == "" || vcsServer == nil {
+		return &vcsInfos, nil
+	}
+
+	// START OBSERVABILITY
 	ctx, end := observability.Span(ctx, "workflow.getVCSInfos",
 		observability.Tag("application", applicationName),
 		observability.Tag("vcs_server", applicationVCSServer),
@@ -905,39 +932,27 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	)
 	defer end()
 
-	if vcsServer == nil {
-		return vcsInfos, nil
-	}
-	vcsInfos.Server = vcsServer.Name
-
-	// Cache management, kind of memoization form gathered vcsInfos
-	cacheKey := cache.Key("api:workflow:getVCSInfos:", applicationVCSServer, applicationRepositoryFullname, vcsInfos.String(), fmt.Sprintf("%v", isChildNode), previousGitRepo)
 	// Try to get the data from cache
+	cacheKey := cache.Key("api:workflow:getVCSInfos:", applicationVCSServer, applicationRepositoryFullname, vcsInfos.String())
 	if store.Get(cacheKey, &vcsInfos) {
-		log.Debug("getVCSInfos> load from cache: %s", cacheKey)
-		return vcsInfos, nil
+		log.Debug("completeVCSInfos> load from cache: %s", cacheKey)
+		return &vcsInfos, nil
 	}
-	// Store the result in the cache
-	defer func() {
-		if err == nil {
-			store.Set(cacheKey, &i)
-		}
-	}()
 
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
 	if errclient != nil {
-		return vcsInfos, sdk.WrapError(errclient, "computeVCSInfos> Cannot get client")
+		return nil, sdk.WrapError(errclient, "cannot get client")
 	}
 
-	// Set default values
+	// Check repository value
 	if vcsInfos.Repository == "" {
 		vcsInfos.Repository = applicationRepositoryFullname
-	} else if vcsInfos.Repository != applicationRepositoryFullname {
+	} else if strings.ToLower(vcsInfos.Repository) != strings.ToLower(applicationRepositoryFullname) {
 		//The input repository is not the same as the application, we have to check if it is a fork
 		forks, err := client.ListForks(ctx, applicationRepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "Cannot get forks for %s", applicationRepositoryFullname)
+			return nil, sdk.WrapError(err, "cannot get forks for %s", applicationRepositoryFullname)
 		}
 		var forkFound bool
 		for _, fork := range forks {
@@ -949,84 +964,53 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 
 		//If it's not a fork; reset this value to the application repository
 		if !forkFound {
-			if !isChildNode {
-				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.Repository))
-			}
-			vcsInfos.Hash = ""
-			vcsInfos.Repository = applicationRepositoryFullname
-			vcsInfos.Tag = ""
+			return nil, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.Repository))
 		}
 	}
 
-	//Get the url and http_url
+	// RETRIEVE URL
 	repo, err := client.RepoByFullname(ctx, vcsInfos.Repository)
 	if err != nil {
-		if !isChildNode {
-			return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
-		}
-		//If we ignore errors
-		vcsInfos.Repository = applicationRepositoryFullname
-		repo, err = client.RepoByFullname(ctx, applicationRepositoryFullname)
-		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "Cannot get repo %s", applicationRepositoryFullname)
-		}
+		return nil, sdk.NewError(sdk.ErrNotFound, err)
 	}
 	vcsInfos.URL = repo.SSHCloneURL
 	vcsInfos.HTTPUrl = repo.HTTPCloneURL
 
-	if vcsInfos.Branch == "" && !isChildNode {
-		if vcsInfos.Tag != "" {
-			return vcsInfos, nil
+	switch {
+	case vcsInfos.Branch == "" && vcsInfos.Hash == "":
+		// Get default branch
+		defaultB, errD := repositoriesmanager.DefaultBranch(ctx, client, vcsInfos.Repository)
+		if errD != nil {
+			return nil, errD
 		}
-		return vcsInfos, sdk.WrapError(sdk.ErrBranchNameNotProvided, "computeVCSInfos> should not have an empty branch")
-	}
-
-	branch, err := client.Branch(ctx, vcsInfos.Repository, vcsInfos.Branch)
-	if err != nil {
-		if !isChildNode {
-			return vcsInfos, sdk.NewError(sdk.ErrBranchNameNotProvided, err)
-		}
-	}
-
-	if branch == nil {
-		log.Error("computeVCSInfos> unable to get branch %s - repository:%s - app:%s", vcsInfos.Branch, vcsInfos.Repository, applicationName)
-		vcsInfos.Branch = ""
-	}
-
-	//Get the default branch
-	if branch == nil {
-		branches, errR := client.Branches(ctx, vcsInfos.Repository)
-		if errR != nil {
-			return vcsInfos, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", vcsInfos.Repository)
-		}
-		_branch := sdk.GetDefaultBranch(branches)
-		branch = &_branch
-		vcsInfos.Branch = branch.DisplayID
-	}
-
-	//Check if the branch is still valid
-	if branch == nil && previousGitRepo != "" && previousGitRepo == applicationRepositoryFullname {
-		return vcsInfos, sdk.WrapError(fmt.Errorf("branch has been deleted"), "computeVCSInfos> ")
-	}
-
-	if branch != nil && vcsInfos.Hash == "" {
-		vcsInfos.Hash = branch.LatestCommit
-	}
-
-	//Get the latest commit
-	commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
-	if errCm != nil {
-		if !isChildNode {
-			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
+		vcsInfos.Branch = defaultB.DisplayID
+		vcsInfos.Hash = defaultB.LatestCommit
+	case vcsInfos.Hash == "" && vcsInfos.Branch != "":
+		// GET COMMIT INFO
+		branch, errB := client.Branch(ctx, vcsInfos.Repository, vcsInfos.Branch)
+		if errB != nil {
+			// Try default branch
+			b, errD := repositoriesmanager.DefaultBranch(ctx, client, vcsInfos.Repository)
+			if errD != nil {
+				return nil, errD
+			}
+			branch = &b
+			vcsInfos.Branch = branch.DisplayID
 		}
 		vcsInfos.Hash = branch.LatestCommit
-		commit, errCm = client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
+	}
+
+	// Get commit info if needed
+	if vcsInfos.Hash != "" && (vcsInfos.Author == "" || vcsInfos.Message == "") {
+		commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
-			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
+			log.Warning("unable to ")
+			return nil, sdk.WrapError(errCm, "cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
+		vcsInfos.Author = commit.Author.Name
+		vcsInfos.Message = commit.Message
 	}
-	vcsInfos.Author = commit.Author.Name
-	vcsInfos.Message = commit.Message
 
-	return vcsInfos, nil
+	store.Set(cacheKey, vcsInfos)
+	return &vcsInfos, nil
 }

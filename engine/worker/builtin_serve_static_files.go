@@ -68,7 +68,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		}
 
 		sendLog("Fetching files in progress...")
-		file, err := sdk.CreateTarFromPaths(filepath.Join(w.currentJob.workingDirectory, filepath.Dir(path)), filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
+		file, _, err := sdk.CreateTarFromPaths(filepath.Join(w.currentJob.workingDirectory, filepath.Dir(path)), filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("Cannot tar files: %v", err)

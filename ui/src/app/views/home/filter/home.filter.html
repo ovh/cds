@@ -6,16 +6,10 @@
                 <div class="ui form">
                     <div class="fields">
                         <div class="field">
-                            <sui-select class="selection"
-                                        name="project"
-                                        placeholder="{{'timeline_filter_project_select' | translate}}"
-                                        labelField="name"
-                                        valueField="key"
-                                        [options]="projects"
-                                        [isSearchable]="true"
-                                        [(ngModel)]="selectedProjectKey" #selectProj>
-                                <sui-select-option *ngFor="let option of selectProj.filteredOptions"
-                                                [value]="option"></sui-select-option>
+                            <sui-select class="selection" name="project" placeholder="{{'timeline_filter_project_select' | translate}}"
+                                labelField="name" valueField="key" [options]="projects" [isSearchable]="true"
+                                [(ngModel)]="selectedProjectKey" #selectProj>
+                                <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
                             </sui-select>
                         </div>
                         <button class="ui blue button" type="button" (click)="addProject()">{{'btn_add' | translate}}</button>
@@ -29,14 +23,15 @@
             <div class="header">
                 {{p.key}}
                 <div class="ui right floated">
-                    <i class="close icon" (click)="removeProject(p)"></i>
+                    <i class="close icon pointing" (click)="removeProject(p)"></i>
                 </div>
             </div>
             <div class="meta">
                 <div class="ui dropdown" suiDropdown (isOpenChange)="loadProjectWorkflow(p, false)" autoClose="outsideClick">
                     <div class="text">
                         <span *ngIf="!p.workflow_names || p.workflow_names.length === 0"> All workflows</span>
-                        <span *ngIf="p.workflow_names && p.workflow_names.length > 0">{{ p.workflow_names.length }}  workflows</span>
+                        <span *ngIf="p.workflow_names && p.workflow_names.length > 0">{{ p.workflow_names.length }}
+                            workflows</span>
                     </div>
                     <div class="menu" suiDropdownMenu>
                         <div class="item" *ngFor="let w of p?.project?.workflow_names" (click)="updateWorkflowInFilter(w, p)">

@@ -47,10 +47,10 @@ type DebugConfiguration struct {
 
 // HatcheryConfiguration contains subsection of Hatchery configuration
 type HatcheryConfiguration struct {
-	Local      *local.HatcheryConfiguration      `toml:"local" comment:"Hatchery Local." json:"local"`
-	Kubernetes *kubernetes.HatcheryConfiguration `toml:"kubernetes" comment:"Hatchery Kubernetes." json:"kubernetes"`
-	Marathon   *marathon.HatcheryConfiguration   `toml:"marathon" comment:"Hatchery Marathon." json:"marathon"`
-	Openstack  *openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/" json:"openstack"`
-	Swarm      *swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/" json:"swarm"`
-	VSphere    *vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/" json:"vshpere"`
+	Local      *local.HatcheryConfiguration      `toml:"local" comment:"Hatchery Local. Doc: https://ovh.github.io/cds/docs/components/hatchery/local/" json:"local"`
+	Kubernetes *kubernetes.HatcheryConfiguration `toml:"kubernetes" comment:"Hatchery Kubernetes. Doc: https://ovh.github.io/cds/docs/integrations/hatchery/kubernetes/" json:"kubernetes"`
+	Marathon   *marathon.HatcheryConfiguration   `toml:"marathon" comment:"Hatchery Marathon. Doc: https://ovh.github.io/cds/docs/integrations/hatchery/marathon/" json:"marathon"`
+	Openstack  *openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/docs/integrations/hatchery/openstack/" json:"openstack"`
+	Swarm      *swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/docs/integrations/swarm/" json:"swarm"`
+	VSphere    *vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/docs/integrations/hatchery/vsphere/" json:"vshpere"`
 }

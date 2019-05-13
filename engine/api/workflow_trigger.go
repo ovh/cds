@@ -90,6 +90,8 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 				data.ConditionNames = append(data.ConditionNames, "git.message")
 				data.ConditionNames = append(data.ConditionNames, "git.author")
 				data.ConditionNames = append(data.ConditionNames, "git.hash")
+				data.ConditionNames = append(data.ConditionNames, "git.hash.short")
+				data.ConditionNames = append(data.ConditionNames, "git.tag")
 			}
 		}
 

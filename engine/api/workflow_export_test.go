@@ -38,6 +38,8 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
@@ -47,7 +49,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		Action: sdk.Action{
 			Enabled: true,
 			Actions: []sdk.Action{
-				sdk.NewScriptAction("echo lol"),
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}
@@ -163,6 +165,8 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
@@ -172,7 +176,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		Action: sdk.Action{
 			Enabled: true,
 			Actions: []sdk.Action{
-				sdk.NewScriptAction("echo lol"),
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}
@@ -189,7 +193,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		ProjectKey:    proj.Key,
 		HistoryLength: 25,
 		Groups: []sdk.GroupPermission{
-			sdk.GroupPermission{
+			{
 				Group:      *group2,
 				Permission: 7,
 			},
@@ -274,6 +278,8 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
+	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
@@ -283,7 +289,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		Action: sdk.Action{
 			Enabled: true,
 			Actions: []sdk.Action{
-				sdk.NewScriptAction("echo lol"),
+				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
 			},
 		},
 	}

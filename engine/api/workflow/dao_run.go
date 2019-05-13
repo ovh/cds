@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -239,6 +240,26 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts 
 	return loadRun(db, loadOpts, query, projectkey, workflowname)
 }
 
+// LockRun locks a workflow run
+func LockRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`SELECT %s
+	FROM workflow_run
+	WHERE id = $1 FOR UPDATE SKIP LOCKED`, wfRunfields)
+	wr, err := loadRun(db, LoadRunOptions{}, query, id)
+	if err == sdk.ErrWorkflowNotFound {
+		err = sdk.ErrLocked
+	}
+	return wr, sdk.WithStack(err)
+}
+
+// LoadRunIDsWithOldModel loads all ids for run that use old workflow model
+func LoadRunIDsWithOldModel(db gorp.SqlExecutor) ([]int64, error) {
+	query := "SELECT id FROM workflow_run WHERE workflow->'workflow_data' IS NULL LIMIT 100"
+	var ids []int64
+	_, err := db.Select(&ids, query)
+	return ids, sdk.WithStack(err)
+}
+
 // LoadRun returns a specific run
 func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
@@ -385,6 +406,44 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 	return wruns, offset, limit, int(count), nil
 }
 
+// LoadRunsIDByTag load workflow run ids for given tag and his value
+func LoadRunsIDByTag(db gorp.SqlExecutor, projectKey, workflowName, tag, tagValue string) ([]int64, error) {
+	query := `SELECT workflow_run.id
+		FROM workflow_run
+		JOIN project on workflow_run.project_id = project.id
+		JOIN workflow on workflow_run.workflow_id = workflow.id
+		JOIN (
+			SELECT workflow_run_id, string_agg(all_tags, ',') AS tags
+			FROM (
+				SELECT workflow_run_id, tag || '=' || value "all_tags"
+				FROM workflow_run_tag
+				WHERE workflow_run_tag.tag = $3 AND workflow_run_tag.value = $4
+				ORDER BY tag
+			) AS all_wr_tags
+			GROUP BY workflow_run_id
+		) AS tags on workflow_run.id = tags.workflow_run_id
+		WHERE project.projectkey = $1
+		AND workflow.name = $2
+		ORDER BY workflow_run.start DESC`
+
+	idsDB := []struct {
+		ID int64 `db:"id"`
+	}{}
+	if _, err := db.Select(&idsDB, query, projectKey, workflowName, tag, tagValue); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Cannot load runs id by tag")
+	}
+
+	ids := make([]int64, len(idsDB))
+	for i := range idsDB {
+		ids[i] = idsDB[i].ID
+	}
+
+	return ids, nil
+}
+
 func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 	dbRunTags := []RunTag{}
 	if _, err := db.Select(&dbRunTags, "SELECT * from workflow_run_tag WHERE workflow_run_id=$1", run.ID); err != nil {
@@ -399,7 +458,7 @@ func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 }
 
 func MigrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
-	if run != nil && run.Workflow.WorkflowData == nil {
+	if run != nil && run.Workflow.WorkflowData == nil && run.Status != sdk.StatusPending.String() {
 		data := run.Workflow.Migrate(true)
 		run.Workflow.WorkflowData = &data
 
@@ -671,6 +730,21 @@ func PurgeAllWorkflowRunsByWorkflowID(db gorp.SqlExecutor, id int64) (int, error
 	return int(n), nil
 }
 
+// MarkWorkflowRunsAsDelete marks workflow runs to be deleted
+func MarkWorkflowRunsAsDelete(db gorp.SqlExecutor, ids []int64) error {
+	idsStr := gorpmapping.IDsToQueryString(ids)
+	if _, err := db.Exec("update workflow_run set to_delete = true where id = ANY(string_to_array($1, ',')::int[])", idsStr); err != nil {
+		return sdk.WrapError(err, "Unable to mark as delete workflow id %s", idsStr)
+	}
+	return nil
+}
+
+type byInt64Desc []int64
+
+func (a byInt64Desc) Len() int           { return len(a) }
+func (a byInt64Desc) Less(i, j int) bool { return a[i] > a[j] }
+func (a byInt64Desc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+
 // PurgeWorkflowRun mark all workflow run to delete
 func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow, workflowRunsMarkToDelete *stats.Int64Measure) error {
 	ids := []struct {
@@ -689,6 +763,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		}
 	}
 
+	// Only if there aren't tags
 	if len(filteredPurgeTags) == 0 {
 		qLastSuccess := `
 		SELECT id
@@ -735,6 +810,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		return nil
 	}
 
+	//  Only where there are tags
 	queryGetIds := `
 		SELECT string_agg(id::text, ',') AS ids
 			FROM (
@@ -746,6 +822,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 					AND workflow_run.status <> $4
 					AND workflow_run.status <> $5
 					AND workflow_run.status <> $6
+					AND workflow_run.status <> $7
 				ORDER BY workflow_run.id DESC
 			) as wr
 		GROUP BY tag, value HAVING COUNT(id) > $3
@@ -760,6 +837,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		sdk.StatusWaiting.String(),
 		sdk.StatusBuilding.String(),
 		sdk.StatusChecking.String(),
+		sdk.StatusPending.String(),
 	)
 	if errS != nil {
 		log.Warning("PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
@@ -767,21 +845,21 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 	}
 
 	querySuccessIds := `
-	 SELECT id
-		 FROM (
-		   SELECT max(id::bigint)::text AS id, status
-		     FROM (
-		       SELECT workflow_run.id AS id, workflow_run_tag.tag AS tag, workflow_run_tag.value AS value, workflow_run.status AS status
-		         FROM workflow_run
-		           JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
-		         WHERE workflow_run.workflow_id = $1
-		         AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[])
-		       ORDER BY workflow_run.id DESC
-		     ) as wr
+	SELECT id
+		FROM (
+		   	SELECT max(id::bigint)::text AS id, status
+		     	FROM (
+		       		SELECT workflow_run.id AS id, workflow_run_tag.tag AS tag, workflow_run_tag.value AS value, workflow_run.status AS status
+		         		FROM workflow_run
+		           		JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
+		         	WHERE workflow_run.workflow_id = $1
+		         		AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[])
+		       		ORDER BY workflow_run.id DESC
+		    	) as wr
 		    GROUP BY tag, value, status
-		 ) as wrGrouped
-		 WHERE status = $3;
-	 `
+		) as wrGrouped
+	WHERE status = $3;
+	`
 
 	successIDs := []struct {
 		ID string `db:"id"`
@@ -794,20 +872,32 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 	idsToUpdate := []string{}
 	for _, idToUp := range ids {
 		if idToUp.Ids != "" {
-			idsSplitted := strings.Split(idToUp.Ids, ",")[wf.HistoryLength:]
-			idsStr := make([]string, 0, len(idsSplitted))
+			// NEED TO SORT idToUp.Ids
+			splittedIds := strings.Split(idToUp.Ids, ",")
+			idsInt64 := make([]int64, len(splittedIds))
+			for i, id := range splittedIds {
+				nu, err := strconv.ParseInt(id, 10, 64)
+				if err != nil {
+					log.Error("PurgeWorkflowRun> Cannot parse int64 %s: %v", id, err)
+					return err
+				}
+				idsInt64[i] = nu
+			}
 
-			for _, id := range idsSplitted {
+			sort.Sort(byInt64Desc(idsInt64))
+			idsStr := make([]string, 0, int64(len(idsInt64))-wf.HistoryLength)
+			for _, id := range idsInt64[wf.HistoryLength:] {
 				found := false
+				strID := fmt.Sprintf("%d", id)
 				for _, successID := range successIDs {
-					if successID.ID == id {
+					if successID.ID == strID {
 						found = true
 						break
 					}
 				}
 				// If id is the last success id don't add in the id's array to delete
 				if !found {
-					idsStr = append(idsStr, id)
+					idsStr = append(idsStr, strID)
 				}
 			}
 			idsToUpdate = append(idsToUpdate, idsStr...)

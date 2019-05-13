@@ -35,13 +35,14 @@ func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName
 // PublishWorkflowRun publish event on a workflow run
 func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 	e := sdk.EventRunWorkflow{
-		ID:            wr.ID,
-		Number:        wr.Number,
-		Status:        wr.Status,
-		Start:         wr.Start.Unix(),
-		LastExecution: wr.LastExecution.Unix(),
-		LastModified:  wr.LastModified.Unix(),
-		Tags:          wr.Tags,
+		ID:               wr.ID,
+		Number:           wr.Number,
+		Status:           wr.Status,
+		Start:            wr.Start.Unix(),
+		LastExecution:    wr.LastExecution.Unix(),
+		LastModified:     wr.LastModified.Unix(),
+		LastModifiedNano: wr.LastModified.UnixNano(),
+		Tags:             wr.Tags,
 	}
 	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, wr.Tags)
 }
@@ -102,6 +103,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		if wnode.Context != nil && wnode.Context.EnvironmentID != 0 {
 			env = w.Environments[wnode.Context.EnvironmentID]
 		}
+		e.NodeType = wnode.Type
 	} else {
 		nodeName = n.Name
 		pipName = w.Pipelines[n.PipelineID].Name
@@ -110,6 +112,38 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		}
 		if n.Context != nil && n.Context.Environment != nil {
 			env = *n.Context.Environment
+		}
+	}
+
+	// Try to get gerrit variable
+	var project, changeID, branch, revision, url string
+	projectParam := sdk.ParameterFind(&nr.BuildParameters, "git.repository")
+	if projectParam != nil {
+		project = projectParam.Value
+	}
+	changeIDParam := sdk.ParameterFind(&nr.BuildParameters, "gerrit.change.id")
+	if changeIDParam != nil {
+		changeID = changeIDParam.Value
+	}
+	branchParam := sdk.ParameterFind(&nr.BuildParameters, "gerrit.change.branch")
+	if branchParam != nil {
+		branch = branchParam.Value
+	}
+	revisionParams := sdk.ParameterFind(&nr.BuildParameters, "git.hash")
+	if revisionParams != nil {
+		revision = revisionParams.Value
+	}
+	urlParams := sdk.ParameterFind(&nr.BuildParameters, "cds.ui.pipeline.run")
+	if urlParams != nil {
+		url = urlParams.Value
+	}
+	if changeID != "" && project != "" && branch != "" && revision != "" {
+		e.GerritChange = &sdk.GerritChangeEvent{
+			ID:         changeID,
+			DestBranch: branch,
+			Project:    project,
+			Revision:   revision,
+			URL:        url,
 		}
 	}
 

@@ -3,13 +3,14 @@ import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
-import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as ActionApplication from './applications.action';
 import * as ActionProject from './project.action';
+import { DeleteFromCacheWorkflow } from './workflows.action';
 
 export class ApplicationsStateModel {
     public applications: { [key: string]: Application };
+    public overviews: { [key: string]: Overview };
     public currentProjectKey: string;
     public loading: boolean;
 }
@@ -17,6 +18,7 @@ export class ApplicationsStateModel {
 export function getInitialApplicationsState(): ApplicationsStateModel {
     return {
         applications: {},
+        overviews: {},
         currentProjectKey: null,
         loading: true,
     };
@@ -32,6 +34,13 @@ export class ApplicationsState {
         return createSelector(
             [ApplicationsState],
             (state: ApplicationsStateModel) => state.applications[projectKey + '/' + applicationName]
+        );
+    }
+
+    static selectOverview(projectKey: string, applicationName: string) {
+        return createSelector(
+            [ApplicationsState],
+            (state: ApplicationsStateModel) => state.overviews[projectKey + '/' + applicationName]
         );
     }
 
@@ -86,7 +95,6 @@ export class ApplicationsState {
             });
             ctx.dispatch(new ActionProject.AddApplicationInProject(app));
         }));
-
     }
 
     @Action(ActionApplication.LoadApplication)
@@ -136,12 +144,14 @@ export class ApplicationsState {
                 let applications = Object.assign({}, state.applications, {
                     [action.payload.projectKey + '/' + app.name]: app,
                 });
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
                 delete applications[appKey];
 
                 ctx.setState({
                     ...state,
                     applications,
                 });
+
                 ctx.dispatch(new ActionProject.UpdateApplicationInProject({
                     previousAppName: action.payload.applicationName,
                     changes: app
@@ -184,18 +194,15 @@ export class ApplicationsState {
         const state = ctx.getState();
         const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
 
-        if (state.applications[appKey] && state.applications[appKey].overview) {
-            return Observable.empty();
-        }
-
         return this._http.get<Overview>(
             `/ui/project/${action.payload.projectKey}/application/${action.payload.applicationName}/overview`
         ).pipe(tap((overview) => {
-            let applicationUpdated = Object.assign({}, state.applications[appKey], { overview });
-
             ctx.setState({
                 ...state,
-                applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
+                overviews: {
+                    ...state.overviews,
+                    [appKey]: overview
+                }
             });
         }));
     }
@@ -306,6 +313,8 @@ export class ApplicationsState {
                     deployment_strategies: app.deployment_strategies
                 });
 
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
+
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -369,6 +378,8 @@ export class ApplicationsState {
                     vcs_strategy: app.vcs_strategy
                 });
 
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
+
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -391,6 +402,8 @@ export class ApplicationsState {
                     repository_fullname: app.repository_fullname,
                     vcs_strategy: app.vcs_strategy
                 });
+
+                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
 
                 ctx.setState({
                     ...state,
@@ -444,5 +457,25 @@ export class ApplicationsState {
             }
             ctx.dispatch(new ActionApplication.LoadApplication(app));
         }));
+    }
+
+    @Action(ActionApplication.ClearCacheApplication)
+    clearCache(ctx: StateContext<ApplicationsStateModel>, _: ActionApplication.ClearCacheApplication) {
+        ctx.setState(getInitialApplicationsState());
+    }
+
+    //  ------- Helpers --------- //
+    clearWorkflowCache(ctx: StateContext<ApplicationsStateModel>, projectKey: string, appKey: string) {
+        const state = ctx.getState();
+
+        if (state.applications[appKey] && state.applications[appKey].usage &&
+            Array.isArray(state.applications[appKey].usage.workflows)) {
+            state.applications[appKey].usage.workflows.forEach((wf) => {
+                ctx.dispatch(new DeleteFromCacheWorkflow({
+                    projectKey: projectKey,
+                    workflowName: wf.name
+                }));
+            });
+        }
     }
 }

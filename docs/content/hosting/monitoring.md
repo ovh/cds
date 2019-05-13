@@ -1,10 +1,11 @@
-+++
-title = "Monitoring"
-weight = 8
+---
+title: "Monitoring"
+weight: 8
+card: 
+  name: operate
+---
 
-+++
-
-### Status Handler on API
+## Status Handler on API
 
 https://your.cds.instance/mon/status returns the status of CDS Engine.
 
@@ -34,7 +35,7 @@ If you don't need a CDS µService repositories, you can disable monitoring on it
       minInstance = 0
 ```
 
-### Monitoring with Command Line
+## Monitoring with Command Line
 
 ```bash
 ./cdsctl monitoring

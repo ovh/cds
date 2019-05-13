@@ -1,12 +1,13 @@
-import {Component, Input} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, Input } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { NotificationService } from 'app/service/notification/notification.service';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
-import {Project} from '../../../../../model/project.model';
-import {Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import { AddNotificationWorkflow, DeleteNotificationWorkflow, UpdateNotificationWorkflow } from 'app/store/workflows.action';
+import { cloneDeep } from 'lodash';
+import { finalize, first } from 'rxjs/operators';
+import { Project } from '../../../../../model/project.model';
+import { Workflow, WorkflowNotification } from '../../../../../model/workflow.model';
+import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-notification-list',
@@ -35,22 +36,29 @@ export class WorkflowNotificationListComponent {
 
     @Input() project: Project;
 
-    constructor(private _workflowStore: WorkflowStore, private _notificationService: NotificationService,
-        private _translate: TranslateService, private _toast: ToastService) {
+    constructor(
+        private store: Store,
+        private _notificationService: NotificationService,
+        private _translate: TranslateService,
+        private _toast: ToastService
+    ) {
     }
 
     createNotification(n: WorkflowNotification): void {
         this.loading = true;
-        let workflowToUpdate = cloneDeep(this.workflow);
-        if (!workflowToUpdate.notifications) {
-            workflowToUpdate.notifications = new Array<WorkflowNotification>();
-        }
         if (n.settings && n.settings.recipients) {
             n.settings.recipients = n.settings.recipients.map(r => r.trim());
         }
-        workflowToUpdate.notifications.push(n);
 
-        this.updateWorkflow(workflowToUpdate);
+        this.store.dispatch(new AddNotificationWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            notification: n
+        })).pipe(finalize(() => {
+            this.loading = false;
+            delete this.selectedNotification;
+            delete this.newNotification;
+        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 
     copy(index: number) {
@@ -81,37 +89,32 @@ export class WorkflowNotificationListComponent {
     }
 
     updateNotification(n: WorkflowNotification): void {
-        let workflowToUpdate = cloneDeep(this.workflow);
+        this.loading = true;
         if (n.settings && n.settings.recipients) {
             n.settings.recipients = n.settings.recipients.map(r => r.trim());
         }
-        workflowToUpdate.notifications = workflowToUpdate.notifications.map(notif => {
-            if (notif.id !== n.id) {
-                return notif;
-            } else {
-                return n;
-            }
-        });
-        this.updateWorkflow(workflowToUpdate);
-    }
-
-    deleteNotification(n: WorkflowNotification): void {
-        let workflowToUpdate = cloneDeep(this.workflow);
-        workflowToUpdate.notifications = workflowToUpdate.notifications.filter(no => {
-            return n.id !== no.id;
-        });
-        this.updateWorkflow(workflowToUpdate);
-    }
-
-    updateWorkflow(workflowToUpdate: Workflow): void {
-        this.loading = true;
-        this._workflowStore.updateWorkflow(this.project.key, workflowToUpdate).pipe(finalize(() => {
+        this.store.dispatch(new UpdateNotificationWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            notification: n
+        })).pipe(finalize(() => {
             this.loading = false;
             delete this.selectedNotification;
             delete this.newNotification;
-        })).subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_updated'));
-        });
+        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
+    }
+
+    deleteNotification(n: WorkflowNotification): void {
+        this.loading = true
+        this.store.dispatch(new DeleteNotificationWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            notification: n
+        })).pipe(finalize(() => {
+            this.loading = false;
+            delete this.selectedNotification;
+            delete this.newNotification;
+        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 
     refreshNotif(): void {

@@ -4,6 +4,7 @@ import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
 import { tap } from 'rxjs/operators';
 import * as actionPipeline from './pipelines.action';
 import * as ActionProject from './project.action';
+import { DeleteFromCacheWorkflow } from './workflows.action';
 
 export class PipelinesStateModel {
     public pipelines: { [key: string]: Pipeline };
@@ -159,6 +160,20 @@ export class PipelinesState {
                     previousPipName: action.payload.pipelineName,
                     changes: pip
                 }));
+
+                if (state.pipelines[pipKey].usage && Array.isArray(state.pipelines[pipKey].usage.workflows)) {
+                    state.pipelines[pipKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+
+                return ctx.dispatch(new actionPipeline.ResyncPipeline({
+                    projectKey: action.payload.projectKey,
+                    pipelineName: pip.name
+                }));
             } else {
                 let pipUpdated: Pipeline = {
                     ...state.pipelines[pipKey],
@@ -204,6 +219,15 @@ export class PipelinesState {
                 let pipKey = pip.projectKey + '/' + pip.name;
                 let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
 
+                if (state.pipelines[pipKey].usage && Array.isArray(state.pipelines[pipKey].usage.workflows)) {
+                    state.pipelines[pipKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+
                 ctx.setState({
                     ...state,
                     pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipUpdated }),
@@ -224,6 +248,15 @@ export class PipelinesState {
                 let pipKey = pip.projectKey + '/' + pip.name;
                 let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
 
+                if (state.pipelines[pipKey].usage && Array.isArray(state.pipelines[pipKey].usage.workflows)) {
+                    state.pipelines[pipKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
+
                 ctx.setState({
                     ...state,
                     pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipUpdated }),
@@ -240,6 +273,15 @@ export class PipelinesState {
                 const state = ctx.getState();
                 let pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
                 let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
+
+                if (state.pipelines[pipKey].usage && Array.isArray(state.pipelines[pipKey].usage.workflows)) {
+                    state.pipelines[pipKey].usage.workflows.forEach((wf) => {
+                        ctx.dispatch(new DeleteFromCacheWorkflow({
+                            projectKey: action.payload.projectKey,
+                            workflowName: wf.name
+                        }));
+                    });
+                }
 
                 ctx.setState({
                     ...state,
@@ -415,7 +457,6 @@ export class PipelinesState {
     fetchAsCode(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.FetchAsCodePipeline) {
         let params = new HttpParams();
         params = params.append('format', 'yaml');
-        params = params.append('withPermissions', 'true');
 
         return this._http.get<string>(
             `/project/${action.payload.projectKey}/export/pipeline/${action.payload.pipelineName}`,
@@ -494,5 +535,10 @@ export class PipelinesState {
                 pipeline: pip
             }));
         }));
+    }
+
+    @Action(actionPipeline.ClearCachePipeline)
+    clearCache(ctx: StateContext<PipelinesStateModel>, _: actionPipeline.ClearCachePipeline) {
+        ctx.setState(getInitialPipelinesState());
     }
 }

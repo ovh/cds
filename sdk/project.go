@@ -16,11 +16,11 @@ type Project struct {
 	Description      string               `json:"description" yaml:"description" db:"description" cli:"description"`
 	Icon             string               `json:"icon" yaml:"icon" db:"icon" cli:"-"`
 	Workflows        []Workflow           `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
-	WorkflowNames    []IDName             `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
+	WorkflowNames    IDNames              `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
 	Pipelines        []Pipeline           `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames    []IDName             `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	PipelineNames    IDNames              `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
 	Applications     []Application        `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames []IDName             `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ApplicationNames IDNames              `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
 	ProjectGroups    []GroupPermission    `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variable         []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments     []Environment        `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
@@ -34,6 +34,57 @@ type Project struct {
 	Integrations     []ProjectIntegration `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
 	Features         map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
 	Favorite         bool                 `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
+	URLs             URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
+}
+
+type URL struct {
+	APIURL string `json:"api_url"`
+	UIURL  string `json:"ui_url"`
+}
+
+// SetApplication data on project
+func (proj *Project) SetApplication(app Application) {
+	found := false
+	for i, a := range proj.Applications {
+		if a.Name == app.Name {
+			proj.Applications[i] = app
+			found = true
+			break
+		}
+	}
+	if !found {
+		proj.Applications = append(proj.Applications, app)
+	}
+}
+
+// SetEnvironment data on project
+func (proj *Project) SetEnvironment(env Environment) {
+	found := false
+	for i, e := range proj.Environments {
+		if e.Name == env.Name {
+			proj.Environments[i] = env
+			found = true
+			break
+		}
+	}
+	if !found {
+		proj.Environments = append(proj.Environments, env)
+	}
+}
+
+// SetPipeline data on project
+func (proj *Project) SetPipeline(pip Pipeline) {
+	found := false
+	for i, p := range proj.Pipelines {
+		if p.Name == pip.Name {
+			proj.Pipelines[i] = pip
+			found = true
+			break
+		}
+	}
+	if !found {
+		proj.Pipelines = append(proj.Pipelines, pip)
+	}
 }
 
 // IsValid returns error if the project is not valid
