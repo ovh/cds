@@ -65,9 +65,9 @@ func (y yamlSchemaVSCodeInstaller) Install(schemas yamlSchemaPath) error {
 	globPatterns := []string{"*.cds*.yml", "*.cds*.app.yml", "*.cds*.env.yml", "*.cds*.pip.yml"}
 	var schs []string
 	for i := range paths {
-		schs = append(schs, fmt.Sprintf("\n\t\t\"%s\": \"%s\"", paths[i], globPatterns[i]))
+		schs = append(schs, fmt.Sprintf(`\n\t\t"%s": "%s"`, paths[i], globPatterns[i]))
 	}
-	res := fmt.Sprintf("{\n\t\"yaml.schemas\": {%s\n\t}\n}", strings.Join(schs, ","))
+	res := fmt.Sprintf(`{\n\t"yaml.schemas": {%s\n\t}\n}`, strings.Join(schs, ","))
 
 	fmt.Println("You need to add the following part in your VSCode settings.json file:")
 	fmt.Println(cli.Cyan(res))
