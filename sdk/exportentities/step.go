@@ -535,7 +535,7 @@ func (s Step) asScript() (sdk.Action, error) {
 	if script, ok := s.Script.([]interface{}); ok {
 		lines := make([]string, len(script))
 		for i := range script {
-			if line, ok := script[i].(string); ok {
+			if line, okString := script[i].(string); okString {
 				lines[i] = line
 			}
 		}
