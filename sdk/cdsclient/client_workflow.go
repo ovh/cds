@@ -70,6 +70,14 @@ func (c *client) WorkflowRunGet(projectKey string, workflowName string, number i
 	return &run, nil
 }
 
+func (c *client) WorkflowRunsDeleteByBranch(projectKey string, workflowName string, branch string) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/branch/%s", projectKey, workflowName, url.PathEscape(branch))
+	if _, err := c.DeleteJSON(context.Background(), url, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowRunResync(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/resync", projectKey, workflowName, number)
 	var run sdk.WorkflowRun

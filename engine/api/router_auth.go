@@ -165,7 +165,7 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 		if getService(ctx) != nil {
 			return ctx, false, nil
 		}
-		return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> Need worker")
+		return ctx, false, sdk.WrapError(sdk.ErrForbidden, "Router> Need service")
 	}
 
 	if rc.Options["needWorker"] == "true" {

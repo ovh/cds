@@ -267,3 +267,7 @@ Before adding a hook on your Workflow, you have to add the application in the Pi
 Select the first pipeline, then click on **Edit the pipeline context** from the [sidebar]({{<relref "/docs/concepts/workflow/sidebar.md">}}).
 
 [Pipeline Context Documentation]({{<relref "/docs/concepts/workflow/pipeline-context.md">}})
+
+## Vcs events
+
+For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).

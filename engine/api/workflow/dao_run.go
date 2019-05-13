@@ -406,6 +406,44 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 	return wruns, offset, limit, int(count), nil
 }
 
+// LoadRunsIDByTag load workflow run ids for given tag and his value
+func LoadRunsIDByTag(db gorp.SqlExecutor, projectKey, workflowName, tag, tagValue string) ([]int64, error) {
+	query := `SELECT workflow_run.id
+		FROM workflow_run
+		JOIN project on workflow_run.project_id = project.id
+		JOIN workflow on workflow_run.workflow_id = workflow.id
+		JOIN (
+			SELECT workflow_run_id, string_agg(all_tags, ',') AS tags
+			FROM (
+				SELECT workflow_run_id, tag || '=' || value "all_tags"
+				FROM workflow_run_tag
+				WHERE workflow_run_tag.tag = $3 AND workflow_run_tag.value = $4
+				ORDER BY tag
+			) AS all_wr_tags
+			GROUP BY workflow_run_id
+		) AS tags on workflow_run.id = tags.workflow_run_id
+		WHERE project.projectkey = $1
+		AND workflow.name = $2
+		ORDER BY workflow_run.start DESC`
+
+	idsDB := []struct {
+		ID int64 `db:"id"`
+	}{}
+	if _, err := db.Select(&idsDB, query, projectKey, workflowName, tag, tagValue); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Cannot load runs id by tag")
+	}
+
+	ids := make([]int64, len(idsDB))
+	for i := range idsDB {
+		ids[i] = idsDB[i].ID
+	}
+
+	return ids, nil
+}
+
 func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 	dbRunTags := []RunTag{}
 	if _, err := db.Select(&dbRunTags, "SELECT * from workflow_run_tag WHERE workflow_run_id=$1", run.ID); err != nil {
@@ -690,6 +728,15 @@ func PurgeAllWorkflowRunsByWorkflowID(db gorp.SqlExecutor, id int64) (int, error
 	n, _ := res.RowsAffected() // nolint
 	log.Info("PurgeAllWorkflowRunsByWorkflowID> will delete %d workflow runs for workflow %d", n, id)
 	return int(n), nil
+}
+
+// MarkWorkflowRunsAsDelete marks workflow runs to be deleted
+func MarkWorkflowRunsAsDelete(db gorp.SqlExecutor, ids []int64) error {
+	idsStr := gorpmapping.IDsToQueryString(ids)
+	if _, err := db.Exec("update workflow_run set to_delete = true where id = ANY(string_to_array($1, ',')::int[])", idsStr); err != nil {
+		return sdk.WrapError(err, "Unable to mark as delete workflow id %s", idsStr)
+	}
+	return nil
 }
 
 type byInt64Desc []int64
