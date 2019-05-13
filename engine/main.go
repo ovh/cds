@@ -212,32 +212,6 @@ All options
 
 		if conf.VCS != nil {
 			conf.VCS.API.Token = sharedInfraToken
-			conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
-			conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
-				URL: "https://github.com",
-				Github: &vcs.GithubServerConfiguration{
-					ClientID:     "xxxx",
-					ClientSecret: "xxxx",
-				},
-			}
-			conf.VCS.Servers["Bitbucket"] = vcs.ServerConfiguration{
-				URL: "https://mybitbucket.com",
-				Bitbucket: &vcs.BitbucketServerConfiguration{
-					ConsumerKey: "xxx",
-					PrivateKey:  "xxx",
-				},
-			}
-			conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
-				URL: "https://gitlab.com",
-				Gitlab: &vcs.GitlabServerConfiguration{
-					AppID:  "xxxx",
-					Secret: "xxxx",
-				},
-			}
-			conf.VCS.Servers["Gerrit"] = vcs.ServerConfiguration{
-				URL:    "http://localhost:8080",
-				Gerrit: &vcs.GerritServerConfiguration{},
-			}
 		}
 
 		if !configNewAsEnvFlag {
