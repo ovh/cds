@@ -12,6 +12,8 @@ import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import * as workflowsActions from './workflow.action';
 import {WorkflowState, WorkflowStateModel} from './workflow.state';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 
 describe('Workflows', () => {
     let store: Store;
@@ -19,7 +21,7 @@ describe('Workflows', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService],
+            providers: [NavbarService, WorkflowService, WorkflowRunService],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
                 HttpClientTestingModule
@@ -75,9 +77,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.select(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -104,9 +103,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -122,9 +118,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1bis');
@@ -151,9 +144,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -191,9 +181,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -239,9 +226,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -284,9 +268,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -331,9 +312,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -357,9 +335,6 @@ describe('Workflows', () => {
                 joins: []
             },
         });
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -380,9 +355,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -400,9 +372,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1/label';
         })).flush(label);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -444,9 +413,6 @@ describe('Workflows', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows/wf1/label/2';
         })).flush(label);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -487,9 +453,6 @@ description: some description`;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/export/workflows/wf1';
         })).flush(asCode);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -556,9 +519,6 @@ description: some description`;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/workflows';
         })).flush(workflow);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
@@ -571,9 +531,6 @@ description: some description`;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/user/favorite';
         })).flush(null);
-        store.selectOnce(WorkflowState).subscribe(state => {
-            expect(Object.keys(state.workflows).length).toEqual(1);
-        });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();
             expect(wfs.workflow.name).toEqual('wf1');
