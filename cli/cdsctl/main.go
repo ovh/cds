@@ -87,7 +87,7 @@ var mainCmd = cli.Command{
 
 ## Download
 
-You'll find last release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+You will find lastest release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
 
 
 ## Authentication

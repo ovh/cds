@@ -9,15 +9,14 @@ Documentation is available at https://ovh.github.io/cds/
 ```console
 cd contrib/helm/cds
 # To let CDS spawn workers on your kubernetes cluster you need to copy your kubeconfig.yaml in the current directory
-cp yourPathToKubeconfig.yaml kubeconfig.yaml
 helm dependency update
 helm install .
 ```
 
-
 ## FUTURE
 
 When CDS helm chart will be released you'll be able to install with
+
 ```console
 $ helm install stable/cds
 ```
@@ -36,9 +35,9 @@ It starts a PostgreSQL server, a Redis server and an Elasticsearch server using 
 
 ## Prerequisites
 
-- Kubernetes 1.4+ with Beta APIs enabled
-- PV provisioner support in the underlying infrastructure
-- Kubernetes config file (`kubeconfig.yaml`) located at this path. (For minikube it's often located `~/.kube/config`)
++ Kubernetes 1.4+ with Beta APIs enabled
++ PV provisioner support in the underlying infrastructure
++ RBAC enabled or .rbac.create set to false
 
 ## Installing the Chart
 
@@ -46,10 +45,8 @@ To install the chart with the release name `my-release`:
 
 ```console
 # Inside of cds/contrib/helm/cds
-# To let CDS spawn workers on your kubernetes cluster you need to copy your kubeconfig.yaml in the current directory
-cp yourPathToKubeconfig.yaml kubeconfig.yaml
-helm dependency update
-helm install --name my-cds . 
+$ helm dependency update
+$ helm install --name my-cds .
 ```
 
 The command deploys CDS on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -153,7 +150,6 @@ And check in the log of your api server to get registration URL :
 
   export CDS_API_POD_NAME=$(kubectl get pods --namespace default -l "app=my-cds-cds-api" -o jsonpath="{.items[0].metadata.name}")
   kubectl logs -f --namespace default $CDS_API_POD_NAME | grep 'account/verify'
-
 ```
 
 + Create the first CDS User
@@ -187,8 +183,8 @@ $ chmod +x cdsctl
 *please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
 If you don't want to use the keychain, you can select the version i386*
 
-
 + Login with cdsctl
+
 ```console
 $ ./cdsctl login --api-url http://$SERVICE_IP/cdsapi -u yourusername
 CDS API URL: http://$SERVICE_IP/cdsapi
@@ -282,12 +278,8 @@ $ helm install --name my-release -f values.yaml .
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
 + If you use a Kubernetes provider without LoadBalancer ability you just have to set your `ui.serviceType` to `ClusterIP` and set `ingress.enabled` to `true` with the right `ingress.hostname` and `ingress.port` (for example: `helm install --kubeconfig kubeconfig.yml --name my-release -f values.yaml --set ui.serviceType=ClusterIP --set ingress.enabled=true --set ingress.hostname=cds.MY_NODES_URL --set ingress.port=32080 .`).
-
 + If you use a minikube you have to set `ui.serviceType` to `ClusterIP`.
-
 + If you use a Kubernetes as GKE, EKS or if your cloud provider provide you an available LoadBalancer you just have to set `ui.serviceType` to `LoadBalancer`.
-
-+ Your `kubeconfig.yaml` must be located in this directory.
 
 ## Image
 
@@ -303,6 +295,6 @@ By default, cds api artifact directory is created as default PersistentVolumeCla
 1. Create the PersistentVolumeClaim
 1. Install the chart
 
-```bash
+```console
 $ helm install --name my-release --set cds.existingClaim=PVC_NAME .
 ```

@@ -7,7 +7,7 @@ card:
 
 
 CDS API is the core component of CDS.
-To start CDS API, the **only mandatory dependency is a PostgreSQL database** and a path to the directory containing other CDS binaries.
+To start CDS API, the **only mandatory dependencies are a PostgreSQL database, a Redis server** and a path to the directory containing other CDS binaries.
 
 There is are two ways to set up CDS:
 

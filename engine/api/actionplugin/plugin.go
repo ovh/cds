@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//InsertWithGRPCPlugin create action in database
+//InsertWithGRPCPlugin creates action in database
 func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,
@@ -31,7 +31,7 @@ func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.
 	return &a, nil
 }
 
-//UpdateGRPCPlugin create action in database
+//UpdateGRPCPlugin creates action in database
 func UpdateGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter, userID int64) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,

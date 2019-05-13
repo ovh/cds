@@ -488,7 +488,7 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 				if len(filters) > 0 {
 					for k, v := range filters {
 						// filter only if tag match
-						matchTag := k == tag || strings.ToUpper(k) == tag || strings.ToLower(k) == tag
+						matchTag := k == tag || strings.ToUpper(k) == strings.ToUpper(tag)
 						if !matchTag {
 							continue
 						}

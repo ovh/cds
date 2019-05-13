@@ -21,14 +21,13 @@ version: v1.0
 name: my-application
 
 variables:
-  variables:
-    artifact.name:
-      type: string
-      value: my-application
-    docker.image:
-      value: my-org/my-application
-    docker.registry: 
-      value: hub.docker.com
+  artifact.name:
+    type: string
+    value: my-application
+  docker.image:
+    value: my-org/my-application
+  docker.registry: 
+    value: hub.docker.com
 
 keys:
   app-mySSHKey:
