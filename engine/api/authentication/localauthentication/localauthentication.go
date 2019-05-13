@@ -3,10 +3,14 @@ package localauthentication
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/nbutton23/zxcvbn-go"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/user"
@@ -35,7 +39,7 @@ func (l *localAuthentication) CheckAuthentication(ctx context.Context, db gorp.S
 	}
 
 	if !ok {
-		return nil, sdk.ErrUnauthorized
+		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
 	u, err := user.LoadUserByUsername(db, username)
@@ -44,4 +48,24 @@ func (l *localAuthentication) CheckAuthentication(ctx context.Context, db gorp.S
 	}
 
 	return u, nil
+}
+
+const minPasswordStrength = 3
+
+func CheckPasswordIsValid(password string) error {
+	passwordStrength := zxcvbn.PasswordStrength(password, nil).Score
+	if passwordStrength < minPasswordStrength {
+		return sdk.WithStack(sdk.ErrWrongRequest)
+	}
+	return nil
+}
+
+func GenerateVerifyToken(username string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodRS512, jwt.StandardClaims{
+		Issuer:    accesstoken.LocalIssuer,
+		Subject:   username,
+		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		IssuedAt:  time.Now().Unix(),
+	})
+	return accesstoken.Sign(token)
 }

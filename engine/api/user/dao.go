@@ -1,8 +1,6 @@
 package user
 
 import (
-	"fmt"
-
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 
@@ -40,7 +38,7 @@ func LoadUserByID(db gorp.SqlExecutor, id string) (*sdk.AuthentifiedUser, error)
 		return nil, err
 	}
 	if !isValid {
-		return nil, fmt.Errorf("corrupted data")
+		return nil, sdk.WithStack(sdk.ErrCorruptedData)
 	}
 
 	var au = sdk.AuthentifiedUser(u)
@@ -66,7 +64,7 @@ func LoadUserByEmail(db gorp.SqlExecutor, email string) (*sdk.AuthentifiedUser, 
 		return nil, err
 	}
 	if !isValid {
-		return nil, fmt.Errorf("corrupted data")
+		return nil, sdk.WithStack(sdk.ErrCorruptedData)
 	}
 
 	var au = sdk.AuthentifiedUser(u)
@@ -92,7 +90,7 @@ func LoadUserByUsername(db gorp.SqlExecutor, username string) (*sdk.Authentified
 		return nil, err
 	}
 	if !isValid {
-		return nil, fmt.Errorf("corrupted data")
+		return nil, sdk.WithStack(sdk.ErrCorruptedData)
 	}
 
 	var au = sdk.AuthentifiedUser(u)
@@ -161,7 +159,7 @@ func DeleteContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 	return nil
 }
 
-func LoadContacts(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.UserContact, error) {
+func LoadContacts(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) (sdk.UserContacts, error) {
 	query := "select * from user_contact where user_id = $1 order by id asc"
 	var contacts []sdk.UserContact
 	var dbContacts []userContact
@@ -175,9 +173,9 @@ func LoadContacts(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.UserConta
 			return nil, err
 		}
 		if !ok {
-			return nil, fmt.Errorf("corrupted data")
+			return nil, sdk.WithStack(sdk.ErrCorruptedData)
 		}
 		contacts = append(contacts, sdk.UserContact(dbContacts[i]))
 	}
-	return contacts, nil
+	return sdk.UserContacts(contacts), nil
 }

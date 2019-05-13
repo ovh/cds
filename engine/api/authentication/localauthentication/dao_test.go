@@ -2,8 +2,9 @@ package localauthentication_test
 
 import (
 	"testing"
+	"time"
 
-	"github.com/ovh/cds/engine/api/localauthentication"
+	"github.com/ovh/cds/engine/api/authentication/localauthentication"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
@@ -12,11 +13,10 @@ import (
 
 func TestLocalAutenticationDAO(t *testing.T) {
 	var u = sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-		Email:    sdk.RandomString(10),
-		Fullname: sdk.RandomString(10),
-		Origin:   sdk.RandomString(10),
-		Ring:     sdk.UserRingAdmin,
+		Username:     sdk.RandomString(10),
+		Fullname:     sdk.RandomString(10),
+		Ring:         sdk.UserRingAdmin,
+		DateCreation: time.Now(),
 	}
 
 	db, _, _ := test.SetupPG(t)
@@ -24,8 +24,9 @@ func TestLocalAutenticationDAO(t *testing.T) {
 	assert.NoError(t, user.Insert(db, &u))
 
 	var localAuth = sdk.UserLocalAuthentication{
-		UserID:        u.ID,
-		ClearPassword: sdk.RandomString(10),
+		UserID:           u.ID,
+		ClearPassword:    sdk.RandomString(10),
+		ClearVerifyToken: sdk.RandomString(10),
 	}
 
 	assert.NoError(t, localauthentication.Insert(db, &localAuth))

@@ -4,9 +4,8 @@ CREATE TABLE IF NOT EXISTS "authentified_user" (
   id VARCHAR(36) PRIMARY KEY,
   username TEXT NOT NULL,
   fullname TEXT NOT NULL,
-  email TEXT NOT NULL,
-  origin VARCHAR(25) NOT NULL,
   ring VARCHAR(25) NOT NULL,
+  date_creation TIMESTAMP WITH TIME ZONE,
   sig BYTEA
 );
 
@@ -23,6 +22,7 @@ SELECT create_foreign_key('FK_AUTHENTIFIED_USER_MIGRATION_AUTHENTIFIED_USER', 'a
 CREATE TABLE IF NOT EXISTS "user_local_authentication" (
   user_id VARCHAR(36) PRIMARY KEY,
   encrypted_password BYTEA,
+  encrypted_verify_token BYTEA,
   sig BYTEA
 );
 
@@ -43,7 +43,7 @@ SELECT create_foreign_key_idx_cascade('FK_USER_CONTACT_AUTHENTIFIED', 'user_cont
 
 -- +migrate Down
 
-DROP TABLE  "authentified_user";
 DROP TABLE  "authentified_user_migration";
 DROP TABLE  "user_local_authentication";
 DROP TABLE  "user_contact";
+DROP TABLE  "authentified_user";

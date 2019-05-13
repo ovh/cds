@@ -34,6 +34,7 @@ type AuthentifiedUser struct {
 type UserLocalAuthentication struct {
 	UserID        string `json:"user_id" db:"user_id"`
 	ClearPassword string `json:"clear_password" db:"-"`
+	Verified      bool   `json:"verified" db:"verified"`
 }
 
 type UserContact struct {
@@ -42,6 +43,28 @@ type UserContact struct {
 	Type           string `json:"type" db:"type"`
 	Value          string `json:"value" db:"value"`
 	PrimaryContact bool   `json:"primary_contact" db:"primary_contact"`
+}
+
+const UserContactTypeEmail = "email"
+
+type UserContacts []UserContact
+
+func (u UserContacts) Find(t, v string) *UserContact {
+	for _, c := range u {
+		if c.Type == t && c.Value == v {
+			return &c
+		}
+	}
+	return nil
+}
+
+func (u UserContacts) Primary() *UserContact {
+	for _, c := range u {
+		if c.PrimaryContact {
+			return &c
+		}
+	}
+	return nil
 }
 
 // Favorite represent the favorites workflow or project of the user
@@ -70,11 +93,24 @@ func UserPermissionKey(k, n string) string {
 
 // UserRequest request new user creation
 type UserRequest struct {
-	Fullname string `json:"fullname"`
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Callback string `json:"callback"`
+	Fullname             string `json:"fullname"`
+	Email                string `json:"email"`
+	Username             string `json:"username"`
+	Password             string `json:"password"`
+	PasswordConfirmation string `json:"password_confirmation"`
+	Callback             string `json:"callback"`
+}
+
+type UserResponse struct {
+	AuthentifiedUser
+	VerifyToken string `json:"verify_token"`
+}
+
+type UserResetRequest struct {
+	Email       string `json:"email"`
+	Username    string `json:"username"`
+	VerifyToken string `json:"verify_token"`
+	Callback    string `json:"callback"`
 }
 
 // UserLoginRequest login request
@@ -89,20 +125,5 @@ type UserLoginCallbackRequest struct {
 	PublicKey    []byte `json:"public_key"`
 }
 
-// UserAPIResponse  response from rest API
-type UserAPIResponse struct {
-	User     User   `json:"user"`
-	Password string `json:"password,omitempty"`
-	Token    string `json:"token,omitempty"`
-}
-
 // UserEmailPattern  pattern for user email address
 const UserEmailPattern = "(\\w[-._\\w]*\\w@\\w[-._\\w]*\\w\\.\\w{2,3})"
-
-// NewUser instanciate a new User
-func NewUser(username string) *User {
-	u := &User{
-		Username: username,
-	}
-	return u
-}

@@ -53,8 +53,7 @@ func (l *ldapAuthentication) CheckAuthentication(ctx context.Context, db gorp.Sq
 
 	//Bind user
 	if err := l.Bind(username, password); err != nil {
-		log.Warning("LDAP> Bind error %s %s", username, err)
-		return nil, err
+		return nil, sdk.WrapError(sdk.ErrUnauthorized, "LDAP bind failure: %v", err)
 	}
 
 	log.Debug("LDAP> Bind successful %s", username)
@@ -64,7 +63,7 @@ func (l *ldapAuthentication) CheckAuthentication(ctx context.Context, db gorp.Sq
 	entry, errSearch := l.Search(search, "uid", "cn", "ou", "givenName", "sn", "mail")
 	if errSearch != nil && errSearch != errUserNotFound {
 		log.Warning("LDAP> Search error %s: %s", search, errSearch)
-		return nil, errSearch
+		return nil, sdk.WrapError(sdk.ErrUnauthorized, "LDAP bind failure: %v", errSearch)
 	}
 
 	if len(entry) > 1 {

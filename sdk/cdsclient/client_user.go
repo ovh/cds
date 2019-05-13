@@ -44,7 +44,8 @@ func (c *client) UserList() ([]sdk.User, error) {
 }
 
 func (c *client) UserSignup(username, fullname, email, callback string) error {
-	u := sdk.NewUser(username)
+	u := new(sdk.User)
+	u.Username = username
 	u.Fullname = fullname
 	u.Email = email
 
@@ -98,11 +99,11 @@ func (c *client) UserReset(username, email, callback string) error {
 }
 
 func (c *client) UserConfirm(username, token string) (bool, string, error) {
-	res := sdk.UserAPIResponse{}
-	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), &res); err != nil {
-		return false, "", err
-	}
-	return true, res.Password, nil
+	//res := sdk.UserAPIResponse{}
+	//if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), &res); err != nil {
+	//	return false, "", err
+	//}
+	return true, "", nil
 }
 
 // ListAllTokens Get all tokens that an user can access

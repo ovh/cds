@@ -344,12 +344,12 @@ func (api *API) InitRouter() {
 	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
-	r.Handle("/user/import", r.POST(api.importUsersHandler, NeedAdmin(true)))
+	//r.Handle("/user/import", r.POST(api.importUsersHandler, NeedAdmin(true)))
 	r.Handle("/user/{username}", r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))
 	r.Handle("/user/{username}/groups", r.GET(api.getUserGroupsHandler, NeedUsernameOrAdmin(true)))
 	r.Handle("/user/{username}/confirm/{token}", r.GET(api.confirmUserHandler, Auth(false)))
 	r.Handle("/user/{username}/reset", r.POST(api.resetUserHandler, Auth(false)))
-	r.Handle("/auth/mode", r.GET(api.authModeHandler, Auth(false)))
+	//r.Handle("/auth/mode", r.GET(api.authModeHandler, Auth(false)))
 
 	// Workers
 	r.Handle("/worker", r.GET(api.getWorkersHandler), r.POST(api.registerWorkerHandler, Auth(false)))

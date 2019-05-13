@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	localIssuer string
+	LocalIssuer string
 	signingKey  *rsa.PrivateKey
 	verifyKey   *rsa.PublicKey
 )
 
 // Init the package by passing the signing key
 func Init(issuer string, k []byte) error {
-	localIssuer = issuer
+	LocalIssuer = issuer
 	var err error
 	signingKey, err = jwt.ParseRSAPrivateKeyFromPEM(k)
 	if err != nil {
@@ -66,7 +66,7 @@ func Regen(token *sdk.AccessToken) (string, error) {
 		ID:     token.ID,
 		Groups: sdk.GroupsToIDs(token.Groups),
 		StandardClaims: jwt.StandardClaims{
-			Issuer:    localIssuer,
+			Issuer:    LocalIssuer,
 			Subject:   token.User.Username,
 			Id:        token.ID,
 			IssuedAt:  time.Now().Unix(),
@@ -75,11 +75,14 @@ func Regen(token *sdk.AccessToken) (string, error) {
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
+	return Sign(jwtToken)
+}
+
+func Sign(jwtToken *jwt.Token) (string, error) {
 	ss, err := jwtToken.SignedString(signingKey)
 	if err != nil {
 		return "", sdk.WithStack(err)
 	}
-
 	return ss, nil
 }
 

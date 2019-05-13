@@ -1,8 +1,6 @@
 package localauthentication
 
 import (
-	"fmt"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -15,10 +13,11 @@ func Insert(db gorp.SqlExecutor, u *sdk.UserLocalAuthentication) error {
 		UserLocalAuthentication: *u,
 		EncryptedPassword:       nil,
 	}
-	dbUser.ClearPassword = ""
 	if err := gorpmapping.Encrypt(u.ClearPassword, &dbUser.EncryptedPassword, []byte(u.UserID)); err != nil {
 		return err
 	}
+
+	dbUser.ClearPassword = ""
 	err := gorpmapping.InsertAndSign(db, &dbUser)
 	return sdk.WithStack(err)
 }
@@ -51,7 +50,7 @@ func Authentify(db gorp.SqlExecutor, username, password string) (bool, error) {
 		return false, err
 	}
 	if !isValid {
-		return false, fmt.Errorf("corrupted data")
+		return false, sdk.WithStack(sdk.ErrCorruptedData)
 	}
 
 	if err := gorpmapping.Decrypt(dbLocalAuth.EncryptedPassword, &dbLocalAuth.ClearPassword, []byte(u.ID)); err != nil {
@@ -73,7 +72,7 @@ func LoadByID(db gorp.SqlExecutor, id string) (*sdk.UserLocalAuthentication, err
 		return nil, err
 	}
 	if !isValid {
-		return nil, fmt.Errorf("corrupted data")
+		return nil, sdk.WithStack(sdk.ErrCorruptedData)
 	}
 
 	var au = u.UserLocalAuthentication
