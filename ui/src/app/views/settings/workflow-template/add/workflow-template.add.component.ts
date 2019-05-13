@@ -65,13 +65,20 @@ export class WorkflowTemplateAddComponent implements OnInit {
         this._workflowService.pullWorkflow(projectKey, workflowName).subscribe(w => {
             this.projectKey = projectKey;
             this.workflowName = workflowName;
-            this.workflowTemplate = <WorkflowTemplate>{
+            let wt = <WorkflowTemplate>{
                 editable: true,
-                value: w.workflow.value,
-                pipelines: w.pipelines.map(p => <PipelineTemplate>{ value: p.value }),
-                applications: w.applications.map(a => <PipelineTemplate>{ value: a.value }),
-                environments: w.environments.map(e => <PipelineTemplate>{ value: e.value })
-            };
+                value: w.workflow.value
+            }
+            if (w.pipelines) {
+                wt.pipelines = w.pipelines.map(p => <PipelineTemplate>{ value: p.value });
+            }
+            if (w.applications) {
+                wt.applications = w.applications.map(a => <PipelineTemplate>{ value: a.value });
+            }
+            if (w.environments) {
+                wt.environments = w.environments.map(e => <PipelineTemplate>{ value: e.value });
+            }
+            this.workflowTemplate = wt;
         });
     }
 
