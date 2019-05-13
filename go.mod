@@ -72,7 +72,7 @@ require (
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
-	github.com/fsamin/go-dump v1.0.8
+	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.1
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
@@ -286,5 +286,3 @@ replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-2018083115000
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
 
 replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate
-
-replace github.com/fsamin/go-dump => github.com/richardlt/go-dump v0.0.0-20190530092628-7e74e489d264

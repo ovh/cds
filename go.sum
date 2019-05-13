@@ -148,6 +148,8 @@ github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b h1:QqmfGmPkAbYcqM
 github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b/go.mod h1:2H9hjfbpSMHwY503FclkV/lZTBh2YlOmLLSda12uL8c=
 github.com/fortytw2/leaktest v1.2.0 h1:cj6GCiwJDH7l3tMHLjZDo0QqPtrXJiWSI9JgpeQKw+Q=
 github.com/fortytw2/leaktest v1.2.0/go.mod h1:jDsjWgpAGjm2CA7WthBh/CdZYEPF31XHquHwclZch5g=
+github.com/fsamin/go-dump v1.0.9 h1:3MAneAJLnGfKTJtFEAdgrD+QqqK2Hwj7EJUQMQZcDls=
+github.com/fsamin/go-dump v1.0.9/go.mod h1:ZgKd2aOXAFFbbFuUgvQhu7mwTlI3d3qnTICMWdvAa9o=
 github.com/fsamin/go-repo v0.1.1 h1:m7x+yEPEXY+afNgdQ+gJMvEao3N5nJ6W9Tal6s0BYeg=
 github.com/fsamin/go-repo v0.1.1/go.mod h1:FjkhUwT3u2bCq7HcT+3hfMxkQhiKlfdvw91+fDHNRxo=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be h1:UhjSvwE1gxUYfekK9BXZ/LL55we9Avg+2Pt0PIlMYCk=
@@ -438,8 +440,6 @@ github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8 h1:Kh7M6mzRpQ2de
 github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
 github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5 h1:gwcdIpH6NU2iF8CmcqD+CP6+1CkRBOhHaPR+iu6raBY=
 github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/richardlt/go-dump v0.0.0-20190530092628-7e74e489d264 h1:Ud4cdT2vTG4HufT0NCK2FiNWbzxuuJRDMBSxUIanIps=
-github.com/richardlt/go-dump v0.0.0-20190530092628-7e74e489d264/go.mod h1:ZgKd2aOXAFFbbFuUgvQhu7mwTlI3d3qnTICMWdvAa9o=
 github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362 h1:lmOdpLt3XS6QyVoY6xNfOOTNWE2xtUBees+OAO+HFOg=
 github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362/go.mod h1:WS0rl9eEliYI8DPnr3TOwz4439pay+qNgzJoVya/DmY=
 github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec h1:6ncX5ko6B9LntYM0YBRXkiSaZMmLYeZ/NWcmeB43mMY=

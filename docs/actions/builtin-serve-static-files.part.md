@@ -14,4 +14,4 @@
 
 ## Notes
 
-Pay attention this action is only available if your objectstore is configured to use Openstack Swift. And fow now by default your static files will be deleted after 2 months.
+Pay attention this action is only available if your objectstore is configured to use [Openstack Swift]({{< relref "/docs/integrations/openstack/openstack_swift.md" >}}) or [AWS S3]({{< relref "/docs/integrations/aws/aws_s3.md" >}}). And for now by default your static files will be deleted after 2 months.
