@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
+	_ "github.com/ovh/symmecrypt/ciphers/hmac"
 	"github.com/ovh/symmecrypt/keyloader"
 )
 
