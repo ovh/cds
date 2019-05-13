@@ -153,7 +153,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			}
 		}
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, deprecatedGetUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, deprecatedGetUser(ctx), workflow.ImportOptions{Force: force})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
@@ -179,7 +179,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		key := vars["key"]
 		wfName := vars["permWorkflowName"]
 
-		//Load project
+		// Load project
 		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
@@ -233,7 +233,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, deprecatedGetUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, deprecatedGetUser(ctx), workflow.ImportOptions{Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 
@@ -277,13 +277,14 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		defer r.Body.Close()
 
 		log.Debug("Read %d bytes from body", len(btes))
-
 		tr := tar.NewReader(bytes.NewReader(btes))
 
 		var pushOptions *workflow.PushOption
 		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {
 			pushOptions = &workflow.PushOption{
-				FromRepository: r.Header.Get(sdk.WorkflowAsCodeHeader),
+				FromRepository:  r.Header.Get(sdk.WorkflowAsCodeHeader),
+				IsDefaultBranch: true,
+				Force:           FormBool(r, "force"),
 			}
 		}
 
@@ -301,7 +302,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, deprecatedGetUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot push workflow")
+			return err
 		}
 		msgListString := translate(r, allMsg)
 

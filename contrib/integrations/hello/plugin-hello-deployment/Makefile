@@ -56,10 +56,14 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			FILENAME=deployment-plugin-$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
-			echo "Updating plugin binary $$FILENAME"; \
-			PLUGIN_YML=$(TARGET_DIR)/plugin.yml; \
-			NAME_PLUGIN=`grep 'name:' $$PLUGIN_YML|cut -d ':' -f2;`; \
-			echo "Updating plugin $$NAME_PLUGIN with binary $$FILENAME"; \
-			cdsctl admin plugins binary-add $$NAME_PLUGIN $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$$FILENAME; \
+      if [ -f "$(TARGET_DIR)/$$FILENAME" ]; then \
+        echo "Updating plugin binary $$FILENAME"; \
+        PLUGIN_YML=$(TARGET_DIR)/plugin.yml; \
+        NAME_PLUGIN=`grep 'name:' $$PLUGIN_YML|cut -d ':' -f2;`; \
+        echo "Updating plugin $$NAME_PLUGIN with binary $$FILENAME"; \
+        cdsctl admin plugins binary-add $$NAME_PLUGIN $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$$FILENAME; \
+      else \
+        echo "$$FILENAME is missing"; \
+      fi \
 		done; \
 	done

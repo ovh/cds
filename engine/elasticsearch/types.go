@@ -5,6 +5,8 @@ import (
 	"github.com/ovh/cds/engine/service"
 )
 
+const indexNotFoundException = "index_not_found_exception"
+
 // Service is the repostories service
 type Service struct {
 	service.Common

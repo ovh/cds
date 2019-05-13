@@ -109,6 +109,7 @@
   "audit_diff": "Différences",
   "audit_context": "Contexte",
   "audit_modification_type": "Type de modification",
+  "audit_title_variable": "Audit de variable",
 
   "btn_apply": "Appliquer",
   "btn_cancel": "Annuler",
@@ -940,6 +941,7 @@
   "workflow_save_as_code_title": "Sauvegarde du workflow as code",
   "workflow_save_as_code_pending": "Envoie des modifications",
   "workflow_as_code_pr_success": "Une demande de revue a été créée :",
+  "workflow_as_code_no_edit": "Edition impossible via l'interface lorsque le mode as code est actif",
 
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
   "workflow_resync_vcs": "Resynchroniser les statuts VCS",
@@ -949,7 +951,7 @@
   "workflow_app_info_new_wf_link_pipeline": "ATTENTION. Cette action est obsolète. Vous devriez utiliser les nouveaux Workflows CDS (Projet -> Worflow) pour créer et gérer vos workflows.",
   "workflow_added": "Workflow créé",
   "workflow_run_summary": "Résumé du run",
-  "workflow_run_scheduling" : "Construction du workflow",
+  "workflow_run_scheduling": "Construction du workflow",
   "workflow_context_invalid": "JSON invalide",
   "workflow_icon": "Icône du workflow",
   "workflow_create": "Création d'un workflow",

@@ -1,29 +1,32 @@
 use super::error::Error as CdsError;
 use super::models;
+use crate::service::Service;
 
 use std::collections::HashMap;
 
 use reqwest::Client as HttpClient;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use base64;
 
 const SESSION_TOKEN_HEADER: &'static str = "Session-Token";
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
-pub struct Client<'a> {
-    pub name: &'a str, //Useful for multi instance to give a name to your instance
-    pub host: &'a str,
-    pub username: &'a str,
-    pub token: &'a str,
+pub struct Client {
+    pub name: String, //Useful for multi instance to give a name to your instance
+    pub host: String,
+    pub username: String,
+    pub token: String,
+    pub hash: String,
     pub insecure_skip_verify_tls: bool,
 }
 
-impl<'a> Client<'a> {
-    pub fn new<T: Into<&'a str>>(host: T, username: T, token: T) -> Self {
-        let host: &'a str = host.into();
+impl Client {
+    pub fn new<T: Into<String>>(host: T, username: T, token: T) -> Self {
+        let host: String = host.into();
         Client {
-            host: host,
+            host: host.clone(),
             username: username.into(),
             token: token.into(),
             insecure_skip_verify_tls: !host.starts_with("https"),
@@ -31,7 +34,7 @@ impl<'a> Client<'a> {
         }
     }
 
-    pub fn status(&self) -> Result<models::Status, CdsError> {
+    pub fn status(&self) -> Result<models::MonitoringStatus, CdsError> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), "/mon/status".to_string(), body)
     }
@@ -130,6 +133,14 @@ impl<'a> Client<'a> {
         )
     }
 
+    pub fn service_register(&self, service: &Service) -> Result<String, CdsError> {
+        self.stream_json(
+            "POST".to_string(),
+            "/services/register".to_string(),
+            service
+        ).map(|serv_resp: Service| serv_resp.hash)
+    }
+
     pub fn stream_json<T: Serialize, U: DeserializeOwned>(
         &self,
         method: String,
@@ -137,15 +148,22 @@ impl<'a> Client<'a> {
         body: T,
     ) -> Result<U, CdsError> {
         let url = format!("{}{}", self.host, path);
-        let mut resp_http = HttpClient::new()
+        let mut req_http = HttpClient::new()
             .request(reqwest::Method::from_bytes(method.as_bytes())?, &url)
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .header(reqwest::header::USER_AGENT, "CDS/sdk")
             .header("X-Requested-With", "X-CDS-SDK")
-            .header(SESSION_TOKEN_HEADER, self.token)
-            .basic_auth(self.username, Some(self.token))
-            .json(&body)
-            .send()?;
+            .header(SESSION_TOKEN_HEADER, self.token.clone());
+
+        if self.username != "" {
+            req_http = req_http.basic_auth(self.username.clone(), Some(self.token.clone()));
+        }
+        
+        if self.hash != "" {
+            req_http = req_http.header("X_AUTH_HEADER", base64::encode(&self.hash));
+        }
+        
+        let mut resp_http = req_http.json(&body).send()?;
 
         if resp_http.status().as_u16() > 400u16 {
             let mut err: CdsError = resp_http.json().map_err(CdsError::from)?;

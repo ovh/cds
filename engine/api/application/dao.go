@@ -208,14 +208,14 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, opts ...LoadOpt
 }
 
 // LoadAllNames returns all application names
-func LoadAllNames(db gorp.SqlExecutor, projID int64) ([]sdk.IDName, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 	query := `
 		SELECT application.id, application.name, application.description, application.icon
 		FROM application
 		WHERE application.project_id= $1
 		ORDER BY application.name ASC`
 
-	var res []sdk.IDName
+	var res sdk.IDNames
 	if _, err := db.Select(&res, query, projID); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil

@@ -5,7 +5,7 @@
 image:
   registry: docker.io
   repository: ovhcom/cds-engine
-  tag: 0.38.1
+  tag: 0.39.2
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -20,6 +20,16 @@ image:
 
 cdsUsername: cds
 logLevel: info
+
+rbac:
+  create: true
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
 
 ## Default: random 64 character string
 #apiAuthSharedinfratoken: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
@@ -162,7 +172,7 @@ ui:
   image:
     registry: docker.io
     repository: ovhcom/cds-ui
-    tag: 0.38.1
+    tag: 0.39.2
   logLevel: info
   baseUrl: /
   api.livenessProbe:

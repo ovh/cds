@@ -66,7 +66,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)), r.GET(api.getProfileHandler, NeedAdmin(true)))
-	r.Handle("/admin/plugin", r.POST(api.postPGRPCluginHandler, NeedAdmin(true)), r.GET(api.getAllGRPCluginHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin", r.POST(api.postGRPCluginHandler, NeedAdmin(true)), r.GET(api.getAllGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}", r.GET(api.getGRPCluginHandler, NeedAdmin(true)), r.PUT(api.putGRPCluginHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary", r.POST(api.postGRPCluginBinaryHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, Auth(false)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
@@ -197,8 +197,10 @@ func (api *API) InitRouter() {
 
 	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler, EnableTracing()), r.GET(api.getWorkflowsHandler, AllowProvider(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler, AllowProvider(true), EnableTracing()), r.PUT(api.putWorkflowHandler, EnableTracing()), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/icon", r.PUT(api.putWorkflowIconHandler), r.DELETE(api.deleteWorkflowIconHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/{uuid}", r.GET(api.getWorkflowAsCodeHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode", r.POST(api.postWorkflowAsCodeHandler, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/resync/pr", r.POST(api.postResyncPRWorkflowAsCodeHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label", r.POST(api.postWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label/{labelID}", r.DELETE(api.deleteWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/rollback/{auditID}", r.POST(api.postWorkflowRollbackHandler))
@@ -330,7 +332,7 @@ func (api *API) InitRouter() {
 
 	// config
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(false)))
-	r.Handle("/config/vcs", r.GET(api.ConfigVCShandler, NeedService()))
+	r.Handle("/config/vcs", r.GET(api.ConfigVCShandler))
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))

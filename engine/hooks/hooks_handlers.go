@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -399,12 +400,12 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 		}
 
 		for _, hook := range hooks {
-			if hook.UUID != "" {
-				if err := s.deleteTask(ctx, &hook); err != nil {
-					log.Warning("Hooks> postTaskBulkHandler cannot delete task %s : %v", hook.UUID, err)
+			err := s.updateTask(ctx, &hook)
+			if err == errNoTask {
+				if err := s.addTask(ctx, &hook); err != nil {
+					return sdk.WithStack(err)
 				}
-			}
-			if err := s.addTask(ctx, &hook); err != nil {
+			} else if err != nil {
 				return sdk.WithStack(err)
 			}
 		}
@@ -445,6 +446,36 @@ func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun)
 	}
 
 	return t, *e, nil
+}
+
+var errNoTask = errors.New("task not found")
+
+func (s *Service) updateTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
+	//Parse the hook as a task
+	t, err := s.hookToTask(h)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to parse hook")
+	}
+
+	task := s.Dao.FindTask(t.UUID)
+	if task == nil {
+		return errNoTask
+	}
+
+	task.Config = t.Config
+	_ = s.stopTask(t)
+	execs, _ := s.Dao.FindAllTaskExecutions(t)
+	for _, e := range execs {
+		if e.Status == TaskExecutionScheduled {
+			s.Dao.DeleteTaskExecution(&e)
+		}
+	}
+	if _, err := s.startTask(ctx, t); err != nil {
+		return sdk.WrapError(err, "Unable start task %+v", t)
+	}
+	// Save the task
+	s.Dao.SaveTask(t)
+	return nil
 }
 
 func (s *Service) deleteTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {

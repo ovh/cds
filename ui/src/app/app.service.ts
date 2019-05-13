@@ -260,7 +260,7 @@ export class AppService {
         this.store.selectOnce(WorkflowsState)
             .pipe(filter((wfs) => wfs != null))
             .subscribe((wfs: WorkflowsStateModel) => {
-                const wfKey = event.project_key + '-' + event.workflow_name;
+                const wfKey = `${event.project_key}/${event.workflow_name}`;
                 if (!wfs || !wfs.workflows || !wfs.workflows[wfKey]) {
                     return;
                 }

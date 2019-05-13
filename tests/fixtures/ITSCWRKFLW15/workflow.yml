@@ -1,0 +1,5 @@
+name: ITSCWRKFLW15-WORKFLOW
+version: v1.0
+pipeline: ITSCWRKFLW15-PIPELINE
+application: ITSCWRKFLW15-APPLICATION
+integration: hello-it-dev

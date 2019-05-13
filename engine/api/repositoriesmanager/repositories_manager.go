@@ -84,7 +84,7 @@ func GetProjectVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 	return nil
 }
 
-// NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs uservices calls
+// NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs µServices calls
 func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
@@ -398,7 +398,11 @@ func (c *vcsClient) PullRequestCreate(ctx context.Context, fullname string, pr s
 func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
 	_, err := c.doJSONRequest(ctx, "POST", path, hook, hook)
-	return sdk.WrapError(err, "unable to create hook on repository %s from %s", fullname, c.name)
+	if err != nil {
+		log.Error("CreateHook> %v", err)
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to create hook on repository %s from %s", fullname, c.name)
+	}
+	return nil
 }
 
 func (c *vcsClient) GetHook(ctx context.Context, fullname, u string) (sdk.VCSHook, error) {
@@ -531,7 +535,7 @@ func (c *vcsClient) ListStatuses(ctx context.Context, repo string, ref string) (
 	return statuses, nil
 }
 
-func (c *vcsClient) GrantReadPermission(ctx context.Context, repo string) error {
+func (c *vcsClient) GrantWritePermission(ctx context.Context, repo string) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/grant", c.name, repo)
 	if _, err := c.doJSONRequest(ctx, "POST", path, nil, nil); err != nil {
 		return sdk.WithStack(err)

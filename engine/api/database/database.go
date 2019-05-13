@@ -124,6 +124,12 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 	f.Database.SetMaxOpenConns(f.DBMaxConn)
 	f.Database.SetMaxIdleConns(int(f.DBMaxConn / 2))
 
+	log.Debug("database> setting statement_timeout %d on database", f.DBTimeout)
+	if _, err := f.Database.Exec(fmt.Sprintf("SET statement_timeout = %d", f.DBTimeout)); err != nil {
+		log.Error("unable to set statement_timeout with %d on database: %s", f.DBTimeout, err)
+		return nil, sdk.WrapError(err, "unable to set statement_timeout with %d", f.DBTimeout)
+	}
+
 	// Set role if specified
 	if role != "" {
 		log.Debug("database> setting role %s on database", role)
@@ -137,7 +143,7 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 }
 
 func (f *DBConnectionFactory) dsn() string {
-	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d statement_timeout=%d", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout)
+	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout)
 }
 
 // Status returns database driver and status in a printable string

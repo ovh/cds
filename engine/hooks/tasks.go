@@ -390,6 +390,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
 		//Populate next execution
 		hs, err = s.doPollerTaskExecution(t, e)
+		doRestart = true
 	case e.ScheduledTask != nil && e.Type == TypeBranchDeletion:
 		_, err = s.doBranchDeletionTaskExecution(e)
 	case e.Kafka != nil && e.Type == TypeKafka:

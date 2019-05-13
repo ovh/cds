@@ -95,7 +95,7 @@ https://ovh.github.io/cds/
 
 ## Download
 
-You'll find last release of CDS ` + "`engine`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+You will find lastest release of CDS ` + "`engine`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
 `,
 }
 
@@ -133,18 +133,18 @@ var configNewCmd = &cobra.Command{
 	Use:   "new",
 	Short: "CDS configuration file assistant",
 	Long: `
-# generate the whole configuration file
+Generate the whole configuration file
 	$ engine config new > conf.toml
 
-# you can compose your file configuration
-# this will generate a file configuration containing
-# api and hatchery:local µService
+you can compose your file configuration
+this will generate a file configuration containing
+api and hatchery:local µService
 	$ engine config new api hatchery:local
 
-# For advanced usage, Debug and Tracing section can be generated as:
+For advanced usage, Debug and Tracing section can be generated as:
 	$ engine config new debug tracing [µService(s)...]
 
-# All options
+All options
 	$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
 
 `,
@@ -212,32 +212,6 @@ var configNewCmd = &cobra.Command{
 
 		if conf.VCS != nil {
 			conf.VCS.API.Token = sharedInfraToken
-			conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
-			conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
-				URL: "https://github.com",
-				Github: &vcs.GithubServerConfiguration{
-					ClientID:     "xxxx",
-					ClientSecret: "xxxx",
-				},
-			}
-			conf.VCS.Servers["Bitbucket"] = vcs.ServerConfiguration{
-				URL: "https://mybitbucket.com",
-				Bitbucket: &vcs.BitbucketServerConfiguration{
-					ConsumerKey: "xxx",
-					PrivateKey:  "xxx",
-				},
-			}
-			conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
-				URL: "https://gitlab.com",
-				Gitlab: &vcs.GitlabServerConfiguration{
-					AppID:  "xxxx",
-					Secret: "xxxx",
-				},
-			}
-			conf.VCS.Servers["Gerrit"] = vcs.ServerConfiguration{
-				URL:    "http://localhost:8080",
-				Gerrit: &vcs.GerritServerConfiguration{},
-			}
 		}
 
 		if !configNewAsEnvFlag {

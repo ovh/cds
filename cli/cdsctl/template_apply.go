@@ -237,7 +237,7 @@ func templateApplyRun(v cli.Values) error {
 			}
 
 			for _, vcs := range p.VCSServers {
-				rs, err := client.RepositoriesList(p.Key, vcs.Name)
+				rs, err := client.RepositoriesList(p.Key, vcs.Name, false)
 				if err != nil {
 					return err
 				}

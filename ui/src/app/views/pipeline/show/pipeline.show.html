@@ -1,19 +1,13 @@
 <div *ngIf="pipeline;then showPipeline; else loadPipeline"></div>
 <ng-template #showPipeline>
     <div id="PipelineShow">
-        <app-project-breadcrumb [project]="project"
-                        [pipeline]="pipeline"
-                        [application]="application"
-                        [workflow]="workflowName"
-                        [version]="version"
-                        [buildNumber]="buildNumber"
-                        [envName]="envName"
-                        [remote]="remote"
-                        [branch]="branch">
+        <app-project-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application"
+            [workflow]="workflowName" [version]="version" [buildNumber]="buildNumber" [envName]="envName"
+            [remote]="remote" [branch]="branch">
             <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
-                <a class="ui label small basic" [class.green]="pipeline && pipeline.from_repository"
-                   suiPopup [popupTemplate]="popupFromRepository"
-                   popupPlacement="bottom right" popupTrigger="outsideClick" #popup="suiPopup">
+                <a class="ui label small basic" [class.green]="pipeline && pipeline.from_repository" suiPopup
+                    [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
+                    #popup="suiPopup">
                     <i class="code icon"></i>as code
                 </a>
                 <ng-template let-popup #popupFromRepository>
@@ -29,7 +23,8 @@
                             <div class="footer">
                                 <div>
                                     <div class="ui list">
-                                        <a class="item" target="_blank" href="https://ovh.github.io/cds/gettingstarted/init_workflow_with_cdsctl">
+                                        <a class="item" target="_blank"
+                                            href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">
                                             {{'common_read_more'| translate}}
                                         </a>
                                     </div>
@@ -49,13 +44,15 @@
                 <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')">
                     <i class="font icon"></i>{{ 'common_parameters' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0" (click)="usageCount > 0 && showTab('usage')">
+                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0"
+                    (click)="usageCount > 0 && showTab('usage')">
                     <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'audits'" (click)="showTab('audits')">
                     <i class="history icon"></i>{{'common_audit' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="pipeline.permission === 7">
+                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')"
+                    *ngIf="pipeline.permission === 7">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
             </sm-menu>
@@ -65,20 +62,27 @@
             <div class="paddingContent">
                 <div class="viewContent" [ngSwitch]="selectedTab">
                     <div *ngSwitchCase="'pipeline'">
-                        <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline" [queryParams]="queryParams"></app-pipeline-workflow>
+                        <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline"
+                            [queryParams]="queryParams"></app-pipeline-workflow>
                     </div>
                     <div *ngSwitchCase="'parameters'">
                         <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
-                        <app-parameter-list (event)="parameterEvent($event)" [project]="project" [parameters]="pipeline.parameters" [keys]="keys" [mode]="pipeline.permission === 7? 'edit': 'ro'"></app-parameter-list>
+                        <app-parameter-list (event)="parameterEvent($event)" [project]="project"
+                            [parameters]="pipeline.parameters" [keys]="keys"
+                            [mode]="pipeline.permission === 7? 'edit': 'ro'"></app-parameter-list>
                         <ng-container *ngIf="pipeline.permission === 7">
                             <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
-                            <app-parameter-form [project]="project" [loading]="paramFormLoading" (createParameterEvent)="parameterEvent($event)" [keys]="keys"></app-parameter-form>
+                            <app-parameter-form [project]="project" [loading]="paramFormLoading"
+                                (createParameterEvent)="parameterEvent($event)" [keys]="keys"></app-parameter-form>
                         </ng-container>
-                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)" #paramWarning></app-warning-modal>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')"
+                            [msg]="_translate.instant('warning_modal_body')" (event)="parameterEvent($event, true)"
+                            #paramWarning></app-warning-modal>
 
                     </div>
                     <div *ngSwitchCase="'usage'">
-                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows" [environments]="environments"></app-usage>
+                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows"
+                            [environments]="environments"></app-usage>
                     </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
@@ -91,10 +95,7 @@
         </div>
     </div>
     <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && pipeline != null">
-        <app-pipeline-ascode-editor
-            [project]="project"
-            [pipeline]="pipeline"
-            [open]="asCodeEditorOpen">
+        <app-pipeline-ascode-editor [project]="project" [pipeline]="pipeline" [open]="asCodeEditorOpen">
         </app-pipeline-ascode-editor>
     </section>
 </ng-template>

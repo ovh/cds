@@ -1368,7 +1368,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 403, rec.Code)
+	assert.Equal(t, 404, rec.Code)
 }
 
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
@@ -1438,7 +1438,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 403, rec.Code)
+	assert.Equal(t, 404, rec.Code)
 }
 
 func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk.User, string, *sdk.Project,

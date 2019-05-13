@@ -227,7 +227,6 @@ describe('Pipelines', () => {
         let audit = new PipelineAudit();
         audit.action = 'update';
         audit.pipeline = new Pipeline();
-        audit.user = new User();
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline/pip1/audits';
         })).flush([audit]);

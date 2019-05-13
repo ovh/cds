@@ -28,6 +28,43 @@ github.com/araddon/gou
 github.com/armon/consul-api
 # github.com/artyom/untar v0.0.0-20160228112026-02ed5a2449a6
 github.com/artyom/untar
+# github.com/aws/aws-sdk-go v1.19.11
+github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/credentials
+github.com/aws/aws-sdk-go/aws/session
+github.com/aws/aws-sdk-go/service/s3
+github.com/aws/aws-sdk-go/service/s3/s3manager
+github.com/aws/aws-sdk-go/aws/awserr
+github.com/aws/aws-sdk-go/aws/endpoints
+github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/ini
+github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/aws/client
+github.com/aws/aws-sdk-go/aws/corehandlers
+github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/stscreds
+github.com/aws/aws-sdk-go/aws/csm
+github.com/aws/aws-sdk-go/aws/defaults
+github.com/aws/aws-sdk-go/aws/request
+github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/client/metadata
+github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/s3err
+github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/eventstream
+github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi
+github.com/aws/aws-sdk-go/private/protocol/rest
+github.com/aws/aws-sdk-go/private/protocol/restxml
+github.com/aws/aws-sdk-go/service/s3/s3iface
+github.com/aws/aws-sdk-go/internal/sdkrand
+github.com/aws/aws-sdk-go/service/sts
+github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
+github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
+github.com/aws/aws-sdk-go/aws/ec2metadata
+github.com/aws/aws-sdk-go/private/protocol/query
+github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+github.com/aws/aws-sdk-go/internal/sdkuri
+github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 # github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a
 github.com/beorn7/perks/quantile
 # github.com/bgentry/speakeasy v0.0.0-20160813190634-a1ccbf2c40df
@@ -247,7 +284,7 @@ github.com/google/gops/signal
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
-# github.com/gophercloud/gophercloud v0.0.0-20181102031606-aa00757ee3ab
+# github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks
@@ -309,6 +346,8 @@ github.com/inconshreveable/mousetrap
 github.com/itsjamie/gin-cors
 # github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2
 github.com/jgsqware/xnet
+# github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
+github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v1.1.5
 github.com/json-iterator/go
 # github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f
@@ -526,6 +565,8 @@ github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/debug
 github.com/vmware/govmomi/vim25/xml
+# github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
+github.com/whilp/git-urls
 # github.com/xanzy/go-gitlab v0.15.0
 github.com/xanzy/go-gitlab
 # github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076
@@ -568,7 +609,7 @@ go.opencensus.io/internal
 go.opencensus.io/internal/tagencoding
 go.opencensus.io/trace/internal
 go.opencensus.io
-# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+# golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ssh
 golang.org/x/crypto/openpgp
@@ -585,7 +626,7 @@ golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
-# golang.org/x/net v0.0.0-20190313220215-9f648a60d977
+# golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http2
@@ -602,18 +643,20 @@ golang.org/x/oauth2/internal
 golang.org/x/oauth2/google
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
+# golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
+# golang.org/x/sys v0.0.0-20190502175342-a43fa875dd82
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/cpu
 golang.org/x/sys/windows/registry
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.2
 golang.org/x/text/language
-golang.org/x/text/internal/tag
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+golang.org/x/text/internal/tag
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 # golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
@@ -693,7 +736,7 @@ gopkg.in/square/go-jose.v2/json
 gopkg.in/testfixtures.v2
 # gopkg.in/urfave/cli.v1 v1.18.1
 gopkg.in/urfave/cli.v1
-# gopkg.in/yaml.v2 v2.2.1
+# gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
 # k8s.io/api v0.0.0-20181204000039-89a74a8d264d
 k8s.io/api/core/v1

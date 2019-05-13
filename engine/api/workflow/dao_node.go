@@ -228,7 +228,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		log.Debug("inserting outgoing hook %+v", h)
 		//Insert the hook
 		if err := insertOutgoingHook(db, store, w, n, h, u); err != nil {
-			return sdk.WrapError(err, "unable to insert workflow node hook")
+			return sdk.WrapError(err, "unable to insert workflow node outgoing hook")
 		}
 	}
 
@@ -567,7 +567,7 @@ func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode) er
 	if node == nil {
 		return nil
 	}
-	log.Debug("deleteNode> Delete node %d", node.ID)
+	log.Debug("deleteNode> Delete node %d %s", node.ID, node.Name)
 
 	dbwn := Node(*node)
 	if _, err := db.Delete(&dbwn); err != nil {
