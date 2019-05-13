@@ -29,15 +29,6 @@ func newStep(act sdk.Action) Step {
 	case sdk.BuiltinAction:
 		switch act.Name {
 		case sdk.ScriptAction:
-			// TODO use type for step script
-			/*
-			   var step StepScript
-			   script := sdk.ParameterFind(&act.Parameters, "script")
-			   if script != nil {
-			     step = StepScript(strings.SplitN(script.Value, "\n", -1))
-			   }
-			   s.Script = &step
-			*/
 			script := sdk.ParameterFind(&act.Parameters, "script")
 			if script != nil {
 				s.Script = strings.SplitN(script.Value, "\n", -1)
@@ -267,9 +258,6 @@ type StepParameters map[string]string
 // StepCustom represents exported custom step.
 type StepCustom map[string]StepParameters
 
-// StepScript represents exported script step.
-type StepScript []string
-
 // StepCoverage represents exported coverage step.
 type StepCoverage struct {
 	Format  string `json:"format,omitempty" yaml:"format,omitempty"`
@@ -351,10 +339,8 @@ type Step struct {
 	Optional       *bool  `json:"optional,omitempty" yaml:"optional,omitempty"`
 	AlwaysExecuted *bool  `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
 	// step specific data, only one option should be set
-	StepCustom `json:"-" yaml:",inline"`
-	// TODO use type for script
-	//Script           *StepScript           `json:"script,omitempty" yaml:"script,omitempty" jsonschema_description:"Script.\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
-	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"-"`
+	StepCustom       `json:"-" yaml:",inline"`
+	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"-" jsonschema_description:"Script.\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
 	Coverage         *StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty" jsonschema_description:"Parse coverage report.\nhttps://ovh.github.io/cds/docs/actions/builtin-coverage"`
 	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema_description:"Download artifacts in workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-download"`
 	// TODO use type for artifact upload
