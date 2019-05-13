@@ -157,12 +157,13 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: workflow
-        })).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                this.hasModification = false;
-                event.gp.updating = false;
-                this._toast.success('', this._translate.instant('permission_updated'));
-            });
+        })).pipe(finalize(() => {
+            this.loading = false;
+            event.gp.updating = false;
+        })).subscribe(() => {
+            this.hasModification = false;
+            this._toast.success('', this._translate.instant('permission_updated'));
+        });
     }
 
     pushChange(b: boolean): void {

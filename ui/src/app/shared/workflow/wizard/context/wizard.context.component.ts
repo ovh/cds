@@ -105,7 +105,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         this.node.context.environment_id = Number(this.node.context.environment_id);
         this.node.context.pipeline_id = Number(this.node.context.pipeline_id);
 
-        let appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name
+        let appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name;
         if (appName && appName !== ' ') {
             this._appService.getDeploymentStrategies(this.project.key, appName).pipe(
                 first(),

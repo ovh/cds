@@ -25,7 +25,7 @@ import {
     GetWorkflowRun,
     UpdateWorkflowRunList
 } from './store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from './store/workflow.state';
+import { WorkflowState } from './store/workflow.state';
 
 @Injectable()
 export class AppService {
@@ -257,14 +257,10 @@ export class AppService {
             return
         }
         this._store.selectOnce(WorkflowState)
-            .pipe(filter((wf) => wf != null))
-            .subscribe((wfs: WorkflowStateModel) => {
-                if (!wfs || !wfs.workflow ) {
-                    return;
-                }
-                if (wfs.projectKey !== event.project_key || wfs.workflow.name !== event.workflow_name) {
-                    return;
-                }
+            .pipe(
+                filter((wf) => wf != null && !wf.workflow
+                    && (wf.projectKey !== event.project_key || wf.workflow.name !== event.workflow_name)))
+            .subscribe(() => {
                 if (event.type_event === EventType.WORKFLOW_DELETE) {
                     this._store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name }));
                     return;
@@ -313,9 +309,7 @@ export class AppService {
                     this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)
                         .pipe(first())
-                        .subscribe(wr => {
-                        this._store.dispatch(new UpdateWorkflowRunList({workflowRun: wr}));
-                    });
+                        .subscribe(wr => this._store.dispatch(new UpdateWorkflowRunList({workflowRun: wr})));
                 }
                 break;
             case EventType.RUN_WORKFLOW_NODE:

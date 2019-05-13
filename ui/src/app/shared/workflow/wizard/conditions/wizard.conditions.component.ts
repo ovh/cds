@@ -10,7 +10,7 @@ import {WorkflowService} from 'app/service/workflow/workflow.service';
 import {Table} from 'app/shared/table/table';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {UpdateWorkflow} from 'app/store/workflow.action';
-import {cloneDeep} from 'lodash';
+import {cloneDeep, uniqBy} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
 
 @Component({
@@ -41,9 +41,9 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 this.isAdvanced = false;
             }
 
-            let c = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
-            if (c) {
-                c.value = <any>(c.value !== 'false');
+            let condition = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
+            if (condition) {
+                condition.value = <any>(condition.value !== 'false');
             }
 
         }
@@ -93,9 +93,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 finalize(() => this.loadingConditions = false)
             )
             .subscribe(wtc => {
-                this.operators = [];
-                Object.keys(wtc.operators).forEach( (k, v, i) => {
-                    this.operators.push({key: k, value: wtc.operators[k]});
+                this.operators = Object.keys(wtc.operators).map(k => {
+                    return {key: k, value: wtc.operators[k]};
                 });
                 this.conditionNames = wtc.names;
             });
@@ -119,7 +118,9 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         } else {
             this.editableNode.context.conditions.lua_script = '';
             let sizeBefore = this.editableNode.context.conditions.plain.length;
-            let tmp = this.getUnique(this.editableNode.context.conditions.plain, 'variable');
+
+
+            let tmp = uniqBy(this.editableNode.context.conditions.plain, 'variable');
             let sizeAfter = tmp.length;
             if (sizeAfter !== sizeBefore) {
                 this._toast.error('Conflict', this._translate.instant('workflow_node_condition_duplicate'));
@@ -128,7 +129,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
             this.editableNode.context.conditions.plain = tmp;
 
-            let emptyConditions = this.editableNode.context.conditions.plain.findIndex(c => (!c.variable || c.variable === ''))
+            let emptyConditions = this.editableNode.context.conditions.plain.findIndex(c => !c.variable)
             if (emptyConditions > -1) {
                 this._toast.error('Forbidden', this._translate.instant('workflow_node_condition_empty'));
                 this.loading = false;
@@ -151,16 +152,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 this.conditionsChange.emit(false);
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });
-    }
-
-    getUnique(arr, comp): Array<WorkflowNodeCondition> {
-        const unique = arr
-            .map(e => e[comp])
-            // store the keys of the unique objects
-            .map((e, i, final) => final.indexOf(e) === i && i)
-            // eliminate the dead keys & store unique objects
-            .filter(e => arr[e]).map(e => arr[e]);
-        return unique;
     }
 
     pushChange(event: string): void {

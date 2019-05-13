@@ -50,7 +50,7 @@ export class WorkflowNodeHookComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+        this.subSelect = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.readonly = !s.canEdit;
             this.workflowRun = s.workflowRun;
             if (this.workflowRun && this.node && this.workflowRun.nodes
@@ -83,7 +83,7 @@ export class WorkflowNodeHookComponent implements OnInit {
                 this._store.dispatch(new OpenEditModal({
                     node: this.node,
                     hook: this.hook
-                })).subscribe(() => {});
+                }));
                 break;
             case 'delete':
                 if (this.deleteHookModal) {

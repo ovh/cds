@@ -52,8 +52,7 @@ export class WorkflowWNodeComponent implements OnInit {
     readonly = true;
 
     // Subscription
-    subNodeRun: Subscription;
-    subWorkflowRun: Subscription;
+    sub: Subscription;
 
     zone = new NgZone({});
 
@@ -79,7 +78,7 @@ export class WorkflowWNodeComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+        this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.readonly = !s.canEdit;
             if (s.workflowRun) {
                 if (this.workflowRun && this.workflowRun.id !== s.workflowRun.id) {
@@ -158,7 +157,7 @@ export class WorkflowWNodeComponent implements OnInit {
                 this._store.dispatch(new OpenEditModal({
                     node: this.node,
                     hook: null
-                })).subscribe(() => {});
+                }));
                 break;
             case 'hook':
                 this.openAddHookModal();
