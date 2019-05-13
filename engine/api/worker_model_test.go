@@ -887,7 +887,115 @@ func Test_updateWorkerModel(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
+}
 
+func Test_updateWorkerModelWithPassword(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
+	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	//Create group
+	g := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+
+	//Create user
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
+
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	model := sdk.Model{
+		Name:       "Test1",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
+		Restricted: true,
+		ModelDocker: sdk.ModelDocker{
+			Image:    "buildpack-deps:jessie",
+			Shell:    "sh -c",
+			Cmd:      "worker",
+			Private:  true,
+			Username: "test",
+			Password: "testpw",
+		},
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa1",
+				Type:  sdk.BinaryRequirement,
+				Value: "1",
+			},
+		},
+	}
+
+	//Prepare request
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	t.Logf("Body: %s", w.Body.String())
+
+	json.Unmarshal(w.Body.Bytes(), &model)
+
+	model2 := sdk.Model{
+		Name:       "Test1bis",
+		Restricted: true,
+		ModelDocker: sdk.ModelDocker{
+			Image:    "buildpack-deps:jessie",
+			Cmd:      "worker",
+			Shell:    "sh -c",
+			Private:  true,
+			Username: "test",
+			Password: sdk.PasswordPlaceholder,
+		},
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa1",
+				Type:  sdk.BinaryRequirement,
+				Value: "1",
+			},
+			{
+				Name:  "capa2",
+				Type:  sdk.BinaryRequirement,
+				Value: "2",
+			},
+		},
+	}
+
+	//Prepare request
+	vars := map[string]string{
+		"permModelID": fmt.Sprintf("%d", model.ID),
+	}
+	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
+
+	//Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	var resp sdk.Model
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	test.Equal(t, sdk.PasswordPlaceholder, resp.ModelDocker.Password, "Worker model should not return password, but placeholder")
+
+	wm, errL := worker.LoadWorkerModelByIDWithPassword(api.mustDB(), resp.ID)
+	test.NoError(t, errL)
+
+	pw, errPw := worker.DecryptValue(wm.ModelDocker.Password)
+	test.NoError(t, errPw)
+
+	test.Equal(t, "testpw", pw)
 }
 
 func Test_deleteWorkerModel(t *testing.T) {
