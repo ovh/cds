@@ -34,11 +34,11 @@ Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsct
 	Flags: []cli.Flag{
 		{
 			Name:  "repository-url",
-			Usage: "(Optionnal) Set the repository remote URL. Default is the fetch URL",
+			Usage: "(Optional) Set the repository remote URL. Default is the fetch URL",
 		},
 		{
 			Name:  "repository-fullname",
-			Usage: "(Optionnal) Set the repository fullname defined in repository manager",
+			Usage: "(Optional) Set the repository fullname defined in repository manager",
 		},
 		{
 			Name:  "repository-ssh-key",
@@ -50,7 +50,15 @@ Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsct
 		},
 		{
 			Name:  "pipeline",
-			Usage: "(Optionnal) Set the root pipeline you want to use. If empty it will propose you to reuse of create a pipeline.",
+			Usage: "(Optional) Set the root pipeline you want to use. If empty it will propose you to reuse of create a pipeline.",
+		},
+		{
+			Name:  "application",
+			Usage: "(Optional) Set the application name. If empty, it will deduce application name from the repository.",
+		},
+		{
+			Name:  "workflow",
+			Usage: "(Optional) Set the workflow name. If empty, it will deduce workflow name from the repository.",
 		},
 		{
 			Name:      "yes",
@@ -347,10 +355,11 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 			} else {
 				// ask for ssh key, if not selected or no existing key create a new one.
 				if len(projectSSHKeys) > 1 {
-					opts := make([]string, len(projectPGPKeys)+1)
-					opts[0] = "Use a new SSH key"
+					var opts = []string{
+						"Use a new SSH key",
+					}
 					for i := range projectSSHKeys {
-						opts[i+1] = projectSSHKeys[i].Name
+						opts = append(opts, projectSSHKeys[i].Name)
 					}
 					selected := cli.MultiChoice("Select a SSH key to use in application VCS strategy", opts...)
 					if selected > 0 {
@@ -494,12 +503,21 @@ func workflowInitRun(c cli.Values) error {
 			return err
 		}
 
+		if c.GetString("application") != "" {
+			appName = c.GetString("application")
+		}
+
 		pipName, existingPip, err := interactiveChoosePipeline(pkey, c.GetString("pipeline"))
 		if err != nil {
 			return err
 		}
 
-		wFilePath, err := craftWorkflowFile(repoShortname, appName, pipName, dotCDS)
+		workflowName := repoShortname
+		if c.GetString("workflow") != "" {
+			workflowName = c.GetString("workflow")
+		}
+
+		wFilePath, err := craftWorkflowFile(workflowName, appName, pipName, dotCDS)
 		if err != nil {
 			return err
 		}

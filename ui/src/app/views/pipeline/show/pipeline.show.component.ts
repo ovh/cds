@@ -46,7 +46,7 @@ export class PipelineShowComponent implements OnInit {
     currentUser: User;
     usageCount = 0;
 
-    // optionnal application data
+    // optional application data
     workflowName: string;
     application: Application;
     version: string;
