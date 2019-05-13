@@ -88,6 +88,10 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                             case 'outgoinghook':
                                 this.selected = 'outgoinghook';
                                 break;
+                            case 'join':
+                            case 'fork':
+                                this.selected = 'conditions';
+                                break;
                             default:
                                 this.selected = 'context';
                         }

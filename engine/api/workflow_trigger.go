@@ -48,23 +48,17 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			}
 		}
 
-		refNode := wf.WorkflowData.NodeByID(id)
-		if refNode == nil {
-			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
-		}
-
 		params := []sdk.Parameter{}
-		// If there is a workflow run, try to get build parameter from it
+		var refNode *sdk.Node
 		if wr != nil {
+			refNode = wr.Workflow.WorkflowData.NodeByID(id)
 			var errp error
 			params, errp = workflow.NodeBuildParametersFromRun(*wr, id)
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
 			}
-		}
-
-		// If node node found in last workflow run
-		if len(params) == 0 {
+		} else {
+			refNode = wf.WorkflowData.NodeByID(id)
 			var errp error
 			ancestorIds := refNode.Ancestors(wf.WorkflowData)
 			params, errp = workflow.NodeBuildParametersFromWorkflow(ctx, api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
@@ -83,7 +77,11 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			}
 		}
 
-		if refNode.IsLinkedToRepo(wf) {
+		if refNode == nil {
+			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+		}
+
+		if (wr == nil && refNode.IsLinkedToRepo(wf)) || (wr != nil && refNode.IsLinkedToRepo(&wr.Workflow)) {
 			if sdk.ParameterFind(&params, "git.repository") == nil {
 				data.ConditionNames = append(data.ConditionNames, "git.repository")
 				data.ConditionNames = append(data.ConditionNames, "git.branch")
