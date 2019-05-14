@@ -12,7 +12,8 @@ type Stage struct {
 	BuildOrder    int                    `json:"build_order"`
 	Enabled       bool                   `json:"enabled"`
 	RunJobs       []WorkflowNodeJobRun   `json:"run_jobs"`
-	Prerequisites []Prerequisite         `json:"prerequisites"`
+	Prerequisites []Prerequisite         `json:"prerequisites"` //TODO: to delete
+	Conditions    WorkflowNodeConditions `json:"conditions"`
 	LastModified  int64                  `json:"last_modified"`
 	Jobs          []Job                  `json:"jobs"`
 	Status        Status                 `json:"status"`
@@ -48,7 +49,7 @@ func (s Stage) ToSummary() StageSummary {
 }
 
 // Conditions returns stage prerequisites as a set of WorkflowTriggerCondition regex
-func (s *Stage) Conditions() []WorkflowNodeCondition {
+func (s *Stage) PlainConditions() []WorkflowNodeCondition {
 	res := make([]WorkflowNodeCondition, len(s.Prerequisites))
 	for i, p := range s.Prerequisites {
 		if !strings.HasPrefix(p.Parameter, "workflow.") && !strings.HasPrefix(p.Parameter, "git.") {

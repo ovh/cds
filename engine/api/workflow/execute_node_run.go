@@ -332,12 +332,8 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	report := new(ProcessorReport)
 
 	_, next := observability.Span(ctx, "sdk.WorkflowCheckConditions")
-	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
+	conditionsOK := checkNodeRunCondition(wr, stage.Conditions, run.BuildParameters)
 	next()
-	if err != nil {
-		return report, sdk.WrapError(err, "cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
-	}
-
 	if !conditionsOK {
 		stage.Status = sdk.StatusSkipped
 	}

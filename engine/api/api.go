@@ -783,6 +783,9 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.CleanArtifactBuiltinActions(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
+	migrate.Add(sdk.Migration{Name: "StageConditions", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.StageConditions(a.Cache, a.DBConnectionFactory.GetDBMap)
+	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 			return migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache)
