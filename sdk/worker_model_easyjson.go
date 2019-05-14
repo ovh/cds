@@ -1170,6 +1170,14 @@ func easyjson1c3bd83cDecodeGithubComOvhCdsSdk2(in *jlexer.Lexer, out *ModelDocke
 		switch key {
 		case "image":
 			out.Image = string(in.String())
+		case "private":
+			out.Private = bool(in.Bool())
+		case "registry":
+			out.Registry = string(in.String())
+		case "username":
+			out.Username = string(in.String())
+		case "password":
+			out.Password = string(in.String())
 		case "memory":
 			out.Memory = int64(in.Int64())
 		case "envs":
@@ -1219,6 +1227,46 @@ func easyjson1c3bd83cEncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in ModelDock
 			out.RawString(prefix)
 		}
 		out.String(string(in.Image))
+	}
+	if in.Private {
+		const prefix string = ",\"private\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Private))
+	}
+	if in.Registry != "" {
+		const prefix string = ",\"registry\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Registry))
+	}
+	if in.Username != "" {
+		const prefix string = ",\"username\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Username))
+	}
+	if in.Password != "" {
+		const prefix string = ",\"password\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Password))
 	}
 	if in.Memory != 0 {
 		const prefix string = ",\"memory\":"

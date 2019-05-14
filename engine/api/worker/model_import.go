@@ -31,7 +31,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *export
 	}
 
 	// check if a model already exists for given info, if exists but not force update returns an error
-	old, err := LoadWorkerModelByNameAndGroupID(db, data.Name, grp.ID)
+	old, err := LoadWorkerModelByNameAndGroupIDWithClearPassword(db, data.Name, grp.ID)
 	if err != nil {
 		// validate worker model type fields
 		if err := data.IsValidType(); err != nil {

@@ -293,6 +293,7 @@ type WorkflowClient interface {
 	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error
 	WorkflowGroupDelete(projectKey, name, groupName string) error
 	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
+	WorkflowRunsDeleteByBranch(projectKey string, workflowName string, branch string) error
 	WorkflowRunResync(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)

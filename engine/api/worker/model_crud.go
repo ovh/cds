@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -129,6 +130,15 @@ func UpdateModel(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Mode
 			data.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
 			data.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 		}
+	}
+
+	// if model type is docker and given password equals the place holder value, we will reuse the old password value
+	if data.Type == sdk.Docker && data.ModelDocker.Password == sdk.PasswordPlaceholder {
+		decryptedPw, err := secret.DecryptValue(old.ModelDocker.Password)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot decrypt password old model password")
+		}
+		data.ModelDocker.Password = decryptedPw
 	}
 
 	// update fields from request data

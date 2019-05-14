@@ -2,7 +2,10 @@ package swarm
 
 import (
 	"bytes"
+	"encoding/base64"
+	"fmt"
 	"io"
+	"net/url"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -12,7 +15,7 @@ import (
 	context "golang.org/x/net/context"
 )
 
-func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeout time.Duration) error {
+func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeout time.Duration, model sdk.Model) error {
 	t0 := time.Now()
 	log.Debug("hatchery> swarm> pullImage> pulling image %s on %s", img, dockerClient.name)
 
@@ -21,6 +24,22 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 
 	//Pull the worker image
 	opts := types.ImageCreateOptions{}
+	if model.ModelDocker.Private {
+		registry := "index.docker.io"
+		if model.ModelDocker.Registry != "" {
+			urlParsed, errParsed := url.Parse(model.ModelDocker.Registry)
+			if errParsed != nil {
+				return sdk.WrapError(errParsed, "cannot parse registry url %s", registry)
+			}
+			if urlParsed.Host == "" {
+				registry = urlParsed.Path
+			} else {
+				registry = urlParsed.Host
+			}
+		}
+		auth := fmt.Sprintf(`{"username": "%s", "password": "%s", "serveraddress": "%s"}`, model.ModelDocker.Username, model.ModelDocker.Password, registry)
+		opts.RegistryAuth = base64.StdEncoding.EncodeToString([]byte(auth))
+	}
 	res, err := dockerClient.ImageCreate(ctx, img, opts)
 	if err != nil {
 		log.Warning("hatchery> swarm> pullImage> Unable to pull image %s on %s: %s", img, dockerClient.name, err)

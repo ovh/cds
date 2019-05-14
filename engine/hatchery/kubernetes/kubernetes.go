@@ -383,6 +383,16 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases[0].Hostnames[0] = "worker"
 	}
 
+	// Check here to add secret if needed
+	secretName := "cds-credreg-" + spawnArgs.Model.Name
+	if spawnArgs.Model.ModelDocker.Private {
+		if err := h.createSecret(secretName, spawnArgs.Model); err != nil {
+			return "", sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Name)
+		}
+		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretName}}
+		podSchema.ObjectMeta.Labels[LABEL_SECRET] = secretName
+	}
+
 	for i, serv := range services {
 		//name= <alias> => the name of the host put in /etc/hosts of the worker
 		//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
@@ -484,6 +494,12 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 
 			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorkers()
+			})
+
+			sdk.GoRoutine(ctx, "deleteSecrets", func(ctx context.Context) {
+				if err := h.deleteSecrets(); err != nil {
+					log.Error("hatchery> kubernetes> cannot handle secrets : %v", err)
+				}
 			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {

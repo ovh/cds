@@ -73,7 +73,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		old, errLoad := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		old, errLoad := worker.LoadWorkerModelByNameAndGroupIDWithClearPassword(api.mustDB(), modelName, g.ID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "cannot load worker model")
 		}
