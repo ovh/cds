@@ -61,8 +61,6 @@ func Test_postActionImportHandler(t *testing.T) {
 	uri := api.Router.GetRoute("POST", api.importActionHandler, nil)
 	test.NotEmpty(t, uri)
 
-	script := exportentities.StepScript{"echo {{.cds.pip.param1}}"}
-
 	a := exportentities.Action{
 		Name:        "myAction",
 		Description: "MyDecription",
@@ -79,7 +77,7 @@ func Test_postActionImportHandler(t *testing.T) {
 		},
 		Steps: []exportentities.Step{
 			{
-				Script: &script,
+				Script: "echo {{.cds.pip.param1}}",
 			},
 		},
 	}

@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -66,45 +65,23 @@ func newStep(act sdk.Action) Step {
 				s.ArtifactDownload.Enabled = enabled.Value
 			}
 		case sdk.ArtifactUpload:
-			// TODO use type for artifact upload
-			/*
-				s.ArtifactUpload = &StepArtifactUpload{}
-				path := sdk.ParameterFind(&act.Parameters, "path")
-				if path != nil {
-				  s.ArtifactUpload.Path = path.Value
-				}
-				tag := sdk.ParameterFind(&act.Parameters, "tag")
-				if tag != nil {
-				  s.ArtifactUpload.Tag = tag.Value
-				}
-				destination := sdk.ParameterFind(&act.Parameters, "destination")
-				if destination != nil {
-				  s.ArtifactUpload.Destination = destination.Value
-				}
-				enabled := sdk.ParameterFind(&act.Parameters, "enabled")
-				if enabled != nil && enabled.Value != "true" {
-				  s.ArtifactUpload.Enabled = enabled.Value
-				}
-			*/
-			step := make(map[string]string)
 			s.ArtifactUpload = &StepArtifactUpload{}
 			path := sdk.ParameterFind(&act.Parameters, "path")
 			if path != nil {
-				step["path"] = path.Value
+				s.ArtifactUpload.Path = path.Value
 			}
 			tag := sdk.ParameterFind(&act.Parameters, "tag")
 			if tag != nil {
-				step["tag"] = tag.Value
+				s.ArtifactUpload.Tag = tag.Value
 			}
 			destination := sdk.ParameterFind(&act.Parameters, "destination")
 			if destination != nil {
-				step["destination"] = destination.Value
+				s.ArtifactUpload.Destination = destination.Value
 			}
 			enabled := sdk.ParameterFind(&act.Parameters, "enabled")
 			if enabled != nil && enabled.Value != "true" {
-				step["enabled"] = enabled.Value
+				s.ArtifactUpload.Enabled = enabled.Value
 			}
-			s.ArtifactUpload = step
 		case sdk.ServeStaticFiles:
 			s.ServeStaticFiles = &StepServeStaticFiles{}
 			name := sdk.ParameterFind(&act.Parameters, "name")
@@ -343,9 +320,7 @@ type Step struct {
 	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"-" jsonschema_description:"Script.\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
 	Coverage         *StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty" jsonschema_description:"Parse coverage report.\nhttps://ovh.github.io/cds/docs/actions/builtin-coverage"`
 	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema_description:"Download artifacts in workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-download"`
-	// TODO use type for artifact upload
-	//ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema_description:"Upload artifacts from workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-upload"`
-	ArtifactUpload   interface{}           `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema:"-"`
+	ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema_description:"Upload artifacts from workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-upload"`
 	ServeStaticFiles *StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty" jsonschema_description:"Serve static files.\nhttps://ovh.github.io/cds/docs/actions/builtin-serve-static-files"`
 	GitClone         *StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty" jsonschema_description:"Clone a git repository.\nhttps://ovh.github.io/cds/docs/actions/builtin-gitclone"`
 	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema_description:"Create a git tag.\nhttps://ovh.github.io/cds/docs/actions/builtin-gittag"`
@@ -656,22 +631,9 @@ func (s Step) isArtifactUpload() bool { return s.ArtifactUpload != nil }
 
 func (s Step) asArtifactUpload() (sdk.Action, error) {
 	var a sdk.Action
-	// TODO use type for artifact upload
-	/*
-			m, err := stepToMap(s.ArtifactUpload)
-			if err != nil {
-				return a, err
-		  }
-	*/
-	var m map[string]string
-	if upload, ok := s.ArtifactUpload.(map[interface{}]interface{}); ok {
-		if err := mapstructure.Decode(upload, &m); err != nil {
-			return a, sdk.NewErrorWithStack(err, sdk.ErrMalformattedStep)
-		}
-	} else if upload, ok := s.ArtifactUpload.(string); ok {
-		m = map[string]string{"path": upload}
-	} else {
-		return a, sdk.NewErrorFrom(sdk.ErrMalformattedStep, "invalid given data for artifact upload action")
+	m, err := stepToMap(s.ArtifactUpload)
+	if err != nil {
+		return a, err
 	}
 	a = sdk.Action{
 		Name:       sdk.ArtifactUpload,
