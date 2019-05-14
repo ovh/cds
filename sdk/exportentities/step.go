@@ -254,7 +254,7 @@ type StepArtifactDownload struct {
 type StepArtifactUpload struct {
 	Enabled     string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
-	Path        string `json:"path,omitempty" yaml:"name,omitempty" jsonschema:"required"`
+	Path        string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
 	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
 }
 
