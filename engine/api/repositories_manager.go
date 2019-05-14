@@ -503,19 +503,20 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 			}
 
 			for _, wf := range usage.Workflows {
-				rootCtx, errNc := workflow.LoadNodeContext(db, api.Cache, proj, wf.RootID, u, workflow.LoadOptions{})
-				if errNc != nil {
-					return sdk.WrapError(errNc, "attachRepositoriesManager> Cannot DefaultPayloadToMap")
+
+				wfDB, errWL := workflow.LoadByID(db, api.Cache, proj, wf.ID, u, workflow.LoadOptions{})
+				if errWL != nil {
+					return errWL
 				}
 
-				if rootCtx.ApplicationID != app.ID {
+				if wfDB.WorkflowData.Node.Context == nil {
+					wfDB.WorkflowData.Node.Context = &sdk.NodeContext{}
+				}
+				if wfDB.WorkflowData.Node.Context == nil || wfDB.WorkflowData.Node.Context.ApplicationID != app.ID {
 					continue
 				}
 
-				wf.Root = &sdk.WorkflowNode{
-					Context: rootCtx,
-				}
-				payload, errD := rootCtx.DefaultPayloadToMap()
+				payload, errD := wfDB.WorkflowData.Node.Context.DefaultPayloadToMap()
 				if errD != nil {
 					return sdk.WrapError(errP, "attachRepositoriesManager> Cannot DefaultPayloadToMap")
 				}
@@ -528,9 +529,10 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				if errPay != nil {
 					return sdk.WrapError(errPay, "attachRepositoriesManager> Cannot get defaultPayload")
 				}
-				wf.Root.Context.DefaultPayload = defaultPayload
-				if err := workflow.UpdateNodeContext(db, wf.Root.Context); err != nil {
-					return sdk.WrapError(err, "Cannot update node context %d", wf.Root.Context.ID)
+				wf.WorkflowData.Node.Context.DefaultPayload = defaultPayload
+
+				if err := workflow.Update(ctx, db, api.Cache, &wf, proj, u); err != nil {
+					return sdk.WrapError(err, "Cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 			}
 		}
@@ -581,15 +583,16 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 				return sdk.WrapError(errP, "detachRepositoriesManager> Cannot load project")
 			}
 
-			hookToDelete := map[string]sdk.WorkflowNodeHook{}
+			hookToDelete := map[string]sdk.NodeHook{}
 			for _, wf := range usage.Workflows {
-				nodeHooks, err := workflow.LoadHooksByNodeID(db, wf.RootID)
-				if err != nil {
-					return sdk.WrapError(err, "Cannot load node hook by nodeID %d", wf.RootID)
+				wfDB, errWL := workflow.LoadByID(db, api.Cache, proj, wf.ID, u, workflow.LoadOptions{})
+				if errWL != nil {
+					return errWL
 				}
 
+				nodeHooks := wfDB.WorkflowData.GetHooks()
 				for _, nodeHook := range nodeHooks {
-					if nodeHook.WorkflowHookModel.Name != sdk.RepositoryWebHookModelName && nodeHook.WorkflowHookModel.Name != sdk.GitPollerModelName {
+					if nodeHook.HookModelName != sdk.RepositoryWebHookModelName && nodeHook.HookModelName != sdk.GitPollerModelName {
 						continue
 					}
 					hookToDelete[nodeHook.UUID] = nodeHook

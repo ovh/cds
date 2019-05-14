@@ -9,13 +9,129 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+func hookEnregistrement(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow) error {
+	srvs, err := services.FindByType(db, services.TypeHooks)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to get services dao")
+	}
+
+	//Perform the request on one off the hooks service
+	if len(srvs) < 1 {
+		return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services dao")
+	}
+
+	// DELETE DELETED HOOKS
+
+	// add/update all others
+	for i := range wf.WorkflowData.Node.Hooks {
+		h := &wf.WorkflowData.Node.Hooks[i]
+
+		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
+			Value:        wf.ProjectKey,
+			Configurable: false,
+		}
+		h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
+			Value:        wf.Name,
+			Configurable: false,
+		}
+		h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
+			Value:        fmt.Sprint(wf.ID),
+			Configurable: false,
+		}
+		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
+			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
+			}
+			h.Config[sdk.HookConfigVCSServer] = sdk.WorkflowNodeHookConfigValue{
+				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer,
+				Configurable: false,
+			}
+			h.Config[sdk.HookConfigRepoFullName] = sdk.WorkflowNodeHookConfigValue{
+				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname,
+				Configurable: false,
+			}
+		}
+
+		if err := updateSchedulerPayload(ctx, db, store, p, wf, h); err != nil {
+			return err
+		}
+	}
+
+}
+
+func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, h *sdk.NodeHook) error {
+	if h.HookModelName != sdk.SchedulerModelName {
+		return nil
+	}
+	// Add git.branch in scheduler payload
+	if wf.WorkflowData.Node.IsLinkedToRepo(wf) {
+		var payloadValues map[string]string
+		if h.Config["payload"].Value != "" {
+			var bodyJSON interface{}
+			//Try to parse the body as an array
+			bodyJSONArray := []interface{}{}
+			if err := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONArray); err != nil {
+				//Try to parse the body as a map
+				bodyJSONMap := map[string]interface{}{}
+				if err2 := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONMap); err2 == nil {
+					bodyJSON = bodyJSONMap
+				}
+			} else {
+				bodyJSON = bodyJSONArray
+			}
+
+			//Go Dump
+			var errDump error
+			payloadValues, errDump = dump.ToStringMap(bodyJSON)
+			if errDump != nil {
+				return sdk.WrapError(errDump, "cannot dump payload %+v", h.Config["payload"].Value)
+			}
+		}
+
+		// try get git.branch on defaultPayload
+		if payloadValues["git.branch"] == "" {
+			defaultPayloadMap, errP := wf.WorkflowData.Node.Context.DefaultPayloadToMap()
+			if errP != nil {
+				return sdk.WrapError(errP, "cannot read node default payload")
+			}
+			if defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"] != "" {
+				payloadValues["git.branch"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"]
+			}
+			if defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitRepository"] != "" {
+				payloadValues["git.repository"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitRepository"]
+			}
+		}
+
+		// try get git.branch on repo linked
+		if payloadValues["git.branch"] == "" {
+			defaultPayload, errDefault := DefaultPayload(ctx, db, store, p, wf)
+			if errDefault != nil {
+				return sdk.WrapError(errDefault, "unable to get default payload")
+			}
+			var errDump error
+			payloadValues, errDump = dump.ToStringMap(defaultPayload)
+			if errDump != nil {
+				return sdk.WrapError(errDump, "cannot dump payload %+v", h.Config["payload"].Value)
+			}
+		}
+
+		payloadStr, errM := json.MarshalIndent(&payloadValues, "", "  ")
+		if errM != nil {
+			return sdk.WrapError(errM, "cannot marshal hook config payload : %s", errM)
+		}
+		pl := h.Config["payload"]
+		pl.Value = string(payloadStr)
+		h.Config["payload"] = pl
+	}
+	return nil
+}
 
 // HookRegistration ensures hooks registration on Hook µService
 func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
@@ -35,89 +151,9 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			return sdk.WrapError(err, "Unable to get services dao")
 		}
 
-		// Update in VCS
-		for i := range hookToUpdate {
-			h := hookToUpdate[i]
-			if oldW != nil && wf.Name != oldW.Name {
-				configValue := h.Config[sdk.HookConfigWorkflow]
-				configValue.Value = wf.Name
-				h.Config[sdk.HookConfigWorkflow] = configValue
-				hookToUpdate[i] = h
-			}
-		}
-
 		//Perform the request on one off the hooks service
 		if len(srvs) < 1 {
 			return sdk.WrapError(fmt.Errorf("No hooks service available, please try again"), "Unable to get services dao")
-		}
-
-		// Update scheduler payload
-		for i := range hookToUpdate {
-			h := hookToUpdate[i]
-
-			if h.WorkflowHookModel.Name == sdk.SchedulerModelName {
-				// Add git.branch in scheduler payload
-				if wf.Root.IsLinkedToRepo() {
-					var payloadValues map[string]string
-					if h.Config["payload"].Value != "" {
-						var bodyJSON interface{}
-						//Try to parse the body as an array
-						bodyJSONArray := []interface{}{}
-						if err := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONArray); err != nil {
-							//Try to parse the body as a map
-							bodyJSONMap := map[string]interface{}{}
-							if err2 := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONMap); err2 == nil {
-								bodyJSON = bodyJSONMap
-							}
-						} else {
-							bodyJSON = bodyJSONArray
-						}
-
-						//Go Dump
-						var errDump error
-						payloadValues, errDump = dump.ToStringMap(bodyJSON)
-						if errDump != nil {
-							return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
-						}
-					}
-
-					// try get git.branch on defaultPayload
-					if payloadValues["git.branch"] == "" {
-						defaultPayloadMap, errP := wf.Root.Context.DefaultPayloadToMap()
-						if errP != nil {
-							return sdk.WrapError(errP, "HookRegistration> Cannot read node default payload")
-						}
-						if defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"] != "" {
-							payloadValues["git.branch"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"]
-						}
-						if defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitRepository"] != "" {
-							payloadValues["git.repository"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitRepository"]
-						}
-					}
-
-					// try get git.branch on repo linked
-					if payloadValues["git.branch"] == "" {
-						defaultPayload, errDefault := DefaultPayload(ctx, db, store, p, &wf)
-						if errDefault != nil {
-							return sdk.WrapError(errDefault, "HookRegistration> Unable to get default payload")
-						}
-						var errDump error
-						payloadValues, errDump = dump.ToStringMap(defaultPayload)
-						if errDump != nil {
-							return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
-						}
-					}
-
-					payloadStr, errM := json.MarshalIndent(&payloadValues, "", "  ")
-					if errM != nil {
-						return sdk.WrapError(errM, "HookRegistration> Cannot marshal hook config payload : %s", errM)
-					}
-					pl := h.Config["payload"]
-					pl.Value = string(payloadStr)
-					h.Config["payload"] = pl
-					hookToUpdate[i] = h
-				}
-			}
 		}
 
 		// Create hook on µservice
@@ -237,86 +273,28 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	return nil
 }
 
-func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.WorkflowNodeHook) (hookToUpdate map[string]sdk.WorkflowNodeHook, hookToDelete map[string]sdk.WorkflowNodeHook) {
-	hookToUpdate = make(map[string]sdk.WorkflowNodeHook)
-	hookToDelete = make(map[string]sdk.WorkflowNodeHook)
-
-	for o := range oldHooks {
-		for n := range newHooks {
-			if oldHooks[o].Ref == newHooks[n].Ref {
-				nh := newHooks[n]
-				nh.UUID = oldHooks[o].UUID
-				if nh.Config == nil {
-					nh.Config = sdk.WorkflowNodeHookConfig{}
-				}
-				//Useful for RepositoryWebHook
-				if webhookID, ok := oldHooks[o].Config["webHookID"]; ok {
-					nh.Config["webHookID"] = webhookID
-				}
-				if oldIcon, ok := oldHooks[o].Config["hookIcon"]; oldHooks[o].WorkflowHookModelID == newHooks[n].WorkflowHookModelID && ok {
-					nh.Config["hookIcon"] = oldIcon
-				}
-				newHooks[n] = nh
-			}
-		}
-	}
-
-	for key, hNew := range newHooks {
-		hold, ok := oldHooks[key]
-		// if new hook
-		if !ok || !hNew.Equals(hold) {
-			hookToUpdate[key] = newHooks[key]
-			continue
-		}
-	}
-
-	for _, oldH := range oldHooks {
-		var exist bool
-		for _, newH := range newHooks {
-			if oldH.UUID == newH.UUID {
-				exist = true
-				break
-			}
-		}
-		if !exist {
-			hookToDelete[oldH.UUID] = oldH
-		}
-	}
-	return
-}
-
 // DefaultPayload returns the default payload for the workflow root
 func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow) (interface{}, error) {
-	if wf.Root.Context == nil {
+	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, nil
 	}
 
 	var defaultPayload interface{}
-	// Load application if not available
-	if wf.Root.Context != nil && wf.Root.Context.Application == nil && wf.Root.Context.ApplicationID != 0 {
-		app, errLa := application.LoadByID(db, store, wf.Root.Context.ApplicationID)
-		if errLa != nil {
-			return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "DefaultPayload> unable to load application by id %d", wf.Root.Context.ApplicationID)
-		}
-		wf.Root.Context.Application = app
-	}
 
-	if wf.Root.Context.Application == nil {
-		return wf.Root.Context.DefaultPayload, nil
-	}
+	app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 
-	if wf.Root.Context.Application.RepositoryFullname != "" {
+	if app.RepositoryFullname != "" {
 		defaultBranch := "master"
-		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, wf.Root.Context.Application.VCSServer)
+		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 		if projectVCSServer != nil {
 			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectVCSServer)
 			if errclient != nil {
-				return wf.Root.Context.DefaultPayload, sdk.WrapError(errclient, "DefaultPayload> Cannot get authorized client")
+				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(errclient, "DefaultPayload> Cannot get authorized client")
 			}
 
-			branches, errBr := client.Branches(ctx, wf.Root.Context.Application.RepositoryFullname)
+			branches, errBr := client.Branches(ctx, app.RepositoryFullname)
 			if errBr != nil {
-				return wf.Root.Context.DefaultPayload, sdk.WrapError(errBr, "DefaultPayload> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
+				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(errBr, "DefaultPayload> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
 			}
 
 			for _, branch := range branches {
@@ -327,23 +305,23 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			}
 		}
 
-		defaultPayload = wf.Root.Context.DefaultPayload
-		if !wf.Root.Context.HasDefaultPayload() {
+		defaultPayload = wf.WorkflowData.Node.Context.DefaultPayload
+		if !wf.WorkflowData.Node.Context.HasDefaultPayload() {
 			structuredDefaultPayload := sdk.WorkflowNodeContextDefaultPayloadVCS{
 				GitBranch:     defaultBranch,
-				GitRepository: wf.Root.Context.Application.RepositoryFullname,
+				GitRepository: app.RepositoryFullname,
 			}
 			defaultPayloadBtes, _ := json.Marshal(structuredDefaultPayload)
 			if err := json.Unmarshal(defaultPayloadBtes, &defaultPayload); err != nil {
 				return nil, err
 			}
-		} else if defaultPayloadMap, err := wf.Root.Context.DefaultPayloadToMap(); err == nil && defaultPayloadMap["git.branch"] == "" {
+		} else if defaultPayloadMap, err := wf.WorkflowData.Node.Context.DefaultPayloadToMap(); err == nil && defaultPayloadMap["git.branch"] == "" {
 			defaultPayloadMap["git.branch"] = defaultBranch
-			defaultPayloadMap["git.repository"] = wf.Root.Context.Application.RepositoryFullname
+			defaultPayloadMap["git.repository"] = app.RepositoryFullname
 			defaultPayload = defaultPayloadMap
 		}
 	} else {
-		defaultPayload = wf.Root.Context.DefaultPayload
+		defaultPayload = wf.WorkflowData.Node.Context.DefaultPayload
 	}
 
 	return defaultPayload, nil

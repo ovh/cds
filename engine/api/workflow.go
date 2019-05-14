@@ -329,19 +329,19 @@ func (api *API) postWorkflowHandler() service.Handler {
 			project.LoadOptions.WithIntegrations,
 		)
 		if errP != nil {
-			return sdk.WrapError(errP, "Cannot load Project %s", key)
+			return errP
 		}
 		var wf sdk.Workflow
 		if err := service.UnmarshalBody(r, &wf); err != nil {
-			return sdk.WrapError(err, "Cannot read body")
+			return err
 		}
 
 		if wf.WorkflowData == nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "No node found")
+			return sdk.WrapError(sdk.ErrWrongRequest, "no node found")
 		}
 
 		if err := workflow.RenameNode(api.mustDB(), &wf); err != nil {
-			return sdk.WrapError(err, "postWorkflowHandler> Cannot rename node")
+			return err
 		}
 
 		wf.ProjectID = p.ID
@@ -349,25 +349,26 @@ func (api *API) postWorkflowHandler() service.Handler {
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "Cannot start transaction")
+			return sdk.WithStack(errT)
 		}
 		defer tx.Rollback()
 
-		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
+		if wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
 			var err error
-			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, &wf); err != nil {
+			if wf.WorkflowData.Node.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, &wf); err != nil {
 				log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
 			}
-			wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
 		}
 
 		if err := workflow.Insert(tx, api.Cache, &wf, p, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
-		if errHr := workflow.HookRegistration(ctx, tx, api.Cache, nil, wf, p); errHr != nil {
-			return sdk.WrapError(errHr, "postWorkflowHandler>Hook registration failed")
-		}
+		/*
+			if errHr := workflow.HookRegistration(ctx, tx, api.Cache, nil, wf, p); errHr != nil {
+				return sdk.WrapError(errHr, "postWorkflowHandler>Hook registration failed")
+			}
+		*/
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
@@ -377,14 +378,14 @@ func (api *API) postWorkflowHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
+
+		event.PublishWorkflowAdd(p.Key, *wf1, deprecatedGetUser(ctx))
+
 		wf1.Permission = permission.PermissionReadWriteExecute
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
-		// TODO REMOVE WHEN WE WILL DELETE OLD NODE STRUCT
-		wf1.Root = nil
-		wf1.Joins = nil
 		return service.WriteJSON(w, wf1, http.StatusCreated)
 	}
 }

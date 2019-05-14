@@ -109,10 +109,10 @@ func UpdateIcon(db gorp.SqlExecutor, workflowID int64, icon string) error {
 func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata) error {
 	b, err := json.Marshal(metadata)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	if _, err := db.Exec("update workflow set metadata = $1 where id = $2", b, workflowID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
@@ -689,16 +689,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
-	if w.Root == nil {
-		return sdk.WrapError(sdk.ErrWorkflowInvalidRoot, "Root node is not here")
-	}
-
-	if errIN := insertNode(db, store, w, w.Root, u, false); errIN != nil {
-		return sdk.WrapError(errIN, "Unable to insert workflow root node")
-	}
-	w.RootID = w.Root.ID
-
-	if w.Root.IsLinkedToRepo() {
+	if w.WorkflowData.Node.IsLinkedToRepo(w) {
 		if w.Metadata == nil {
 			w.Metadata = sdk.Metadata{}
 		}
@@ -714,32 +705,13 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 
 		if err := UpdateMetadata(db, w.ID, w.Metadata); err != nil {
-			return sdk.WrapError(err, "Unable to insert workflow metadata (%#v, %d)", w.Root, w.ID)
+			return err
 		}
 	}
 
-	if _, err := db.Exec("UPDATE workflow SET root_node_id = $2 WHERE id = $1", w.ID, w.Root.ID); err != nil {
-		return sdk.WrapError(err, "Unable to insert workflow (%#v, %d)", w.Root, w.ID)
-	}
-
-	for i := range w.Joins {
-		j := &w.Joins[i]
-		if err := insertJoin(db, store, w, j, u); err != nil {
-			return sdk.WrapError(err, "Unable to insert update workflow(%d) join (%#v)", w.ID, j)
-		}
-	}
-
-	// TODO Delete in last migration step
-	hooks := w.GetHooks()
-	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
-	for _, h := range hooks {
-		w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
-			Ref:           h.Ref,
-			HookModelID:   h.WorkflowHookModelID,
-			Config:        h.Config,
-			UUID:          h.UUID,
-			HookModelName: h.WorkflowHookModel.Name,
-		})
+	// Manage new hooks
+	if err := hookEnregistrement(db, w); err != nil {
+		return err
 	}
 
 	if err := InsertWorkflowData(db, w); err != nil {
@@ -758,8 +730,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	if err := dbWorkflow.PostUpdate(db); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to create workflow data")
 	}
-
-	event.PublishWorkflowAdd(p.Key, *w, u)
 
 	return nil
 }
@@ -930,53 +900,22 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 }
 
 // Update updates a workflow
-func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
+func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
 	if err := IsValid(ctx, store, db, w, p, u); err != nil {
 		return err
 	}
 
-	// Delete all OLD JOIN
-	for _, j := range oldWorkflow.Joins {
-		if err := deleteJoin(db, j); err != nil {
-			return sdk.WrapError(err, "unable to delete all joins on workflow(%d - %s)", w.ID, w.Name)
-		}
-	}
-
-	if err := DeleteNotifications(db, oldWorkflow.ID); err != nil {
+	if err := DeleteNotifications(db, w.ID); err != nil {
 		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d - %s)", w.ID, w.Name)
 	}
 
-	// Delete old Root Node
-	if oldWorkflow.Root != nil {
-		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
-			return sdk.WrapError(err, "Unable to detach workflow root")
-		}
-
-		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root); err != nil {
-			return sdk.WrapError(err, "unable to delete root node on workflow(%d - %s)", w.ID, w.Name)
-		}
-	}
-
 	// Delete workflow data
-	if err := DeleteWorkflowData(db, *oldWorkflow); err != nil {
+	if err := DeleteWorkflowData(db, *w); err != nil {
 		return sdk.WrapError(err, "Update> unable to delete workflow data(%d - %s)", w.ID, w.Name)
 	}
 
 	// Delete all node ID
 	w.ResetIDs()
-
-	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
-		return sdk.WrapError(err, "unable to update root node on workflow(%d - %s)", w.ID, w.Name)
-	}
-	w.RootID = w.Root.ID
-
-	// Insert new JOIN
-	for i := range w.Joins {
-		j := &w.Joins[i]
-		if err := insertJoin(db, store, w, j, u); err != nil {
-			return sdk.WrapError(err, "Unable to update workflow(%d) join (%#v)", w.ID, j)
-		}
-	}
 
 	filteredPurgeTags := []string{}
 	for _, t := range w.PurgeTags {
@@ -985,23 +924,6 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		}
 	}
 	w.PurgeTags = filteredPurgeTags
-
-	if w.Icon == "" {
-		w.Icon = oldWorkflow.Icon
-	}
-
-	// TODO: DELETE in step 3: Synchronize HOOK datas
-	hooks := w.GetHooks()
-	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
-	for _, h := range hooks {
-		w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
-			Ref:           h.Ref,
-			HookModelID:   h.WorkflowHookModelID,
-			Config:        h.Config,
-			UUID:          h.UUID,
-			HookModelName: h.WorkflowHookModel.Name,
-		})
-	}
 
 	if err := InsertWorkflowData(db, w); err != nil {
 		return sdk.WrapError(err, "Update> Unable to insert workflow data")
@@ -1022,7 +944,6 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	}
 	*w = sdk.Workflow(dbw)
 
-	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
 	return nil
 }
 

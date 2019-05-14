@@ -1,8 +1,6 @@
 package workflow
 
 import (
-	"fmt"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -14,56 +12,16 @@ func insertNodeHookData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error
 		return nil
 	}
 
-	hookToKeep := make([]sdk.NodeHook, 0)
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
 		h.NodeID = n.ID
-
-		model := w.HookModels[h.HookModelID]
-		if model.Name == sdk.RepositoryWebHookModelName && n.Context.ApplicationID == 0 {
-			continue
-		}
-
-		//Configure the hook
-		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
-			Value:        w.ProjectKey,
-			Configurable: false,
-		}
-
-		h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
-			Value:        w.Name,
-			Configurable: false,
-		}
-
-		h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
-			Value:        fmt.Sprint(w.ID),
-			Configurable: false,
-		}
-
-		if model.Name == sdk.RepositoryWebHookModelName || model.Name == sdk.GitPollerModelName || model.Name == sdk.GerritHookModelName {
-			if n.Context.ApplicationID == 0 || w.Applications[n.Context.ApplicationID].RepositoryFullname == "" || w.Applications[n.Context.ApplicationID].VCSServer == "" {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
-			}
-			h.Config[sdk.HookConfigVCSServer] = sdk.WorkflowNodeHookConfigValue{
-				Value:        w.Applications[n.Context.ApplicationID].VCSServer,
-				Configurable: false,
-			}
-			h.Config[sdk.HookConfigRepoFullName] = sdk.WorkflowNodeHookConfigValue{
-				Value:        w.Applications[n.Context.ApplicationID].RepositoryFullname,
-				Configurable: false,
-			}
-		}
 
 		dbHook := dbNodeHookData(*h)
 		if err := db.Insert(&dbHook); err != nil {
 			return sdk.WrapError(err, "insertNodeHookData> Unable to insert workflow node hook")
 		}
 		h.ID = dbHook.ID
-
-		hookToKeep = append(hookToKeep, *h)
 	}
-
-	n.Hooks = hookToKeep
 	return nil
 }
 
