@@ -36,9 +36,10 @@ const (
 
 // Stage represents exported sdk.Stage
 type Stage struct {
-	Enabled    *bool             `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Jobs       map[string]Job    `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Conditions map[string]string `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Enabled *bool          `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Jobs    map[string]Job `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	// Conditions map[string]string `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Conditions interface{} `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 }
 
 // Job represents exported sdk.Job
@@ -144,13 +145,11 @@ func newStagesForPipelineV1(stages []sdk.Stage) ([]string, map[string]Stage) {
 			st.Enabled = &s.Enabled
 			hasOptions = true
 		}
-		if len(s.Prerequisites) > 0 {
-			st.Conditions = make(map[string]string)
+		if len(s.Conditions.PlainConditions) > 0 || s.Conditions.LuaScript != "" {
+			st.Conditions = s.Conditions
 			hasOptions = true
 		}
-		for _, r := range s.Prerequisites {
-			st.Conditions[r.Parameter] = r.ExpectedValue
-		}
+
 		if hasOptions == true {
 			opts[s.Name] = st
 		}
@@ -377,12 +376,29 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 			mapStages[s].Enabled = true
 		}
 
-		//Compute stage Prerequisites
-		for n, c := range opt.Conditions {
-			mapStages[s].Prerequisites = append(mapStages[s].Prerequisites, sdk.Prerequisite{
-				Parameter:     n,
-				ExpectedValue: c,
-			})
+		// Keep retrocompatibility
+		if opt.Conditions != nil {
+			test := map[string]string{"lolilol": "test"}
+			fmt.Printf("%t - %+v\n", test)
+			fmt.Printf("%t - %+v\n", opt.Conditions)
+			conditionsMap, isLegacyConditions := opt.Conditions.(map[string]string)
+
+			fmt.Printf("isLegacyConditions --> %v --- %+v\n", isLegacyConditions, conditionsMap)
+			_, containsCheck := conditionsMap["check"]
+			_, containsScript := conditionsMap["script"]
+			if isLegacyConditions && !containsCheck && !containsScript {
+				conditions := make([]sdk.WorkflowNodeCondition, 0, len(conditionsMap))
+				for name, value := range conditionsMap {
+					conditions = append(conditions, sdk.WorkflowNodeCondition{Operator: sdk.WorkflowConditionsOperatorRegex, Variable: name, Value: value})
+				}
+				mapStages[s].Conditions = sdk.WorkflowNodeConditions{PlainConditions: conditions}
+			} else {
+				conditions, isNewConditions := opt.Conditions.(sdk.WorkflowNodeConditions)
+				if !isNewConditions {
+					return nil, fmt.Errorf("Cannot get conditions type")
+				}
+				mapStages[s].Conditions = conditions
+			}
 		}
 	}
 
