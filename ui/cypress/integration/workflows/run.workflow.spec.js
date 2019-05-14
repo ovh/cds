@@ -4,8 +4,8 @@ context('Workflows', () => {
     beforeEach(() => {
         // Login
         cy.visit('http://127.0.0.1:4200/account/login')
-        cy.get('input[name=username]').type('aa')
-        cy.get('input[name=password]').type('b2636689cdb239456c8776b9b06ba2b63606142603013838a397b2bfdd0a3850c15ad0e8f7ef5dce380e8bb1437e7b642614ee78d47b01edc383a0e333b8f0b4')
+        cy.get('input[name=username]').type('')
+        cy.get('input[name=password]').type('')
         cy.get('.ui.green.button').click()
         cy.location('pathname').should('include', 'home')
     })
