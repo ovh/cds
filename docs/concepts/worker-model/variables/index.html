@@ -10,35 +10,43 @@
 
 
 <link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-<meta name="description" content="When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
+<meta name="description"
+    content="When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
 Here is the list of available variables:
  API string &ndash;&gt; URI of the CDS API set in the hatchery configuration Token string &ndash;&gt; token set in the hatchery configuration Name string &ndash;&gt; Name of the worker BaseDir string &ndash;&gt; basedir configuration set in the hatchery configuration HTTPInsecure bool &ndash;&gt; http insecure configuration set in the hatchery configuration Model int64 &ndash;&gt; ID of the model that the hatchery want to spawn Hatchery int64 &ndash;&gt; ID of the hatchery HatcheryName string PipelineBuildJobID int64 WorkflowJobID int64 &ndash;&gt; Useful to know which workflow job the hatchery will launch spawning this worker TTL int FromWorkerImage bool">
-<meta property="og:description" content="When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
+<meta property="og:description"
+    content="When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
 Here is the list of available variables:
  API string &ndash;&gt; URI of the CDS API set in the hatchery configuration Token string &ndash;&gt; token set in the hatchery configuration Name string &ndash;&gt; Name of the worker BaseDir string &ndash;&gt; basedir configuration set in the hatchery configuration HTTPInsecure bool &ndash;&gt; http insecure configuration set in the hatchery configuration Model int64 &ndash;&gt; ID of the model that the hatchery want to spawn Hatchery int64 &ndash;&gt; ID of the hatchery HatcheryName string PipelineBuildJobID int64 WorkflowJobID int64 &ndash;&gt; Useful to know which workflow job the hatchery will launch spawning this worker TTL int FromWorkerImage bool">
-<meta name="twitter:description" content="When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
+<meta name="twitter:description"
+    content="When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
 Here is the list of available variables:
  API string &ndash;&gt; URI of the CDS API set in the hatchery configuration Token string &ndash;&gt; token set in the hatchery configuration Name string &ndash;&gt; Name of the worker BaseDir string &ndash;&gt; basedir configuration set in the hatchery configuration HTTPInsecure bool &ndash;&gt; http insecure configuration set in the hatchery configuration Model int64 &ndash;&gt; ID of the model that the hatchery want to spawn Hatchery int64 &ndash;&gt; ID of the hatchery HatcheryName string PipelineBuildJobID int64 WorkflowJobID int64 &ndash;&gt; Useful to know which workflow job the hatchery will launch spawning this worker TTL int FromWorkerImage bool">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/worker-model/variables/">
 <meta property="og:title" content="Worker Model Variables">
 <meta name="twitter:title" content="Worker Model Variables">
-<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
 <script type="text/javascript">
     var baseurl = "https:\/\/ovh.github.io\/cds";
+
 </script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>

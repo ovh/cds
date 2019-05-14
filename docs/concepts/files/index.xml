@@ -39,7 +39,7 @@ version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stag
       <description>Example:
 name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model
 cdsctl worker model import ./go-official-1.11.4-stretch.yml  or with a remote file:
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml  </description>
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml   If you want to specify an image using a private registry or a private image. You need to fill credentials in field username and password to access to your image. And if your image is not on docker hub but from a private registry you need to fill the registry info (the registry api url, for example for docker hub it&amp;rsquo;s https://index.</description>
     </item>
     
     <item>
@@ -61,7 +61,7 @@ version: v1.0 name: CDS_SonarScanner description: Run Sonar analysis. You must h
       <guid>https://ovh.github.io/cds/docs/concepts/files/application-syntax/</guid>
       <description>An Application allows you to enable some features of CDS within a workflow.
  Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionnary.</description>
+version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionnary.</description>
     </item>
     
     <item>

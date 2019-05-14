@@ -10,35 +10,43 @@
 
 
 <link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-<meta name="description" content="This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
+<meta name="description"
+    content="This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
 Errors can be forwarded to a Graylog instance then retrieved directly from the ctl (see api.graylog and log.graylog sections in cds configuration file to setup).
 cdsctl admin errors get &lt;error_uuid&gt;  Usage in code All errors from lib should be wrapped like sdk.">
-<meta property="og:description" content="This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
+<meta property="og:description"
+    content="This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
 Errors can be forwarded to a Graylog instance then retrieved directly from the ctl (see api.graylog and log.graylog sections in cds configuration file to setup).
 cdsctl admin errors get &lt;error_uuid&gt;  Usage in code All errors from lib should be wrapped like sdk.">
-<meta name="twitter:description" content="This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
+<meta name="twitter:description"
+    content="This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
 Errors can be forwarded to a Graylog instance then retrieved directly from the ctl (see api.graylog and log.graylog sections in cds configuration file to setup).
 cdsctl admin errors get &lt;error_uuid&gt;  Usage in code All errors from lib should be wrapped like sdk.">
 <meta property="og:url" content="https://ovh.github.io/cds/development/contribute/error_management/">
 <meta property="og:title" content="Error management">
 <meta name="twitter:title" content="Error management">
-<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
 <script type="text/javascript">
     var baseurl = "https:\/\/ovh.github.io\/cds";
+
 </script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>

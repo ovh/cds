@@ -10,38 +10,46 @@
 
 
 <link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-<meta name="description" content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+<meta name="description"
+    content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
  Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
-<meta property="og:description" content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+<meta property="og:description"
+    content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
  Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
-<meta name="twitter:description" content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+<meta name="twitter:description"
+    content="The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
  Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/bitbucket/">
 <meta property="og:title" content="Bitbucket Server">
 <meta name="twitter:title" content="Bitbucket Server">
-<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
 <script type="text/javascript">
     var baseurl = "https:\/\/ovh.github.io\/cds";
+
 </script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
@@ -361,6 +369,7 @@ This integration enables some features:
 <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
 <li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
+<li><a href="#vcs-events">Vcs events</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -544,6 +553,10 @@ to a CDS Application.</p>
 # you can also start CDS api and vcs in the same process:
 $ engine start api vcs
 </code></pre>
+
+<h2 id="vcs-events">Vcs events</h2>
+
+<p>For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).</p>
 
 
 

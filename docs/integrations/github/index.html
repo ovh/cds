@@ -10,38 +10,46 @@
 
 
 <link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-<meta name="description" content="The Github Integration have to be configured on your CDS by a CDS Administrator.
+<meta name="description"
+    content="The Github Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Github to a CDS Application.
 This integration enables some features:
  Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator">
-<meta property="og:description" content="The Github Integration have to be configured on your CDS by a CDS Administrator.
+<meta property="og:description"
+    content="The Github Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Github to a CDS Application.
 This integration enables some features:
  Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator">
-<meta name="twitter:description" content="The Github Integration have to be configured on your CDS by a CDS Administrator.
+<meta name="twitter:description"
+    content="The Github Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Github to a CDS Application.
 This integration enables some features:
  Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/github/">
 <meta property="og:title" content="GitHub">
 <meta name="twitter:title" content="GitHub">
-<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
 <script type="text/javascript">
     var baseurl = "https:\/\/ovh.github.io\/cds";
+
 </script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
@@ -374,6 +382,7 @@ This integration enables some features:
 <li><a href="#my-cds-is-not-accessible-since-github-how-can-i-do"><strong>My CDS is not accessible since GitHub, how can I do?</strong></a></li>
 <li><a href="#i-don-t-see-the-type-git-repository-poller-nor-repositorywebhook-when-i-add-a-hook"><strong>I don&rsquo;t see the type Git Repository Poller nor RepositoryWebhook when I add a Hook</strong></a></li>
 </ul></li>
+<li><a href="#vcs-events">Vcs events</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -678,6 +687,10 @@ will call regularly GitHub. With this way, GitHub doesn&rsquo;t need to call you
 Select the first pipeline, then click on <strong>Edit the pipeline context</strong> from the <a href="https://ovh.github.io/cds/docs/concepts/workflow/sidebar/">sidebar</a>.</p>
 
 <p><a href="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/">Pipeline Context Documentation</a></p>
+
+<h2 id="vcs-events">Vcs events</h2>
+
+<p>For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).</p>
 
 
 

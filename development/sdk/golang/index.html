@@ -10,32 +10,40 @@
 
 
 <link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
-<meta name="description" content="Generate a persistent token There is three ways to generate a persistent token:
+<meta name="description"
+    content="Generate a persistent token There is three ways to generate a persistent token:
  cdsctl login call CDS API Code it:  conf := cdsclient.Config{ Host: &quot;http://your-cds-instance&quot;, } client = cdsclient.New(conf) // replace username and password ok, token, err := client.UserLogin(username, password) if err != nil { return err } if !ok { return fmt.Errorf(&quot;login failed&quot;) } fmt.Printf(&quot;export CDS_API_URL=%s\n&quot;, url) fmt.Printf(&quot;export CDS_USER=%s\n&quot;, username) fmt.Printf(&quot;export CDS_TOKEN=%s\n&quot;, token)  How to use it?">
-<meta property="og:description" content="Generate a persistent token There is three ways to generate a persistent token:
+<meta property="og:description"
+    content="Generate a persistent token There is three ways to generate a persistent token:
  cdsctl login call CDS API Code it:  conf := cdsclient.Config{ Host: &quot;http://your-cds-instance&quot;, } client = cdsclient.New(conf) // replace username and password ok, token, err := client.UserLogin(username, password) if err != nil { return err } if !ok { return fmt.Errorf(&quot;login failed&quot;) } fmt.Printf(&quot;export CDS_API_URL=%s\n&quot;, url) fmt.Printf(&quot;export CDS_USER=%s\n&quot;, username) fmt.Printf(&quot;export CDS_TOKEN=%s\n&quot;, token)  How to use it?">
-<meta name="twitter:description" content="Generate a persistent token There is three ways to generate a persistent token:
+<meta name="twitter:description"
+    content="Generate a persistent token There is three ways to generate a persistent token:
  cdsctl login call CDS API Code it:  conf := cdsclient.Config{ Host: &quot;http://your-cds-instance&quot;, } client = cdsclient.New(conf) // replace username and password ok, token, err := client.UserLogin(username, password) if err != nil { return err } if !ok { return fmt.Errorf(&quot;login failed&quot;) } fmt.Printf(&quot;export CDS_API_URL=%s\n&quot;, url) fmt.Printf(&quot;export CDS_USER=%s\n&quot;, username) fmt.Printf(&quot;export CDS_TOKEN=%s\n&quot;, token)  How to use it?">
 <meta property="og:url" content="https://ovh.github.io/cds/development/sdk/golang/">
 <meta property="og:title" content="SDK Golang">
 <meta name="twitter:title" content="SDK Golang">
-<meta name="twitter:image:alt"   content="CDS - Continuous Delivery Service">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
 <script type="text/javascript">
     var baseurl = "https:\/\/ovh.github.io\/cds";
+
 </script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
 <script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>

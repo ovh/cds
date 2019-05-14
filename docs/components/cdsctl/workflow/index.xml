@@ -86,7 +86,7 @@ cdsctl workflow import [ PROJECT-KEY ] PATH [flags]  Options  --force Override w
       <description>cdsctl workflow init Init a workflow
 Synopsis Initialize a workflow from your current repository, this will read or create yml files and push them to CDS.
 Documentation: https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/
-cdsctl workflow init [PROJECT-KEY] [flags]  Options  --pipeline string (Optionnal) Set the root pipeline you want to use. If empty it will propose you to reuse of create a pipeline. --repository-fullname string (Optionnal) Set the repository fullname defined in repository manager --repository-pgp-key string Set the repository pgp key you want to use --repository-ssh-key string Set the repository access key you want to use --repository-url string (Optionnal) Set the repository remote URL.</description>
+cdsctl workflow init [PROJECT-KEY] [flags]  Options  --application string (Optional) Set the application name. If empty, it will deduce application name from the repository. --pipeline string (Optional) Set the root pipeline you want to use. If empty it will propose you to reuse of create a pipeline.</description>
     </item>
     
     <item>
