@@ -2,6 +2,7 @@ package worker
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"sort"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -81,10 +83,16 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	dbmodel := WorkerModel(*model)
 	dbmodel.NeedRegistration = true
 	model.UserLastModified = time.Now()
+	if model.ModelDocker.Password == sdk.PasswordPlaceholder {
+		return sdk.WithStack(sdk.ErrInvalidPassword)
+	}
 	if err := db.Insert(&dbmodel); err != nil {
 		return err
 	}
 	*model = sdk.Model(dbmodel)
+	if model.ModelDocker.Password != "" {
+		model.ModelDocker.Password = sdk.PasswordPlaceholder
+	}
 	return nil
 }
 
@@ -100,6 +108,9 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 		return err
 	}
 	*model = sdk.Model(dbmodel)
+	if model.ModelDocker.Password != "" {
+		model.ModelDocker.Password = sdk.PasswordPlaceholder
+	}
 	return nil
 }
 
@@ -124,11 +135,11 @@ func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	if _, err := db.Select(&wms, query); err != nil {
 		return nil, sdk.WithStack(err)
 	}
-	return scanWorkerModels(db, wms)
+	return scanWorkerModels(db, wms, false)
 }
 
 // loadWorkerModel retrieves a specific worker model in database
-func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Model, error) {
+func loadWorkerModel(db gorp.SqlExecutor, withPassword bool, query string, args ...interface{}) (*sdk.Model, error) {
 	wms := []dbResultWMS{}
 	if _, err := db.Select(&wms, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -139,7 +150,7 @@ func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*s
 	if len(wms) == 0 {
 		return nil, sdk.WithStack(sdk.ErrNoWorkerModel)
 	}
-	r, err := scanWorkerModels(db, wms)
+	r, err := scanWorkerModels(db, wms, withPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -152,13 +163,25 @@ func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*s
 // LoadWorkerModelByName retrieves a specific worker model in database
 func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
 	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, modelColumns)
-	return loadWorkerModel(db, query, name)
+	return loadWorkerModel(db, false, query, name)
+}
+
+// LoadWorkerModelByNameWithPassword retrieves a specific worker model in database
+func LoadWorkerModelByNameWithPassword(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, modelColumns)
+	return loadWorkerModel(db, true, query, name)
 }
 
 // LoadWorkerModelByID retrieves a specific worker model in database
 func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, modelColumns)
-	return loadWorkerModel(db, query, ID)
+	return loadWorkerModel(db, false, query, ID)
+}
+
+// LoadWorkerModelByIDWithPassword retrieves a specific worker model in database
+func LoadWorkerModelByIDWithPassword(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, modelColumns)
+	return loadWorkerModel(db, true, query, ID)
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
@@ -203,7 +226,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 		}
 	}
 	var err error
-	models, err = scanWorkerModels(db, wms)
+	models, err = scanWorkerModels(db, wms, false)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadWorkerModelsByUser")
 	}
@@ -239,6 +262,13 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, group
 	for i := range ms {
 		if err := ms[i].PostSelect(db); err != nil {
 			return nil, sdk.WithStack(err)
+		}
+		if ms[i].ModelDocker.Private && ms[i].ModelDocker.Password != "" {
+			var err error
+			ms[i].ModelDocker.Password, err = DecryptValue(ms[i].ModelDocker.Password)
+			if err != nil {
+				return models, sdk.WrapError(err, "cannot decrypt value for model %s", ms[i].Name)
+			}
 		}
 		models = append(models, sdk.Model(ms[i]))
 	}
@@ -280,16 +310,19 @@ func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary
 			return nil, sdk.WrapError(err, "for user")
 		}
 	}
-	return scanWorkerModels(db, wms)
+	return scanWorkerModels(db, wms, false)
 }
 
-func scanWorkerModels(db gorp.SqlExecutor, rows []dbResultWMS) ([]sdk.Model, error) {
+func scanWorkerModels(db gorp.SqlExecutor, rows []dbResultWMS, withPassword bool) ([]sdk.Model, error) {
 	models := []sdk.Model{}
 	for _, row := range rows {
 		m := row.WorkerModel
 		m.Group = sdk.Group{ID: m.GroupID, Name: row.GroupName}
 		if err := m.PostSelect(db); err != nil {
 			return nil, err
+		}
+		if m.ModelDocker.Password != "" && !withPassword {
+			m.ModelDocker.Password = sdk.PasswordPlaceholder
 		}
 		models = append(models, sdk.Model(m))
 	}
@@ -503,4 +536,26 @@ func getAdditionalSQLFilters(opts *StateLoadOption) []string {
 		}
 	}
 	return additionalFilters
+}
+
+// DecryptValue decrypt value for password
+func DecryptValue(v string) (string, error) {
+	b, err64 := base64.StdEncoding.DecodeString(v)
+	if err64 != nil {
+		return "", sdk.WrapError(err64, "cannot decode string")
+	}
+	secret, errD := secret.Decrypt(b)
+	if errD != nil {
+		return "", sdk.WrapError(errD, "Cannot decrypt password")
+	}
+	return string(secret), nil
+}
+
+// EncryptValue encrypt value for password
+func EncryptValue(v string) (string, error) {
+	encryptedSecret, errE := secret.Encrypt([]byte(v))
+	if errE != nil {
+		return "", sdk.WrapError(errE, "Cannot encrypt password")
+	}
+	return base64.StdEncoding.EncodeToString(encryptedSecret), nil
 }

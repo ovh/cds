@@ -15,9 +15,30 @@ import (
 // SwiftStore implements ObjectStore interface with openstack swift implementation
 type SwiftStore struct {
 	swift.Connection
-	containerprefix    string
+	containerPrefix    string
 	disableTempURL     bool
 	projectIntegration sdk.ProjectIntegration
+}
+
+func newSwiftStore(integration sdk.ProjectIntegration, conf ConfigOptionsOpenstack) (*SwiftStore, error) {
+	log.Info("ObjectStore> Initialize Swift driver on url: %s", conf.Address)
+	s := &SwiftStore{
+		Connection: swift.Connection{
+			AuthUrl:  conf.Address,
+			Region:   conf.Region,
+			Tenant:   conf.Tenant,
+			Domain:   conf.Domain,
+			UserName: conf.Username,
+			ApiKey:   conf.Password,
+		},
+		containerPrefix:    conf.ContainerPrefix,
+		disableTempURL:     conf.DisableTempURL,
+		projectIntegration: integration,
+	}
+	if err := s.Authenticate(); err != nil {
+		return nil, sdk.WrapError(err, "Unable to authenticate on swift storage")
+	}
+	return s, nil
 }
 
 // TemporaryURLSupported returns true is temporary URL are supported
@@ -45,7 +66,7 @@ func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
 
 // ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
 func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	container := s.containerprefix + o.GetPath()
+	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
@@ -81,7 +102,7 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 
 // Store stores in swift
 func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
-	container := s.containerprefix + o.GetPath()
+	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
@@ -117,12 +138,12 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 
 // Fetch an object from swift
 func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
-	container := s.containerprefix + o.GetPath()
+	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 
 	pipeReader, pipeWriter := io.Pipe()
-	log.Debug("OpenstacSwiftStorekStore> Fetching /%s/%s\n", container, object)
+	log.Debug("SwiftStore> Fetching /%s/%s\n", container, object)
 
 	go func() {
 		log.Debug("SwiftStore> downloading object %s/%s", container, object)
@@ -139,7 +160,7 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 
 // Delete an object from swift
 func (s *SwiftStore) Delete(o Object) error {
-	container := s.containerprefix + o.GetPath()
+	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 
@@ -154,8 +175,8 @@ func (s *SwiftStore) Delete(o Object) error {
 }
 
 // StoreURL returns a temporary url and a secret key to store an object
-func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
-	container := s.containerprefix + o.GetPath()
+func (s *SwiftStore) StoreURL(o Object, contentType string) (string, string, error) {
+	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 	if err := s.ContainerCreate(container, nil); err != nil {
@@ -171,14 +192,9 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 	return url, string(key), nil
 }
 
-// GetPublicURL returns a public url to fetch an object (check your object ACLs before)
-func (s *SwiftStore) GetPublicURL(o Object) (url string, err error) {
-	return s.StorageUrl + "/" + (s.containerprefix + o.GetPath()), nil
-}
-
 // ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
 func (s *SwiftStore) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
-	container := s.containerprefix + o.GetPath()
+	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 	if entrypoint == "" {
@@ -227,7 +243,7 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 
 // FetchURL returns a temporary url and a secret key to fetch an object
 func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
-	container := s.containerprefix + o.GetPath()
+	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 

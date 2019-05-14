@@ -161,6 +161,26 @@ func (api *API) getWorkflowRunsHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteWorkflowRunsBranchHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		branch := vars["branch"]
+
+		wfIDs, err := workflow.LoadRunsIDByTag(api.mustDB(), key, name, "git.branch", branch)
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.MarkWorkflowRunsAsDelete(api.mustDB(), wfIDs); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 // getWorkflowRunNumHandler returns the last run number for the given workflow
 func (api *API) getWorkflowRunNumHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

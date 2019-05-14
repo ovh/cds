@@ -929,6 +929,8 @@
   "worker_model_arch": "Architecture",
   "worker_model_pattern_title": "Patterns des scripts de configuration",
   "worker_model_pre_cmd": "Commande avant exécution du worker",
+  "worker_model_private": "Registry privée",
+  "worker_model_private_tooltip": "Si votre image provient d'une registry privée qui requiert une authentification",
   "worker_model_cmd": "Commande principale du worker",
   "worker_model_cmd_tooltip": "La commande doit terminer par ./worker",
   "worker_model_cmd_docker": "Commande",
@@ -936,6 +938,9 @@
   "worker_model_post_cmd": "Commande après exécution du worker",
   "worker_model_shell_cmd": "Commande principale du shell",
   "worker_model_no_usage": "Ce modèle de worker n'est pas utilisé explicitement dans un pipeline",
+  "worker_model_private_registry": "Registry privée",
+  "worker_model_username": "Nom d'utilisateur",
+  "worker_model_password": "Mot de passe",
 
   "workflow_modal_change_view_confirm": "Êtes-vous sure de vouloir perdre vos changements ?",
   "workflow_save_as_code_title": "Sauvegarde du workflow as code",

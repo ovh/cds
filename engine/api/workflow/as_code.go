@@ -114,7 +114,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient, repoFullName string, prID int64) (bool, bool, error) {
 	pr, err := client.PullRequest(ctx, repoFullName, int(prID))
 	if err != nil {
-		if err == sdk.ErrNotFound {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return false, true, nil
 		}
 		return false, false, sdk.WrapError(err, "unable to check pull request status")

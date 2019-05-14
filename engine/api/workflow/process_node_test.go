@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/pipeline"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"

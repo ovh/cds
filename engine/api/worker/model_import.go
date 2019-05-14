@@ -96,7 +96,7 @@ currentUGroup:
 	}
 
 	if force {
-		if existingWm, err := LoadWorkerModelByName(db, sdkWm.Name); err != nil {
+		if existingWm, err := LoadWorkerModelByNameWithPassword(db, sdkWm.Name); err != nil {
 			if sdk.Cause(err) == sql.ErrNoRows {
 				if asSimpleUser && modelPattern == nil {
 					return nil, sdk.ErrWorkerModelNoPattern
@@ -132,6 +132,14 @@ currentUGroup:
 					sdkWm.ModelVirtualMachine.Flavor = flavor
 				}
 			}
+			if sdkWm.ModelDocker.Password == sdk.PasswordPlaceholder {
+				decryptedPw, err := DecryptValue(existingWm.ModelDocker.Password)
+				if err != nil {
+					return nil, sdk.WrapError(err, "cannot decrypt password")
+				}
+				sdkWm.ModelDocker.Password = decryptedPw
+			}
+
 			if !asSimpleUser {
 				if errInvalidModel != nil {
 					return nil, errInvalidModel

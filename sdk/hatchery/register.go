@@ -3,7 +3,6 @@ package hatchery
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"sync/atomic"
 
@@ -24,12 +23,13 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 		return fmt.Errorf("hatchery> workerRegister> No model returned by GetWorkerModels")
 	}
 	// currentRegister contains the register spawned in this ticker
-	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering, sdk.StatusWorkerPending)
+	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering)
 	if err != nil {
 		log.Error("hatchery> workerRegister> %v", err)
 	}
 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
+loopModels:
 	for k := range models {
 		if models[k].Type != h.ModelType() {
 			continue
@@ -40,7 +40,10 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 			continue
 		}
 
-		maxRegistration := int64(math.Floor(float64(h.Configuration().Provision.MaxWorker) / 4))
+		maxRegistration := int64(h.Configuration().Provision.MaxConcurrentRegistering)
+		if maxRegistration == 0 {
+			maxRegistration = 2
+		}
 		if atomic.LoadInt64(&nbRegisteringWorkerModels) > maxRegistration {
 			log.Debug("hatchery> workerRegister> max registering worker reached")
 			return nil
@@ -53,8 +56,9 @@ func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- wor
 
 		// Check if there is a pending registering worker
 		for _, w := range currentRegistering {
-			if strings.HasPrefix(w.Name, "register-") && strings.Contains(w.Name, models[k].Name) {
+			if strings.Contains(w.Name, models[k].Name) {
 				log.Info("hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
+				continue loopModels
 			}
 		}
 

@@ -346,6 +346,14 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 		a := &sdk.Auth{
 			EmailVerified: true,
 		}
+		// first user in db is a CDS Admin
+		nbUsers, errc := user.CountUser(db)
+		if errc != nil {
+			return nil, sdk.WrapError(errc, "searchAndInsertOrUpdateUser: Cannot count user")
+		}
+		if nbUsers == 0 {
+			u.Admin = true
+		}
 		if err := user.InsertUser(db, u, a); err != nil {
 			log.Error("LDAP> Error inserting user %s: %s", username, err)
 			return nil, err

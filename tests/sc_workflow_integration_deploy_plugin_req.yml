@@ -1,0 +1,64 @@
+name: Create a simple workflow (ITSCWRKFLW15) run it and then stop it
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW15/pipeline.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW15/application.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW15/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW15"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW15 "
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW15 ITSCWRKFLW15"
+
+- name: import integration
+  steps:
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/hello-it.yml
+  - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/hello-it-plugin.yml
+  - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/hello-action-plugin.yml
+  - script: {{.cds.build.cdsctl}} admin plugins binary-add hello-it-plugin ./tests/fixtures/plugins/hello-it-plugin-binary.yml ./tests/fixtures/plugins/hello.py 
+  - script: {{.cds.build.cdsctl}} admin plugins binary-add hello-action-plugin ./tests/fixtures/plugins/hello-action-plugin-binary.yml ./tests/fixtures/plugins/hello.py
+
+- name: import application
+  steps:
+  - script: {{.cds.build.cdsctl}} application import --force ITSCWRKFLW15 ./tests/fixtures/ITSCWRKFLW15/application.yml
+
+- name: import pipeline
+  steps:
+  - script: {{.cds.build.cdsctl}} pipeline import --force ITSCWRKFLW15 ./tests/fixtures/ITSCWRKFLW15/pipeline.yml
+
+- name: import workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW15 ./tests/fixtures/ITSCWRKFLW15/workflow.yml
+
+- name: run workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW15-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script: {{.cds.build.cdsctl}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json
+    retry: 10
+    delay: 3
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Building
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
+
+- name: check if pre-requisite is visible in queue
+  steps:
+  - script: {{.cds.build.cdsctl}} admin curl /queue/workflows|grep "job.requirement.network.localhost.local"
+
+- name: stop workflow
+  steps:
+  - script: {{.cds.build.cdsctl}} workflow stop ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW15-WORKFLOW #1 has been stopped"

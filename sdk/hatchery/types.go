@@ -35,6 +35,7 @@ type CommonConfiguration struct {
 		Frequency                 int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds" json:"frequency"`
 		MaxWorker                 int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers" json:"maxWorker"`
 		MaxConcurrentProvisioning int  `toml:"maxConcurrentProvisioning" default:"10" comment:"Maximum allowed simultaneous workers provisioning" json:"maxConcurrentProvisioning"`
+		MaxConcurrentRegistering  int  `toml:"maxConcurrentRegistering" default:"2" comment:"Maximum allowed simultaneous workers registering. -1 to disable registering on this hatchery" json:"maxConcurrentRegistering"`
 		GraceTimeQueued           int  `toml:"graceTimeQueued" default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it" json:"graceTimeQueued"`
 		RegisterFrequency         int  `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds" json:"registerFrequency"`
 		WorkerLogsOptions         struct {

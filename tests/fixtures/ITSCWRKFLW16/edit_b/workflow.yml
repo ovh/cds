@@ -1,0 +1,10 @@
+name: ITSCWRKFLW16-WORKFLOW
+version: v1.0
+pipeline: ITSCWRKFLW16-PIPELINE
+pipeline_hooks:
+- type: Scheduler
+  ref: "1556912136"
+  config:
+    cron: 20 * * * *
+    payload: '{}'
+    timezone: UTC

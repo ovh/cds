@@ -139,7 +139,6 @@ func (api *API) getVariablesHandler() service.Handler {
 			"{{.git.branch}}",
 			"{{.git.tag}}",
 			"{{.git.author}}",
-			"{{.git.project}}",
 			"{{.git.repository}}",
 			"{{.git.url}}",
 			"{{.git.http_url}}",

@@ -358,6 +358,8 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	// Useful to let models cache in hatchery refresh
 	keyWorkerModel := keyBookWorkerModel(modelID)
 	store.UpdateTTL(keyWorkerModel, modelsCacheTTLInSeconds+10)
+	// delete from cache by group
+	store.Delete(cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", t.GroupID)))
 
 	return w, nil
 }
