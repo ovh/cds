@@ -102,10 +102,9 @@ func (api *API) getProjectsHandler() service.Handler {
 					return err
 				}
 
-				wapps := w.GetApplications()
 				//Checks the workflow use one of the applications
 			wapps:
-				for _, a := range wapps {
+				for _, a := range w.Applications {
 					for _, b := range apps {
 						if a.Name == b.Name {
 							ws = append(ws, p.Workflows[i])

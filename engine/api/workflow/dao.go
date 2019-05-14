@@ -1096,19 +1096,9 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid workflow name. It should match %s", sdk.NamePattern))
 	}
 
-	//Check duplicate refs
-	refs := w.References()
-	for i, ref1 := range refs {
-		for j, ref2 := range refs {
-			if ref1 == ref2 && i != j {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Duplicate reference %s", ref1))
-			}
-		}
-	}
-
 	//Check refs
-	for _, j := range w.Joins {
-		if len(j.SourceNodeRefs) == 0 {
+	for _, j := range w.WorkflowData.Joins {
+		if len(j.JoinContext) == 0 {
 			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Source node references is mandatory"))
 		}
 	}
@@ -1130,77 +1120,6 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 	}
 	if w.OutGoingHookModels == nil {
 		w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
-	}
-
-	if w.WorkflowData == nil {
-		//Checks application are in the current project
-		apps := w.InvolvedApplications()
-		for _, appID := range apps {
-			var found bool
-			for _, a := range proj.Applications {
-				if appID == a.ID {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
-			}
-		}
-
-		//Checks pipelines are in the current project
-		pips := w.InvolvedPipelines()
-		for _, pipID := range pips {
-			var found bool
-			for _, p := range proj.Pipelines {
-				if pipID == p.ID {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
-			}
-		}
-
-		//Checks environments are in the current project
-		envs := w.InvolvedEnvironments()
-		for _, envID := range envs {
-			var found bool
-			for _, e := range proj.Environments {
-				if envID == e.ID {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
-			}
-		}
-
-		//Checks integrations are in the current project
-		pfs := w.InvolvedIntegrations()
-		for _, id := range pfs {
-			var found bool
-			for _, p := range proj.Integrations {
-				if id == p.ID {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown integrations %d", id))
-			}
-		}
-
-		//Check contexts
-		nodes := w.Nodes(true)
-		for _, n := range nodes {
-			if err := n.CheckApplicationDeploymentStrategies(proj); err != nil {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
-			}
-		}
-		return nil
 	}
 
 	// Fill empty node type

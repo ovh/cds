@@ -47,36 +47,15 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 	dbnotif.WorkflowID = w.ID
 
 	//Load sources
-	var ids []struct {
-		OldNodeID int64         `db:"workflow_node_id"`
-		NewNodeID sql.NullInt64 `db:"node_id"`
-	}
-	if _, err := db.Select(&ids, "select workflow_node_id, node_id from workflow_notification_source where workflow_notification_id = $1", id); err != nil {
+	var ids []int64
+	if _, err := db.Select(&ids, "select node_id from workflow_notification_source where workflow_notification_id = $1", id); err != nil {
 		return sdk.WorkflowNotification{}, sdk.WrapError(err, "Unable to load notification %d sources", id)
 	}
-
-	dbnotif.SourceNodeIDs = make([]int64, 0, len(ids))
-	dbnotif.NodeIDs = make([]int64, 0, len(ids))
-	for _, ID := range ids {
-		dbnotif.SourceNodeIDs = append(dbnotif.SourceNodeIDs, ID.OldNodeID)
-		if ID.NewNodeID.Valid {
-			i := ID.NewNodeID.Int64
-			dbnotif.NodeIDs = append(dbnotif.NodeIDs, i)
-		} else {
-			oldN := w.GetNode(ID.OldNodeID)
-			if oldN != nil {
-				newN := w.WorkflowData.NodeByName(oldN.Name)
-				if newN != nil {
-					dbnotif.NodeIDs = append(dbnotif.NodeIDs, newN.ID)
-				}
-			}
-		}
-	}
-
+	dbnotif.NodeIDs = ids
 	n := sdk.WorkflowNotification(dbnotif)
 
 	for _, id := range n.SourceNodeIDs {
-		notifNode := w.GetNode(id)
+		notifNode := w.WorkflowData.NodeByID(id)
 		if notifNode != nil {
 			n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
 		}
@@ -100,7 +79,7 @@ func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNot
 
 	for _, s := range n.SourceNodeRefs {
 		//Search references
-		var foundRef = w.GetNodeByName(s)
+		var foundRef = w.WorkflowData.NodeByRef(s)
 		if foundRef == nil || foundRef.ID == 0 {
 			return sdk.WrapError(sdk.ErrWorkflowNotificationNodeRef, "insertNotification> Invalid notification references %s", s)
 		}

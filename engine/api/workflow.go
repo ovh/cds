@@ -344,8 +344,6 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowHandler> Cannot rename node")
 		}
 
-		(&wf).RetroMigrate()
-
 		wf.ProjectID = p.ID
 		wf.ProjectKey = key
 
