@@ -942,7 +942,7 @@
   "worker_model_username": "Nom d'utilisateur",
   "worker_model_password": "Mot de passe",
 
-  "workflow_modal_change_view_confirm": "Êtes-vous sure de vouloir perdre vos changements ?",
+  "workflow_modal_change_view_confirm": "Êtes-vous sûr de vouloir perdre vos changements ?",
   "workflow_save_as_code_title": "Sauvegarde du workflow as code",
   "workflow_save_as_code_pending": "Envoie des modifications",
   "workflow_as_code_pr_success": "Une demande de revue a été créée :",
@@ -993,7 +993,7 @@
   "workflow_node_context_payload": "Payload par défaut",
   "workflow_node_context_payload_read_only": "Payload utilisé (lecture seule)",
   "workflow_node_menu_trigger": "Déclencher",
-  "workflow_node_menu_edit": "Editer",
+  "workflow_node_menu_edit": "Éditer",
   "workflow_node_menu_edit_ro": "Voir la configuration",
   "workflow_run_node_job_queued": "Attente depuis {{time}}",
   "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : ^[a-zA-Z0-9._-]{1,}$",
