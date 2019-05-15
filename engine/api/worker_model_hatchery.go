@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -76,7 +75,7 @@ func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "this route can be called only by hatchery: %+v", h)
 		}
 
-		models, err := worker.LoadWorkerModelsUsableOnGroupWithClearPassword(api.mustDB(), api.Cache, *h.GroupID, group.SharedInfraGroup.ID)
+		models, err := worker.LoadWorkerModelsUsableOnGroupWithClearPassword(api.mustDB(), api.Cache, *h.GroupID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models for hatchery %d with group %d", h.ID, *h.GroupID)
 		}

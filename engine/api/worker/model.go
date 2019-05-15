@@ -96,7 +96,7 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 		return sdk.WithStack(sdk.ErrInvalidPassword)
 	}
 	if err := db.Insert(&dbmodel); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	*model = sdk.Model(dbmodel)
 	if model.ModelDocker.Password != "" {
@@ -114,7 +114,7 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	model.LastSpawnErrLogs = nil
 	dbmodel := WorkerModel(*model)
 	if _, err := db.Update(&dbmodel); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	*model = sdk.Model(dbmodel)
 	if model.ModelDocker.Password != "" {
@@ -132,7 +132,7 @@ func UpdateWorkerModelWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) 
 	model.LastSpawnErrLogs = nil
 	dbmodel := WorkerModel(model)
 	if _, err := db.Update(&dbmodel); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return nil
 }
@@ -149,7 +149,7 @@ func LoadWorkerModelsNotSharedInfra(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	return loadWorkerModels(db, false, query, group.SharedInfraGroup.ID)
 }
 
-// loadWorkerModel retrieves a list of worker model in database
+// loadWorkerModels retrieves a list of worker model in database.
 func loadWorkerModels(db gorp.SqlExecutor, withPassword bool, query string, args ...interface{}) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
 	if _, err := db.Select(&wms, query, args...); err != nil {
@@ -168,7 +168,7 @@ func loadWorkerModels(db gorp.SqlExecutor, withPassword bool, query string, args
 	return r, nil
 }
 
-// loadWorkerModel retrieves a specific worker model in database
+// loadWorkerModel retrieves a specific worker model in database.
 func loadWorkerModel(db gorp.SqlExecutor, withPassword bool, query string, args ...interface{}) (*sdk.Model, error) {
 	wms := []dbResultWMS{}
 	if _, err := db.Select(&wms, query, args...); err != nil {
@@ -279,7 +279,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 }
 
 // LoadWorkerModelsUsableOnGroupWithClearPassword returns worker models for a group.
-func LoadWorkerModelsUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store cache.Store, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
+func LoadWorkerModelsUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store cache.Store, groupID int64) ([]sdk.Model, error) {
 	key := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", groupID))
 
 	models := make([]sdk.Model, 0)
@@ -292,7 +292,7 @@ func LoadWorkerModelsUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store c
 	// so, a 'shared.infra' hatchery need all its worker models and all others with restricted = false
 
 	var query string
-	if sharedinfraGroupID == groupID { // shared infra, return all models, excepts restricted
+	if groupID == group.SharedInfraGroup.ID { // shared infra, return all models, excepts restricted
 		query = fmt.Sprintf(`
       SELECT %s
       FROM worker_model
@@ -375,10 +375,10 @@ func DeleteWorkerModel(db gorp.SqlExecutor, ID int64) error {
 	m := WorkerModel(sdk.Model{ID: ID})
 	count, err := db.Delete(&m)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	if count == 0 {
-		return sdk.ErrNoWorkerModel
+		return sdk.WithStack(sdk.ErrNoWorkerModel)
 	}
 	return nil
 }
@@ -389,7 +389,7 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) (sdk.Requi
 
 	rows, err := db.Query(query, workerID)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -397,7 +397,7 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) (sdk.Requi
 	for rows.Next() {
 		var c sdk.Requirement
 		if err := rows.Scan(&c.Name, &c.Type, &c.Value); err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 		capas = append(capas, c)
 	}
@@ -482,7 +482,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 		return sdk.WithStack(err)
 	}
 	if n == 0 {
-		return sdk.ErrNoWorkerModel
+		return sdk.WithStack(sdk.ErrNoWorkerModel)
 	}
 	return nil
 }
