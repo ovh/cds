@@ -7,6 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/sessionstore"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -28,8 +32,10 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Config:              Configuration{},
 		Cache:               cache,
 	}
-	api.InitRouter()
+	api.AuthenticationDrivers = make(map[string]authentication.Driver)
 	api.AuthenticationDrivers["local"] = localauthentication.New()
+	auth.Store, _ = sessionstore.Get(context.Background(), cache, 60)
+	api.InitRouter()
 	f := func() {
 		cancel()
 		end()
@@ -50,6 +56,9 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 		Config:              Configuration{},
 		Cache:               cache,
 	}
+	api.AuthenticationDrivers = make(map[string]authentication.Driver)
+	api.AuthenticationDrivers["local"] = localauthentication.New()
+	auth.Store, _ = sessionstore.Get(context.Background(), cache, 60)
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)

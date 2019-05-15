@@ -144,7 +144,7 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 
 func (api *API) getAccessTokenByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
+		id, err := requestVar(r, "id")
 		if err != nil {
 			return sdk.WithStack(err)
 		}

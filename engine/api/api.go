@@ -406,8 +406,7 @@ func getGrantedUser(c context.Context) *sdk.GrantedUser {
 	return u
 }
 
-func 
-getAuthentifiedUser(c context.Context) *sdk.AuthentifiedUser {
+func getAuthentifiedUser(c context.Context) *sdk.AuthentifiedUser {
 	u := getGrantedUser(c)
 	if u == nil {
 		return nil
@@ -699,7 +698,6 @@ func (a *API) Serve(ctx context.Context) error {
 	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication drivers...")
-
 	a.AuthenticationDrivers = map[string]authentication.Driver{}
 	if a.Config.Auth.LDAP.Enable {
 		cfg := ldapauthentication.LDAPConfig{

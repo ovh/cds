@@ -483,9 +483,9 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		models := []sdk.Model{}
 		var errbyuser error
 		if binary != "" {
-			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), deprecatedGetUser(ctx), binary)
+			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), getAuthentifiedUser(ctx), binary)
 		} else {
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), opt)
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getAuthentifiedUser(ctx), opt)
 		}
 		if errbyuser != nil {
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", deprecatedGetUser(ctx).ID)
