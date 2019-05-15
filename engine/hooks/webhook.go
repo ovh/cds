@@ -313,7 +313,7 @@ func (s *Service) enqueueBranchDeletion(uuid, projectKey, workflowName, branch s
 	task := sdk.Task{
 		Config: config,
 		Type:   TypeBranchDeletion,
-		UUID:   uuid,
+		UUID:   sdk.UUID(),
 	}
 
 	_, err := s.startTask(context.Background(), &task)
