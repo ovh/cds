@@ -162,7 +162,7 @@ func (s *Service) deleteTaskExecutionsRoutine(c context.Context) error {
 				continue
 			}
 			for _, t := range tasks {
-				branchDeletionInProgress := 0
+				taskToDelete := false
 				execs, err := s.Dao.FindAllTaskExecutions(&t)
 				if err != nil {
 					log.Error("Hooks> deleteTaskExecutionsRoutine > Unable to find all task executions (%s): %v", t.UUID, err)
@@ -179,7 +179,7 @@ func (s *Service) deleteTaskExecutionsRoutine(c context.Context) error {
 						if e.Status == TaskExecutionDone && e.ProcessingTimestamp != 0 {
 							s.Dao.DeleteTaskExecution(&e)
 						} else {
-							branchDeletionInProgress++
+							taskToDelete = true
 						}
 					default:
 						if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
@@ -189,12 +189,10 @@ func (s *Service) deleteTaskExecutionsRoutine(c context.Context) error {
 
 				}
 
-				switch t.Type {
-				case TypeBranchDeletion:
-					if branchDeletionInProgress == 0 {
-						s.Dao.DeleteTask(&t)
-					}
+				if taskToDelete {
+					s.Dao.DeleteTask(&t)
 				}
+
 			}
 		}
 	}

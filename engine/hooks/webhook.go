@@ -53,7 +53,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		}
 		if pushEvent.Deleted {
 			branch := strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
-			err := s.enqueueBranchDeletion(t.UUID, projectKey, workflowName, branch)
+			err := s.enqueueBranchDeletion(projectKey, workflowName, branch)
 
 			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 		}
@@ -99,7 +99,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		}
 		// Branch deletion ( gitlab return 0000000000000000000000000000000000000000 as git hash)
 		if pushEvent.After == "0000000000000000000000000000000000000000" {
-			err := s.enqueueBranchDeletion(t.UUID, projectKey, workflowName, strings.TrimPrefix(pushEvent.Ref, "refs/heads/"))
+			err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushEvent.Ref, "refs/heads/"))
 			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 		}
 		payload["git.author"] = pushEvent.UserUsername
@@ -142,7 +142,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 
 		for _, pushChange := range pushEvent.Changes {
 			if pushChange.Type == "DELETE" {
-				err := s.enqueueBranchDeletion(t.UUID, projectKey, workflowName, strings.TrimPrefix(pushChange.RefID, "refs/heads/"))
+				err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.RefID, "refs/heads/"))
 				if err != nil {
 					log.Error("cannot enqueue branch deletion: %v", err)
 				}
@@ -292,7 +292,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 	return &h, nil
 }
 
-func (s *Service) enqueueBranchDeletion(uuid, projectKey, workflowName, branch string) error {
+func (s *Service) enqueueBranchDeletion(projectKey, workflowName, branch string) error {
 	config := sdk.WorkflowNodeHookConfig{
 		"project": sdk.WorkflowNodeHookConfigValue{
 			Configurable: false,
