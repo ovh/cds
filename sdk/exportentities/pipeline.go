@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cast"
 	yaml "gopkg.in/yaml.v2"
 
@@ -395,12 +396,11 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 				if err != nil {
 					return nil, fmt.Errorf("Cannot convert conditions type: check that your stage conditions are right formatted")
 				}
-				fmt.Printf("-- %+v ---- %t", mapStrInt, mapStrInt)
-				plainConditions, okPlainConditions := mapStrInt["check"].([]sdk.WorkflowNodeCondition)
-				if !okPlainConditions {
-					return nil, fmt.Errorf("Cannot get conditions type")
+				var conditions sdk.WorkflowNodeConditions
+				if err := mapstructure.Decode(mapStrInt, &conditions); err != nil {
+					return nil, sdk.WrapError(err, "cannot decode conditions")
 				}
-				mapStages[s].Conditions = sdk.WorkflowNodeConditions{PlainConditions: plainConditions}
+				mapStages[s].Conditions = conditions
 			}
 		}
 	}
