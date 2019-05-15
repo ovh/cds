@@ -162,10 +162,6 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	if err := gorpmapping.JSONNullString(res.W, &w); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal workflow")
 	}
-	// TODO: to delete when old runs will be purged
-	for i := range w.Joins {
-		w.Joins[i].Ref = fmt.Sprintf("%d", w.Joins[i].ID)
-	}
 	r.Workflow = w
 
 	i := []sdk.WorkflowRunInfo{}
@@ -472,9 +468,6 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 		return nil, sdk.WrapError(errT, "loadRun> Error loading tags for run %d", wr.ID)
 	}
 	wr.Tags = tags
-
-	// Here we can ignore error
-	_ = MigrateWorkflowRun(context.TODO(), db, &wr)
 
 	if err := syncNodeRuns(db, &wr, loadOpts); err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow node run")

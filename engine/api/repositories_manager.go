@@ -531,7 +531,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				}
 				wf.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, &wf, proj, u); err != nil {
+				if err := workflow.Update(ctx, db, api.Cache, &wf, proj, u, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
 					return sdk.WrapError(err, "Cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 			}
@@ -556,6 +556,15 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(errl, "detachRepositoriesManager> error on load project %s", projectKey)
 		}
 
+		// Check if there is hooks on this application
+		hooksCount, err := workflow.CountHooksByApplication(db, app.ID)
+		if err != nil {
+			return err
+		}
+		if hooksCount > 0 {
+			return sdk.WithStack(sdk.ErrRepositoryUsedByHook)
+		}
+
 		//Remove all the things in a transaction
 		tx, errT := db.Begin()
 		if errT != nil {
@@ -569,58 +578,6 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		usage, errU := loadApplicationUsage(db, projectKey, appName)
-		if errU != nil {
-			return sdk.WrapError(errU, "detachRepositoriesManager> Cannot load application usage")
-		}
-
-		// Update default payload of linked workflow root
-		if len(usage.Workflows) > 0 {
-			proj, errP := project.Load(db, api.Cache, projectKey, u)
-			if errP != nil {
-				return sdk.WrapError(errP, "detachRepositoriesManager> Cannot load project")
-			}
-
-			hookToDelete := map[string]sdk.NodeHook{}
-			for _, wf := range usage.Workflows {
-				wfDB, errWL := workflow.LoadByID(db, api.Cache, proj, wf.ID, u, workflow.LoadOptions{})
-				if errWL != nil {
-					return errWL
-				}
-
-				nodeHooks := wfDB.WorkflowData.GetHooks()
-				for _, nodeHook := range nodeHooks {
-					if nodeHook.HookModelName != sdk.RepositoryWebHookModelName && nodeHook.HookModelName != sdk.GitPollerModelName {
-						continue
-					}
-					hookToDelete[nodeHook.UUID] = nodeHook
-				}
-			}
-
-			if len(hookToDelete) > 0 {
-				txDel, errTx := db.Begin()
-				if errTx != nil {
-					return sdk.WrapError(errTx, "detachRepositoriesManager> Cannot create delete transaction")
-				}
-				defer func() {
-					_ = txDel.Rollback()
-				}()
-
-				for _, nodeHook := range hookToDelete {
-					if err := workflow.DeleteHook(txDel, &nodeHook); err != nil {
-						return sdk.WrapError(err, "Cannot delete hooks")
-					}
-				}
-				if err := workflow.DeleteHookConfiguration(ctx, txDel, api.Cache, proj, hookToDelete); err != nil {
-					return sdk.WrapError(err, "Cannot delete hooks vcs configuration")
-				}
-
-				if err := txDel.Commit(); err != nil {
-					return sdk.WrapError(err, "Cannot commit delete transaction")
-				}
-			}
 		}
 
 		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, u)

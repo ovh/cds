@@ -17,17 +17,46 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, wfOld *sdk.Workflow) error {
-	newHooks := wf.WorkflowData.GetHooks()
-	var hookToDelete []sdk.NodeHook
-	for _, h := range wfOld.WorkflowData.Node.Hooks {
-		if _, has := newHooks[h.UUID]; !has {
-			hookToDelete = append(hookToDelete, h)
+func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
+	// Delete from vcs configuration if needed
+	for _, h := range hookToDelete {
+		if h.HookModelName == sdk.RepositoryWebHookModelName {
+			// Call VCS to know if repository allows webhook and get the configuration fields
+			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
+			if projectVCSServer != nil {
+				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectVCSServer)
+				if errclient != nil {
+					return errclient
+				}
+				vcsHook := sdk.VCSHook{
+					Method:   "POST",
+					URL:      h.Config["webHookURL"].Value,
+					Workflow: true,
+					ID:       h.Config["webHookID"].Value,
+				}
+				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
+					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
+				}
+				h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        vcsHook.ID,
+					Configurable: false,
+				}
+			}
 		}
 	}
 
-	DeleteHookConfiguration()
-
+	//Push the hook to hooks µService
+	//Load service "hooks"
+	srvs, err := services.FindByType(db, services.TypeHooks)
+	if err != nil {
+		return err
+	}
+	code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+	if errHooks != nil || code >= 400 {
+		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
+		// so, it's just a warn log
+		log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
+	}
 	return nil
 }
 
@@ -168,61 +197,6 @@ func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cach
 		pl := h.Config["payload"]
 		pl.Value = string(payloadStr)
 		h.Config["payload"] = pl
-	}
-	return nil
-}
-
-// HookRegistration ensures hooks registration on Hook µService
-func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
-
-	if len(hookToDelete) > 0 {
-		if err := DeleteHookConfiguration(ctx, db, store, p, hookToDelete); err != nil {
-			return sdk.WrapError(err, "Cannot remove hook configuration")
-		}
-	}
-	return nil
-}
-
-// DeleteHookConfiguration delete hooks configuration (and their vcs configuration)
-func DeleteHookConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
-	// Delete from vcs configuration if needed
-	for _, h := range hookToDelete {
-		if h.HookModelName == sdk.RepositoryWebHookModelName {
-			// Call VCS to know if repository allows webhook and get the configuration fields
-			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
-			if projectVCSServer != nil {
-				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectVCSServer)
-				if errclient != nil {
-					return sdk.WrapError(errclient, "deleteHookConfiguration> Cannot get vcs client")
-				}
-				vcsHook := sdk.VCSHook{
-					Method:   "POST",
-					URL:      h.Config["webHookURL"].Value,
-					Workflow: true,
-					ID:       h.Config["webHookID"].Value,
-				}
-				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
-					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
-				}
-				h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
-					Value:        vcsHook.ID,
-					Configurable: false,
-				}
-			}
-		}
-	}
-
-	//Push the hook to hooks µService
-	//Load service "hooks"
-	srvs, err := services.FindByType(db, services.TypeHooks)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to get services dao")
-	}
-	code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
-	if errHooks != nil || code >= 400 {
-		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
-		// so, it's just a warn log
-		log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }

@@ -137,7 +137,7 @@ func (s *Service) stopTaskHandler() service.Handler {
 func (s *Service) postTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
-		hook := &sdk.WorkflowNodeHook{}
+		hook := &sdk.NodeHook{}
 		if err := service.UnmarshalBody(r, hook); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -367,7 +367,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 
 func (s *Service) deleteTaskBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		hooks := map[string]sdk.WorkflowNodeHook{}
+		hooks := map[string]sdk.NodeHook{}
 		if err := service.UnmarshalBody(r, &hooks); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -394,7 +394,7 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 func (s *Service) postTaskBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
-		hooks := map[string]sdk.WorkflowNodeHook{}
+		hooks := map[string]sdk.NodeHook{}
 		if err := service.UnmarshalBody(r, &hooks); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -413,7 +413,7 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 	}
 }
 
-func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
+func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Parse the hook as a task
 	t, err := s.hookToTask(h)
 	if err != nil {
@@ -450,7 +450,7 @@ func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun)
 
 var errNoTask = errors.New("task not found")
 
-func (s *Service) updateTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
+func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Parse the hook as a task
 	t, err := s.hookToTask(h)
 	if err != nil {
@@ -478,7 +478,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.WorkflowNodeHook) error
 	return nil
 }
 
-func (s *Service) deleteTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
+func (s *Service) deleteTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Parse the hook as a task
 	t, err := s.hookToTask(h)
 	if err != nil {

@@ -226,9 +226,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		options := workflow.LoadOptions{
-			WithoutNode: true,
-		}
+		options := workflow.LoadOptions{}
 		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
@@ -580,7 +578,6 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		var app sdk.Application
 		var env sdk.Environment
 		var node *sdk.Node
-		var wNode *sdk.WorkflowNode
 		if wf != nil {
 			node = wf.WorkflowData.NodeByName(nodeName)
 			if node == nil {
@@ -612,9 +609,6 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		} else {
 			// Find hash and branch of ancestor node run
 			var nodeIDsAncestors []int64
-			if wNode != nil {
-				nodeIDsAncestors = wNode.Ancestors(&wfRun.Workflow, false)
-			}
 			if node != nil {
 				nodeIDsAncestors = node.Ancestors(wfRun.Workflow.WorkflowData)
 			}
@@ -806,10 +800,6 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			next()
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
-			}
-			// MIGRATION TO NEW MODEL
-			if err := workflow.MigrateWorkflowRun(ctx, api.mustDB(), lastRun); err != nil {
-				return sdk.WrapError(err, "unable to migrate workflow run")
 			}
 		}
 
@@ -1030,9 +1020,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		options := workflow.LoadOptions{
-			WithoutNode: true,
-		}
+		options := workflow.LoadOptions{}
 		work, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")

@@ -25,7 +25,7 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 		lastExec := time.Now()
 		workflowID, errV := requestVarInt(r, "workflowID")
 		if errV != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getHookPollingVCSEvents> cannot convert workflowID to int %s", errV)
+			return errV
 		}
 
 		if r.Header.Get("X-CDS-Last-Execution") != "" {
@@ -36,22 +36,19 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 
 		h, errL := workflow.LoadHookByUUID(api.mustDB(), uuid)
 		if errL != nil {
-			return sdk.WrapError(errL, "getHookPollingVCSEvents> cannot load hook")
-		}
-		if h == nil {
-			return sdk.ErrNotFound
+			return errL
 		}
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Config[sdk.HookConfigProject].Value, nil)
 		if errProj != nil {
-			return sdk.WrapError(errProj, "getHookPollingVCSEvents> cannot load project")
+			return errProj
 		}
 
 		//get the client for the repositories manager
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerParam)
 		client, errR := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if errR != nil {
-			return sdk.WrapError(errR, "getHookPollingVCSEvents> Unable to get client for %s %s", proj.Key, vcsServerParam)
+			return errR
 		}
 
 		//Check if the polling if disabled

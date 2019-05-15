@@ -140,12 +140,8 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 	gerritRepoHooks[vcsName] = true
 }
 
-func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
-	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
-		return nil, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
-	}
-
-	switch h.WorkflowHookModel.Name {
+func (s *Service) hookToTask(h *sdk.NodeHook) (*sdk.Task, error) {
+	switch h.HookModelName {
 	case sdk.GerritHookModelName:
 		return &sdk.Task{
 			UUID:   h.UUID,
@@ -202,8 +198,7 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 			Type: TypeWorkflowHook,
 		}, nil
 	}
-
-	return nil, fmt.Errorf("Unsupported hook: %s", h.WorkflowHookModel.Name)
+	return nil, fmt.Errorf("Unsupported hook: %s", h.HookModelName)
 }
 
 func (s *Service) startTasks(ctx context.Context) error {

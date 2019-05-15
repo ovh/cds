@@ -8,6 +8,14 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// CountPipeline Count the number of workflow that use the given pipeline
+func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
+	query := `SELECT count(1) FROM w_node WHERE pipeline_id= $1`
+	nbWorkfow := -1
+	err := db.QueryRow(query, pipelineID).Scan(&nbWorkfow)
+	return nbWorkfow != 0, err
+}
+
 // DeleteWorkflowData delete the relation representation of the workflow
 func DeleteWorkflowData(db gorp.SqlExecutor, w sdk.Workflow) error {
 	if w.WorkflowData == nil {
