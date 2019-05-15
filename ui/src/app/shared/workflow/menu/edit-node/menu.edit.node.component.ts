@@ -5,6 +5,7 @@ import {
     Output
 } from '@angular/core';
 import {PermissionValue} from 'app/model/permission.model';
+import { Project } from 'app/model/project.model';
 import {
     WNode,
     Workflow,
@@ -23,6 +24,7 @@ import {IPopup} from 'ng2-semantic-ui';
 export class WorkflowWNodeMenuEditComponent {
 
     // Project that contains the workflow
+    @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() node: WNode;
     @Input() noderun: WorkflowNodeRun;

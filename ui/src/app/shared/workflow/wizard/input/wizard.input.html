@@ -1,19 +1,32 @@
 <div class="ui form">
     <ng-container
-        *ngIf="pipParamsReady && editableNode.context.default_pipeline_parameters && editableNode.context.default_pipeline_parameters.length > 0">
+        *ngIf="noderun || (pipParamsReady && editableNode.context.default_pipeline_parameters)">
         <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
-        <app-parameter-list
-            [project]="project"
-            [parameters]="editableNode.context.default_pipeline_parameters"
-            [paramsRef]="currentPipeline.parameters"
-            [mode]="readonly?'ro':'launcher'"
-            [suggest]="suggest"
-            [canDelete]="false"
-            (event)="parameterEvent($event)">
-        </app-parameter-list>
+        <ng-container *ngIf="editableNode?.context?.default_pipeline_parameters">
+            <app-parameter-list
+                [project]="project"
+                [parameters]="editableNode.context.default_pipeline_parameters"
+                [paramsRef]="currentPipeline.parameters"
+                [mode]="readonly?'ro':'launcher'"
+                [suggest]="suggest"
+                [canDelete]="false"
+                (event)="parameterEvent($event)">
+            </app-parameter-list>
+        </ng-container>
+        <ng-container *ngIf="noderun != null">
+            <app-parameter-list
+                [project]="project"
+                [parameters]="noderun.pipeline_parameters"
+                [paramsRef]="noderun.pipeline_parameters"
+                [mode]="readonly?'ro':'launcher'"
+                [suggest]="suggest"
+                [canDelete]="false"
+                (event)="parameterEvent($event)">
+            </app-parameter-list>
+        </ng-container>
     </ng-container>
     <ng-container
-        *ngIf="(editableNode.hooks && editableNode.hooks.length > 0) || (editableNode.id === workflow.workflow_data.node.id)">
+        *ngIf="(editableNode?.hooks && editableNode?.hooks.length > 0) || (editableNode?.id === workflow.workflow_data?.node?.id) || noderun">
         <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
         <ng-container *ngIf="!loadingBranches">
             <codemirror

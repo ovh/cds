@@ -1,22 +1,23 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {Store} from '@ngxs/store';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {finalize, flatMap} from 'rxjs/operators';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { finalize, flatMap } from 'rxjs/operators';
 
-import {TranslateService} from '@ngx-translate/core';
-import {Application} from 'app/model/application.model';
-import {PermissionValue} from 'app/model/permission.model';
-import {Pipeline} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {WNode, Workflow} from 'app/model/workflow.model';
-import {ApplicationWorkflowService, VariableService} from 'app/service/services.module';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {ParameterEvent} from 'app/shared/parameter/parameter.event.model';
-import {ToastService} from 'app/shared/toast/ToastService';
-import {FetchPipeline} from 'app/store/pipelines.action';
-import {PipelinesState} from 'app/store/pipelines.state';
-import {UpdateWorkflow} from 'app/store/workflow.action';
-import {cloneDeep} from 'lodash';
+import { TranslateService } from '@ngx-translate/core';
+import { Application } from 'app/model/application.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { ApplicationWorkflowService, VariableService } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { FetchPipeline } from 'app/store/pipelines.action';
+import { PipelinesState } from 'app/store/pipelines.state';
+import { UpdateWorkflow } from 'app/store/workflow.action';
+import { cloneDeep } from 'lodash';
 
 declare var CodeMirror: any;
 
@@ -41,7 +42,9 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     get node(): WNode {
         return this.editableNode;
     }
+
     @Input() readonly = true;
+    @Input() noderun: WorkflowNodeRun;
 
     @Output() inputChange = new EventEmitter<boolean>();
 
@@ -65,7 +68,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         private store: Store, private _variableService: VariableService,
         private _appWorkflowService: ApplicationWorkflowService, private _translate: TranslateService,
         private _toast: ToastService
-    ) {}
+    ) {
+    }
 
     ngOnInit(): void {
         this.codeMirrorConfig = {
@@ -76,6 +80,10 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             autoRefresh: true,
             readOnly: this.readonly
         };
+
+        if (!this.node) {
+            this.payloadString = JSON.stringify(this.noderun.payload, undefined, 4);
+        }
 
     }
 
@@ -96,10 +104,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             this.refreshVCSInfos(app);
         }
 
-
         this.payloadString = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
-
-
         let pipeline = Workflow.getPipeline(this.workflow, this.node);
         if (pipeline) {
             this.store.dispatch(new FetchPipeline({
@@ -123,6 +128,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                 }
             });
         }
+
+
     }
 
 
@@ -174,6 +181,9 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
 
 
     updateValue(payload): void {
+        if (this.noderun) {
+            return;
+        }
         let newPayload: {};
         if (!payload) {
             return;

@@ -4,6 +4,10 @@
         <div class="modalHeader">
             <ng-container *ngIf="!hook">{{node.name}}</ng-container>
             <ng-container *ngIf="hook">{{ 'workflow_node_hook_modal_title' | translate }}</ng-container>
+
+            <button class="ui right floated icon button" (click)="modal.deny()">
+                <i class="close icon"></i>
+            </button>
         </div>
     </div>
     <div class="content">
@@ -47,12 +51,19 @@
                                                    [node]="node" (contextChange)="pushChange($event)"></app-workflow-node-context>
                     </ng-container>
                     <ng-container *ngSwitchCase="'input'">
-                        <app-workflow-node-input [project]="project" [workflow]="workflow" [readonly]="readonly"
-                                                 [node]="node" (inputChange)="pushChange($event)"></app-workflow-node-input>
+                        <ng-container *ngIf="!nodeRun">
+                            <app-workflow-node-input [project]="project" [workflow]="workflow" [readonly]="readonly"
+                                                     [node]="node"(inputChange)="pushChange($event)"></app-workflow-node-input>
+                        </ng-container>
+                        <ng-container *ngIf="nodeRun">
+                            <app-workflow-node-input [project]="project" [workflow]="workflow" [readonly]="true"
+                                                     [noderun]="nodeRun"(inputChange)="pushChange($event)"></app-workflow-node-input>
+                        </ng-container>
+
                     </ng-container>
                     <ng-container *ngSwitchCase="'outgoinghook'">
                         <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow" [mode]="readonly?'ro':'update'"
-                            [hook]="node" [updateMode]="true" (outgoinghookChange)="pushChange($event)"></app-workflow-node-outgoinghook>
+                            [hook]="node" (outgoinghookChange)="pushChange($event)"></app-workflow-node-outgoinghook>
                     </ng-container>
                     <ng-container *ngSwitchCase="'conditions'">
                         <app-workflow-node-conditions [project]="project" [workflow]="workflow" [readonly]="readonly"

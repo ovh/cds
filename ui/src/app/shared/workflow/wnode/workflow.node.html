@@ -16,6 +16,7 @@
 </div>
 <ng-template let-popup #popupNode>
     <app-workflow-menu-wnode-edit (event)="receivedEvent($event)"
+                                  [project]="project"
                                   [workflow]="workflow" [node]="node" [popup]="popup"
                                   [noderun]="currentNodeRun"
                                   [readonly]="readonly" #menu></app-workflow-menu-wnode-edit>

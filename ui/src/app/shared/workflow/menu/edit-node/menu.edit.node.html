@@ -51,6 +51,14 @@
                     <span *ngIf="!readonly">{{ 'workflow_node_menu_edit' | translate }}</span>
                 </div>
             </a>
+            <ng-container *ngIf="node.type === 'pipeline'">
+                <a class="item" [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]" [queryParams]="{workflow: workflow.name}">
+                    <div class="content">
+                        {{ 'workflow_node_menu_edit_pipeline' | translate }}
+                    </div>
+                </a>
+            </ng-container>
+
             <hr>
             <a class="item" (click)="sendEvent('delete')"
                [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly

@@ -5,6 +5,7 @@ import {GroupPermission} from 'app/model/group.model';
 import {PermissionValue} from 'app/model/permission.model';
 import {Project} from 'app/model/project.model';
 import {WNode, WNodeHook, Workflow} from 'app/model/workflow.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {PermissionEvent} from 'app/shared/permission/permission.event.model';
 import {ToastService} from 'app/shared/toast/ToastService';
@@ -48,6 +49,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     projectSubscriber: Subscription;
     storeSub: Subscription;
     readonly = true;
+    nodeRun: WorkflowNodeRun;
 
     constructor(private _modalService: SuiModalService, private _store: Store,
                 private _translate: TranslateService, private _toast: ToastService) {
@@ -60,6 +62,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+            this.nodeRun = cloneDeep(s.workflowNodeRun);
             if (!s.editModal) {
                 this.hook = undefined;
                 this.node = undefined;
