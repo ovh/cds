@@ -1,8 +1,11 @@
-package worker
+package worker_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/worker"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -10,20 +13,19 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
 func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
 	//Loading all models
-	models, err := LoadWorkerModels(db)
+	models, err := worker.LoadWorkerModels(db)
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := DeleteWorkerModel(db, m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(db, m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -64,7 +66,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 		UserLastModified: time.Now(),
 	}
 
-	if err := InsertWorkerModel(db, &m); err != nil {
+	if err := worker.InsertWorkerModel(db, &m); err != nil {
 		t.Fatalf("Cannot insert worker model: %s", err)
 	}
 
@@ -81,7 +83,7 @@ func TestInsertWorkerModel(t *testing.T) {
 
 	m := insertWorkerModel(t, db, "Foo", g.ID)
 
-	m1, err := LoadWorkerModelByID(db, m.ID)
+	m1, err := worker.LoadWorkerModelByID(db, m.ID)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -94,24 +96,11 @@ func TestInsertWorkerModel(t *testing.T) {
 
 	assert.EqualValues(t, m, m1)
 
-	s := sdk.RandomString(10)
-	_, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    false,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
-	}
-	user.InsertUser(db, u, &u.Auth)
 	group.InsertGroup(db, g)
-	group.InsertUserInGroup(db, g.ID, u.ID, false)
+	u, _ := assets.InsertLambdaUser(db, g)
+	group.InsertUserInGroup(db, g.ID, u.OldUserStruct.ID, false)
 
-	m3, err := LoadWorkerModelsByUser(db, store, u, nil)
+	m3, err := worker.LoadWorkerModelsByUser(db, store, u, nil)
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}
@@ -135,7 +124,7 @@ func TestLoadWorkerModel(t *testing.T) {
 	}
 	insertWorkerModel(t, db, "Foo", g.ID)
 
-	m, err := LoadWorkerModelByName(db, "Foo")
+	m, err := worker.LoadWorkerModelByName(db, "Foo")
 	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
@@ -143,7 +132,7 @@ func TestLoadWorkerModel(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m.Type)
 
-	_, errNotExist := LoadWorkerModelByName(db, "NotExisting")
+	_, errNotExist := worker.LoadWorkerModelByName(db, "NotExisting")
 	assert.True(t, sdk.ErrorIs(errNotExist, sdk.ErrNoWorkerModel))
 }
 
@@ -157,7 +146,7 @@ func TestLoadWorkerModels(t *testing.T) {
 	insertWorkerModel(t, db, "lol", g.ID)
 	insertWorkerModel(t, db, "foo", g.ID)
 
-	models, err := LoadWorkerModels(db)
+	models, err := worker.LoadWorkerModels(db)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -183,8 +172,8 @@ func TestLoadWorkerModelsWithFilter(t *testing.T) {
 	insertWorkerModel(t, db, "lol", g.ID)
 	insertWorkerModel(t, db, "foo", g.ID)
 
-	opts := StateError
-	models, err := LoadWorkerModelsByUser(db, store, &sdk.User{Admin: true}, &opts)
+	opts := worker.StateError
+	models, err := worker.LoadWorkerModelsByUser(db, store, &sdk.AuthentifiedUser{Ring: sdk.UserRingAdmin}, &opts)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -198,27 +187,14 @@ func TestLoadWorkerModelsByUserAndBinary(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	deleteAllWorkerModel(t, db)
-	s := sdk.RandomString(10)
-	_, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    false,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
-	}
-	user.InsertUser(db, u, &u.Auth)
 	g := insertGroup(t, db)
-	group.InsertUserInGroup(db, g.ID, u.ID, false)
+	u, _ := assets.InsertLambdaUser(db)
+	group.InsertUserInGroup(db, g.ID, u.OldUserStruct.ID, false)
 
 	insertWorkerModel(t, db, "lol", g.ID)
 	insertWorkerModel(t, db, "foo", g.ID)
 
-	models, err := LoadWorkerModelsByUserAndBinary(db, u, "capa_1")
+	models, err := worker.LoadWorkerModelsByUserAndBinary(db, u, "capa_1")
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
@@ -245,7 +221,7 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 	}
 	m := insertWorkerModel(t, db, "Foo", g.ID)
 
-	capa, err := LoadWorkerModelCapabilities(db, m.ID)
+	capa, err := worker.LoadWorkerModelCapabilities(db, m.ID)
 	if err != nil {
 		t.Fatalf("Cannot load worker model capabilities: %s", err)
 	}
@@ -267,11 +243,11 @@ func TestUpdateWorkerModel(t *testing.T) {
 		Value: "Capa_2",
 	})
 
-	if err := UpdateWorkerModel(db, &m1); err != nil {
+	if err := worker.UpdateWorkerModel(db, &m1); err != nil {
 		t.Fatalf("Error : %s", err)
 	}
 
-	m3, err := LoadWorkerModelByName(db, "lol")
+	m3, err := worker.LoadWorkerModelByName(db, "lol")
 	test.NoError(t, err)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)

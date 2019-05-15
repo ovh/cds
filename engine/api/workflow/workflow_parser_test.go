@@ -31,13 +31,13 @@ func TestParseAndImport(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pipeline",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app, u))
+	test.NoError(t, application.Insert(db, cache, proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)

@@ -3,7 +3,6 @@ package project_test
 import (
 	"testing"
 
-	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -14,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -23,26 +21,22 @@ func TestInsertProject(t *testing.T) {
 	defer end()
 	project.Delete(db, cache, "key")
 
-	u, _ := assets.InsertAdminUser(db)
-
 	proj := sdk.Project{
 		Name: "test proj",
 		Key:  "key",
 	}
-	assert.NoError(t, project.Insert(db, cache, &proj, u))
+	assert.NoError(t, project.Insert(db, cache, &proj))
 }
 
 func TestInsertProject_withWrongKey(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
-
 	proj := sdk.Project{
 		Name: "test proj",
 		Key:  "error key",
 	}
 
-	assert.Error(t, project.Insert(db, cache, &proj, u))
+	assert.Error(t, project.Insert(db, cache, &proj))
 }
 
 func TestDelete(t *testing.T) {
@@ -89,15 +83,13 @@ func TestLoadAllByRepo(t *testing.T) {
 		RepositoryFullname: "ovh/cds",
 	}
 
-	test.NoError(t, project.Insert(db, cache, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
-	user.DeleteUserWithDependenciesByName(db, "TestLoadAllByRepo_user")
+	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
-	u, _ := InsertLambdaUser(t, db, "TestLoadAllByRepo_user", &proj.ProjectGroups[0].Group)
-
-	test.NoError(t, application.Insert(db, cache, &proj, app, u))
+	test.NoError(t, application.Insert(db, cache, &proj, app))
 
 	projs, err := project.LoadAllByRepo(db, cache, u, "ovh/cds")
 	assert.NoError(t, err)
@@ -136,16 +128,13 @@ func TestLoadAll(t *testing.T) {
 		t.Fatalf("Cannot insert group : %s", err)
 	}
 
-	test.NoError(t, project.Insert(db, cache, &proj, nil))
-	test.NoError(t, project.Insert(db, cache, &proj1, nil))
+	test.NoError(t, project.Insert(db, cache, &proj))
+	test.NoError(t, project.Insert(db, cache, &proj1))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
-	user.DeleteUserWithDependenciesByName(db, "test_TestLoadAll_admin")
-	user.DeleteUserWithDependenciesByName(db, "test_TestLoadAll_user")
-
-	u1, _ := InsertAdminUser(t, db, "test_TestLoadAll_admin")
-	u2, _ := InsertLambdaUser(t, db, "test_TestLoadAll_user", &proj.ProjectGroups[0].Group)
+	u1, _ := assets.InsertAdminUser(db)
+	u2, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
 	actualGroups1, err := project.LoadAll(nil, db, cache, u1)
 	test.NoError(t, err)
@@ -169,45 +158,4 @@ func TestLoadAll(t *testing.T) {
 	project.Delete(db, cache, "test_TestLoadAll")
 	project.Delete(db, cache, "test_TestLoadAll1")
 
-}
-
-// InsertAdminUser have to be used only for tests
-func InsertAdminUser(t *testing.T, db *gorp.DbMap, s string) (*sdk.User, string) {
-	password, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    true,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
-	}
-	user.InsertUser(db, u, &u.Auth)
-	return u, password
-}
-
-// InsertLambdaUser have to be used only for tests
-func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, s string, groups ...*sdk.Group) (*sdk.User, string) {
-	password, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    false,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
-	}
-	user.InsertUser(db, u, &u.Auth)
-	for _, g := range groups {
-		group.InsertGroup(db, g)
-		group.InsertUserInGroup(db, g.ID, u.ID, false)
-		u.Groups = append(u.Groups, *g)
-	}
-	return u, password
 }

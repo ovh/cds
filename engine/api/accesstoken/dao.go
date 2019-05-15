@@ -27,7 +27,7 @@ func FindByID(db gorp.SqlExecutor, id string) (sdk.AccessToken, error) {
 }
 
 // FindAllByUser returns all tokens created by a user
-func FindAllByUser(db gorp.SqlExecutor, userID int64) ([]sdk.AccessToken, error) {
+func FindAllByUser(db gorp.SqlExecutor, userID string) ([]sdk.AccessToken, error) {
 	var dbTokens []accessToken
 	if _, err := db.Select(&dbTokens, "select * from access_token where user_id = $1 order by created asc", userID); err != nil {
 		return nil, sdk.WithStack(err)

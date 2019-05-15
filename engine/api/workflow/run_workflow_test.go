@@ -34,7 +34,7 @@ func TestManualRun1(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -57,7 +57,7 @@ func TestManualRun1(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -150,7 +150,7 @@ func TestManualRun1(t *testing.T) {
 	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache,
 		workflow.QueueFilter{
 			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-			User:     u,
+			User:     u.OldUserStruct,
 			Rights:   permission.PermissionReadExecute,
 		})
 	test.NoError(t, err)
@@ -192,7 +192,7 @@ func TestManualRun2(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -215,7 +215,7 @@ func TestManualRun2(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -291,7 +291,7 @@ func TestManualRun2(t *testing.T) {
 	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache,
 		workflow.QueueFilter{
 			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-			User:     u,
+			User:     u.OldUserStruct,
 			Rights:   permission.PermissionReadExecute,
 		})
 	test.NoError(t, err)
@@ -342,7 +342,7 @@ func TestManualRun3(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -367,7 +367,7 @@ func TestManualRun3(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -431,7 +431,7 @@ func TestManualRun3(t *testing.T) {
 
 	filter := workflow.QueueFilter{
 		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-		User:     u,
+		User:     u.OldUserStruct,
 	}
 
 	// test nil since/until
@@ -444,7 +444,7 @@ func TestManualRun3(t *testing.T) {
 
 	filter2 := workflow.QueueFilter{
 		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-		User:     u,
+		User:     u.OldUserStruct,
 		Since:    &t0,
 		Until:    &t1,
 	}
@@ -456,7 +456,7 @@ func TestManualRun3(t *testing.T) {
 	filter3 := workflow.QueueFilter{
 		Rights:   permission.PermissionReadExecute,
 		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-		User:     u,
+		User:     u.OldUserStruct,
 	}
 
 	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, filter3)
@@ -558,7 +558,7 @@ func TestManualRun3(t *testing.T) {
 	jobs, err = workflow.LoadNodeJobRunQueue(ctx, db, cache,
 		workflow.QueueFilter{
 			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-			User:     u,
+			User:     u.OldUserStruct,
 			Rights:   permission.PermissionReadExecute,
 		})
 	test.NoError(t, err)
@@ -577,7 +577,7 @@ func TestManualRun3(t *testing.T) {
 		jobsSince, errW := workflow.LoadNodeJobRunQueue(ctx, db, cache,
 			workflow.QueueFilter{
 				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-				User:     u,
+				User:     u.OldUserStruct,
 				Rights:   permission.PermissionReadExecute,
 				Since:    &t0,
 				Until:    &t1,
@@ -592,7 +592,7 @@ func TestManualRun3(t *testing.T) {
 		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
 			workflow.QueueFilter{
 				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-				User:     u,
+				User:     u.OldUserStruct,
 				Rights:   permission.PermissionReadExecute,
 				Since:    &since,
 			})
@@ -612,7 +612,7 @@ func TestManualRun3(t *testing.T) {
 		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
 			workflow.QueueFilter{
 				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
-				User:     u,
+				User:     u.OldUserStruct,
 				Rights:   permission.PermissionReadExecute,
 				Since:    &t0,
 				Until:    &t1,
@@ -631,7 +631,7 @@ func TestManualRun3(t *testing.T) {
 		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
 			workflow.QueueFilter{
 				GroupsID:     []int64{proj.ProjectGroups[0].Group.ID},
-				User:         u,
+				User:         u.OldUserStruct,
 				Rights:       permission.PermissionReadExecute,
 				RatioService: &cent,
 			})
@@ -649,7 +649,7 @@ func TestManualRun3(t *testing.T) {
 		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
 			workflow.QueueFilter{
 				GroupsID:     []int64{proj.ProjectGroups[0].Group.ID},
-				User:         u,
+				User:         u.OldUserStruct,
 				Rights:       permission.PermissionReadExecute,
 				RatioService: &zero,
 			})
@@ -666,7 +666,7 @@ func TestManualRun3(t *testing.T) {
 		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
 			workflow.QueueFilter{
 				GroupsID:  []int64{proj.ProjectGroups[0].Group.ID},
-				User:      u,
+				User:      u.OldUserStruct,
 				Rights:    permission.PermissionReadExecute,
 				ModelType: sdk.Openstack,
 			})
@@ -693,7 +693,7 @@ func TestNoStage(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -763,7 +763,7 @@ func TestNoJob(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true

@@ -26,7 +26,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	actual, err := application.LoadByName(db, cache, key, "my-app")
 	test.NoError(t, err)
@@ -45,7 +45,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	_, _ = assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
@@ -66,7 +66,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	actual, err := application.LoadByID(db, cache, app.ID)
 	test.NoError(t, err)
@@ -86,7 +86,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	_, _ = assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
@@ -117,8 +117,8 @@ func TestLoadAllAsAdmin(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
-	test.NoError(t, application.Insert(db, cache, proj, &app2, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
+	test.NoError(t, application.Insert(db, cache, proj, &app2))
 
 	actual, err := application.LoadAll(db, cache, proj.Key)
 	test.NoError(t, err)
@@ -144,8 +144,8 @@ func TestLoadAllAsUser(t *testing.T) {
 		Name: "my-app2",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
-	test.NoError(t, application.Insert(db, cache, proj, &app2, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
+	test.NoError(t, application.Insert(db, cache, proj, &app2))
 
 	_, _ = assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
@@ -167,7 +167,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -175,7 +175,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	w := sdk.Workflow{
 		Name:       "test_1",

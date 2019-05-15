@@ -185,7 +185,7 @@ func LoadWorkerModelByIDWithPassword(db gorp.SqlExecutor, ID int64) (*sdk.Model,
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
-func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts *StateLoadOption) ([]sdk.Model, error) {
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.AuthentifiedUser, opts *StateLoadOption) ([]sdk.Model, error) {
 	prefixKey := "api:workermodels"
 
 	if opts != nil {
@@ -199,7 +199,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 
 	additionalFilters := getAdditionalSQLFilters(opts)
 	wms := []dbResultWMS{}
-	if user.Admin {
+	if user.Admin() {
 		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, modelColumns)
 		if len(additionalFilters) > 0 {
 			query += fmt.Sprintf(" WHERE %s", strings.Join(additionalFilters, " AND "))
@@ -221,7 +221,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 			query += fmt.Sprintf(" AND %s", strings.Join(additionalFilters, " AND "))
 		}
 
-		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
+		if _, err := db.Select(&wms, query, user.OldUserStruct.ID, group.SharedInfraGroup.ID); err != nil {
 			return nil, sdk.WrapError(err, "for user")
 		}
 	}
@@ -279,9 +279,9 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, group
 }
 
 // LoadWorkerModelsByUserAndBinary returns worker models list according to user's groups and binary capability
-func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary string) ([]sdk.Model, error) {
+func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.AuthentifiedUser, binary string) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
-	if user.Admin {
+	if user.Admin() {
 		query := fmt.Sprintf(`
 			SELECT %s
 				FROM worker_model
@@ -306,7 +306,7 @@ func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary
 					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
 				WHERE group_id = $2 AND worker_capability.type = 'binary' AND worker_capability.argument = $3
 		`, modelColumns, modelColumns)
-		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID, binary); err != nil {
+		if _, err := db.Select(&wms, query, user.OldUserStruct.ID, group.SharedInfraGroup.ID, binary); err != nil {
 			return nil, sdk.WrapError(err, "for user")
 		}
 	}

@@ -48,7 +48,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -110,7 +110,7 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -147,7 +147,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	app := sdk.Application{
 		ProjectID:  proj.ID,
@@ -155,7 +155,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		Name:       "app1",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
@@ -213,7 +213,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -221,7 +221,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -229,7 +229,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -237,7 +237,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -357,7 +357,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -365,7 +365,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -373,7 +373,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -381,7 +381,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -501,7 +501,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -516,7 +516,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -524,7 +524,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	app := sdk.Application{
 		ProjectID:  proj.ID,
@@ -532,7 +532,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "app1",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	app2 := sdk.Application{
 		ProjectID:  proj.ID,
@@ -540,7 +540,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "app2",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app2, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app2))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
@@ -634,7 +634,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -642,7 +642,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -650,7 +650,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -658,7 +658,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
 	pip5 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -666,7 +666,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip5",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -849,7 +849,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -857,7 +857,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -865,7 +865,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -873,7 +873,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
 	pip5 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -881,7 +881,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip5",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5))
 
 	pip6 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -889,7 +889,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip6",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip6, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip6))
 
 	pip7 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -897,7 +897,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip7",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip7, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip7))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -1120,7 +1120,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1128,7 +1128,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1136,7 +1136,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -1270,7 +1270,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 

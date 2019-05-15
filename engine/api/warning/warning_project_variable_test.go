@@ -38,7 +38,7 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -154,7 +154,7 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 		pipParam,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	// Create Delete var
 	ePayloadDelete := sdk.EventProjectVariableDelete{
@@ -230,7 +230,7 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
@@ -327,7 +327,7 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		pipParam,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),

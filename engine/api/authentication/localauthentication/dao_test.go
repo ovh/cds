@@ -24,9 +24,8 @@ func TestLocalAutenticationDAO(t *testing.T) {
 	assert.NoError(t, user.Insert(db, &u))
 
 	var localAuth = sdk.UserLocalAuthentication{
-		UserID:           u.ID,
-		ClearPassword:    sdk.RandomString(10),
-		ClearVerifyToken: sdk.RandomString(10),
+		UserID:        u.ID,
+		ClearPassword: sdk.RandomString(10),
 	}
 
 	assert.NoError(t, localauthentication.Insert(db, &localAuth))

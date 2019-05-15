@@ -36,7 +36,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -59,7 +59,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -78,7 +78,7 @@ func TestPull(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app, u))
+	test.NoError(t, application.Insert(db, cache, proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)

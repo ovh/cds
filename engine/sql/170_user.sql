@@ -22,7 +22,7 @@ SELECT create_foreign_key_idx_cascade('FK_AUTHENTIFIED_USER_MIGRATION_AUTHENTIFI
 CREATE TABLE IF NOT EXISTS "user_local_authentication" (
   user_id VARCHAR(36) PRIMARY KEY,
   encrypted_password BYTEA,
-  encrypted_verify_token BYTEA,
+  verified BOOLEAN NOT NULL DEFAULT FALSE,
   sig BYTEA
 );
 

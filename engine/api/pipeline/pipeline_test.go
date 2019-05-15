@@ -23,7 +23,7 @@ func TestInsertPipeline(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, cache, &p, nil); err != nil {
+	if err := project.Insert(db, cache, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -61,7 +61,7 @@ func TestInsertPipeline(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if err := pipeline.InsertPipeline(db, cache, &p, tt.p, nil); (err != nil) != tt.wantErr {
+		if err := pipeline.InsertPipeline(db, cache, &p, tt.p); (err != nil) != tt.wantErr {
 			t.Errorf("%q. InsertPipeline() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 	}
@@ -76,7 +76,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, cache, &p, nil); err != nil {
+	if err := project.Insert(db, cache, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -97,7 +97,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, &p, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, &p, pip))
 
 	pip1, err := pipeline.LoadPipeline(db, p.Key, "Name", true)
 	test.NoError(t, err)
@@ -114,7 +114,7 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, cache, &p, nil); err != nil {
+	if err := project.Insert(db, cache, &p); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -133,7 +133,7 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 			},
 		},
 	}
-	assert.Error(t, pipeline.InsertPipeline(db, cache, &p, pip, nil))
+	assert.Error(t, pipeline.InsertPipeline(db, cache, &p, pip))
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
@@ -148,7 +148,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -156,7 +156,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	w := sdk.Workflow{
 		Name:       "test_1",

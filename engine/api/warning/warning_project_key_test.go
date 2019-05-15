@@ -95,7 +95,7 @@ func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	// Add a parameter that use project key
 	pa := sdk.Parameter{
@@ -167,7 +167,7 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 	s := sdk.Stage{Name: "MyStage", PipelineID: pip.ID}
 	test.NoError(t, pipeline.InsertStage(db, &s))
 	j := sdk.Job{PipelineStageID: s.ID, Action: sdk.Action{
@@ -246,7 +246,7 @@ func TestMissingProjectKeyApplicationWarning(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, application.Insert(db, cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, cache, proj, &app))
 
 	// Setup ssh key
 	app.RepositoryStrategy = sdk.RepositoryStrategy{

@@ -48,7 +48,7 @@ func TestImport(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pipeline",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	//Pipeline
 	pipparam := sdk.Pipeline{
@@ -58,12 +58,12 @@ func TestImport(t *testing.T) {
 	}
 	sdk.AddParameter(&pipparam.Parameter, "name", sdk.StringParameter, "value")
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pipparam, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pipparam))
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app, u))
+	test.NoError(t, application.Insert(db, cache, proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
