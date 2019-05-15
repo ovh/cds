@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -342,9 +343,19 @@ func LoadWorkerModelsUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store c
       ORDER by name
     `, modelColumns)
 	}
-	models, err := loadWorkerModels(db, false, query, groupID)
+	models, err := loadWorkerModels(db, true, query, groupID)
 	if err != nil {
 		return nil, sdk.WithStack(err)
+	}
+
+	for i := range models {
+		if models[i].ModelDocker.Private && models[i].ModelDocker.Password != "" {
+			var err error
+			models[i].ModelDocker.Password, err = secret.DecryptValue(models[i].ModelDocker.Password)
+			if err != nil {
+				return nil, sdk.WrapError(err, "cannot decrypt value for model %s", fmt.Sprintf("%s/%s", models[i].Group.Name, models[i].Name))
+			}
+		}
 	}
 
 	store.SetWithTTL(key, models, modelsCacheTTLInSeconds)
