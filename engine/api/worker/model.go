@@ -139,13 +139,23 @@ func UpdateWorkerModelWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) 
 
 // LoadWorkerModels retrieves models from database.
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, modelColumns)
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    ORDER BY worker_model.name
+  `, modelColumns)
 	return loadWorkerModels(db, false, query)
 }
 
 // LoadWorkerModelsNotSharedInfra retrieves models not shared infra from database.
 func LoadWorkerModelsNotSharedInfra(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`SELECT %s FROM worker_model JOIN "group" ON worker_model.group_id = "group".id WHERE worker_model.group_id != $1 ORDER BY worker_model.name`, modelColumns)
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model JOIN "group" ON worker_model.group_id = "group".id
+    WHERE worker_model.group_id != $1
+    ORDER BY worker_model.name
+  `, modelColumns)
 	return loadWorkerModels(db, false, query, group.SharedInfraGroup.ID)
 }
 
@@ -210,13 +220,23 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 
 // LoadWorkerModelByNameAndGroupIDWithClearPassword retrieves a specific worker model in database by name and group id.
 func LoadWorkerModelByNameAndGroupIDWithClearPassword(db gorp.SqlExecutor, name string, groupID int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`SELECT %s FROM worker_model JOIN "group" ON worker_model.group_id = "group".id AND worker_model.name = $1 AND worker_model.group_id = $2`, modelColumns)
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    WHERE worker_model.name = $1 AND worker_model.group_id = $2
+  `, modelColumns)
 	return loadWorkerModel(db, true, query, name, groupID)
 }
 
 // LoadWorkerModelByNameAndGroupID retrieves a specific worker model in database by name and group id.
 func LoadWorkerModelByNameAndGroupID(db gorp.SqlExecutor, name string, groupID int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`SELECT %s FROM worker_model JOIN "group" ON worker_model.group_id = "group".id AND worker_model.name = $1 AND worker_model.group_id = $2`, modelColumns)
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    WHERE worker_model.name = $1 AND worker_model.group_id = $2
+  `, modelColumns)
 	return loadWorkerModel(db, false, query, name, groupID)
 }
 
@@ -250,19 +270,30 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 	var query string
 	var args []interface{}
 	if user.Admin {
-		query = fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, modelColumns)
+		query = fmt.Sprintf(`
+      SELECT %s
+      FROM worker_model
+      JOIN "group" ON worker_model.group_id = "group".id
+    `, modelColumns)
 		if len(additionalFilters) > 0 {
 			query += fmt.Sprintf(" WHERE %s", strings.Join(additionalFilters, " AND "))
 		}
 	} else {
-		query = fmt.Sprintf(`select %s
-					from worker_model
-					JOIN "group" on worker_model.group_id = "group".id
-					where group_id in (select group_id from group_user where user_id = $1)
-					union
-					select %s from worker_model
-					JOIN "group" on worker_model.group_id = "group".id
-					where group_id = $2`, modelColumns, modelColumns)
+		query = fmt.Sprintf(`
+      SELECT %s
+			  FROM worker_model
+			  JOIN "group" ON worker_model.group_id = "group".id
+			  WHERE group_id IN (
+          SELECT group_id
+          FROM group_user
+          WHERE user_id = $1
+        )
+			UNION
+      SELECT %s
+        FROM worker_model
+			  JOIN "group" on worker_model.group_id = "group".id
+        WHERE group_id = $2
+    `, modelColumns, modelColumns)
 		if len(additionalFilters) > 0 {
 			query += fmt.Sprintf(" AND %s", strings.Join(additionalFilters, " AND "))
 		}
