@@ -1919,6 +1919,8 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	assert.Equal(t, "mylastcommit", mapParams["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
 	assert.Equal(t, "super commit", mapParams["git.message"])
+
+	assert.Equal(t, "mylastcommit", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSHash)
 }
 
 func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {

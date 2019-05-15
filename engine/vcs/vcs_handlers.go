@@ -534,7 +534,7 @@ func (s *Service) getCommitStatusHandler() service.Handler {
 
 		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
 		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitStatusHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
 		}
 
 		consumer, err := s.getConsumer(name)
