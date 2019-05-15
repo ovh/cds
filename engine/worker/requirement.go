@@ -124,7 +124,7 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	}
 
 	isSharedInfra := w.model.Group.Name == sdk.SharedInfraGroupName && modelName == w.model.Name
-	isSameName := modelName != w.model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
+	isSameName := modelName == w.model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
 	return isSharedInfra || isSameName, nil
 }
 
