@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -136,9 +137,12 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 	//Check if we have to delete stages
 	for _, os := range oldPipeline.Stages {
 		var stageFound bool
+		var currentStage sdk.Stage
 		for _, s := range pip.Stages {
 			if s.Name == os.Name {
 				stageFound = true
+				currentStage = s
+				currentStage.ID = os.ID
 				break
 			}
 		}
@@ -157,6 +161,12 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			}
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeleted, os.Name)
+			}
+		} else {
+			fmt.Printf("currentStage ---------> %+v\n", currentStage)
+			// Update stage
+			if err := UpdateStage(db, &currentStage); err != nil {
+				return sdk.WrapError(err, "cannot update stage %s (id=%d) for conditions, build_order and name", currentStage.Name, currentStage.ID)
 			}
 		}
 	}

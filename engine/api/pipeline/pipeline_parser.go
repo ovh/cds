@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/go-gorp/gorp"
@@ -51,6 +52,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	var globalError error
 
+	fmt.Printf("%+v\n", *pip)
 	if exist && !opts.Force {
 		return pip, nil, sdk.ErrPipelineAlreadyExists
 	} else if exist {

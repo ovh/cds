@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/spf13/cast"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
@@ -378,26 +379,28 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 
 		// Keep retrocompatibility
 		if opt.Conditions != nil {
-			test := map[string]string{"lolilol": "test"}
-			fmt.Printf("%t - %+v\n", test)
-			fmt.Printf("%t - %+v\n", opt.Conditions)
-			conditionsMap, isLegacyConditions := opt.Conditions.(map[string]string)
-
-			fmt.Printf("isLegacyConditions --> %v --- %+v\n", isLegacyConditions, conditionsMap)
-			_, containsCheck := conditionsMap["check"]
-			_, containsScript := conditionsMap["script"]
+			conditionsMapStr, errCast := cast.ToStringMapStringE(opt.Conditions)
+			isLegacyConditions := errCast == nil
+			fmt.Printf("isLegacyConditions --> %v --- %+v\n", isLegacyConditions, conditionsMapStr)
+			_, containsCheck := conditionsMapStr["check"]
+			_, containsScript := conditionsMapStr["script"]
 			if isLegacyConditions && !containsCheck && !containsScript {
-				conditions := make([]sdk.WorkflowNodeCondition, 0, len(conditionsMap))
-				for name, value := range conditionsMap {
+				conditions := make([]sdk.WorkflowNodeCondition, 0, len(conditionsMapStr))
+				for name, value := range conditionsMapStr {
 					conditions = append(conditions, sdk.WorkflowNodeCondition{Operator: sdk.WorkflowConditionsOperatorRegex, Variable: name, Value: value})
 				}
 				mapStages[s].Conditions = sdk.WorkflowNodeConditions{PlainConditions: conditions}
 			} else {
-				conditions, isNewConditions := opt.Conditions.(sdk.WorkflowNodeConditions)
-				if !isNewConditions {
+				mapStrInt, err := cast.ToStringMapE(opt.Conditions)
+				if err != nil {
+					return nil, fmt.Errorf("Cannot convert conditions type: check that your stage conditions are right formatted")
+				}
+				fmt.Printf("-- %+v ---- %t", mapStrInt, mapStrInt)
+				plainConditions, okPlainConditions := mapStrInt["check"].([]sdk.WorkflowNodeCondition)
+				if !okPlainConditions {
 					return nil, fmt.Errorf("Cannot get conditions type")
 				}
-				mapStages[s].Conditions = conditions
+				mapStages[s].Conditions = sdk.WorkflowNodeConditions{PlainConditions: plainConditions}
 			}
 		}
 	}
