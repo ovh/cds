@@ -45,7 +45,7 @@ func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w h
 			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid given id or group and template slug")
 		}
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		var g *sdk.Group
 		var err error
@@ -66,11 +66,11 @@ func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w h
 				}
 			}
 		}
-		gs := append(u.Groups, *group.SharedInfraGroup)
+		gs := append(u.OldUserStruct.Groups, *group.SharedInfraGroup)
 
 		var wt *sdk.WorkflowTemplate
 		if id != 0 {
-			if u.Admin {
+			if u.Admin() {
 				wt, err = workflowtemplate.GetByID(api.mustDB(), id)
 			} else {
 				wt, err = workflowtemplate.GetByIDAndGroupIDs(api.mustDB(), id, sdk.GroupsToIDs(gs))
@@ -183,7 +183,7 @@ func (api *API) postTemplateHandler() service.Handler {
 
 		data.Version = 0
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
@@ -228,7 +228,7 @@ func (api *API) getTemplateHandler() service.Handler {
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), t); err != nil {
 			return err
 		}
-		if err := group.CheckUserIsGroupAdmin(t.Group, deprecatedGetUser(ctx)); err == nil {
+		if err := group.CheckUserIsGroupAdmin(t.Group, getAuthentifiedUser(ctx)); err == nil {
 			t.Editable = true
 		}
 
@@ -290,7 +290,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 		old := getWorkflowTemplate(ctx)
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
@@ -340,7 +340,7 @@ func (api *API) deleteTemplateHandler() service.Handler {
 	}
 }
 
-func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, wt *sdk.WorkflowTemplate, req sdk.WorkflowTemplateRequest) (sdk.WorkflowTemplateResult, error) {
+func (api *API) applyTemplate(ctx context.Context, u *sdk.AuthentifiedUser, p *sdk.Project, wt *sdk.WorkflowTemplate, req sdk.WorkflowTemplateRequest) (sdk.WorkflowTemplateResult, error) {
 	var result sdk.WorkflowTemplateResult
 
 	tx, err := api.mustDB().Begin()
@@ -473,10 +473,10 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		// check permission on project
-		if !u.Admin {
+		if !u.Admin() {
 			if !withImport && !checkProjectReadPermission(ctx, req.ProjectKey) {
 				return sdk.WithStack(sdk.ErrNoProject)
 			}
@@ -561,10 +561,10 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			}
 		}
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		// non admin user should have read/write access to all given project
-		if !u.Admin {
+		if !u.Admin() {
 			for i := range req.Operations {
 				if err := api.checkProjectPermissions(ctx, req.Operations[i].Request.ProjectKey, permission.PermissionReadWriteExecute, nil); err != nil {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
@@ -574,7 +574,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 		// store the bulk request
 		bulk := sdk.WorkflowTemplateBulk{
-			UserID:             u.ID,
+			UserID:             u.OldUserStruct.ID,
 			WorkflowTemplateID: wt.ID,
 			Operations:         make([]sdk.WorkflowTemplateBulkOperation, len(req.Operations)),
 		}
@@ -706,7 +706,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		}
 		t := getWorkflowTemplate(ctx)
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
 		if err != nil {
@@ -748,11 +748,11 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load projet")
 		}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, deprecatedGetUser(ctx), workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getAuthentifiedUser(ctx), workflow.LoadOptions{})
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot load workflow %s", workflowName)
@@ -783,7 +783,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 		}
 		t := getWorkflowTemplate(ctx)
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
 		if err != nil {
@@ -847,7 +847,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 
 		tr := tar.NewReader(bytes.NewReader(btes))
 
-		msgs, wt, err := workflowtemplate.Push(api.mustDB(), deprecatedGetUser(ctx), tr)
+		msgs, wt, err := workflowtemplate.Push(api.mustDB(), getAuthentifiedUser(ctx), tr)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot push template")
 		}

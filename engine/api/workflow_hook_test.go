@@ -27,7 +27,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	u, passUser := assets.InsertLambdaUser(api.mustDB())
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10), u)
-	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -35,7 +35,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	loadUserPermissions(db, cache, u)
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications,
@@ -96,7 +96,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, admin))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
@@ -104,7 +104,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "ovh/cds",
 	}
-	test.NoError(t, application.Insert(db, cache, proj, &app, admin))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, admin, project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)

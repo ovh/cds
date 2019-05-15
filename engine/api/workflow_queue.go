@@ -41,7 +41,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 
-		user := deprecatedGetUser(ctx)
+		user := getAuthentifiedUser(ctx)
 		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, user, project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			var username string
@@ -325,7 +325,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, deprecatedGetUser(ctx))
+		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getAuthentifiedUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d", id)
 		}
@@ -398,7 +398,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		dbWithCtx := api.mustDBWithCtx(customCtx)
 
 		_, next := observability.Span(ctx, "project.LoadProjectByNodeJobRunID")
-		proj, errP := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, deprecatedGetUser(ctx), project.LoadOptions.WithVariables)
+		proj, errP := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, getAuthentifiedUser(ctx), project.LoadOptions.WithVariables)
 		next()
 		if errP != nil {
 			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
@@ -878,7 +878,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 			return sdk.WrapError(errLoad, "Unable to load coverage report")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, deprecatedGetUser(ctx))
+		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getAuthentifiedUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d", id)
 		}
@@ -971,7 +971,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 		// If we are on default branch, push metrics
 		if nr.VCSServer != "" && nr.VCSBranch != "" {
-			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, deprecatedGetUser(ctx))
+			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getAuthentifiedUser(ctx))
 			if errP != nil {
 				log.Error("postWorkflowJobTestsResultsHandler> Cannot load project by nodeJobRunID %d: %v", id, errP)
 				return nil

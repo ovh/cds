@@ -40,7 +40,7 @@ func (api *API) getRepositoriesManagerForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
 		if errproj != nil {
 			return errproj
 		}
@@ -55,7 +55,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 		key := vars[permProjectKey]
 		rmName := vars["name"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
 		}
@@ -118,14 +118,9 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		rmName := data["repositories_manager"]
 		username := data["username"]
 
-		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		u, err := user.LoadUserByUsername(api.mustDB(), username)
 		if err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
-		}
-
-		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
-		if err != nil {
-			return err
 		}
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, u)
@@ -171,7 +166,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, deprecatedGetUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAuthentifiedUser(ctx))
 
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
@@ -204,7 +199,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "cannot get token nor verifier from data")
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "cannot load project %s", projectKey)
 		}
@@ -241,7 +236,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, deprecatedGetUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 
@@ -271,7 +266,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "repositoriesManagerAuthorizeCallback> Cannot get token nor verifier from data")
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
@@ -310,7 +305,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, deprecatedGetUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -322,7 +317,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 
-		p, errl := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		p, errl := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteRepositoriesManagerHandler> Cannot load project %s", projectKey)
 		}
@@ -358,7 +353,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteVCSServer(p, vcsServer.Name, deprecatedGetUser(ctx))
+		event.PublishDeleteVCSServer(p, vcsServer.Name, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -371,7 +366,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		rmName := vars["name"]
 		sync := FormBool(r, "synchronize")
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
@@ -422,7 +417,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Missing repository name 'repo' as a query parameter"))
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
@@ -455,7 +450,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		rmName := vars["name"]
 		fullname := r.FormValue("fullname")
 		db := api.mustDB()
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		app, err := application.LoadByName(db, api.Cache, projectKey, appName)
 		if err != nil {
@@ -552,7 +547,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 		db := api.mustDB()
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		app, errl := application.LoadByName(db, api.Cache, projectKey, appName)
 		if errl != nil {

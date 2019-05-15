@@ -36,7 +36,7 @@ var (
 )
 
 //NewSession inits a new session
-func NewSession(u *sdk.User) (sessionstore.SessionKey, error) {
+func NewSession(u *sdk.AuthentifiedUser) (sessionstore.SessionKey, error) {
 	session, err := Store.New("")
 	if err != nil {
 		return "", err

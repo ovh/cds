@@ -43,7 +43,7 @@ func Test_getAllKeysProjectHandler(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
 	appk1 := &sdk.ApplicationKey{
 		Key: sdk.Key{
@@ -68,7 +68,7 @@ func Test_getAllKeysProjectHandler(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app2, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app2))
 
 	app2k1 := &sdk.ApplicationKey{
 		Key: sdk.Key{

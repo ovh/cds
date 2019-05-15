@@ -49,7 +49,7 @@ func updateWorkflowTriggerHookSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 	return nil
 }
 
-func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
+func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.AuthentifiedUser, skipDependencies bool) error {
 	log.Debug("insertNode> insert or update node %s %d (%s) on %d", n.Name, n.ID, n.Ref, n.PipelineID)
 
 	if !nodeNamePattern.MatchString(n.Name) {
@@ -330,7 +330,7 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 }
 
 // loadNode loads a node in a workflow
-func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
+func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.AuthentifiedUser, opts LoadOptions) (*sdk.WorkflowNode, error) {
 	c, end := observability.Span(c, "workflow.loadNode",
 		observability.Tag(observability.TagWorkflow, w.Name),
 		observability.Tag(observability.TagProjectKey, proj.Key),
@@ -430,7 +430,7 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 }
 
 // LoadNodeContextByNodeName load the context for a given node name and user
-func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User, workflowName, nodeName string, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
+func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser, workflowName, nodeName string, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	query := `
 		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id
@@ -455,7 +455,7 @@ func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk
 }
 
 // LoadNodeContext load the context for a given node id and user
-func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeID int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
+func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeID int64, u *sdk.AuthentifiedUser, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", nodeID); err != nil {
 		return nil, sdk.WrapError(err, "Unable to load node context %d", nodeID)
@@ -470,7 +470,7 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, 
 	return &ctx, nil
 }
 
-func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
+func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
 		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex, project_integration_id from workflow_node_context where id = $1", ctx.ID); err != nil {

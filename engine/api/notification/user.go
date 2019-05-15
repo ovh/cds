@@ -101,6 +101,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
 						}
+						//TODO: fix email
 						jn.Recipients = append(jn.Recipients, u.Email)
 					}
 				}

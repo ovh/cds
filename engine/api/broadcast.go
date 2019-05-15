@@ -27,7 +27,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 		bc.Updated = now
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, deprecatedGetUser(ctx))
+			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, getAuthentifiedUser(ctx))
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
@@ -38,7 +38,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot add broadcast")
 		}
 
-		event.PublishBroadcastAdd(bc, deprecatedGetUser(ctx))
+		event.PublishBroadcastAdd(bc, getAuthentifiedUser(ctx))
 		return service.WriteJSON(w, bc, http.StatusCreated)
 	}
 }
@@ -50,8 +50,8 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		u := deprecatedGetUser(ctx)
-		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, u)
+		u := getAuthentifiedUser(ctx)
+		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, u.OldUserStruct)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcast by id")
 		}
@@ -90,7 +90,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to commit transaction")
 		}
 
-		event.PublishBroadcastUpdate(*oldBC, bc, deprecatedGetUser(ctx))
+		event.PublishBroadcastUpdate(*oldBC, bc, getAuthentifiedUser(ctx))
 		return service.WriteJSON(w, bc, http.StatusOK)
 	}
 }
@@ -138,7 +138,7 @@ func (api *API) deleteBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishBroadcastDelete(broadcastID, deprecatedGetUser(ctx))
+		event.PublishBroadcastDelete(broadcastID, getAuthentifiedUser(ctx))
 		return nil
 	}
 }

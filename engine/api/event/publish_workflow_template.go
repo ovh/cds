@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func publishWorkflowTemplateEvent(payload interface{}, u *sdk.User) {
+func publishWorkflowTemplateEvent(payload interface{}, u *sdk.AuthentifiedUser) {
 	event := sdk.Event{
 		Timestamp: time.Now(),
 		Hostname:  hostname,
@@ -19,18 +19,18 @@ func publishWorkflowTemplateEvent(payload interface{}, u *sdk.User) {
 	}
 	if u != nil {
 		event.Username = u.Username
-		event.UserMail = u.Email
+		event.UserMail = u.Email()
 	}
 	publishEvent(event)
 }
 
 // PublishWorkflowTemplateAdd publishes an event for the creation of the given workflow template.
-func PublishWorkflowTemplateAdd(wt sdk.WorkflowTemplate, u *sdk.User) {
+func PublishWorkflowTemplateAdd(wt sdk.WorkflowTemplate, u *sdk.AuthentifiedUser) {
 	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateAdd{WorkflowTemplate: wt}, u)
 }
 
 // PublishWorkflowTemplateUpdate publishes an event for the update of the given workflow template.
-func PublishWorkflowTemplateUpdate(old, new sdk.WorkflowTemplate, changeMessage string, u *sdk.User) {
+func PublishWorkflowTemplateUpdate(old, new sdk.WorkflowTemplate, changeMessage string, u *sdk.AuthentifiedUser) {
 	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateUpdate{
 		OldWorkflowTemplate: old,
 		NewWorkflowTemplate: new,
@@ -39,12 +39,12 @@ func PublishWorkflowTemplateUpdate(old, new sdk.WorkflowTemplate, changeMessage 
 }
 
 // PublishWorkflowTemplateInstanceAdd publishes an event for the creation of the given workflow template instance.
-func PublishWorkflowTemplateInstanceAdd(wti sdk.WorkflowTemplateInstance, u *sdk.User) {
+func PublishWorkflowTemplateInstanceAdd(wti sdk.WorkflowTemplateInstance, u *sdk.AuthentifiedUser) {
 	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateInstanceAdd{WorkflowTemplateInstance: wti}, u)
 }
 
 // PublishWorkflowTemplateInstanceUpdate publishes an event for the update of the given workflow template instance.
-func PublishWorkflowTemplateInstanceUpdate(old, new sdk.WorkflowTemplateInstance, u *sdk.User) {
+func PublishWorkflowTemplateInstanceUpdate(old, new sdk.WorkflowTemplateInstance, u *sdk.AuthentifiedUser) {
 	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateInstanceUpdate{
 		OldWorkflowTemplateInstance: old,
 		NewWorkflowTemplateInstance: new,

@@ -33,7 +33,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		p, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		p, err := project.Load(tx, api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot load %s", key)
 		}
@@ -62,7 +62,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectPermission(p, gp, deprecatedGetUser(ctx))
+		event.PublishDeleteProjectPermission(p, gp, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -91,7 +91,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		p, errl := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		p, errl := project.Load(tx, api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithGroups)
 		if errl != nil {
 			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load project %s", key)
 		}
@@ -133,7 +133,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		}
 
 		if !onlyProject {
-			wfList, err := workflow.LoadAllNames(tx, p.ID, deprecatedGetUser(ctx))
+			wfList, err := workflow.LoadAllNames(tx, p.ID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load all workflow names for project id %d key %s", p.ID, p.Key)
 			}
@@ -164,7 +164,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 			Permission: groupProject.Permission,
 			Group:      gpInProject.Group,
 		}
-		event.PublishUpdateProjectPermission(p, newGP, gpInProject, deprecatedGetUser(ctx))
+		event.PublishUpdateProjectPermission(p, newGP, gpInProject, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, groupProject, http.StatusOK)
 	}
@@ -182,7 +182,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to unmarshal")
 		}
 
-		p, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		p, errl := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "AddGroupInProject: Cannot load %s", key)
 		}
@@ -216,7 +216,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 		}
 
 		if !onlyProject {
-			wfList, err := workflow.LoadAllNames(tx, p.ID, deprecatedGetUser(ctx))
+			wfList, err := workflow.LoadAllNames(tx, p.ID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load all workflow names for project id %d key %s", p.ID, p.Key)
 			}
@@ -231,7 +231,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot commit transaction")
 		}
 
-		event.PublishAddProjectPermission(p, groupProject, deprecatedGetUser(ctx))
+		event.PublishAddProjectPermission(p, groupProject, getAuthentifiedUser(ctx))
 
 		if err := group.LoadGroupByProject(api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)
@@ -249,7 +249,7 @@ func (api *API) importGroupsInProjectHandler() service.Handler {
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "importGroupsInProjectHandler> Cannot load %s", key)
 		}

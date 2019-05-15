@@ -39,7 +39,7 @@ import (
 )
 
 type testRunWorkflowCtx struct {
-	user        *sdk.User
+	user        *sdk.AuthentifiedUser
 	password    string
 	project     *sdk.Project
 	workflow    *sdk.Workflow
@@ -54,8 +54,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true)
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -63,7 +63,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -263,7 +263,7 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 	ctx.workerToken, err = token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent, "", ""))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.OldUserStruct.Groups[0].ID, ctx.workerToken, sdk.Persistent, "", ""))
 	//Register the worker
 	params := &sdk.WorkerRegistrationForm{
 		Name:  sdk.RandomString(10),
@@ -280,7 +280,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 	tk, err := token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.OldUserStruct.Groups[0].ID, tk, sdk.Persistent, "", ""))
 
 	//Generate a hash
 	hash, errsession := sessionstore.NewSessionKey()
@@ -290,7 +290,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 
 	ctx.hatchery = &sdk.Service{
 		Name:    sdk.RandomString(10),
-		GroupID: &ctx.user.Groups[0].ID,
+		GroupID: &ctx.user.OldUserStruct.Groups[0].ID,
 		Type:    services.TypeHatchery,
 		Token:   tk,
 		Hash:    string(hash),
@@ -865,15 +865,15 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	// add group
-	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	// Create pipeline
 	pip := &sdk.Pipeline{
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -907,7 +907,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
 	// Create workflow
 	w := sdk.Workflow{
@@ -997,8 +997,8 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	// add group
-	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServer, 0, 1)
@@ -1013,7 +1013,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -1049,7 +1049,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "repoManServ",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	// Create workflow

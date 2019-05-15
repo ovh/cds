@@ -548,7 +548,7 @@ func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, paren
 		params = append(params, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Email,
+			Value: manual.User.Email(),
 		}, sdk.Parameter{
 			Name:  "cds.triggered_by.fullname",
 			Type:  sdk.StringParameter,

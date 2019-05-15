@@ -425,7 +425,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model for id %d", workerModelID)
 		}
 
-		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, deprecatedGetUser(ctx))
+		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, getAuthentifiedUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load pipelines linked to worker model")
 		}

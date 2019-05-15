@@ -21,7 +21,7 @@ import (
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
 // UpdateAsCode does a workflow pull and start an operation to push cds files into the git repository
-func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, encryptFunc sdk.EncryptFunc, u *sdk.User) (*sdk.Operation, error) {
+func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, encryptFunc sdk.EncryptFunc, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
@@ -82,7 +82,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		},
 		User: sdk.User{
 			Username: u.Username,
-			Email:    u.Email,
+			Email:    u.Email(),
 		},
 	}
 
@@ -123,7 +123,7 @@ func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient,
 }
 
 // SyncAsCodeEvent checks if workflow as to become ascode
-func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u *sdk.User) error {
+func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u *sdk.AuthentifiedUser) error {
 	if len(wf.AsCodeEvent) == 0 {
 		return nil
 	}
@@ -172,7 +172,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 }
 
 // UpdateWorkflowAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u *sdk.User) {
+func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u *sdk.AuthentifiedUser) {
 	counter := 0
 	defer func() {
 		store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)

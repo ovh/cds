@@ -131,13 +131,13 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 
 	//Load the first admin we can
 	if anAdminID == 0 {
-		users, err := user.LoadUsers(db)
+		users, err := user.LoadAll(db, user.LoadOptions.WithOldUserStruct)
 		if err != nil {
 			return err
 		}
 		for _, u := range users {
-			if u.Admin {
-				anAdminID = u.ID
+			if u.Ring == sdk.UserRingAdmin {
+				anAdminID = u.OldUserStruct.ID
 				break
 			}
 		}

@@ -16,7 +16,7 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW, w *sdk.Workflow, u *sdk.AuthentifiedUser, force bool, msgChan chan<- sdk.Message) error {
 	ctx, end := observability.Span(ctx, "workflow.Import")
 	defer end()
 
@@ -114,7 +114,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	return nil
 }
 
-func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sdk.User, wt *sdk.WorkflowTemplate) error {
+func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sdk.AuthentifiedUser, wt *sdk.WorkflowTemplate) error {
 	// set the workflow id on template instance if exist
 	if wt == nil {
 		return nil

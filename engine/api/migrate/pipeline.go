@@ -74,7 +74,7 @@ func migratePipelineCleanArtifactBuiltinActions(db *gorp.DbMap, store cache.Stor
 					step.Parameters = append(step.Parameters[:id], step.Parameters[id+1:]...)
 				}
 			}
-			if err := pipeline.UpdateJob(tx, &j, 1); err != nil {
+			if err := pipeline.UpdateJob(tx, &j); err != nil {
 				return sdk.WithStack(err)
 			}
 		}

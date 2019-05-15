@@ -14,7 +14,7 @@ import (
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
+func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.AuthentifiedUser) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
@@ -152,7 +152,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, j.Action.Name, os.Name)
 				}
 			}
-			if err := DeleteStageByID(db, &os, u.ID); err != nil {
+			if err := DeleteStageByID(db, &os); err != nil {
 				return sdk.WrapError(err, "unable to delete stage %d", os.ID)
 			}
 			if msgChan != nil {
@@ -189,7 +189,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 }
 
 //Import insert the pipeline in the project
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
+func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.AuthentifiedUser) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -226,7 +226,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 	return nil
 }
 
-func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
+func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.AuthentifiedUser) error {
 	// check that action used by job can be used by pipeline's project
 	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
@@ -236,7 +236,7 @@ func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *s
 
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
-	if err := InsertPipeline(db, store, proj, pip, u); err != nil {
+	if err := InsertPipeline(db, store, proj, pip); err != nil {
 		return err
 	}
 
@@ -275,6 +275,8 @@ func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *s
 			}
 		}
 	}
+
+	event.PublishPipelineAdd(proj.Key, *pip, u)
 
 	return nil
 }

@@ -26,7 +26,7 @@ import (
 )
 
 // InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string, u *sdk.User) *sdk.Project {
+func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string, u *sdk.AuthentifiedUser) *sdk.Project {
 	proj := sdk.Project{
 		Key:  key,
 		Name: name,
@@ -34,7 +34,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 
 	g := InsertTestGroup(t, db, name+"-group")
 
-	if err := project.Insert(db, store, &proj, u); err != nil {
+	if err := project.Insert(db, store, &proj); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 		return nil
 	}
@@ -82,49 +82,41 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 }
 
 // InsertAdminUser have to be used only for tests
-func InsertAdminUser(db *gorp.DbMap) (*sdk.User, string) {
-	s := sdk.RandomString(10)
-	_, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    true,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
+func InsertAdminUser(db *gorp.DbMap) (*sdk.AuthentifiedUser, string) {
+	var u = &sdk.AuthentifiedUser{
+		Username:     sdk.RandomString(10),
+		Fullname:     sdk.RandomString(10),
+		Ring:         sdk.UserRingAdmin,
+		DateCreation: time.Now(),
 	}
-	user.InsertUser(db, u, &u.Auth)
 
-	t, _ := user.NewPersistentSession(db, u)
+	user.Insert(db, u)
+
+	u, _ = user.LoadUserByID(db, u.ID, user.LoadOptions.WithOldUserStruct)
+	t, _ := user.NewPersistentSession_DEPRECATED(db, u.OldUserStruct)
 	return u, string(t)
 }
 
 // InsertLambdaUser have to be used only for tests
-func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
-	s := sdk.RandomString(10)
-	_, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    false,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
-	}
-	user.InsertUser(db, u, &u.Auth)
-	for _, g := range groups {
-		group.InsertGroup(db, g)
-		group.InsertUserInGroup(db, g.ID, u.ID, false)
-		u.Groups = append(u.Groups, *g)
+func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
+	var u = &sdk.AuthentifiedUser{
+		Username:     sdk.RandomString(10),
+		Fullname:     sdk.RandomString(10),
+		Ring:         sdk.UserRingUser,
+		DateCreation: time.Now(),
 	}
 
-	t, _ := user.NewPersistentSession(db, u)
+	user.Insert(db, u)
+
+	u, _ = user.LoadUserByID(db, u.ID, user.LoadOptions.WithOldUserStruct)
+	t, _ := user.NewPersistentSession_DEPRECATED(db, u.OldUserStruct)
+
+	for _, g := range groups {
+		group.InsertGroup(db, g)
+		group.InsertUserInGroup(db, g.ID, u.OldUserStruct.ID, false)
+		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *g)
+	}
+
 	return u, string(t)
 }
 
@@ -253,7 +245,7 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, ur
 }
 
 // AuthentifyRequest  have to be used only for tests
-func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, token string) {
+func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.AuthentifiedUser, token string) {
 	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
 	req.Header.Add(sdk.SessionTokenHeader, token)
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
@@ -261,7 +253,7 @@ func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, token strin
 }
 
 //NewAuthentifiedRequest prepare a request
-func NewAuthentifiedRequest(t *testing.T, u *sdk.User, pass, method, uri string, i interface{}) *http.Request {
+func NewAuthentifiedRequest(t *testing.T, u *sdk.AuthentifiedUser, pass, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
 	if i != nil {
@@ -334,7 +326,7 @@ func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri s
 	return req
 }
 
-func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.User, groups ...sdk.Group) (string, error) {
+func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.AuthentifiedUser, groups ...sdk.Group) (string, error) {
 	expiration := time.Now().Add(5 * time.Minute)
 	token, jwt, err := accesstoken.New(u, groups, "test", sdk.RandomString(5), expiration)
 	if err != nil {
@@ -344,7 +336,7 @@ func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.User, groups ...sdk.Gr
 	return jwt, err
 }
 
-func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u sdk.User, groups ...sdk.Group) (string, string, error) {
+func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser, groups ...sdk.Group) (string, string, error) {
 	expiration := time.Now().Add(5 * time.Minute)
 	token, jwt, err := accesstoken.New(u, groups, accesstoken.OriginUI, sdk.RandomString(5), expiration)
 	if err != nil {

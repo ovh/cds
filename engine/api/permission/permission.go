@@ -22,21 +22,21 @@ var (
 )
 
 // ProjectPermission  Get the permission for the given project
-func ProjectPermission(projectKey string, u *sdk.User) int {
-	if u == nil || u.Admin {
+func ProjectPermission(projectKey string, u *sdk.AuthentifiedUser) int {
+	if u == nil || u.Admin() {
 		return PermissionReadWriteExecute
 	}
 
-	return u.Permissions.ProjectsPerm[projectKey]
+	return u.OldUserStruct.Permissions.ProjectsPerm[projectKey]
 }
 
 // WorkflowPermission  Get the permission for the given workflow
-func WorkflowPermission(key string, name string, u *sdk.User) int {
-	if u.Admin {
+func WorkflowPermission(key string, name string, u *sdk.AuthentifiedUser) int {
+	if u.Admin() {
 		return PermissionReadWriteExecute
 	}
 
-	if perm, ok := u.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)]; ok {
+	if perm, ok := u.OldUserStruct.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)]; ok {
 		return perm
 	}
 
@@ -45,43 +45,43 @@ func WorkflowPermission(key string, name string, u *sdk.User) int {
 }
 
 // AccessToProject check if we can access to the given project
-func AccessToProject(key string, u *sdk.User, access int) bool {
-	if u.Admin {
+func AccessToProject(key string, u *sdk.AuthentifiedUser, access int) bool {
+	if u.Admin() {
 		return true
 	}
-	return u.Permissions.ProjectsPerm[key] >= access
+	return u.OldUserStruct.Permissions.ProjectsPerm[key] >= access
 }
 
 // AccessToWorkflow check access to a workflow
-func AccessToWorkflow(key, name string, u *sdk.User, access int) bool {
-	if u.Admin {
+func AccessToWorkflow(key, name string, u *sdk.AuthentifiedUser, access int) bool {
+	if u.Admin() {
 		return true
 	}
 
-	for _, g := range u.Groups {
+	for _, g := range u.OldUserStruct.Groups {
 		if g.ID == SharedInfraGroupID {
 			return true
 		}
 	}
 
-	if u.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)] >= access {
+	if u.OldUserStruct.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)] >= access {
 		return true
 	}
 	return false
 }
 
 // AccessToWorkflowNode check rights on the given workflow node
-func AccessToWorkflowNode(wf *sdk.Workflow, wn *sdk.Node, u *sdk.User, access int) bool {
+func AccessToWorkflowNode(wf *sdk.Workflow, wn *sdk.Node, u *sdk.AuthentifiedUser, access int) bool {
 	if wn == nil {
 		return false
 	}
 
-	if u.Admin {
+	if u.Admin() {
 		return true
 	}
 
 	if len(wn.Groups) > 0 {
-		for _, g := range u.Groups {
+		for _, g := range u.OldUserStruct.Groups {
 			if g.ID == SharedInfraGroupID {
 				return true
 			}

@@ -57,7 +57,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet %s", key)
 		}
@@ -94,7 +94,7 @@ func (api *API) getActionsForGroupHandler() service.Handler {
 			return err
 		}
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		if err := group.CheckUserIsGroupMember(g, u); err != nil {
 			return err
@@ -130,7 +130,7 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
@@ -204,7 +204,7 @@ func (api *API) getActionHandler() service.Handler {
 		if err := action.LoadOptions.Default(api.mustDB(), a); err != nil {
 			return err
 		}
-		if err := group.CheckUserIsGroupAdmin(a.Group, deprecatedGetUser(ctx)); err == nil {
+		if err := group.CheckUserIsGroupAdmin(a.Group, getAuthentifiedUser(ctx)); err == nil {
 			a.Editable = true
 		}
 
@@ -250,7 +250,7 @@ func (api *API) putActionHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		grp, err := group.LoadGroupByID(tx, *data.GroupID)
 		if err != nil {
@@ -483,7 +483,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			}
 		}
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		if grp.ID != newGrp.ID || old.Name != ea.Name {
 			// check that the group exists and user is admin for group id
@@ -669,7 +669,7 @@ func (api *API) importActionHandler() service.Handler {
 			}
 		}
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
@@ -843,8 +843,8 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return usage, err
 	}
 
-	u := deprecatedGetUser(ctx)
-	if !u.Admin {
+	u := getAuthentifiedUser(ctx)
+	if !u.Admin() {
 		// filter usage in pipeline by user's projects
 		ps, err := project.LoadAll(ctx, db, store, u)
 		if err != nil {
@@ -864,7 +864,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		usage.Pipelines = filteredPipelines
 
 		// filter usage in action by user's groups
-		groupIDs := append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID)
+		groupIDs := append(sdk.GroupsToIDs(u.OldUserStruct.Groups), group.SharedInfraGroup.ID)
 		mGroupIDs := make(map[int64]struct{}, len(groupIDs))
 		for i := range groupIDs {
 			mGroupIDs[groupIDs[i]] = struct{}{}

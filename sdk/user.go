@@ -1,6 +1,8 @@
 package sdk
 
-import "time"
+import (
+	"time"
+)
 
 // User represent a CDS user.
 type User struct {
@@ -23,12 +25,41 @@ const (
 	UserRingUser       = "USER"
 )
 
+func AuthentifiedUsersToIDs(users []*AuthentifiedUser) []string {
+	ids := make([]string, len(users))
+	for i := range users {
+		ids[i] = (users)[i].ID
+	}
+	return ids
+}
+
 type AuthentifiedUser struct {
-	ID           string    `json:"id" yaml:"id" cli:"id,key" db:"id"`
-	Username     string    `json:"username" yaml:"username" cli:"username,key" db:"username"`
-	Fullname     string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
-	Ring         string    `json:"ring" yaml:"ring,omitempty" db:"ring"`
-	DateCreation time.Time `json:"date_creation" yaml:"date_creation" db:"date_creation"`
+	ID            string       `json:"id" yaml:"id" cli:"id,key" db:"id"`
+	Username      string       `json:"username" yaml:"username" cli:"username,key" db:"username"`
+	Fullname      string       `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
+	Ring          string       `json:"ring" yaml:"ring,omitempty" db:"ring"`
+	DateCreation  time.Time    `json:"date_creation" yaml:"date_creation" db:"date_creation"`
+	Contacts      UserContacts `json:"contacts" yaml:"contacts" db:"-"`
+	OldUserStruct *User        `json:"old_user_struct" yaml:"old_user_struct" db:"-"`
+}
+
+func (u AuthentifiedUser) Admin() bool {
+	return u.Ring == UserRingAdmin
+}
+
+func (u AuthentifiedUser) Email() string {
+	if u.Contacts == nil {
+		return ""
+	}
+	byEmails := u.Contacts.Filter(UserContactTypeEmail)
+	if len(byEmails) == 0 {
+		return ""
+	}
+	primaryEmailAdress := byEmails.Primary()
+	if primaryEmailAdress != nil {
+		return primaryEmailAdress.Value
+	}
+	return byEmails[0].Value
 }
 
 type UserLocalAuthentication struct {
@@ -49,6 +80,15 @@ const UserContactTypeEmail = "email"
 
 type UserContacts []UserContact
 
+func (u UserContacts) Filter(t string) UserContacts {
+	var filtered = UserContacts{}
+	for _, c := range u {
+		if c.Type == t {
+			filtered = append(filtered, c)
+		}
+	}
+	return filtered
+}
 func (u UserContacts) Find(t, v string) *UserContact {
 	for _, c := range u {
 		if c.Type == t && c.Value == v {
@@ -118,6 +158,12 @@ type UserLoginRequest struct {
 	RequestToken string `json:"request_token"`
 	Username     string `json:"username"`
 	Password     string `json:"password"`
+}
+
+// UserLoginResponse  response from rest API
+type UserLoginResponse struct {
+	User  AuthentifiedUser `json:"user"`
+	Token string           `json:"token"`
 }
 
 type UserLoginCallbackRequest struct {

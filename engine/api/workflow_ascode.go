@@ -34,7 +34,7 @@ func (api *API) postResyncPRWorkflowAsCodeHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, u,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
@@ -66,7 +66,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, u,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,

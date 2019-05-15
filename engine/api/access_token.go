@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -16,7 +17,7 @@ import (
 
 // Manage access token handlers
 
-func (api *API) createNewAccessToken(u sdk.User, accessTokenRequest sdk.AccessTokenRequest) (token sdk.AccessToken, jwttoken string, err error) {
+func (api *API) createNewAccessToken(u sdk.AuthentifiedUser, accessTokenRequest sdk.AccessTokenRequest) (token sdk.AccessToken, jwttoken string, err error) {
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return token, jwttoken, sdk.WithStack(err)
@@ -24,7 +25,13 @@ func (api *API) createNewAccessToken(u sdk.User, accessTokenRequest sdk.AccessTo
 
 	defer tx.Rollback() // nolint
 
-	allGroups, err := group.LoadGroupByAdmin(tx, u.ID)
+	// TODO: after migration from user.groups to authentifiedUser.groups
+	oldUser, err := user.GetDeprecatedUser(api.mustDB(), &u)
+	if err != nil {
+		return token, jwttoken, sdk.WithStack(err)
+	}
+
+	allGroups, err := group.LoadGroupByAdmin(tx, oldUser.ID)
 	if err != nil {
 		return token, jwttoken, sdk.WithStack(err)
 	}
@@ -118,7 +125,7 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 		}
 
 		// Only the creator of the token can regen it
-		if t.UserID != getGrantedUser(ctx).OnBehalfOf.ID {
+		if t.AuthentifiedUserID != getGrantedUser(ctx).OnBehalfOf.ID {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -165,16 +172,23 @@ func (api *API) getAccessTokenByGroupHandler() service.Handler {
 		if err := group.LoadUserGroup(api.mustDB(), g); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		oldUser, err := user.GetDeprecatedUser(api.mustDB(), &getGrantedUser(ctx).OnBehalfOf)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
 		var isGroupMember bool
 		for _, u := range g.Users {
-			if u.ID == getGrantedUser(ctx).OnBehalfOf.ID {
+			if u.ID == oldUser.ID {
 				isGroupMember = true
 				break
 			}
 		}
+
 		if !isGroupMember {
 			for _, u := range g.Admins {
-				if u.ID == getGrantedUser(ctx).OnBehalfOf.ID {
+				if u.ID == oldUser.ID {
 					isGroupMember = true
 					break
 				}
@@ -189,6 +203,7 @@ func (api *API) getAccessTokenByGroupHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
+
 		return service.WriteJSON(w, tokens, http.StatusOK)
 	}
 }
@@ -204,7 +219,7 @@ func (api *API) deleteAccessTokenHandler() service.Handler {
 		}
 
 		// Only the creator of the token can delete it
-		if t.UserID != getGrantedUser(ctx).OnBehalfOf.ID {
+		if t.AuthentifiedUserID != getGrantedUser(ctx).OnBehalfOf.ID {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

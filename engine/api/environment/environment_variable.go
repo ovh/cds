@@ -205,7 +205,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, environmentID int64, args ...GetAll
 }
 
 // InsertVariable Insert a new variable in the given environment
-func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Variable, u *sdk.User) error {
+func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Variable, u *sdk.AuthentifiedUser) error {
 	query := `INSERT INTO environment_variable(environment_id, name, value, cipher_value, type)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 
@@ -242,7 +242,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, varBefore sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, varBefore sdk.Variable, u *sdk.AuthentifiedUser) error {
 	varValue := variable.Value
 
 	rx := sdk.NamePatternRegex
@@ -294,7 +294,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, va
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u *sdk.User) error {
+func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u *sdk.AuthentifiedUser) error {
 	query := `DELETE FROM environment_variable
 	          WHERE environment_variable.environment_id = $1 AND environment_variable.name = $2`
 	result, err := db.Exec(query, envID, variable.Name)

@@ -18,14 +18,14 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations, project.LoadOptions.WithFavorites)
+		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations, project.LoadOptions.WithFavorites)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		switch params.Type {
 		case "workflow":
-			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, deprecatedGetUser(ctx), workflow.LoadOptions{WithFavorites: true})
+			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, getAuthentifiedUser(ctx), workflow.LoadOptions{WithFavorites: true})
 			if errW != nil {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}

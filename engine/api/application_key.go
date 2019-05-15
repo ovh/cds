@@ -38,7 +38,7 @@ func (api *API) getKeysInApplicationHandler() service.Handler {
 
 func (api *API) deleteKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
@@ -143,7 +143,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishApplicationKeyAdd(key, *app, newKey, deprecatedGetUser(ctx))
+		event.PublishApplicationKeyAdd(key, *app, newKey, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

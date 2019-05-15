@@ -53,7 +53,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getAuthentifiedUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -69,7 +69,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineUpdate(key, p.Name, oldName, deprecatedGetUser(ctx))
+		event.PublishPipelineUpdate(key, p.Name, oldName, getAuthentifiedUser(ctx))
 		pipelineDB.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
@@ -88,7 +88,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		}
 
 		db := api.mustDB()
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		pipDB, err := pipeline.LoadPipeline(db, key, name, false)
 		if err != nil {
@@ -151,7 +151,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		proj, errl := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.Default)
 		if errl != nil {
 			return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
 		}
@@ -182,7 +182,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		defer tx.Rollback()
 
 		p.ProjectID = proj.ID
-		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -194,7 +194,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineAdd(key, p, deprecatedGetUser(ctx))
+		event.PublishPipelineAdd(key, p, getAuthentifiedUser(ctx))
 
 		p.Permission = permission.PermissionReadWriteExecute
 
@@ -231,7 +231,7 @@ func (api *API) getPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
 
-		p.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
+		p.Permission = permission.ProjectPermission(projectKey, getAuthentifiedUser(ctx))
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
@@ -255,7 +255,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		project, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		project, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -282,7 +282,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 		key := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project")
 		}
@@ -311,7 +311,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot delete pipeline audit")
 		}
 
-		if err := pipeline.DeletePipeline(tx, p.ID, deprecatedGetUser(ctx).ID); err != nil {
+		if err := pipeline.DeletePipeline(tx, p.ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline %s", pipelineName)
 		}
 
@@ -319,7 +319,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineDelete(key, *p, deprecatedGetUser(ctx))
+		event.PublishPipelineDelete(key, *p, getAuthentifiedUser(ctx))
 		return nil
 	}
 }

@@ -10,16 +10,15 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/authentication/localauthentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router, context.CancelFunc) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, cache, end := test.SetupPG(t, bootstrapFunc...)
-	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "/"+test.GetTestName(t))
+	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
 	api := &API{
@@ -30,6 +29,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Cache:               cache,
 	}
 	api.InitRouter()
+	api.AuthenticationDrivers["local"] = localauthentication.New()
 	f := func() {
 		cancel()
 		end()
@@ -39,8 +39,8 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 
 func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string, func()) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
-	db, cache, end := test.SetupPG(t, bootstrapFunc...)
-	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "")
+	_, cache, end := test.SetupPG(t, bootstrapFunc...)
+	router := newRouter(mux.NewRouter(), "")
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
 	api := &API{

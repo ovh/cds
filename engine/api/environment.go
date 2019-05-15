@@ -29,7 +29,7 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		environments, errEnv := environment.LoadEnvironments(tx, projectKey, true, deprecatedGetUser(ctx))
+		environments, errEnv := environment.LoadEnvironments(tx, projectKey, true, getAuthentifiedUser(ctx))
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "getEnvironmentsHandler> Cannot load environments from db")
 		}
@@ -74,7 +74,7 @@ func (api *API) getEnvironmentHandler() service.Handler {
 			env.Usage.Workflows = wf
 		}
 
-		env.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
+		env.Permission = permission.ProjectPermission(projectKey, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, env, http.StatusOK)
 	}
@@ -114,7 +114,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addEnvironmentHandler> Cannot load %s", key)
 		}
@@ -141,12 +141,12 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		}
 
 		var errEnvs error
-		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key, true, deprecatedGetUser(ctx))
+		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key, true, getAuthentifiedUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
-		event.PublishEnvironmentAdd(key, env, deprecatedGetUser(ctx))
+		event.PublishEnvironmentAdd(key, env, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -159,7 +159,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		environmentName := vars["environmentName"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -186,10 +186,10 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentDelete(p.Key, *env, deprecatedGetUser(ctx))
+		event.PublishEnvironmentDelete(p.Key, *env, getAuthentifiedUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, deprecatedGetUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getAuthentifiedUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteEnvironmentHandler> Cannot load environments")
 		}
@@ -213,7 +213,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -240,10 +240,10 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, deprecatedGetUser(ctx))
+		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getAuthentifiedUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, deprecatedGetUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getAuthentifiedUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateEnvironmentHandler> Cannot load environments")
 		}
@@ -264,13 +264,13 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
 		}
 
 		//Load all environments to check if there is another environment with the same name
-		envs, err := environment.LoadEnvironments(api.mustDB(), projectKey, false, deprecatedGetUser(ctx))
+		envs, err := environment.LoadEnvironments(api.mustDB(), projectKey, false, getAuthentifiedUser(ctx))
 		if err != nil {
 			return err
 		}
@@ -304,7 +304,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//Insert variables
 		for _, v := range envPost.Variable {
-			if err := environment.InsertVariable(tx, envPost.ID, &v, deprecatedGetUser(ctx)); err != nil {
+			if err := environment.InsertVariable(tx, envPost.ID, &v, getAuthentifiedUser(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
 			}
 		}
@@ -315,12 +315,12 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//return the project with all environments
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, deprecatedGetUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getAuthentifiedUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}
 
-		event.PublishEnvironmentAdd(p.Key, envPost, deprecatedGetUser(ctx))
+		event.PublishEnvironmentAdd(p.Key, envPost, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}

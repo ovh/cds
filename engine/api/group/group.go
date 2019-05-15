@@ -326,15 +326,15 @@ func CheckUserInGroup(db gorp.SqlExecutor, groupID, userID int64) (bool, error) 
 }
 
 // CheckUserIsGroupAdmin returns an error if the user is not admin of given group.
-func CheckUserIsGroupAdmin(group *sdk.Group, user *sdk.User) error {
-	if user.Admin {
+func CheckUserIsGroupAdmin(group *sdk.Group, user *sdk.AuthentifiedUser) error {
+	if user.Admin() {
 		return nil
 	}
 
-	for _, g := range user.Groups {
+	for _, g := range user.OldUserStruct.Groups {
 		if g.ID == group.ID {
 			for _, a := range g.Admins {
-				if a.ID == user.ID {
+				if a.ID == user.OldUserStruct.ID {
 					return nil
 				}
 			}
@@ -346,12 +346,12 @@ func CheckUserIsGroupAdmin(group *sdk.Group, user *sdk.User) error {
 }
 
 // CheckUserIsGroupMember returns an error if the user is not a member of given group.
-func CheckUserIsGroupMember(group *sdk.Group, user *sdk.User) error {
-	if user.Admin || group.ID == SharedInfraGroup.ID {
+func CheckUserIsGroupMember(group *sdk.Group, user *sdk.AuthentifiedUser) error {
+	if user.Admin() || group.ID == SharedInfraGroup.ID {
 		return nil
 	}
 
-	for _, g := range user.Groups {
+	for _, g := range user.OldUserStruct.Groups {
 		if g.ID == group.ID {
 			return nil
 		}

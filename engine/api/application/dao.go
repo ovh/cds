@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -153,7 +152,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, dbApp
 }
 
 // Insert add an application id database
-func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
+func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application) error {
 	if err := app.IsValid(); err != nil {
 		return sdk.WrapError(err, "application is not valid")
 	}
@@ -170,7 +169,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
 	*app = sdk.Application(dbApp)
-	event.PublishAddApplication(proj.Key, *app, u)
 
 	return nil
 }

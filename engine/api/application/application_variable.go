@@ -204,7 +204,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncA
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
+func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable sdk.Variable, u *sdk.AuthentifiedUser) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
@@ -247,7 +247,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, variableBefore *sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, variableBefore *sdk.Variable, u *sdk.AuthentifiedUser) error {
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
@@ -294,7 +294,7 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
+func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.AuthentifiedUser) error {
 	query := `DELETE FROM application_variable
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, app.ID, variable.Name)
@@ -339,7 +339,7 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 
 // AddKeyPairToApplication generate a ssh key pair and add them as application variables
 // DEPCRECATED
-func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, keyname string, u *sdk.User) error {
+func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, keyname string, u *sdk.AuthentifiedUser) error {
 	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return sdk.WrapError(errGenerate, "AddKeyPairToApplication> Cannot generate key")

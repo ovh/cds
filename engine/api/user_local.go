@@ -112,19 +112,14 @@ func (api *API) resetUserHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		usr, err := user.LoadUserByUsername(api.mustDB(), username, user.LoadOptions.WithContacts)
 		if err != nil {
 			return err
 		}
 
 		// TODO: Check if user has local auth
 
-		userContacts, err := user.LoadContacts(api.mustDB(), usr)
-		if err != nil {
-			return err
-		}
-
-		contact := userContacts.Find(sdk.UserContactTypeEmail, resetUserRequest.Email)
+		contact := usr.Contacts.Find(sdk.UserContactTypeEmail, resetUserRequest.Email)
 		if contact == nil {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
@@ -161,6 +156,8 @@ func (api *API) confirmUserHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+
+		_ = usr
 
 		//TODO: check if has local auth
 

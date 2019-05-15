@@ -116,7 +116,7 @@ func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		got := api.checkWorkerModelPermissionsByUser(tt.args.m, tt.args.u, tt.args.p)
+		got := api.checkWorkerModelPermissionsByUser(tt.args.m, &sdk.AuthentifiedUser{OldUserStruct: tt.args.u}, tt.args.p)
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%q. checkWorkerModelPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
 		}

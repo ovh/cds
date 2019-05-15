@@ -20,7 +20,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 
 	grp := sdk.Group{Name: sdk.RandomString(10)}
 	user, password := assets.InsertLambdaUser(db, &grp)
-	test.NoError(t, group.SetUserGroupAdmin(db, grp.ID, user.ID))
+	test.NoError(t, group.SetUserGroupAdmin(db, grp.ID, user.OldUserStruct.ID))
 
 	// Test a call with a JWT Token
 	jwt, err := assets.NewJWTToken(t, db, *user, grp)
@@ -93,7 +93,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 
 	// Test_getAccessTokenByUserHandler
 	vars = map[string]string{
-		"id": strconv.FormatInt(user.ID, 10),
+		"id": user.ID,
 	}
 	uri = router.GetRoute("GET", api.getAccessTokenByUserHandler, vars)
 	req = assets.NewAuthentifiedRequest(t, user, password, "GET", uri, nil)

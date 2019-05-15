@@ -191,21 +191,21 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelID string,
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "user not authorized for worker model %s", modelID)
 	}
 
-	if api.checkWorkerModelPermissionsByUser(m, deprecatedGetUser(ctx), permissionValue) {
+	if api.checkWorkerModelPermissionsByUser(m, getAuthentifiedUser(ctx), permissionValue) {
 		return nil
 	}
 	return sdk.NewErrorFrom(sdk.ErrForbidden, "user not authorized for worker model %s", modelID)
 }
 
-func (api *API) checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.User, permissionValue int) bool {
-	if u.Admin {
+func (api *API) checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.AuthentifiedUser, permissionValue int) bool {
+	if u.Admin() {
 		return true
 	}
 
-	for _, g := range u.Groups {
+	for _, g := range u.OldUserStruct.Groups {
 		if g.ID == m.GroupID {
 			for _, a := range g.Admins {
-				if a.ID == u.ID {
+				if a.ID == u.OldUserStruct.ID {
 					return true
 				}
 			}
@@ -226,7 +226,7 @@ func (api *API) checkActionPermissions(ctx context.Context, actionName string, p
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group or action name")
 	}
 
-	u := deprecatedGetUser(ctx)
+	u := getAuthentifiedUser(ctx)
 
 	// check that group exists
 	g, err := group.LoadGroup(api.mustDB(), groupName)

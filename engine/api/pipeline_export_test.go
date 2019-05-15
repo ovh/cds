@@ -24,7 +24,7 @@ func Test_getPipelineExportHandler(t *testing.T) {
 		Name:      pipName,
 	}
 
-	if err := pipeline.InsertPipeline(db, api.Cache, proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(db, api.Cache, proj, pip); err != nil {
 		t.Fatal(err)
 	}
 

@@ -7,12 +7,13 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 )
 
 //Import is able to create a new application and all its components
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager string, u *sdk.User, msgChan chan<- sdk.Message) error {
+func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager string, u *sdk.AuthentifiedUser, msgChan chan<- sdk.Message) error {
 	doUpdate, erre := Exists(db, proj.Key, app.Name)
 	if erre != nil {
 		return sdk.WrapError(erre, "application.Import> Unable to check if application exists")
@@ -54,7 +55,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		}
 	} else {
 		//Save application in database
-		if err := Insert(db, store, proj, app, u); err != nil {
+		if err := Insert(db, store, proj, app); err != nil {
 			return sdk.WrapError(err, "application.Import")
 		}
 
@@ -105,11 +106,13 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		}
 	}
 
+	event.PublishAddApplication(proj.Key, *app, u)
+
 	return nil
 }
 
 //importVariables is able to create variable on an existing application
-func importVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User, msgChan chan<- sdk.Message) error {
+func importVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.AuthentifiedUser, msgChan chan<- sdk.Message) error {
 	for _, newVar := range app.Variable {
 		var errCreate error
 		switch newVar.Type {

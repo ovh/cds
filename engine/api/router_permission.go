@@ -12,7 +12,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) error {
+func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, authUser *sdk.AuthentifiedUser) error {
+	u := authUser.OldUserStruct
 	permProj, err := project.LoadPermissions(db, groupID)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load project permissions for %s", u.Username)
@@ -43,7 +44,8 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 }
 
 // loadUserPermissions retrieves all group memberships
-func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) error {
+func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, authUser *sdk.AuthentifiedUser) error {
+	u := authUser.OldUserStruct
 	u.Groups = nil
 	kp := cache.Key("users", u.Username, "perms")
 	kg := cache.Key("users", u.Username, "groups")
@@ -75,7 +77,7 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 				usr.Groups = nil
 				group.Admins = append(group.Admins, usr)
 			}
-			if err := loadGroupPermissionInUser(db, group.ID, u); err != nil {
+			if err := loadGroupPermissionInUser(db, group.ID, authUser); err != nil {
 				return err
 			}
 			u.Groups = append(u.Groups, group)
@@ -103,9 +105,11 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID in
 		}
 		store.SetWithTTL(kg, g, 120)
 	}
-
+	authUser := sdk.AuthentifiedUser{
+		OldUserStruct: &u,
+	}
 	if !store.Get(ku, &u.Permissions) {
-		if err := loadGroupPermissionInUser(db, groupID, &u); err != nil {
+		if err := loadGroupPermissionInUser(db, groupID, &authUser); err != nil {
 			return g, sdk.UserPermissions{}, sdk.WrapError(err, "loadPermissionsByGroupID")
 		}
 		store.SetWithTTL(ku, u.Permissions, 120)

@@ -81,7 +81,7 @@ func ReadFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
 }
 
 // Push creates or updates a workflow template from a tar.
-func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
+func Push(db gorp.SqlExecutor, u *sdk.AuthentifiedUser, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
 	wt, err := ReadFromTar(tr)
 	if err != nil {
 		return nil, nil, err

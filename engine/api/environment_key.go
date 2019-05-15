@@ -67,7 +67,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentKeyDelete(key, *env, envKey, deprecatedGetUser(ctx))
+		event.PublishEnvironmentKeyDelete(key, *env, envKey, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -135,7 +135,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentKeyAdd(key, *env, newKey, deprecatedGetUser(ctx))
+		event.PublishEnvironmentKeyAdd(key, *env, newKey, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

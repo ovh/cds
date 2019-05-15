@@ -70,7 +70,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, deprecatedGetUser(ctx))
+			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAuthentifiedUser(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)
@@ -120,14 +120,14 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, deprecatedGetUser(ctx))
+			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAuthentifiedUser(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
-func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u *sdk.User) {
+func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u *sdk.AuthentifiedUser) {
 	if !m.Public && len(m.PublicConfigurations) > 0 {
 		return
 	}
@@ -155,7 +155,7 @@ func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.In
 	}
 }
 
-func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u *sdk.User) error {
+func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u *sdk.AuthentifiedUser) error {
 	if !m.Public {
 		return nil
 	}

@@ -14,7 +14,7 @@ import (
 )
 
 // ParseAndImport parse and import an exportentities.WorkerModel
-func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
+func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.AuthentifiedUser) (*sdk.Model, error) {
 	sdkWm, errInvalidModel := eWorkerModel.GetWorkerModel()
 	gr, err := group.LoadGroupByName(db, sdkWm.Group.Name)
 	if err != nil {
@@ -35,10 +35,10 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *export
 	//User must be admin of the group set in the model
 	var isGroupAdmin bool
 currentUGroup:
-	for _, g := range u.Groups {
+	for _, g := range u.OldUserStruct.Groups {
 		if g.ID == sdkWm.GroupID {
 			for _, a := range g.Admins {
-				if a.ID == u.ID {
+				if a.ID == u.OldUserStruct.ID {
 					isGroupAdmin = true
 					break currentUGroup
 				}
@@ -47,12 +47,12 @@ currentUGroup:
 	}
 
 	//User should have the right permission or be admin
-	if !u.Admin && !isGroupAdmin {
+	if !u.Admin() && !isGroupAdmin {
 		return nil, sdk.ErrWorkerModelNoAdmin
 	}
 
 	var badRequestError error
-	asSimpleUser := !u.Admin && !sdkWm.Restricted
+	asSimpleUser := !u.Admin() && !sdkWm.Restricted
 	switch sdkWm.Type {
 	case sdk.Docker:
 		if sdkWm.ModelDocker.Image == "" {

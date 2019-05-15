@@ -46,7 +46,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project")
 		}
@@ -111,7 +111,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateProjectIntegration(p, projectIntegration, ppDB, deprecatedGetUser(ctx))
+		event.PublishUpdateProjectIntegration(p, projectIntegration, ppDB, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, projectIntegration, http.StatusOK)
 	}
@@ -123,7 +123,7 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project")
 		}
@@ -153,7 +153,7 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectIntegration(p, deletedIntegration, deprecatedGetUser(ctx))
+		event.PublishDeleteProjectIntegration(p, deletedIntegration, getAuthentifiedUser(ctx))
 		return nil
 	}
 }
@@ -163,7 +163,7 @@ func (api *API) getProjectIntegrationsHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "getProjectIntegrationsHandler> Cannot load project")
 		}
@@ -176,7 +176,7 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project")
 		}
@@ -230,7 +230,7 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddProjectIntegration(p, pp, deprecatedGetUser(ctx))
+		event.PublishAddProjectIntegration(p, pp, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, pp, http.StatusOK)
 	}

@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -213,20 +212,6 @@ func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p pip
 // migrateActionGitCloneJob is the unitary function
 func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipName, appName string, envID int64, j sdk.Job) error {
 	mapReplacement := make(map[int]sdk.Action)
-
-	//Load the first admin we can
-	if anAdminID == 0 {
-		users, err := user.LoadUsers(db)
-		if err != nil {
-			return err
-		}
-		for _, u := range users {
-			if u.Admin {
-				anAdminID = u.ID
-				break
-			}
-		}
-	}
 
 	//Check all the steps of the job
 	for i := range j.Action.Actions {

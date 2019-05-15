@@ -51,24 +51,14 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	log.Debug("grpc.SendResult> begin")
 	defer log.Debug("grpc.SendResult> end")
 
-	//Get workerName from context
-	workerName, ok := c.Value(keyWorkerName).(string)
-	if !ok {
-		return new(empty.Empty), sdk.ErrForbidden
-	}
-
 	workerID, ok := c.Value(keyWorkerID).(string)
 	if !ok {
 		return new(empty.Empty), sdk.ErrForbidden
 	}
 
-	workerUser := &sdk.User{
-		Username: workerName,
-	}
-
 	db := h.dbConnectionFactory.GetDBMap()
 
-	p, errP := project.LoadProjectByNodeRunID(nil, db, h.store, res.BuildID, workerUser, project.LoadOptions.WithVariables)
+	p, errP := project.LoadProjectByNodeRunID(nil, db, h.store, res.BuildID, getAuthentifiedUser(c), project.LoadOptions.WithVariables)
 	if errP != nil {
 		return new(empty.Empty), sdk.WrapError(errP, "SendResult> Cannot load project")
 	}

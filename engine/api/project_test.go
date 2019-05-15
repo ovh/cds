@@ -33,7 +33,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value1",
 		Type:  "PASSWORD",
 	}
-	err := project.InsertVariable(api.mustDB(), project1, var1, &sdk.User{Username: "foo"})
+	err := project.InsertVariable(api.mustDB(), project1, var1, &sdk.AuthentifiedUser{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
@@ -41,13 +41,13 @@ func TestVariableInProject(t *testing.T) {
 	// 3. Test Update variable
 	var2 := var1
 	var2.Value = "value1Updated"
-	err = project.UpdateVariable(api.mustDB(), project1, var2, var1, &sdk.User{Username: "foo"})
+	err = project.UpdateVariable(api.mustDB(), project1, var2, var1, &sdk.AuthentifiedUser{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot update var1 in project1: %s", err)
 	}
 
 	// 4. Delete variable
-	err = project.DeleteVariable(api.mustDB(), project1, var1, &sdk.User{Username: "foo"})
+	err = project.DeleteVariable(api.mustDB(), project1, var1, &sdk.AuthentifiedUser{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot delete var1 from project: %s", err)
 	}
@@ -62,7 +62,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value2",
 		Type:  "STRING",
 	}
-	err = project.InsertVariable(api.mustDB(), project1, var3, &sdk.User{Username: "foo"})
+	err = project.InsertVariable(api.mustDB(), project1, var3, &sdk.AuthentifiedUser{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
@@ -79,7 +79,7 @@ func Test_getProjectsHandler(t *testing.T) {
 		RepositoryFullname: repofullname,
 	}
 	u, pass := assets.InsertAdminUser(api.mustDB())
-	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, app))
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -196,7 +196,7 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T)
 	defer end()
 	u, pass := assets.InsertLambdaUser(api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
-	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -228,7 +228,7 @@ func Test_getprojectsHandler_AsProvider(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
-	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
@@ -255,12 +255,12 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
-	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
 
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
@@ -284,7 +284,7 @@ func Test_putProjectLabelsHandler(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
-	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
 
 	lbl1 := sdk.Label{
 		Name:      sdk.RandomString(5),

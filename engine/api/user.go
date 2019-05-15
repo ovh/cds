@@ -28,18 +28,13 @@ func (api *API) deleteUserHandler() service.Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		}
 
-		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
-		if err != nil {
-			return err
-		}
-
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := user.DeleteUserWithDependencies(tx, u); err != nil {
+		if err := user.Delete(tx, usr.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete user")
 		}
 
@@ -57,21 +52,13 @@ func (api *API) getUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
+		u := getAuthentifiedUser(ctx)
+
+		if !u.Admin() && username != u.Username {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		usr, err := user.LoadUserByUsername(api.mustDB(), username)
-		if err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
-		}
-
-		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
-		if err != nil {
-			return err
-		}
-
-		if err = loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
+		if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
 		}
 
@@ -122,7 +109,7 @@ func (api *API) updateUserHandler() service.Handler {
 // GetUsers fetches all users from databases
 func (api *API) getUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		users, err := user.LoadUsers(api.mustDB())
+		users, err := user.LoadAll(api.mustDB(), user.LoadOptions.WithContacts)
 		if err != nil {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}

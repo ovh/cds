@@ -406,6 +406,15 @@ func getGrantedUser(c context.Context) *sdk.GrantedUser {
 	return u
 }
 
+func 
+getAuthentifiedUser(c context.Context) *sdk.AuthentifiedUser {
+	u := getGrantedUser(c)
+	if u == nil {
+		return nil
+	}
+	return &u.OnBehalfOf
+}
+
 func deprecatedGetUser(c context.Context) *sdk.User {
 	i := c.Value(auth.ContextUser)
 	if i == nil {
@@ -704,11 +713,9 @@ func (a *API) Serve(ctx context.Context) error {
 			BindPwd:      a.Config.Auth.LDAP.BindPwd,
 		}
 		a.AuthenticationDrivers["ldap"] = ldapauthentication.New(cfg)
+	} else {
+		a.AuthenticationDrivers["local"] = localauthentication.New()
 	}
-
-	//if a.Config.Auth.Local {
-	a.AuthenticationDrivers["local"] = localauthentication.New()
-	//}
 
 	var err error
 	auth.Store, err = sessionstore.Get(ctx, a.Cache, a.Config.HTTP.SessionTTL*60)
@@ -778,12 +785,9 @@ func (a *API) Serve(ctx context.Context) error {
 	//Temporary migration code
 	//DEPRECATED Migrations
 	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
-		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.AuthentifiedUser{Ring: sdk.UserRingAdmin})
 	}, a.PanicDump())
 
-	migrate.Add(sdk.Migration{Name: "Permissions", Release: "0.37.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.Permissions(a.DBConnectionFactory.GetDBMap, a.Cache)
-	}})
 	migrate.Add(sdk.Migration{Name: "WorkflowOldStruct", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.WorkflowRunOldModel(ctx, a.DBConnectionFactory.GetDBMap)
 	}})

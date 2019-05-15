@@ -3,12 +3,13 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ovh/cds/engine/api/project"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/project"
 
 	"github.com/stretchr/testify/assert"
 
@@ -129,7 +130,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	// Create Application
 	app := sdk.Application{
@@ -138,7 +139,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)

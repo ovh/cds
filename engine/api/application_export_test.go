@@ -23,7 +23,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(db, api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(db, api.Cache, proj, app); err != nil {
 		t.Fatal(err)
 	}
 

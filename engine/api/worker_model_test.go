@@ -218,7 +218,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
-	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -226,7 +226,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -503,7 +503,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -551,7 +551,7 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -604,7 +604,7 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	pattern := sdk.ModelPattern{
 		Name: "test",
@@ -669,7 +669,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
 		Name:       "Test-with-provision",
@@ -759,7 +759,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -810,7 +810,7 @@ func Test_updateWorkerModel(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -904,7 +904,7 @@ func Test_updateWorkerModelWithPassword(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1013,7 +1013,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
 		t.Fatal(err)
 	}
 

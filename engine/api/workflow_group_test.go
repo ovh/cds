@@ -32,7 +32,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -99,7 +99,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -160,7 +160,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -255,7 +255,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -333,7 +333,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -411,7 +411,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, permission.PermissionReadWriteExecute))
-	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.OldUserStruct.ID, true))
 	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionRead))
 
 	//First pipeline
@@ -420,7 +420,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -473,7 +473,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	test.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.ID))
+	test.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID))
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
@@ -562,7 +562,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, permission.PermissionReadWriteExecute))
-	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.OldUserStruct.ID, true))
 	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionRead))
 
 	//First pipeline
@@ -571,7 +571,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -624,7 +624,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	test.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.ID))
+	test.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID))
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)

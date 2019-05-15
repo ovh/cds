@@ -34,7 +34,7 @@ func Init(issuer string, k []byte) error {
 const OriginUI = "UI"
 
 // New returns a new access token for a user
-func New(u sdk.User, groups []sdk.Group, origin, desc string, expiration time.Time) (sdk.AccessToken, string, error) {
+func New(u sdk.AuthentifiedUser, groups []sdk.Group, origin, desc string, expiration time.Time) (sdk.AccessToken, string, error) {
 	var token sdk.AccessToken
 	token.ID = sdk.UUID()
 	token.Created = time.Now()
@@ -43,14 +43,8 @@ func New(u sdk.User, groups []sdk.Group, origin, desc string, expiration time.Ti
 	token.Origin = origin
 	token.Status = sdk.AccessTokenStatusEnabled
 	token.Groups = groups
-
-	var tmpUser = u
-	tmpUser.Auth = sdk.Auth{}
-	tmpUser.Favorites = nil
-	tmpUser.Groups = nil
-	tmpUser.Permissions = sdk.UserPermissions{}
-	token.User = tmpUser
-	token.UserID = u.ID
+	token.AuthentifiedUser = u
+	token.AuthentifiedUserID = u.ID
 
 	jwttoken, err := Regen(&token)
 	if err != nil {
@@ -67,7 +61,7 @@ func Regen(token *sdk.AccessToken) (string, error) {
 		Groups: sdk.GroupsToIDs(token.Groups),
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    LocalIssuer,
-			Subject:   token.User.Username,
+			Subject:   token.AuthentifiedUser.Username,
 			Id:        token.ID,
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: token.ExpireAt.Unix(),

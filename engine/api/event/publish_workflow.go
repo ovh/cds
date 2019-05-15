@@ -10,7 +10,7 @@ import (
 )
 
 // publishWorkflowEvent publish workflow event
-func publishWorkflowEvent(payload interface{}, key, workflowName string, u *sdk.User) {
+func publishWorkflowEvent(payload interface{}, key, workflowName string, u *sdk.AuthentifiedUser) {
 	event := sdk.Event{
 		Timestamp:    time.Now(),
 		Hostname:     hostname,
@@ -22,13 +22,13 @@ func publishWorkflowEvent(payload interface{}, key, workflowName string, u *sdk.
 	}
 	if u != nil {
 		event.Username = u.Username
-		event.UserMail = u.Email
+		event.UserMail = u.Email()
 	}
 	publishEvent(event)
 }
 
 // PublishWorkflowAdd publishes an event for the creation of the given Workflow
-func PublishWorkflowAdd(projKey string, w sdk.Workflow, u *sdk.User) {
+func PublishWorkflowAdd(projKey string, w sdk.Workflow, u *sdk.AuthentifiedUser) {
 	e := sdk.EventWorkflowAdd{
 		Workflow: w,
 	}
@@ -36,7 +36,7 @@ func PublishWorkflowAdd(projKey string, w sdk.Workflow, u *sdk.User) {
 }
 
 // PublishWorkflowUpdate publishes an event for the update of the given Workflow
-func PublishWorkflowUpdate(projKey string, w sdk.Workflow, oldw sdk.Workflow, u *sdk.User) {
+func PublishWorkflowUpdate(projKey string, w sdk.Workflow, oldw sdk.Workflow, u *sdk.AuthentifiedUser) {
 	e := sdk.EventWorkflowUpdate{
 		NewWorkflow: w,
 		OldWorkflow: oldw,
@@ -45,7 +45,7 @@ func PublishWorkflowUpdate(projKey string, w sdk.Workflow, oldw sdk.Workflow, u 
 }
 
 // PublishWorkflowDelete publishes an event for the deletion of the given Workflow
-func PublishWorkflowDelete(projKey string, w sdk.Workflow, u *sdk.User) {
+func PublishWorkflowDelete(projKey string, w sdk.Workflow, u *sdk.AuthentifiedUser) {
 	e := sdk.EventWorkflowDelete{
 		Workflow: w,
 	}
@@ -53,7 +53,7 @@ func PublishWorkflowDelete(projKey string, w sdk.Workflow, u *sdk.User) {
 }
 
 // PublishWorkflowPermissionAdd publishes an event when adding a permission on a workflow
-func PublishWorkflowPermissionAdd(projKey string, w sdk.Workflow, gp sdk.GroupPermission, u *sdk.User) {
+func PublishWorkflowPermissionAdd(projKey string, w sdk.Workflow, gp sdk.GroupPermission, u *sdk.AuthentifiedUser) {
 	e := sdk.EventWorkflowPermissionAdd{
 		WorkflowID: w.ID,
 		Permission: gp,
@@ -62,7 +62,7 @@ func PublishWorkflowPermissionAdd(projKey string, w sdk.Workflow, gp sdk.GroupPe
 }
 
 // PublishWorkflowPermissionUpdate publishes an event when updating a permission on a workflow
-func PublishWorkflowPermissionUpdate(projKey string, w sdk.Workflow, gp sdk.GroupPermission, gpOld sdk.GroupPermission, u *sdk.User) {
+func PublishWorkflowPermissionUpdate(projKey string, w sdk.Workflow, gp sdk.GroupPermission, gpOld sdk.GroupPermission, u *sdk.AuthentifiedUser) {
 	e := sdk.EventWorkflowPermissionUpdate{
 		WorkflowID:    w.ID,
 		NewPermission: gp,
@@ -72,7 +72,7 @@ func PublishWorkflowPermissionUpdate(projKey string, w sdk.Workflow, gp sdk.Grou
 }
 
 // PublishWorkflowPermissionDelete publishes an event when deleting a permission on a workflow
-func PublishWorkflowPermissionDelete(projKey string, w sdk.Workflow, gp sdk.GroupPermission, u *sdk.User) {
+func PublishWorkflowPermissionDelete(projKey string, w sdk.Workflow, gp sdk.GroupPermission, u *sdk.AuthentifiedUser) {
 	e := sdk.EventWorkflowPermissionDelete{
 		WorkflowID: w.ID,
 		Permission: gp,

@@ -11,7 +11,7 @@ import (
 )
 
 // insertTrigger inserts a trigger
-func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
+func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.AuthentifiedUser) error {
 	trigger.WorkflowNodeID = node.ID
 	trigger.ID = 0
 	trigger.WorkflowDestNodeID = 0
@@ -39,7 +39,7 @@ func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node
 }
 
 // LoadTriggers loads trigger from a node
-func loadTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeTrigger, error) {
+func loadTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.AuthentifiedUser, opts LoadOptions) ([]sdk.WorkflowNodeTrigger, error) {
 	dbtriggers := []NodeTrigger{}
 	if _, err := db.Select(&dbtriggers, "select * from workflow_node_trigger where workflow_node_id = $1 ORDER by workflow_node_trigger.id ASC", node.ID); err != nil {
 		if err == sql.ErrNoRows {

@@ -65,7 +65,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
@@ -90,7 +90,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, deprecatedGetUser(ctx),
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getAuthentifiedUser(ctx),
 			pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
@@ -119,7 +119,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		format := r.FormValue("format")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
@@ -151,7 +151,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, deprecatedGetUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getAuthentifiedUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
 			return sdk.WrapError(sdk.NewError(sdk.ErrInvalidPipeline, globalError), "unable to parse and import pipeline")

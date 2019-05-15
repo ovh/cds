@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -129,19 +130,24 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 			}
 		}
 	case deprecatedGetUser(ctx) != nil:
-		if err := loadUserPermissions(api.mustDB(), api.Cache, deprecatedGetUser(ctx)); err != nil {
-			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", deprecatedGetUser(ctx).ID, err)
-		}
-
 		// TEMPORARY CODE, IT SHOULD BE REMOVED WHEN ALL WILL BE MIGRATED TO JWT TOKENS
 		u := deprecatedGetUser(ctx)
+		authUser, err := user.LoadByOldUserID(api.mustDB(), u.ID)
+		if err != nil {
+			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load authentified user from ID %d: %v", deprecatedGetUser(ctx).ID, err)
+		}
+
 		var grantedUser = sdk.GrantedUser{
 			Fullname:   u.Fullname,
-			OnBehalfOf: *u,
+			OnBehalfOf: *authUser,
 			Groups:     u.Groups,
 		}
 		ctx = context.WithValue(ctx, ContextGrantedUser, &grantedUser)
 		// TEMPORARY CODE - END
+
+		if err := loadUserPermissions(api.mustDB(), api.Cache, getAuthentifiedUser(ctx)); err != nil {
+			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", deprecatedGetUser(ctx).ID, err)
+		}
 
 	}
 
@@ -250,14 +256,14 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 	// Put the granted user in the context
 	var grantedUser = sdk.GrantedUser{
 		Fullname:   token.Description,
-		OnBehalfOf: token.User,
+		OnBehalfOf: token.AuthentifiedUser,
 		Groups:     token.Groups,
 	}
 	ctx = context.WithValue(ctx, ContextGrantedUser, &grantedUser)
 
 	// TEMPORARY CODE
 	// SHOULD BE REMOVED WITH REFACTO OF PERMISSIONS
-	ctx, err = auth.DeprecatedSession(ctx, api.mustDB(), token.ID, token.User.Username)
+	ctx, err = auth.DeprecatedSession(ctx, api.mustDB(), token.ID, token.AuthentifiedUser.Username)
 	if err != nil {
 		return ctx, false, sdk.WithStack(err)
 	}
@@ -267,7 +273,6 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", deprecatedGetUser(ctx).ID, err)
 		}
 	}
-
 	// END OF TEMPORARY CODE
 
 	return ctx, false, nil

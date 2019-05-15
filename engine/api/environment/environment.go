@@ -16,7 +16,7 @@ import (
 )
 
 // LoadEnvironments load all environment from the given project
-func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *sdk.User) ([]sdk.Environment, error) {
+func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *sdk.AuthentifiedUser) ([]sdk.Environment, error) {
 	var envs []sdk.Environment
 
 	query := `SELECT environment.id, environment.name, environment.last_modified, 7 as "perm", environment.from_repository
@@ -283,7 +283,7 @@ func CountEnvironmentByVarValue(db gorp.SqlExecutor, projectKey string, value st
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
-func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
+func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.AuthentifiedUser) error {
 	if !strings.HasPrefix(keyname, "env-") {
 		keyname = "env-" + keyname
 	}

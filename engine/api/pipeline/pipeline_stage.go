@@ -277,7 +277,7 @@ func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 }
 
 // DeleteStageByID Delete stage with associated pipeline action
-func DeleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage, userID int64) error {
+func DeleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage) error {
 	nbOfStages, err := CountStageByPipelineID(tx, s.PipelineID)
 	if err != nil {
 		return err
@@ -346,7 +346,7 @@ func deleteStagePrerequisites(db gorp.SqlExecutor, stageID int64) error {
 }
 
 // DeleteAllStage  Delete all stages from pipeline ID
-func DeleteAllStage(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
+func DeleteAllStage(db gorp.SqlExecutor, pipelineID int64) error {
 	stageIDs, err := seleteAllStageID(db, pipelineID)
 	if err != nil {
 		return err

@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func insertFork(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, fork *sdk.WorkflowNodeFork, u *sdk.User) error {
+func insertFork(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, fork *sdk.WorkflowNodeFork, u *sdk.AuthentifiedUser) error {
 	fork.WorkflowNodeID = node.ID
 
 	dbFork := dbNodeFork(*fork)
@@ -31,7 +31,7 @@ func insertFork(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *s
 	return nil
 }
 
-func insertForkTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, fork *sdk.WorkflowNodeFork, trigger *sdk.WorkflowNodeForkTrigger, u *sdk.User) error {
+func insertForkTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, fork *sdk.WorkflowNodeFork, trigger *sdk.WorkflowNodeForkTrigger, u *sdk.AuthentifiedUser) error {
 	trigger.WorkflowForkID = fork.ID
 	trigger.ID = 0
 	trigger.WorkflowDestNodeID = 0
@@ -67,7 +67,7 @@ func updateWorkflowForkTriggerSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 	return nil
 }
 
-func loadForks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeFork, error) {
+func loadForks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.AuthentifiedUser, opts LoadOptions) ([]sdk.WorkflowNodeFork, error) {
 	res := []dbNodeFork{}
 	if _, err := db.Select(&res, "select * FROM workflow_node_fork where workflow_node_id = $1", node.ID); err != nil {
 		if err == sql.ErrNoRows {
@@ -107,7 +107,7 @@ func loadForks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 	return forks, nil
 }
 
-func loadForkTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (sdk.WorkflowNodeForkTrigger, error) {
+func loadForkTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.AuthentifiedUser, opts LoadOptions) (sdk.WorkflowNodeForkTrigger, error) {
 	var t sdk.WorkflowNodeForkTrigger
 
 	dbtrigger := dbNodeForkTrigger{}

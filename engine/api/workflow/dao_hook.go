@@ -167,7 +167,7 @@ func loadHooks(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode) ([]
 	return nodes, nil
 }
 
-func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeOutgoingHook, error) {
+func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.AuthentifiedUser, opts LoadOptions) ([]sdk.WorkflowNodeOutgoingHook, error) {
 	res := []nodeOutgoingHook{}
 	if _, err := db.Select(&res, "select id, name, workflow_hook_model_id from workflow_node_outgoing_hook where workflow_node_id = $1", node.ID); err != nil {
 		if err == sql.ErrNoRows {
@@ -262,7 +262,7 @@ func LoadHooksByNodeID(db gorp.SqlExecutor, nodeID int64) ([]sdk.WorkflowNodeHoo
 }
 
 // insertOutgoingHook inserts a outgoing hook
-func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeOutgoingHook, u *sdk.User) error {
+func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeOutgoingHook, u *sdk.AuthentifiedUser) error {
 	hook.WorkflowNodeID = node.ID
 
 	var icon string
@@ -363,7 +363,7 @@ func (h *nodeOutgoingHook) PostGet(db gorp.SqlExecutor) error {
 	return nil
 }
 
-func insertOutgoingTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, h sdk.WorkflowNodeOutgoingHook, trigger *sdk.WorkflowNodeOutgoingHookTrigger, u *sdk.User) error {
+func insertOutgoingTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, h sdk.WorkflowNodeOutgoingHook, trigger *sdk.WorkflowNodeOutgoingHookTrigger, u *sdk.AuthentifiedUser) error {
 	trigger.WorkflowNodeOutgoingHookID = h.ID
 	trigger.ID = 0
 
@@ -389,7 +389,7 @@ func insertOutgoingTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workfl
 	return nil
 }
 
-func loadHookTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, hook *sdk.WorkflowNodeOutgoingHook, id int64, u *sdk.User, opts LoadOptions) (sdk.WorkflowNodeOutgoingHookTrigger, error) {
+func loadHookTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, hook *sdk.WorkflowNodeOutgoingHook, id int64, u *sdk.AuthentifiedUser, opts LoadOptions) (sdk.WorkflowNodeOutgoingHookTrigger, error) {
 	var t sdk.WorkflowNodeOutgoingHookTrigger
 
 	dbtrigger := outgoingHookTrigger{}

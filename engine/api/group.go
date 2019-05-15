@@ -53,7 +53,7 @@ func (api *API) deleteGroupHandler() service.Handler {
 		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx)
 
 		g, errl := group.LoadGroup(api.mustDB(), name)
 		if errl != nil {
@@ -326,11 +326,11 @@ func (api *API) addUserInGroupHandler() service.Handler {
 
 			userInGroup, errc := group.CheckUserInGroup(api.mustDB(), g.ID, oldUser.ID)
 			if errc != nil {
-				return sdk.WrapError(errc, "Cannot check if user %s is already in the group %s", u, g.Name)
+				return sdk.WrapError(errc, "Cannot check if user %s is already in the group %s", u.Username, g.Name)
 			}
 			if !userInGroup {
 				if err := group.InsertUserInGroup(api.mustDB(), g.ID, oldUser.ID, false); err != nil {
-					return sdk.WrapError(err, "Cannot add user %s in group %s", u, g.Name)
+					return sdk.WrapError(err, "Cannot add user %s in group %s", u.Username, g.Name)
 				}
 			}
 		}

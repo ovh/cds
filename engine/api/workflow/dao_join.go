@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeJoin, error) {
+func loadJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.AuthentifiedUser, opts LoadOptions) ([]sdk.WorkflowNodeJoin, error) {
 	joinIDs := []int64{}
 	_, err := db.Select(&joinIDs, "select id from workflow_node_join where workflow_id = $1", w.ID)
 	if err != nil {
@@ -34,7 +34,7 @@ func loadJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 	return joins, nil
 }
 
-func loadJoin(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoin, error) {
+func loadJoin(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.AuthentifiedUser, opts LoadOptions) (*sdk.WorkflowNodeJoin, error) {
 	dbjoin := Join{}
 	//Load the join
 	if err := db.SelectOne(&dbjoin, "select * from workflow_node_join where id = $1 and workflow_id = $2", id, w.ID); err != nil {
@@ -79,7 +79,7 @@ func loadJoin(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 	return &j, nil
 }
 
-func loadJoinTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNodeJoin, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoinTrigger, error) {
+func loadJoinTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNodeJoin, id int64, u *sdk.AuthentifiedUser, opts LoadOptions) (*sdk.WorkflowNodeJoinTrigger, error) {
 	dbtrigger := JoinTrigger{}
 	//Load the trigger
 	if err := db.SelectOne(&dbtrigger, "select * from workflow_node_join_trigger where workflow_node_join_id = $1 and id = $2", node.ID, id); err != nil {
@@ -102,7 +102,7 @@ func loadJoinTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	return &t, nil
 }
 
-func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u *sdk.User) error {
+func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u *sdk.AuthentifiedUser) error {
 	log.Debug("insertOrUpdateJoin> %#v", n)
 	n.WorkflowID = w.ID
 	n.ID = 0
@@ -154,7 +154,7 @@ func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	return nil
 }
 
-func insertJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, j sdk.WorkflowNodeJoin, trigger *sdk.WorkflowNodeJoinTrigger, u *sdk.User) error {
+func insertJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, j sdk.WorkflowNodeJoin, trigger *sdk.WorkflowNodeJoinTrigger, u *sdk.AuthentifiedUser) error {
 	trigger.WorkflowNodeJoinID = j.ID
 	trigger.ID = 0
 

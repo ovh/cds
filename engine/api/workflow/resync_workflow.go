@@ -11,7 +11,7 @@ import (
 )
 
 // Resync a workflow in the given workflow run
-func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, u *sdk.User) error {
+func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, u *sdk.AuthentifiedUser) error {
 	options := LoadOptions{
 		DeepPipeline: true,
 		Base64Keys:   true,

@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
+func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.AuthentifiedUser) {
 	db := DBFunc()
 
 	// Project migration
@@ -65,7 +65,7 @@ func loadProjectIDs(db gorp.SqlExecutor) ([]int64, error) {
 	return ids, nil
 }
 
-func migrateProject(db *gorp.DbMap, projID int64, store cache.Store, u *sdk.User) error {
+func migrateProject(db *gorp.DbMap, projID int64, store cache.Store, u *sdk.AuthentifiedUser) error {
 	tx, errT := db.Begin()
 	if errT != nil {
 		log.Warning("migrateProject> Cannot start transaction: %s", errT)
