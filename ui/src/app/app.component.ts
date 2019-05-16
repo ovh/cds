@@ -78,7 +78,7 @@ export class AppComponent implements OnInit {
 
         this.themeSubscriber = this._theme.get().subscribe(t => {
             if (t) {
-                this.currentTheme = t;
+                document.body.className = t;
             } else {
                 _theme.set('light');
             }
