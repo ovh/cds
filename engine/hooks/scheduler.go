@@ -178,7 +178,6 @@ func (s *Service) deleteTaskExecutionsRoutine(c context.Context) error {
 					case TypeBranchDeletion:
 						if e.Status == TaskExecutionDone && e.ProcessingTimestamp != 0 {
 							s.Dao.DeleteTaskExecution(&e)
-						} else {
 							taskToDelete = true
 						}
 					default:
