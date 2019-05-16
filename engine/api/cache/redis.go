@@ -40,7 +40,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 			IdleTimeout:        10 * time.Second,
 			PoolSize:           25,
 			MaxRetries:         10,
-			MinRetryBackoff:    50 * time.Millisecond,
+			MinRetryBackoff:    30 * time.Millisecond,
 			MaxRetryBackoff:    100 * time.Millisecond,
 		}
 		client = redis.NewFailoverClient(opts)
