@@ -14,7 +14,7 @@ import (
 func GetDeprecatedUser(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) (*sdk.User, error) {
 	oldUserID, err := db.SelectInt("select user_id from authentified_user_migration where authentified_user_id = $1", u.ID)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(sdk.ErrInvalidUser, "unable to load user_id from authentified_user_migration where authentified_user_id = %s: %v", u.ID, err)
 	}
 	oldUser, err := deprecatedLoadUserWithoutAuthByID(db, oldUserID)
 	if err != nil {
@@ -24,9 +24,9 @@ func GetDeprecatedUser(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) (*sdk.User,
 }
 
 func LoadByOldUserID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
-	oldUserID, err := db.SelectStr("select user_id from authentified_user_migration where authentified_user_id = $1", id)
+	oldUserID, err := db.SelectStr("select authentified_user_id from authentified_user_migration where user_id = $1", id)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(sdk.ErrInvalidUser, "unable to load authentified_user_id from authentified_user_migration where user_id = %d: %v", id, err)
 	}
 	return LoadUserByID(db, oldUserID, opts...)
 }
@@ -45,6 +45,11 @@ func LoadUserByID(db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.
 	}
 
 	var au = sdk.AuthentifiedUser(u)
+	if len(opts) == 0 {
+		opts = []LoadOptionFunc{
+			LoadOptions.WithOldUserStruct, LoadOptions.WithContacts,
+		}
+	}
 	for i := range opts {
 		if err := opts[i](db, &au); err != nil {
 			return nil, err
@@ -56,9 +61,11 @@ func LoadUserByID(db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.
 
 func unsafeLoadUserByID(db gorp.SqlExecutor, id string) (authentifiedUser, error) {
 	var u authentifiedUser
-	query := "select * from authentified_user where id = $1"
-	if err := db.SelectOne(&u, query, id); err != nil {
-		return u, sdk.WithStack(err)
+	query := gorpmapping.NewQuery("select * from authentified_user where id = $1").Args(id)
+	if has, err := gorpmapping.Get(db, query, &u); err != nil {
+		return u, sdk.WrapError(err, "unable to load user by id %s", id)
+	} else if !has {
+		return u, sdk.WrapError(sdk.ErrInvalidUser, "unable to load user by id %s", id)
 	}
 	return u, nil
 }

@@ -18,12 +18,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type contextKey int
-
-const (
-	ContextGrantedUser contextKey = iota
-)
-
 // Check Provider
 func (api *API) authAllowProviderMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, bool, error) {
 	if rc.Options["allowProvider"] == "true" {
@@ -65,18 +59,21 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 	if rc.Options["auth"] == "true" && getProvider(ctx) == nil {
 		switch headers.Get("User-Agent") {
 		case sdk.WorkerAgent:
+			log.Debug("authDeprecatedMiddleware.WorkerAgent")
 			var err error
 			ctx, err = auth.CheckWorkerAuth(ctx, api.mustDB(), api.Cache, headers)
 			if err != nil {
 				return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s sdk.WorkerAgent agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		case sdk.ServiceAgent:
+			log.Debug("authDeprecatedMiddleware.ServiceAgent")
 			var err error
 			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers)
 			if err != nil {
 				return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s sdk.ServiceAgent agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		default:
+			log.Debug("authDeprecatedMiddleware.CheckAuth_DEPRECATED")
 			var err error
 			ctx, err = auth.CheckAuth_DEPRECATED(ctx, w, req, api.mustDB())
 			if err != nil {
@@ -136,18 +133,16 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 		if err != nil {
 			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load authentified user from ID %d: %v", deprecatedGetUser(ctx).ID, err)
 		}
-
+		if err := loadUserPermissions(api.mustDB(), api.Cache, authUser); err != nil {
+			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", deprecatedGetUser(ctx).ID, err)
+		}
 		var grantedUser = sdk.GrantedUser{
 			Fullname:   u.Fullname,
 			OnBehalfOf: *authUser,
 			Groups:     u.Groups,
 		}
-		ctx = context.WithValue(ctx, ContextGrantedUser, &grantedUser)
+		ctx = context.WithValue(ctx, auth.ContextGrantedUser, &grantedUser)
 		// TEMPORARY CODE - END
-
-		if err := loadUserPermissions(api.mustDB(), api.Cache, getAuthentifiedUser(ctx)); err != nil {
-			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", deprecatedGetUser(ctx).ID, err)
-		}
 
 	}
 
@@ -215,7 +210,6 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 		// Checking X-XSRF-TOKEN header if the token is used from a cookie
 		xsrfToken = req.Header.Get("X-XSRF-TOKEN")
 	} else {
-		log.Debug("api.authJWTMiddleware> reading Authorization Bearer header")
 		if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
 			jwt = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
 		}
@@ -259,11 +253,11 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 		OnBehalfOf: token.AuthentifiedUser,
 		Groups:     token.Groups,
 	}
-	ctx = context.WithValue(ctx, ContextGrantedUser, &grantedUser)
+	ctx = context.WithValue(ctx, auth.ContextGrantedUser, &grantedUser)
 
 	// TEMPORARY CODE
 	// SHOULD BE REMOVED WITH REFACTO OF PERMISSIONS
-	ctx, err = auth.DeprecatedSession(ctx, api.mustDB(), token.ID, token.AuthentifiedUser.Username)
+	ctx, err = auth.Session_DEPRECATED(ctx, api.mustDB(), token.ID, token.AuthentifiedUser.Username)
 	if err != nil {
 		return ctx, false, sdk.WithStack(err)
 	}

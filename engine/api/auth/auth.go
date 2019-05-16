@@ -29,6 +29,7 @@ const (
 	ContextUserSession
 	ContextProvider
 	ContextUserAuthentified
+	ContextGrantedUser
 )
 
 var (
@@ -123,6 +124,9 @@ func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, hea
 		return ctx, err
 	}
 
+	//TODO
+	// Worker authentication against jwt token
+
 	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: w.Name})
 	ctx = context.WithValue(ctx, ContextWorker, w)
 	return ctx, nil
@@ -154,8 +158,8 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, he
 	return ctx, nil
 }
 
-// DeprecatedSession have to be deprecated
-func DeprecatedSession(ctx context.Context, db gorp.SqlExecutor, sessionToken, username string) (context.Context, error) {
+// Session_DEPRECATED have to be deprecated
+func Session_DEPRECATED(ctx context.Context, db gorp.SqlExecutor, sessionToken, username string) (context.Context, error) {
 	u, err := user.LoadUserByUsername(db, username)
 	if err != nil {
 		return ctx, err
@@ -181,7 +185,7 @@ func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.
 		if ok {
 			return ctx, nil
 		}
-		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
+		return ctx, sdk.WithStack(sdk.ErrSessionNotFound)
 	}
 
 	//Check other session
@@ -191,7 +195,7 @@ func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.
 		sessionToken = req.FormValue("session")
 	}
 	if sessionToken == "" {
-		return ctx, sdk.WithStack(fmt.Errorf("no session header"))
+		return ctx, sdk.WithStack(sdk.ErrSessionNotFound)
 	}
 
 	exists, err := Store.Exists(sessionstore.SessionKey(sessionToken))
@@ -204,13 +208,13 @@ func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.
 		return ctx, sdk.WithStack(err)
 	}
 
-	ctx, err = DeprecatedSession(ctx, db, sessionToken, username)
+	ctx, err = Session_DEPRECATED(ctx, db, sessionToken, username)
 	if err != nil {
 		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %v", username, err))
 	}
 
 	if !exists {
-		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
+		return ctx, sdk.WithStack(sdk.ErrSessionNotFound)
 	}
 
 	return ctx, nil

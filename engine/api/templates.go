@@ -28,6 +28,8 @@ import (
 	"github.com/ovh/cds/sdk/slug"
 )
 
+type contextKey int
+
 const (
 	contextWorkflowTemplate contextKey = iota
 )
@@ -459,6 +461,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+
+		u := getAuthentifiedUser(ctx)
+
 		wt := getWorkflowTemplate(ctx)
 		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
 			return err
@@ -472,8 +477,6 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		if err := wt.CheckParams(req); err != nil {
 			return err
 		}
-
-		u := getAuthentifiedUser(ctx)
 
 		// check permission on project
 		if !u.Admin() {

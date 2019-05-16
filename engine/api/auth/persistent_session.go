@@ -44,37 +44,38 @@ func NewPersistentSession(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) (session
 func getUserPersistentSession_DEPRECATED(ctx context.Context, db gorp.SqlExecutor, headers http.Header) (context.Context, bool) {
 	h := headers.Get(sdk.SessionTokenHeader)
 	if h == "" {
+		log.Warning("getUserPersistentSession_DEPRECATED> unable to get SessionTokenHeader")
 		return ctx, false
 	}
 
 	key := sessionstore.SessionKey(h)
 	ok, _ := Store.Exists(key)
-	var err error
+	var globalErr error
 	var u *sdk.AuthentifiedUser
 
 	if !ok {
 		//Reload the persistent session from the database
-		token, err := user.LoadPersistentSessionToken(db, key)
-		if err != nil {
-			log.Warning("getUserPersistentSession> Unable to load user by token %s (%v)", key, err)
+		var token *sdk.UserToken
+		token, globalErr = user.LoadPersistentSessionToken(db, key)
+		if globalErr != nil {
+			log.Warning("getUserPersistentSession> Unable to load user by token %s (%v)", key, globalErr)
 			return ctx, false
 		}
-		u, err = user.LoadByOldUserID(db, token.UserID)
-		if err == nil {
+		u, globalErr = user.LoadByOldUserID(db, token.UserID)
+		if globalErr == nil {
 			Store.New(key)
 			Store.Set(key, "username", u.Username)
-
 		}
 	} else {
 		//The session is in the session store
 		var usr string
 		Store.Get(sessionstore.SessionKey(h), "username", &usr)
-		u, err = user.LoadUserByUsername(db, usr)
+		u, globalErr = user.LoadUserByUsername(db, usr)
 	}
 
 	//Check previous errors
-	if err != nil {
-		log.Warning("getUserPersistentSession> Unable to load user")
+	if globalErr != nil {
+		log.Warning("getUserPersistentSession> Unable to load user: %v", globalErr)
 		return ctx, false
 	}
 

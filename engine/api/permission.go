@@ -52,8 +52,8 @@ func (api *API) deprecatedSetGroupsAndPermissionsFromGroupID(ctx context.Context
 	if err != nil {
 		return sdk.WrapError(sdk.ErrUnauthorized, "deprecatedSetGroupsAndPermissionsFromGroupID> cannot load permissions: %s", err)
 	}
-	deprecatedGetUser(ctx).Permissions = perm
-	deprecatedGetUser(ctx).Groups = append(deprecatedGetUser(ctx).Groups, g)
+	getAuthentifiedUser(ctx).OldUserStruct.Permissions = perm
+	getAuthentifiedUser(ctx).OldUserStruct.Groups = append(getAuthentifiedUser(ctx).OldUserStruct.Groups, g)
 	return err
 }
 
@@ -97,7 +97,7 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 
 func (api *API) checkPermission(ctx context.Context, routeVar map[string]string, permission int) error {
 	// FIXME to remove with new auth, by pass only used for workers
-	for _, g := range deprecatedGetUser(ctx).Groups {
+	for _, g := range getAuthentifiedUser(ctx).OldUserStruct.Groups {
 		if group.SharedInfraGroup != nil && g.Name == group.SharedInfraGroup.Name {
 			return nil
 		}
@@ -119,7 +119,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 		return nil
 	}
 
-	if deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= perm {
+	if getAuthentifiedUser(ctx).OldUserStruct.Permissions.ProjectsPerm[projectKey] >= perm {
 		return nil
 	}
 
@@ -136,7 +136,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 			}
 			return sdk.WrapError(sdk.ErrForbidden, "user not authorized for workflow %s", workflowName)
 		default:
-			wPerm, has := deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)]
+			wPerm, has := getAuthentifiedUser(ctx).OldUserStruct.Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)]
 			if !has {
 				return sdk.WithStack(sdk.ErrNotFound)
 			}
@@ -151,18 +151,18 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 }
 
 func checkProjectReadPermission(ctx context.Context, projectKey string) bool {
-	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
+	return getAuthentifiedUser(ctx).OldUserStruct.Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
 }
 
 func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVar map[string]string) error {
-	for _, g := range deprecatedGetUser(ctx).Groups {
+	for _, g := range getAuthentifiedUser(ctx).OldUserStruct.Groups {
 		if g.Name == groupName {
 			if permissionValue == permission.PermissionRead {
 				return nil
 			}
 
 			for i := range g.Admins {
-				if g.Admins[i].ID == deprecatedGetUser(ctx).ID {
+				if g.Admins[i].ID == getAuthentifiedUser(ctx).OldUserStruct.ID {
 					return nil
 				}
 			}

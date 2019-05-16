@@ -549,8 +549,6 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 
 	//Create user
 	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{

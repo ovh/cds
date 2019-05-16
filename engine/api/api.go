@@ -395,7 +395,7 @@ func getUserSession(c context.Context) string {
 }
 
 func getGrantedUser(c context.Context) *sdk.GrantedUser {
-	i := c.Value(ContextGrantedUser)
+	i := c.Value(auth.ContextGrantedUser)
 	if i == nil {
 		return nil
 	}

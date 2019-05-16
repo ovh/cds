@@ -45,6 +45,8 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if !shouldContinue {
 		log.Info("api.router> authentication successful with JWT token")
 		return ctx, nil
+	} else {
+		log.Debug("api.router> authentication unsuccessful with JWT token")
 	}
 
 	//Check Authentication (users, workers, hatcheries, services)

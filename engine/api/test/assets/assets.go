@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertTestProject create a test project
@@ -92,7 +93,7 @@ func InsertAdminUser(db *gorp.DbMap) (*sdk.AuthentifiedUser, string) {
 
 	user.Insert(db, u)
 
-	u, _ = user.LoadUserByID(db, u.ID, user.LoadOptions.WithOldUserStruct)
+	u, _ = user.LoadUserByID(db, u.ID)
 	t, _ := user.NewPersistentSession_DEPRECATED(db, u.OldUserStruct)
 	return u, string(t)
 }
@@ -108,7 +109,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 
 	user.Insert(db, u)
 
-	u, _ = user.LoadUserByID(db, u.ID, user.LoadOptions.WithOldUserStruct)
+	u, _ = user.LoadUserByID(db, u.ID)
 	t, _ := user.NewPersistentSession_DEPRECATED(db, u.OldUserStruct)
 
 	for _, g := range groups {
@@ -116,6 +117,10 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		group.InsertUserInGroup(db, g.ID, u.OldUserStruct.ID, false)
 		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *g)
 	}
+
+	btes, _ := json.Marshal(u)
+
+	log.Debug("lambda user: %s", string(btes))
 
 	return u, string(t)
 }

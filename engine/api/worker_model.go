@@ -38,14 +38,14 @@ func (api *API) addWorkerModelHandler() service.Handler {
 			}
 		}
 
-		currentUser := deprecatedGetUser(ctx)
+		currentUser := getAuthentifiedUser(ctx)
 		//User must be admin of the group set in the model
 		var isGroupAdmin bool
 	currentUGroup:
-		for _, g := range currentUser.Groups {
+		for _, g := range currentUser.OldUserStruct.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == currentUser.ID {
+					if a.ID == currentUser.OldUserStruct.ID {
 						isGroupAdmin = true
 						break currentUGroup
 					}
@@ -54,7 +54,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !currentUser.Admin && !isGroupAdmin {
+		if !currentUser.Admin() && !isGroupAdmin {
 			return sdk.ErrWorkerModelNoAdmin
 		}
 
@@ -63,7 +63,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 			if model.ModelDocker.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker image")
 			}
-			if !currentUser.Admin && !model.Restricted {
+			if !currentUser.Admin() && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrWorkerModelNoPattern
 				}
@@ -78,7 +78,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 			if model.ModelVirtualMachine.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
-			if !currentUser.Admin && !model.Restricted {
+			if !currentUser.Admin() && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrWorkerModelNoPattern
 				}
@@ -107,17 +107,16 @@ func (api *API) addWorkerModelHandler() service.Handler {
 
 		// provision is allowed only for CDS Admin
 		// or by currentUser with a restricted model
-		if !currentUser.Admin && !model.Restricted {
+		if !currentUser.Admin() && !model.Restricted {
 			model.Provision = 0
 		}
 
 		model.CreatedBy = sdk.User{
-			Email:    currentUser.Email,
+			Email:    currentUser.Email(),
 			Username: currentUser.Username,
-			Admin:    currentUser.Admin,
+			Admin:    currentUser.Admin(),
 			Fullname: currentUser.Fullname,
-			ID:       currentUser.ID,
-			Origin:   currentUser.Origin,
+			ID:       currentUser.OldUserStruct.ID,
 		}
 
 		// Insert model in db
