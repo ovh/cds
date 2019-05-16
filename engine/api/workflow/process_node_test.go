@@ -148,13 +148,10 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	w.WorkflowData.Node.Context.DefaultPayload = map[string]string{
 		"git.branch":     "master",
 		"git.repository": "sguiheux/demo",
 	}
-	w.Root.Context.DefaultPayload = w.WorkflowData.Node.Context.DefaultPayload
 
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -291,13 +288,10 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	w.WorkflowData.Node.Context.DefaultPayload = map[string]string{
 		"git.branch":     "master",
 		"git.repository": "sguiheux/demo",
 	}
-	w.Root.Context.DefaultPayload = w.WorkflowData.Node.Context.DefaultPayload
 
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -436,7 +430,6 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -566,7 +559,6 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -789,7 +781,6 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -967,7 +958,6 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1137,7 +1127,6 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1318,7 +1307,6 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1514,7 +1502,6 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1716,7 +1703,6 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1895,7 +1881,6 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN

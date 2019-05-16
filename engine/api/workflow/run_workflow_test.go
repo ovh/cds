@@ -101,7 +101,6 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
@@ -258,7 +257,7 @@ func TestManualRun2(t *testing.T) {
 			},
 		},
 	}
-	(&w).RetroMigrate()
+
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
@@ -411,7 +410,6 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
@@ -725,7 +723,6 @@ func TestNoStage(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
@@ -800,7 +797,6 @@ func TestNoJob(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,

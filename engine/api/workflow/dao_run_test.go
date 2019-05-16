@@ -50,7 +50,6 @@ func TestCanBeRun(t *testing.T) {
 			Name:       "test_1",
 			ProjectID:  1,
 			ProjectKey: "key",
-			RootID:     10,
 			WorkflowData: &sdk.WorkflowData{
 				Node: nodeRoot,
 			},
@@ -212,8 +211,6 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	(&w).RetroMigrate()
-
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
@@ -308,8 +305,6 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
 	}
-
-	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -486,8 +481,6 @@ vcs_ssh_key: proj-blabla
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
 	}
-
-	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -684,8 +677,6 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	(&w).RetroMigrate()
-
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
@@ -780,7 +771,6 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		},
 		HistoryLength: 2,
 	}
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
@@ -874,7 +864,6 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		},
 		HistoryLength: 20,
 	}
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{

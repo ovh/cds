@@ -278,7 +278,6 @@ func Test_WorkerModelUsage(t *testing.T) {
 			},
 		},
 	}
-	(&wf).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
 

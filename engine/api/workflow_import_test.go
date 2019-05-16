@@ -668,7 +668,6 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))

@@ -667,8 +667,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	// Manage new hooks
-	if err := hookEnregistrement(context.TODO(), db, store, p, w); err != nil {
-		return err
+	if len(w.WorkflowData.Node.Hooks) > 0 {
+		if err := hookEnregistrement(context.TODO(), db, store, p, w); err != nil {
+			return err
+		}
 	}
 
 	if err := InsertWorkflowData(db, w); err != nil {
