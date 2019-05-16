@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/cast"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
@@ -41,7 +39,7 @@ type Stage struct {
 	Enabled *bool          `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Jobs    map[string]Job `json:"jobs,omitempty" yaml:"jobs,omitempty"`
 	// Conditions map[string]string `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	Conditions interface{} `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Conditions *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 }
 
 // Job represents exported sdk.Job
@@ -148,7 +146,7 @@ func newStagesForPipelineV1(stages []sdk.Stage) ([]string, map[string]Stage) {
 			hasOptions = true
 		}
 		if len(s.Conditions.PlainConditions) > 0 || s.Conditions.LuaScript != "" {
-			st.Conditions = s.Conditions
+			st.Conditions = &s.Conditions
 			hasOptions = true
 		}
 
@@ -378,30 +376,8 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 			mapStages[s].Enabled = true
 		}
 
-		// Keep retrocompatibility
 		if opt.Conditions != nil {
-			conditionsMapStr, errCast := cast.ToStringMapStringE(opt.Conditions)
-			isLegacyConditions := errCast == nil
-			fmt.Printf("isLegacyConditions --> %v --- %+v\n", isLegacyConditions, conditionsMapStr)
-			_, containsCheck := conditionsMapStr["check"]
-			_, containsScript := conditionsMapStr["script"]
-			if isLegacyConditions && !containsCheck && !containsScript {
-				conditions := make([]sdk.WorkflowNodeCondition, 0, len(conditionsMapStr))
-				for name, value := range conditionsMapStr {
-					conditions = append(conditions, sdk.WorkflowNodeCondition{Operator: sdk.WorkflowConditionsOperatorRegex, Variable: name, Value: value})
-				}
-				mapStages[s].Conditions = sdk.WorkflowNodeConditions{PlainConditions: conditions}
-			} else {
-				mapStrInt, err := cast.ToStringMapE(opt.Conditions)
-				if err != nil {
-					return nil, fmt.Errorf("Cannot convert conditions type: check that your stage conditions are right formatted")
-				}
-				var conditions sdk.WorkflowNodeConditions
-				if err := mapstructure.Decode(mapStrInt, &conditions); err != nil {
-					return nil, sdk.WrapError(err, "cannot decode conditions")
-				}
-				mapStages[s].Conditions = conditions
-			}
+			mapStages[s].Conditions = *opt.Conditions
 		}
 	}
 

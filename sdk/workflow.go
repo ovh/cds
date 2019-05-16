@@ -1483,15 +1483,15 @@ type WorkflowNodeOutgoingHookTrigger struct {
 
 //WorkflowNodeConditions is either an array of WorkflowNodeCondition or a lua script
 type WorkflowNodeConditions struct {
-	PlainConditions []WorkflowNodeCondition `json:"plain,omitempty" yaml:"check,omitempty" mapstructure:"check"`
-	LuaScript       string                  `json:"lua_script,omitempty" yaml:"script,omitempty" mapstructure:"script"`
+	PlainConditions []WorkflowNodeCondition `json:"plain,omitempty" yaml:"check,omitempty"`
+	LuaScript       string                  `json:"lua_script,omitempty" yaml:"script,omitempty"`
 }
 
 //WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type WorkflowNodeCondition struct {
-	Variable string `json:"variable" yaml:"variable" mapstructure:"variable"`
-	Operator string `json:"operator" yaml:"operator" mapstructure:"operator"`
-	Value    string `json:"value" yaml:"value" mapstructure:"value"`
+	Variable string `json:"variable" yaml:"variable"`
+	Operator string `json:"operator" yaml:"operator"`
+	Value    string `json:"value" yaml:"value"`
 }
 
 //WorkflowNodeContext represents a context attached on a node
