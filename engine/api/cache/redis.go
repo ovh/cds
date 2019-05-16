@@ -39,6 +39,9 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 			IdleCheckFrequency: 10 * time.Second,
 			IdleTimeout:        10 * time.Second,
 			PoolSize:           25,
+			MaxRetries:         10,
+			MinRetryBackoff:    30 * time.Millisecond,
+			MaxRetryBackoff:    100 * time.Millisecond,
 		}
 		client = redis.NewFailoverClient(opts)
 	} else {
@@ -47,6 +50,9 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 			Password:           password, // no password set
 			DB:                 0,        // use default DB
 			IdleCheckFrequency: 30 * time.Second,
+			MaxRetries:         10,
+			MinRetryBackoff:    30 * time.Millisecond,
+			MaxRetryBackoff:    100 * time.Millisecond,
 		})
 	}
 
@@ -65,9 +71,6 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
-const retryWait = 30
-const retryWaitDuration = retryWait * time.Millisecond
-
 //Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) bool {
 	if s.Client == nil {
@@ -75,24 +78,17 @@ func (s *RedisStore) Get(key string, value interface{}) bool {
 		return false
 	}
 
-	var errRedis error
-	for i := 0; i < 3; i++ {
-		val, errRedis := s.Client.Get(key).Result()
-		if errRedis != nil && errRedis != redis.Nil {
-			time.Sleep(retryWaitDuration)
-			continue
-		}
-		if val != "" && errRedis != redis.Nil {
-			if err := json.Unmarshal([]byte(val), value); err != nil {
-				log.Warning("redis> cannot unmarshal %s :%s", key, err)
-				return false
-			}
-			return true
-		}
-	}
-
+	val, errRedis := s.Client.Get(key).Result()
 	if errRedis != nil && errRedis != redis.Nil {
-		log.Error("redis> get error %s : %v", key, errRedis)
+		log.Error("redis>Get> get error %s : %v", key, errRedis)
+		return false
+	}
+	if val != "" {
+		if err := json.Unmarshal([]byte(val), value); err != nil {
+			log.Error("redis>Get> cannot unmarshal %s :%s", key, err)
+			return false
+		}
+		return true
 	}
 
 	return false
@@ -109,16 +105,8 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 		log.Warning("redis> error caching %s: %s", key, err)
 	}
 
-	var errRedis error
-	for i := 0; i < 3; i++ {
-		errRedis = s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err()
-		if errRedis == nil {
-			break
-		}
-		time.Sleep(retryWaitDuration)
-	}
-	if errRedis != nil {
-		log.Error("redis> set error %s: %v", key, errRedis)
+	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
+		log.Error("redis> set error %s: %v", key, err)
 	}
 }
 
@@ -129,16 +117,8 @@ func (s *RedisStore) UpdateTTL(key string, ttl int) {
 		return
 	}
 
-	var errRedis error
-	for i := 0; i < 3; i++ {
-		errRedis = s.Client.Expire(key, time.Duration(ttl)*time.Second).Err()
-		if errRedis == nil {
-			break
-		}
-		time.Sleep(retryWaitDuration)
-	}
-	if errRedis != nil {
-		log.Error("redis> set error %s: %v", key, errRedis)
+	if err := s.Client.Expire(key, time.Duration(ttl)*time.Second).Err(); err != nil {
+		log.Error("redis>UpdateTTL> set error %s: %v", key, err)
 	}
 }
 
@@ -153,16 +133,9 @@ func (s *RedisStore) Delete(key string) {
 		log.Error("redis> cannot get redis client")
 		return
 	}
-	var errRedis error
-	for i := 0; i < 3; i++ {
-		errRedis = s.Client.Del(key).Err()
-		if errRedis == nil {
-			break
-		}
-		time.Sleep(retryWaitDuration)
-	}
-	if errRedis != nil {
-		log.Error("redis> error deleting %s : %s", key, errRedis)
+
+	if err := s.Client.Del(key).Err(); err != nil {
+		log.Error("redis> error deleting %s : %s", key, err)
 	}
 }
 
@@ -232,13 +205,7 @@ func (s *RedisStore) QueueLen(queueName string) int {
 
 	var errRedis error
 	var res int64
-	for i := 0; i < 3; i++ {
-		res, errRedis = s.Client.LLen(queueName).Result()
-		if errRedis == nil {
-			break
-		}
-		time.Sleep(retryWaitDuration)
-	}
+	res, errRedis = s.Client.LLen(queueName).Result()
 	if errRedis != nil {
 		log.Warning("redis> Cannot read %s :%s", queueName, errRedis)
 	}
@@ -444,7 +411,7 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 	var errRedis error
 	var res bool
 	if retrywdMillisecond == -1 {
-		retrywdMillisecond = retryWait
+		retrywdMillisecond = 30
 	}
 	if retryCount == -1 {
 		retryCount = 3

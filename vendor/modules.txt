@@ -246,14 +246,13 @@ github.com/gin-gonic/gin/render
 github.com/gizak/termui
 # github.com/go-gorp/gorp v2.0.0+incompatible => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
 github.com/go-gorp/gorp
-# github.com/go-redis/redis v6.14.1+incompatible
+# github.com/go-redis/redis v6.15.2+incompatible
 github.com/go-redis/redis
 github.com/go-redis/redis/internal
 github.com/go-redis/redis/internal/consistenthash
 github.com/go-redis/redis/internal/hashtag
 github.com/go-redis/redis/internal/pool
 github.com/go-redis/redis/internal/proto
-github.com/go-redis/redis/internal/singleflight
 github.com/go-redis/redis/internal/util
 # github.com/go-sql-driver/mysql v0.0.0-20180113200744-2cc627ac8def
 github.com/go-sql-driver/mysql
