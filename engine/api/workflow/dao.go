@@ -1487,10 +1487,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	if oldWf != nil && (opts == nil || !opts.Force) {
-		if oldWf.FromRepository != "" && opts != nil && opts.FromRepository != oldWf.FromRepository {
-			return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
-		}
+	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
+	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
+		return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 	}
 
 	tx, err := db.Begin()
