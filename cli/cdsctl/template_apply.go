@@ -145,10 +145,7 @@ func templateApplyRun(v cli.Values) error {
 
 	// if no template given from args, and exiting instance try to get it's template
 	if wt == nil && wti != nil {
-		wt, err = client.TemplateGetByID(wti.WorkflowTemplateID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return err
-		}
+		wt = wti.Template
 	}
 
 	// if no template found for workflow or no instance, suggest one

@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -28,6 +29,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permModelID":           api.checkWorkerModelPermissions,
 		"permActionName":        api.checkActionPermissions,
 		"permActionBuiltinName": api.checkActionBuiltinPermissions,
+		"permTemplateSlug":      api.checkTemplateSlugPermissions,
 	}
 }
 
@@ -250,6 +252,43 @@ func (api *API) checkActionPermissions(ctx context.Context, actionName string, p
 	}
 	if a == nil {
 		return sdk.WithStack(sdk.ErrNoAction)
+	}
+
+	return nil
+}
+
+func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug string, permissionValue int, routeVars map[string]string) error {
+	// try to get template for given path that match user's groups with/without admin grants
+	groupName := routeVars["groupName"]
+
+	if groupName == "" || templateSlug == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group or workflow template slug")
+	}
+
+	u := deprecatedGetUser(ctx)
+
+	// check that group exists
+	g, err := group.LoadGroup(api.mustDB(), groupName)
+	if err != nil {
+		return err
+	}
+
+	if permissionValue > permission.PermissionRead {
+		if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
+			return err
+		}
+	} else {
+		if err := group.CheckUserIsGroupMember(g, u); err != nil {
+			return err
+		}
+	}
+
+	wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+	if err != nil {
+		return err
+	}
+	if wt == nil {
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	return nil

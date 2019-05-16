@@ -129,7 +129,7 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		return err
 	}
 
-	wt, err = workflowtemplate.GetBySlugAndGroupIDs(db, wt.Slug, []int64{grp.ID})
+	wt, err = workflowtemplate.LoadBySlugAndGroupID(db, wt.Slug, grp.ID)
 	if err != nil {
 		return err
 	}
