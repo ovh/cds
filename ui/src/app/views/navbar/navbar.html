@@ -179,12 +179,6 @@
             <option value="en"><i class="gb flag"></i></option>
         </sm-select>
 
-        <sm-select class="languageSelect" [(model)]="currentTheme"
-            (modelChange)="changeTheme()">
-            <option value="light"><i class="ui icon sun"></i></option>
-            <option value="night"><i class="ui icon moon"></i></option>
-        </sm-select>
-        
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#"
                 [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
@@ -201,6 +195,9 @@
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
             <a sm-item href="https://ovh.github.io/cds/" target="_blank">{{ 'navbar_documentation' | translate }}</a>
+            <div class="divider"></div>
+            <sm-checkbox class="theme-switch" name="switch-theme" [control]="themeSwitch" type="toggle"
+                label="{{'navbar_dark_mode' | translate}}" (change)="changeTheme()"></sm-checkbox>
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['account', 'login']">{{ 'navbar_disconnect' | translate }}</a>
         </sm-dropdown>

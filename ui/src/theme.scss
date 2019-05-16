@@ -6,9 +6,7 @@ $polar_grey_2: #6B6F7B;
 $polar_grey_3: #B5B7BD;
 $polar_grey_4: #E1E2E5;
 $polar_grey_5: #FCFCFC;
-$polar_grey_6: #212121;
 $polar_grey_7: #282828;
-$polar_grey_8: #303030;
 
 $darkTheme_grey_0: #2d2c2c; // top bar and active|hover on darkTheme_grey_1 background
 $darkTheme_grey_1: #383736;
@@ -229,8 +227,15 @@ a.ui.basic.grey.label:hover {
 
 .ui.menu .dropdown.item .menu>.item {
 
-  .night &,
-  :host-context(.night) & {
+  .night & {
+    color: $darkTheme_grey_6 !important;
+  }
+}
+
+.ui.toggle.checkbox input:checked~label,
+.ui.toggle.checkbox label {
+
+  .night & {
     color: $darkTheme_grey_6 !important;
   }
 }
