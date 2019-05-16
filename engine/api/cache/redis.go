@@ -51,7 +51,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 			DB:                 0,        // use default DB
 			IdleCheckFrequency: 30 * time.Second,
 			MaxRetries:         10,
-			MinRetryBackoff:    50 * time.Millisecond,
+			MinRetryBackoff:    30 * time.Millisecond,
 			MaxRetryBackoff:    100 * time.Millisecond,
 		})
 	}
