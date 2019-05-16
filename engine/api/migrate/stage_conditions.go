@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -34,10 +33,8 @@ func StageConditions(store cache.Store, DBFunc func() *gorp.DbMap) error {
 		}
 		prerequisites = append(prerequisites, prereq)
 	}
-	fmt.Printf("%+v\n", prerequisites)
 
 	conditionsMap := convertToNewConditions(prerequisites)
-	fmt.Printf("%+v\n", conditionsMap)
 	for stageID, condition := range conditionsMap {
 		conditionBts, err := json.Marshal(condition)
 		if err != nil {
