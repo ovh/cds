@@ -81,7 +81,7 @@ require (
 	github.com/gizak/termui v0.0.0-20170306115353-798ffb9cbbe4
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-gorp/gorp v2.0.0+incompatible
-	github.com/go-redis/redis v6.14.1+incompatible
+	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-sql-driver/mysql v0.0.0-20180113200744-2cc627ac8def // indirect
 	github.com/go-stomp/stomp v1.0.1 // indirect
 	github.com/gocql/gocql v0.0.0-20181018123354-22229812a83e // indirect
