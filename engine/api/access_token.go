@@ -59,7 +59,7 @@ func (api *API) createNewAccessToken(u sdk.AuthentifiedUser, accessTokenRequest 
 	expiration := time.Now().Add(time.Duration(accessTokenRequest.ExpirationDelaySecond) * time.Second)
 
 	// Create the token
-	token, jwttoken, err = accesstoken.New(u, scopeGroup, accessTokenRequest.Origin, accessTokenRequest.Description, expiration)
+	token, jwttoken, err = accesstoken.New(u, scopeGroup, accessTokenRequest.Scopes, accessTokenRequest.Origin, accessTokenRequest.Description, expiration)
 	if err != nil {
 		return token, jwttoken, sdk.WithStack(err)
 	}

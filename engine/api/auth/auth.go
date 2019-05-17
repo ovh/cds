@@ -30,6 +30,8 @@ const (
 	ContextProvider
 	ContextUserAuthentified
 	ContextGrantedUser
+	ContextJWT
+	ContextScope
 )
 
 var (

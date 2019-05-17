@@ -140,3 +140,5 @@ func Get(db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
 	}
 	return true, nil
 }
+
+type IDs pq.Int64Array

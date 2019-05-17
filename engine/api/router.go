@@ -193,6 +193,9 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 	f := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
+		// Push scope in the context
+		ctx = context.WithValue(ctx, auth.ContextScope, scope)
+
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
 

@@ -21,7 +21,7 @@ func Test_verifyToken(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	exp := time.Now().Add(5 * time.Minute)
-	_, jwt, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, "cds_test", "cds test", exp)
+	_, jwt, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
 
 	test.NoError(t, err)
 	t.Logf("jwt token: %s", jwt)
@@ -41,7 +41,7 @@ func TestIsValid(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	exp := time.Now().Add(1 * time.Second)
-	token, jwtToken, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, "cds_test", "cds test", exp)
+	token, jwtToken, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
 	test.NoError(t, err)
 
 	test.NoError(t, accesstoken.Insert(db, &token))
@@ -73,7 +73,7 @@ func TestXSRFToken(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	exp := time.Now().Add(5 * time.Minute)
-	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, "cds_test", "cds test", exp)
+	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
 	test.NoError(t, err)
 
 	x := accesstoken.StoreXSRFToken(cache, token)

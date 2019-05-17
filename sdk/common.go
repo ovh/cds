@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/md5"
 	"crypto/sha512"
+	"database/sql/driver"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/go-gorp/gorp"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk/log"
 )
@@ -174,4 +176,21 @@ var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)
 // IsURL returns if given path is a url according to the URL regex.
 func IsURL(path string) bool {
 	return rxURL.MatchString(path)
+}
+
+type StringSlice []string
+
+// Scan action.
+func (a *StringSlice) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal StringSlice")
+}
+
+// Value returns driver.Value from action.
+func (a StringSlice) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal StringSlice")
 }

@@ -406,6 +406,30 @@ func getGrantedUser(c context.Context) *sdk.GrantedUser {
 	return u
 }
 
+func getHandlerScope(c context.Context) HandlerScope {
+	i := c.Value(auth.ContextScope)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(HandlerScope)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
+func JWT(c context.Context) *sdk.AccessToken {
+	i := c.Value(auth.ContextJWT)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.AccessToken)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
 func getAuthentifiedUser(c context.Context) *sdk.AuthentifiedUser {
 	u := getGrantedUser(c)
 	if u == nil {

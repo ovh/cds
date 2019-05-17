@@ -13,10 +13,11 @@ const (
 
 // AccessTokenRequest a the type used by clients to ask a new access_token
 type AccessTokenRequest struct {
-	GroupsIDs             []int64 `json:"scope"`
-	Description           string  `json:"description"`
-	Origin                string  `json:"origin"`
-	ExpirationDelaySecond float64 `json:"expiration_delay_second"`
+	GroupsIDs             []int64  `json:"groups"`
+	Scopes                []string `json:"scopes"`
+	Description           string   `json:"description"`
+	Origin                string   `json:"origin"`
+	ExpirationDelaySecond float64  `json:"expiration_delay_second"`
 }
 
 // GrantedUser is a user granted from a JWT token. It can be a service, a worker, a hatchery or a user
@@ -47,7 +48,8 @@ type AccessToken struct {
 	Created            time.Time        `json:"created" cli:"created" db:"created"`
 	Status             string           `json:"status" cli:"status" db:"status"`
 	Origin             string           `json:"-" cli:"-" db:"origin"`
-	Groups             []Group          `json:"groups" cli:"scope" db:"-"`
+	Groups             []Group          `json:"groups" cli:"groups" db:"-"`
+	Scopes             StringSlice      `json:"scopes" cli:"scopes" db:"scopes"`
 }
 
 // Token describes tokens used by worker to access the API
@@ -69,3 +71,21 @@ type AccessTokenJWTClaims struct {
 	Groups []int64
 	jwt.StandardClaims
 }
+
+// Available access tokens scopes
+const (
+	AccessTokenScopeALL          = "all"
+	AccessTokenScopeUser         = "User"
+	AccessTokenScopeAccessToken  = "AccessToken"
+	AccessTokenScopeAction       = "Action"
+	AccessTokenScopeAdmin        = "Admin"
+	AccessTokenScopeGroup        = "Group"
+	AccessTokenScopeTemplate     = "Template"
+	AccessTokenScopeProject      = "Project"
+	AccessTokenScopeRun          = "Run"
+	AccessTokenScopeRunExecution = "RunExecution"
+	AccessTokenScopeHooks        = "Hooks"
+	AccessTokenScopeWorker       = "Worker"
+	AccessTokenScopeWorkerModel  = "WorkerModel"
+	AccessTokenScopeHatchery     = "Hatchery"
+)

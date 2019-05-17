@@ -51,7 +51,8 @@ CREATE TABLE access_token
     created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     expired_at TIMESTAMP WITH TIME ZONE,
     status VARCHAR(25),
-    origin  VARCHAR(25)
+    origin  VARCHAR(25),
+    scopes JSONB
 );
 
 CREATE TABLE access_token_group

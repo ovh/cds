@@ -21,7 +21,7 @@ func TestInsert(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	exp := time.Now().Add(5 * time.Minute)
-	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, "cds_test", "cds test", exp)
+	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
 	test.NoError(t, err)
 
 	test.NoError(t, accesstoken.Insert(db, &token))
@@ -45,7 +45,7 @@ func TestUpdate(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	exp := time.Now().Add(5 * time.Minute)
-	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, "cds_test", "cds test", exp)
+	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
 	test.NoError(t, err)
 
 	test.NoError(t, accesstoken.Insert(db, &token))
@@ -74,7 +74,7 @@ func TestFind(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	exp := time.Now().Add(5 * time.Minute)
-	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, "cds_test", "cds test", exp)
+	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
 	test.NoError(t, err)
 
 	test.NoError(t, accesstoken.Insert(db, &token))

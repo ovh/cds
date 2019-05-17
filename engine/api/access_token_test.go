@@ -32,6 +32,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 			Description:           "test",
 			ExpirationDelaySecond: 3600,
 			GroupsIDs:             []int64{grp.ID},
+			Scopes:                []string{sdk.AccessTokenScopeProject, sdk.AccessTokenScopeUser},
 		},
 	)
 	w := httptest.NewRecorder()
@@ -48,6 +49,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 			Description:           "testxsrf",
 			ExpirationDelaySecond: 3600,
 			GroupsIDs:             []int64{grp.ID},
+			Scopes:                []string{sdk.AccessTokenScopeProject, sdk.AccessTokenScopeUser},
 		},
 	)
 	w = httptest.NewRecorder()
@@ -70,6 +72,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 			Description:           "test",
 			ExpirationDelaySecond: 3600,
 			GroupsIDs:             []int64{grp.ID},
+			Scopes:                []string{sdk.AccessTokenScopeProject, sdk.AccessTokenScopeUser},
 		},
 	)
 	w = httptest.NewRecorder()
