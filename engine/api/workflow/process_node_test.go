@@ -1280,6 +1280,15 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				repoBranch++
