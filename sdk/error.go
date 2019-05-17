@@ -191,6 +191,7 @@ var (
 	ErrApplicationMandatoryOnWorkflowAsCode          = Error{ID: 174, Status: http.StatusBadRequest}
 	ErrInvalidPassword                               = Error{ID: 175, Status: http.StatusBadRequest}
 	ErrRepositoryUsedByHook                          = Error{ID: 176, Status: http.StatusForbidden}
+	ErrResourceNotInProject                          = Error{ID: 177, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -364,6 +365,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application linked to a git repository is mandatory on the workflow root",
 	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
 	ErrRepositoryUsedByHook.ID:                          "There is still a hook on this repository",
+	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
 }
 
 var errorsFrench = map[int]string{
@@ -537,6 +539,7 @@ var errorsFrench = map[int]string{
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Une application liée à un dépôt git est obligatoire à la racine du workflow",
 	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
 	ErrRepositoryUsedByHook.ID:                          "Il y a encore un hook sur ce dépôt",
+	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
 }
 
 var errorsLanguages = []map[int]string{

@@ -110,6 +110,16 @@ func TestPurgeWorkflowRun(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// Default payload on workflow insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
 				b := sdk.VCSBranch{

@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Import is able to create a new workflow and all its components
@@ -30,14 +29,8 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		w.HistoryLength = 20
 	}
 
-	//Manage default payload
-	var err error
 	if w.WorkflowData.Node.Context == nil {
 		w.WorkflowData.Node.Context = &sdk.NodeContext{}
-	}
-
-	if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
-		log.Warning("workflow.Import> Cannot set default payload : %v", err)
 	}
 
 	// create the workflow if not exists
@@ -82,6 +75,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	// The derivation branch is set in workflow parser it is not comming from the default branch
 	uptOptions := UpdateOptions{
 		DisableHookManagement: w.DerivationBranch != "",
+		OldWorkflow:           oldW,
 	}
 
 	if err := Update(ctx, db, store, w, proj, u, uptOptions); err != nil {

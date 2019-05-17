@@ -17,7 +17,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
+func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) map[string]*sdk.NodeHook {
+	hookToDelete := make(map[string]*sdk.NodeHook)
+	currentHooks := newWorkflow.WorkflowData.GetHooks()
+	for k, h := range oldWorkflow.WorkflowData.GetHooks() {
+		if _, has := currentHooks[k]; !has {
+			hookToDelete[k] = h
+		}
+	}
+	return hookToDelete
+}
+
+func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]*sdk.NodeHook) error {
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
 		if h.HookModelName == sdk.RepositoryWebHookModelName {
@@ -45,33 +56,39 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 	}
 
-	//Push the hook to hooks µService
-	//Load service "hooks"
-	srvs, err := services.FindByType(db, services.TypeHooks)
-	if err != nil {
-		return err
-	}
-	code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
-	if errHooks != nil || code >= 400 {
-		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
-		// so, it's just a warn log
-		log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
+	if len(hookToDelete) > 0 {
+		//Push the hook to hooks µService
+		//Load service "hooks"
+		srvs, err := services.FindByType(db, services.TypeHooks)
+		if err != nil {
+			return err
+		}
+		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+		if errHooks != nil || code >= 400 {
+			// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
+			// so, it's just a warn log
+			log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
+		}
 	}
 	return nil
 }
 
-func hookEnregistrement(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow) error {
-	srvs, err := services.FindByType(db, services.TypeHooks)
-	if err != nil {
-		return sdk.WrapError(err, "unable to get services dao")
+func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
+	var oldHooks map[string]*sdk.NodeHook
+	if oldWorkflow != nil {
+		oldHooks = oldWorkflow.WorkflowData.GetHooks()
 	}
-
-	//Perform the request on one off the hooks service
-	if len(srvs) < 1 {
-		return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services dao")
-	}
-
 	if len(wf.WorkflowData.Node.Hooks) > 0 {
+		srvs, err := services.FindByType(db, services.TypeHooks)
+		if err != nil {
+			return sdk.WrapError(err, "unable to get services dao")
+		}
+
+		//Perform the request on one off the hooks service
+		if len(srvs) < 1 {
+			return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services dao")
+		}
+
 		for i := range wf.WorkflowData.Node.Hooks {
 			h := &wf.WorkflowData.Node.Hooks[i]
 
@@ -80,6 +97,13 @@ func hookEnregistrement(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				h.UUID = sdk.UUID()
 				if h.Ref == "" {
 					h.Ref = fmt.Sprintf("%d", time.Now().Unix())
+				}
+			} else if oldHooks != nil {
+				// search previous hook configuration
+				previousHook, has := oldHooks[h.UUID]
+				// If previous hook is the same, we do nothing
+				if has && h.Equals(*previousHook) {
+					continue
 				}
 			}
 
@@ -114,8 +138,9 @@ func hookEnregistrement(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			}
 		}
 
+		hooks := wf.WorkflowData.GetHooks()
 		// Create hook on µservice
-		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", wf.WorkflowData.Node.Hooks, &wf.WorkflowData.Node.Hooks)
+		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", hooks, &hooks)
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}

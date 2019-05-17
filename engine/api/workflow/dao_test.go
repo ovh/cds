@@ -1,14 +1,18 @@
 package workflow_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/fsamin/go-dump"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"net/http"
 	"sort"
 	"testing"
-
-	"github.com/fsamin/go-dump"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -1235,6 +1239,58 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 			break
 		}
 	}
+
+	mockHookSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeHooks}
+	test.NoError(t, services.Insert(db, mockHookSservice))
+	defer func() {
+		services.Delete(db, mockHookSservice) // nolint
+	}()
+
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/task/bulk":
+				h := sdk.NodeHook{
+					HookModelID: webHookID,
+					Config: sdk.WorkflowNodeHookConfig{
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "POST",
+							Configurable: true,
+						},
+						"username": sdk.WorkflowNodeHookConfigValue{
+							Value:        "test",
+							Configurable: false,
+						},
+						"password": sdk.WorkflowNodeHookConfigValue{
+							Value:        "password",
+							Configurable: false,
+						},
+						"payload": sdk.WorkflowNodeHookConfigValue{
+							Value:        "{}",
+							Configurable: true,
+						},
+						"URL": sdk.WorkflowNodeHookConfigValue{
+							Value:        "https://www.github.com",
+							Configurable: true,
+						},
+					},
+				}
+				if err := enc.Encode(map[string]sdk.NodeHook{"uuid": h}); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
 
 	outHookModels, err := workflow.LoadOutgoingHookModels(db)
 	test.NoError(t, err)

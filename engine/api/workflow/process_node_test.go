@@ -79,6 +79,16 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
 				b := sdk.VCSBranch{
@@ -101,6 +111,16 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					Timestamp: time.Now().Unix(),
 				}
 				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				if err := enc.Encode(map[string]sdk.NodeHook{
+					"123": {
+						Config:        sdk.WebHookModel.DefaultConfig,
+						HookModelName: sdk.WebHookModelName,
+						HookModelID:   webHookModel.ID,
+					},
+				}); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -229,6 +249,16 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
 			case "/vcs/github/repos/sguiheux/demo/commits/currentcommit":
 				c := sdk.VCSCommit{
@@ -241,6 +271,16 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 					Timestamp: time.Now().Unix(),
 				}
 				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				if err := enc.Encode(map[string]sdk.NodeHook{
+					"123": {
+						Config:        sdk.WebHookModel.DefaultConfig,
+						HookModelName: sdk.WebHookModelName,
+						HookModelID:   webHookModel.ID,
+					},
+				}); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -366,6 +406,16 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -502,6 +552,16 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -1795,6 +1855,15 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT

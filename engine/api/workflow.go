@@ -339,13 +339,6 @@ func (api *API) postWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
-			var err error
-			if wf.WorkflowData.Node.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, &wf); err != nil {
-				log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
-			}
-		}
-
 		if err := workflow.Insert(tx, api.Cache, &wf, p, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
@@ -415,15 +408,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		// TODO Remove old struct
-		if wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
-			var err error
-			if wf.WorkflowData.Node.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, &wf); err != nil {
-				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
-			}
-		}
-
-		if err := workflow.Update(ctx, tx, api.Cache, &wf, p, deprecatedGetUser(ctx), workflow.UpdateOptions{}); err != nil {
+		if err := workflow.Update(ctx, tx, api.Cache, &wf, p, deprecatedGetUser(ctx), workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
 			return sdk.WrapError(err, "Cannot update workflow")
 		}
 

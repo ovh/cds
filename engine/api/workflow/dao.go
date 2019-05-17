@@ -54,6 +54,7 @@ type LoadOptions struct {
 // UpdateOptions is option to parse a workflow
 type UpdateOptions struct {
 	DisableHookManagement bool
+	OldWorkflow           *sdk.Workflow
 }
 
 // CountVarInWorkflowData represents the result of CountVariableInWorkflow function
@@ -80,16 +81,16 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 // CountVariableInWorkflow counts how many time the given variable is used on all workflows of the given project
 func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName string) ([]CountVarInWorkflowData, error) {
 	query := `
-		SELECT DISTINCT workflow.name as workflow_name, workflow_node.name as node_name
+		SELECT DISTINCT workflow.name as workflow_name, w_node.name as node_name
 		FROM workflow
 		JOIN project ON project.id = workflow.project_id
-		JOIN workflow_node ON workflow_node.workflow_id = workflow.id
-		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
+		JOIN w_node ON w_node.workflow_id = workflow.id
+		JOIN w_node_context ON w_node_context.node_id = w_node.id
 		WHERE project.projectkey = $1
 		AND (
-			workflow_node_context.default_pipeline_parameters::TEXT LIKE $2
+			w_node_context.default_pipeline_parameters::TEXT LIKE $2
 			OR
-			workflow_node_context.default_payload::TEXT LIKE $2
+			w_node_context.default_payload::TEXT LIKE $2
 		);
 	`
 	var datas []CountVarInWorkflowData
@@ -610,6 +611,13 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(err, "Unable to validate workflow")
 	}
 
+	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
+		var err error
+		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(context.TODO(), db, store, p, w); err != nil {
+			log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
+		}
+	}
+
 	if w.HistoryLength == 0 {
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
@@ -668,7 +676,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 
 	// Manage new hooks
 	if len(w.WorkflowData.Node.Hooks) > 0 {
-		if err := hookEnregistrement(context.TODO(), db, store, p, w); err != nil {
+		if err := hookRegistration(context.TODO(), db, store, p, w, nil); err != nil {
 			return err
 		}
 	}
@@ -884,8 +892,23 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	}
 	w.PurgeTags = filteredPurgeTags
 
+	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
+		var err error
+		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, p, w); err != nil {
+			log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
+		}
+	}
+
 	if !uptOption.DisableHookManagement {
-		// TODO Hook registration/unregistration
+		if err := hookRegistration(ctx, db, store, p, w, uptOption.OldWorkflow); err != nil {
+			return err
+		}
+		if uptOption.OldWorkflow != nil {
+			hookToDelete := computeHookToDelete(w, uptOption.OldWorkflow)
+			if err := hookUnregistration(ctx, db, store, p, hookToDelete); err != nil {
+				return err
+			}
+		}
 
 	}
 
@@ -1129,22 +1152,17 @@ func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n
 	if n.Context.EnvironmentID != 0 {
 		env, ok := w.Environments[n.Context.EnvironmentID]
 		if !ok {
-			found := false
-			for _, e := range proj.Environments {
-				if e.ID == n.Context.EnvironmentID {
-					found = true
-				}
-			}
-			if !found {
-				return sdk.WithStack(sdk.ErrNoEnvironment)
-			}
-
 			// Load environment from db to get stage/jobs
 			envDB, err := environment.LoadEnvironmentByID(db, n.Context.EnvironmentID)
 			if err != nil {
 				return sdk.WrapError(err, "unable to load environment %d", n.Context.EnvironmentID)
 			}
 			env = *envDB
+
+			if env.ProjectID != proj.ID {
+				return sdk.NewErrorFrom(sdk.ErrResourceNotInProject, "can not found a environment with id %d", n.Context.EnvironmentID)
+			}
+
 			w.Environments[n.Context.EnvironmentID] = env
 		}
 		n.Context.EnvironmentName = env.Name
@@ -1166,17 +1184,15 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
-			found := false
-			for _, a := range proj.Applications {
-				if a.ID == n.Context.ApplicationID {
-					app = a
-					found = true
-				}
+			app, errA := application.LoadByID(db, store, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+			if errA != nil {
+				return errA
 			}
-			if !found {
-				return sdk.WithStack(sdk.ErrApplicationNotFound)
+			if app.ProjectKey != proj.Key {
+				return sdk.NewErrorFrom(sdk.ErrResourceNotInProject, "can not found a application with id %d", n.Context.ApplicationID)
 			}
-			w.Applications[n.Context.ApplicationID] = app
+
+			w.Applications[n.Context.ApplicationID] = *app
 		}
 		n.Context.ApplicationName = app.Name
 		return nil
@@ -1197,22 +1213,17 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 	if n.Context.PipelineID != 0 {
 		pip, ok := w.Pipelines[n.Context.PipelineID]
 		if !ok {
-			found := false
-			for _, p := range proj.Pipelines {
-				if p.ID == n.Context.PipelineID {
-					found = true
-				}
-			}
-			if !found {
-				return sdk.NewErrorFrom(sdk.ErrPipelineNotFound, "Can not found a pipeline with id %d", n.Context.PipelineID)
-			}
-
 			// Load pipeline from db to get stage/jobs
 			pipDB, err := pipeline.LoadPipelineByID(ctx, db, n.Context.PipelineID, true)
 			if err != nil {
 				return sdk.WrapError(err, "unable to load pipeline %d", n.Context.PipelineID)
 			}
 			pip = *pipDB
+
+			if pip.ProjectKey != proj.Key {
+				return sdk.NewErrorFrom(sdk.ErrResourceNotInProject, "can not found a pipeline with id %d", n.Context.PipelineID)
+			}
+
 			w.Pipelines[n.Context.PipelineID] = pip
 		}
 		n.Context.PipelineName = pip.Name
@@ -1378,6 +1389,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	uptOpts := UpdateOptions{
 		DisableHookManagement: !isDefaultBranch,
+		OldWorkflow:           oldWf,
 	}
 	if err := Update(ctx, tx, store, wf, proj, u, uptOpts); err != nil {
 		return nil, nil, sdk.WrapError(err, "Unable to update workflow")

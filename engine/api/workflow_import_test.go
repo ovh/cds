@@ -75,13 +75,14 @@ metadata:
 	assert.NotNil(t, w)
 
 	m, _ := dump.ToStringMap(w)
+	t.Logf("%+v", m)
 	assert.Equal(t, "test_1", m["Workflow.Name"])
-	assert.Equal(t, "pip1", m["Workflow.Root.Name"])
-	assert.Equal(t, "pip1", m["Workflow.Root.PipelineName"])
-	assert.Equal(t, "name", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Name"])
-	assert.Equal(t, "value", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Value"])
-	assert.Equal(t, "pip1_2", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Name"])
-	assert.Equal(t, "pip1", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.PipelineName"])
+	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Name"])
+	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Context.PipelineName"])
+	assert.Equal(t, "name", m["Workflow.WorkflowData.Node.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Name"])
+	assert.Equal(t, "value", m["Workflow.WorkflowData.Node.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Value"])
+	assert.Equal(t, "pip1_2", m["Workflow.WorkflowData.Node.Triggers.Triggers0.ChildNode.Name"])
+	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Triggers.Triggers0.ChildNode.Context.PipelineName"])
 	assert.Equal(t, "git.branch,git.author,git.hash", m["Workflow.Metadata.default_tags"])
 }
 
