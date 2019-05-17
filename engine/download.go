@@ -74,7 +74,7 @@ You can also indicate a specific os or architecture to not download all binaries
 				continue
 			}
 
-			fmt.Printf("Downloading worker for os %s and arch %s and save it in %s...\n", workerResource.OS, workerResource.Arch, conf.API.Directories.Download)
+			fmt.Printf("Downloading worker for os %s and arch %s into %s...\n", workerResource.OS, workerResource.Arch, conf.API.Directories.Download)
 			resp, err := http.Get(urlBinary)
 			if err != nil {
 				sdk.Exit("Error while getting binary from: %s err:%s\n", urlBinary, err)
