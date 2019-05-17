@@ -18,7 +18,7 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations, project.LoadOptions.WithFavorites)
+		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations, project.LoadOptions.WithFavorites(getAuthentifiedUser(ctx).OldUserStruct.ID))
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}

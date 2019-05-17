@@ -24,9 +24,6 @@ var (
 		if err := loadApplications(db, store, proj, u); err != nil {
 			return sdk.WrapError(err, "application.loadDefault")
 		}
-		if err := loadPermission(db, store, proj, u); err != nil {
-			return sdk.WrapError(err, "application.loadDefault")
-		}
 		return nil
 	}
 
@@ -204,11 +201,6 @@ var (
 		if err := group.LoadGroupByProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadGroups")
 		}
-		return nil
-	}
-
-	loadPermission = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
-		//proj.Permission = permission.ProjectPermission(proj.Key, u)
 		return nil
 	}
 

@@ -22,13 +22,13 @@ var (
 )
 
 // ProjectPermission  Get the permission for the given project
-// func ProjectPermission(projectKey string, u *sdk.AuthentifiedUser) int {
-// 	if u == nil || u.Admin() {
-// 		return PermissionReadWriteExecute
-// 	}
-//
-// 	return u.OldUserStruct.Permissions.ProjectsPerm[projectKey]
-// }
+func ProjectPermission(projectKey string, u *sdk.AuthentifiedUser) int {
+	if u == nil || u.Admin() {
+		return PermissionReadWriteExecute
+	}
+
+	return u.OldUserStruct.Permissions.ProjectsPerm[projectKey]
+}
 
 // WorkflowPermission  Get the permission for the given workflow
 func WorkflowPermission(key string, name string, u *sdk.AuthentifiedUser) int {

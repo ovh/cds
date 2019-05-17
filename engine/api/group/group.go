@@ -302,7 +302,7 @@ func CheckUserIsGroupAdmin(group *sdk.Group, user *sdk.AuthentifiedUser) error {
 		return nil
 	}
 
-	for _, g := range user.OldUserStruct.Groups {
+	for _, g := range user.GetGroups() {
 		if g.ID == group.ID {
 			for _, a := range g.Admins {
 				if a.ID == user.OldUserStruct.ID {

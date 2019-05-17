@@ -27,7 +27,7 @@ type ImportOptions struct {
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
-func Parse(proj *sdk.Project, ew *exportentities.Workflow, u *sdk.AuthentifiedUser) (*sdk.Workflow, error) {
+func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
 	log.Info("Parse>> Parse workflow %s in project %s", ew.Name, proj.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
@@ -57,14 +57,14 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow, u *sdk.AuthentifiedUs
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u *sdk.AuthentifiedUser, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u sdk.IdentifiableGroupMember, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
 	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 	//Parse workflow
-	w, errW := Parse(proj, ew, u)
+	w, errW := Parse(proj, ew)
 	if errW != nil {
 		return nil, nil, errW
 	}

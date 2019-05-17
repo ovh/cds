@@ -256,7 +256,6 @@ var LoadOptions = struct {
 	WithPipelineNames:                       &loadPipelineNames,
 	WithEnvironments:                        &loadEnvironments,
 	WithGroups:                              &loadGroups,
-	WithPermission:                          &loadPermission,
 	WithApplications:                        &loadApplications,
 	WithApplicationNames:                    &loadApplicationNames,
 	WithVariables:                           &loadVariables,

@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -45,7 +44,6 @@ type LoadOptions struct {
 	DeepPipeline          bool
 	Base64Keys            bool
 	OnlyRootNode          bool
-	WithFavorites         bool
 	WithLabels            bool
 	WithIcon              bool
 	WithAsCodeUpdateEvent bool
@@ -529,10 +527,6 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		res.ProjectKey = proj.Key
 	}
 
-	if u != nil {
-		res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
-	}
-
 	// Load groups
 	_, next = observability.Span(ctx, "workflow.load.loadWorkflowGroups")
 	gps, err := group.LoadWorkflowGroups(db, res.ID)
@@ -547,17 +541,6 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	res.Environments = map[int64]sdk.Environment{}
 	res.HookModels = map[int64]sdk.WorkflowHookModel{}
 	res.OutGoingHookModels = map[int64]sdk.WorkflowHookModel{}
-
-	if opts.WithFavorites {
-		_, next = observability.Span(ctx, "workflow.load.loadFavorite")
-		fav, errF := loadFavorite(db, &res, u)
-		next()
-
-		if errF != nil {
-			return nil, sdk.WrapError(errF, "Load> unable to load favorite")
-		}
-		res.Favorite = fav
-	}
 
 	if opts.WithLabels {
 		_, next = observability.Span(ctx, "workflow.load.Labels")
@@ -597,8 +580,8 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	return w, nil
 }
 
-func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.GroupMember) (bool, error) {
-	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2", u.ID, w.ID)
+func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID int64) (bool, error) {
+	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2", uID, w.ID)
 	if err != nil {
 		return false, sdk.WithStack(err)
 	}
@@ -1254,7 +1237,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 }
 
 // Push push a workflow from cds files
-func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u sdk.GroupMember, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
+func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u sdk.IdentifiableGroupMember, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
 

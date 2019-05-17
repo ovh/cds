@@ -352,7 +352,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
 
-		event.PublishWorkflowAdd(p.Key, *wf1, deprecatedGetUser(ctx))
+		event.PublishWorkflowAdd(p.Key, *wf1, getAuthentifiedUser(ctx))
 
 		wf1.Permission = permission.PermissionReadWriteExecute
 

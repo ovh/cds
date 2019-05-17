@@ -200,7 +200,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites,
+			project.LoadOptions.WithFavorites(getAuthentifiedUser(ctx).OldUserStruct.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -336,7 +336,8 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 		p, errP := project.Load(db, api.Cache, key, getAuthentifiedUser(ctx),
 			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites, project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
+			project.LoadOptions.WithFavorites(getAuthentifiedUser(ctx).OldUserStruct.ID),
+			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
 		}
@@ -516,7 +517,8 @@ func (api *API) addProjectHandler() service.Handler {
 		event.PublishAddProject(p, getAuthentifiedUser(ctx))
 
 		proj, errL := project.Load(api.mustDB(), api.Cache, p.Key, getAuthentifiedUser(ctx), project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites, project.LoadOptions.WithKeys, project.LoadOptions.WithPermission,
+			project.LoadOptions.WithFavorites(getAuthentifiedUser(ctx).OldUserStruct.ID),
+			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission,
 			project.LoadOptions.WithIntegrations, project.LoadOptions.WithVariables)
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load project %s", p.Key)
