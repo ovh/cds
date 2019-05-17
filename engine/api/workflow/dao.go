@@ -1012,6 +1012,18 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
 	}
 
+	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.DefaultPayload != nil {
+		defaultPayload, err := w.WorkflowData.Node.Context.DefaultPayloadToMap()
+		if err != nil {
+			return sdk.WrapError(err, "cannot transform default payload to map")
+		}
+		for payloadKey := range defaultPayload {
+			if strings.HasPrefix(payloadKey, "cds.") {
+				return sdk.WrapError(sdk.ErrInvalidPayloadVariable, "cannot have key %s in default payload", payloadKey)
+			}
+		}
+	}
+
 	// Fill empty node type
 	w.AssignEmptyType()
 	if err := w.ValidateType(); err != nil {
@@ -1152,6 +1164,7 @@ func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n
 	if n.Context.EnvironmentID != 0 {
 		env, ok := w.Environments[n.Context.EnvironmentID]
 		if !ok {
+
 			// Load environment from db to get stage/jobs
 			envDB, err := environment.LoadEnvironmentByID(db, n.Context.EnvironmentID)
 			if err != nil {
@@ -1269,10 +1282,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	if oldWf != nil && (opts == nil || !opts.Force) {
-		if oldWf.FromRepository != "" && opts != nil && opts.FromRepository != oldWf.FromRepository {
-			return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
-		}
+	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
+	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
+		return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 	}
 
 	tx, err := db.Begin()

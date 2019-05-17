@@ -190,8 +190,9 @@ var (
 	ErrProjectSecretDataUnknown                      = Error{ID: 173, Status: http.StatusBadRequest}
 	ErrApplicationMandatoryOnWorkflowAsCode          = Error{ID: 174, Status: http.StatusBadRequest}
 	ErrInvalidPassword                               = Error{ID: 175, Status: http.StatusBadRequest}
-	ErrRepositoryUsedByHook                          = Error{ID: 176, Status: http.StatusForbidden}
-	ErrResourceNotInProject                          = Error{ID: 177, Status: http.StatusForbidden}
+	ErrInvalidPayloadVariable                        = Error{ID: 176, Status: http.StatusBadRequest}
+	ErrRepositoryUsedByHook                          = Error{ID: 177, Status: http.StatusForbidden}
+	ErrResourceNotInProject                          = Error{ID: 178, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -363,6 +364,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowAsCodeOverride.ID:                        "You cannot override workflow from this repository",
 	ErrProjectSecretDataUnknown.ID:                      "Invalid encrypted data",
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application linked to a git repository is mandatory on the workflow root",
+	ErrInvalidPayloadVariable.ID:                        "Your payload cannot contain keys like cds.*",
 	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
 	ErrRepositoryUsedByHook.ID:                          "There is still a hook on this repository",
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
@@ -537,6 +539,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowAsCodeOverride.ID:                        "Vous ne pouvez pas importer le workflow depuis ce dépôt",
 	ErrProjectSecretDataUnknown.ID:                      "Donnée chiffrée non valide",
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Une application liée à un dépôt git est obligatoire à la racine du workflow",
+	ErrInvalidPayloadVariable.ID:                        "Le payload du workflow ne peut pas contenir de clés nommées cds.*",
 	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
 	ErrRepositoryUsedByHook.ID:                          "Il y a encore un hook sur ce dépôt",
 	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",

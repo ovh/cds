@@ -948,7 +948,6 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 
 func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) *workflow.ProcessorReport {
 	report := new(workflow.ProcessorReport)
-	log.Error("unable to start workflow: %v", err)
 
 	var info sdk.SpawnMsg
 	if sdk.ErrorIs(err, sdk.ErrConditionsNotOk) {
@@ -959,6 +958,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			wfRun.Status = sdk.StatusNeverBuilt.String()
 		}
 	} else {
+		log.Error("unable to start workflow: %v", err)
 		wfRun.Status = sdk.StatusFail.String()
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,

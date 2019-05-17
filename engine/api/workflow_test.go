@@ -273,6 +273,59 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
+func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
+	// Init database
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	// Init user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+
+	// Insert application
+	app := sdk.Application{
+		Name:               "app1",
+		RepositoryFullname: "test/app1",
+		VCSServer:          "github",
+	}
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app, u))
+
+	var workflow = &sdk.Workflow{
+		Name:        "Name",
+		Description: "Description",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					ApplicationID:  app.ID,
+					PipelineID:     pip.ID,
+					DefaultPayload: map[string]string{"cds.test": "test"},
+				},
+			},
+		},
+	}
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflow)
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
+}
 
 func Test_putWorkflowHandler(t *testing.T) {
 	// Init database

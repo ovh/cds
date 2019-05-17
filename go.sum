@@ -166,8 +166,8 @@ github.com/gizak/termui v0.0.0-20170306115353-798ffb9cbbe4 h1:FR9qaWjaamxW0RNDdn
 github.com/gizak/termui v0.0.0-20170306115353-798ffb9cbbe4/go.mod h1:PkJoWUt/zacQKysNfQtcw1RW+eK2SxkieVBtl+4ovLA=
 github.com/go-errors/errors v1.0.1 h1:LUHzmkK3GUKUrL/1gfBUxAHzcev3apQlezX/+O7ma6w=
 github.com/go-errors/errors v1.0.1/go.mod h1:f4zRHt4oKfwPJE5k8C9vpYG+aDHdBFUsgrm6/TyX73Q=
-github.com/go-redis/redis v6.14.1+incompatible h1:kSJohAREGMr344uMa8PzuIg5OU6ylCbyDkWkkNOfEik=
-github.com/go-redis/redis v6.14.1+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
+github.com/go-redis/redis v6.15.2+incompatible h1:9SpNVG76gr6InJGxoZ6IuuxaCOQwDAhzyXg+Bs+0Sb4=
+github.com/go-redis/redis v6.15.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-sql-driver/mysql v0.0.0-20180113200744-2cc627ac8def h1:S5Q9hDt/aa5nJp7+qwsNSKi9KIlEoSBaNdjyKS44OAQ=
 github.com/go-sql-driver/mysql v0.0.0-20180113200744-2cc627ac8def/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/go-stomp/stomp v1.0.1 h1:f90kcc2VJM+65lbpmnMO9Ef+PWn+qbamSrSR63V8ygM=

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/pipeline"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
@@ -846,8 +847,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
 	manualEvent.Payload = map[string]string{
-		"git.branch":  "feat/branch",
-		"cds.release": "9.2.0",
+		"git.branch": "feat/branch",
 	}
 
 	opts := &sdk.WorkflowRunPostHandlerOption{
@@ -869,7 +869,6 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
 	assert.Equal(t, "super commit", mapParams["git.message"])
 	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSServer)
-	assert.Equal(t, "9.2.0", mapParams["cds.release"])
 
 	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].BuildParameters)
 	assert.Equal(t, "defaultBranch", mapParams2["git.branch"])
@@ -878,7 +877,6 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.Equal(t, "super default commit", mapParams2["git.message"])
 	assert.Equal(t, "mylastcommit", mapParams2["workflow.root.git.hash"])
 	assert.Equal(t, "stash", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSServer)
-	assert.Equal(t, "9.2.0", mapParams2["cds.release"])
 
 	mapParams3 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].BuildParameters)
 	assert.Equal(t, "feat/branch", mapParams3["git.branch"])
@@ -887,7 +885,6 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.Equal(t, "super commit", mapParams3["git.message"])
 	assert.Equal(t, "defaultBranch", mapParams3["workflow.child1.git.branch"])
 	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].VCSServer)
-	assert.Equal(t, "9.2.0", mapParams3["cds.release"])
 }
 
 // Payload: branch only
@@ -1976,6 +1973,8 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	assert.Equal(t, "mylastcommit", mapParams["git.hash"])
 	assert.Equal(t, "steven.guiheux", mapParams["git.author"])
 	assert.Equal(t, "super commit", mapParams["git.message"])
+
+	assert.Equal(t, "mylastcommit", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSHash)
 }
 
 func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {
