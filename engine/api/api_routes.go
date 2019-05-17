@@ -17,23 +17,20 @@ func Scope(s ...string) HandlerScope {
 }
 
 var (
-	ScopeNone              HandlerScope = nil
-	scopeUser                           = "User"
-	scopeAccessToken                    = "AccessToken"
-	scopeAction                         = "Action"
-	scopeAdmin                          = "Admin"
-	scopeGroup                          = "Group"
-	scopeIntegration                    = "Integration"
-	scopeTemplate                       = "Template"
-	scopeProject                        = "Project"
-	scopeRun                            = "Run"
-	scopeRunExecution                   = "RunExecution"
-	scopeHooks                          = "hooks"
-	scopeWorker                         = "worker"
-	scopeWorkerModel                    = "workerModel"
-	scopeWorkerExecution                = Scope(scopeRun, scopeRunExecution)
-	scopeHatchery                       = "hatchery"
-	scopeHatcheryExecution              = Scope(scopeRun, scopeRunExecution)
+	ScopeNone         = func() HandlerScope { return nil }
+	scopeUser         = "User"
+	scopeAccessToken  = "AccessToken"
+	scopeAction       = "Action"
+	scopeAdmin        = "Admin"
+	scopeGroup        = "Group"
+	scopeTemplate     = "Template"
+	scopeProject      = "Project"
+	scopeRun          = "Run"
+	scopeRunExecution = "RunExecution"
+	scopeHooks        = "hooks"
+	scopeWorker       = "worker"
+	scopeWorkerModel  = "workerModel"
+	scopeHatchery     = "hatchery"
 )
 
 // InitRouter initializes the router and all the routes
@@ -44,8 +41,8 @@ func (api *API) InitRouter() {
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
 
 	r := api.Router
-	r.Handle("/login", ScopeNone, r.POST(api.loginUserHandler, Auth(false)))
-	r.Handle("/login/callback", ScopeNone, r.POST(api.loginUserCallbackHandler, Auth(false)))
+	r.Handle("/login", ScopeNone(), r.POST(api.loginUserHandler, Auth(false)))
+	r.Handle("/login/callback", ScopeNone(), r.POST(api.loginUserCallbackHandler, Auth(false)))
 
 	log.Info("Initializing Events broker")
 	// Initialize event broker
@@ -75,8 +72,8 @@ func (api *API) InitRouter() {
 	r.Handle("/action/requirement", Scope(scopeAction), r.GET(api.getActionsRequirements, Auth(false))) // FIXME add auth used by hatcheries
 	r.Handle("/project/{permProjectKey}/action", Scope(scopeProject), r.GET(api.getActionsForProjectHandler))
 	r.Handle("/group/{groupID}/action", Scope(scopeGroup), r.GET(api.getActionsForGroupHandler))
-	r.Handle("/actionBuiltin", ScopeNone, r.GET(api.getActionsBuiltinHandler))
-	r.Handle("/actionBuiltin/{permActionBuiltinName}", ScopeNone, r.GET(api.getActionBuiltinHandler))
+	r.Handle("/actionBuiltin", ScopeNone(), r.GET(api.getActionsBuiltinHandler))
+	r.Handle("/actionBuiltin/{permActionBuiltinName}", ScopeNone(), r.GET(api.getActionBuiltinHandler))
 	r.Handle("/actionBuiltin/{permActionBuiltinName}/usage", Scope(scopeAdmin), r.GET(api.getActionBuiltinUsageHandler))
 
 	// Admin
@@ -104,12 +101,11 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services/call", Scope(scopeAdmin), r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 
 	// Download file
-	r.Handle("/download", ScopeNone, r.GET(api.downloadsHandler))
-	r.Handle("/download/{name}/{os}/{arch}", ScopeNone, r.GET(api.downloadHandler, Auth(false)))
+	r.Handle("/download", ScopeNone(), r.GET(api.downloadsHandler))
+	r.Handle("/download/{name}/{os}/{arch}", ScopeNone(), r.GET(api.downloadHandler, Auth(false)))
 
 	// Group
 	r.Handle("/group", Scope(scopeGroup), r.GET(api.getGroupsHandler), r.POST(api.addGroupHandler))
-	//r.Handle("/group/public", Scope(scopeGroup),r.GET(api.getPublicGroupsHandler))
 	r.Handle("/group/{permGroupName}", Scope(scopeGroup), r.GET(api.getGroupHandler), r.PUT(api.updateGroupHandler), r.DELETE(api.deleteGroupHandler))
 	r.Handle("/group/{permGroupName}/user", Scope(scopeGroup), r.POST(api.addUserInGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}", Scope(scopeGroup), r.DELETE(api.removeUserFromGroupHandler))
@@ -124,25 +120,25 @@ func (api *API) InitRouter() {
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", Scope(scopeRun), r.GET(api.getHookPollingVCSEvents))
 
 	// Integration
-	r.Handle("/integration/models", ScopeNone, r.GET(api.getIntegrationModelsHandler), r.POST(api.postIntegrationModelHandler, NeedAdmin(true)))
-	r.Handle("/integration/models/{name}", ScopeNone, r.GET(api.getIntegrationModelHandler), r.PUT(api.putIntegrationModelHandler, NeedAdmin(true)), r.DELETE(api.deleteIntegrationModelHandler, NeedAdmin(true)))
+	r.Handle("/integration/models", ScopeNone(), r.GET(api.getIntegrationModelsHandler), r.POST(api.postIntegrationModelHandler, NeedAdmin(true)))
+	r.Handle("/integration/models/{name}", ScopeNone(), r.GET(api.getIntegrationModelHandler), r.PUT(api.putIntegrationModelHandler, NeedAdmin(true)), r.DELETE(api.deleteIntegrationModelHandler, NeedAdmin(true)))
 
 	// Broadcast
-	r.Handle("/broadcast", ScopeNone, r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
-	r.Handle("/broadcast/{id}", ScopeNone, r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, NeedAdmin(true)), r.DELETE(api.deleteBroadcastHandler, NeedAdmin(true)))
+	r.Handle("/broadcast", ScopeNone(), r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
+	r.Handle("/broadcast/{id}", ScopeNone(), r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, NeedAdmin(true)), r.DELETE(api.deleteBroadcastHandler, NeedAdmin(true)))
 	r.Handle("/broadcast/{id}/mark", Scope(scopeProject), r.POST(api.postMarkAsReadBroadcastHandler))
 
 	// Overall health
-	r.Handle("/mon/status", ScopeNone, r.GET(api.statusHandler, Auth(false)))
-	r.Handle("/mon/smtp/ping", ScopeNone, r.GET(api.smtpPingHandler, Auth(true)))
-	r.Handle("/mon/version", ScopeNone, r.GET(VersionHandler, Auth(false)))
-	r.Handle("/mon/db/migrate", ScopeNone, r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
-	r.Handle("/mon/metrics", ScopeNone, r.GET(observability.StatsHandler, Auth(false)))
-	r.Handle("/mon/errors/{uuid}", ScopeNone, r.GET(api.getErrorHandler, NeedAdmin(true)))
-	r.Handle("/mon/panic/{uuid}", ScopeNone, r.GET(api.getPanicDumpHandler, Auth(false)))
+	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, Auth(false)))
+	r.Handle("/mon/smtp/ping", ScopeNone(), r.GET(api.smtpPingHandler, Auth(true)))
+	r.Handle("/mon/version", ScopeNone(), r.GET(VersionHandler, Auth(false)))
+	r.Handle("/mon/db/migrate", ScopeNone(), r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
+	r.Handle("/mon/metrics", ScopeNone(), r.GET(observability.StatsHandler, Auth(false)))
+	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, NeedAdmin(true)))
+	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, Auth(false)))
 
-	r.Handle("/ui/navbar", ScopeNone, r.GET(api.getNavbarHandler))
-	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", ScopeNone, r.GET(api.getApplicationOverviewHandler))
+	r.Handle("/ui/navbar", ScopeNone(), r.GET(api.getNavbarHandler))
+	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", ScopeNone(), r.GET(api.getApplicationOverviewHandler))
 
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", Scope(scopeProject), r.POST(api.postImportAsCodeHandler))
@@ -150,7 +146,7 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", Scope(scopeProject), r.POST(api.postPerformImportAsCodeHandler))
 
 	// Bookmarks
-	r.Handle("/bookmarks", ScopeNone, r.GET(api.getBookmarksHandler))
+	r.Handle("/bookmarks", ScopeNone(), r.GET(api.getBookmarksHandler))
 
 	// Project
 	r.Handle("/project", Scope(scopeProject), r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.addProjectHandler))
@@ -219,7 +215,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/export/pipeline/{pipelineKey}", Scope(scopeProject), r.GET(api.getPipelineExportHandler))
 
 	// Workflows
-	r.Handle("/workflow/artifact/{hash}", ScopeNone, r.GET(api.downloadworkflowArtifactDirectHandler, Auth(false)))
+	r.Handle("/workflow/artifact/{hash}", ScopeNone(), r.GET(api.downloadworkflowArtifactDirectHandler, Auth(false)))
 
 	r.Handle("/project/{permProjectKey}/workflows", Scope(scopeProject), r.POST(api.postWorkflowHandler, EnableTracing()), r.GET(api.getWorkflowsHandler, AllowProvider(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", Scope(scopeProject), r.GET(api.getWorkflowHandler, AllowProvider(true), EnableTracing()), r.PUT(api.putWorkflowHandler, EnableTracing()), r.DELETE(api.deleteWorkflowHandler))
@@ -237,7 +233,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/outgoinghook/model", Scope(scopeProject), r.GET(api.getWorkflowOutgoingHookModelsHandler))
 
 	// Outgoing hook model
-	r.Handle("/workflow/outgoinghook/model", ScopeNone, r.GET(api.getWorkflowOutgoingHookModelsHandler))
+	r.Handle("/workflow/outgoinghook/model", ScopeNone(), r.GET(api.getWorkflowOutgoingHookModelsHandler))
 
 	// Preview workflows
 	r.Handle("/project/{permProjectKey}/preview/workflows", Scope(scopeProject), r.POST(api.postWorkflowPreviewHandler))
@@ -324,10 +320,10 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/variable", Scope(scopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/step", Scope(scopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 
-	r.Handle("/variable/type", ScopeNone, r.GET(api.getVariableTypeHandler))
-	r.Handle("/parameter/type", ScopeNone, r.GET(api.getParameterTypeHandler))
-	r.Handle("/notification/type", ScopeNone, r.GET(api.getUserNotificationTypeHandler))
-	r.Handle("/notification/state", ScopeNone, r.GET(api.getUserNotificationStateValueHandler))
+	r.Handle("/variable/type", ScopeNone(), r.GET(api.getVariableTypeHandler))
+	r.Handle("/parameter/type", ScopeNone(), r.GET(api.getParameterTypeHandler))
+	r.Handle("/notification/type", ScopeNone(), r.GET(api.getUserNotificationTypeHandler))
+	r.Handle("/notification/state", ScopeNone(), r.GET(api.getUserNotificationStateValueHandler))
 
 	// RepositoriesManager
 	r.Handle("/repositories_manager", Scope(scopeProject), r.GET(api.getRepositoriesManagerHandler))
@@ -349,12 +345,12 @@ func (api *API) InitRouter() {
 	r.Handle("/suggest/variable/{permProjectKey}", Scope(scopeProject), r.GET(api.getVariablesHandler))
 
 	//Requirements
-	r.Handle("/requirement/types", ScopeNone, r.GET(api.getRequirementTypesHandler))
-	r.Handle("/requirement/types/{type}", ScopeNone, r.GET(api.getRequirementTypeValuesHandler))
+	r.Handle("/requirement/types", ScopeNone(), r.GET(api.getRequirementTypesHandler))
+	r.Handle("/requirement/types/{type}", ScopeNone(), r.GET(api.getRequirementTypeValuesHandler))
 
 	// config
-	r.Handle("/config/user", ScopeNone, r.GET(api.ConfigUserHandler, Auth(false)))
-	r.Handle("/config/vcs", ScopeNone, r.GET(api.ConfigVCShandler))
+	r.Handle("/config/user", ScopeNone(), r.GET(api.ConfigUserHandler, Auth(false)))
+	r.Handle("/config/vcs", ScopeNone(), r.GET(api.ConfigVCShandler))
 
 	// Users
 	r.Handle("/user", Scope(scopeUser), r.GET(api.getUsersHandler))
@@ -365,7 +361,7 @@ func (api *API) InitRouter() {
 	r.Handle("/user/timeline/filter", Scope(scopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
 	r.Handle("/user/token", Scope(scopeUser), r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", Scope(scopeUser), r.GET(api.getUserTokenHandler))
-	r.Handle("/user/signup", ScopeNone, r.POST(api.addUserHandler, Auth(false)))
+	r.Handle("/user/signup", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/{username}", Scope(scopeUser), r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))
 	r.Handle("/user/{username}/groups", Scope(scopeUser), r.GET(api.getUserGroupsHandler, NeedUsernameOrAdmin(true)))
 	r.Handle("/user/{username}/confirm/{token}", Scope(scopeUser), r.GET(api.confirmUserHandler, Auth(false)))
@@ -396,17 +392,17 @@ func (api *API) InitRouter() {
 
 	// Workflows
 	r.Handle("/workflow/hook", Scope(scopeHooks), r.GET(api.getWorkflowHooksHandler, NeedService()))
-	r.Handle("/workflow/hook/model/{model}", ScopeNone, r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
+	r.Handle("/workflow/hook/model/{model}", ScopeNone(), r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
-	r.Handle("/events", ScopeNone, r.GET(api.eventsBroker.ServeHTTP))
+	r.Handle("/events", ScopeNone(), r.GET(api.eventsBroker.ServeHTTP))
 
 	// Feature
-	r.Handle("/feature/clean", ScopeNone, r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
+	r.Handle("/feature/clean", ScopeNone(), r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
 
 	// Engine µServices
-	r.Handle("/services/register", ScopeNone, r.POST(api.postServiceRegisterHandler, Auth(false)))
-	r.Handle("/services/{type}", ScopeNone, r.GET(api.getExternalServiceHandler, NeedWorker()))
+	r.Handle("/services/register", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
+	r.Handle("/services/{type}", ScopeNone(), r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	// Templates
 	r.Handle("/template", Scope(scopeTemplate), r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))

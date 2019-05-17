@@ -279,35 +279,6 @@ func LoadGroupByAdmin(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
 	return groups, nil
 }
 
-// LoadPublicGroups returns public groups,
-// actually it returns shared.infra group only because public group are not supported
-func LoadPublicGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
-	groups := []sdk.Group{}
-	//This query should have to be fixed with a new public column
-	query := `
-		SELECT id, name
-		FROM "group"
-		WHERE name = $1
-		ORDER BY name
-		`
-	rows, err := db.Query(query, SharedInfraGroup.Name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var name string
-		if err := rows.Scan(&id, &name); err != nil {
-			return nil, err
-		}
-		g := sdk.Group{ID: id, Name: name}
-		groups = append(groups, g)
-	}
-	return groups, nil
-}
-
 // CheckUserInGroup verivies that user is in given group
 func CheckUserInGroup(db gorp.SqlExecutor, groupID, userID int64) (bool, error) {
 	query := `SELECT COUNT(user_id) FROM group_user WHERE group_id = $1 AND user_id = $2`

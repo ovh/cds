@@ -168,19 +168,11 @@ func (api *API) getGroupsHandler() service.Handler {
 		var groups []sdk.Group
 		var err error
 
-		public := FormBool(r, "withPublic")
 		withoutDefault := FormBool(r, "withoutDefault")
 		if deprecatedGetUser(ctx).Admin {
 			groups, err = group.LoadGroups(api.mustDB())
 		} else {
 			groups, err = group.LoadGroupByUser(api.mustDB(), deprecatedGetUser(ctx).ID)
-			if public {
-				publicGroups, errl := group.LoadPublicGroups(api.mustDB())
-				if errl != nil {
-					return sdk.WrapError(errl, "Cannot load group from db")
-				}
-				groups = append(groups, publicGroups...)
-			}
 		}
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load group from db")
@@ -200,16 +192,6 @@ func (api *API) getGroupsHandler() service.Handler {
 			return service.WriteJSON(w, filteredGroups, http.StatusOK)
 		}
 
-		return service.WriteJSON(w, groups, http.StatusOK)
-	}
-}
-
-func (api *API) getPublicGroupsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		groups, err := group.LoadPublicGroups(api.mustDB())
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load group from db")
-		}
 		return service.WriteJSON(w, groups, http.StatusOK)
 	}
 }
