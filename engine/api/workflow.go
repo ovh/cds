@@ -62,7 +62,6 @@ func (api *API) getWorkflowHandler() service.Handler {
 		}
 
 		opts := workflow.LoadOptions{
-			WithFavorites:         true,
 			DeepPipeline:          withDeepPipelines,
 			WithIcon:              true,
 			WithLabels:            withLabels,
