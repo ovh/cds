@@ -1465,6 +1465,15 @@ func TestGitParamWithJoin(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				repoBranch++
@@ -1665,6 +1674,15 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
