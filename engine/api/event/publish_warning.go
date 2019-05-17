@@ -10,7 +10,7 @@ import (
 )
 
 // PublishWarningEvent publish application event
-func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, workflowName string, u *sdk.AuthentifiedUser) {
+func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, workflowName string, u sdk.Identifiable) {
 	event := sdk.Event{
 		Timestamp:       time.Now(),
 		Hostname:        hostname,
@@ -24,7 +24,7 @@ func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, wo
 		WorkflowName:    workflowName,
 	}
 	if u != nil {
-		event.Username = u.Username
+		event.Username = u.GetUsername()
 		event.UserMail = u.Email()
 	}
 	publishEvent(event)
@@ -39,7 +39,7 @@ func PublishAddWarning(w sdk.Warning) {
 }
 
 // PublishUpdateWarning publishes an event for the edition of the given warning
-func PublishUpdateWarning(w sdk.Warning, u *sdk.AuthentifiedUser) {
+func PublishUpdateWarning(w sdk.Warning, u sdk.Identifiable) {
 	e := sdk.EventWarningUpdate{
 		Warning: w,
 	}

@@ -11,8 +11,8 @@ import (
 
 func (api *API) getTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
-		filter, err := user.LoadTimelineFilter(api.mustDB(), u)
+		u := getAuthentifiedUser(ctx).OldUserStruct
+		filter, err := user.LoadTimelineFilter(api.mustDB(), u.ID)
 		if err != nil {
 			return sdk.WrapError(err, "getTimelineFilterHandler")
 		}
@@ -22,23 +22,23 @@ func (api *API) getTimelineFilterHandler() service.Handler {
 
 func (api *API) postTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
+		u := getAuthentifiedUser(ctx).OldUserStruct
 		var timelineFilter sdk.TimelineFilter
 		if err := service.UnmarshalBody(r, &timelineFilter); err != nil {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
 		// Try to load
-		count, errLoad := user.CountTimelineFilter(api.mustDB(), u)
+		count, errLoad := user.CountTimelineFilter(api.mustDB(), u.ID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "Cannot load filter")
 		}
 		if count == 0 {
-			if err := user.InsertTimelineFilter(api.mustDB(), timelineFilter, u); err != nil {
+			if err := user.InsertTimelineFilter(api.mustDB(), timelineFilter, u.ID); err != nil {
 				return sdk.WrapError(err, "Cannot insert filter")
 			}
 		} else {
-			if err := user.UpdateTimelineFilter(api.mustDB(), timelineFilter, u); err != nil {
+			if err := user.UpdateTimelineFilter(api.mustDB(), timelineFilter, u.ID); err != nil {
 				return sdk.WrapError(err, "Unable to update filter")
 			}
 		}

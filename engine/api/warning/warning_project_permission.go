@@ -43,7 +43,7 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 			return sdk.WrapError(err, "Unable to get payload from ToEventProjectPermissionDelete")
 		}
 		// Check in ENV
-		envs, err := environment.LoadEnvironments(db, e.ProjectKey, false, nil)
+		envs, err := environment.LoadEnvironments(db, e.ProjectKey)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to list environments")
 		}

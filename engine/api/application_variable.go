@@ -222,7 +222,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			err = application.AddKeyPairToApplication(tx, api.Cache, app, newVar.Name, getAuthentifiedUser(ctx))
+			err = application.AddKeyPairToApplication_DEPRECATED(tx, api.Cache, app, newVar.Name, getAuthentifiedUser(ctx))
 			break
 		default:
 			err = application.InsertVariable(tx, api.Cache, app, newVar, getAuthentifiedUser(ctx))

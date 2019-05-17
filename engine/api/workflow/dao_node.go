@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -531,8 +530,6 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 				return sdk.WrapError(errE, "postLoadNodeContext> Unable to load env %d keys", ctx.EnvironmentID)
 			}
 		}
-
-		ctx.Environment.Permission = permission.ProjectPermission(env.ProjectKey, u)
 	}
 
 	//Load the integration in the context

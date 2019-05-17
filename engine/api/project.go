@@ -86,7 +86,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			return service.WriteJSON(w, projects, http.StatusOK)
 		}
 
-		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.AuthentifiedUser) error {
+		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u sdk.GroupMember) error {
 			//Filter the applications by repo
 			apps := []sdk.Application{}
 			for i := range p.Applications {

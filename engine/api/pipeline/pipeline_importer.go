@@ -14,7 +14,7 @@ import (
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.AuthentifiedUser) error {
+func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
@@ -189,7 +189,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 }
 
 //Import insert the pipeline in the project
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.AuthentifiedUser) error {
+func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -226,7 +226,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 	return nil
 }
 
-func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.AuthentifiedUser) error {
+func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u sdk.Identifiable) error {
 	// check that action used by job can be used by pipeline's project
 	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)

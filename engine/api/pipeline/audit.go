@@ -44,10 +44,10 @@ const (
 )
 
 // CreateAudit insert current pipeline version on audit table
-func CreateAudit(db gorp.SqlExecutor, pip *sdk.Pipeline, action string, u *sdk.AuthentifiedUser) error {
+func CreateAudit(db gorp.SqlExecutor, pip *sdk.Pipeline, action string, u sdk.Identifiable) error {
 	pipAudit := &sdk.PipelineAudit{
 		PipelineID: pip.ID,
-		UserName:   u.Username,
+		UserName:   u.GetUsername(),
 		Versionned: time.Now(),
 		Pipeline:   pip,
 		Action:     action,

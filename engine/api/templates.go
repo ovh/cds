@@ -902,7 +902,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 		}
 		wfTmpl := getWorkflowTemplate(ctx)
 
-		wfs, err := workflow.LoadByWorkflowTemplateID(ctx, api.mustDB(), wfTmpl.ID, deprecatedGetUser(ctx))
+		wfs, err := workflow.LoadByWorkflowTemplateID(ctx, api.mustDB(), wfTmpl.ID, getAuthentifiedUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load templates")
 		}

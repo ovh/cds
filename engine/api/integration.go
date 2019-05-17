@@ -127,7 +127,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 	}
 }
 
-func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u *sdk.AuthentifiedUser) {
+func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u sdk.Identifiable) {
 	if !m.Public && len(m.PublicConfigurations) > 0 {
 		return
 	}
@@ -155,7 +155,7 @@ func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.In
 	}
 }
 
-func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u *sdk.AuthentifiedUser) error {
+func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
 	if !m.Public {
 		return nil
 	}

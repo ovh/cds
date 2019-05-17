@@ -10,7 +10,7 @@ import (
 )
 
 // PublishProjectEvent publish application event
-func PublishProjectEvent(payload interface{}, key string, u *sdk.AuthentifiedUser) {
+func PublishProjectEvent(payload interface{}, key string, u sdk.Identifiable) {
 	event := sdk.Event{
 		Timestamp:  time.Now(),
 		Hostname:   hostname,
@@ -21,13 +21,13 @@ func PublishProjectEvent(payload interface{}, key string, u *sdk.AuthentifiedUse
 	}
 	if u != nil {
 		event.UserMail = u.Email()
-		event.Username = u.Username
+		event.Username = u.GetUsername()
 	}
 	publishEvent(event)
 }
 
 // PublishAddProject publishes an event for the creation of the given project
-func PublishAddProject(p *sdk.Project, u *sdk.AuthentifiedUser) {
+func PublishAddProject(p *sdk.Project, u sdk.Identifiable) {
 	e := sdk.EventProjectAdd{
 		Variables:   p.Variable,
 		Permissions: p.ProjectGroups,
@@ -38,7 +38,7 @@ func PublishAddProject(p *sdk.Project, u *sdk.AuthentifiedUser) {
 }
 
 // PublishUpdateProject publishes an event for the modification of the project
-func PublishUpdateProject(p *sdk.Project, oldProject *sdk.Project, u *sdk.AuthentifiedUser) {
+func PublishUpdateProject(p *sdk.Project, oldProject *sdk.Project, u sdk.Identifiable) {
 	e := sdk.EventProjectUpdate{
 		NewName:     p.Name,
 		NewMetadata: p.Metadata,
@@ -49,13 +49,13 @@ func PublishUpdateProject(p *sdk.Project, oldProject *sdk.Project, u *sdk.Authen
 }
 
 // PublishDeleteProject publishess an event for the deletion of the given project
-func PublishDeleteProject(p *sdk.Project, u *sdk.AuthentifiedUser) {
+func PublishDeleteProject(p *sdk.Project, u sdk.Identifiable) {
 	e := sdk.EventProjectDelete{}
 	PublishProjectEvent(e, p.Key, u)
 }
 
 // PublishAddProjectVariable publishes an event for the creation of the given variable
-func PublishAddProjectVariable(p *sdk.Project, v sdk.Variable, u *sdk.AuthentifiedUser) {
+func PublishAddProjectVariable(p *sdk.Project, v sdk.Variable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
@@ -66,7 +66,7 @@ func PublishAddProjectVariable(p *sdk.Project, v sdk.Variable, u *sdk.Authentifi
 }
 
 // PublishUpdateProjectVariable publishes an event for the modification of a variable
-func PublishUpdateProjectVariable(p *sdk.Project, newVar sdk.Variable, oldVar sdk.Variable, u *sdk.AuthentifiedUser) {
+func PublishUpdateProjectVariable(p *sdk.Project, newVar sdk.Variable, oldVar sdk.Variable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(newVar.Type) {
 		newVar.Value = sdk.PasswordPlaceholder
 	}
@@ -81,7 +81,7 @@ func PublishUpdateProjectVariable(p *sdk.Project, newVar sdk.Variable, oldVar sd
 }
 
 // PublishDeleteProjectVariable publishes an event on project variable deletion
-func PublishDeleteProjectVariable(p *sdk.Project, v sdk.Variable, u *sdk.AuthentifiedUser) {
+func PublishDeleteProjectVariable(p *sdk.Project, v sdk.Variable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
@@ -92,7 +92,7 @@ func PublishDeleteProjectVariable(p *sdk.Project, v sdk.Variable, u *sdk.Authent
 }
 
 // PublishAddProjectPermission publishes an event on adding a group permission on the project
-func PublishAddProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u *sdk.AuthentifiedUser) {
+func PublishAddProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u sdk.Identifiable) {
 	e := sdk.EventProjectPermissionAdd{
 		Permission: gp,
 	}
@@ -100,7 +100,7 @@ func PublishAddProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u *sdk.
 }
 
 // PublishUpdateProjectPermission publishes an event on updating a group permission on the project
-func PublishUpdateProjectPermission(p *sdk.Project, gp sdk.GroupPermission, oldGP sdk.GroupPermission, u *sdk.AuthentifiedUser) {
+func PublishUpdateProjectPermission(p *sdk.Project, gp sdk.GroupPermission, oldGP sdk.GroupPermission, u sdk.Identifiable) {
 	e := sdk.EventProjectPermissionUpdate{
 		NewPermission: gp,
 		OldPermission: oldGP,
@@ -109,7 +109,7 @@ func PublishUpdateProjectPermission(p *sdk.Project, gp sdk.GroupPermission, oldG
 }
 
 // PublishDeleteProjectPermission publishes an event on deleting a group permission on the project
-func PublishDeleteProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u *sdk.AuthentifiedUser) {
+func PublishDeleteProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u sdk.Identifiable) {
 	e := sdk.EventProjectPermissionDelete{
 		Permission: gp,
 	}
@@ -117,7 +117,7 @@ func PublishDeleteProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u *s
 }
 
 // PublishAddProjectKey publishes an event on adding a project key
-func PublishAddProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.AuthentifiedUser) {
+func PublishAddProjectKey(p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
 	k.Private = sdk.PasswordPlaceholder
 	e := sdk.EventProjectKeyAdd{
 		Key: k,
@@ -126,7 +126,7 @@ func PublishAddProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.AuthentifiedU
 }
 
 // PublishDeleteProjectKey publishes an event on deleting a project key
-func PublishDeleteProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.AuthentifiedUser) {
+func PublishDeleteProjectKey(p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(k.Type) {
 		k.Private = sdk.PasswordPlaceholder
 	}
@@ -137,7 +137,7 @@ func PublishDeleteProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.Authentifi
 }
 
 // PublishAddVCSServer publishes an event on adding a project server
-func PublishAddVCSServer(p *sdk.Project, vcsServerName string, u *sdk.AuthentifiedUser) {
+func PublishAddVCSServer(p *sdk.Project, vcsServerName string, u sdk.Identifiable) {
 	e := sdk.EventProjectVCSServerAdd{
 		VCSServerName: vcsServerName,
 	}
@@ -145,7 +145,7 @@ func PublishAddVCSServer(p *sdk.Project, vcsServerName string, u *sdk.Authentifi
 }
 
 // PublishDeleteVCSServer publishes an event on deleting a project server
-func PublishDeleteVCSServer(p *sdk.Project, vcsServerName string, u *sdk.AuthentifiedUser) {
+func PublishDeleteVCSServer(p *sdk.Project, vcsServerName string, u sdk.Identifiable) {
 	e := sdk.EventProjectVCSServerDelete{
 		VCSServerName: vcsServerName,
 	}
@@ -153,7 +153,7 @@ func PublishDeleteVCSServer(p *sdk.Project, vcsServerName string, u *sdk.Authent
 }
 
 // PublishAddProjectIntegration publishes an event on adding a integration
-func PublishAddProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, u *sdk.AuthentifiedUser) {
+func PublishAddProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, u sdk.Identifiable) {
 	pf.HideSecrets()
 	e := sdk.EventProjectIntegrationAdd{
 		Integration: pf,
@@ -162,7 +162,7 @@ func PublishAddProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, u *
 }
 
 // PublishUpdateProjectIntegration publishes an event on updating a integration
-func PublishUpdateProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, pfOld sdk.ProjectIntegration, u *sdk.AuthentifiedUser) {
+func PublishUpdateProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, pfOld sdk.ProjectIntegration, u sdk.Identifiable) {
 	pf.HideSecrets()
 	pfOld.HideSecrets()
 	e := sdk.EventProjectIntegrationUpdate{
@@ -173,7 +173,7 @@ func PublishUpdateProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, 
 }
 
 // PublishDeleteProjectIntegration publishes an event on deleting integration
-func PublishDeleteProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, u *sdk.AuthentifiedUser) {
+func PublishDeleteProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, u sdk.Identifiable) {
 	e := sdk.EventProjectIntegrationDelete{
 		Integration: pf,
 	}

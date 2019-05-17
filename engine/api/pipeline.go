@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -70,7 +69,6 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 
 		event.PublishPipelineUpdate(key, p.Name, oldName, getAuthentifiedUser(ctx))
-		pipelineDB.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
@@ -137,7 +135,6 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		audit.Pipeline.Permission = permission.PermissionReadWriteExecute
 
 		event.PublishPipelineUpdate(key, audit.Pipeline.Name, name, u)
 
@@ -196,8 +193,6 @@ func (api *API) addPipelineHandler() service.Handler {
 
 		event.PublishPipelineAdd(key, p, getAuthentifiedUser(ctx))
 
-		p.Permission = permission.PermissionReadWriteExecute
-
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
@@ -230,8 +225,6 @@ func (api *API) getPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
-
-		p.Permission = permission.ProjectPermission(projectKey, getAuthentifiedUser(ctx))
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}

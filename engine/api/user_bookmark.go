@@ -30,14 +30,14 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}
 
-			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, deprecatedGetUser(ctx), !wf.Favorite); err != nil {
+			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, getAuthentifiedUser(ctx).OldUserStruct.ID, !wf.Favorite); err != nil {
 				return sdk.WrapError(err, "Cannot change workflow %s/%s favorite", params.ProjectKey, params.WorkflowName)
 			}
 			wf.Favorite = !wf.Favorite
 
 			return service.WriteJSON(w, wf, http.StatusOK)
 		case "project":
-			if err := project.UpdateFavorite(api.mustDB(), p.ID, deprecatedGetUser(ctx), !p.Favorite); err != nil {
+			if err := project.UpdateFavorite(api.mustDB(), p.ID, getAuthentifiedUser(ctx).OldUserStruct.ID, !p.Favorite); err != nil {
 				return sdk.WrapError(err, "Cannot change workflow %s favorite", p.Key)
 			}
 			p.Favorite = !p.Favorite

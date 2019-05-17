@@ -111,7 +111,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getAuthentifiedUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key)
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 		}
@@ -170,7 +170,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getAuthentifiedUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key)
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 		}
@@ -232,7 +232,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getAuthentifiedUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key)
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 		}

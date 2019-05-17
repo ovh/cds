@@ -10,7 +10,7 @@ import (
 )
 
 // PublishEnvironmentEvent publish Environment event
-func publishEnvironmentEvent(payload interface{}, key, envName string, u *sdk.AuthentifiedUser) {
+func publishEnvironmentEvent(payload interface{}, key, envName string, u sdk.Identifiable) {
 	event := sdk.Event{
 		Timestamp:       time.Now(),
 		Hostname:        hostname,
@@ -21,14 +21,14 @@ func publishEnvironmentEvent(payload interface{}, key, envName string, u *sdk.Au
 		EnvironmentName: envName,
 	}
 	if u != nil {
-		event.Username = u.Username
+		event.Username = u.GetUsername()
 		event.UserMail = u.Email()
 	}
 	publishEvent(event)
 }
 
 // PublishEnvironmentAdd publishes an event for the creation of the given environment
-func PublishEnvironmentAdd(projKey string, env sdk.Environment, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentAdd(projKey string, env sdk.Environment, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentAdd{
 		Environment: env,
 	}
@@ -36,7 +36,7 @@ func PublishEnvironmentAdd(projKey string, env sdk.Environment, u *sdk.Authentif
 }
 
 // PublishEnvironmentUpdate publishes an event for the update of the given Environment
-func PublishEnvironmentUpdate(projKey string, env sdk.Environment, oldenv sdk.Environment, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentUpdate(projKey string, env sdk.Environment, oldenv sdk.Environment, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentUpdate{
 		NewName: env.Name,
 		OldName: oldenv.Name,
@@ -45,13 +45,13 @@ func PublishEnvironmentUpdate(projKey string, env sdk.Environment, oldenv sdk.En
 }
 
 // PublishEnvironmentDelete publishes an event for the deletion of the given Environment
-func PublishEnvironmentDelete(projKey string, env sdk.Environment, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentDelete(projKey string, env sdk.Environment, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentDelete{}
 	publishEnvironmentEvent(e, projKey, env.Name, u)
 }
 
 // PublishEnvironmentVariableAdd publishes an event when adding a new variable
-func PublishEnvironmentVariableAdd(projKey string, env sdk.Environment, v sdk.Variable, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentVariableAdd(projKey string, env sdk.Environment, v sdk.Variable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
@@ -62,7 +62,7 @@ func PublishEnvironmentVariableAdd(projKey string, env sdk.Environment, v sdk.Va
 }
 
 // PublishEnvironmentVariableUpdate publishes an event when updating a variable
-func PublishEnvironmentVariableUpdate(projKey string, env sdk.Environment, v sdk.Variable, vOld sdk.Variable, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentVariableUpdate(projKey string, env sdk.Environment, v sdk.Variable, vOld sdk.Variable, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentVariableUpdate{
 		OldVariable: vOld,
 		NewVariable: v,
@@ -71,7 +71,7 @@ func PublishEnvironmentVariableUpdate(projKey string, env sdk.Environment, v sdk
 }
 
 // PublishEnvironmentVariableDelete publishes an event when deleting a new variable
-func PublishEnvironmentVariableDelete(projKey string, env sdk.Environment, v sdk.Variable, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentVariableDelete(projKey string, env sdk.Environment, v sdk.Variable, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentVariableDelete{
 		Variable: v,
 	}
@@ -79,7 +79,7 @@ func PublishEnvironmentVariableDelete(projKey string, env sdk.Environment, v sdk
 }
 
 // PublishEnvironmentKeyAdd publishes an event when adding a key on the given environment
-func PublishEnvironmentKeyAdd(projKey string, env sdk.Environment, k sdk.EnvironmentKey, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentKeyAdd(projKey string, env sdk.Environment, k sdk.EnvironmentKey, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentKeyAdd{
 		Key: k,
 	}
@@ -87,7 +87,7 @@ func PublishEnvironmentKeyAdd(projKey string, env sdk.Environment, k sdk.Environ
 }
 
 // PublishEnvironmentKeyDelete publishes an event when deleting a key on the given environment
-func PublishEnvironmentKeyDelete(projKey string, env sdk.Environment, k sdk.EnvironmentKey, u *sdk.AuthentifiedUser) {
+func PublishEnvironmentKeyDelete(projKey string, env sdk.Environment, k sdk.EnvironmentKey, u sdk.Identifiable) {
 	e := sdk.EventEnvironmentKeyDelete{
 		Key: k,
 	}

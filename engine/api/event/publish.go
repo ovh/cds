@@ -44,7 +44,7 @@ func publishEvent(e sdk.Event) {
 
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
-func Publish(payload interface{}, u *sdk.AuthentifiedUser) {
+func Publish(payload interface{}, u sdk.Identifiable) {
 	p := structs.Map(payload)
 	var projectKey, applicationName, pipelineName, environmentName, workflowName string
 	if v, ok := p["ProjectKey"]; ok {
@@ -76,7 +76,7 @@ func Publish(payload interface{}, u *sdk.AuthentifiedUser) {
 		WorkflowName:    workflowName,
 	}
 	if u != nil {
-		event.Username = u.Username
+		event.Username = u.GetUsername()
 		event.UserMail = u.Email()
 	}
 	publishEvent(event)

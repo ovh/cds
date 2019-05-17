@@ -20,7 +20,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u *sdk.AuthentifiedUser) (*sdk.Application, []sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Message, error) {
 	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
 
 	//Check valid application name

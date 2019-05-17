@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -29,7 +28,7 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		environments, errEnv := environment.LoadEnvironments(tx, projectKey, true, getAuthentifiedUser(ctx))
+		environments, errEnv := environment.LoadEnvironments(tx, projectKey)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "getEnvironmentsHandler> Cannot load environments from db")
 		}
@@ -73,8 +72,6 @@ func (api *API) getEnvironmentHandler() service.Handler {
 			}
 			env.Usage.Workflows = wf
 		}
-
-		env.Permission = permission.ProjectPermission(projectKey, getAuthentifiedUser(ctx))
 
 		return service.WriteJSON(w, env, http.StatusOK)
 	}
@@ -141,7 +138,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		}
 
 		var errEnvs error
-		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key, true, getAuthentifiedUser(ctx))
+		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key)
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
@@ -189,7 +186,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		event.PublishEnvironmentDelete(p.Key, *env, getAuthentifiedUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getAuthentifiedUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteEnvironmentHandler> Cannot load environments")
 		}
@@ -243,7 +240,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getAuthentifiedUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getAuthentifiedUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateEnvironmentHandler> Cannot load environments")
 		}
@@ -270,7 +267,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 		}
 
 		//Load all environments to check if there is another environment with the same name
-		envs, err := environment.LoadEnvironments(api.mustDB(), projectKey, false, getAuthentifiedUser(ctx))
+		envs, err := environment.LoadEnvironments(api.mustDB(), projectKey)
 		if err != nil {
 			return err
 		}
@@ -287,7 +284,6 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			ProjectID:  p.ID,
 			ProjectKey: p.Key,
 			Variable:   env.Variable,
-			Permission: env.Permission,
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -315,7 +311,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//return the project with all environments
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getAuthentifiedUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}

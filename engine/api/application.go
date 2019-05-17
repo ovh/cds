@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -16,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
@@ -30,7 +28,6 @@ func (api *API) getApplicationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
-		withPermissions := r.FormValue("permission")
 		withUsage := FormBool(r, "withUsage")
 		withIcon := FormBool(r, "withIcon")
 
@@ -60,21 +57,6 @@ func (api *API) getApplicationsHandler() service.Handler {
 		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, loadOpts...)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load applications from db")
-		}
-
-		projectPerm := permission.ProjectPermission(projectKey, u)
-		for i := range applications {
-			applications[i].Permission = projectPerm
-		}
-
-		if strings.ToUpper(withPermissions) == "W" {
-			res := make([]sdk.Application, 0, len(applications))
-			for _, a := range applications {
-				if a.Permission >= permission.PermissionReadWriteExecute {
-					res = append(res, a)
-				}
-			}
-			applications = res
 		}
 
 		if withUsage {
@@ -123,7 +105,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
-		app.Permission = permission.ProjectPermission(projectKey, getAuthentifiedUser(ctx))
 
 		if withUsage {
 			usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applicationName)
@@ -243,7 +224,6 @@ func (api *API) addApplicationHandler() service.Handler {
 		if err := application.Insert(tx, api.Cache, proj, &app); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
-		app.Permission = permission.ProjectPermission(key, getAuthentifiedUser(ctx))
 
 		if err := group.LoadGroupByProject(tx, proj); err != nil {
 			return sdk.WrapError(err, "Cannot load group from project")
@@ -312,7 +292,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoProject, "cloneApplicationHandler> Cannot load %s", projectKey)
 		}
 
-		envs, errE := environment.LoadEnvironments(api.mustDB(), projectKey, true, getAuthentifiedUser(ctx))
+		envs, errE := environment.LoadEnvironments(api.mustDB(), projectKey)
 		if errE != nil {
 			return sdk.WrapError(errE, "cloneApplicationHandler> Cannot load Environments %s", projectKey)
 
@@ -338,7 +318,6 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		if err := cloneApplication(tx, api.Cache, proj, &newApp, appToClone, getAuthentifiedUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
 		}
-		newApp.Permission = permission.ProjectPermission(projectKey, getAuthentifiedUser(ctx))
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
@@ -376,7 +355,7 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 		var errVar error
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			errVar = application.AddKeyPairToApplication(db, store, newApp, v.Name, u)
+			errVar = application.AddKeyPairToApplication_DEPRECATED(db, store, newApp, v.Name, u)
 		} else {
 			errVar = application.InsertVariable(db, store, newApp, v, u)
 		}
@@ -455,7 +434,6 @@ func (api *API) updateApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		app.Permission = permission.ProjectPermission(projectKey, getAuthentifiedUser(ctx))
 
 		event.PublishUpdateApplication(p.Key, *app, old, getAuthentifiedUser(ctx))
 

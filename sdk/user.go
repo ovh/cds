@@ -33,6 +33,16 @@ func AuthentifiedUsersToIDs(users []*AuthentifiedUser) []string {
 	return ids
 }
 
+type Identifiable interface {
+	GetUsername() string
+	Email() string
+}
+
+type GroupMember interface {
+	Admin() bool
+	GetGroups() []Group
+}
+
 type AuthentifiedUser struct {
 	ID            string       `json:"id" yaml:"id" cli:"id,key" db:"id"`
 	Username      string       `json:"username" yaml:"username" cli:"username,key" db:"username"`
@@ -41,6 +51,17 @@ type AuthentifiedUser struct {
 	DateCreation  time.Time    `json:"date_creation" yaml:"date_creation" db:"date_creation"`
 	Contacts      UserContacts `json:"contacts" yaml:"contacts" db:"-"`
 	OldUserStruct *User        `json:"old_user_struct" yaml:"old_user_struct" db:"-"`
+}
+
+func (u AuthentifiedUser) GetGroups() []Group {
+	if u.OldUserStruct == nil {
+		return nil
+	}
+	return u.OldUserStruct.Groups
+}
+
+func (u AuthentifiedUser) GetUsername() string {
+	return u.Username
 }
 
 func (u AuthentifiedUser) Admin() bool {
