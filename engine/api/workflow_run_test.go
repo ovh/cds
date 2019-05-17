@@ -1473,7 +1473,6 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 			},
 		},
 	}
-	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
