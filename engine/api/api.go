@@ -783,7 +783,7 @@ func (a *API) Serve(ctx context.Context) error {
 	// migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 	// 	return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
   // }})
-  migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+  migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
     return migrate.ActionModelRequirements(a.Cache, a.DBConnectionFactory.GetDBMap)
   }})
 
