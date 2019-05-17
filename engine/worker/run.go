@@ -354,7 +354,8 @@ func workingDirectory(basedir string, jobInfo *sdk.WorkflowNodeJobRunData, suffi
 
 func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNodeJobRunData) sdk.Result {
 	t0 := time.Now()
-	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
+	// Timeout must be the same as the goroutine which stop jobs in package api/workflow
+	ctx, cancel := context.WithTimeout(ctx, 24*time.Hour)
 
 	defer func() { log.Info("processJob> Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
 	defer cancel()

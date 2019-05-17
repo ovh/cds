@@ -49,6 +49,8 @@ var handledEventErrors = []string{
 	"runtime error: index out of range",
 	"runtime error: slice bounds out of range",
 	"runtime error: invalid memory address or nil pointer dereference",
+	"write: broken pipe",
+	"write: connection reset by peer",
 }
 
 //Init the eventsBroker
