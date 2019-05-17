@@ -76,12 +76,12 @@ func MigrateActionDEPRECATEDGitClonePipeline(db gorp.SqlExecutor, store cache.St
 		if err != nil {
 			return err
 		}
-		node := w.GetNodeByName(p.WorkflowNodeName)
+		node := w.WorkflowData.NodeByName(p.WorkflowNodeName)
 		if node == nil {
 			return sdk.ErrWorkflowNodeNotFound
 		}
-		if node.Context != nil && node.Context.Application != nil {
-			p.AppName = node.Context.Application.Name
+		if node.Context != nil && node.Context.ApplicationID != 0 {
+			p.AppName = w.Applications[node.Context.ApplicationID].Name
 		}
 	}
 

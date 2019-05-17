@@ -644,7 +644,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	}
 
 	// Add payload from root
-	if wf.Root.Context.DefaultPayload != nil {
+	if wf.WorkflowData.Node.Context.DefaultPayload != nil {
 		e := dump.NewDefaultEncoder()
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false
@@ -653,7 +653,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 		e.ExtraFields.Type = false
 
 		tempParams := sdk.ParametersToMap(res)
-		m1, errm1 := e.ToStringMap(wf.Root.Context.DefaultPayload)
+		m1, errm1 := e.ToStringMap(wf.WorkflowData.Node.Context.DefaultPayload)
 		if errm1 == nil {
 			mergedParameters := sdk.ParametersMapMerge(tempParams, m1, sdk.MapMergeOptions.ExcludeGitParams)
 			res = sdk.ParametersFromMap(mergedParameters)

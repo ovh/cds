@@ -358,8 +358,6 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	projUpdate, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)
 	test.NoError(t, workflow.Insert(db, cache, &w, projUpdate, u))

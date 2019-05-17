@@ -14,23 +14,6 @@ import (
 // Workflow is a gorp wrapper around sdk.WorkflowData
 type Workflow sdk.Workflow
 
-// Node is a gorp wrapper around sdk.WorkflowNode
-type Node sdk.WorkflowNode
-
-// NodeContext is a gorp wrapper around sdk.WorkflowNodeContext
-type NodeContext sdk.WorkflowNodeContext
-
-// NodeTrigger is a gorp wrapper around sdk.WorkflowNodeTrigger
-type NodeTrigger sdk.WorkflowNodeTrigger
-
-// Join is a gorp wrapper around sdk.WorkflowNodeJoin
-type Join sdk.WorkflowNodeJoin
-
-// JoinTrigger  is a gorp wrapper around sdk.WorkflowNodeJoinTrigger
-type JoinTrigger sdk.WorkflowNodeJoinTrigger
-
-type outgoingHookTrigger sdk.WorkflowNodeOutgoingHookTrigger
-
 // Notification is a gorp wrapper around sdk.WorkflowNotification
 type Notification sdk.WorkflowNotification
 
@@ -206,15 +189,6 @@ type dbStaticFiles sdk.StaticFiles
 // RunTag is a gorp wrapper around sdk.WorkflowRunTag
 type RunTag sdk.WorkflowRunTag
 
-// NodeHook is a gorp wrapper around sdk.WorkflowNodeHook
-type NodeHook sdk.WorkflowNodeHook
-
-type nodeOutgoingHook sdk.WorkflowNodeOutgoingHook
-
-type dbNodeFork sdk.WorkflowNodeFork
-
-type dbNodeForkTrigger sdk.WorkflowNodeForkTrigger
-
 // hookModel is a gorp wrapper around sdk.WorkflowHookModel
 type hookModel sdk.WorkflowHookModel
 
@@ -234,15 +208,6 @@ type dbAsCodeEvents sdk.AsCodeEvent
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(Workflow{}, "workflow", true, "id"))
-	gorpmapping.Register(gorpmapping.New(Node{}, "workflow_node", true, "id"))
-	gorpmapping.Register(gorpmapping.New(NodeTrigger{}, "workflow_node_trigger", true, "id"))
-	gorpmapping.Register(gorpmapping.New(NodeContext{}, "workflow_node_context", true, "id"))
-	gorpmapping.Register(gorpmapping.New(sqlContext{}, "workflow_node_context", true, "id"))
-	gorpmapping.Register(gorpmapping.New(NodeHook{}, "workflow_node_hook", true, "id"))
-	gorpmapping.Register(gorpmapping.New(nodeOutgoingHook{}, "workflow_node_outgoing_hook", true, "id"))
-	gorpmapping.Register(gorpmapping.New(outgoingHookTrigger{}, "workflow_node_outgoing_hook_trigger", true, "id"))
-	gorpmapping.Register(gorpmapping.New(Join{}, "workflow_node_join", true, "id"))
-	gorpmapping.Register(gorpmapping.New(JoinTrigger{}, "workflow_node_join_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Run{}, "workflow_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeRun{}, "workflow_node_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JobRun{}, "workflow_node_run_job", true, "id"))
@@ -255,8 +220,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(Coverage{}, "workflow_node_run_coverage", false, "workflow_id", "workflow_run_id", "workflow_node_run_id", "repository", "branch"))
 	gorpmapping.Register(gorpmapping.New(dbStaticFiles{}, "workflow_node_run_static_files", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeRunVulenrabilitiesReport{}, "workflow_node_run_vulnerability", true, "id"))
-	gorpmapping.Register(gorpmapping.New(dbNodeFork{}, "workflow_node_fork", true, "id"))
-	gorpmapping.Register(gorpmapping.New(dbNodeForkTrigger{}, "workflow_node_fork_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeData{}, "w_node", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeHookData{}, "w_node_hook", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeContextData{}, "w_node_context", true, "id"))

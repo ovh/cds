@@ -21,14 +21,14 @@ func (w *WorkflowData) AncestorsNames(n Node) []string {
 }
 
 // GetHooks returns the list of all hooks in the workflow tree
-func (w *WorkflowData) GetHooks() map[string]NodeHook {
+func (w *WorkflowData) GetHooks() map[string]*NodeHook {
 	if w == nil {
 		return nil
 	}
-	res := map[string]NodeHook{}
+	res := map[string]*NodeHook{}
 	for _, n := range w.Array() {
 		for _, h := range n.Hooks {
-			res[h.UUID] = h
+			res[h.UUID] = &h
 		}
 	}
 	return res

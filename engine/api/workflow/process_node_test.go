@@ -80,6 +80,16 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
 				b := sdk.VCSBranch{
@@ -102,6 +112,16 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					Timestamp: time.Now().Unix(),
 				}
 				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				if err := enc.Encode(map[string]sdk.NodeHook{
+					"123": {
+						Config:        sdk.WebHookModel.DefaultConfig,
+						HookModelName: sdk.WebHookModelName,
+						HookModelID:   webHookModel.ID,
+					},
+				}); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -149,13 +169,10 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	w.WorkflowData.Node.Context.DefaultPayload = map[string]string{
 		"git.branch":     "master",
 		"git.repository": "sguiheux/demo",
 	}
-	w.Root.Context.DefaultPayload = w.WorkflowData.Node.Context.DefaultPayload
 
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -233,6 +250,16 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
 			case "/vcs/github/repos/sguiheux/demo/commits/currentcommit":
 				c := sdk.VCSCommit{
@@ -245,6 +272,16 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 					Timestamp: time.Now().Unix(),
 				}
 				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				if err := enc.Encode(map[string]sdk.NodeHook{
+					"123": {
+						Config:        sdk.WebHookModel.DefaultConfig,
+						HookModelName: sdk.WebHookModelName,
+						HookModelID:   webHookModel.ID,
+					},
+				}); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -292,13 +329,10 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	w.WorkflowData.Node.Context.DefaultPayload = map[string]string{
 		"git.branch":     "master",
 		"git.repository": "sguiheux/demo",
 	}
-	w.Root.Context.DefaultPayload = w.WorkflowData.Node.Context.DefaultPayload
 
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -375,6 +409,16 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				b := sdk.VCSBranch{
@@ -437,7 +481,6 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -512,6 +555,16 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				t.Fatalf("No need to get branch: %s", r.URL.String())
@@ -567,7 +620,6 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -790,7 +842,6 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -964,7 +1015,6 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1134,7 +1184,6 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1231,6 +1280,15 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				repoBranch++
@@ -1315,7 +1373,6 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1417,6 +1474,15 @@ func TestGitParamWithJoin(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				repoBranch++
@@ -1511,7 +1577,6 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1620,6 +1685,15 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				repoBranch++
@@ -1713,7 +1787,6 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1808,6 +1881,15 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				b := sdk.VCSBranch{
@@ -1892,7 +1974,6 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN

@@ -1,13 +1,18 @@
 package workflow_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/fsamin/go-dump"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"net/http"
 	"sort"
 	"testing"
-
-	"github.com/fsamin/go-dump"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -68,8 +73,6 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -78,11 +81,10 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
-	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
-	assertEqualNode(t, w.Root, w1.Root)
+	assert.Equal(t, w.WorkflowData.Node.Context.PipelineID, w1.WorkflowData.Node.Context.PipelineID)
+	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
-	assert.False(t, w1.Root.Context.Mutex)
+	assert.False(t, w1.WorkflowData.Node.Context.Mutex)
 
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
@@ -186,17 +188,15 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
-	assert.Equal(t, w.Root.Context.ApplicationID, w1.Root.Context.ApplicationID)
-	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
-	assert.Equal(t, w.Root.Context.Mutex, w1.Root.Context.Mutex)
+	assert.Equal(t, w.WorkflowData.Node.Context.ApplicationID, w1.WorkflowData.Node.Context.ApplicationID)
+	assert.Equal(t, w.WorkflowData.Node.Context.EnvironmentID, w1.WorkflowData.Node.Context.EnvironmentID)
+	assert.Equal(t, w.WorkflowData.Node.Context.Mutex, w1.WorkflowData.Node.Context.Mutex)
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {
@@ -318,7 +318,6 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -327,13 +326,12 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
-	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
-	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
+	assert.Equal(t, w.WorkflowData.Node.Context.PipelineID, w1.WorkflowData.Node.Context.PipelineID)
+	test.Equal(t, len(w.WorkflowData.Node.Triggers), len(w1.WorkflowData.Node.Triggers))
 
 	workflow.Sort(&w)
 
-	assertEqualNode(t, w.Root, w1.Root)
+	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
 	exp, err := exportentities.NewWorkflow(w)
 	test.NoError(t, err)
@@ -462,23 +460,20 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 	assert.Error(t, workflow.Insert(db, cache, &w, proj, u))
 }
 
-func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
-	t.Logf("assertEqualNode : %d(%s) on %s", n2.ID, n2.Ref, n2.PipelineName)
+func assertEqualNode(t *testing.T, n1, n2 *sdk.Node) {
+	t.Logf("assertEqualNode : %d(%s)", n2.ID, n2.Ref)
 	workflow.SortNode(n1)
 	workflow.SortNode(n2)
 	t.Logf("assertEqualNode : Checking hooks")
 	test.Equal(t, len(n1.Hooks), len(n2.Hooks))
 	t.Logf("assertEqualNode : Checking triggers")
 	test.Equal(t, len(n1.Triggers), len(n2.Triggers))
-	t.Logf("assertEqualNode : Checking out going hooks")
-	test.Equal(t, len(n1.OutgoingHooks), len(n2.OutgoingHooks))
 
-	assert.Equal(t, n1.PipelineName, n2.PipelineName)
 	for i, t1 := range n1.Triggers {
 		t2 := n2.Triggers[i]
-		test.Equal(t, len(t1.WorkflowDestNode.Context.Conditions.PlainConditions), len(t2.WorkflowDestNode.Context.Conditions.PlainConditions), "Number of conditions on node does not match")
-		test.EqualValuesWithoutOrder(t, t1.WorkflowDestNode.Context.Conditions.PlainConditions, t2.WorkflowDestNode.Context.Conditions.PlainConditions, "Conditions on triggers does not match")
-		assertEqualNode(t, &t1.WorkflowDestNode, &t2.WorkflowDestNode)
+		test.Equal(t, len(t1.ChildNode.Context.Conditions.PlainConditions), len(t2.ChildNode.Context.Conditions.PlainConditions), "Number of conditions on node does not match")
+		test.EqualValuesWithoutOrder(t, t1.ChildNode.Context.Conditions.PlainConditions, t2.ChildNode.Context.Conditions.PlainConditions, "Conditions on triggers does not match")
+		assertEqualNode(t, &t1.ChildNode, &t2.ChildNode)
 	}
 }
 func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *testing.T) {
@@ -593,13 +588,9 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
-	test.NoError(t, err)
-
-	w1old, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
@@ -608,7 +599,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.WorkflowData.Node.Context.PipelineID = pip2.ID
 	w1.WorkflowData.Node.Context.ApplicationID = app2.ID
 
-	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, w1old, proj, u))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, u, workflow.UpdateOptions{}))
 
 	t.Logf("Reloading workflow...")
 	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
@@ -775,7 +766,6 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.RenameNode(db, &w))
-	w.RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -784,9 +774,8 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
-	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
-	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
+	assert.Equal(t, w.WorkflowData.Node.Context.PipelineID, w1.WorkflowData.Node.Context.PipelineID)
+	test.Equal(t, len(w.WorkflowData.Node.Triggers), len(w1.WorkflowData.Node.Triggers))
 
 	workflow.Sort(&w)
 
@@ -813,20 +802,25 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 			t.Logf("%s: %s but was undefined", k, v)
 		}
 	}
-	assertEqualNode(t, w.Root, w1.Root)
+	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
-	assert.EqualValues(t, w.Joins[0].Triggers[0].WorkflowDestNode.Context.Conditions, w1.Joins[0].Triggers[0].WorkflowDestNode.Context.Conditions)
-	assert.Equal(t, w.Joins[0].Triggers[0].WorkflowDestNode.PipelineID, w1.Joins[0].Triggers[0].WorkflowDestNode.PipelineID)
+	assert.EqualValues(t, w.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.Conditions, w1.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.Conditions)
+	assert.Equal(t, w.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.PipelineID, w1.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.PipelineID)
 
-	assert.Equal(t, pip1.Name, w.Root.PipelineName)
-	assert.Equal(t, pip2.Name, w.Root.Triggers[0].WorkflowDestNode.PipelineName)
-	assert.Equal(t, pip3.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.PipelineName)
-	assert.Equal(t, pip4.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.PipelineName)
+	assert.Equal(t, pip1.ID, w.WorkflowData.Node.Context.PipelineID)
+	assert.Equal(t, pip2.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Context.PipelineID)
+	assert.Equal(t, pip3.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
+	assert.Equal(t, pip4.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
+
+	log.Warning("%d-%d", w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
+		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID)
+
+	log.Warning("%+v", w1.WorkflowData.Joins[0].JoinContext)
 	test.EqualValuesWithoutOrder(t, []int64{
-		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
-		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
-	}, w1.Joins[0].SourceNodeIDs)
-	assert.Equal(t, pip5.Name, w.Joins[0].Triggers[0].WorkflowDestNode.PipelineName)
+		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
+		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
+	}, []int64{w1.WorkflowData.Joins[0].JoinContext[0].ParentID, w1.WorkflowData.Joins[0].JoinContext[1].ParentID})
+	assert.Equal(t, pip5.ID, w.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.PipelineID)
 
 	exp, err := exportentities.NewWorkflow(*w1)
 	test.NoError(t, err)
@@ -1073,7 +1067,6 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.RenameNode(db, &w))
-	w.RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -1104,7 +1097,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 			t.Logf("%s: %s but was undefined", k, v)
 		}
 	}
-	assertEqualNode(t, w.Root, w1.Root)
+	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 }
 
 func TestUpdateWorkflowWithJoins(t *testing.T) {
@@ -1165,13 +1158,12 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	test.NoError(t, workflow.RenameNode(db, &w))
-	w.RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	w1old := *w1
+	//w1old := *w1
 	w1.Name = "test_2"
 	w1.WorkflowData.Joins = []sdk.Node{
 		{
@@ -1198,9 +1190,8 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.RenameNode(db, w1))
-	w1.RetroMigrate()
 
-	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, &w1old, proj, u))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, u, workflow.UpdateOptions{}))
 
 	t.Logf("Reloading workflow...")
 	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
@@ -1248,6 +1239,58 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 			break
 		}
 	}
+
+	mockHookSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeHooks}
+	test.NoError(t, services.Insert(db, mockHookSservice))
+	defer func() {
+		services.Delete(db, mockHookSservice) // nolint
+	}()
+
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			// NEED get REPO
+			case "/task/bulk":
+				h := sdk.NodeHook{
+					HookModelID: webHookID,
+					Config: sdk.WorkflowNodeHookConfig{
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "POST",
+							Configurable: true,
+						},
+						"username": sdk.WorkflowNodeHookConfigValue{
+							Value:        "test",
+							Configurable: false,
+						},
+						"password": sdk.WorkflowNodeHookConfigValue{
+							Value:        "password",
+							Configurable: false,
+						},
+						"payload": sdk.WorkflowNodeHookConfigValue{
+							Value:        "{}",
+							Configurable: true,
+						},
+						"URL": sdk.WorkflowNodeHookConfigValue{
+							Value:        "https://www.github.com",
+							Configurable: true,
+						},
+					},
+				}
+				if err := enc.Encode(map[string]sdk.NodeHook{"uuid": h}); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
 
 	outHookModels, err := workflow.LoadOutgoingHookModels(db)
 	test.NoError(t, err)
@@ -1397,7 +1440,6 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.RenameNode(db, &w))
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u), "unable to insert workflow")
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -1406,9 +1448,8 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
-	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
-	assertEqualNode(t, w.Root, w1.Root)
+	assert.Equal(t, w.WorkflowData.Node.Context.PipelineID, w1.WorkflowData.Node.Context.PipelineID)
+	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
@@ -1418,7 +1459,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		return
 	}
 
-	assert.Len(t, w.Root.Hooks, 1)
+	assert.Len(t, w.WorkflowData.Node.Hooks, 1)
 
 	exp, err := exportentities.NewWorkflow(*w1)
 	test.NoError(t, err)

@@ -311,7 +311,7 @@ type WorkflowClient interface {
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
 	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
-	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
+	WorkflowAllHooksList() ([]sdk.NodeHook, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
 	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
 	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)

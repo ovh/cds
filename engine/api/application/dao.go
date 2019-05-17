@@ -105,9 +105,9 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 	apps := []sdk.Application{}
 	query := fmt.Sprintf(`SELECT DISTINCT %s
 	FROM application
-		JOIN workflow_node_context ON workflow_node_context.application_id = application.id
-		JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
-		JOIN workflow ON workflow.id = workflow_node.workflow_id
+		JOIN w_node_context ON w_node_context.application_id = application.id
+		JOIN w_node ON w_node.id = w_node_context.node_id
+		JOIN workflow ON workflow.id = w_node.workflow_id
 	WHERE workflow.id = $1`, appRows)
 
 	if _, err := db.Select(&apps, query, workflowID); err != nil {

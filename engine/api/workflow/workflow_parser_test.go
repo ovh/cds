@@ -97,10 +97,17 @@ func TestParseAndImport(t *testing.T) {
 				t.Logf("Workflow = \n%s", string(b))
 
 				if tt.name == "test-1" {
-					assert.Len(t, w.Root.Forks, 1)
-					assert.Equal(t, w.Root.Forks[0].Name, "fork")
-					assert.Len(t, w.Root.Forks[0].Triggers, 1)
-					assert.Equal(t, w.Root.Forks[0].Triggers[0].WorkflowDestNode.Name, "third")
+					assert.Len(t, w.WorkflowData.Node.Triggers, 2)
+					if w.WorkflowData.Node.Triggers[0].ChildNode.Type == "fork" {
+						assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Name, "fork")
+						assert.Len(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers, 1)
+						assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Name, "third")
+					} else {
+						assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Name, "fork")
+						assert.Len(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers, 1)
+						assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers[0].ChildNode.Name, "third")
+					}
+
 				}
 
 			}

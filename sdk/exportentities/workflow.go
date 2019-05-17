@@ -254,12 +254,12 @@ func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow
 	}
 
 	for nodeName, hs := range exportedWorkflow.Hooks {
-		if nodeName == w.Root.Name && len(hs) == 1 {
+		if nodeName == w.WorkflowData.Node.Name && len(hs) == 1 {
 			if hs[0].Model == sdk.RepositoryWebHookModelName {
 				delete(exportedWorkflow.Hooks, nodeName)
 				if exportedWorkflow.Workflow != nil {
 					for nodeName := range exportedWorkflow.Workflow {
-						if nodeName == w.Root.Name {
+						if nodeName == w.WorkflowData.Node.Name {
 							entry := exportedWorkflow.Workflow[nodeName]
 							entry.Payload = nil
 							exportedWorkflow.Workflow[nodeName] = entry

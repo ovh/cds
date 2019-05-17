@@ -80,8 +80,6 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to rename node")
 		}
 
-		wf.RetroMigrate()
-
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
 }

@@ -106,7 +106,6 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -233,7 +232,6 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -387,8 +385,6 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -503,7 +499,6 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -636,7 +631,6 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -760,7 +754,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations, project.LoadOptions.WithApplications)
 	test.NoError(t, errP)
 
@@ -891,7 +884,6 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -1045,7 +1037,6 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -1123,7 +1114,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -1187,8 +1177,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 				return writeError(w, fmt.Errorf("error for test"))
 
 			case "/task/bulk":
-				hooks := map[string]sdk.WorkflowNodeHook{}
-				hooks["123"] = sdk.WorkflowNodeHook{
+				hooks := map[string]sdk.NodeHook{}
+				hooks["123"] = sdk.NodeHook{
 					UUID: "123",
 				}
 				if err := enc.Encode(hooks); err != nil {
@@ -1345,8 +1335,6 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithEnvironments)
 	test.NoError(t, errP)
 
@@ -1417,7 +1405,6 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 			},
 		},
 	}
-	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
@@ -1486,7 +1473,6 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 			},
 		},
 	}
-	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
@@ -1587,7 +1573,6 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 		},
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
@@ -1781,8 +1766,6 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 			},
 		},
 	}
-
-	(&w).RetroMigrate()
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)

@@ -191,7 +191,9 @@ var (
 	ErrApplicationMandatoryOnWorkflowAsCode          = Error{ID: 174, Status: http.StatusBadRequest}
 	ErrInvalidPassword                               = Error{ID: 175, Status: http.StatusBadRequest}
 	ErrInvalidPayloadVariable                        = Error{ID: 176, Status: http.StatusBadRequest}
-	ErrCorruptedData                                 = Error{ID: 177, Status: http.StatusInternalServerError}
+	ErrRepositoryUsedByHook                          = Error{ID: 177, Status: http.StatusForbidden}
+	ErrResourceNotInProject                          = Error{ID: 178, Status: http.StatusForbidden}
+	ErrCorruptedData                                 = Error{ID: 179, Status: http.StatusInternalServerError}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -366,6 +368,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidPayloadVariable.ID:                        "Your payload cannot contain keys like cds.*",
 	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
 	ErrCorruptedData.ID:                                 "Corrupted data",
+	ErrRepositoryUsedByHook.ID:                          "There is still a hook on this repository",
+	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
 }
 
 var errorsFrench = map[int]string{
@@ -540,6 +544,8 @@ var errorsFrench = map[int]string{
 	ErrInvalidPayloadVariable.ID:                        "Le payload du workflow ne peut pas contenir de clés nommées cds.*",
 	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
 	ErrCorruptedData.ID:                                 "Données corrompues",
+	ErrRepositoryUsedByHook.ID:                          "Il y a encore un hook sur ce dépôt",
+	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
 }
 
 var errorsLanguages = []map[int]string{

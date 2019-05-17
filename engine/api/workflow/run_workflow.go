@@ -35,7 +35,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 
 	report := new(ProcessorReport)
 
-	hooks := wr.Workflow.GetHooks()
+	hooks := wr.Workflow.WorkflowData.GetHooks()
 	h, ok := hooks[e.WorkflowNodeHookUUID]
 	if !ok {
 		return report, sdk.WithStack(sdk.ErrNoHook)
@@ -43,7 +43,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 
 	//If the hook is on the root, it will trigger a new workflow run
 	//Else if will trigger a new subnumber of the last workflow run
-	if h.WorkflowNodeID == wr.Workflow.Root.ID {
+	if h.NodeID == wr.Workflow.WorkflowData.Node.ID {
 		if err := IsValid(ctx, store, db, &wr.Workflow, p, nil); err != nil {
 			return nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
@@ -129,7 +129,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			}
 
 			if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
-				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.Root.ID)
+				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.WorkflowData.Node.ID)
 			}
 
 			// Continue  the current workflow run

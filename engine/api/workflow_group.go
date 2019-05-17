@@ -29,9 +29,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		options := workflow.LoadOptions{
-			WithoutNode: true,
-		}
+		options := workflow.LoadOptions{}
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, u, options)
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
@@ -95,9 +93,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		options := workflow.LoadOptions{
-			WithoutNode: true,
-		}
+		options := workflow.LoadOptions{}
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getAuthentifiedUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
@@ -152,9 +148,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		options := workflow.LoadOptions{
-			WithoutNode: true,
-		}
+		options := workflow.LoadOptions{}
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getAuthentifiedUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")

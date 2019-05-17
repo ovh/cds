@@ -464,7 +464,6 @@ func TestImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			(tt.args.w).RetroMigrate()
 
 			workflowExists, err := workflow.Exists(db, proj.Key, tt.args.w.Name)
 			if err != nil {

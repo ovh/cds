@@ -108,16 +108,12 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				Config:        sdk.RepositoryWebHookModel.DefaultConfig,
 				UUID:          opts.HookUUID,
 			})
-			w.RetroMigrate()
 			var err error
 			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 			}
-			w.WorkflowData.Node.Context.DefaultPayload = w.Root.Context.DefaultPayload
 		}
 	}
-
-	w.RetroMigrate()
 
 	if opts.WorkflowName != "" && w.Name != opts.WorkflowName {
 		return nil, nil, sdk.WrapError(sdk.ErrWorkflowNameImport, "Wrong workflow name")
