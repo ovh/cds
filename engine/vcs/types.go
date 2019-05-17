@@ -125,6 +125,27 @@ func (s BitbucketServerConfiguration) check() error {
 	return nil
 }
 
+// BitbucketCloudConfiguration represents the bitbucket configuration
+type BitbucketCloudConfiguration struct {
+	ConsumerKey string `toml:"consumerKey" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/ \n#######\n You can change the consumeKey if you want"`
+	PrivateKey  string `toml:"privateKey" json:"-" default:"xxxxx"`
+	Status      struct {
+		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+	}
+	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	Username        string `toml:"username" comment:"optional. Bitbucket username, used to add comment on Pull Request on failed build." json:"username"`
+	Token           string `toml:"token" comment:"optional, Bitbucket Token associated to username, used to add comment on Pull Request" json:"-"`
+}
+
+func (s BitbucketCloudConfiguration) check() error {
+	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
+		return fmt.Errorf("Bitbucket proxy webhook must have the HTTP scheme")
+	}
+	return nil
+}
+
 func (s *Service) addServerConfiguration(name string, c ServerConfiguration) error {
 	if name == "" {
 		return fmt.Errorf("Invalid VCS server name")
