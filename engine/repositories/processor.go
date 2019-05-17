@@ -42,7 +42,7 @@ func (s *Service) do(op sdk.Operation) error {
 	// Load workflow as code file
 	case op.Setup.Checkout.Branch != "":
 		if err := s.processCheckout(&op); err != nil {
-			op.Error = err.Error()
+			op.Error = sdk.Cause(err).Error()
 			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = ""
@@ -50,7 +50,7 @@ func (s *Service) do(op sdk.Operation) error {
 			switch {
 			case op.LoadFiles.Pattern != "":
 				if err := s.processLoadFiles(&op); err != nil {
-					op.Error = err.Error()
+					op.Error = sdk.Cause(err).Error()
 					op.Status = sdk.OperationStatusError
 				} else {
 					op.Error = ""
@@ -64,7 +64,7 @@ func (s *Service) do(op sdk.Operation) error {
 	// Push workflow as code file
 	case op.Setup.Push.FromBranch != "":
 		if err := s.processPush(&op); err != nil {
-			op.Error = err.Error()
+			op.Error = sdk.Cause(err).Error()
 			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = ""
