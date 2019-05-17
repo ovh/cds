@@ -38,8 +38,7 @@ export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.themeSubscription = this._theme.get().subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'seti' : 'default';
-
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.code && this.code.instance) {
                 this.code.instance.setOption('theme', this.codeMirrorConfig.theme);
             }

@@ -11,18 +11,22 @@
         stroke: $darkTheme_grey_5;
         &.success {
             fill: $darkTheme_light_green;
+            stroke: $darkTheme_green;
         }
         &.fail {
             fill: $darkTheme_light_red;
+            stroke: $darkTheme_red;
         }
         &.building {
-            fill: $darkTheme_light_teal;
+            fill: $darkTheme_light_blue;
+            stroke: $darkTheme_blue;
         }
         &.inactive {
             fill: $darkTheme_light_grey;
+            stroke: grey;
         }
         &.active {
-            fill: $cds_color_teal;
+          stroke: $cds_color_teal;
         }
     }
     &.success {

@@ -46,8 +46,7 @@ export class DiffItemComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.themeSubscription = this._theme.get().subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'seti' : 'default';
-
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codeLeft && this.codeLeft.instance) {
                 this.codeLeft.instance.setOption('theme', this.codeMirrorConfig.theme);
             }

@@ -1,5 +1,15 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
+import { Application } from 'app/model/application.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
+import { ThemeStore } from 'app/service/services.module';
+import { VariableService } from 'app/service/variable/variable.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { FetchPipeline } from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { cloneDeep } from 'lodash';
@@ -8,15 +18,6 @@ import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semanti
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
 import { finalize, flatMap } from 'rxjs/operators';
-import { Application } from '../../../../model/application.model';
-import { PermissionValue } from '../../../../model/permission.model';
-import { Pipeline } from '../../../../model/pipeline.model';
-import { Project } from '../../../../model/project.model';
-import { WNode, Workflow } from '../../../../model/workflow.model';
-import { ApplicationWorkflowService } from '../../../../service/application/application.workflow.service';
-import { VariableService } from '../../../../service/variable/variable.service';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { ParameterEvent } from '../../../parameter/parameter.event.model';
 declare var CodeMirror: any;
 
 @Component({
@@ -25,7 +26,7 @@ declare var CodeMirror: any;
     styleUrls: ['./node.context.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeContextComponent {
+export class WorkflowNodeContextComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -43,26 +44,26 @@ export class WorkflowNodeContextComponent {
     codemirror: CodemirrorComponent;
 
     editableNode: WNode;
-
     suggest: string[] = [];
     payloadString: string;
     branches: string[] = [];
     remotes: string[] = [];
     tags: string[] = [];
-    codeMirrorConfig: {};
+    codeMirrorConfig: any;
     invalidJSON = false;
     loadingBranches = false;
-
     pipParamsReady = false;
     currentPipeline: Pipeline;
     pipelineSubscription: Subscription;
     permissionEnum = PermissionValue;
+    themeSubscription: Subscription;
 
     constructor(
         private store: Store,
         private _variableService: VariableService,
         private _modalService: SuiModalService,
-        private _appWorkflowService: ApplicationWorkflowService
+        private _appWorkflowService: ApplicationWorkflowService,
+        private _theme: ThemeStore
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -71,6 +72,15 @@ export class WorkflowNodeContextComponent {
             lineWrapping: true,
             autoRefresh: true
         };
+    }
+
+    ngOnInit() {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     show(): void {

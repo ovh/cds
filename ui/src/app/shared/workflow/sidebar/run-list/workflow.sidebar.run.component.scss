@@ -71,7 +71,7 @@
                                 }
 
                                 &.running {
-                                    color: $darkTheme_teal;
+                                    color: $darkTheme_blue;
                                 }
 
                                 &.fail {
@@ -79,7 +79,7 @@
                                 }
 
                                 &.waiting {
-                                    color: $darkTheme_teal;
+                                    color: $darkTheme_blue;
                                 }
 
                             }
@@ -173,7 +173,7 @@
                 }
 
                 &.running {
-                    border-color: $darkTheme_teal;
+                    border-color: $darkTheme_blue;
                 }
 
                 &.fail {
@@ -181,7 +181,7 @@
                 }
 
                 &.waiting {
-                    border-color: $darkTheme_teal;
+                    border-color: $darkTheme_blue;
                 }
             }
         }
