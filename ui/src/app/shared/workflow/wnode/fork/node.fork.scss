@@ -10,19 +10,19 @@
     :host-context(.night) & {
         stroke: $darkTheme_grey_5;
         &.success {
-            fill: $darkTheme_light_green;
+            fill: $darkTheme_night_green;
             stroke: $darkTheme_green;
         }
         &.fail {
-            fill: $darkTheme_light_red;
+            fill: $darkTheme_night_red;
             stroke: $darkTheme_red;
         }
         &.building {
-            fill: $darkTheme_light_blue;
+            fill: $darkTheme_night_blue;
             stroke: $darkTheme_blue;
         }
         &.inactive {
-            fill: $darkTheme_light_grey;
+            fill: $darkTheme_night_grey;
             stroke: grey;
         }
         &.active {

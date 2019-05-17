@@ -13,7 +13,6 @@ import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { FetchPipeline } from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { cloneDeep } from 'lodash';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
@@ -40,8 +39,7 @@ export class WorkflowNodeContextComponent implements OnInit {
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
-    @ViewChild('textareaCodeMirror')
-    codemirror: CodemirrorComponent;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     editableNode: WNode;
     suggest: string[] = [];

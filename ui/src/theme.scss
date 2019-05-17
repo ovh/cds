@@ -1,12 +1,5 @@
 // This file contains all the overrides on semantic components required for CDS light and night theme.
 $darkBackground: #1b1c1d;
-$polar_grey_0: #333333;
-$polar_grey_1: #666666;
-$polar_grey_2: #6B6F7B;
-$polar_grey_3: #B5B7BD;
-$polar_grey_4: #E1E2E5;
-$polar_grey_5: #FCFCFC;
-$polar_grey_7: #282828;
 
 $darkTheme_grey_0: #2d2c2c; // top bar and active|hover on darkTheme_grey_1 background
 $darkTheme_grey_1: #383736;
@@ -18,13 +11,17 @@ $darkTheme_grey_6: #cccccc; // text on darkTheme_grey_1
 
 $darkTheme_green: #007611;
 $darkTheme_blue: #0070d9;
-$darkTheme_red: #c30101;
+$darkTheme_red: #e42805;
 $darkTheme_orange: #ff7924;
-$darkTheme_light_green: #2b5500;
-$darkTheme_light_red: #ad0000;
-$darkTheme_light_blue: #003f7e;
-$darkTheme_light_grey: #EEEEEE;
-$darkTheme_light_orange: #9e4607;
+$darkTheme_light_green: #94eaa0;
+$darkTheme_light_blue: #61b3ff;
+$darkTheme_light_red: #f5a293;
+$darkTheme_light_orange: #f9aa7a;
+$darkTheme_night_green: #115e00;
+$darkTheme_night_red: #8a1b02;
+$darkTheme_night_blue: #003f7e;
+$darkTheme_night_grey: #EEEEEE;
+$darkTheme_night_orange: #9e4607;
 
 .night {
     color: $darkTheme_grey_6;
@@ -40,7 +37,20 @@ $darkTheme_light_orange: #9e4607;
 
     .night & {
         background-color: $darkTheme_grey_0;
-        box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
+        box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
+    }
+}
+
+.ui.cards>.card {
+    .night & {
+        background-color: $darkTheme_grey_0;
+        box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
+    }
+}
+
+.ui.cards>.card>.content>.header {
+    .night & {
+        color: $darkTheme_grey_5;
     }
 }
 
@@ -50,7 +60,7 @@ a.ui.card:hover,
 .ui.link.card:hover {
     .night & {
         background-color: $darkBackground;
-        box-shadow: 0px 1px 3px 0px $polar_grey_0, 0px 0px 0px 1px $polar_grey_0;
+        box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
     }
 }
 
@@ -63,7 +73,7 @@ a.ui.card:hover,
 .ui.selection.active.dropdown,
 .ui.selection.active.dropdown .menu {
     .night & {
-        border-color: $darkTheme_grey_0;
+        border-color: $darkTheme_grey_2;
     }
 }
 
@@ -71,12 +81,13 @@ a.ui.card:hover,
     .night & {
         background-color: $darkTheme_grey_0;
         color: $darkTheme_grey_6;
+        border-color: $darkTheme_grey_2;
     }
 }
 
 .ui.selection.dropdown .menu>.item {
     .night & {
-        border-color: $darkTheme_grey_0;
+        border-color: $darkTheme_grey_2;
     }
 }
 
@@ -120,7 +131,7 @@ a.ui.card:hover,
     .night & {
         color: $darkTheme_grey_6;
         background-color: $darkTheme_grey_0;
-        border-color: $polar_grey_0;
+        border-color: $darkTheme_grey_2;
     }
 }
 
@@ -129,23 +140,35 @@ a.ui.card:hover,
     .night & {
         color: $darkTheme_grey_6;
         background-color: $darkBackground;
-        border-color: $polar_grey_0;
+        border-color: $darkTheme_grey_2;
     }
 }
 
-.ui.header,
+.ui.header {
+    .night & {
+        color: $darkTheme_grey_5;
+    }
+}
+
+.ui.header .sub.header {
+    .night & {
+        color: $darkTheme_grey_6;
+    }
+}
+
+.ui.attached.header,
 .ui.attached.block.header,
 .ui.attached.top.segment {
     .night & {
         color: $darkTheme_grey_6;
-        background-color: $polar_grey_7;
-        border-color: $polar_grey_7;
+        background-color: $darkTheme_grey_1;
+        border-color: $darkTheme_grey_1;
     }
 }
 
 .ui.attached.segment {
     .night & {
-        border-color: $polar_grey_7;
+        border-color: $darkTheme_grey_1;
     }
 }
 
@@ -225,6 +248,7 @@ a.ui.basic.grey.label:hover {
     .night &,
     :host-context(.night) & {
         background-color: $darkTheme_grey_0;
+        color: $darkTheme_grey_5;
 
         .item {
             color: $darkTheme_grey_6;
@@ -259,17 +283,34 @@ a.ui.basic.grey.label:hover {
 .ui.info.message,
 .ui.blue.message {
     .night & {
-        color: $darkTheme_blue;
-        background-color: $darkTheme_light_blue;
-        box-shadow: 0px 0px 0px 1px $darkTheme_blue inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+        color: $darkTheme_light_blue;
+        background-color: $darkTheme_night_blue;
+        box-shadow: 0px 0px 0px 1px $darkTheme_light_blue inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
     }
 }
 
 .ui.orange.message {
     .night & {
-        color: $darkTheme_orange;
-        background-color: $darkTheme_light_orange;
-        box-shadow: 0px 0px 0px 1px $darkTheme_orange inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+        color: $darkTheme_light_orange;
+        background-color: $darkTheme_night_orange;
+        box-shadow: 0px 0px 0px 1px $darkTheme_light_orange inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+    }
+}
+
+.ui.red.message {
+    .night & {
+        color: $darkTheme_light_red;
+        background-color: $darkTheme_night_red;
+        box-shadow: 0px 0px 0px 1px $darkTheme_light_red inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+    }
+}
+
+.ui.success.message,
+.ui.green.message {
+    .night & {
+        color: $darkTheme_light_green;
+        background-color: $darkTheme_night_green;
+        box-shadow: 0px 0px 0px 1px $darkTheme_light_green inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
     }
 }
 
@@ -289,5 +330,32 @@ a.ui.basic.grey.label:hover {
     .night & {
         background-color: $darkTheme_grey_0;
         border-color: $darkTheme_grey_1;
+    }
+}
+
+.ui.positive.button,
+.ui.green.button {
+    .night & {
+        background-color: $darkTheme_green !important;
+    }
+}
+
+.ui.negative.button,
+.ui.red.button {
+    .night & {
+        background-color: $darkTheme_red !important;
+    }
+}
+
+.ui.primary.button,
+.ui.blue.button {
+    .night & {
+        background-color: $darkTheme_blue !important;
+    }
+}
+
+.ui.inverted.red.segment {
+    .night & {
+        background-color: $darkTheme_red !important;
     }
 }

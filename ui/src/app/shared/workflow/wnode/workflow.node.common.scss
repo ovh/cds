@@ -13,19 +13,19 @@
       color: $polar_grey_4;
     }
     &.success {
-      background-color: $darkTheme_light_green;
+      background-color: $darkTheme_night_green;
       border-color: $darkTheme_green;
     }
     &.fail {
-      background-color: $darkTheme_light_red;
+      background-color: $darkTheme_night_red;
       border-color: $darkTheme_red;
     }
     &.building {
-      background-color: $darkTheme_light_blue;
+      background-color: $darkTheme_night_blue;
       border-color: $darkTheme_blue;
     }
     &.inactive {
-      background-color: $darkTheme_light_grey;
+      background-color: $darkTheme_night_grey;
       border-color: grey;
     }
     &.active {

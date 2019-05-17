@@ -3,25 +3,25 @@
 #summary {
     :host-context(.night) & {
         .success {
-            background-color: $darkTheme_light_green;
+            background-color: $darkTheme_night_green;
             border: 2px solid $darkTheme_green;
             border-top: none;
         }
 
         .fail {
-            background-color: $darkTheme_light_red;
+            background-color: $darkTheme_night_red;
             border: 2px solid $darkTheme_red;
             border-top: none;
         }
 
         .building {
-            background-color: $darkTheme_light_blue;
+            background-color: $darkTheme_night_blue;
             border: 2px solid $darkTheme_blue;
             border-top: none;
         }
 
         .inactive {
-            background-color: $darkTheme_light_grey;
+            background-color: $darkTheme_night_grey;
             border: 2px solid grey;
             border-top: none;
         }
@@ -65,7 +65,8 @@
 
     .row {
         a {
-            color: black;
+            color: inherit;
+            text-decoration: underline;
             font-weight: 600;
         }
     }

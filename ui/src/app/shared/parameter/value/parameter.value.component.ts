@@ -7,7 +7,6 @@ import { RepoManagerService } from 'app/service/repomanager/project.repomanager.
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { cloneDeep } from 'lodash';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -62,8 +61,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     @Output() valueChange = new EventEmitter<string | number | boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
 
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
+    @ViewChild('codeMirror') codemirror: any;
 
     codeMirrorConfig: any;
     repositoriesManager: Array<RepositoriesManager>;

@@ -624,10 +624,16 @@ sui-search {
 
 .codeAdded {
     background-color: #cdffd8;
+    .night & {
+        background-color: $darkTheme_night_green;
+    }
 }
 
 .codeRemoved {
     background-color: #ffeef0;
+    .night & {
+        background-color: $darkTheme_night_red;
+    }
 }
 
 .wrapper {

@@ -20,11 +20,18 @@ ul {
           padding-bottom: 5px;
           position: relative;
           :host-context(.night) & {
-            .success,
-            .fail,
-            .inactive,
-            .building {
-              color: $polar_grey_1;
+            color: $darkTheme_grey_6;
+            .success.segment {
+              background-color: $darkTheme_night_green;
+            }
+            .fail.segment {
+              background-color: $darkTheme_night_red;
+            }
+            .inactive.segment {
+              background-color: $darkTheme_night_grey;
+            }
+            .building.segment {
+              background-color: $darkTheme_night_blue;
             }
           }
           .success.segment {

@@ -1,8 +1,10 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from 'app/model/workflow.model';
+import { ThemeStore } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { cloneDeep } from 'lodash';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
-import { PipelineStatus } from '../../../../../model/pipeline.model';
-import { Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from '../../../../../model/workflow.model';
+import { Subscription } from 'rxjs/Subscription';
 declare var CodeMirror: any;
 
 @Component({
@@ -10,7 +12,8 @@ declare var CodeMirror: any;
     templateUrl: './condition.form.html',
     styleUrls: ['./condition.form.scss']
 })
-export class WorkflowNodeConditionFormComponent {
+@AutoUnsubscribe()
+export class WorkflowNodeConditionFormComponent implements OnInit {
 
     @Input() operators: {};
     @Input('names')
@@ -25,21 +28,23 @@ export class WorkflowNodeConditionFormComponent {
     }
     @Input() conditions: WorkflowNodeConditions;
     @Input() workflow: Workflow;
-    @Input() mode: 'advanced'|'basic';
+    @Input() mode: 'advanced' | 'basic';
 
     @Output() changeEvent = new EventEmitter<WorkflowNodeConditions>();
 
-    @ViewChild('textareaCodeMirror')
-    codemirror: CodemirrorComponent;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     _names: Array<string> = [];
     suggest: Array<string> = [];
     condition = new WorkflowNodeCondition();
     oldVariableCondition: string;
-    codeMirrorConfig: {};
+    codeMirrorConfig: any;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
+    themeSubscription: Subscription;
 
-    constructor() {
+    constructor(
+        private _theme: ThemeStore
+    ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -48,6 +53,15 @@ export class WorkflowNodeConditionFormComponent {
             lineNumbers: true,
             autoRefresh: true
         };
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     send(): void {
@@ -85,7 +99,7 @@ export class WorkflowNodeConditionFormComponent {
     }
 
     updateConditionValue(event: any) {
-      this.condition.value = event.target.checked ?  'true' : 'false';
+        this.condition.value = event.target.checked ? 'true' : 'false';
     }
 
     variableChanged(variable: any) {

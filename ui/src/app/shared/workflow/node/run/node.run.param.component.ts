@@ -14,7 +14,6 @@ import { WorkflowEventStore } from 'app/service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { cloneDeep } from 'lodash';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { debounceTime, finalize, first } from 'rxjs/operators';
@@ -32,8 +31,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
-    @ViewChild('textareaCodeMirror')
-    codemirror: CodemirrorComponent;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() workflowRun: WorkflowRun;
     _nodeRun: WorkflowNodeRun;
@@ -116,6 +114,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
 
     ngOnInit(): void {
         this.linkedToRepo = WNode.linkedToRepo(this._nodeToRun, this.workflow);
+
         this.themeSubscription = this._theme.get().subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {

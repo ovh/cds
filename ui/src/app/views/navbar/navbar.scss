@@ -182,7 +182,8 @@
 
     .info {
         font-size: 1em;
-        color: black;
+        color: inherit;
+        text-decoration: underline;
         display: block;
 
         &.mt {

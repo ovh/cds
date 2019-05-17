@@ -1,18 +1,18 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { PermissionValue } from 'app/model/permission.model';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { ThemeStore } from 'app/service/services.module';
+import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
+import { WorkflowEventStore } from 'app/service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchAsCodeWorkflow, ImportWorkflow, PreviewWorkflow, ResyncWorkflow } from 'app/store/workflows.action';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { PermissionValue } from '../../../../model/permission.model';
-import { Project } from '../../../../model/project.model';
-import { Workflow } from '../../../../model/workflow.model';
-import { WorkflowCoreService } from '../../../../service/workflow/workflow.core.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-sidebar-code',
@@ -20,7 +20,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     styleUrls: ['./sidebar.code.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarCodeComponent {
+export class WorkflowSidebarCodeComponent implements OnInit {
+    @ViewChild('codeMirror') codemirror: any;
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -43,18 +44,16 @@ export class WorkflowSidebarCodeComponent {
     }
     _open = false;
 
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
 
     asCodeEditorSubscription: Subscription;
     codeMirrorConfig: any;
-
     exportedWf: string;
     updated = false;
     loading = false;
     loadingGet = true;
     previewMode = false;
     permissionEnum = PermissionValue;
+    themeSubscription: Subscription;
 
     constructor(
         private store: Store,
@@ -63,7 +62,8 @@ export class WorkflowSidebarCodeComponent {
         private _workflowCore: WorkflowCoreService,
         private _workflowEventStore: WorkflowEventStore,
         private _toast: ToastService,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _theme: ThemeStore
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -71,13 +71,22 @@ export class WorkflowSidebarCodeComponent {
             lineNumbers: true,
             autoRefresh: true,
         };
+    }
 
+    ngOnInit(): void {
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
             .subscribe((state) => {
                 if (state != null && state.save) {
                     this.save();
                 }
             });
+
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     keyEvent(event: KeyboardEvent) {

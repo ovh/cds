@@ -85,15 +85,27 @@ pre {
   }
   tbody tr td:first-child {
     border-left: 1px solid $darkGreyColor;
+    :host-context(.night) & {
+        border-color: $darkTheme_grey_3;
+    }
   }
   tbody tr td:last-child {
     border-right: 1px solid $darkGreyColor;
+    :host-context(.night) & {
+        border-color: $darkTheme_grey_3;
+    }
   }
   tbody tr:first-child td {
     border-top: 1px solid $darkGreyColor;
+    :host-context(.night) & {
+        border-color: $darkTheme_grey_3;
+    }
   }
   tbody tr:last-child td {
     border-bottom: 1px solid $darkGreyColor;
+    :host-context(.night) & {
+        border-color: $darkTheme_grey_3;
+    }
   }
   tbody tr td {
     border: none;
