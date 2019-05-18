@@ -10,7 +10,7 @@ import { AddPipeline } from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { AddEnvironmentInProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, of as observableOf } from 'rxjs';
 import { finalize, first, flatMap, map } from 'rxjs/operators';
 import { Application } from '../../../../model/application.model';

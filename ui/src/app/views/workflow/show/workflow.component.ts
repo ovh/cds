@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as actionsWorkflow from 'app/store/workflows.action';
 import { WorkflowsState } from 'app/store/workflows.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../model/permission.model';

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { PipelineStatus } from '../../../../model/pipeline.model';
@@ -35,7 +35,7 @@ export class WorkflowTriggerComponent {
     selectedType: string;
     isParent: boolean;
 
-    constructor(private _modalService: SuiModalService) {}
+    constructor(private _modalService: SuiModalService) { }
 
     show(t: string, isP: boolean): void {
         this.selectedType = t;
@@ -65,7 +65,7 @@ export class WorkflowTriggerComponent {
     saveTrigger(): void {
         this.destNode.context.conditions = new WorkflowNodeConditions();
         this.destNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
-        let c = new  WorkflowNodeCondition();
+        let c = new WorkflowNodeCondition();
         c.variable = 'cds.status';
         c.value = PipelineStatus.SUCCESS;
         c.operator = 'eq';
@@ -97,12 +97,12 @@ export class WorkflowTriggerComponent {
     }
 
     nextStep() {
-      this.nodeWizard.goToNextSection().subscribe((section) => {
-        if (section === 'done') {
-          this.saveTrigger();
-        } else {
-          this.currentSection = section;
-        }
-      });
+        this.nodeWizard.goToNextSection().subscribe((section) => {
+            if (section === 'done') {
+                this.saveTrigger();
+            } else {
+                this.currentSection = section;
+            }
+        });
     }
 }

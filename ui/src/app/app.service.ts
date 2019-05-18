@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Broadcast, BroadcastEvent } from './model/broadcast.model';

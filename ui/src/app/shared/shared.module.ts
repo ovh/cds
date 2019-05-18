@@ -5,7 +5,6 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { MomentModule } from 'angular2-moment';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula';
@@ -14,12 +13,12 @@ import { NgxAutoScroll, NgxAutoScrollModule } from 'ngx-auto-scroll';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
+import { MomentModule } from 'ngx-moment';
 import { ActionComponent } from './action/action.component';
 import { ActionStepFormComponent } from './action/step/form/step.form.component';
 import { ActionStepComponent } from './action/step/step.component';
 import { AuditListComponent } from './audit/list/audit.list.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
-import { BroadcastLevelService } from './broadcast/broadcast.level.service';
 import { ConfirmButtonComponent } from './button/confirm/confirm.button';
 import { DeleteButtonComponent } from './button/delete/delete.button';
 import { UploadButtonComponent } from './button/upload/upload.button.component';
@@ -116,9 +115,24 @@ import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
 
 @NgModule({
-    imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,
-        CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule,
-        SuiModule, NgxAutoScrollModule, InfiniteScrollModule, NgxChartsModule],
+    imports: [
+        CommonModule,
+        ClipboardModule,
+        NgSemanticModule,
+        FormsModule,
+        TranslateModule,
+        DragulaModule.forRoot(),
+        MomentModule,
+        CodemirrorModule,
+        ReactiveFormsModule,
+        MarkdownModule.forRoot(),
+        NguiAutoCompleteModule,
+        RouterModule,
+        SuiModule,
+        NgxAutoScrollModule,
+        InfiniteScrollModule,
+        NgxChartsModule
+    ],
     declarations: [
         ActionComponent,
         ActionStepComponent,
@@ -224,7 +238,6 @@ import { ZoneComponent } from './zone/zone.component';
     providers: [
         DurationService,
         PermissionService,
-        BroadcastLevelService,
         SharedService,
         ToastService
     ],

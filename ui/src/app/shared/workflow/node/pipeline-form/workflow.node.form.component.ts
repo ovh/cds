@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ApplicationService } from 'app/service/application/application.service';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 import { Environment } from '../../../../model/environment.model';
 import { IdName, Project } from '../../../../model/project.model';
@@ -28,7 +28,7 @@ export class WorkflowNodeFormComponent implements OnInit {
         let voidEnv = new Environment();
         voidEnv.id = 0;
         voidEnv.name = ' ';
-        this.environments = cloneDeep(this.project.environments) || [];
+        this.environments = cloneDeep(this.project.environments) || [];
         this.environments.unshift(voidEnv);
 
         let voidApp = new IdName();

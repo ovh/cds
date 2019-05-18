@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { PipelineStatus } from '../../../../../model/pipeline.model';
 import { Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from '../../../../../model/workflow.model';
@@ -25,7 +25,7 @@ export class WorkflowNodeConditionFormComponent {
     }
     @Input() conditions: WorkflowNodeConditions;
     @Input() workflow: Workflow;
-    @Input() mode: 'advanced'|'basic';
+    @Input() mode: 'advanced' | 'basic';
 
     @Output() changeEvent = new EventEmitter<WorkflowNodeConditions>();
 
@@ -85,7 +85,7 @@ export class WorkflowNodeConditionFormComponent {
     }
 
     updateConditionValue(event: any) {
-      this.condition.value = event.target.checked ?  'true' : 'false';
+        this.condition.value = event.target.checked ? 'true' : 'false';
     }
 
     variableChanged(variable: any) {

@@ -1,13 +1,13 @@
-import {AfterViewChecked, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {first} from 'rxjs/operators';
-import {AllKeys} from '../../../model/keys.model';
-import {Parameter} from '../../../model/parameter.model';
-import {Project} from '../../../model/project.model';
-import {RepositoriesManager, Repository} from '../../../model/repositories.model';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {SharedService} from '../../shared.service';
+import { AfterViewChecked, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { first } from 'rxjs/operators';
+import { AllKeys } from '../../../model/keys.model';
+import { Parameter } from '../../../model/parameter.model';
+import { Project } from '../../../model/project.model';
+import { RepositoriesManager, Repository } from '../../../model/repositories.model';
+import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
+import { SharedService } from '../../shared.service';
 
 declare var CodeMirror: any;
 
@@ -32,7 +32,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     @Input() projectKey: string;
 
     @Input('ref')
-    set ref(data: Parameter|Array<string>) {
+    set ref(data: Parameter | Array<string>) {
         if (data && (<Parameter>data).type === 'list') {
             this.refValue = (<string>(<Parameter>data).value).split(';');
         } else if (data && Array.isArray(data)) {

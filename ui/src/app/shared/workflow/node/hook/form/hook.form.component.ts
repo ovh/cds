@@ -1,15 +1,15 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
-import {ProjectIntegration} from '../../../../../model/integration.model';
-import {Project} from '../../../../../model/project.model';
-import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
+import { Component, Input, OnInit } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { finalize, first } from 'rxjs/operators';
+import { ProjectIntegration } from '../../../../../model/integration.model';
+import { Project } from '../../../../../model/project.model';
+import { WorkflowHookModel } from '../../../../../model/workflow.hook.model';
 import {
     WNode,
     WNodeHook,
     Workflow, WorkflowNodeHookConfigValue
 } from '../../../../../model/workflow.model';
-import {HookService} from '../../../../../service/hook/hook.service';
+import { HookService } from '../../../../../service/hook/hook.service';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -81,14 +81,14 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     updateHookMultiChoice(k: string): void {
-        let finalValue = Object.getOwnPropertyNames((<WorkflowNodeHookConfigValue>this.hook.config[k]).temp).filter( choice => {
+        let finalValue = Object.getOwnPropertyNames((<WorkflowNodeHookConfigValue>this.hook.config[k]).temp).filter(choice => {
             return (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp[choice];
         });
         (<WorkflowNodeHookConfigValue>this.hook.config[k]).value = finalValue.join(';');
     }
 
     updateIntegration(): void {
-        Object.keys(this.hook.config).forEach( k => {
+        Object.keys(this.hook.config).forEach(k => {
             if (k === 'integration') {
                 this.hook.config[k].value = this.selectedIntegration.name;
             } else {
@@ -111,7 +111,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.availableIntegrations = this.project.integrations.filter(pf =>  pf.model.hook);
+        this.availableIntegrations = this.project.integrations.filter(pf => pf.model.hook);
         if (this.hook && this.hook.config && this.hook.config['integration']) {
             this.selectedIntegration = this.project.integrations.find(pf => pf.name === this.hook.config['integration'].value);
         }

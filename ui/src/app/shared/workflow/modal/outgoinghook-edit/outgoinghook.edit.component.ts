@@ -1,10 +1,10 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {Project} from '../../../../model/project.model';
-import {WNode, Workflow} from '../../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { Project } from '../../../../model/project.model';
+import { WNode, Workflow } from '../../../../model/workflow.model';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-node-outgoinghook-modal',

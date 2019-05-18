@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as projectActions from 'app/store/project.action';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../../../model/application.model';
 import { Environment } from '../../../../../../model/environment.model';

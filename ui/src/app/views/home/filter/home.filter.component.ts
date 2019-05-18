@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ResyncProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, flatMap } from 'rxjs/operators';
 import { IdName, LoadOpts, Project } from '../../../model/project.model';
 import { ProjectFilter, TimelineFilter } from '../../../model/timeline.model';

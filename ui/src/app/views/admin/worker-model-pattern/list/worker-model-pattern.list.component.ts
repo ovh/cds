@@ -1,28 +1,30 @@
 import { Component } from '@angular/core';
 import { ModelPattern } from 'app/model/worker-model.model';
+import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { finalize } from 'rxjs/operators';
-import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Table } from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-worker-model-pattern-list',
-    templateUrl: './worker-model-pattern.list.html',
-    styleUrls: ['./worker-model-pattern.list.scss']
+    templateUrl: './worker-model-pattern.list.html'
 })
-export class WorkerModelPatternListComponent extends Table<ModelPattern> {
+export class WorkerModelPatternListComponent {
+    loading: boolean;
     workerModelPatterns: Array<ModelPattern> = [];
-    filter: string;
-    loading = false;
+    columns: Array<Column<ModelPattern>>;
     path: Array<PathItem>;
+    filter: Filter<ModelPattern>;
 
-    constructor(private _workerModelService: WorkerModelService) {
-        super();
-
-        this.loading = true;
-        this._workerModelService.getWorkerModelPatterns()
-            .pipe(finalize(() => this.loading = false))
-            .subscribe(wmp => this.workerModelPatterns = wmp);
+    constructor(
+        private _workerModelService: WorkerModelService
+    ) {
+        this.filter = f => {
+            const lowerFilter = f.toLowerCase();
+            return d => {
+                return d.name.toLowerCase().indexOf(lowerFilter) !== -1 || d.type.toLowerCase().indexOf(lowerFilter) !== -1;
+            }
+        };
 
         this.path = [<PathItem>{
             translate: 'common_admin'
@@ -30,16 +32,27 @@ export class WorkerModelPatternListComponent extends Table<ModelPattern> {
             translate: 'worker_model_pattern_title',
             routerLink: ['/', 'admin', 'worker-model-pattern']
         }];
-    }
 
-    getData(): Array<ModelPattern> {
-        if (!this.filter) {
-            return this.workerModelPatterns;
-        }
-        let lowerFilter = this.filter.toLowerCase();
+        this.columns = [
+            <Column<ModelPattern>>{
+                type: ColumnType.ROUTER_LINK,
+                name: 'common_name',
+                selector: (mp: ModelPattern) => {
+                    return {
+                        link: `/admin/worker-model-pattern/${mp.type}/${mp.name}`,
+                        value: mp.name
+                    };
+                }
+            },
+            <Column<ModelPattern>>{
+                name: 'common_type',
+                selector: (mp: ModelPattern) => mp.type
+            }
+        ];
 
-        return this.workerModelPatterns.filter((wmp) => {
-            return wmp.name.toLowerCase().indexOf(lowerFilter) !== -1 || wmp.type.toLowerCase() === lowerFilter;
-        });
+        this.loading = true;
+        this._workerModelService.getWorkerModelPatterns()
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(wmp => this.workerModelPatterns = wmp);
     }
 }

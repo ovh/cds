@@ -1,9 +1,9 @@
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
+import { Broadcast } from 'app/model/broadcast.model';
 import * as immutable from 'immutable';
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {Observable} from 'rxjs/Observable';
-import {Broadcast} from '../../model/broadcast.model';
-import {BroadcastService} from './broadcast.service';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { BroadcastService } from './broadcast.service';
 
 /**
  * Service to get broadcast
@@ -30,8 +30,8 @@ export class BroadcastStore {
 
     delete(broadcast: Broadcast): Observable<boolean> {
         return this._broadcastService.deleteBroadcast(broadcast).map(b => {
-           this.removeBroadcastFromCache(broadcast.id);
-           return b;
+            this.removeBroadcastFromCache(broadcast.id);
+            return b;
         });
     }
 
@@ -72,7 +72,7 @@ export class BroadcastStore {
                 let m = immutable.Map<number, Broadcast>();
                 if (bcs) {
                     bcs.forEach(bc => {
-                       m = m.set(bc.id, bc);
+                        m = m.set(bc.id, bc);
                     });
                     this._broadcasts.next(m);
                 }

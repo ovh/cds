@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { NotificationService } from 'app/service/notification/notification.service';
 import { AddNotificationWorkflow, DeleteNotificationWorkflow, UpdateNotificationWorkflow } from 'app/store/workflows.action';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 import { Project } from '../../../../../model/project.model';
 import { Workflow, WorkflowNotification } from '../../../../../model/workflow.model';

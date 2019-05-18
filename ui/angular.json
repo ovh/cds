@@ -34,9 +34,6 @@
             "scripts": [
               "node_modules/jquery/dist/jquery.js",
               "node_modules/semantic-ui/dist/semantic.js",
-              "node_modules/lodash/lodash.min.js",
-              "node_modules/moment/min/moment.min.js",
-              "node_modules/moment/locale/fr.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",
               "node_modules/codemirror/addon/mode/simple.js",
@@ -64,10 +61,12 @@
           },
           "configurations": {
             "test": {
-              "fileReplacements": [{
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.test.ts"
-              }]
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.test.ts"
+                }
+              ]
             },
             "development": {},
             "production": {
@@ -80,10 +79,12 @@
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
-              "fileReplacements": [{
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.prod.ts"
-              }]
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
             }
           }
         },
@@ -120,9 +121,6 @@
             "scripts": [
               "node_modules/jquery/dist/jquery.js",
               "node_modules/semantic-ui/dist/semantic.js",
-              "node_modules/lodash/lodash.min.js",
-              "node_modules/moment/min/moment.min.js",
-              "node_modules/moment/locale/fr.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",
               "node_modules/codemirror/addon/mode/simple.js",

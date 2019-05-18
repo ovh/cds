@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { ActionService } from 'app/service/action/action.service';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
 import { Action } from '../../../../model/action.model';
 import { Group } from '../../../../model/group.model';

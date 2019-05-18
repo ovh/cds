@@ -6,7 +6,7 @@ import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { FetchWorkflow } from 'app/store/workflows.action';
 import { WorkflowsState } from 'app/store/workflows.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, flatMap } from 'rxjs/operators';
 import { PipelineStatus } from '../../../model/pipeline.model';

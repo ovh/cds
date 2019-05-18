@@ -4,7 +4,7 @@ import { User } from 'app/model/user.model';
 import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { SharedService } from 'app/shared/shared.service';
-import { omit } from 'lodash';
+import omit from 'lodash-es/omit';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript';
 import { finalize } from 'rxjs/operators/finalize';
 

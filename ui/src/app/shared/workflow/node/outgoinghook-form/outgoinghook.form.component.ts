@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { FetchWorkflow } from 'app/store/workflows.action';
 import { WorkflowsState } from 'app/store/workflows.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize, flatMap } from 'rxjs/operators';
 import { IdName, Project } from '../../../../model/project.model';
