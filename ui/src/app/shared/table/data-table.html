@@ -70,6 +70,12 @@
                     </app-confirm-button>
                     <span class="ui label {{c.selector.class}}" *ngSwitchCase="'label'">{{c.selector.value |
                         translate}}</span>
+                    <ng-container *ngSwitchCase="'router-link-with-icons'">
+                        <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
+                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate">
+                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
+                        </span>
+                    </ng-container>
                     <ng-container *ngSwitchDefault>{{c.selector | translate}}</ng-container>
                 </td>
             </ng-container>

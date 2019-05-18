@@ -10,6 +10,7 @@ export enum ColumnType {
     ICON = 'icon',
     LINK = 'link',
     ROUTER_LINK = 'router-link',
+    ROUTER_LINK_WITH_ICONS = 'router-link-with-icons',
     MARKDOWN = 'markdown',
     DATE = 'date',
     BUTTON = 'button',

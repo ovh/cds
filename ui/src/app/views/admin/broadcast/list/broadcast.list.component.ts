@@ -47,25 +47,30 @@ export class BroadcastListComponent {
                 }
             },
             <Column<Broadcast>>{
-                type: ColumnType.ICON,
-                name: 'broadcast_archived',
-                class: 'one',
-                selector: (b: Broadcast) => { return b.archived ? ['archive', 'icon'] : []; }
-            },
-            <Column<Broadcast>>{
                 type: ColumnType.DATE,
                 name: 'broadcast_created',
                 class: 'three',
                 selector: (b: Broadcast) => b.created
             },
             <Column<Broadcast>>{
-                type: ColumnType.ROUTER_LINK,
+                type: ColumnType.ROUTER_LINK_WITH_ICONS,
                 name: 'broadcast_title',
-                class: 'seven',
+                class: 'eight',
                 selector: (b: Broadcast) => {
+                    let icons = [];
+
+                    if (b.archived) {
+                        icons.push({
+                            label: 'broadcast_archived',
+                            class: ['archive', 'icon'],
+                            title: 'broadcast_archived'
+                        });
+                    }
+
                     return {
                         link: `/admin/broadcast/${b.id}`,
-                        value: b.title
+                        value: b.title,
+                        icons: icons
                     };
                 }
             },

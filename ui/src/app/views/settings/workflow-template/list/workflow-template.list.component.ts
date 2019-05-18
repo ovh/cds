@@ -55,6 +55,7 @@ export class WorkflowTemplateListComponent {
                 selector: (wt: WorkflowTemplate) => wt.description
             }
         ];
+
         this.getTemplates();
     }
 
