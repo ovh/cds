@@ -35,6 +35,7 @@ ui/tests
 ui/typings
 ui/src/app/**/*.js
 ui/semantic
+ui/semantic\\
 ui/e2e/*.png
 ui/documentation
 ui/dist
