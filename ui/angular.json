@@ -9,8 +9,11 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-builders/custom-webpack:browser",
           "options": {
+            "customWebpackConfig": {
+              "path": "./extra-webpack.config.js"
+            },
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -87,7 +90,7 @@
           }
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular-builders/dev-server:generic",
           "options": {
             "browserTarget": "ui-ng2:build"
           },
@@ -138,7 +141,7 @@
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/sanitize-html/dist/sanitize-html.min.js",
-              "node_modules/duration-js/duration.js",
+              "node_modules/duration-js/duration.js"
             ],
             "styles": [
               "node_modules/dragula/dist/dragula.css",
