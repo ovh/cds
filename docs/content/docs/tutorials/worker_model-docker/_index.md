@@ -25,6 +25,10 @@ Docker Image *golang:1.10* have a "curl" in $PATH, so it can be used as it is.
 
 ![Add worker model](/images/workflows.pipelines.requirements.docker.worker-model.docker.add.png)
 
+{{< note >}}
+If you want to specify an image using a private registry or a private image. You need to check the private checkbox and fill credentials in username and password to access to your image. And if your image is not on docker hub but from a private registry you need to fill the registry info (the registry api url, for example for docker hub it's https://index.docker.io/v1/ but we fill it by default).
+{{< /note >}}
+
 ## Worker Model Docker on Hatchery Swarm
 
 This hatchery offers some features on job pre-requisites, usable only on user's hatchery (ie. not a shared.infra hatchery).

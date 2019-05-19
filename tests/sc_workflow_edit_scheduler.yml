@@ -1,0 +1,31 @@
+name: Workflow (ITSCWRKFLW16) update workflow with scheduler
+testcases:
+- name: assert filepath
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW16/edit_a/pipeline.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW16/edit_b/pipeline.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW16/edit_a/workflow.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW16/edit_b/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW16"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW16 "
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW16 ITSCWRKFLW16"
+
+- name: import workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW16 ./tests/fixtures/ITSCWRKFLW16/edit_a/*.yml --skip-update-files
+  - script:  {{.cds.build.cdsctl}} workflow export ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json
+    assertions:
+    - result.systemoutjson.pipeline_hooks.pipeline_hooks0.config.cron ShouldEqual '10 * * * *'
+  - script:  {{.cds.build.cdsctl}} admin hooks list --filter workflow=ITSCWRKFLW16-WORKFLOW --format json
+    assertions:
+    - result.systemoutjson.systemoutjson0.cron ShouldEqual '10 * * * *'
+  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW16 ./tests/fixtures/ITSCWRKFLW16/edit_b/*.yml --skip-update-files
+  - script:  {{.cds.build.cdsctl}} workflow export ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json  
+    assertions:
+    - result.systemoutjson.pipeline_hooks.pipeline_hooks0.config.cron ShouldEqual '20 * * * *'
+  - script:  {{.cds.build.cdsctl}} admin hooks list --filter workflow=ITSCWRKFLW16-WORKFLOW --format json
+    assertions:
+    - result.systemoutjson.systemoutjson0.cron ShouldEqual '20 * * * *'

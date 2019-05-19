@@ -33,6 +33,10 @@ export class WorkerModel {
 
 export class ModelDocker {
     image: string;
+    private: boolean;
+    registry: string;
+    username: string;
+    password: string;
     shell: string;
     envs: {};
     cmd: string;

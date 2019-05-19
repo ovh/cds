@@ -1203,6 +1203,18 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		return nil
 	}
 
+	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.DefaultPayload != nil {
+		defaultPayload, err := w.WorkflowData.Node.Context.DefaultPayloadToMap()
+		if err != nil {
+			return sdk.WrapError(err, "cannot transform default payload to map")
+		}
+		for payloadKey := range defaultPayload {
+			if strings.HasPrefix(payloadKey, "cds.") {
+				return sdk.WrapError(sdk.ErrInvalidPayloadVariable, "cannot have key %s in default payload", payloadKey)
+			}
+		}
+	}
+
 	// Fill empty node type
 	w.AssignEmptyType()
 	if err := w.ValidateType(); err != nil {
@@ -1347,6 +1359,7 @@ func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n
 			for _, e := range proj.Environments {
 				if e.ID == n.Context.EnvironmentID {
 					found = true
+					break
 				}
 			}
 			if !found {
@@ -1385,6 +1398,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 				if a.ID == n.Context.ApplicationID {
 					app = a
 					found = true
+					break
 				}
 			}
 			if !found {
@@ -1415,6 +1429,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 			for _, p := range proj.Pipelines {
 				if p.ID == n.Context.PipelineID {
 					found = true
+					break
 				}
 			}
 			if !found {
@@ -1472,10 +1487,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	if oldWf != nil && (opts == nil || !opts.Force) {
-		if oldWf.FromRepository != "" && opts != nil && opts.FromRepository != oldWf.FromRepository {
-			return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
-		}
+	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
+	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
+		return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 	}
 
 	tx, err := db.Begin()

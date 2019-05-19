@@ -75,7 +75,7 @@ services:
   #
   # If your are a Docker for Desktop user (Docker4Mac or Docker4Windows) you will probably have to bind 
   # your docker socket to a tcp port with a socat like
-  # docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2376:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+  # docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
   cds-hatchery-swarm:
     image: ovhcom/cds-engine:latest
     command: /app/cds-engine-linux-amd64 start hatchery:swarm
@@ -106,6 +106,23 @@ services:
       CDS_HATCHERY_LOCAL_NBPROVISION: 5
     links:
        - cds-api
+
+  cds-hooks:
+    image: ovhcom/cds-engine:latest
+    command: sh -c "PATH=$PATH:/app /app/cds-engine-linux-amd64 start hooks"
+    environment:
+      CDS_HOOKS_NAME: hooks
+      CDS_HOOKS_URL: http://cds-hooks:8083
+      CDS_HOOKS_URLPUBLIC: http://${HOSTNAME}:8083
+      CDS_HOOKS_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      CDS_HOOKS_API_HTTP_URL: http://cds-api:8081
+      CDS_HOOKS_CACHE_REDIS_HOST: cds-cache:6379
+      CDS_HOOKS_CACHE_REDIS_PASSWORD: cds
+    ports:
+      - "8083:8083"
+    links:
+       - cds-api
+       - cds-cache
 
 volumes:
   cds-artifacts-volume:

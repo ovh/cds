@@ -1,6 +1,6 @@
 [package]
 name = "sdk-cds"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Benjamin Coenen <benjamin.coenen@corp.ovh.com>"]
 edition = "2018"
 description = "SDK in Rust to use CDS API"
@@ -16,3 +16,5 @@ serde = "1.0.0"
 serde_derive = "1.0.0"
 serde_json = "1.0.0"
 http = "0.1.15"
+chrono = { version = "0.4.6", features = ["serde"] }
+base64 = "0.10.1"

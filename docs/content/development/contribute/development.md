@@ -194,12 +194,12 @@ $ engine --config ~/.cds/dev.toml start api
 $ engine --config ~/.cds/dev.toml start hatchery:local
 ```
 
-If you want to launch vcs & hooks uServices, you have to:
+If you want to launch vcs & hooks µServices, you have to:
 
 - set name in sections `[vcs]` and `[hooks]`
 - uncomment API URL in sections `[vcs.api.http]` and `[hooks.api.http]`
 - for vcs uService, please read tutorial on [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}).
 
-Of course, you have to do the same thing with other uServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
+Of course, you have to do the same thing with other µServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
 
 A remark / question / suggestion, feel free to join us on https://gitter.im/ovh-cds/Lobby

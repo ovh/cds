@@ -161,6 +161,26 @@ func (api *API) getWorkflowRunsHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteWorkflowRunsBranchHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		branch := vars["branch"]
+
+		wfIDs, err := workflow.LoadRunsIDByTag(api.mustDB(), key, name, "git.branch", branch)
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.MarkWorkflowRunsAsDelete(api.mustDB(), wfIDs); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 // getWorkflowRunNumHandler returns the last run number for the given workflow
 func (api *API) getWorkflowRunNumHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -938,7 +958,6 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 
 func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.WorkflowRun, err error) *workflow.ProcessorReport {
 	report := new(workflow.ProcessorReport)
-	log.Error("unable to start workflow: %v", err)
 
 	var info sdk.SpawnMsg
 	if sdk.ErrorIs(err, sdk.ErrConditionsNotOk) {
@@ -949,6 +968,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			wfRun.Status = sdk.StatusNeverBuilt.String()
 		}
 	} else {
+		log.Error("unable to start workflow: %v", err)
 		wfRun.Status = sdk.StatusFail.String()
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,

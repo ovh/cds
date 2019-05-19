@@ -78,7 +78,11 @@ func GetArtifactFilename(name, os, arch, variant string) string {
 	if name == "cdsctl" {
 		prefix = ""
 	}
-	return fmt.Sprintf("%s%s-%s-%s%s", prefix, name, os, getArchName(arch), variant)
+	var suffix string
+	if os == "windows" {
+		suffix = ".exe"
+	}
+	return fmt.Sprintf("%s%s-%s-%s%s%s", prefix, name, os, getArchName(arch), variant, suffix)
 }
 
 // AllDownloadableResourcesWithAvailability set flag Available on downloads list

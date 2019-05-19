@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"mime"
@@ -17,7 +18,7 @@ func (s *Service) doWebHookExecution(e *sdk.TaskExecution) ([]sdk.WorkflowNodeRu
 	log.Debug("Hooks> Processing webhook %s %s", e.UUID, e.Type)
 
 	if e.Type == TypeRepoManagerWebHook {
-		return executeRepositoryWebHook(e)
+		return s.executeRepositoryWebHook(e)
 	}
 	event, err := executeWebHook(e)
 	if err != nil {
@@ -37,9 +38,11 @@ func getRepositoryHeader(whe *sdk.WebHookExecution) string {
 	return ""
 }
 
-func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	payloads := []map[string]interface{}{}
+	projectKey := t.Config["project"].Value
+	workflowName := t.Config["workflow"].Value
 
 	switch getRepositoryHeader(t.WebHook) {
 	case GithubHeader:
@@ -49,7 +52,10 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 			return nil, sdk.WrapError(err, "unable ro read github request: %s", string(t.WebHook.RequestBody))
 		}
 		if pushEvent.Deleted {
-			return nil, nil
+			branch := strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+			err := s.enqueueBranchDeletion(projectKey, workflowName, branch)
+
+			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 		}
 		payload["git.author"] = pushEvent.HeadCommit.Author.Username
 		payload["git.author.email"] = pushEvent.HeadCommit.Author.Email
@@ -93,7 +99,8 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 		}
 		// Branch deletion ( gitlab return 0000000000000000000000000000000000000000 as git hash)
 		if pushEvent.After == "0000000000000000000000000000000000000000" {
-			return nil, nil
+			err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushEvent.Ref, "refs/heads/"))
+			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 		}
 		payload["git.author"] = pushEvent.UserUsername
 		payload["git.author.email"] = pushEvent.UserEmail
@@ -135,7 +142,10 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEv
 
 		for _, pushChange := range pushEvent.Changes {
 			if pushChange.Type == "DELETE" {
-				// TODO: delelete all runs for this branch
+				err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.RefID, "refs/heads/"))
+				if err != nil {
+					log.Error("cannot enqueue branch deletion: %v", err)
+				}
 				continue
 			}
 			payload := make(map[string]interface{})
@@ -280,6 +290,35 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 		h.Payload[k] = values.Get(k)
 	}
 	return &h, nil
+}
+
+func (s *Service) enqueueBranchDeletion(projectKey, workflowName, branch string) error {
+	config := sdk.WorkflowNodeHookConfig{
+		"project": sdk.WorkflowNodeHookConfigValue{
+			Configurable: false,
+			Type:         sdk.HookConfigTypeProject,
+			Value:        projectKey,
+		},
+		"workflow": sdk.WorkflowNodeHookConfigValue{
+			Configurable: false,
+			Type:         sdk.HookConfigTypeWorkflow,
+			Value:        workflowName,
+		},
+		"branch": sdk.WorkflowNodeHookConfigValue{
+			Configurable: false,
+			Type:         sdk.HookConfigTypeString,
+			Value:        branch,
+		},
+	}
+	task := sdk.Task{
+		Config: config,
+		Type:   TypeBranchDeletion,
+		UUID:   sdk.UUID(),
+	}
+
+	_, err := s.startTask(context.Background(), &task)
+
+	return sdk.WrapError(err, "cannot start task")
 }
 
 func copyValues(dst, src url.Values) {
