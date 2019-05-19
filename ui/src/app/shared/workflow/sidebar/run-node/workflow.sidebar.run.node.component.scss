@@ -1,30 +1,42 @@
 @import '../../../../../common';
+
 .sidebarNodeRun {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    .title {
-        padding: 10px 40px 10px 10px;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .title {
+    padding: 10px 40px 10px 10px;
+  }
+
+  .control {
+    padding: 10px;
+  }
+
+  .info {
+    padding: 10px;
+  }
+
+  .steps {
+    :host-context(.night) & {
+      background-color: $darkTheme_grey_1;
     }
-    .control {
-        padding: 10px;
+
+    flex: 1;
+    border: none;
+    overflow: hidden;
+
+    &:hover {
+      overflow-y: auto;
     }
-    .info {
-        padding: 10px;
-    }
-    .steps {
-        flex: 1;
-        border: none;
-        overflow: hidden;
-        &:hover {
-            overflow-y: auto;
-        }
-    }
-    .logs {
-        padding: 10px;
-    }
-    pre {
-        white-space: pre-line;
-    }
+  }
+
+  .logs {
+    padding: 10px;
+  }
+
+  pre {
+    white-space: pre-line;
+  }
 }

@@ -108,9 +108,28 @@ a.ui.card:hover,
   }
 }
 
+.ui.menu {
+  .night & {
+    background-color: $darkTheme_grey_3;
+    box-shadow: none;
+  }
+}
+
 .ui.menu .item {
   .night & {
     color: $darkTheme_grey_6;
+  }
+}
+
+.ui.pagination.menu .active.item {
+  .night & {
+    color: $darkTheme_grey_5;
+  }
+}
+
+.ui.secondary.menu {
+  .night & {
+    background-color: $darkTheme_grey_1;
   }
 }
 
