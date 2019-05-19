@@ -1,189 +1,194 @@
 @import '../../../../../common';
 
 .workflowSidebar {
-    height: 100%;
-    width: 255px;
-    display: flex;
-    flex-direction: column;
+  height: 100%;
+  width: 255px;
+  display: flex;
+  flex-direction: column;
 
-    .selection {
-        margin: 6px 0 6px 4px;
-        width: calc(100% - 4px);
-        z-index: 1001; // fix to be over loader that is z-index 1000
+  .selection {
+    margin: 6px 0 6px 4px;
+    width: calc(100% - 4px);
+    z-index: 1001; // fix to be over loader that is z-index 1000
+  }
+
+  .runs {
+    color: $polar_grey_1;
+
+    :host-context(.night) & {
+      color: $darkTheme_grey_5;
     }
 
-    .runs {
-        color: $polar_grey_1;
-        margin: 0;
+    margin: 0;
+    flex: 1;
+
+    &.scrollable {
+      overflow: hidden;
+
+      &:hover {
+        overflow-y: auto;
+      }
+    }
+
+    .empty {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .item {
+      width: 240px;
+      height: 60px;
+      margin: 0 0 6px 4px;
+      padding: 0;
+      border-left: 4px solid grey;
+      background-color: $polar_grey_5;
+      display: flex;
+      flex-direction: column;
+
+      .content {
         flex: 1;
+        display: flex;
+        flex-direction: row;
+        padding: 3px 5px 0 5px;
 
-        &.scrollable {
-            overflow: hidden;
+        .info {
+          overflow: hidden;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
 
-            &:hover {
-                overflow-y: auto;
-            }
-        }
-
-        .empty {
-            padding: 20px;
-            text-align: center;
-        }
-
-        .item {
-            width: 240px;
-            height: 60px;
-            margin: 0 0 6px 4px;
-            padding: 0;
-            border-left: 4px solid grey;
-            background-color: $polar_grey_5;
-            display: flex;
-            flex-direction: column;
-
-            .content {
-                flex: 1;
-                display: flex;
-                flex-direction: row;
-                padding: 3px 5px 0 5px;
-
-                .info {
-                    overflow: hidden;
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-
-                    .number {
-                        .hash {
-                            font-size: 1.2em;
-                            line-height: 1em;
-                            color: $polar_grey_3;
-                            margin-right: 1px;
-                        }
-
-                        .count {
-                            font-size: 1.3em;
-                            line-height: 1em;
-
-                            :host-context(.night) & {
-
-                                &.success {
-                                    color: $darkTheme_green;
-                                }
-
-                                &.running {
-                                    color: $darkTheme_blue;
-                                }
-
-                                &.fail {
-                                    color: $darkTheme_red;
-                                }
-
-                                &.waiting {
-                                    color: $darkTheme_blue;
-                                }
-
-                            }
-
-                            &.success {
-                                color: $cds_color_green;
-                            }
-
-                            &.running {
-                                color: $cds_color_teal;
-                            }
-
-                            &.fail {
-                                color: $cds_color_red;
-                            }
-
-                            &.waiting {
-                                color: $cds_color_teal;
-                            }
-                        }
-                    }
-
-                    .line {
-                        font-size: 0.8em;
-                        line-height: 0.9em;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        padding: 5px 0;
-                    }
-                }
-
-                .loader {
-                    margin-top: 2px;
-                }
+          .number {
+            .hash {
+              font-size: 1.2em;
+              line-height: 1em;
+              color: $polar_grey_3;
+              margin-right: 1px;
             }
 
-            .foot {
-                display: flex;
-                flex-direction: row;
-                font-size: 0.8em;
-                line-height: 0.9em;
-                padding: 0px 5px 3px 5px;
+            .count {
+              font-size: 1.3em;
+              line-height: 1em;
 
-                .duration {
-                    flex: 1;
-                }
-            }
-
-            &.active {
-                background-color: $cds_color_light_grey;
-            }
-
-            &:focus {
-                outline: none;
-            }
-
-            &:hover {
-                background-color: $cds_color_light_grey;
-            }
-
-            &.success {
-                border-color: $cds_color_green;
-            }
-
-            &.running {
-                border-color: $cds_color_teal;
-            }
-
-            &.fail {
-                border-color: $cds_color_red;
-            }
-
-            &.waiting {
-                border-color: $cds_color_teal;
-            }
-
-            :host-context(.night) & {
-                background-color: $darkTheme_grey_2;
-
-                &.active {
-                    background-color: $darkTheme_grey_0;
-                }
-
-                &:hover {
-                    background-color: $darkTheme_grey_0;
-                }
+              :host-context(.night) & {
 
                 &.success {
-                    border-color: $darkTheme_green;
+                  color: $darkTheme_green;
                 }
 
                 &.running {
-                    border-color: $darkTheme_blue;
+                  color: $darkTheme_blue;
                 }
 
                 &.fail {
-                    border-color: $darkTheme_red;
+                  color: $darkTheme_red;
                 }
 
                 &.waiting {
-                    border-color: $darkTheme_blue;
+                  color: $darkTheme_blue;
                 }
+
+              }
+
+              &.success {
+                color: $cds_color_green;
+              }
+
+              &.running {
+                color: $cds_color_teal;
+              }
+
+              &.fail {
+                color: $cds_color_red;
+              }
+
+              &.waiting {
+                color: $cds_color_teal;
+              }
             }
+          }
+
+          .line {
+            font-size: 0.8em;
+            line-height: 0.9em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 5px 0;
+          }
         }
+
+        .loader {
+          margin-top: 2px;
+        }
+      }
+
+      .foot {
+        display: flex;
+        flex-direction: row;
+        font-size: 0.8em;
+        line-height: 0.9em;
+        padding: 0px 5px 3px 5px;
+
+        .duration {
+          flex: 1;
+        }
+      }
+
+      &.active {
+        background-color: $cds_color_light_grey;
+      }
+
+      &:focus {
+        outline: none;
+      }
+
+      &:hover {
+        background-color: $cds_color_light_grey;
+      }
+
+      &.success {
+        border-color: $cds_color_green;
+      }
+
+      &.running {
+        border-color: $cds_color_teal;
+      }
+
+      &.fail {
+        border-color: $cds_color_red;
+      }
+
+      &.waiting {
+        border-color: $cds_color_teal;
+      }
+
+      :host-context(.night) & {
+        background-color: $darkTheme_grey_2;
+
+        &.active {
+          background-color: $darkTheme_grey_0;
+        }
+
+        &:hover {
+          background-color: $darkTheme_grey_0;
+        }
+
+        &.success {
+          border-color: $darkTheme_green;
+        }
+
+        &.running {
+          border-color: $darkTheme_blue;
+        }
+
+        &.fail {
+          border-color: $darkTheme_red;
+        }
+
+        &.waiting {
+          border-color: $darkTheme_blue;
+        }
+      }
     }
+  }
 }
