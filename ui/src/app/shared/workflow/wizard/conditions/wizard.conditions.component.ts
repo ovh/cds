@@ -40,7 +40,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             } else {
                 this.isAdvanced = false;
             }
-
+            this.previousValue = this.editableNode.context.conditions.lua_script;
             let condition = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
             if (condition) {
                 condition.value = <any>(condition.value !== 'false');
@@ -64,6 +64,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
     loading = false;
+    previousValue: string;
 
     constructor(private store: Store, private _variableService: VariableService, private _workflowService: WorkflowService,
                 private _toast: ToastService, private _translate: TranslateService) {
@@ -157,7 +158,16 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             });
     }
 
-    pushChange(event: string): void {
-        this.conditionsChange.emit(true);
+    pushChange(event: string, e?: string): void {
+        if (event !== 'codemirror') {
+            this.conditionsChange.emit(true);
+            return;
+        }
+        if (event === 'codemirror' && e && e !== this.previousValue) {
+            this.previousValue = e;
+            this.conditionsChange.emit(true);
+        }
+        return;
+
     }
 }

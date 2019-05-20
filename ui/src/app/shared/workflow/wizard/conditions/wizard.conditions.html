@@ -138,7 +138,7 @@
             </div>
             <codemirror
                 [(ngModel)]="editableNode.context.conditions.lua_script"
-                (ngModelChange)="pushChange('codemirror')"
+                (ngModelChange)="pushChange('codemirror', $event)"
                 [config]="codeMirrorConfig"
                 #textareaCodeMirror>
             </codemirror>
