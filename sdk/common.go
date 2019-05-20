@@ -194,3 +194,15 @@ func (a StringSlice) Value() (driver.Value, error) {
 	j, err := json.Marshal(a)
 	return j, WrapError(err, "cannot marshal StringSlice")
 }
+
+// DirectoryExists checks if the directory exists
+func DirectoryExists(path string) (bool, error) {
+	s, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return s.IsDir(), err
+}

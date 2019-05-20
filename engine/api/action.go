@@ -23,11 +23,9 @@ import (
 
 func (api *API) getActionsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
-
 		var as []sdk.Action
 		var err error
-		if u.Admin {
+		if isMaintainer(ctx) || isAdmin(ctx) {
 			as, err = action.LoadAllByTypes(api.mustDB(),
 				[]string{sdk.DefaultAction},
 				action.LoadOptions.WithRequirements,
@@ -37,7 +35,7 @@ func (api *API) getActionsHandler() service.Handler {
 			)
 		} else {
 			as, err = action.LoadAllTypeDefaultByGroupIDs(api.mustDB(),
-				append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID),
+				append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID),
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
@@ -57,7 +55,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithGroups)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet %s", key)
 		}
@@ -88,16 +86,15 @@ func (api *API) getActionsForGroupHandler() service.Handler {
 			return err
 		}
 
-		// check that the group exists and user is part of the group
+		// check that the group exists
 		g, err := group.LoadGroupByID(api.mustDB(), groupID)
 		if err != nil {
 			return err
 		}
 
-		u := getAuthentifiedUser(ctx)
-
-		if err := group.CheckUserIsGroupMember(g, u); err != nil {
-			return err
+		// and user is part of the group
+		if !isGroupMember(ctx, g) && !isMaintainer(ctx) && !isAdmin(ctx) {
+			return sdk.ErrForbidden
 		}
 
 		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(api.mustDB(),
@@ -130,10 +127,8 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		u := getAuthentifiedUser(ctx)
-
-		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-			return err
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -173,7 +168,7 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionAdd(*new, u)
+		event.PublishActionAdd(*new, getAPIConsumer(ctx))
 
 		new.Editable = true
 
@@ -204,7 +199,8 @@ func (api *API) getActionHandler() service.Handler {
 		if err := action.LoadOptions.Default(api.mustDB(), a); err != nil {
 			return err
 		}
-		if err := group.CheckUserIsGroupAdmin(a.Group, getAuthentifiedUser(ctx)); err == nil {
+
+		if isGroupAdmin(ctx, g) || isAdmin(ctx) {
 			a.Editable = true
 		}
 
@@ -250,17 +246,14 @@ func (api *API) putActionHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u := getAuthentifiedUser(ctx)
-
 		grp, err := group.LoadGroupByID(tx, *data.GroupID)
 		if err != nil {
 			return err
 		}
 
 		if *old.GroupID != *data.GroupID || old.Name != data.Name {
-			// check that the group exists and user is admin for group id
-			if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-				return err
+			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 			}
 
 			// check that no action already exists for same group/name
@@ -295,7 +288,7 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *new, u)
+		event.PublishActionUpdate(*old, *new, getAPIConsumer(ctx))
 
 		new.Editable = true
 
@@ -483,12 +476,9 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			}
 		}
 
-		u := getAuthentifiedUser(ctx)
-
 		if grp.ID != newGrp.ID || old.Name != ea.Name {
-			// check that the group exists and user is admin for group id
-			if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-				return err
+			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 			}
 
 			// check that no action already exists for same group/name
@@ -544,7 +534,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishActionUpdate(*old, *new, u)
+		event.PublishActionUpdate(*old, *new, getAPIConsumer(ctx))
 
 		new.Editable = true
 
@@ -669,10 +659,8 @@ func (api *API) importActionHandler() service.Handler {
 			}
 		}
 
-		u := getAuthentifiedUser(ctx)
-
-		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-			return err
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
 		data, err := ea.Action()
@@ -741,9 +729,9 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		if exists {
-			event.PublishActionUpdate(*old, *new, u)
+			event.PublishActionUpdate(*old, *new, getAPIConsumer(ctx))
 		} else {
-			event.PublishActionAdd(*new, u)
+			event.PublishActionAdd(*new, getAPIConsumer(ctx))
 		}
 
 		new.Editable = true
@@ -843,10 +831,9 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return usage, err
 	}
 
-	u := getAuthentifiedUser(ctx)
-	if !u.Admin() {
+	if !isAdmin(ctx) && !isMaintainer(ctx) {
 		// filter usage in pipeline by user's projects
-		ps, err := project.LoadAll(ctx, db, store, u)
+		ps, err := project.LoadAllByGroups(ctx, db, store, getAPIConsumer(ctx))
 		if err != nil {
 			return usage, err
 		}
@@ -864,7 +851,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		usage.Pipelines = filteredPipelines
 
 		// filter usage in action by user's groups
-		groupIDs := append(sdk.GroupsToIDs(u.OldUserStruct.Groups), group.SharedInfraGroup.ID)
+		groupIDs := sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups())
 		mGroupIDs := make(map[int64]struct{}, len(groupIDs))
 		for i := range groupIDs {
 			mGroupIDs[groupIDs[i]] = struct{}{}

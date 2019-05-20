@@ -39,7 +39,6 @@ type Identifiable interface {
 }
 
 type GroupMember interface {
-	Admin() bool
 	GetGroups() []Group
 }
 
@@ -71,6 +70,10 @@ func (u AuthentifiedUser) GetUsername() string {
 
 func (u AuthentifiedUser) Admin() bool {
 	return u.Ring == UserRingAdmin
+}
+
+func (u AuthentifiedUser) Maintainer() bool {
+	return u.Ring == UserRingMaintainer
 }
 
 func (u AuthentifiedUser) Email() string {

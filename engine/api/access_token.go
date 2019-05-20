@@ -92,9 +92,9 @@ func (api *API) postNewAccessTokenHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		grantedUser := getGrantedUser(ctx)
+		APIConsumer := getAPIConsumer(ctx)
 
-		token, jwttoken, err := api.createNewAccessToken(grantedUser.OnBehalfOf, accessTokenRequest)
+		token, jwttoken, err := api.createNewAccessToken(APIConsumer.OnBehalfOf, accessTokenRequest)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -125,7 +125,7 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 		}
 
 		// Only the creator of the token can regen it
-		if t.AuthentifiedUserID != getGrantedUser(ctx).OnBehalfOf.ID {
+		if t.AuthentifiedUserID != getAPIConsumer(ctx).OnBehalfOf.ID {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -173,7 +173,7 @@ func (api *API) getAccessTokenByGroupHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		oldUser, err := user.GetDeprecatedUser(api.mustDB(), &getGrantedUser(ctx).OnBehalfOf)
+		oldUser, err := user.GetDeprecatedUser(api.mustDB(), &getAPIConsumer(ctx).OnBehalfOf)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -219,7 +219,7 @@ func (api *API) deleteAccessTokenHandler() service.Handler {
 		}
 
 		// Only the creator of the token can delete it
-		if t.AuthentifiedUserID != getGrantedUser(ctx).OnBehalfOf.ID {
+		if t.AuthentifiedUserID != getAPIConsumer(ctx).OnBehalfOf.ID {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

@@ -20,22 +20,54 @@ type AccessTokenRequest struct {
 	ExpirationDelaySecond float64  `json:"expiration_delay_second"`
 }
 
-// GrantedUser is a user granted from a JWT token. It can be a service, a worker, a hatchery or a user
-type GrantedUser struct {
+// APIConsumer is a user granted from a JWT token. It can be a service, a worker, a hatchery or a user
+type APIConsumer struct {
 	Fullname   string
 	Groups     []Group
 	OnBehalfOf AuthentifiedUser
 }
 
-func (g *GrantedUser) IsGranted() bool {
+func (g *APIConsumer) IsGranted() bool {
 	return g != nil
 }
 
-func (g *GrantedUser) IsRealUser() bool {
-	if !g.IsGranted() {
+func (g *APIConsumer) GetGroups() []Group {
+	if g.IsGranted() {
+		return nil
+	}
+	return g.Groups
+}
+
+func (g *APIConsumer) Admin() bool {
+	if g.IsGranted() {
 		return false
 	}
-	return g.OnBehalfOf.Fullname == g.Fullname
+	return g.OnBehalfOf.Admin()
+}
+
+func (g *APIConsumer) Maintainer() bool {
+	if g.IsGranted() {
+		return false
+	}
+	return g.OnBehalfOf.Maintainer()
+}
+
+func (g *APIConsumer) GetUsername() string {
+	return g.Fullname
+}
+
+func (g *APIConsumer) Email() string {
+	return g.OnBehalfOf.Email()
+}
+
+func (g *APIConsumer) GetDEPRECATEDUserStruct() *User {
+	if g.IsGranted() {
+		return nil
+	}
+	if g.OnBehalfOf.OldUserStruct == nil {
+		return nil
+	}
+	return g.OnBehalfOf.OldUserStruct
 }
 
 // AccessToken is either a Personnal Access Token or a Group Access Token

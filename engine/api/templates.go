@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -849,6 +850,31 @@ func (api *API) postTemplatePushHandler() service.Handler {
 		defer r.Body.Close()
 
 		tr := tar.NewReader(bytes.NewReader(btes))
+		wt, err := ReadFromTar(tr)
+		if err != nil {
+			return err
+		}
+
+		// group name should be set
+		if wt.Group == nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
+		}
+
+		// check that the user is admin on the given template's group
+		grp, err := group.LoadGroup(db, wt.Group.Name)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+		wt.GroupID = grp.ID
+
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+		}
+
+		// check the workflow template extracted
+		if err := wt.IsValid(); err != nil {
+			return err
+		}
 
 		msgs, wt, err := workflowtemplate.Push(api.mustDB(), getAuthentifiedUser(ctx), tr)
 		if err != nil {
@@ -909,4 +935,68 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 
 		return service.WriteJSON(w, wfs, http.StatusOK)
 	}
+}
+
+// ReadFromTar returns a workflow template from given tar reader.
+func ReadFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
+	var wt sdk.WorkflowTemplate
+
+	// extract template data from tar
+	var apps, pips, envs [][]byte
+	var wkf []byte
+	var tmpl exportentities.Template
+
+	mError := new(sdk.MultiError)
+	var templateFileName string
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+		}
+
+		buff := new(bytes.Buffer)
+		if _, err := io.Copy(buff, tr); err != nil {
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+		}
+
+		b := buff.Bytes()
+		switch {
+		case strings.Contains(hdr.Name, ".application."):
+			apps = append(apps, b)
+		case strings.Contains(hdr.Name, ".pipeline."):
+			pips = append(pips, b)
+		case strings.Contains(hdr.Name, ".environment."):
+			envs = append(envs, b)
+		case hdr.Name == "workflow.yml":
+			// if a workflow was already found, it's a mistake
+			if len(wkf) != 0 {
+				mError.Append(fmt.Errorf("Two workflow files found"))
+				break
+			}
+			wkf = b
+		default:
+			// if a template was already found, it's a mistake
+			if templateFileName != "" {
+				mError.Append(fmt.Errorf("Two template files found: %s and %s", templateFileName, hdr.Name))
+				break
+			}
+			if err := yaml.Unmarshal(b, &tmpl); err != nil {
+				mError.Append(sdk.WrapError(err, "Unable to unmarshal template %s", hdr.Name))
+				continue
+			}
+			templateFileName = hdr.Name
+		}
+	}
+
+	if !mError.IsEmpty() {
+		return wt, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
+	}
+
+	// init workflow template struct from data
+	wt = tmpl.GetTemplate(wkf, pips, apps, envs)
+
+	return wt, nil
 }

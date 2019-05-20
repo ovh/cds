@@ -456,37 +456,8 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 	return res, nil
 }
 
-// LoadByWorkflowTemplateID load all workflows linked to a workflow template but without loading workflow details
-func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64, u sdk.GroupMember) ([]sdk.Workflow, error) {
+func loadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, query string, args []interface{}) ([]sdk.Workflow, error) {
 	var dbRes []Workflow
-	query := `
-	SELECT workflow.*
-		FROM workflow
-			JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
-		WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false
-	`
-	args := []interface{}{templateID}
-
-	if !u.Admin() {
-		query = `
-			SELECT workflow.*
-				FROM workflow
-					JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
-					JOIN project ON workflow.project_id = project.id
-				WHERE workflow_template_instance.workflow_template_id = $1
-				AND workflow.to_delete = false
-				AND project.id IN (
-					SELECT project_group.project_id
-						FROM project_group
-					WHERE
-						project_group.group_id = ANY(string_to_array($2, ',')::int[])
-						OR
-						$3 = ANY(string_to_array($2, ',')::int[])
-				)
-			`
-		args = append(args, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID)
-	}
-
 	if _, err := db.Select(&dbRes, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -505,6 +476,38 @@ func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, template
 	}
 
 	return workflows, nil
+}
+
+// LoadByWorkflowTemplateID load all workflows linked to a workflow template but without loading workflow details
+func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) ([]sdk.Workflow, error) {
+	query := `
+	SELECT workflow.*
+		FROM workflow
+			JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
+		WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false`
+	args := []interface{}{templateID}
+	return loadByWorkflowTemplateID(ctx, db, query, args)
+}
+
+// LoadByWorkflowTemplateIDByGroups load all workflows linked to a workflow template but without loading workflow details against the groups provided
+func LoadByWorkflowTemplateIDByGroups(ctx context.Context, db gorp.SqlExecutor, templateID int64, u sdk.GroupMember) ([]sdk.Workflow, error) {
+	query := `SELECT workflow.*
+				FROM workflow
+					JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
+					JOIN project ON workflow.project_id = project.id
+				WHERE workflow_template_instance.workflow_template_id = $1
+				AND workflow.to_delete = false
+				AND project.id IN (
+					SELECT project_group.project_id
+						FROM project_group
+					WHERE
+						project_group.group_id = ANY(string_to_array($2, ',')::int[])
+						OR
+						$3 = ANY(string_to_array($2, ',')::int[])
+				)`
+
+	args := []interface{}{templateID, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID}
+	return loadByWorkflowTemplateID(ctx, db, query, args)
 }
 
 func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOptions, u sdk.GroupMember, query string, args ...interface{}) (*sdk.Workflow, error) {

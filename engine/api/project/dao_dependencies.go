@@ -17,24 +17,24 @@ import (
 )
 
 var (
-	loadDefault = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
-		if err := loadVariables(db, store, proj, u); err != nil {
+	loadDefault = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
+		if err := loadVariables(db, store, proj); err != nil {
 			return sdk.WrapError(err, "application.loadDefault")
 		}
-		if err := loadApplications(db, store, proj, u); err != nil {
+		if err := loadApplications(db, store, proj); err != nil {
 			return sdk.WrapError(err, "application.loadDefault")
 		}
 		return nil
 	}
 
-	loadApplications = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadApplications = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		if err := loadApplicationsWithOpts(db, store, proj); err != nil {
 			return sdk.WrapError(err, "application.loadApplications")
 		}
 		return nil
 	}
 
-	loadApplicationNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadApplicationNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		var err error
 		var apps sdk.IDNames
 
@@ -46,9 +46,9 @@ var (
 		return nil
 	}
 
-	loadApplicationWithDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadApplicationWithDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		if proj.Applications == nil {
-			if err := loadApplications(db, store, proj, u); err != nil {
+			if err := loadApplications(db, store, proj); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationWithDeploymentStrategies")
 			}
 		}
@@ -61,17 +61,17 @@ var (
 		return nil
 	}
 
-	loadVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		return loadAllVariables(db, store, proj)
 	}
 
-	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		return loadAllVariables(db, store, proj, WithClearPassword())
 	}
 
-	loadApplicationVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadApplicationVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		if proj.Applications == nil {
-			if err := loadApplications(db, store, proj, u); err != nil {
+			if err := loadApplications(db, store, proj); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationVariables")
 			}
 		}
@@ -84,15 +84,15 @@ var (
 		return nil
 	}
 
-	loadKeys = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadKeys = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		return LoadAllKeys(db, proj)
 	}
 
-	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		return LoadAllDecryptedKeys(db, proj)
 	}
 
-	loadIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, false)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load integrations")
@@ -101,12 +101,12 @@ var (
 		return nil
 	}
 
-	loadFeatures = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadFeatures = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		LoadFeatures(store, proj)
 		return nil
 	}
 
-	loadClearIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadClearIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, true)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load integrations")
@@ -115,7 +115,7 @@ var (
 		return nil
 	}
 
-	loadWorkflows = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadWorkflows = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		workflows, errW := workflow.LoadAll(db, proj.Key)
 		if errW != nil {
 			log.Error("Unable to load workflows for project %s: %v", proj.Key, errW)
@@ -124,7 +124,7 @@ var (
 		return nil
 	}
 
-	loadWorkflowNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadWorkflowNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		var err error
 		var wfs sdk.IDNames
 
@@ -136,7 +136,7 @@ var (
 		return nil
 	}
 
-	lockAndWaitProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	lockAndWaitProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		return nil
 	}
 
@@ -158,7 +158,7 @@ var (
 		return nil
 	}
 
-	loadIcon = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadIcon = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		icon, err := db.SelectStr("SELECT icon FROM project WHERE id = $1", proj.ID)
 		if err != nil {
 			return sdk.WrapError(err, "project.loadIcon")
@@ -167,7 +167,7 @@ var (
 		return nil
 	}
 
-	loadPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		pipelines, errPip := pipeline.LoadPipelines(db, proj.ID, false)
 		if errPip != nil && sdk.Cause(errPip) != sql.ErrNoRows && !sdk.ErrorIs(errPip, sdk.ErrPipelineNotFound) && !sdk.ErrorIs(errPip, sdk.ErrPipelineNotAttached) {
 			return sdk.WrapError(errPip, "application.loadPipelines")
@@ -176,7 +176,7 @@ var (
 		return nil
 	}
 
-	loadPipelineNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadPipelineNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		var err error
 		var pips sdk.IDNames
 
@@ -188,7 +188,7 @@ var (
 		return nil
 	}
 
-	loadEnvironments = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadEnvironments = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		envs, errEnv := environment.LoadEnvironments(db, proj.Key)
 		if errEnv != nil && sdk.Cause(errEnv) != sql.ErrNoRows && !sdk.ErrorIs(errEnv, sdk.ErrNoEnvironment) {
 			return sdk.WrapError(errEnv, "application.loadEnvironments")
@@ -197,14 +197,14 @@ var (
 		return nil
 	}
 
-	loadGroups = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+	loadGroups = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		if err := group.LoadGroupByProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadGroups")
 		}
 		return nil
 	}
 
-	loadLabels = func(db gorp.SqlExecutor, _ cache.Store, proj *sdk.Project, _ sdk.GroupMember) error {
+	loadLabels = func(db gorp.SqlExecutor, _ cache.Store, proj *sdk.Project) error {
 		labels, err := Labels(db, proj.ID)
 		if err != nil {
 			return sdk.WithStack(err)
@@ -214,7 +214,7 @@ var (
 	}
 
 	loadFavorites = func(uID int64) LoadOptionFunc {
-		f := func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u sdk.GroupMember) error {
+		f := func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 			count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, uID)
 			if err != nil {
 				return sdk.WithStack(err)

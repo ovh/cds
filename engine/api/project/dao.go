@@ -17,21 +17,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// LoadAllByRepo returns all projects with an application linked to the repo
-func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
-	var query string
-	var args []interface{}
+func loadAllByRepo(db gorp.SqlExecutor, store cache.Store, query string, args []interface{}, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+	return loadprojects(db, store, opts, query, args...)
+}
 
-	// Admin can gets all project
-	// Users can gets only their projects
-	if u == nil || u.Admin() {
-		query = `SELECT DISTINCT project.*
-		FROM  project
-		JOIN  application on project.id = application.project_id
-		WHERE application.repo_fullname = $1
-		ORDER by project.name, project.projectkey ASC`
-	} else {
-		query = `SELECT DISTINCT project.*
+// LoadAllByRepoAndGroups returns all projects with an application linked to the repo against the groups
+func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+	query := `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
 		WHERE application.repo_fullname = $3
@@ -43,41 +35,42 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, re
 				OR
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)`
-		args = []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID}
-	}
+	args := []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID, repo}
+	return loadAllByRepo(db, store, query, args, opts...)
+}
 
-	args = append(args, repo)
+// LoadAllByRepo returns all projects with an application linked to the repo
+func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+	query := `SELECT DISTINCT project.*
+	FROM  project
+	JOIN  application on project.id = application.project_id
+	WHERE application.repo_fullname = $1
+	ORDER by project.name, project.projectkey ASC`
+	args := []interface{}{repo}
+	return loadAllByRepo(db, store, query, args, opts...)
+}
 
-	return loadprojects(db, store, u, opts, query, args...)
+// LoadAllByGroups returns all projects given groups
+func LoadAllByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+	query := `SELECT project.*
+	FROM project
+	WHERE project.id IN (
+		SELECT project_group.project_id
+		FROM project_group
+		WHERE
+			project_group.group_id = ANY(string_to_array($1, ',')::int[])
+			OR
+			$2 = ANY(string_to_array($1, ',')::int[])
+	)
+	ORDER by project.name, project.projectkey ASC`
+	args := []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID}
+	return loadprojects(db, store, opts, query, args...)
 }
 
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, opts ...LoadOptionFunc) ([]sdk.Project, error) {
-	var end func()
-	_, end = observability.Span(ctx, "project.LoadAll")
-	defer end()
-
-	var query string
-	var args []interface{}
-	// Admin can gets all project
-	// Users can gets only their projects
-	if u == nil || u.Admin() {
-		query = "select project.* from project ORDER by project.name, project.projectkey ASC"
-	} else {
-		query = `SELECT project.*
-				FROM project
-				WHERE project.id IN (
-					SELECT project_group.project_id
-					FROM project_group
-					WHERE
-						project_group.group_id = ANY(string_to_array($1, ',')::int[])
-						OR
-						$2 = ANY(string_to_array($1, ',')::int[])
-				)
-				ORDER by project.name, project.projectkey ASC`
-		args = []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID}
-	}
-	return loadprojects(db, store, u, opts, query, args...)
+	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
+	return loadprojects(db, store, opts, query)
 }
 
 // LoadPermissions loads all projects where group has access
@@ -222,7 +215,7 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 }
 
 // LoadOptionFunc is used as options to loadProject functions
-type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, sdk.GroupMember) error
+type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
@@ -325,7 +318,7 @@ func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember,
 	return load(nil, db, store, u, opts, query, pipelineID)
 }
 
-func loadprojects(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+func loadprojects(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -341,7 +334,7 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, opt
 			log.Error("loadprojects> PostGet error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
 			continue
 		}
-		proj, err := unwrap(db, store, p, u, opts)
+		proj, err := unwrap(db, store, p, opts)
 		if err != nil {
 			log.Error("loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
 			continue
@@ -377,14 +370,14 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u sdk.Gro
 		return nil, sdk.WithStack(err)
 	}
 
-	return unwrap(db, store, dbProj, u, opts)
+	return unwrap(db, store, dbProj, opts)
 }
 
-func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, u sdk.GroupMember, opts []LoadOptionFunc) (*sdk.Project, error) {
+func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, opts []LoadOptionFunc) (*sdk.Project, error) {
 	proj := sdk.Project(*p)
 
 	for _, f := range opts {
-		if err := (*f)(db, store, &proj, u); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		if err := (*f)(db, store, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return nil, err
 		}
 	}

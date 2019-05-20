@@ -28,7 +28,7 @@ const (
 	ContextService
 	ContextProvider
 	ContextUserAuthentified
-	ContextGrantedUser
+	ContextAPIConsumer
 	ContextJWT
 	ContextScope
 )

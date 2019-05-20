@@ -38,3 +38,26 @@ func GroupsToIDs(gs []Group) []int64 {
 	}
 	return ids
 }
+
+func (g Group) IsMember(group *Group, u GroupMember) bool {
+	for _, g := range u.GetGroups() {
+		if g.ID == group.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func (g Group) IsAdmin(group *Group, u IdentifiableGroupMember) bool {
+	for _, g := range u.GetGroups() {
+		if g.ID == group.ID {
+			for _, adm := range g.Admins {
+				if adm.Username == u.GetUsername() {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	return false
+}
