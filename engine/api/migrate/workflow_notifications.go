@@ -40,7 +40,7 @@ func migrateNotification(db *gorp.DbMap, store cache.Store, id int64) error {
 	}
 	defer tx.Rollback() // nolint
 
-	proj, err := project.LoadProjectByWorkflowID(db, store, nil, id, project.LoadOptions.WithApplicationWithDeploymentStrategies,
+	proj, err := project.LoadProjectByWorkflowID(db, store, id, project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
 		project.LoadOptions.WithGroups,

@@ -73,7 +73,7 @@ func migrateProject(db *gorp.DbMap, projID int64, store cache.Store, u *sdk.Auth
 	}
 	defer tx.Rollback()
 
-	proj, errP := project.LoadByID(tx, store, projID, u, project.LoadOptions.WithLockNoWait, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
+	proj, errP := project.LoadByID(tx, store, projID, project.LoadOptions.WithLockNoWait, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 	if errP != nil {
 		log.Warning("migrateProject> Cannot get project %d: %s", projID, errP)
 		return errP
