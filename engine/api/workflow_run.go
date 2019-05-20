@@ -962,7 +962,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 		wfRun.Status = sdk.StatusFail.String()
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{err.Error()},
+			Args: []interface{}{sdk.Cause(err).Error()},
 		}
 	}
 

@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -77,15 +78,13 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.NodeHook, error) {
 }
 
 func (h *dbNodeHookData) PostGet(db gorp.SqlExecutor) error {
-	var config sdk.WorkflowNodeHookConfig
 	var configS string
-	if _, err := db.Select(&configS, "select config from w_node_hook where id = $1", h.ID); err != nil {
+	if err := db.SelectOne(&configS, "select config from w_node_hook where id = $1", h.ID); err != nil {
 		return sdk.WithStack(err)
 	}
-	if err := json.Unmarshal([]byte(configS), &config); err != nil {
+	if err := json.Unmarshal([]byte(configS), &h.Config); err != nil {
 		return sdk.WithStack(err)
 	}
-	h.Config = config
 	return nil
 }
 

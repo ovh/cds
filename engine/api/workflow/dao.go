@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
@@ -1197,15 +1198,16 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 	if n.Context.ApplicationID != 0 {
 		app, ok := w.Applications[n.Context.ApplicationID]
 		if !ok {
-			app, errA := application.LoadByID(db, store, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+			appDB, errA := application.LoadByID(db, store, n.Context.ApplicationID, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 			if errA != nil {
 				return errA
 			}
+			app = *appDB
 			if app.ProjectKey != proj.Key {
 				return sdk.NewErrorFrom(sdk.ErrResourceNotInProject, "can not found a application with id %d", n.Context.ApplicationID)
 			}
 
-			w.Applications[n.Context.ApplicationID] = *app
+			w.Applications[n.Context.ApplicationID] = app
 		}
 		n.Context.ApplicationName = app.Name
 		return nil
@@ -1416,6 +1418,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if err := tx.Commit(); err != nil {
 			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")
 		}
+
+		event.PublishWorkflowUpdate(proj.Key, *wf, *oldWf, u)
 		log.Debug("workflow %s updated", wf.Name)
 	}
 

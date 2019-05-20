@@ -123,7 +123,7 @@ export class WorkflowNotificationListComponent {
         if (this.workflow.notifications) {
             this.workflow.notifications.forEach(n => {
                 let listNodes = new Array<string>();
-                n.source_node_id.forEach(id => {
+                n.node_id.forEach(id => {
                     let node = mapNodes.get(id);
                     if (node) {
                         listNodes.push(node.name);

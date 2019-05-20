@@ -594,6 +594,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		Status:        sdk.StatusPending.String(),
 		LastExecution: time.Now(),
 		Tags:          make([]sdk.WorkflowRunTag, 0),
+		Workflow:      sdk.Workflow{Name: wf.Name},
 	}
 
 	if opts != nil && opts.Hook != nil {

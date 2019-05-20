@@ -103,7 +103,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		}
 		t, err := s.hookToTask(&h)
 		if err != nil {
-			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
+			log.Error("Hook> Unable to transform hoot to tast task %+v: %v", h, err)
 			continue
 		}
 		s.Dao.SaveTask(t)

@@ -144,13 +144,18 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}
+		// Update hooks in workflow
+		for i := range wf.WorkflowData.Node.Hooks {
+			h := &wf.WorkflowData.Node.Hooks[i]
+			h.Config = hooks[h.UUID].Config
+		}
 
 		// Create vcs configuration ( always after hook creation to have webhook URL) + update hook in DB
 		for i := range wf.WorkflowData.Node.Hooks {
-			h := wf.WorkflowData.Node.Hooks[i]
+			h := &wf.WorkflowData.Node.Hooks[i]
 			v, ok := h.Config["webHookID"]
 			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
-				if err := createVCSConfiguration(ctx, db, store, p, &h); err != nil {
+				if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
 					return sdk.WrapError(err, "Cannot update vcs configuration")
 				}
 			}

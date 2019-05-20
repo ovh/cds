@@ -34,7 +34,6 @@ export class WorkflowEventStore {
     broadcastWorkflowRun(key: string, name: string, wr: WorkflowRun): void {
         let store = this._currentWorkflowRuns.getValue();
         let w = store.get(wr.id);
-
         // Update workflow runs list
         let dNew: number;
         if (wr.last_modified_nano) {
@@ -58,6 +57,7 @@ export class WorkflowEventStore {
         let sRun = this._currentWorkflowRun.getValue();
         if (sRun && sRun.id === wr.id && (sRun.status !== wr.status ||
             new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime())) {
+            console.log('resync');
             // Call get workflow run to get workflow
             this._workflowRunService.getWorkflowRun(key, name, wr.num).subscribe(wrUpdated => {
                 wr = wrUpdated;
