@@ -118,14 +118,14 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 			return nil, nil, err
 		}
 
-		new, err := LoadByID(db, wt.ID, LoadOptions.Default)
+		newTemplate, err := LoadByID(db, wt.ID, LoadOptions.Default)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		event.PublishWorkflowTemplateAdd(*new, u)
+		event.PublishWorkflowTemplateAdd(*newTemplate, u)
 
-		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, new.Group.Name, new.Slug)}, new, nil
+		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, newTemplate.Group.Name, newTemplate.Slug)}, newTemplate, nil
 	}
 
 	clone := sdk.WorkflowTemplate(*old)
@@ -140,12 +140,12 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 		return nil, nil, err
 	}
 
-	new, err := LoadByID(db, clone.ID, LoadOptions.Default)
+	newTemplate, err := LoadByID(db, clone.ID, LoadOptions.Default)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	event.PublishWorkflowTemplateUpdate(*old, *new, "", u)
+	event.PublishWorkflowTemplateUpdate(*old, *newTemplate, "", u)
 
-	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, new.Group.Name, new.Slug)}, new, nil
+	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, newTemplate.Group.Name, newTemplate.Slug)}, newTemplate, nil
 }

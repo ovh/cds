@@ -120,21 +120,21 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		new, err := workflowtemplate.LoadByID(api.mustDB(), data.ID, workflowtemplate.LoadOptions.Default)
+		newTemplate, err := workflowtemplate.LoadByID(api.mustDB(), data.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishWorkflowTemplateAdd(*new, u)
+		event.PublishWorkflowTemplateAdd(*newTemplate, u)
 
-		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), new); err != nil {
+		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), newTemplate); err != nil {
 			return err
 		}
 
 		// aggregate extra data for ui
-		new.Editable = true
+		newTemplate.Editable = true
 
-		return service.WriteJSON(w, data, http.StatusOK)
+		return service.WriteJSON(w, newTemplate, http.StatusOK)
 	}
 }
 
@@ -249,21 +249,21 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		new, err := workflowtemplate.LoadByID(api.mustDB(), clone.ID, workflowtemplate.LoadOptions.Default)
+		newTemplate, err := workflowtemplate.LoadByID(api.mustDB(), clone.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishWorkflowTemplateUpdate(*old, *new, data.ChangeMessage, deprecatedGetUser(ctx))
+		event.PublishWorkflowTemplateUpdate(*old, *newTemplate, data.ChangeMessage, deprecatedGetUser(ctx))
 
-		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), new); err != nil {
+		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), newTemplate); err != nil {
 			return err
 		}
 
 		// aggregate extra data for ui
-		new.Editable = true
+		newTemplate.Editable = true
 
-		return service.WriteJSON(w, new, http.StatusOK)
+		return service.WriteJSON(w, newTemplate, http.StatusOK)
 	}
 }
 

@@ -168,21 +168,21 @@ func (api *API) postActionHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		new, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishActionAdd(*new, u)
+		event.PublishActionAdd(*newAction, u)
 
-		if err := action.LoadOptions.WithAudits(api.mustDB(), new); err != nil {
+		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
 			return err
 		}
 
 		// aggregate extra data for ui
-		new.Editable = true
+		newAction.Editable = true
 
-		return service.WriteJSON(w, new, http.StatusCreated)
+		return service.WriteJSON(w, newAction, http.StatusCreated)
 	}
 }
 
@@ -292,21 +292,21 @@ func (api *API) putActionHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		new, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *new, u)
+		event.PublishActionUpdate(*old, *newAction, u)
 
-		if err := action.LoadOptions.WithAudits(api.mustDB(), new); err != nil {
+		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
 			return err
 		}
 
 		// aggregate extra data for ui
-		new.Editable = true
+		newAction.Editable = true
 
-		return service.WriteJSON(w, new, http.StatusOK)
+		return service.WriteJSON(w, newAction, http.StatusOK)
 	}
 }
 
@@ -544,21 +544,21 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		new, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *new, u)
+		event.PublishActionUpdate(*old, *newAction, u)
 
-		if err := action.LoadOptions.WithAudits(api.mustDB(), new); err != nil {
+		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
 			return err
 		}
 
 		// aggregate extra data for ui
-		new.Editable = true
+		newAction.Editable = true
 
-		return service.WriteJSON(w, new, http.StatusOK)
+		return service.WriteJSON(w, newAction, http.StatusOK)
 	}
 }
 
@@ -739,29 +739,29 @@ func (api *API) importActionHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		new, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
 		if exists {
-			event.PublishActionUpdate(*old, *new, u)
+			event.PublishActionUpdate(*old, *newAction, u)
 		} else {
-			event.PublishActionAdd(*new, u)
+			event.PublishActionAdd(*newAction, u)
 		}
 
-		if err := action.LoadOptions.WithAudits(api.mustDB(), new); err != nil {
+		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
 			return err
 		}
 
 		// aggregate extra data for ui
-		new.Editable = true
+		newAction.Editable = true
 
 		code := http.StatusCreated
 		if exists {
 			code = http.StatusOK
 		}
-		return service.WriteJSON(w, new, code)
+		return service.WriteJSON(w, newAction, code)
 	}
 }
 
