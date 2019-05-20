@@ -811,6 +811,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/engine/download/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/worker/download/</loc>
   </url>
   
@@ -1664,6 +1668,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/worker/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/engine/download/workers/</loc>
   </url>
   
   <url>

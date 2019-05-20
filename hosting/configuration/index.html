@@ -22,21 +22,21 @@ Start CDS with local configuration file You can also generate a configuration fi
 $ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
 Check your configuration file with
 $ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS">
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Download workers binaries">
 <meta property="og:description"
     content="The toml configuration can be provided by a file, via consul k/v store or via vault.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
 $ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
 Check your configuration file with
 $ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS">
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Download workers binaries">
 <meta name="twitter:description"
     content="The toml configuration can be provided by a file, via consul k/v store or via vault.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
 $ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
 Check your configuration file with
 $ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS">
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Download workers binaries">
 <meta property="og:url" content="https://ovh.github.io/cds/hosting/configuration/">
 <meta property="og:title" content="Configuration">
 <meta name="twitter:title" content="Configuration">
@@ -332,6 +332,15 @@ Configuration file OK
 <p>Create your database relations</p>
 
 <pre><code class="language-bash">$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0
+</code></pre>
+
+<p>Download workers binaries</p>
+
+<pre><code class="language-bash">$ $PATH_TO_CDS/engine download workers --config my_conf_file.toml
+Reading configuration file my_conf_file.toml
+Downloading worker for os windows and arch amd64 into /tmp/cds/download...
+Downloading worker for os windows and arch 386 into /tmp/cds/download...
+...
 </code></pre>
 
 <p>Run CDS</p>

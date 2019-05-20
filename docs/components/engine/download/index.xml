@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>download on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/engine/download/</link>
+    <description>Recent content in download on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/engine/download/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>workers</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/download/workers/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/download/workers/</guid>
+      <description>engine download workers Download workers binaries from latest release on Github
+Synopsis Download workers binaries from latest release on Github
+You can also indicate a specific os or architecture to not download all binaries available with flag &amp;ndash;os and &amp;ndash;arch
+engine download workers [flags]  Examples engine download workers  Options  --arch string Download only for this arch --config string config file --os string Download only for this os --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.</description>
+    </item>
+    
+  </channel>
+</rss>
