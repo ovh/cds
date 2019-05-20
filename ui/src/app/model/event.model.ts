@@ -1,4 +1,5 @@
 export class Event {
+    healthCheck: number;
     timestamp: Date;
     hostname: string;
     cdsname: string;

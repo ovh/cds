@@ -648,6 +648,7 @@ export class WNodeContext {
     node_id: number;
     pipeline_id: number;
     application_id: number;
+    disable_vcs_status: boolean;
     environment_id: number;
     project_integration_id: number;
     default_payload: {};

@@ -21,13 +21,14 @@ import { PipelineService } from '../../../../../../service/pipeline/pipeline.ser
 import { ProjectAuditService } from '../../../../../../service/project/project.audit.service';
 import { ProjectService } from '../../../../../../service/project/project.service';
 import { ProjectStore } from '../../../../../../service/project/project.store';
-import { ServicesModule } from '../../../../../../service/services.module';
+import { ServicesModule, WorkflowRunService } from '../../../../../../service/services.module';
 import { VariableService } from '../../../../../../service/variable/variable.service';
 import { SharedModule } from '../../../../../../shared/shared.module';
 import { ToastService } from '../../../../../../shared/toast/ToastService';
 import { VariableEvent } from '../../../../../../shared/variable/variable.event.model';
 import { ProjectModule } from '../../../../project.module';
 import { ProjectEnvironmentComponent } from './environment.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
 describe('CDS: Environment Component', () => {
 
     beforeEach(() => {
@@ -49,7 +50,9 @@ describe('CDS: Environment Component', () => {
                 VariableService,
                 EnvironmentService,
                 PipelineService,
-                AuthentificationStore
+                AuthentificationStore,
+                WorkflowService,
+                WorkflowRunService
             ],
             imports: [
                 ProjectModule,

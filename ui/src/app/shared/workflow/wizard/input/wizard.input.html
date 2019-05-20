@@ -1,0 +1,62 @@
+<div class="ui form">
+    <ng-container
+        *ngIf="noderun || pipParamsReady">
+        <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
+        <ng-container *ngIf="noderun == null && editableNode?.context">
+            <app-parameter-list
+                [project]="project"
+                [parameters]="editableNode.context.default_pipeline_parameters"
+                [paramsRef]="currentPipeline.parameters"
+                [mode]="readonly?'ro':'launcher'"
+                [suggest]="suggest"
+                [canDelete]="false"
+                (event)="parameterEvent($event)">
+            </app-parameter-list>
+        </ng-container>
+        <ng-container *ngIf="noderun != null">
+            <app-parameter-list
+                [project]="project"
+                [parameters]="noderun.pipeline_parameters"
+                [paramsRef]="noderun.pipeline_parameters"
+                [mode]="readonly?'ro':'launcher'"
+                [suggest]="suggest"
+                [canDelete]="false"
+                (event)="parameterEvent($event)">
+            </app-parameter-list>
+        </ng-container>
+    </ng-container>
+    <ng-container
+        *ngIf="(editableNode?.hooks && editableNode?.hooks.length > 0) || (editableNode?.id === workflow.workflow_data?.node?.id) || noderun">
+        <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
+        <ng-container *ngIf="!loadingBranches">
+            <codemirror
+                [class.invalid]="invalidJSON"
+                [(ngModel)]="payloadString"
+                [config]="codeMirrorConfig"
+                (click)="changeCodeMirror($event, false)"
+                (change)="changeCodeMirror($event, true)"
+                #textareaCodeMirror>
+            </codemirror>
+        </ng-container>
+        <ng-container *ngIf="loadingBranches">
+            <div class="ui info message">
+                {{ 'common_loading' | translate }}
+            </div>
+        </ng-container>
+        <div class="extra">
+            <ng-container *ngIf="invalidJSON">
+                {{ 'workflow_context_invalid' | translate}}
+            </ng-container>
+            <ng-container *ngIf="!invalidJSON">
+                <button class="ui small blue button" (click)="reindent()">Reindent</button>
+            </ng-container>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="!readonly">
+        <button class="ui right floated green button"
+                [disabled]="loadingBranches || loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.loading]="loading" (click)="updateWorkflow()">
+            {{ 'btn_save' | translate }}
+        </button>
+    </ng-container>
+</div>

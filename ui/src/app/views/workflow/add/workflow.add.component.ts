@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { AddWorkflow, ImportWorkflow } from 'app/store/workflows.action';
+import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
@@ -114,7 +114,7 @@ workflow:
     createWorkflow(node: WNode): void {
         this.loading = true;
         this.workflow.workflow_data.node = node;
-        this.store.dispatch(new AddWorkflow({
+        this.store.dispatch(new CreateWorkflow({
             projectKey: this.project.key,
             workflow: this.workflow
         })).pipe(

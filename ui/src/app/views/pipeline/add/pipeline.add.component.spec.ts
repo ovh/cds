@@ -27,6 +27,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineAddComponent } from './pipeline.add.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
@@ -53,7 +55,9 @@ describe('CDS: Pipeline Add Component', () => {
                 NavbarService,
                 PipelineService,
                 EnvironmentService,
-                VariableService
+                VariableService,
+                WorkflowService,
+                WorkflowRunService
             ],
             imports: [
                 PipelineModule,

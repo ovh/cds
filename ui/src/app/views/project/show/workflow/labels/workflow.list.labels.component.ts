@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflows.action';
+import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflow.action';
 import { cloneDeep } from 'lodash';
 import { finalize } from 'rxjs/operators';
 import { IdName, Label, Project } from '../../../../../model/project.model';

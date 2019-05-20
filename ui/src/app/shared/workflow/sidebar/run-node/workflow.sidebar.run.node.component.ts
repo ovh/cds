@@ -1,5 +1,7 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import {Store} from '@ngxs/store';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import 'rxjs/add/observable/zip';
 import { first } from 'rxjs/operators';
@@ -9,8 +11,6 @@ import { Project } from '../../../../model/project.model';
 import { WNode, WNodeType, Workflow } from '../../../../model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
 import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
-import { WorkflowSidebarMode, WorkflowSidebarStore } from '../../../../service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { DurationService } from '../../../duration/duration.service';
 import { WorkflowNodeRunParamComponent } from '../../node/run/node.run.param.component';
@@ -28,11 +28,9 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
 
-    currentWorkflowRunSub: Subscription;
     currentWorkflowRun: WorkflowRun;
-
-    currentNodeRunSub: Subscription;
     currentWorkflowNodeRun: WorkflowNodeRun;
+    storeSub: Subscription;
 
     node: WNode;
     subNode: Subscription;
@@ -55,67 +53,36 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         private _wrService: WorkflowRunService,
         private _router: Router,
         private _durationService: DurationService,
-        private _workflowEventStore: WorkflowEventStore,
-        private _sidebarStore: WorkflowSidebarStore,
-        private _cd: ChangeDetectorRef
+        private _store: Store
     ) { }
 
     ngOnInit(): void {
-        this.subNode = this._workflowEventStore.selectedNode().subscribe(n => {
-            this.node = n;
-            this.refreshData();
-            if (this.currentWorkflowRun && this.loading) {
-                this.loading = false;
-                this._cd.detectChanges();
-            }
-            if (!this.node) {
-                this.loading = true;
-                this._cd.detectChanges();
-            }
-        });
-        this.currentWorkflowRunSub = this._workflowEventStore.selectedRun().subscribe(wr => {
-            this.currentWorkflowRun = wr;
-            if (!wr) {
+        this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this.currentWorkflowRun = s.workflowRun;
+            this.node = s.node;
+            this.currentWorkflowNodeRun = s.workflowNodeRun;
+            if (!s.workflowRun) {
                 return;
             }
-
             if (this.node && this.loading) {
                 this.loading = false;
-                this._cd.detectChanges();
             } else if (!this.node) {
                 this.loading = true;
-                this._cd.detectChanges();
             }
+            this.refreshData();
 
-            // If not the same run => display loading
-            if (this.currentWorkflowNodeRun && this.currentWorkflowRun
-                && this.currentWorkflowRun && this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
-                this.loading = true;
-            } else {
-                this.refreshData();
+            if (!s.workflowNodeRun) {
+                return;
             }
-        });
-
-        this.currentNodeRunSub = this._workflowEventStore.selectedNodeRun()
-            .subscribe((nodeRun) => {
-                this.currentWorkflowNodeRun = nodeRun;
-                if (!nodeRun) {
-                    return;
-                }
-                this.loading = false;
-                this.deleteInverval();
+            this.loading = false;
+            this.deleteInverval();
+            this.duration = this.getDuration();
+            this.durationIntervalID = window.setInterval(() => {
                 this.duration = this.getDuration();
-                this.durationIntervalID = window.setInterval(() => {
-                    this.duration = this.getDuration();
-                }, 5000);
-                // If not the same run => display loading
-                if (this.currentWorkflowRun && this.currentWorkflowNodeRun &&
-                    this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
-                    this.loading = true;
-                } else {
-                    this.refreshData();
-                }
-            });
+            }, 5000);
+
+            this.refreshData();
+        });
     }
 
     refreshData(): void {
@@ -257,14 +224,5 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             clearInterval(this.durationIntervalID);
             this.durationIntervalID = 0;
         }
-    }
-
-    goToEditNode(): void {
-        this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
-        this._workflowEventStore.setSelectedNodeRun(null, false);
-        this._workflowEventStore.setSelectedRun(null);
-        this._router.navigate(
-            ['/project', this.project.key, 'workflow', this.workflow.name],
-            { queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref } });
     }
 }

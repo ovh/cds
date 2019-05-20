@@ -1,17 +1,18 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
+import {Store} from '@ngxs/store';
 import * as AU from 'ansi_up';
+import {PermissionValue} from 'app/model/permission.model';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {Project} from 'app/model/project.model';
+import {Workflow} from 'app/model/workflow.model';
+import {WorkflowRun} from 'app/model/workflow.run.model';
+import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {ToastService} from 'app/shared/toast/ToastService';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
-import {PermissionValue} from '../../../../model/permission.model';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {Workflow} from '../../../../model/workflow.model';
-import {WorkflowRun} from '../../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-run-summary',
@@ -22,12 +23,14 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 export class WorkflowRunSummaryComponent {
     @Input('direction')
     set direction(val) {
-      this._direction = val;
-      this.directionChange.emit(val);
+        this._direction = val;
+        this.directionChange.emit(val);
     }
+
     get direction() {
         return this._direction;
     }
+
     @Input() project: Project;
     @Input() workflow: Workflow;
     workflowRun: WorkflowRun;
@@ -45,10 +48,10 @@ export class WorkflowRunSummaryComponent {
     pipelineStatusEnum = PipelineStatus;
     permissionEnum = PermissionValue;
 
-    constructor(private _workflowRunService: WorkflowRunService, private _workflowEventStore: WorkflowEventStore,
-        private _toast: ToastService, private _translate: TranslateService) {
-        this.subWR = this._workflowEventStore.selectedRun().subscribe(wr => {
-            this.workflowRun = wr;
+    constructor(private _workflowRunService: WorkflowRunService,
+                private _toast: ToastService, private _translate: TranslateService, private _store: Store) {
+        this.subWR = this._store.select(WorkflowState.getCurrent()).subscribe((state: WorkflowStateModel) => {
+            this.workflowRun = state.workflowRun;
             if (this.workflowRun) {
                 if (this.workflowRun.tags) {
                     let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
@@ -63,7 +66,7 @@ export class WorkflowRunSummaryComponent {
     getSpawnInfos() {
         let msg = '';
         if (this.workflowRun.infos) {
-            this.workflowRun.infos.forEach( s => {
+            this.workflowRun.infos.forEach(s => {
                 msg += '[' + s.api_time.toString().substr(0, 19) + '] ' + s.user_message + '\n';
             });
         }
@@ -74,7 +77,7 @@ export class WorkflowRunSummaryComponent {
     }
 
     changeDirection() {
-      this.direction = this.direction === 'LR' ? 'TB' : 'LR';
+        this.direction = this.direction === 'LR' ? 'TB' : 'LR';
     }
 
     stopWorkflow() {
@@ -85,9 +88,9 @@ export class WorkflowRunSummaryComponent {
     }
 
     resyncVCSStatus() {
-      this.loadingAction = true;
-      this._workflowRunService.resyncVCSStatus(this.project.key, this.workflowName, this.workflowRun.num)
-          .pipe(finalize(() => this.loadingAction = false))
-          .subscribe(() => this._toast.success('', this._translate.instant('workflow_vcs_resynced')));
+        this.loadingAction = true;
+        this._workflowRunService.resyncVCSStatus(this.project.key, this.workflowName, this.workflowRun.num)
+            .pipe(finalize(() => this.loadingAction = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('workflow_vcs_resynced')));
     }
 }
