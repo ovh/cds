@@ -1,8 +1,8 @@
 <div class="ui form">
     <ng-container
-        *ngIf="noderun || (pipParamsReady && editableNode.context.default_pipeline_parameters)">
+        *ngIf="noderun || pipParamsReady">
         <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
-        <ng-container *ngIf="editableNode?.context?.default_pipeline_parameters">
+        <ng-container *ngIf="noderun == null && editableNode?.context">
             <app-parameter-list
                 [project]="project"
                 [parameters]="editableNode.context.default_pipeline_parameters"
