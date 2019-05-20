@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Release - CDS - Continuous Delivery Service</title>
+<title>Coverage - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,23 +17,26 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content=" Release is a builtin action, you can&rsquo;t modify it.
-This action creates a release on the git repository linked to the application, if repository manager implements it.
-This is actually implemented for GitHub only.
-Parameters  artifacts - optional - List of artifacts to upload, separated by &lsquo;,&rsquo;. You can also use regexp releaseNote - optional - release information tag - mandatory - Tag attached to the release title - mandatory - Set the title of the release  ">
+    content=" Coverage is a builtin action, you can&rsquo;t modify it.
+CDS Builtin Action. Parse given file to extract coverage results.
+Parameters  format: Coverage report format. minimum: Minimum percentage of coverage required (-1 means no minimum). path: Path of the coverage report file.  Requirements No Requirement
+YAML example Example of a pipeline using Coverage action:
+{}  ">
 <meta property="og:description"
-    content=" Release is a builtin action, you can&rsquo;t modify it.
-This action creates a release on the git repository linked to the application, if repository manager implements it.
-This is actually implemented for GitHub only.
-Parameters  artifacts - optional - List of artifacts to upload, separated by &lsquo;,&rsquo;. You can also use regexp releaseNote - optional - release information tag - mandatory - Tag attached to the release title - mandatory - Set the title of the release  ">
+    content=" Coverage is a builtin action, you can&rsquo;t modify it.
+CDS Builtin Action. Parse given file to extract coverage results.
+Parameters  format: Coverage report format. minimum: Minimum percentage of coverage required (-1 means no minimum). path: Path of the coverage report file.  Requirements No Requirement
+YAML example Example of a pipeline using Coverage action:
+{}  ">
 <meta name="twitter:description"
-    content=" Release is a builtin action, you can&rsquo;t modify it.
-This action creates a release on the git repository linked to the application, if repository manager implements it.
-This is actually implemented for GitHub only.
-Parameters  artifacts - optional - List of artifacts to upload, separated by &lsquo;,&rsquo;. You can also use regexp releaseNote - optional - release information tag - mandatory - Tag attached to the release title - mandatory - Set the title of the release  ">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/release/">
-<meta property="og:title" content="Release">
-<meta name="twitter:title" content="Release">
+    content=" Coverage is a builtin action, you can&rsquo;t modify it.
+CDS Builtin Action. Parse given file to extract coverage results.
+Parameters  format: Coverage report format. minimum: Minimum percentage of coverage required (-1 means no minimum). path: Path of the coverage report file.  Requirements No Requirement
+YAML example Example of a pipeline using Coverage action:
+{}  ">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/builtin-coverage/">
+<meta property="og:title" content="Coverage">
+<meta name="twitter:title" content="Coverage">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -214,61 +217,67 @@ Parameters  artifacts - optional - List of artifacts to upload, separated by &ls
 	
 		
 			
-<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/artifact-download/"></a>
+<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/artifact-upload/"></a>
+<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/checkoutapplication/"></a>
+<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/deployapplication/"></a>
+<a class="item" data-title="Coverage" href="https://ovh.github.io/cds/docs/actions/builtin-coverage/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/gitclone/"></a>
+<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/gittag/"></a>
+<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/junit/"></a>
+<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/builtin-gittag/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/release/"></a>
+<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/builtin-junit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/script/"></a>
+<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/builtin-release/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/serve-static-files/"></a>
+<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/builtin-script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/"></a>
 
 		
 	
@@ -398,7 +407,7 @@ Parameters  artifacts - optional - List of artifacts to upload, separated by &ls
 			<div id="docsContent">
         		
 
-<h1>Release</h1>
+<h1>Coverage</h1>
 
 
 
@@ -407,26 +416,38 @@ Parameters  artifacts - optional - List of artifacts to upload, separated by &ls
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#yaml-example">YAML example</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p><strong>Release</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p><strong>Coverage</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action creates a release on the git repository linked to the application, if repository manager implements it.</p>
-
-<p>This is actually implemented for GitHub only.</p>
+<p>CDS Builtin Action.
+Parse given file to extract coverage results.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>artifacts - optional - List of artifacts to upload, separated by &lsquo;,&rsquo;. You can also use regexp</li>
-<li>releaseNote - optional - release information</li>
-<li>tag - mandatory - Tag attached to the release</li>
-<li>title - mandatory - Set the title of the release</li>
+<li><strong>format</strong>: Coverage report format.</li>
+<li><strong>minimum</strong>: Minimum percentage of coverage required (-1 means no minimum).</li>
+<li><strong>path</strong>: Path of the coverage report file.</li>
 </ul>
+
+<h2 id="requirements">Requirements</h2>
+
+<p>No Requirement</p>
+
+<h2 id="yaml-example">YAML example</h2>
+
+<p>Example of a pipeline using Coverage action:</p>
+
+<pre><code class="language-yml">{}
+
+</code></pre>
 
 
 

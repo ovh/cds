@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>GitClone - CDS - Continuous Delivery Service</title>
+<title>Release - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,20 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="GitClone is a builtin action, you can&rsquo;t modify it.
-This action clones a repository into a new directory.
-Parameters  url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository. privateKey - optional - the private key to be able to git clone from ssh user - optional - the user to be able to git clone from https with authentication password - optional - the password to be able to git clone from https with authentication branch - optional - Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.">
+    content="Release is a builtin action, you can&rsquo;t modify it.
+This action creates a release on the git repository linked to the application, if repository manager implements it.
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement">
 <meta property="og:description"
-    content="GitClone is a builtin action, you can&rsquo;t modify it.
-This action clones a repository into a new directory.
-Parameters  url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository. privateKey - optional - the private key to be able to git clone from ssh user - optional - the user to be able to git clone from https with authentication password - optional - the password to be able to git clone from https with authentication branch - optional - Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.">
+    content="Release is a builtin action, you can&rsquo;t modify it.
+This action creates a release on the git repository linked to the application, if repository manager implements it.
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement">
 <meta name="twitter:description"
-    content="GitClone is a builtin action, you can&rsquo;t modify it.
-This action clones a repository into a new directory.
-Parameters  url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository. privateKey - optional - the private key to be able to git clone from ssh user - optional - the user to be able to git clone from https with authentication password - optional - the password to be able to git clone from https with authentication branch - optional - Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/gitclone/">
-<meta property="og:title" content="GitClone">
-<meta name="twitter:title" content="GitClone">
+    content="Release is a builtin action, you can&rsquo;t modify it.
+This action creates a release on the git repository linked to the application, if repository manager implements it.
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/builtin-release/">
+<meta property="og:title" content="Release">
+<meta name="twitter:title" content="Release">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -211,61 +211,67 @@ Parameters  url - mandatory - the git URL must include information about the tra
 	
 		
 			
-<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/artifact-download/"></a>
+<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/artifact-upload/"></a>
+<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/checkoutapplication/"></a>
+<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/deployapplication/"></a>
+<a class="item" data-title="Coverage" href="https://ovh.github.io/cds/docs/actions/builtin-coverage/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/gitclone/"></a>
+<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/gittag/"></a>
+<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/junit/"></a>
+<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/builtin-gittag/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/release/"></a>
+<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/builtin-junit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/script/"></a>
+<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/builtin-release/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/serve-static-files/"></a>
+<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/builtin-script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/"></a>
 
 		
 	
@@ -395,7 +401,7 @@ Parameters  url - mandatory - the git URL must include information about the tra
 			<div id="docsContent">
         		
 
-<h1>GitClone</h1>
+<h1>Release</h1>
 
 
 
@@ -404,69 +410,69 @@ Parameters  url - mandatory - the git URL must include information about the tra
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
-<li><a href="#example">Example</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#yaml-example">YAML example</a></li>
+<li><a href="#notes">Notes</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p><strong>GitClone</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p><strong>Release</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action clones a repository into a new directory.</p>
+<p>This action creates a release on the git repository linked to the application, if repository manager implements it.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository.</li>
-<li>privateKey - optional - the private key to be able to git clone from ssh</li>
-<li>user - optional - the user to be able to git clone from https with authentication</li>
-<li>password - optional - the password to be able to git clone from https with authentication</li>
-<li>branch - optional - Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.git.branch}} branch instead.</li>
-<li>commit - optional - the current branch head (HEAD) to the commit</li>
-<li>directory - optional - the name of a directory to clone into.</li>
+<li><strong>artifacts</strong>: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp.</li>
+<li><strong>releaseNote</strong>: (optional) Set a release note for the release.</li>
+<li><strong>tag</strong>: Tag attached to the release.</li>
+<li><strong>title</strong>: Set a title for the release.</li>
 </ul>
 
-<p>Advanced parameters:</p>
+<h2 id="requirements">Requirements</h2>
 
-<ul>
-<li>depth - optional - 50 by default. You can remove &ndash;depth with the value &lsquo;false&rsquo;</li>
-<li>submodules - true by default, you can set false to avoid this.</li>
-<li>tag - optional - empty by default, you can set to <code>{{.git.tag}}</code> to clone a tag from your repository. In this way, in your workflow payload you can add a key in your JSON like <code>&quot;git.tag&quot;: &quot;0.2&quot;</code>.</li>
-</ul>
+<p>No Requirement</p>
 
-<p>Notes:</p>
+<h2 id="yaml-example">YAML example</h2>
 
-<p>By default, depth is 50 and git clone with <code>--single-branch</code> automatically.
-So, if you want to do in a step script <code>git diff anotherBranch</code>, you have to set depth to &lsquo;false&rsquo;.</p>
+<p>Example of a pipeline using Release action:</p>
 
-<p>If there is no user &amp;&amp; password &amp;&amp; sshkey setted in action GitClone, CDS checks on Application VCS Strategy if some auth parameters can be used.</p>
+<pre><code class="language-yml">version: v1.0
+name: Pipeline1
+parameters:
+  tagLevel:
+    type: list
+    default: major;minor;patch
+    description: major, minor or patch
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - checkout: '{{.cds.workspace}}'
+  - gitTag:
+      path: '{{.cds.workspace}}'
+      tagLevel: '{{.cds.pip.tagLevel}}'
+      tagMessage: Release from CDS run {{.cds.version}}
+  - script:
+    - '#!/bin/sh'
+    - TAG=`git describe --abbrev=0 --tags`
+    - worker export tag $TAG
+  - release:
+      artifacts: '{{.cds.workspace}}/myFile'
+      releaseNote: My release {{.cds.build.tag}}
+      tag: '{{.cds.build.tag}}'
+      title: '{{.cds.build.tag}}'
 
-<h2 id="example">Example</h2>
+</code></pre>
 
-<ul>
-<li>Add repository manager on your application.</li>
-</ul>
+<h2 id="notes">Notes</h2>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-repo-manager.png" alt="img" /></p>
-
-<ul>
-<li>Job Configuration.</li>
-</ul>
-
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-edit-job.png" alt="img" /></p>
-
-<ul>
-<li>Launch workflow, you can select the git branch.</li>
-</ul>
-
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-run-workflow.png" alt="img" /></p>
-
-<ul>
-<li>View logs on job</li>
-</ul>
-
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-run-job.png" alt="img" /></p>
+<p>This action is actually implemented for GitHub only.</p>
 
 
 

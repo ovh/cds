@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Artifact Upload - CDS - Continuous Delivery Service</title>
+<title>GitTag - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,20 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.">
+    content="GitTag is a builtin action, you can&rsquo;t modify it.
+Tag the current branch and push it. Use vcs config from your application. Semver used if fully compatible with https://semver.org.
+Parameters  path: (optional) The path to your git directory. prefix: (optional) Add a prefix for tag name. tagLevel: Set the level of the tag. Must be &lsquo;major&rsquo; or &lsquo;minor&rsquo; or &lsquo;patch&rsquo;. tagMessage: (optional) Set a message for the tag. tagMetadata: (optional) Metadata of the tag.">
 <meta property="og:description"
-    content="Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.">
+    content="GitTag is a builtin action, you can&rsquo;t modify it.
+Tag the current branch and push it. Use vcs config from your application. Semver used if fully compatible with https://semver.org.
+Parameters  path: (optional) The path to your git directory. prefix: (optional) Add a prefix for tag name. tagLevel: Set the level of the tag. Must be &lsquo;major&rsquo; or &lsquo;minor&rsquo; or &lsquo;patch&rsquo;. tagMessage: (optional) Set a message for the tag. tagMetadata: (optional) Metadata of the tag.">
 <meta name="twitter:description"
-    content="Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/artifact-upload/">
-<meta property="og:title" content="Artifact Upload">
-<meta name="twitter:title" content="Artifact Upload">
+    content="GitTag is a builtin action, you can&rsquo;t modify it.
+Tag the current branch and push it. Use vcs config from your application. Semver used if fully compatible with https://semver.org.
+Parameters  path: (optional) The path to your git directory. prefix: (optional) Add a prefix for tag name. tagLevel: Set the level of the tag. Must be &lsquo;major&rsquo; or &lsquo;minor&rsquo; or &lsquo;patch&rsquo;. tagMessage: (optional) Set a message for the tag. tagMetadata: (optional) Metadata of the tag.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/builtin-gittag/">
+<meta property="og:title" content="GitTag">
+<meta name="twitter:title" content="GitTag">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -211,61 +211,67 @@ Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Arti
 	
 		
 			
-<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/artifact-download/"></a>
+<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/artifact-upload/"></a>
+<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/checkoutapplication/"></a>
+<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/deployapplication/"></a>
+<a class="item" data-title="Coverage" href="https://ovh.github.io/cds/docs/actions/builtin-coverage/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/gitclone/"></a>
+<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/gittag/"></a>
+<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/junit/"></a>
+<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/builtin-gittag/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/release/"></a>
+<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/builtin-junit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/script/"></a>
+<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/builtin-release/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/serve-static-files/"></a>
+<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/builtin-script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/"></a>
 
 		
 	
@@ -395,7 +401,7 @@ Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Arti
 			<div id="docsContent">
         		
 
-<h1>Artifact Upload</h1>
+<h1>GitTag</h1>
 
 
 
@@ -404,74 +410,66 @@ Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Arti
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#yaml-example">YAML example</a></li>
 <li><a href="#example">Example</a></li>
-<li><a href="#yaml-format">YAML Format</a></li>
-<li><a href="#worker-upload-command">Worker Upload Command</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p><strong>Artifact Upload Action</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p><strong>GitTag</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.</p>
+<p>Tag the current branch and push it. Use vcs config from your application.
+Semver used if fully compatible with <a href="https://semver.org">https://semver.org</a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>path: Path of file to upload, example: <code>./src/yourFile.json</code></li>
-<li>tag: Artifact will be uploaded with a tag, generally <code>{{.cds.version}}</code>.</li>
-<li>enabled: Enable artifact upload, <code>true</code> or <code>false</code></li>
-<li>destination: optional. Destination of this artifact. Use the name of integration attached on your project. Default is empty.</li>
+<li><strong>path</strong>: (optional) The path to your git directory.</li>
+<li><strong>prefix</strong>: (optional) Add a prefix for tag name.</li>
+<li><strong>tagLevel</strong>: Set the level of the tag. Must be &lsquo;major&rsquo; or &lsquo;minor&rsquo; or &lsquo;patch&rsquo;.</li>
+<li><strong>tagMessage</strong>: (optional) Set a message for the tag.</li>
+<li><strong>tagMetadata</strong>: (optional) Metadata of the tag. Example: cds.42 on a tag 1.0.0 will return 1.0.0+cds.42.</li>
+<li><strong>tagPrerelease</strong>: (optional) Prerelease version of the tag. Example: alpha on a tag 1.0.0 will return 1.0.0-alpha.</li>
 </ul>
+
+<h2 id="requirements">Requirements</h2>
+
+<ul>
+<li><strong>git</strong>: type: binary Value: git</li>
+<li><strong>gpg</strong>: type: binary Value: gpg</li>
+</ul>
+
+<h2 id="yaml-example">YAML example</h2>
+
+<p>Example of a pipeline using GitTag action:</p>
+
+<pre><code class="language-yml">version: v1.0
+name: Pipeline1
+parameters:
+  tagLevel:
+    type: list
+    default: major;minor;patch
+    description: major, minor or patch
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - checkout: '{{.cds.workspace}}'
+  - gitTag:
+      path: '{{.cds.workspace}}'
+      tagLevel: '{{.cds.pip.tagLevel}}'
+      tagMessage: Release from CDS run {{.cds.version}}
+
+</code></pre>
 
 <h2 id="example">Example</h2>
 
-<ul>
-<li>Create a file <code>myfile</code> and upload it.</li>
-</ul>
-
-<p><img src="../images/artifact-upload-job.png" alt="img" /></p>
-
-<ul>
-<li>Launch pipeline, check logs</li>
-</ul>
-
-<p><img src="../images/artifact-upload-logs.png?width=500px" alt="img" /></p>
-
-<ul>
-<li>View artifact</li>
-</ul>
-
-<p><img src="../images/artifact-upload-view-artifact.png" alt="img" /></p>
-
-<h2 id="yaml-format">YAML Format</h2>
-
-<p>Example of Pipeline using Artifact Upload Action</p>
-
-<pre><code class="language-yml">version: v1.0
-name: test-artifacts
-stages:
-- Stage 1
-jobs:
-- job: JobWithUpload
-  stage: Stage 1
-  steps:
-  - script:
-    - echo &quot;content file&quot; &gt; myfile
-  - artifactUpload:
-      path: myfile
-      tag: '{{.cds.version}}'
-</code></pre>
-
-<h2 id="worker-upload-command">Worker Upload Command</h2>
-
-<p>You can upload an artifact with the built-in action - or use the worker command.</p>
-
-<p>Example of a step script using <a href="https://ovh.github.io/cds/docs/components/worker/upload/">worker upload command</a></p>
-
-<p><img src="../images/artifact-worker-upload.png" alt="img" /></p>
+<p>Tutorial that use this action: <a href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_tag_release/">Build, tag and release an application</a>.</p>
 
 
 

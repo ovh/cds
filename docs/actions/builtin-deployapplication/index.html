@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Serve Static Files - CDS - Continuous Delivery Service</title>
+<title>DeployApplication - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,23 +17,29 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="Serve Static Files Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
-Pay attention this action is only available if your objectstore is configured to use Openstack Swift. And fow now by default your static files will be deleted after 2 months.
-Parameters  name: Name to display in CDS UI and identify your static files path: Path where static files will be uploaded (example: mywebsite/*).">
+    content="DeployApplication is a builtin action, you can&rsquo;t modify it.
+Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.
+Parameters No Parameter
+Requirements No Requirement
+YAML example Example of a pipeline using DeployApplication action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - deploy: &#39;{{.cds.application}}&#39;  Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.">
 <meta property="og:description"
-    content="Serve Static Files Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
-Pay attention this action is only available if your objectstore is configured to use Openstack Swift. And fow now by default your static files will be deleted after 2 months.
-Parameters  name: Name to display in CDS UI and identify your static files path: Path where static files will be uploaded (example: mywebsite/*).">
+    content="DeployApplication is a builtin action, you can&rsquo;t modify it.
+Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.
+Parameters No Parameter
+Requirements No Requirement
+YAML example Example of a pipeline using DeployApplication action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - deploy: &#39;{{.cds.application}}&#39;  Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.">
 <meta name="twitter:description"
-    content="Serve Static Files Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
-Pay attention this action is only available if your objectstore is configured to use Openstack Swift. And fow now by default your static files will be deleted after 2 months.
-Parameters  name: Name to display in CDS UI and identify your static files path: Path where static files will be uploaded (example: mywebsite/*).">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/serve-static-files/">
-<meta property="og:title" content="Serve Static Files">
-<meta name="twitter:title" content="Serve Static Files">
+    content="DeployApplication is a builtin action, you can&rsquo;t modify it.
+Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.
+Parameters No Parameter
+Requirements No Requirement
+YAML example Example of a pipeline using DeployApplication action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - deploy: &#39;{{.cds.application}}&#39;  Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">
+<meta property="og:title" content="DeployApplication">
+<meta name="twitter:title" content="DeployApplication">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -214,61 +220,67 @@ Parameters  name: Name to display in CDS UI and identify your static files path:
 	
 		
 			
-<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/artifact-download/"></a>
+<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/artifact-upload/"></a>
+<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/checkoutapplication/"></a>
+<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/deployapplication/"></a>
+<a class="item" data-title="Coverage" href="https://ovh.github.io/cds/docs/actions/builtin-coverage/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/gitclone/"></a>
+<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/gittag/"></a>
+<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/junit/"></a>
+<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/builtin-gittag/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/release/"></a>
+<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/builtin-junit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/script/"></a>
+<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/builtin-release/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/serve-static-files/"></a>
+<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/builtin-script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/"></a>
 
 		
 	
@@ -398,7 +410,7 @@ Parameters  name: Name to display in CDS UI and identify your static files path:
 			<div id="docsContent">
         		
 
-<h1>Serve Static Files</h1>
+<h1>DeployApplication</h1>
 
 
 
@@ -407,6 +419,8 @@ Parameters  name: Name to display in CDS UI and identify your static files path:
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#yaml-example">YAML example</a></li>
 <li><a href="#example">Example</a></li>
 </ul></li>
 </ul>
@@ -414,40 +428,59 @@ Parameters  name: Name to display in CDS UI and identify your static files path:
 
 
 
-<p><strong>Serve Static Files Action</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p><strong>DeployApplication</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;</p>
-
-<p>Pay attention this action is only available if your objectstore is configured to use Openstack Swift. And fow now by default your static files will be deleted after 2 months.</p>
+<p>Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.</p>
 
 <h2 id="parameters">Parameters</h2>
 
-<ul>
-<li>name: Name to display in CDS UI and identify your static files</li>
-<li>path: Path where static files will be uploaded (example: mywebsite/*). If it&rsquo;s a file, the entrypoint would be set to this filename by default.</li>
-<li>entrypoint: Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html).</li>
-<li>static-key: Indicate a static-key which will be a reference to keep the same generated URL. Example: {{.git.branch}}.</li>
-</ul>
+<p>No Parameter</p>
+
+<h2 id="requirements">Requirements</h2>
+
+<p>No Requirement</p>
+
+<h2 id="yaml-example">YAML example</h2>
+
+<p>Example of a pipeline using DeployApplication action:</p>
+
+<pre><code class="language-yml">version: v1.0
+name: Pipeline1
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - deploy: '{{.cds.application}}'
+
+</code></pre>
 
 <h2 id="example">Example</h2>
 
 <ul>
-<li>In this example I created a website with script in bash and use action <code>Serve Static Files</code>. If you want to keep the same URL by .git.branch for example you can indicate in the advanced parameters a <code>static-key</code> equals to <code>{{.git.branch}}</code>.</li>
+<li>Add a deployment platform on your application.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.serve-static-files-job.png" alt="img" /></p>
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-1.png" alt="img" /></p>
 
 <ul>
-<li>Launch pipeline, check logs</li>
+<li>Create a workflow, add a pipeline and an application linked to a platform.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.serve-static-files-logs.png" alt="img" /></p>
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-2.png" alt="img" /></p>
 
 <ul>
-<li>View your static files with links in the tab artifact</li>
+<li>Or edit the pipeline context from your workflow view.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.serve-static-files-tab.png" alt="img" /></p>
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-3.png" alt="img" /></p>
+
+<ul>
+<li>In the job, use action DeployApplication</li>
+</ul>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-4.png" alt="img" /></p>
 
 
 

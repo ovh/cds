@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>DeployApplication - CDS - Continuous Delivery Service</title>
+<title>Artifact Download - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,23 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content=" DeployApplication is a builtin action, you can&rsquo;t modify it.
-This action is useful only if you have a Deployment Plaftorm associated to your current application.
-Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.   Or edit the pipeline context from your workflow view.   In the job, use action DeployApplication  ">
+    content="Artifact Download is a builtin action, you can&rsquo;t modify it.
+This action can be used to retrieve an artifact previously uploaded by an Artifact Upload.
+Parameters  enabled: (optional) Enable artifact download. path: Path where artifacts will be downloaded. pattern: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB). tag: Artifact are uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement
+YAML example Example of a pipeline using Artifact Download action:">
 <meta property="og:description"
-    content=" DeployApplication is a builtin action, you can&rsquo;t modify it.
-This action is useful only if you have a Deployment Plaftorm associated to your current application.
-Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.   Or edit the pipeline context from your workflow view.   In the job, use action DeployApplication  ">
+    content="Artifact Download is a builtin action, you can&rsquo;t modify it.
+This action can be used to retrieve an artifact previously uploaded by an Artifact Upload.
+Parameters  enabled: (optional) Enable artifact download. path: Path where artifacts will be downloaded. pattern: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB). tag: Artifact are uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement
+YAML example Example of a pipeline using Artifact Download action:">
 <meta name="twitter:description"
-    content=" DeployApplication is a builtin action, you can&rsquo;t modify it.
-This action is useful only if you have a Deployment Plaftorm associated to your current application.
-Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.   Or edit the pipeline context from your workflow view.   In the job, use action DeployApplication  ">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/deployapplication/">
-<meta property="og:title" content="DeployApplication">
-<meta name="twitter:title" content="DeployApplication">
+    content="Artifact Download is a builtin action, you can&rsquo;t modify it.
+This action can be used to retrieve an artifact previously uploaded by an Artifact Upload.
+Parameters  enabled: (optional) Enable artifact download. path: Path where artifacts will be downloaded. pattern: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB). tag: Artifact are uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement
+YAML example Example of a pipeline using Artifact Download action:">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/">
+<meta property="og:title" content="Artifact Download">
+<meta name="twitter:title" content="Artifact Download">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -211,61 +214,67 @@ Example  Add a deployment platform on your application.   Create a workflow, add
 	
 		
 			
-<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/artifact-download/"></a>
+<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/artifact-upload/"></a>
+<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/checkoutapplication/"></a>
+<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/deployapplication/"></a>
+<a class="item" data-title="Coverage" href="https://ovh.github.io/cds/docs/actions/builtin-coverage/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/gitclone/"></a>
+<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/gittag/"></a>
+<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/junit/"></a>
+<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/builtin-gittag/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/release/"></a>
+<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/builtin-junit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/script/"></a>
+<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/builtin-release/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/serve-static-files/"></a>
+<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/builtin-script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/"></a>
 
 		
 	
@@ -395,7 +404,7 @@ Example  Add a deployment platform on your application.   Create a workflow, add
 			<div id="docsContent">
         		
 
-<h1>DeployApplication</h1>
+<h1>Artifact Download</h1>
 
 
 
@@ -403,42 +412,74 @@ Example  Add a deployment platform on your application.   Create a workflow, add
 <ul>
 <li>
 <ul>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#yaml-example">YAML example</a></li>
 <li><a href="#example">Example</a></li>
+<li><a href="#worker-download-command">Worker Download Command</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p><strong>DeployApplication</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p><strong>Artifact Download</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action is useful only if you have a Deployment Plaftorm associated to your current application.</p>
+<p>This action can be used to retrieve an artifact previously uploaded by an Artifact Upload.</p>
+
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><strong>enabled</strong>: (optional) Enable artifact download.</li>
+<li><strong>path</strong>: Path where artifacts will be downloaded.</li>
+<li><strong>pattern</strong>: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB).</li>
+<li><strong>tag</strong>: Artifact are uploaded with a tag, generally {{.cds.version}}.</li>
+</ul>
+
+<h2 id="requirements">Requirements</h2>
+
+<p>No Requirement</p>
+
+<h2 id="yaml-example">YAML example</h2>
+
+<p>Example of a pipeline using Artifact Download action:</p>
+
+<pre><code class="language-yml">version: v1.0
+name: Pipeline1
+stages:
+- Stage1
+jobs:
+- job: Job1
+  stage: Stage1
+  steps:
+  - artifactDownload:
+      path: '{{.cds.workspace}}'
+      pattern: '*.tag.gz'
+      tag: '{{.cds.version}}'
+
+</code></pre>
 
 <h2 id="example">Example</h2>
 
 <ul>
-<li>Add a deployment platform on your application.</li>
+<li>Workflow Configuration: a pipeline doing an <code>upload artifact</code> and another doing a <code>download artifact</code>.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-1.png" alt="img" /></p>
+<p><img src="../images/artifact-download-workflow.png" alt="img" /></p>
 
 <ul>
-<li>Create a workflow, add a pipeline and an application linked to a platform.</li>
+<li>Run pipeline, check logs</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-2.png" alt="img" /></p>
+<p><img src="../images/artifact-download-logs.png" alt="img" /></p>
 
-<ul>
-<li>Or edit the pipeline context from your workflow view.</li>
-</ul>
+<h2 id="worker-download-command">Worker Download Command</h2>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-3.png" alt="img" /></p>
+<p>You can download an artifact with the built-in action - or use the worker command.</p>
 
-<ul>
-<li>In the job, use action DeployApplication</li>
-</ul>
+<p>Example of a step script using <a href="https://ovh.github.io/cds/docs/components/worker/download/">worker download command</a></p>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.deploy-application-4.png" alt="img" /></p>
+<p><img src="../images/artifact-worker-download.png" alt="img" /></p>
 
 
 

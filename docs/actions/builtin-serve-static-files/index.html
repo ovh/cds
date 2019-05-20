@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>GitTag - CDS - Continuous Delivery Service</title>
+<title>Serve Static Files - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,20 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="GitTag is a builtin action, you can&rsquo;t modify it.
-This action creates a semver comptabible tag. You can use a pgp key to sign it.
-Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository. authPrivateKey - optional - the private key to be able to git tag from ssh user - optional - the user to be able to git tag from https with authentication password - optional - the password to be able to git tag from https with authentication tagName - optional - Name of the tag you want to create.">
+    content="Serve Static Files is a builtin action, you can&rsquo;t modify it.
+This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
+Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.">
 <meta property="og:description"
-    content="GitTag is a builtin action, you can&rsquo;t modify it.
-This action creates a semver comptabible tag. You can use a pgp key to sign it.
-Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository. authPrivateKey - optional - the private key to be able to git tag from ssh user - optional - the user to be able to git tag from https with authentication password - optional - the password to be able to git tag from https with authentication tagName - optional - Name of the tag you want to create.">
+    content="Serve Static Files is a builtin action, you can&rsquo;t modify it.
+This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
+Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.">
 <meta name="twitter:description"
-    content="GitTag is a builtin action, you can&rsquo;t modify it.
-This action creates a semver comptabible tag. You can use a pgp key to sign it.
-Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository. authPrivateKey - optional - the private key to be able to git tag from ssh user - optional - the user to be able to git tag from https with authentication password - optional - the password to be able to git tag from https with authentication tagName - optional - Name of the tag you want to create.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/gittag/">
-<meta property="og:title" content="GitTag">
-<meta name="twitter:title" content="GitTag">
+    content="Serve Static Files is a builtin action, you can&rsquo;t modify it.
+This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
+Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/">
+<meta property="og:title" content="Serve Static Files">
+<meta name="twitter:title" content="Serve Static Files">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -211,61 +211,67 @@ Parameters  url - mandatory - URL must contain information about the transport p
 	
 		
 			
-<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/artifact-download/"></a>
+<a class="item" data-title="Artifact Download" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/artifact-upload/"></a>
+<a class="item" data-title="Artifact Upload" href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/checkoutapplication/"></a>
+<a class="item" data-title="CheckoutApplication" href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/deployapplication/"></a>
+<a class="item" data-title="Coverage" href="https://ovh.github.io/cds/docs/actions/builtin-coverage/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/gitclone/"></a>
+<a class="item" data-title="DeployApplication" href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/gittag/"></a>
+<a class="item" data-title="GitClone" href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/junit/"></a>
+<a class="item" data-title="GitTag" href="https://ovh.github.io/cds/docs/actions/builtin-gittag/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/release/"></a>
+<a class="item" data-title="JUnit" href="https://ovh.github.io/cds/docs/actions/builtin-junit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/script/"></a>
+<a class="item" data-title="Release" href="https://ovh.github.io/cds/docs/actions/builtin-release/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/serve-static-files/"></a>
+<a class="item" data-title="Script" href="https://ovh.github.io/cds/docs/actions/builtin-script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/"></a>
 
 		
 	
@@ -395,7 +401,7 @@ Parameters  url - mandatory - URL must contain information about the transport p
 			<div id="docsContent">
         		
 
-<h1>GitTag</h1>
+<h1>Serve Static Files</h1>
 
 
 
@@ -404,60 +410,75 @@ Parameters  url - mandatory - URL must contain information about the transport p
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
-<li><a href="#example-of-usage">Example of usage</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#yaml-example">YAML example</a></li>
+<li><a href="#example">Example</a></li>
+<li><a href="#notes">Notes</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p><strong>GitTag</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p><strong>Serve Static Files</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action creates a <a href="https://semver.org">semver</a> comptabible tag. You can use a pgp key to sign it.</p>
+<p>This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.</li>
-<li>authPrivateKey - optional - the private key to be able to git tag from ssh</li>
-<li>user - optional - the user to be able to git tag from https with authentication</li>
-<li>password - optional - the password to be able to git tag from https with authentication</li>
-<li>tagName - optional - Name of the tag you want to create. If empty, it will make a patch version from your last tag.</li>
-<li>tagMessage - optional - Message for the tag</li>
-<li>path - optional - path to your git repository</li>
-<li>signKey - optional - pgp key to sign the tag</li>
-<li>Advanced parameter: prefix - add a prefix in tag name created</li>
+<li><strong>destination</strong>: (optional) Destination of uploading. Use the name of integration attached on your project.</li>
+<li><strong>entrypoint</strong>: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html).</li>
+<li><strong>name</strong>: Name to display in CDS UI and identify your static files.</li>
+<li><strong>path</strong>: Path where static files will be uploaded (example: mywebsite/*). If it&rsquo;s a file, the entrypoint would be set to this filename by default.</li>
+<li><strong>static-key</strong>: (optional) Indicate a static-key which will be a reference to keep the same generated URL. Example: {{.git.branch}}.</li>
 </ul>
 
-<h2 id="example-of-usage">Example of usage</h2>
+<h2 id="requirements">Requirements</h2>
 
-<p>Here, a pipeline as code, containing two actions:</p>
+<p>No Requirement</p>
 
-<ul>
-<li>CheckoutApplication</li>
-<li>GitTag</li>
-</ul>
+<h2 id="yaml-example">YAML example</h2>
+
+<p>Example of a pipeline using Serve Static Files action:</p>
 
 <pre><code class="language-yml">version: v1.0
-name: create-tag
-parameters:
-  tagLevel:
-    type: list
-    default: major;minor;patch
-    description: major, minor or patch
+name: Pipeline1
+stages:
+- Stage1
 jobs:
-- job: CreateTag
+- job: Job1
+  stage: Stage1
   steps:
-  - checkout: '{{.cds.workspace}}'
-  - gitTag:
-      path: '{{.cds.workspace}}'
-      tagLevel: '{{.cds.pip.tagLevel}}'
-      tagMessage: Release from CDS run {{.cds.version}}
+  - serveStaticFiles:
+      name: mywebsite
+      path: mywebsite/*
+
 </code></pre>
 
-<p>This pipeline could be used in a workflow, with a Run Condition on cds.manual = true.</p>
+<h2 id="example">Example</h2>
 
-<p>Tutorial: <a href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_tag_release/">Build, tag and release an application</a></p>
+<ul>
+<li>In this example I created a website with script in bash and use action <code>Serve Static Files</code>. If you want to keep the same URL by .git.branch for example you can indicate in the advanced parameters a <code>static-key</code> equals to <code>{{.git.branch}}</code>.</li>
+</ul>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.serve-static-files-job.png" alt="img" /></p>
+
+<ul>
+<li>Launch pipeline, check logs</li>
+</ul>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.serve-static-files-logs.png" alt="img" /></p>
+
+<ul>
+<li>View your static files with links in the tab artifact</li>
+</ul>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.serve-static-files-tab.png" alt="img" /></p>
+
+<h2 id="notes">Notes</h2>
+
+<p>Pay attention this action is only available if your objectstore is configured to use <a href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/">Openstack Swift</a> or <a href="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/">AWS S3</a>. And for now by default your static files will be deleted after 2 months.</p>
 
 
 

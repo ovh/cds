@@ -29,7 +29,7 @@ You can use « built-in » actions, such as checkoutApplication, script, jUnit, 
       
       <guid>https://ovh.github.io/cds/docs/concepts/permissions/</guid>
       <description>There are 3 types of permissions:
- Read Read / Execute Read / Write / Execute  These permissions can be attached to different objects:
+ Read (as code value: 4) Read / Execute (as code value: 5) Read / Write / Execute (as code value: 7)  These permissions can be attached to different objects:
  On project On workflow On workflow node      Project Workflow Workflow node     Create a workflow RWX - -   Edit a workflow (change run conditions, add nodes, edit payload, notifications, &amp;hellip;) RO RWX -   Create/edit an environment/pipeline/application RWX - -   Manage permissions on project RWX - -   Manage permissions on a workflow RO RWX    Run a workflow RO RX / - OR RX (if there is some groups on node)    Permissions cannot be attached directly to users, they need to be attached to groups of users.</description>
     </item>
     

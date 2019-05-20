@@ -378,7 +378,7 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 
 <p>The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.</p>
 
-<p>This integration enables the <a href="https://ovh.github.io/cds/docs/actions/deployapplication/">DeployApplication</a> action</p>
+<p>This integration enables the <a href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">DeployApplication</a> action</p>
 
 <h2 id="create-integration-model">Create Integration Model</h2>
 
@@ -421,7 +421,7 @@ deployment_default_config:
 
 <h2 id="import-kubernetes-plugin">Import Kubernetes Plugin</h2>
 
-<p>The goal of this integration is to use the <a href="https://ovh.github.io/cds/docs/actions/deployapplication/">DeployApplication</a> action in a Job.
+<p>The goal of this integration is to use the <a href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">DeployApplication</a> action in a Job.
 This action use a dedicated plugin for each integration, you need to import the plugin-kubernetes.</p>
 
 <p>You will find on CDS Release the plugin-kubernetes with associated yml file.</p>
@@ -591,8 +591,8 @@ path of the files in your CDS Job.</p>
 
 <p><img src="../images/link_kubernetes_to_application.png" alt="Add To Application" /></p>
 
-<p>Then, as a standard user, you can use the <a href="https://ovh.github.io/cds/docs/actions/deployapplication/">DeployApplication</a> action in a Job.
-Before using this action, you probably want to use <a href="https://ovh.github.io/cds/docs/actions/checkoutapplication/">CheckoutApplication</a> to git clone the kubernetes or helm files from your git repository.</p>
+<p>Then, as a standard user, you can use the <a href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">DeployApplication</a> action in a Job.
+Before using this action, you probably want to use <a href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> to git clone the kubernetes or helm files from your git repository.</p>
 
 
 

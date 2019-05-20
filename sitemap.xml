@@ -315,11 +315,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/artifact-download/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-artifact-download/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/artifact-upload/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/</loc>
   </url>
   
   <url>
@@ -331,7 +331,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/checkoutapplication/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/</loc>
   </url>
   
   <url>
@@ -347,7 +347,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/deployapplication/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-coverage/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-deployapplication/</loc>
   </url>
   
   <url>
@@ -367,7 +371,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/gitclone/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-gitclone/</loc>
   </url>
   
   <url>
@@ -379,11 +383,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/gittag/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-gittag/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/junit/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-junit/</loc>
   </url>
   
   <url>
@@ -423,7 +427,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/release/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-release/</loc>
   </url>
   
   <url>
@@ -435,11 +439,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/script/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-script/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/actions/serve-static-files/</loc>
+    <loc>https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/</loc>
   </url>
   
   <url>
@@ -784,6 +788,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/worker/disable/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/doc/</loc>
   </url>
   
   <url>
@@ -1168,6 +1176,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/project/variable/list/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/template/list/</loc>
   </url>
   
   <url>
@@ -1567,6 +1579,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/tools/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/development/rest/ui/</loc>
   </url>
   
@@ -1688,6 +1704,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/xtoken/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/tools/yaml-schema/</loc>
   </url>
   
 </urlset>

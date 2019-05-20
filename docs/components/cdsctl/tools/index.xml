@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>tools on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/tools/</link>
+    <description>Recent content in tools on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/tools/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>yaml-schema</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/tools/yaml-schema/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/tools/yaml-schema/</guid>
+      <description> cdsctl tools yaml-schema Generate and install CDS yaml schema for given IDE
+Synopsis Generate and install CDS yaml schema for given IDE
+cdsctl tools yaml-schema IDE-NAME  Examples cdsctl tools yaml-schema vscode  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl tools - Some tooling for CDS  </description>
+    </item>
+    
+  </channel>
+</rss>

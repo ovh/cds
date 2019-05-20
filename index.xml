@@ -124,7 +124,7 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
       
       <guid>https://ovh.github.io/cds/docs/concepts/permissions/</guid>
       <description>There are 3 types of permissions:
- Read Read / Execute Read / Write / Execute  These permissions can be attached to different objects:
+ Read (as code value: 4) Read / Execute (as code value: 5) Read / Write / Execute (as code value: 7)  These permissions can be attached to different objects:
  On project On workflow On workflow node      Project Workflow Workflow node     Create a workflow RWX - -   Edit a workflow (change run conditions, add nodes, edit payload, notifications, &amp;hellip;) RO RWX -   Create/edit an environment/pipeline/application RWX - -   Manage permissions on project RWX - -   Manage permissions on a workflow RO RWX    Run a workflow RO RX / - OR RX (if there is some groups on node)    Permissions cannot be attached directly to users, they need to be attached to groups of users.</description>
     </item>
     
@@ -663,24 +663,25 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.</description>
     
     <item>
       <title>Artifact Download</title>
-      <link>https://ovh.github.io/cds/docs/actions/artifact-download/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-artifact-download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/artifact-download/</guid>
-      <description>Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
-This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
-Parameters  enabled: Enable artifact download path: Path where artifacts will be downloaded pattern: Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB) tag: Artifact are uploaded with a tag, generally {{.cds.version}}  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-artifact-download/</guid>
+      <description>Artifact Download is a builtin action, you can&amp;rsquo;t modify it.
+This action can be used to retrieve an artifact previously uploaded by an Artifact Upload.
+Parameters  enabled: (optional) Enable artifact download. path: Path where artifacts will be downloaded. pattern: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB). tag: Artifact are uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement
+YAML example Example of a pipeline using Artifact Download action:</description>
     </item>
     
     <item>
       <title>Artifact Upload</title>
-      <link>https://ovh.github.io/cds/docs/actions/artifact-upload/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/artifact-upload/</guid>
-      <description>Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/</guid>
+      <description>Artifact Upload is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  path: Path of file to upload, example: ./src/yourFile.json tag: Artifact will be uploaded with a tag, generally {{.cds.version}}. enabled: Enable artifact upload, true or false destination: optional. Destination of this artifact. Use the name of integration attached on your project.</description>
+Parameters  destination: (optional) Destination of this artifact. Use the name of integration attached on your project. enabled: (optional) Enable artifact upload, &amp;ldquo;true&amp;rdquo; or &amp;ldquo;false&amp;rdquo;. path: Path of file to upload, example: ./src/yourFile.json. tag: Artifact will be uploaded with a tag, generally {{.</description>
     </item>
     
     <item>
@@ -709,14 +710,14 @@ Talks March 22, 2019 - Talk at conference Breizhcamp to introduce CDS (French): 
     
     <item>
       <title>CheckoutApplication</title>
-      <link>https://ovh.github.io/cds/docs/actions/checkoutapplication/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/checkoutapplication/</guid>
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/</guid>
       <description>CheckoutApplication is a builtin action, you can&amp;rsquo;t modify it.
-This action clones a repository into a directory. If you want to clone a tag from your repository in this way, in your workflow payload you can add a key in your JSON like &amp;quot;git.tag&amp;quot;: &amp;quot;0.2&amp;quot;.
-This will run git clone with the following options:
- --depth 50 --recursive authentication from Application VCS Strategy (ssh or http(s))  If you want to modify options depth or recursive, you have to use GitClone action.</description>
+CDS Builtin Action. Checkout a repository into a new directory.
+This action use the configuration from application vcs strategy to git clone the repository. The clone will be done with a depth of 50 and with submodules. If you want to modify theses options, you have to use gitClone action.
+Parameters  directory: The name of a directory to clone into.</description>
     </item>
     
     <item>
@@ -739,14 +740,30 @@ All CDS Contributors: https://github.com/ovh/cds/graphs/contributors</descriptio
     </item>
     
     <item>
-      <title>DeployApplication</title>
-      <link>https://ovh.github.io/cds/docs/actions/deployapplication/</link>
+      <title>Coverage</title>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-coverage/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/deployapplication/</guid>
-      <description> DeployApplication is a builtin action, you can&amp;rsquo;t modify it.
-This action is useful only if you have a Deployment Plaftorm associated to your current application.
-Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.   Or edit the pipeline context from your workflow view.   In the job, use action DeployApplication  </description>
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-coverage/</guid>
+      <description> Coverage is a builtin action, you can&amp;rsquo;t modify it.
+CDS Builtin Action. Parse given file to extract coverage results.
+Parameters  format: Coverage report format. minimum: Minimum percentage of coverage required (-1 means no minimum). path: Path of the coverage report file.  Requirements No Requirement
+YAML example Example of a pipeline using Coverage action:
+{}  </description>
+    </item>
+    
+    <item>
+      <title>DeployApplication</title>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-deployapplication/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-deployapplication/</guid>
+      <description>DeployApplication is a builtin action, you can&amp;rsquo;t modify it.
+Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.
+Parameters No Parameter
+Requirements No Requirement
+YAML example Example of a pipeline using DeployApplication action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - deploy: &#39;{{.cds.application}}&#39;  Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.</description>
     </item>
     
     <item>
@@ -774,13 +791,13 @@ package main import ( &amp;quot;flag&amp;quot; &amp;quot;fmt&amp;quot; &amp;quot
     
     <item>
       <title>GitClone</title>
-      <link>https://ovh.github.io/cds/docs/actions/gitclone/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-gitclone/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/gitclone/</guid>
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-gitclone/</guid>
       <description>GitClone is a builtin action, you can&amp;rsquo;t modify it.
-This action clones a repository into a new directory.
-Parameters  url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository. privateKey - optional - the private key to be able to git clone from ssh user - optional - the user to be able to git clone from https with authentication password - optional - the password to be able to git clone from https with authentication branch - optional - Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.</description>
+Clone a repository into a new directory.
+Parameters  branch: (optional) Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.git.branch}} branch instead. commit: (optional) Set the current branch head (HEAD) to the commit. depth: (optional) Clone with a depth of 50 by default. You can remove &amp;ndash;depth with the value &amp;lsquo;false&amp;rsquo;.</description>
     </item>
     
     <item>
@@ -809,24 +826,26 @@ This integration enables some features:
     
     <item>
       <title>GitTag</title>
-      <link>https://ovh.github.io/cds/docs/actions/gittag/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-gittag/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/gittag/</guid>
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-gittag/</guid>
       <description>GitTag is a builtin action, you can&amp;rsquo;t modify it.
-This action creates a semver comptabible tag. You can use a pgp key to sign it.
-Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository. authPrivateKey - optional - the private key to be able to git tag from ssh user - optional - the user to be able to git tag from https with authentication password - optional - the password to be able to git tag from https with authentication tagName - optional - Name of the tag you want to create.</description>
+Tag the current branch and push it. Use vcs config from your application. Semver used if fully compatible with https://semver.org.
+Parameters  path: (optional) The path to your git directory. prefix: (optional) Add a prefix for tag name. tagLevel: Set the level of the tag. Must be &amp;lsquo;major&amp;rsquo; or &amp;lsquo;minor&amp;rsquo; or &amp;lsquo;patch&amp;rsquo;. tagMessage: (optional) Set a message for the tag. tagMetadata: (optional) Metadata of the tag.</description>
     </item>
     
     <item>
       <title>JUnit</title>
-      <link>https://ovh.github.io/cds/docs/actions/junit/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-junit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/junit/</guid>
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-junit/</guid>
       <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
 This action parses a given Junit formatted XML file to extract its test results.
-Parameters  path: Path to a JUnit XML file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
+Parameters  path: Path to junit xml file.  Requirements No Requirement
+YAML example Example of a pipeline using JUnit action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - jUnitReport: &#39;{{.cds.workspace}}/report.xml&#39;  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
     </item>
     
     <item>
@@ -917,14 +936,13 @@ name: my-rabbitmq-integration model: name: RabbitMQ identifier: github.com/ovh/c
     
     <item>
       <title>Release</title>
-      <link>https://ovh.github.io/cds/docs/actions/release/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-release/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/release/</guid>
-      <description> Release is a builtin action, you can&amp;rsquo;t modify it.
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-release/</guid>
+      <description>Release is a builtin action, you can&amp;rsquo;t modify it.
 This action creates a release on the git repository linked to the application, if repository manager implements it.
-This is actually implemented for GitHub only.
-Parameters  artifacts - optional - List of artifacts to upload, separated by &amp;lsquo;,&amp;rsquo;. You can also use regexp releaseNote - optional - release information tag - mandatory - Tag attached to the release title - mandatory - Set the title of the release  </description>
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement</description>
     </item>
     
     <item>
@@ -938,28 +956,26 @@ Parameters  artifacts - optional - List of artifacts to upload, separated by &am
     
     <item>
       <title>Script</title>
-      <link>https://ovh.github.io/cds/docs/actions/script/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-script/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/script/</guid>
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-script/</guid>
       <description>Script is a builtin action, you can&amp;rsquo;t modify it.
 This action executes a given script with a given interpreter.
-Parameters  script: Content of your script. You can put  #!/bin/bash  or
-#!/bin/perl  at first line. This will define the interpreter.
-Make sure that the binary used is in the pre-requisites of the action.
-If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.</description>
+Parameters  script: Content of your script. You can put #!/bin/bash, or #!/bin/perl at first line. Make sure that the binary used is in the pre-requisites of action.  Requirements No Requirement
+YAML example Example of a pipeline using Script action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - script: - &#39;#!</description>
     </item>
     
     <item>
       <title>Serve Static Files</title>
-      <link>https://ovh.github.io/cds/docs/actions/serve-static-files/</link>
+      <link>https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/serve-static-files/</guid>
-      <description>Serve Static Files Action is a builtin action, you can&amp;rsquo;t modify it.
+      <guid>https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/</guid>
+      <description>Serve Static Files is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &amp;hellip;
-Pay attention this action is only available if your objectstore is configured to use Openstack Swift. And fow now by default your static files will be deleted after 2 months.
-Parameters  name: Name to display in CDS UI and identify your static files path: Path where static files will be uploaded (example: mywebsite/*).</description>
+Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.</description>
     </item>
     
     <item>
@@ -1751,12 +1767,23 @@ cdsctl worker disable NAME ...  Options inherited from parent commands  -f, --fi
     
     <item>
       <title>doc</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/doc/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/doc/</guid>
+      <description> cdsctl action builtin doc Generate Builtin action documentation: cdsctl action builtin doc &amp;lt;name&amp;gt;
+Synopsis Generate Builtin action documentation: cdsctl action builtin doc &amp;lt;name&amp;gt;
+cdsctl action builtin doc NAME  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl action builtin - Manage CDS builtin action  </description>
+    </item>
+    
+    <item>
+      <title>doc</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/action/doc/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/action/doc/</guid>
-      <description> cdsctl action doc Generate Action Documentation: cdsctl action doc &amp;lt;path-to-file&amp;gt;
-Synopsis Generate Action Documentation: cdsctl action doc &amp;lt;path-to-file&amp;gt;
+      <description> cdsctl action doc Generate action documentation: cdsctl action doc &amp;lt;path-to-file&amp;gt;
+Synopsis Generate action documentation: cdsctl action doc &amp;lt;path-to-file&amp;gt;
 cdsctl action doc PATH  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl action - Manage CDS action  </description>
     </item>
     
@@ -2608,6 +2635,17 @@ cdsctl project platform list [ PROJECT-KEY ] [flags]  Options  --fields string O
       <description>cdsctl project variable list List CDS project variables
 Synopsis List CDS project variables
 cdsctl project variable list [ PROJECT-KEY ] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/template/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/template/list/</guid>
+      <description>cdsctl template list Get all available workflow template from CDS
+Synopsis Get all available workflow template from CDS
+cdsctl template list [flags]  Examples cdsctl template list  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -3760,6 +3798,17 @@ engine download workers [flags]  Examples engine download workers  Options  --ar
       <description>cdsctl xlogin Login to CDS [EXPERIMENTAL]
 Synopsis Login to CDS [EXPERIMENTAL]
 cdsctl xlogin [flags]  Options  -H, --api-url string CDS API URL --env Display the commands to set up the environment for the cds client -p, --password string CDS Password -u, --username string CDS Username  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>yaml-schema</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/tools/yaml-schema/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/tools/yaml-schema/</guid>
+      <description> cdsctl tools yaml-schema Generate and install CDS yaml schema for given IDE
+Synopsis Generate and install CDS yaml schema for given IDE
+cdsctl tools yaml-schema IDE-NAME  Examples cdsctl tools yaml-schema vscode  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl tools - Some tooling for CDS  </description>
     </item>
     
   </channel>
