@@ -172,7 +172,7 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 
 func searchRepository(pkey, repoManagerName, repoFullname string) (string, error) {
 	var resync bool
-	for !resync {
+	for {
 		// Get repositories from the repository manager
 		repos, err := client.RepositoriesList(pkey, repoManagerName, resync)
 		if err != nil {
@@ -183,15 +183,17 @@ func searchRepository(pkey, repoManagerName, repoFullname string) (string, error
 		// Search the repo
 		for _, r := range repos {
 			// r.Fullname = CDS/demo
-			if strings.ToLower(r.Fullname) == repoFullname {
+			if strings.ToLower(r.Fullname) == strings.ToLower(repoFullname) {
 				fmt.Printf(" * using repository %s from %s", cli.Magenta(r.Fullname), cli.Magenta(repoManagerName))
 				fmt.Println()
 				return r.Fullname, nil
 			}
 		}
+		if resync {
+			break
+		}
 		resync = true
 	}
-
 	return "", fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoFullname, repoManagerName)
 }
 
