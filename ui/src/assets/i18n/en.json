@@ -993,7 +993,7 @@
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",
   "workflow_node_context_payload": "Default payload",
   "workflow_node_context_payload_read_only": "Current Payload (read-only)",
-  "workflow_node_menu_edit": "Edit pipeline context",
+  "workflow_node_menu_edit": "Edit the pipeline context",
   "workflow_node_menu_edit_ro": "Show context configuration",
   "workflow_node_menu_edit_pipeline": "Edit the pipeline",
   "workflow_run_node_job_queued": "Queued {{time}} ago",
