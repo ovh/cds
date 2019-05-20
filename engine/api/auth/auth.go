@@ -26,7 +26,6 @@ const (
 	ContextHatchery
 	ContextWorker
 	ContextService
-	ContextUserSession
 	ContextProvider
 	ContextUserAuthentified
 	ContextGrantedUser
@@ -150,6 +149,8 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, he
 	if err != nil {
 		return ctx, err
 	}
+	//TODO
+	// Service authentication against jwt token
 
 	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
 	if srv.Type == services.TypeHatchery {
@@ -160,8 +161,8 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, he
 	return ctx, nil
 }
 
-// Session_DEPRECATED have to be deprecated
-func Session_DEPRECATED(ctx context.Context, db gorp.SqlExecutor, sessionToken, username string) (context.Context, error) {
+// GetEphemeralSession_DEPRECATED have to be deprecated
+func GetEphemeralSession_DEPRECATED(ctx context.Context, db gorp.SqlExecutor, sessionToken, username string) (context.Context, error) {
 	u, err := user.LoadUserByUsername(db, username)
 	if err != nil {
 		return ctx, err
@@ -173,7 +174,6 @@ func Session_DEPRECATED(ctx context.Context, db gorp.SqlExecutor, sessionToken, 
 	}
 
 	ctx = context.WithValue(ctx, ContextUser, oldUser)
-	ctx = context.WithValue(ctx, ContextUserSession, sessionToken)
 	ctx = context.WithValue(ctx, ContextUserAuthentified, u)
 	return ctx, nil
 }
@@ -210,7 +210,7 @@ func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.
 		return ctx, sdk.WithStack(err)
 	}
 
-	ctx, err = Session_DEPRECATED(ctx, db, sessionToken, username)
+	ctx, err = GetEphemeralSession_DEPRECATED(ctx, db, sessionToken, username)
 	if err != nil {
 		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %v", username, err))
 	}

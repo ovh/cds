@@ -16,7 +16,7 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.AuthentifiedU
 	// Admin can gets all project
 	// Users can gets only their projects
 
-	if u == nil || u.Admin() {
+	if u.Admin() {
 		return loadNavbarAsAdmin(db, store, u)
 	}
 
@@ -61,7 +61,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.Authentifi
 	)
 	`
 
-	rows, err := db.Query(query, u.ID)
+	rows, err := db.Query(query, u.OldUserStruct.ID)
 	if err != nil {
 		return data, err
 	}

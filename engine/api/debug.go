@@ -25,7 +25,8 @@ import (
 // getProfileIndexHandler returns the profiles index
 func (api *API) getProfileIndexHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		session := getUserSession(ctx)
+		var session string
+		//session := getUserSession(ctx) TODO: fix
 
 		if session == "" {
 			session = r.FormValue("Session-Token")

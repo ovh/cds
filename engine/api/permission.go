@@ -47,10 +47,10 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	}
 }
 
-func (api *API) deprecatedSetGroupsAndPermissionsFromGroupID(ctx context.Context, groupID int64) error {
+func (api *API) setGroupsAndPermissionsFromGroupID_DEPRECATED(ctx context.Context, groupID int64) error {
 	g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, groupID)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnauthorized, "deprecatedSetGroupsAndPermissionsFromGroupID> cannot load permissions: %s", err)
+		return sdk.WrapError(sdk.ErrUnauthorized, "setGroupsAndPermissionsFromGroupID_DEPRECATED> cannot load permissions: %s", err)
 	}
 	getAuthentifiedUser(ctx).OldUserStruct.Permissions = perm
 	getAuthentifiedUser(ctx).OldUserStruct.Groups = append(getAuthentifiedUser(ctx).OldUserStruct.Groups, g)
@@ -136,7 +136,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 			}
 			return sdk.WrapError(sdk.ErrForbidden, "user not authorized for workflow %s", workflowName)
 		default:
-			wPerm, has := getAuthentifiedUser(ctx).OldUserStruct.Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)]
+			wPerm, has := deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)]
 			if !has {
 				return sdk.WithStack(sdk.ErrNotFound)
 			}
@@ -151,7 +151,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 }
 
 func checkProjectReadPermission(ctx context.Context, projectKey string) bool {
-	return getAuthentifiedUser(ctx).OldUserStruct.Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
+	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
 }
 
 func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVar map[string]string) error {

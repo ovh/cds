@@ -109,18 +109,18 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 
 			if m.GroupID == group.SharedInfraGroup.ID {
 				// it's a shared.infra model, load group from token only: workerCtx.GroupID
-				if err := api.deprecatedSetGroupsAndPermissionsFromGroupID(ctx, workerCtx.GroupID); err != nil {
+				if err := api.setGroupsAndPermissionsFromGroupID_DEPRECATED(ctx, workerCtx.GroupID); err != nil {
 					return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> model shared.infra:%d", m.GroupID)
 				}
 			} else {
 				// this model is not attached to shared.infra group, load group with m.GroupID
-				if err := api.deprecatedSetGroupsAndPermissionsFromGroupID(ctx, m.GroupID); err != nil {
+				if err := api.setGroupsAndPermissionsFromGroupID_DEPRECATED(ctx, m.GroupID); err != nil {
 					return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> model not shared.infra:%d", m.GroupID)
 				}
 			}
 		} else {
 			// worker does not have a model, take group from token only
-			if err := api.deprecatedSetGroupsAndPermissionsFromGroupID(ctx, workerCtx.GroupID); err != nil {
+			if err := api.setGroupsAndPermissionsFromGroupID_DEPRECATED(ctx, workerCtx.GroupID); err != nil {
 				return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> no model, worker not shared.infra:%d", workerCtx.GroupID)
 			}
 		}
@@ -212,13 +212,13 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 	// TEMPORARY CODE
 	// SHOULD BE REMOVED WITH REFACTO OF PERMISSIONS
 	var err error
-	ctx, err = auth.Session_DEPRECATED(ctx, api.mustDB(), token.ID, token.AuthentifiedUser.Username)
+	ctx, err = auth.GetEphemeralSession_DEPRECATED(ctx, api.mustDB(), token.ID, token.AuthentifiedUser.Username)
 	if err != nil {
 		return ctx, false, sdk.WithStack(err)
 	}
 
 	for _, g := range grantedUser.Groups {
-		if err := api.deprecatedSetGroupsAndPermissionsFromGroupID(ctx, g.ID); err != nil {
+		if err := api.setGroupsAndPermissionsFromGroupID_DEPRECATED(ctx, g.ID); err != nil {
 			return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", deprecatedGetUser(ctx).ID, err)
 		}
 	}

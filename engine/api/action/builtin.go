@@ -397,7 +397,6 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	}
 
 	a.ID = id
-	log.Debug("createBuiltinAction> update builtin action %s", a.Name)
 	if err := Update(tx, a); err != nil {
 		return err
 	}

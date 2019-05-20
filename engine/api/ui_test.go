@@ -42,7 +42,6 @@ func Test_getNavbarHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	t.Logf("Body: %s", w.Body.String())
 	data := []sdk.NavbarProjectData{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &data))
 
