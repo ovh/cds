@@ -19,6 +19,8 @@ import { SharedModule } from '../../../../shared/shared.module';
 import { ToastService } from '../../../../shared/toast/ToastService';
 import { PipelineModule } from '../../pipeline.module';
 import { PipelineAdminComponent } from './pipeline.admin.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 
 describe('CDS: Pipeline Admin Component', () => {
 
@@ -38,6 +40,8 @@ describe('CDS: Pipeline Admin Component', () => {
                 NavbarService,
                 TranslateService,
                 TranslateLoader,
+                WorkflowService,
+                WorkflowRunService,
                 TranslateParser
             ],
             imports: [

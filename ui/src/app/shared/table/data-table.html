@@ -70,7 +70,14 @@
                     </app-confirm-button>
                     <span class="ui label {{c.selector.class}}" *ngSwitchCase="'label'">{{c.selector.value |
                         translate}}</span>
-                    <ng-container *ngSwitchDefault>{{c.selector | translate}}</ng-container>
+                    <ng-container *ngSwitchDefault>
+                        <ng-container *ngIf="c.selector && c.translate">
+                            {{c.selector | translate}}
+                        </ng-container>
+                        <ng-container *ngIf="c.selector && !c.translate">
+                            {{c.selector}}
+                        </ng-container>
+                    </ng-container>
                 </td>
             </ng-container>
         </tr>

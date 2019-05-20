@@ -29,6 +29,8 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
 import { ProjectModule } from '../../../../project/project.module';
 import { ApplicationModule } from '../../../application.module';
 import { ApplicationRepositoryComponent } from './application.repo.component';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 
 @Component({
     template: ''
@@ -63,6 +65,8 @@ describe('CDS: Application Repo Component', () => {
                 TranslateParser,
                 RepoManagerService,
                 Store,
+                WorkflowRunService,
+                WorkflowService,
                 { provide: APP_BASE_HREF, useValue: '/' }
             ],
             imports: [

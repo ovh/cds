@@ -15,12 +15,13 @@ import { NavbarService } from '../../../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../../../service/project/project.service';
 import { ProjectStore } from '../../../../../service/project/project.store';
-import { ServicesModule } from '../../../../../service/services.module';
+import { ServicesModule, WorkflowRunService } from '../../../../../service/services.module';
 import { VariableService } from '../../../../../service/variable/variable.service';
 import { SharedModule } from '../../../../../shared/shared.module';
 import { ToastService } from '../../../../../shared/toast/ToastService';
 import { ProjectModule } from '../../../project.module';
 import { ProjectEnvironmentListComponent } from './environment.list.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
 
 describe('CDS: Environment List Component', () => {
 
@@ -41,7 +42,9 @@ describe('CDS: Environment List Component', () => {
                 PipelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: Router, useClass: MockRouter },
-                EnvironmentService
+                EnvironmentService,
+                WorkflowService,
+                WorkflowRunService
             ],
             imports: [
                 ProjectModule,

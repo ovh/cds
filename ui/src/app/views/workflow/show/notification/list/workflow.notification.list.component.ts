@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { NotificationService } from 'app/service/notification/notification.service';
-import { AddNotificationWorkflow, DeleteNotificationWorkflow, UpdateNotificationWorkflow } from 'app/store/workflows.action';
+import { AddNotificationWorkflow, DeleteNotificationWorkflow, UpdateNotificationWorkflow } from 'app/store/workflow.action';
 import { cloneDeep } from 'lodash';
 import { finalize, first } from 'rxjs/operators';
 import { Project } from '../../../../../model/project.model';

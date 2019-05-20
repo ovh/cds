@@ -14,7 +14,6 @@ import { WNode, WNodeContext, WNodeType, Workflow } from '../../../../model/work
 import { WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest } from '../../../../model/workflow.run.model';
 import { ApplicationWorkflowService } from '../../../../service/application/application.workflow.service';
 import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { ToastService } from '../../../toast/ToastService';
 declare var CodeMirror: any;
@@ -96,7 +95,6 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         private _modalService: SuiModalService,
         private _workflowRunService: WorkflowRunService,
         private _router: Router,
-        private _workflowEventStore: WorkflowEventStore,
         private _translate: TranslateService,
         private _toast: ToastService,
         private _appWorkflowService: ApplicationWorkflowService
@@ -368,8 +366,6 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 { queryParams: { subnum: wr.last_subnumber } });
             wr.force_update = true;
-            this._workflowEventStore.setSelectedRun(wr);
-            this._workflowEventStore.broadcastWorkflowRun(this.project.key, this.workflow.name, wr);
         });
     }
 

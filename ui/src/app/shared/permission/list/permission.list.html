@@ -19,6 +19,7 @@
                         <sui-select class="selection"
                             [isDisabled]="gp.updating"
                             [(ngModel)]="gp.permission"
+                            (ngModelChange)="pushChange()"
                             (selectedOptionChange)="gp.hasChanged = true"
                             [optionFormatter]="formatPermission()"
                             [hasLabels]="true"
