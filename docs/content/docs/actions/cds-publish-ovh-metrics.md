@@ -1,6 +1,6 @@
 ---
 title: "cds-publish-ovh-metrics"
-card: 
+card:
   name: user-action
 ---
 

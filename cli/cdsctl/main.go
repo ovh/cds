@@ -44,6 +44,7 @@ func main() {
 		token(), // nearly deprecated
 		template(),
 		admin(),
+		tools(),
 	})
 	if err := root.Execute(); err != nil {
 		cli.ExitOnError(err)

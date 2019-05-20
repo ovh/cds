@@ -1,6 +1,6 @@
 ---
 title: "plugin-npm-audit-parser"
-card: 
+card:
   name: plugin
 ---
 

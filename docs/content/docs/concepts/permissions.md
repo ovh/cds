@@ -7,9 +7,9 @@ card:
 
 There are 3 types of permissions:
 
-+ Read
-+ Read / Execute
-+ Read / Write / Execute
++ Read (as code value: 4)
++ Read / Execute (as code value: 5)
++ Read / Write / Execute (as code value: 7)
 
 These permissions can be attached to different objects:
 

@@ -13,7 +13,7 @@ notoc: true
 Inside a job, there are two ways to download an artifact:
 
 * with a step using action Download Artifacts
-* with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.
+* with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.
 
 Worker Command:
 

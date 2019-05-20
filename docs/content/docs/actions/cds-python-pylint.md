@@ -1,6 +1,6 @@
 ---
 title: "cds-python-pylint"
-card: 
+card:
   name: user-action
 ---
 
