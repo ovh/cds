@@ -1,6 +1,6 @@
 ---
 title: "plugin-venom"
-card: 
+card:
   name: plugin
 ---
 

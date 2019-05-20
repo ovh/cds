@@ -4,9 +4,6 @@
             <div class="content">
                 <span *ngIf="node.type === 'pipeline' || node.type === 'outgoinghook'">{{node.name}}</span>
                 <span *ngIf="node.type !== 'pipeline' && node.type !== 'outgoinghook'">{{node.type}}</span>
-                <a class="inline pointing" *ngIf="displayEditOption" (click)="goToEditNode()">
-                    <i class="pencil icon float"></i>
-                </a>
                 <div class="sub header"
                     *ngIf="node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
                     {{ 'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}

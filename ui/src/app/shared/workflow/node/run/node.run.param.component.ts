@@ -10,7 +10,6 @@ import { WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
 import { ThemeStore } from 'app/service/services.module';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from 'app/service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { cloneDeep } from 'lodash';
@@ -97,7 +96,6 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         private _modalService: SuiModalService,
         private _workflowRunService: WorkflowRunService,
         private _router: Router,
-        private _workflowEventStore: WorkflowEventStore,
         private _translate: TranslateService,
         private _toast: ToastService,
         private _appWorkflowService: ApplicationWorkflowService,
@@ -377,8 +375,6 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 { queryParams: { subnum: wr.last_subnumber } });
             wr.force_update = true;
-            this._workflowEventStore.setSelectedRun(wr);
-            this._workflowEventStore.broadcastWorkflowRun(this.project.key, this.workflow.name, wr);
         });
     }
 

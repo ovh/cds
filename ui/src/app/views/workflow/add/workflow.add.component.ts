@@ -18,7 +18,7 @@ import { SharedService } from 'app/shared/shared.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { AddWorkflow, ImportWorkflow } from 'app/store/workflows.action';
+import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
@@ -119,7 +119,7 @@ workflow:
     createWorkflow(node: WNode): void {
         this.loading = true;
         this.workflow.workflow_data.node = node;
-        this.store.dispatch(new AddWorkflow({
+        this.store.dispatch(new CreateWorkflow({
             projectKey: this.project.key,
             workflow: this.workflow
         })).pipe(

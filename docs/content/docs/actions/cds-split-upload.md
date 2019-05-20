@@ -1,6 +1,6 @@
 ---
 title: "cds-split-upload"
-card: 
+card:
   name: user-action
 ---
 

@@ -109,8 +109,6 @@
         (click)="changeToRunsMode()"></i>
     <div class="sidebar-toggle">
         <ng-container *ngIf="project && workflow" [ngSwitch]="sidebarMode">
-            <app-workflow-sidebar-wnode-edit *ngSwitchCase="sidebarModes.EDIT" [project]="project"
-                [workflow]="workflow"></app-workflow-sidebar-wnode-edit>
             <app-workflow-sidebar-hook *ngSwitchCase="sidebarModes.EDIT_HOOK" [project]="project" [workflow]="workflow">
             </app-workflow-sidebar-hook>
             <app-workflow-sidebar-run-list *ngSwitchCase="sidebarModes.RUNS" [project]="project" [workflow]="workflow">
@@ -133,3 +131,4 @@
 </section>
 <app-workflow-save-as-code-modal [project]="project" [workflow]="workflow" #saveAsCode>
 </app-workflow-save-as-code-modal>
+<app-node-edit-modal></app-node-edit-modal>

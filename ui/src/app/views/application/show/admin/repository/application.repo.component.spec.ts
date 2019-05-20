@@ -20,6 +20,8 @@ import { ProjectStore } from 'app/service/project/project.store';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { ThemeStore } from 'app/service/services.module';
 import { VariableService } from 'app/service/variable/variable.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { SharedModule } from 'app/shared/shared.module';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { NgxsStoreModule } from 'app/store/store.module';
@@ -62,6 +64,8 @@ describe('CDS: Application Repo Component', () => {
                 Store,
                 { provide: APP_BASE_HREF, useValue: '/' },
                 ThemeStore,
+                WorkflowRunService,
+                WorkflowService
             ],
             imports: [
                 RouterTestingModule.withRoutes([

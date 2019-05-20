@@ -11,7 +11,7 @@ notoc: true
 
 
 
-Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add a replace CDS variables with the real value into a file:
+Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add a replace CDS variables with the real value into a file:
 
 	# create a file
 	cat << EOF > myFile

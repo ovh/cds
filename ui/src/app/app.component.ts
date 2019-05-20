@@ -6,12 +6,12 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
-import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
+import {bufferTime, filter, map, mergeMap} from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { environment } from '../environments/environment';
 import { AppService } from './app.service';
-import { Event } from './model/event.model';
+import {Event, EventType} from './model/event.model';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
@@ -194,11 +194,23 @@ export class AppComponent implements OnInit {
             .pipe(
                 filter((e) => e != null),
                 bufferTime(2000),
-                filter((events) => events.length !== 0)
+                filter((events) => events.length !== 0),
+
             )
             .subscribe((events) => {
                 this.zone.run(() => {
-                    for (let e of events) {
+                    let resultEvents = (<Array<Event>>events).reduce( (results, e) => {
+                        if (!e.type_event || e.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) !== 0) {
+                            results.push(e);
+                        } else {
+                            let wr = results.find( re => re.project_key === e.project_key && re.workflow_name === e.workflow_name);
+                            if (!wr) {
+                                results.push(e);
+                            }
+                        }
+                        return results;
+                    }, new Array<Event>());
+                    for (let e of resultEvents) {
                         if (e.healthCheck != null) {
                             this.lastPing = (new Date()).getTime();
                             // 0 = CONNECTING, 1 = OPEN, 2 = CLOSED

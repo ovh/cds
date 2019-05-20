@@ -647,7 +647,7 @@ func (s *Service) postPullRequestsHandler() service.Handler {
 
 		c, err := client.PullRequestCreate(ctx, fmt.Sprintf("%s/%s", owner, repo), prRequest)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to get pull requests on %s/%s", owner, repo)
+			return sdk.WrapError(err, "Unable to create pull requests on %s/%s", owner, repo)
 		}
 		return service.WriteJSON(w, c, http.StatusOK)
 	}

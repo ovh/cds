@@ -73,6 +73,9 @@ func init() {
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
 
+	//Download command
+	mainCmd.AddCommand(downloadCmd)
+
 	// doc command (hidden command)
 	mainCmd.AddCommand(docCmd)
 }

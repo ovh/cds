@@ -5,12 +5,11 @@ import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { ThemeStore } from 'app/service/services.module';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
-import { WorkflowEventStore } from 'app/service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { FetchAsCodeWorkflow, ImportWorkflow, PreviewWorkflow, ResyncWorkflow } from 'app/store/workflows.action';
+import { FetchAsCodeWorkflow, GetWorkflow, ImportWorkflow, PreviewWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -60,7 +59,6 @@ export class WorkflowSidebarCodeComponent implements OnInit {
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _workflowCore: WorkflowCoreService,
-        private _workflowEventStore: WorkflowEventStore,
         private _toast: ToastService,
         private _translate: TranslateService,
         private _theme: ThemeStore
@@ -98,7 +96,7 @@ export class WorkflowSidebarCodeComponent implements OnInit {
 
     cancel() {
         if (this.previewMode) {
-            this.store.dispatch(new ResyncWorkflow({
+            this.store.dispatch(new GetWorkflow({
                 projectKey: this.project.key,
                 workflowName: this.workflow.name
             })).subscribe(() => this._workflowCore.toggleAsCodeEditor({ open: false, save: false }));
@@ -111,7 +109,6 @@ export class WorkflowSidebarCodeComponent implements OnInit {
     }
 
     unselectAll() {
-        this._workflowEventStore.unselectAll();
         let url = this._router.createUrlTree(['./'], {
             relativeTo: this._activatedRoute,
             queryParams: {}

@@ -14,6 +14,8 @@ import { PrerequisiteEvent } from '../../../../../../shared/prerequisites/prereq
 import { SharedModule } from '../../../../../../shared/shared.module';
 import { PipelineModule } from '../../../../pipeline.module';
 import { PipelineStageFormComponent } from './pipeline.stage.form.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 
 
 describe('CDS: Stage From component', () => {
@@ -26,7 +28,9 @@ describe('CDS: Stage From component', () => {
                 NavbarService,
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                WorkflowService,
+                WorkflowRunService
             ],
             imports: [
                 PipelineModule,

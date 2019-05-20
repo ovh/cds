@@ -10,7 +10,7 @@ import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
-import { AddGroupInAllWorkflows, ClearCacheWorkflow, DeleteFromCacheWorkflow } from './workflows.action';
+import { AddGroupInAllWorkflows } from './workflow.action';
 
 export class ProjectStateModel {
     public project: Project;
@@ -628,8 +628,6 @@ export class ProjectState {
                 let groups = state.project.groups ? state.project.groups.concat([]) : [];
                 groups = groups.filter((group) => group.group.name !== action.payload.group.group.name);
 
-                ctx.dispatch(new ClearCacheWorkflow());
-
                 ctx.setState({
                     ...state,
                     project: Object.assign({}, state.project, <Project>{ groups }),
@@ -868,18 +866,6 @@ export class ProjectState {
             '/project/' + action.payload.projectKey + '/environment/' + action.payload.environmentName,
             action.payload.changes
         ).pipe(tap((project: Project) => {
-            const state = ctx.getState();
-            if (action.payload.environmentName !== action.payload.changes.name) {
-                const currentEnv = state.project.environments.find((env) => env.name === action.payload.environmentName);
-                if (currentEnv && currentEnv.usage && Array.isArray(currentEnv.usage.workflows)) {
-                    currentEnv.usage.workflows.forEach((wf) => {
-                        ctx.dispatch(new DeleteFromCacheWorkflow({
-                            projectKey: action.payload.projectKey,
-                            workflowName: wf.name
-                        }));
-                    });
-                }
-            }
             ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments));
         }));
     }
