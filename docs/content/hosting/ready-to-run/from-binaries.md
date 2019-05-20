@@ -28,7 +28,6 @@ ARCH=amd64 # could be 386, arm, amd64, arm64
 
 # GET Binaries from GitHub
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-worker-$OS-$ARCH
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/ui.tar.gz
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/sql.tar.gz
@@ -55,6 +54,7 @@ Generate a **[Configuration File]({{<relref "/hosting/configuration.md" >}})**
 cd $HOME/cds
 
 ./cds-engine-linux-amd64 config new > $HOME/cds/conf.toml
+./cds-engine-linux-amd64 download workers -f $HOME/cds/conf.toml
 ./cds-engine-linux-amd64 start api --config $HOME/cds/conf.toml
 ```
 
