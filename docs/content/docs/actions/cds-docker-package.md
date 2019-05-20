@@ -1,6 +1,6 @@
 ---
 title: "cds-docker-package"
-card: 
+card:
   name: user-action
 ---
 

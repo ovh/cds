@@ -43,7 +43,7 @@ type WorkflowTemplateResult struct {
 
 // WorkflowTemplate struct.
 type WorkflowTemplate struct {
-	ID           int64                      `json:"id" db:"id" `
+	ID           int64                      `json:"id" db:"id"`
 	GroupID      int64                      `json:"group_id" db:"group_id"`
 	Name         string                     `json:"name" db:"name"`
 	Slug         string                     `json:"slug" db:"slug"`

@@ -184,6 +184,9 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 	}
 
 	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
 
 	if e.ExtraFields.Len {
 		nodeLen := append(roots, "__Len__")

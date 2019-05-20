@@ -6,7 +6,6 @@ import { Key } from 'app/model/keys.model';
 import { tap } from 'rxjs/operators';
 import * as ActionApplication from './applications.action';
 import * as ActionProject from './project.action';
-import { DeleteFromCacheWorkflow } from './workflows.action';
 
 export class ApplicationsStateModel {
     public applications: { [key: string]: Application };
@@ -144,7 +143,6 @@ export class ApplicationsState {
                 let applications = Object.assign({}, state.applications, {
                     [action.payload.projectKey + '/' + app.name]: app,
                 });
-                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
                 delete applications[appKey];
 
                 ctx.setState({
@@ -313,8 +311,6 @@ export class ApplicationsState {
                     deployment_strategies: app.deployment_strategies
                 });
 
-                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
-
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -378,8 +374,6 @@ export class ApplicationsState {
                     vcs_strategy: app.vcs_strategy
                 });
 
-                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
-
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -402,8 +396,6 @@ export class ApplicationsState {
                     repository_fullname: app.repository_fullname,
                     vcs_strategy: app.vcs_strategy
                 });
-
-                this.clearWorkflowCache(ctx, action.payload.projectKey, action.payload.applicationName);
 
                 ctx.setState({
                     ...state,
@@ -462,20 +454,5 @@ export class ApplicationsState {
     @Action(ActionApplication.ClearCacheApplication)
     clearCache(ctx: StateContext<ApplicationsStateModel>, _: ActionApplication.ClearCacheApplication) {
         ctx.setState(getInitialApplicationsState());
-    }
-
-    //  ------- Helpers --------- //
-    clearWorkflowCache(ctx: StateContext<ApplicationsStateModel>, projectKey: string, appKey: string) {
-        const state = ctx.getState();
-
-        if (state.applications[appKey] && state.applications[appKey].usage &&
-            Array.isArray(state.applications[appKey].usage.workflows)) {
-            state.applications[appKey].usage.workflows.forEach((wf) => {
-                ctx.dispatch(new DeleteFromCacheWorkflow({
-                    projectKey: projectKey,
-                    workflowName: wf.name
-                }));
-            });
-        }
     }
 }

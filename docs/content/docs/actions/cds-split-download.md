@@ -1,6 +1,6 @@
 ---
 title: "cds-split-download"
-card: 
+card:
   name: user-action
 ---
 

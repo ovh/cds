@@ -20,6 +20,8 @@ import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
 import { SharedModule } from './shared/shared.module';
 import { NgxsStoreModule } from './store/store.module';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 
 describe('App: CDS', () => {
 
@@ -32,6 +34,8 @@ describe('App: CDS', () => {
             providers: [
                 AuthentificationStore,
                 Store,
+                WorkflowService,
+                WorkflowRunService,
                 { provide: APP_BASE_HREF, useValue: '/' },
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ProjectService, useClass: MockProjectService },

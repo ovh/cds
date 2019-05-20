@@ -31,8 +31,10 @@ const IconFormat = "data:image/"
 
 // True of false
 var (
-	True  = true
-	False = false
+	True        = true
+	False       = false
+	TrueString  = "true"
+	FalseString = "false"
 )
 
 // EncryptFunc is a common type

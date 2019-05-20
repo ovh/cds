@@ -6,18 +6,18 @@ import (
 
 // Application represents exported sdk.Application
 type Application struct {
-	Version              string                              `json:"version,omitempty" yaml:"version,omitempty"`
-	Name                 string                              `json:"name" yaml:"name"`
+	Version              string                              `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"Version for the yaml syntax, latest is v1.0."`
+	Name                 string                              `json:"name" yaml:"name" jsonschema_description:"The name of the application."`
 	Description          string                              `json:"description,omitempty" yaml:"description,omitempty"`
-	VCSServer            string                              `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
-	RepositoryName       string                              `json:"repo,omitempty" yaml:"repo,omitempty"`
+	VCSServer            string                              `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty" jsonschema_description:"Name of the vcs (github, gitlab...), vcs should be linked to target project."`
+	RepositoryName       string                              `json:"repo,omitempty" yaml:"repo,omitempty" jsonschema_description:"Name of the repository including project owner, ex: ovh/cds."`
 	Variables            map[string]VariableValue            `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Keys                 map[string]KeyValue                 `json:"keys,omitempty" yaml:"keys,omitempty"`
-	VCSConnectionType    string                              `json:"vcs_connection_type,omitempty" yaml:"vcs_connection_type,omitempty"`
-	VCSSSHKey            string                              `json:"vcs_ssh_key,omitempty" yaml:"vcs_ssh_key,omitempty"`
+	VCSConnectionType    string                              `json:"vcs_connection_type,omitempty" yaml:"vcs_connection_type,omitempty" jsonschema_description:"Connection type should be 'ssh' or 'https'."`
+	VCSSSHKey            string                              `json:"vcs_ssh_key,omitempty" yaml:"vcs_ssh_key,omitempty" jsonschema_description:"Name of the key to use if connection type is ssh, ex: proj-mykey."`
 	VCSUser              string                              `json:"vcs_user,omitempty" yaml:"vcs_user,omitempty"`
 	VCSPassword          string                              `json:"vcs_password,omitempty" yaml:"vcs_password,omitempty"`
-	VCSPGPKey            string                              `json:"vcs_pgp_key,omitempty" yaml:"vcs_pgp_key,omitempty"`
+	VCSPGPKey            string                              `json:"vcs_pgp_key,omitempty" yaml:"vcs_pgp_key,omitempty" jsonschema_description:"Name of the pgp key, ex: proj-my-pgp-key. Will be used to tag for example."`
 	DeploymentStrategies map[string]map[string]VariableValue `json:"deployments,omitempty" yaml:"deployments,omitempty"`
 }
 

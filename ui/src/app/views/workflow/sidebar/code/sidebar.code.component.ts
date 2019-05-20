@@ -2,7 +2,7 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { FetchAsCodeWorkflow, ImportWorkflow, PreviewWorkflow, ResyncWorkflow } from 'app/store/workflows.action';
+import {FetchAsCodeWorkflow, GetWorkflow, ImportWorkflow, PreviewWorkflow} from 'app/store/workflow.action';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -10,7 +10,6 @@ import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { WorkflowCoreService } from '../../../../service/workflow/workflow.core.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -61,7 +60,6 @@ export class WorkflowSidebarCodeComponent {
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _workflowCore: WorkflowCoreService,
-        private _workflowEventStore: WorkflowEventStore,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
@@ -89,7 +87,7 @@ export class WorkflowSidebarCodeComponent {
 
     cancel() {
         if (this.previewMode) {
-            this.store.dispatch(new ResyncWorkflow({
+            this.store.dispatch(new GetWorkflow({
                 projectKey: this.project.key,
                 workflowName: this.workflow.name
             })).subscribe(() => this._workflowCore.toggleAsCodeEditor({ open: false, save: false }));
@@ -102,7 +100,6 @@ export class WorkflowSidebarCodeComponent {
     }
 
     unselectAll() {
-        this._workflowEventStore.unselectAll();
         let url = this._router.createUrlTree(['./'], {
             relativeTo: this._activatedRoute,
             queryParams: {}

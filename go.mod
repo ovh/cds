@@ -16,6 +16,7 @@ require (
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/Shopify/sarama v1.17.0
 	github.com/Shopify/toxiproxy v2.1.3+incompatible // indirect
+	github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect
 	github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53 // indirect
@@ -72,7 +73,7 @@ require (
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
-	github.com/fsamin/go-dump v1.0.8
+	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.1
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
@@ -285,7 +286,6 @@ require (
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v0.2.0 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
-
 )
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f

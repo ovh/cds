@@ -139,9 +139,12 @@ func TestManualRun1(t *testing.T) {
 	//TestLoadNodeRun
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
-	//don't want to compare queueSeconds attributes
+
+	//don't want to compare queueSeconds attributes and spawn infos attributes
 	nodeRun.Stages[0].RunJobs[0].QueuedSeconds = 0
 	lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].QueuedSeconds = 0
+	nodeRun.Stages[0].RunJobs[0].SpawnInfos = nil
+	lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].SpawnInfos = nil
 
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0], nodeRun)
 

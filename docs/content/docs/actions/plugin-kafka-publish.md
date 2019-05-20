@@ -1,6 +1,6 @@
 ---
 title: "plugin-kafka-publish"
-card: 
+card:
   name: plugin
 ---
 

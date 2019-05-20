@@ -1,6 +1,6 @@
 ---
 title: "plugin-ssh-cmd"
-card: 
+card:
   name: plugin
 ---
 
