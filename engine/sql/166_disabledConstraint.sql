@@ -9,4 +9,5 @@ ALTER TABLE workflow_notification_source ADD PRIMARY KEY (workflow_notification_
 ALTER TABLE workflow_notification_source ALTER COLUMN workflow_node_id DROP NOT NULL;
 
 -- +migrate Down
-DROP INDEX idx_workflow_run_tag_value;
+SELECT 1;
+
