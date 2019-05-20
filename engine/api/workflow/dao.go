@@ -1419,7 +1419,12 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowUpdate(proj.Key, *wf, *oldWf, u)
+		if oldWf != nil {
+			event.PublishWorkflowUpdate(proj.Key, *wf, *oldWf, u)
+		} else {
+			event.PublishWorkflowAdd(proj.Key, *wf, u)
+		}
+
 		log.Debug("workflow %s updated", wf.Name)
 	}
 
