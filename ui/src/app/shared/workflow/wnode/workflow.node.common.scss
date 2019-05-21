@@ -6,7 +6,9 @@
   border-radius: 3px;
   color: $polar_grey_1;
   padding: 2px;
+  background-color: white;
   :host-context(.night) & {
+    background-color: $darkTheme_grey_1;
     border-color: $darkTheme_grey_5;
     color: $darkTheme_grey_6;
     a {
