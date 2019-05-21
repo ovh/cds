@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflows.action';
+import { IdName, Label, Project } from 'app/model/project.model';
+import { Warning } from 'app/model/warning.model';
+import { HelpersService } from 'app/service/helpers/helpers.service';
+import { LabelsEditComponent } from 'app/shared/labels/edit/labels.edit.component';
+import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
-import { IdName, Label, Project } from '../../../../../model/project.model';
-import { Warning } from '../../../../../model/warning.model';
-import { HelpersService } from '../../../../../service/helpers/helpers.service';
-import { LabelsEditComponent } from '../../../../../shared/labels/edit/labels.edit.component';
 
 @Component({
   selector: 'app-project-workflows-labels',

@@ -3,22 +3,20 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { WorkflowRun } from 'app/model/workflow.run.model';
+import { NotificationService } from 'app/service/notification/notification.service';
+import { WorkflowStore } from 'app/service/workflow/workflow.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { FetchWorkflow } from 'app/store/workflows.action';
-import { WorkflowsState } from 'app/store/workflows.state';
+import { ChangeToRunView, GetWorkflowRun } from 'app/store/workflow.action';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { filter, flatMap } from 'rxjs/operators';
-import { PipelineStatus } from '../../../model/pipeline.model';
-import { Project } from '../../../model/project.model';
-import { WNode, Workflow } from '../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../model/workflow.run.model';
-import { NotificationService } from '../../../service/notification/notification.service';
-import { WorkflowRunService } from '../../../service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
-import { WorkflowStore } from '../../../service/workflow/workflow.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { WorkflowNodeRunParamComponent } from '../../../shared/workflow/node/run/node.run.param.component';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-run',
@@ -51,23 +49,19 @@ export class WorkflowRunComponent implements OnInit {
     paramsSubs: Subscription;
     parentParamsSubs: Subscription;
     qpsSubs: Subscription;
-    loadingRun = false;
+    loadingRun = true;
 
     // copy of root node to send it into run modal
     nodeToRun: WNode;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _activatedRoute: ActivatedRoute,
         private _workflowStore: WorkflowStore,
         private _notification: NotificationService,
         private _translate: TranslateService,
-        private _workflowEventStore: WorkflowEventStore,
-        private _workflowRunService: WorkflowRunService,
         private _titleService: Title
     ) {
-        this._workflowEventStore.setSelectedNodeRun(null, false);
-
         // Get project
         this.dataSubs = this._activatedRoute.data.subscribe(datas => {
             if (!this.project || (<Project>datas['project']).key !== this.project.key) {
@@ -77,101 +71,57 @@ export class WorkflowRunComponent implements OnInit {
             }
         });
 
-        this.project$ = this.store.select(ProjectState)
+        this.project$ = this._store.select(ProjectState)
             .pipe(filter((prj) => prj != null))
             .subscribe((projState: ProjectStateModel) => this.project = projState.project);
 
-        // Get workflow
-        this.parentParamsSubs = this._activatedRoute.parent.params
-            .pipe(flatMap((params) => {
-                this.workflowName = params['workflowName'];
-                this.store.dispatch(new FetchWorkflow({
-                    projectKey: params['key'],
-                    workflowName: this.workflowName
-                }));
-
-                return this.store.select(WorkflowsState.selectWorkflow(params['key'], this.workflowName))
-                    .pipe(filter((wf) => wf != null));
-            }))
-            .subscribe((wf) => this.workflow = wf);
-
-        // Get workflow run
-        this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
-            let previousWR: WorkflowRun;
-            if (this.workflowRun) {
-                previousWR = this.workflowRun;
-            }
-            this.workflowRun = wr;
-            if (previousWR && this.workflowRun && previousWR.id === wr.id && previousWR.status !== this.workflowRun.status &&
-                PipelineStatus.isDone(this.workflowRun.status)) {
-                this.handleNotification();
-            }
-            this.updateTitle();
-            this.selectNode();
-        });
+        this.workflowName = this._activatedRoute.snapshot.parent.params['workflowName'];
+        this._store.dispatch(new ChangeToRunView({}));
 
         // Subscribe to route event
         this.paramsSubs = this._activatedRoute.params.subscribe(ps => {
             // if there is no current workflow run
             if (!this.workflowRun) {
-                this.initWorkflowRun(ps['number']);
+                this._store.dispatch(
+                    new GetWorkflowRun({
+                        projectKey: this.project.key,
+                        workflowName: this.workflowName,
+                        num: ps['number']
+                    }));
             } else {
                 if (this.workflowRun.workflow.name !== this.workflowName || this.workflowRun.num !== ps['number']) {
-                    this.initWorkflowRun(ps['number']);
+                    this._store.dispatch(
+                        new GetWorkflowRun({
+                            projectKey: this.project.key,
+                            workflowName: this.workflowName,
+                            num: ps['number']
+                        }));
                 }
             }
         });
 
-        this.qpsSubs = this._activatedRoute.queryParams.subscribe(params => {
-            this.selectedNodeID = params['node_id'];
-            this.selectedNodeRef = params['node_ref'];
-            this.selectNode();
+        this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this.loadingRun = s.loadingWorkflowRun;
+            if (s.workflowRun) {
+                this.workflow = s.workflowRun.workflow;
+                this.workflowName = this.workflow.name;
+
+                let previousWR: WorkflowRun;
+                if (this.workflowRun) {
+                    previousWR = this.workflowRun;
+                }
+                this.workflowRun = s.workflowRun;
+                if (previousWR && this.workflowRun && previousWR.id === s.workflowRun.id && previousWR.status !== this.workflowRun.status &&
+                    PipelineStatus.isDone(this.workflowRun.status)) {
+                    this.handleNotification();
+                }
+                this.updateTitle();
+            }
         });
     }
 
     ngOnInit(): void {
         this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
-    }
-
-    selectNode() {
-        if (!this.workflowRun || !this.workflowRun.workflow || !this.workflowRun.workflow.workflow_data) {
-            return;
-        }
-        if (this.selectedNodeID) {
-            let n = Workflow.getNodeByID(this.selectedNodeID, this.workflowRun.workflow);
-            if (n) {
-                this._workflowEventStore.setSelectedNode(n, false);
-                let nr: WorkflowNodeRun;
-                if (this.workflowRun.nodes && this.workflowRun.nodes[n.id]) {
-                    nr = this.workflowRun.nodes[n.id][0];
-                }
-                this._workflowEventStore.setSelectedNodeRun(nr, true);
-                return;
-            }
-        }
-        if (this.selectedNodeRef) {
-            let n = Workflow.getNodeByRef(this.selectedNodeRef, this.workflowRun.workflow);
-            if (n) {
-                this._workflowEventStore.setSelectedNode(n, false);
-                let nr: WorkflowNodeRun;
-                if (this.workflowRun.nodes && this.workflowRun.nodes[n.id]) {
-                    nr = this.workflowRun.nodes[n.id][0];
-                }
-                this._workflowEventStore.setSelectedNodeRun(nr, true);
-                return;
-            }
-        }
-        this._workflowEventStore.setSelectedNode(null, true);
-    }
-
-    initWorkflowRun(num): void {
-        this.loadingRun = true;
-        this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, num).subscribe(wr => {
-            this.workflowRun = wr;
-
-            this._workflowEventStore.setSelectedRun(this.workflowRun);
-            this.loadingRun = false;
-        });
     }
 
     handleNotification() {

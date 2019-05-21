@@ -2,19 +2,21 @@ import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {Project} from 'app/model/project.model';
+import {WNode, Workflow} from 'app/model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
+import {AuthentificationStore} from 'app/service/auth/authentification.store';
+import {RouterService} from 'app/service/router/router.service';
+import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {DurationService} from 'app/shared/duration/duration.service';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import {GetWorkflowNodeRun, GetWorkflowRun} from 'app/store/workflow.action';
+import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
+import {cloneDeep} from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, first } from 'rxjs/operators';
-import { PipelineStatus } from '../../../../model/pipeline.model';
-import { Project } from '../../../../model/project.model';
-import { WNode, Workflow } from '../../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
-import { RouterService } from '../../../../service/router/router.service';
-import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { DurationService } from '../../../../shared/duration/duration.service';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -33,6 +35,8 @@ export class WorkflowNodeRunComponent {
     project$: Subscription;
     workflowName: string;
 
+    storeSub: Subscription;
+
     duration: string;
 
     workflowRun: WorkflowRun;
@@ -48,14 +52,13 @@ export class WorkflowNodeRunComponent {
     deltaVul = 0;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _routerService: RouterService,
         private _workflowRunService: WorkflowRunService,
         private _durationService: DurationService,
         private _authStore: AuthentificationStore,
-        private _workflowEventStore: WorkflowEventStore,
         private _titleService: Title
     ) {
 
@@ -63,7 +66,7 @@ export class WorkflowNodeRunComponent {
             this.project = datas['project'];
         });
 
-        this.project$ = this.store.select(ProjectState)
+        this.project$ = this._store.select(ProjectState)
             .pipe(filter((prj) => prj != null))
             .subscribe((projState: ProjectStateModel) => {
                 this.project = projState.project;
@@ -83,6 +86,33 @@ export class WorkflowNodeRunComponent {
 
         // Get workflow name
         this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
+        let historyChecked = false;
+        this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            if (this.workflowName !== s.workflow.name) {
+                return;
+            }
+            this.workflowRun = s.workflowRun;
+            this.nodeRun = cloneDeep(s.workflowNodeRun);
+            if (this.workflowRun && this.workflowRun.workflow && this.nodeRun) {
+                this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow);
+            }
+
+            if (this.nodeRun) {
+                if (!historyChecked) {
+                    historyChecked = true;
+                    this._workflowRunService.nodeRunHistory(
+                        this.project.key, this.workflowName,
+                        this.nodeRun.num, this.nodeRun.workflow_node_id)
+                        .pipe(first())
+                        .subscribe(nrs => this.nodeRunsHistory = nrs);
+                }
+                this.initVulnerabilitySummary();
+                if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
+                    this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+                }
+                this.updateTitle();
+            }
+        });
 
         this._activatedRoute.params.subscribe(params => {
             this.nodeRun = null;
@@ -90,43 +120,18 @@ export class WorkflowNodeRunComponent {
             let nodeRunId = params['nodeId'];
 
             if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
-                // Get workflow Run
-                this.initWorkflowNodeRun(number, nodeRunId);
-            }
-        });
-    }
-
-    initWorkflowNodeRun(number, nodeRunId): void {
-        this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, number).pipe(first()).subscribe(wr => {
-            this.workflowRun = wr;
-            this._workflowEventStore.setSelectedRun(this.workflowRun);
-
-            let historyChecked = false;
-            this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
-                .pipe(first()).subscribe(nodeRun => {
-                    this.nodeRun = nodeRun;
-                    this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow);
-                    if (!historyChecked) {
-                        historyChecked = true;
-                        this._workflowRunService.nodeRunHistory(
-                            this.project.key, this.workflowName,
-                            number, this.nodeRun.workflow_node_id)
-                            .pipe(first())
-                            .subscribe(nrs => this.nodeRunsHistory = nrs);
-                    }
-                    this.initVulnerabilitySummary();
-
-                    this._workflowEventStore.setSelectedNode(this.node, false);
-                    this._workflowEventStore.setSelectedNodeRun(this.nodeRun, true);
-
-                    this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
-                        this.nodeRun = wnr;
-                        if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
-                            this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
-                        }
-                        this.updateTitle();
+                this._store.dispatch(new GetWorkflowRun({projectKey: this.project.key, workflowName: this.workflowName, num: number }))
+                    .subscribe(() => {
+                        this._store.dispatch(
+                            new GetWorkflowNodeRun({
+                                projectKey: this.project.key,
+                                workflowName: this.workflowName,
+                                num: number,
+                                nodeRunID: nodeRunId
+                            }));
                     });
-                });
+
+            }
         });
     }
 

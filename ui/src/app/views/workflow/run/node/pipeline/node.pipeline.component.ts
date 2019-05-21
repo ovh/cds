@@ -1,13 +1,13 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Job, StepStatus } from 'app/model/job.model';
+import { PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { DurationService } from 'app/shared/duration/duration.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { Job, StepStatus } from '../../../../../model/job.model';
-import { PipelineStatus, ServiceLog } from '../../../../../model/pipeline.model';
-import { Project } from '../../../../../model/project.model';
-import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../model/workflow.run.model';
-import { AutoUnsubscribe } from '../../../../../shared/decorator/autoUnsubscribe';
-import { DurationService } from '../../../../../shared/duration/duration.service';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -24,13 +24,15 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     @Input() project: Project;
     @Input('run')
     set run(data: WorkflowNodeRun) {
-        this.refreshNodeRun(data);
+        if (data) {
+            this.refreshNodeRun(data);
 
-        this.deleteInterval();
-        this.updateTime();
-        this.durationIntervalID = window.setInterval(() => {
+            this.deleteInterval();
             this.updateTime();
-        }, 5000);
+            this.durationIntervalID = window.setInterval(() => {
+                this.updateTime();
+            }, 5000);
+        }
     }
 
     queryParamsSub: Subscription;
@@ -51,10 +53,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _durationService: DurationService,
         private _route: ActivatedRoute,
         private _router: Router
-    ) {
-
-
-    }
+    ) { }
 
     ngOnInit() {
         this.updateSelectedItems(this._route.snapshot.queryParams);

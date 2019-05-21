@@ -46,10 +46,19 @@ export class SelectorPipe<T> implements PipeTransform {
                     type = c.type;
                     break;
             }
+
+            let selector = c.selector(data);
+
+            let translate: boolean;
+            if (!type || type === ColumnType.TEXT) {
+                translate = typeof selector === 'string';
+            }
+
             return {
                 ...c,
                 type,
-                selector: c.selector(data)
+                selector,
+                translate
             };
         });
     }

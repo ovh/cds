@@ -1,22 +1,22 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Parameter } from 'app/model/parameter.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { Commit } from 'app/model/repositories.model';
+import { WNode, WNodeContext, WNodeType, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest } from 'app/model/workflow.run.model';
+import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
+import { ThemeStore } from 'app/service/services.module';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { debounceTime, finalize, first } from 'rxjs/operators';
-import { Parameter } from '../../../../model/parameter.model';
-import { Pipeline } from '../../../../model/pipeline.model';
-import { Project } from '../../../../model/project.model';
-import { Commit } from '../../../../model/repositories.model';
-import { WNode, WNodeContext, WNodeType, Workflow } from '../../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest } from '../../../../model/workflow.run.model';
-import { ApplicationWorkflowService } from '../../../../service/application/application.workflow.service';
-import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
-import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { ToastService } from '../../../toast/ToastService';
+import { Subscription } from 'rxjs/Subscription';
 declare var CodeMirror: any;
 
 @Component({
@@ -30,8 +30,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
-    @ViewChild('textareaCodeMirror')
-    codemirror: CodemirrorComponent;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() workflowRun: WorkflowRun;
     _nodeRun: WorkflowNodeRun;
@@ -74,7 +73,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     _firstCommitLoad = false;
 
     lastNum: number;
-    codeMirrorConfig: {};
+    codeMirrorConfig: any;
     commits: Commit[] = [];
     parameters: Parameter[] = [];
     branches: string[] = [];
@@ -91,15 +90,16 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     linkedToRepo = false;
     nodeTypeEnum = WNodeType;
     open: boolean;
+    themeSubscription: Subscription;
 
     constructor(
         private _modalService: SuiModalService,
         private _workflowRunService: WorkflowRunService,
         private _router: Router,
-        private _workflowEventStore: WorkflowEventStore,
         private _translate: TranslateService,
         private _toast: ToastService,
-        private _appWorkflowService: ApplicationWorkflowService
+        private _appWorkflowService: ApplicationWorkflowService,
+        private _theme: ThemeStore
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -112,6 +112,13 @@ export class WorkflowNodeRunParamComponent implements OnInit {
 
     ngOnInit(): void {
         this.linkedToRepo = WNode.linkedToRepo(this._nodeToRun, this.workflow);
+
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     show(): void {
@@ -368,8 +375,6 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 { queryParams: { subnum: wr.last_subnumber } });
             wr.force_update = true;
-            this._workflowEventStore.setSelectedRun(wr);
-            this._workflowEventStore.broadcastWorkflowRun(this.project.key, this.workflow.name, wr);
         });
     }
 

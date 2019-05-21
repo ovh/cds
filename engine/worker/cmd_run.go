@@ -48,7 +48,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		log.Info("CDS Worker starting")
 		log.Info("version: %s", sdk.VERSION)
 		log.Info("hostname: %s", hostname)
-		log.Info("auto-update: %t", w.autoUpdate)
 		log.Info("single-use: %t", w.singleUse)
 
 		httpServerCtx, stopHTTPServer := context.WithCancel(context.Background())
@@ -67,7 +66,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		go func() {
 			select {
 			case <-c:
-				defer cancel()
+				cancel()
 				return
 			case <-ctx.Done():
 				return
@@ -99,8 +98,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		registerTick := time.NewTicker(10 * time.Second)
 		refreshTick := time.NewTicker(30 * time.Second)
 
-		updateTick := time.NewTicker(5 * time.Minute)
-
 		// start logger routine with a large buffer
 		w.logger.logChan = make(chan sdk.Log, 100000)
 		go w.logProcessor(ctx)
@@ -115,7 +112,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			w.drainLogsAndCloseLogger(ctx)
 			registerTick.Stop()
 			refreshTick.Stop()
-			updateTick.Stop()
 			w.unregister()
 			cancel()
 			stopHTTPServer()
@@ -269,7 +265,10 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				var continueTakeJob = true
 
 				// Is the worker is "single use": unregister and exit the worker
-				if w.singleUse {
+				if w.singleUse && ctx.Err() == nil {
+					log.Warning("worker single-use but cancelled")
+				} else if w.singleUse {
+					log.Info("worker single-use, see for next jobs now...")
 					continueTakeJob = false
 				}
 
@@ -290,8 +289,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				// Unregister from engine
 				log.Info("Job is done. Unregistering...")
 				cancel()
-			case <-updateTick.C:
-				w.doUpdate()
 			}
 		}
 	}
@@ -338,18 +335,6 @@ func (w *currentWorker) processBookedWJob(ctx context.Context, wjobs chan<- sdk.
 	wjobs <- *wjob
 
 	return nil
-}
-
-func (w *currentWorker) doUpdate() {
-	if w.autoUpdate {
-		version, err := w.client.Version()
-		if err != nil {
-			log.Error("Error while getting version from CDS API: %s", err)
-		}
-		if version.Version != sdk.VERSION {
-			sdk.Exit("Exiting this CDS Worker process - auto updating worker")
-		}
-	}
 }
 
 func (w *currentWorker) doRegister() error {

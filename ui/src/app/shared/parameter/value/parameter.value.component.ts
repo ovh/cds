@@ -1,13 +1,14 @@
 import { AfterViewChecked, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { AllKeys } from 'app/model/keys.model';
+import { Parameter } from 'app/model/parameter.model';
+import { Project } from 'app/model/project.model';
+import { RepositoriesManager, Repository } from 'app/model/repositories.model';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { ThemeStore } from 'app/service/theme/theme.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { first } from 'rxjs/operators';
-import { AllKeys } from '../../../model/keys.model';
-import { Parameter } from '../../../model/parameter.model';
-import { Project } from '../../../model/project.model';
-import { RepositoriesManager, Repository } from '../../../model/repositories.model';
-import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
-import { SharedService } from '../../shared.service';
+import { Subscription } from 'rxjs/Subscription';
 
 declare var CodeMirror: any;
 
@@ -16,6 +17,7 @@ declare var CodeMirror: any;
     templateUrl: './parameter.value.html',
     styleUrls: ['./parameter.value.scss']
 })
+@AutoUnsubscribe()
 export class ParameterValueComponent implements OnInit, AfterViewChecked {
 
     editableValue: string | number | boolean;
@@ -59,10 +61,9 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     @Output() valueChange = new EventEmitter<string | number | boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
 
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
-    codeMirrorConfig: any;
+    @ViewChild('codeMirror') codemirror: any;
 
+    codeMirrorConfig: any;
     repositoriesManager: Array<RepositoriesManager>;
     repositories: Array<Repository>;
     selectedRepoManager: RepositoriesManager;
@@ -70,10 +71,13 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     loadingRepos: boolean;
     connectRepos: boolean;
     alreadyRefreshed: boolean;
-
     list: Array<string>;
+    themeSubscription: Subscription;
 
-    constructor(public _sharedService: SharedService, private _repoManagerService: RepoManagerService) {
+    constructor(
+        private _repoManagerService: RepoManagerService,
+        private _theme: ThemeStore
+    ) {
         this.codeMirrorConfig = {
             mode: 'shell',
             lineWrapping: true,
@@ -88,6 +92,13 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
             this.suggest = new Array<string>();
         }
         this.updateListRepo();
+
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     ngAfterViewChecked(): void {
@@ -96,7 +107,6 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
             setTimeout(() => {
                 this.codemirror.instance.refresh();
             }, 1);
-
         }
     }
 

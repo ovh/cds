@@ -19,7 +19,6 @@ worker [flags]
 
 ```
       --api string                   URL of CDS API
-      --auto-update                  Auto update worker binary from CDS API
       --basedir string               This directory (default TMPDIR os environment var) will contains worker working directory and temporary files
       --booked-job-id int            Booked job id
       --booked-workflow-job-id int   Booked Workflow job id
@@ -33,6 +32,7 @@ worker [flags]
       --grpc-api string              CDS GRPC tcp address
       --grpc-insecure                Disable GRPC TLS encryption
       --hatchery-name string         Hatchery Name spawing worker
+  -h, --help                         help for worker
       --insecure                     (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
       --log-level string             Log Level: debug, info, notice, warning, critical (default "notice")
       --model int                    Model of worker

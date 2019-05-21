@@ -316,6 +316,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: getService(ctx) == nil,
+				Language:                 r.Header.Get("Accept-Language"),
 			},
 		)
 		if err != nil {

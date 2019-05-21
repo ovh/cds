@@ -125,9 +125,7 @@ func (g *githubClient) GetHook(ctx context.Context, fullname, webhookURL string)
 
 	return sdk.VCSHook{}, sdk.WithStack(sdk.ErrNotFound)
 }
-func (g *githubClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
-	return fmt.Errorf("Not yet implemented")
-}
+
 func (g *githubClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	return g.delete("/repos/" + repo + "/hooks/" + hook.ID)
 }

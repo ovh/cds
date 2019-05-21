@@ -50,6 +50,7 @@ import { RequirementService } from './requirement/requirement.service';
 import { RequirementStore } from './requirement/requirement.store';
 import { RouterService } from './router/router.service';
 import { ServiceService } from './service/service.service';
+import { ThemeStore } from './theme/theme.store';
 import { TimelineService } from './timeline/timeline.service';
 import { TimelineStore } from './timeline/timeline.store';
 import { UserService } from './user/user.service';
@@ -60,9 +61,7 @@ import { WorkerModelService } from './worker-model/worker-model.service';
 import { WorkflowTemplateService } from './workflow-template/workflow-template.service';
 import { WorkflowRunService } from './workflow/run/workflow.run.service';
 import { WorkflowCoreService } from './workflow/workflow.core.service';
-import { WorkflowEventStore } from './workflow/workflow.event.store';
 import { WorkflowService } from './workflow/workflow.service';
-import { WorkflowSidebarStore } from './workflow/workflow.sidebar.store';
 import { WorkflowStore } from './workflow/workflow.store';
 
 @NgModule({})
@@ -95,6 +94,7 @@ export class ServicesModule {
                 BroadcastStore,
                 KeyService,
                 LanguageStore,
+                ThemeStore,
                 NavbarService,
                 NotificationService,
                 ParameterService,
@@ -121,8 +121,6 @@ export class ServicesModule {
                 WarningStore,
                 WorkerModelService,
                 WorkflowTemplateService,
-                WorkflowEventStore,
-                WorkflowSidebarStore,
                 WorkflowService,
                 WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
@@ -166,6 +164,7 @@ export {
     BroadcastStore,
     KeyService,
     LanguageStore,
+    ThemeStore,
     ParameterService,
     MonitoringService,
     PipelineCoreService,
@@ -187,8 +186,7 @@ export {
     WorkflowTemplateService,
     WorkflowStore,
     WorkflowRunService,
-    WorkflowCoreService,
-    WorkflowSidebarStore,
-    WorkflowEventStore
+    WorkflowCoreService
+
 };
 

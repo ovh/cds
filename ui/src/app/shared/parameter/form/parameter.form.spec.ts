@@ -1,21 +1,19 @@
-/* tslint:disable:no-unused-variable */
-
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
-import {SharedModule} from '../../shared.module';
-import {ParameterService} from '../../../service/parameter/parameter.service';
-import {ParameterFormComponent} from './parameter.form';
-import {Parameter} from '../../../model/parameter.model';
-import {ParameterEvent} from '../parameter.event.model';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { Injector } from '@angular/core';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { Response, ResponseOptions, XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Parameter } from 'app/model/parameter.model';
+import { ParameterService } from 'app/service/parameter/parameter.service';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { ThemeStore } from 'app/service/services.module';
+import { SharedModule } from '../../shared.module';
+import { ParameterEvent } from '../parameter.event.model';
+import { ParameterFormComponent } from './parameter.form';
 
 describe('CDS: parameter From Component', () => {
-
     let injector: Injector;
     let backend: MockBackend;
 
@@ -31,8 +29,9 @@ describe('CDS: parameter From Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
+                ThemeStore
             ],
-            imports : [
+            imports: [
                 SharedModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
@@ -51,11 +50,11 @@ describe('CDS: parameter From Component', () => {
     });
 
 
-    it('should create a new parameter', fakeAsync( () => {
+    it('should create a new parameter', fakeAsync(() => {
         let call = 0;
         // Mock Http request
         backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["string", "password"]'})));
+            connection.mockRespond(new Response(new ResponseOptions({ body: '["string", "password"]' })));
         });
 
 

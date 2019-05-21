@@ -1,0 +1,131 @@
+<ng-container *ngIf="node && project">
+    <div class="ui form">
+        <div class="inline fields">
+            <div class="four wide field">
+                <label>{{ 'workflow_root_context_pipeline' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <ng-container
+                    *ngIf="node.id > 0 && node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
+                    <div class="ui input">{{workflow.pipelines[node.context.pipeline_id].name}}</div>
+                </ng-container>
+            </div>
+        </div>
+        <div class="inline fields">
+            <div class="four wide field">
+                <label>{{ 'common_name' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <ng-container>
+                    <div class="ui input">
+                        <input type="text" [(ngModel)]="node.name" (ngModelChange)="pushChange()" [disabled]="readonly">
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+        <div class="inline fields">
+            <div class="four wide field">
+                <label>{{ 'workflow_root_context_application' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <sui-select class="fluid selection"
+                            [(ngModel)]="node.context.application_id"
+                            (ngModelChange)="updateVCSStatusCheck(true)"
+                            [options]="applications"
+                            labelField="name"
+                            valueField="id"
+                            [isSearchable]="true"
+                            [isDisabled]="readonly"
+                            #select>
+                    <sui-select-option *ngFor="let option of select.filteredOptions"
+                                       [value]="option">
+                    </sui-select-option>
+                </sui-select>
+            </div>
+        </div>
+        <!-- TO IMPLEMENT
+        <div class="inline fields" *ngIf="showCheckStatus">
+            <div class="four wide field">
+                <label>{{ 'workflow_root_context_application_send_vcs_status' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <div class="ui toggle checkbox ml10">
+                    <input type="checkbox" id="vcs_status" name="vcs_status"
+                           [disabled]="readonly"
+                           [(ngModel)]="node.context.disable_vcs_status" (ngModelChange)="pushChange()">
+                    <label></label>
+                </div>
+            </div>
+        </div>
+        -->
+        <div class="inline fields">
+            <div class="four wide field">
+                <label>{{ 'workflow_root_context_integration' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <sui-select class="fluid selection"
+                            name="selectIntegration"
+                            [(ngModel)]="node.context.project_integration_id"
+                            (ngModelChange)="pushChange()"
+                            [options]="integrations"
+                            labelField="name"
+                            valueField="id"
+                            [isSearchable]="true"
+                            [isDisabled]="readonly"
+                            #selectIntegration>
+                    <sui-select-option *ngFor="let t of selectIntegration.filteredOptions"
+                                       [value]="t">
+                    </sui-select-option>
+                </sui-select>
+            </div>
+        </div>
+        <div class="inline fields">
+            <div class="four wide field">
+                <label>{{ 'workflow_root_context_environment' | translate}}</label>
+            </div>
+            <div class="twelve wide field">
+                <sui-select class="fluid selection"
+                            name="selectIntegration"
+                            [(ngModel)]="node.context.environment_id"
+                            (ngModelChange)="pushChange()"
+                            [options]="environments"
+                            labelField="name"
+                            valueField="id"
+                            [isSearchable]="true"
+                            [isDisabled]="readonly"
+                            #selectEnv>
+                    <sui-select-option *ngFor="let t of selectEnv.filteredOptions"
+                                       [value]="t">
+                    </sui-select-option>
+                </sui-select>
+            </div>
+        </div>
+
+        <div class="inline fields">
+            <div class="four wide field">
+                <label>
+                    <a href="https://ovh.github.io/cds/docs/concepts/workflow/mutex" target="_blank">
+                        {{ 'workflow_root_context_mutex' | translate }}
+                        <i class="external icon"></i>
+                    </a>
+                </label>
+            </div>
+            <div class="twelve wide field">
+                <div class="ui toggle checkbox ml10">
+                    <input type="checkbox" id="mutex" name="mutex"
+                           [disabled]="readonly"
+                           [(ngModel)]="node.context.mutex" (ngModelChange)="pushChange()">
+                    <label></label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <button class="ui right floated green button"
+            *ngIf="!readonly"
+            [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+            [class.loading]="loading" (click)="updateWorkflow()">
+        {{ 'btn_save' | translate }}
+    </button>
+</ng-container>

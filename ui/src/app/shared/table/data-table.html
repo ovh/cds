@@ -76,7 +76,14 @@
                             {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
                         </span>
                     </ng-container>
-                    <ng-container *ngSwitchDefault>{{c.selector | translate}}</ng-container>
+                    <ng-container *ngSwitchDefault>
+                        <ng-container *ngIf="c.selector && c.translate">
+                            {{c.selector | translate}}
+                        </ng-container>
+                        <ng-container *ngIf="c.selector && !c.translate">
+                            {{c.selector}}
+                        </ng-container>
+                    </ng-container>
                 </td>
             </ng-container>
         </tr>
