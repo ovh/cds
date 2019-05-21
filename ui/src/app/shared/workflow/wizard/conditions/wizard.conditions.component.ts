@@ -1,24 +1,29 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {Store} from '@ngxs/store';
-import {PermissionValue} from 'app/model/permission.model';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {WNode, WNodeContext, Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from 'app/model/workflow.model';
-import {VariableService} from 'app/service/variable/variable.service';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
-import {Table} from 'app/shared/table/table';
-import {ToastService} from 'app/shared/toast/ToastService';
-import {UpdateWorkflow} from 'app/store/workflow.action';
-import {cloneDeep, uniqBy} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { PermissionValue } from 'app/model/permission.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, WNodeContext, Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from 'app/model/workflow.model';
+import { ThemeStore } from 'app/service/theme/theme.store';
+import { VariableService } from 'app/service/variable/variable.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Table } from 'app/shared/table/table';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { UpdateWorkflow } from 'app/store/workflow.action';
+import { cloneDeep, uniqBy } from 'lodash';
+import { finalize, first } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-node-conditions',
     templateUrl: './wizard.conditions.html',
     styleUrls: ['./wizard.conditions.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -45,7 +50,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             if (condition) {
                 condition.value = <any>(condition.value !== 'false');
             }
-
         }
     };
     get node(): WNode {
@@ -55,7 +59,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     @Output() conditionsChange = new EventEmitter<boolean>();
 
-    codeMirrorConfig: {};
+    codeMirrorConfig: any;
     isAdvanced = false;
     suggest: Array<string> = [];
     loadingConditions = false;
@@ -65,17 +69,18 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
     loading = false;
     previousValue: string;
+    themeSubscription: Subscription;
 
-    constructor(private store: Store, private _variableService: VariableService, private _workflowService: WorkflowService,
-                private _toast: ToastService, private _translate: TranslateService) {
+    constructor(
+        private store: Store,
+        private _variableService: VariableService,
+        private _workflowService: WorkflowService,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _theme: ThemeStore
+    ) {
         super();
-    }
 
-    getData(): Array<WorkflowNodeCondition> {
-        return undefined;
-    }
-
-    ngOnInit(): void {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -85,6 +90,20 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             autoRefresh: true,
             readOnly: this.readonly,
         };
+    }
+
+    getData(): Array<WorkflowNodeCondition> {
+        return undefined;
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
+
         this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
             .subscribe((suggest) => this.suggest = suggest);
 
@@ -95,7 +114,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             )
             .subscribe(wtc => {
                 this.operators = Object.keys(wtc.operators).map(k => {
-                    return {key: k, value: wtc.operators[k]};
+                    return { key: k, value: wtc.operators[k] };
                 });
                 this.conditionNames = wtc.names;
             });

@@ -50,6 +50,7 @@ import { RequirementService } from './requirement/requirement.service';
 import { RequirementStore } from './requirement/requirement.store';
 import { RouterService } from './router/router.service';
 import { ServiceService } from './service/service.service';
+import { ThemeStore } from './theme/theme.store';
 import { TimelineService } from './timeline/timeline.service';
 import { TimelineStore } from './timeline/timeline.store';
 import { UserService } from './user/user.service';
@@ -93,6 +94,7 @@ export class ServicesModule {
                 BroadcastStore,
                 KeyService,
                 LanguageStore,
+                ThemeStore,
                 NavbarService,
                 NotificationService,
                 ParameterService,
@@ -162,6 +164,7 @@ export {
     BroadcastStore,
     KeyService,
     LanguageStore,
+    ThemeStore,
     ParameterService,
     MonitoringService,
     PipelineCoreService,

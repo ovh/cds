@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -8,29 +6,30 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Application } from 'app/model/application.model';
+import { Project } from 'app/model/project.model';
+import { RepositoriesManager } from 'app/model/repositories.model';
+import { ApplicationService } from 'app/service/application/application.service';
+import { ApplicationStore } from 'app/service/application/application.store';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { KeyService } from 'app/service/keys/keys.service';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/project/project.store';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { ThemeStore } from 'app/service/services.module';
+import { VariableService } from 'app/service/variable/variable.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { SharedModule } from 'app/shared/shared.module';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import { Application } from '../../../../../model/application.model';
-import { Project } from '../../../../../model/project.model';
-import { RepositoriesManager } from '../../../../../model/repositories.model';
-import { ApplicationService } from '../../../../../service/application/application.service';
-import { ApplicationStore } from '../../../../../service/application/application.store';
-import { EnvironmentService } from '../../../../../service/environment/environment.service';
-import { KeyService } from '../../../../../service/keys/keys.service';
-import { NavbarService } from '../../../../../service/navbar/navbar.service';
-import { PipelineService } from '../../../../../service/pipeline/pipeline.service';
-import { ProjectService } from '../../../../../service/project/project.service';
-import { ProjectStore } from '../../../../../service/project/project.store';
-import { RepoManagerService } from '../../../../../service/repomanager/project.repomanager.service';
-import { VariableService } from '../../../../../service/variable/variable.service';
-import { SharedModule } from '../../../../../shared/shared.module';
-import { ToastService } from '../../../../../shared/toast/ToastService';
 import { ProjectModule } from '../../../../project/project.module';
 import { ApplicationModule } from '../../../application.module';
 import { ApplicationRepositoryComponent } from './application.repo.component';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
 
 @Component({
     template: ''
@@ -38,9 +37,7 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 class DummyComponent {
 }
 
-
 describe('CDS: Application Repo Component', () => {
-
     let injector: Injector;
     let toast: ToastService;
 
@@ -65,9 +62,10 @@ describe('CDS: Application Repo Component', () => {
                 TranslateParser,
                 RepoManagerService,
                 Store,
+                { provide: APP_BASE_HREF, useValue: '/' },
+                ThemeStore,
                 WorkflowRunService,
-                WorkflowService,
-                { provide: APP_BASE_HREF, useValue: '/' }
+                WorkflowService
             ],
             imports: [
                 RouterTestingModule.withRoutes([
@@ -178,8 +176,7 @@ class MockRouter {
 }
 
 class MockStore {
-    constructor() {
-    }
+    constructor() { }
 
     connectRepository(key: string, currentName: string, repoManName: string, repoFullname: string) {
         return of({ name: 'app' });
