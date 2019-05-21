@@ -1,16 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { Store } from '@ngxs/store';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
-import { finalize, flatMap } from 'rxjs/operators';
-
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { PermissionValue } from 'app/model/permission.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
-import { ApplicationWorkflowService, VariableService } from 'app/service/services.module';
+import { ApplicationWorkflowService, ThemeStore, VariableService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -18,6 +15,8 @@ import { FetchPipeline } from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { cloneDeep } from 'lodash';
+import { finalize, flatMap } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 
 declare var CodeMirror: any;
 
@@ -28,6 +27,7 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeInputComponent implements OnInit {
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -45,11 +45,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
 
     @Input() readonly = true;
     @Input() noderun: WorkflowNodeRun;
-
     @Output() inputChange = new EventEmitter<boolean>();
-
-    @ViewChild('textareaCodeMirror')
-    codemirror: CodemirrorComponent;
 
     suggest: string[] = [];
     payloadString: string;
@@ -57,21 +53,22 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     permissionEnum = PermissionValue;
     invalidJSON = false;
     loadingBranches = false;
-    codeMirrorConfig: {};
+    codeMirrorConfig: any;
     pipParamsReady = false;
     currentPipeline: Pipeline;
     remotes: string[] = [];
     tags: string[] = [];
-    loading = false;
+    loading: boolean;
+    themeSubscription: Subscription;
 
     constructor(
-        private store: Store, private _variableService: VariableService,
-        private _appWorkflowService: ApplicationWorkflowService, private _translate: TranslateService,
-        private _toast: ToastService
+        private store: Store,
+        private _variableService: VariableService,
+        private _appWorkflowService: ApplicationWorkflowService,
+        private _translate: TranslateService,
+        private _toast: ToastService,
+        private _theme: ThemeStore
     ) {
-    }
-
-    ngOnInit(): void {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -80,11 +77,19 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             autoRefresh: true,
             readOnly: this.readonly
         };
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
 
         if (!this.node) {
             this.payloadString = JSON.stringify(this.noderun.payload, undefined, 4);
         }
-
     }
 
     init(data: WNode): void {
@@ -128,10 +133,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                 }
             });
         }
-
-
     }
-
 
     reindent(): void {
         this.updateValue(this.payloadString);
@@ -178,7 +180,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                 }
             });
     }
-
 
     updateValue(payload): void {
         if (this.noderun) {

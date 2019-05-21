@@ -1,15 +1,17 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {Store} from '@ngxs/store';
-import {ProjectIntegration} from 'app/model/integration.model';
-import {Project} from 'app/model/project.model';
-import {WorkflowHookModel} from 'app/model/workflow.hook.model';
-import {WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue} from 'app/model/workflow.model';
-import {HookService} from 'app/service/hook/hook.service';
-import {ToastService} from 'app/shared/toast/ToastService';
-import {UpdateWorkflow} from 'app/store/workflow.action';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { ProjectIntegration } from 'app/model/integration.model';
+import { Project } from 'app/model/project.model';
+import { WorkflowHookModel } from 'app/model/workflow.hook.model';
+import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
+import { HookService } from 'app/service/hook/hook.service';
+import { ThemeStore } from 'app/service/services.module';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { UpdateWorkflow } from 'app/store/workflow.action';
+import { cloneDeep } from 'lodash';
+import { finalize, first } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -17,6 +19,7 @@ import {finalize, first} from 'rxjs/operators';
     styleUrls: ['./hook.form.scss']
 })
 export class WorkflowNodeHookFormComponent implements OnInit {
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     _hook: WNodeHook = new WNodeHook();
     canDelete = false;
@@ -53,9 +56,53 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     selectedIntegration: ProjectIntegration;
     availableIntegrations: Array<ProjectIntegration>;
     loading = false;
+    themeSubscription: Subscription;
 
-    constructor(private _hookService: HookService, private _store: Store, private _toast: ToastService,
-                private _translate: TranslateService) { }
+    constructor(
+        private _hookService: HookService,
+        private _store: Store,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _theme: ThemeStore
+    ) {
+        this.codeMirrorConfig = {
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            mode: 'application/json',
+            lineWrapping: true,
+            autoRefresh: true,
+            readOnly: this.mode === 'ro',
+        };
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
+
+        this.availableIntegrations = this.project.integrations.filter(pf => pf.model.hook);
+        if (this.hook && this.hook.config && this.hook.config['integration']) {
+            this.selectedIntegration = this.project.integrations.find(pf => pf.name === this.hook.config['integration'].value);
+        }
+        this.loadingModels = true;
+        if (!this.node && this.hook) {
+            this.node = Workflow.getNodeByID(this.hook.node_id, this.workflow);
+        }
+        this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
+            first(),
+            finalize(() => this.loadingModels = false)
+        ).subscribe(mds => {
+            this.hooksModel = mds;
+            if (this.hook && this.hook.hook_model_id) {
+                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
+                this.hook.model = this.selectedHookModel;
+                this.initConfig();
+            }
+        });
+    }
 
     updateHook(): void {
         this.loading = true;
@@ -103,14 +150,14 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     updateHookMultiChoice(k: string): void {
-        let finalValue = Object.getOwnPropertyNames((<WorkflowNodeHookConfigValue>this.hook.config[k]).temp).filter( choice => {
+        let finalValue = Object.getOwnPropertyNames((<WorkflowNodeHookConfigValue>this.hook.config[k]).temp).filter(choice => {
             return (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp[choice];
         });
         (<WorkflowNodeHookConfigValue>this.hook.config[k]).value = finalValue.join(';');
     }
 
     updateIntegration(): void {
-        Object.keys(this.hook.config).forEach( k => {
+        Object.keys(this.hook.config).forEach(k => {
             if (k === 'integration') {
                 this.hook.config[k].value = this.selectedIntegration.name;
             } else {
@@ -130,35 +177,5 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                 this.invalidJSON = true;
             }
         }
-    }
-
-    ngOnInit(): void {
-        this.availableIntegrations = this.project.integrations.filter(pf =>  pf.model.hook);
-        if (this.hook && this.hook.config && this.hook.config['integration']) {
-            this.selectedIntegration = this.project.integrations.find(pf => pf.name === this.hook.config['integration'].value);
-        }
-        this.codeMirrorConfig = {
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            mode: 'application/json',
-            lineWrapping: true,
-            autoRefresh: true,
-            readOnly: this.mode === 'ro',
-        };
-        this.loadingModels = true;
-        if (!this.node && this.hook) {
-            this.node = Workflow.getNodeByID(this.hook.node_id, this.workflow);
-        }
-        this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
-            first(),
-            finalize(() => this.loadingModels = false)
-        ).subscribe(mds => {
-            this.hooksModel = mds;
-            if (this.hook && this.hook.hook_model_id) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
-                this.hook.model = this.selectedHookModel;
-                this.initConfig();
-            }
-        });
     }
 }
