@@ -10,6 +10,7 @@ import (
 )
 
 type currentWorker struct {
+	autoUpdate    bool
 	singleUse     bool
 	apiEndpoint   string
 	token         string
