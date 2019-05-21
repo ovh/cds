@@ -35,7 +35,7 @@ func (b *bitbucketClient) GetHook(ctx context.Context, repo, url string) (sdk.VC
 			return sdk.VCSHook{
 				Disable:     h.Active,
 				Events:      h.Events,
-				ID:          fmt.Sprintf("%s", h.ID),
+				ID:          fmt.Sprintf("%d", h.ID),
 				InsecureSSL: false,
 				Method:      http.MethodPost,
 				Name:        h.Name,
