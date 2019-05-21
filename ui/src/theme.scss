@@ -288,7 +288,8 @@ a.ui.card:hover,
 }
 
 .ui.positive.button,
-.ui.green.button {
+.ui.green.button,
+.ui.green.buttons .button {
     .night & {
         background-color: $darkTheme_green;
     }
@@ -319,6 +320,12 @@ a.ui.card:hover,
 .ui.blue.button {
     .night & {
         background-color: $darkTheme_blue !important;
+    }
+}
+
+.ui.grey.button {
+    .night & {
+        background-color: $darkTheme_grey !important;
     }
 }
 
