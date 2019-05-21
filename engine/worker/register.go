@@ -40,6 +40,10 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	w.initGRPCConn()
 
 	if !uptodate {
+		if w.autoUpdate {
+			log.Warning("-=-=-=-=- your worker binary is not up to date %s %s %s. Auto-updating it... -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
+			sdk.Exit("Exiting this cds worker process - auto updating worker")
+		}
 		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
 	}
 

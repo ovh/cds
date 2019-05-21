@@ -307,9 +307,6 @@ func (w *currentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 			return nil
 		}
 		cancel()
-		if ctx.Err() != nil {
-			return fmt.Errorf("updateStepStatus> step:%d job:%d worker is cancelled", stepOrder, buildID)
-		}
 		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 15s", stepOrder, code, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
@@ -359,7 +356,6 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 	t0 := time.Now()
 	// Timeout must be the same as the goroutine which stop jobs in package api/workflow
 	ctx, cancel := context.WithTimeout(ctx, 24*time.Hour)
-	log.Info("processJob> Process Job")
 
 	defer func() { log.Info("processJob> Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
 	defer cancel()
