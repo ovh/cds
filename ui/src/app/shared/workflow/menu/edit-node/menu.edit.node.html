@@ -1,5 +1,11 @@
 <div class="menu-node">
     <div class="ui list">
+        <ng-container *ngIf="workflowrun">
+            <a class="item" (click)="sendEvent('run')" [class.disabled]="!runnable">
+                {{'btn_run' | translate }}
+            </a>
+            <hr>
+        </ng-container>
         <ng-container *ngIf="!noderun">
             <a class="item" (click)="sendEvent('pipeline')"
                [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly">
