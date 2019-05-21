@@ -15,6 +15,7 @@ import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/work
 import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
 import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
+import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import {
     AddHookWorkflow,
     AddJoinWorkflow,
@@ -42,6 +43,8 @@ export class WorkflowWNodeComponent implements OnInit {
 
     @ViewChild('menu')
     menu: WorkflowWNodeMenuEditComponent;
+    @ViewChild('workflowRunNode')
+    workflowRunNode: WorkflowNodeRunParamComponent;
 
     // Selected workflow run
     workflowRun: WorkflowRun;
@@ -173,6 +176,9 @@ export class WorkflowWNodeComponent implements OnInit {
                 break;
             case 'join_link':
                 this.linkJoin();
+                break;
+            case 'run':
+                this.run();
                 break;
             case 'delete':
                 this.openDeleteNodeModal();
@@ -321,5 +327,9 @@ export class WorkflowWNodeComponent implements OnInit {
             return;
         }
         this._workflowCoreService.linkJoinEvent(this.node);
+    }
+
+    run(): void {
+        this.workflowRunNode.show();
     }
 }
