@@ -1,6 +1,6 @@
 ---
 title: "cds-sonar-scanner"
-card: 
+card:
   name: user-action
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "plugin-marathon"
-card: 
+card:
   name: plugin
 ---
 

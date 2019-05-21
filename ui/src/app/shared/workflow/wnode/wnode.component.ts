@@ -1,20 +1,21 @@
-import {Component, Input, NgZone, OnInit, ViewChild} from '@angular/core';
+import { Component, Input, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Store} from '@ngxs/store';
-import {PermissionValue} from 'app/model/permission.model';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from 'app/model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
-import {WorkflowCoreService} from 'app/service/workflow/workflow.core.service';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {ToastService} from 'app/shared/toast/ToastService';
-import {WorkflowWNodeMenuEditComponent} from 'app/shared/workflow/menu/edit-node/menu.edit.node.component';
-import {WorkflowDeleteNodeComponent} from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
-import {WorkflowHookModalComponent} from 'app/shared/workflow/modal/hook-add/hook.modal.component';
-import {WorkflowTriggerComponent} from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
-import {WorkflowNodeEditModalComponent} from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { PermissionValue } from 'app/model/permission.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { WorkflowWNodeMenuEditComponent } from 'app/shared/workflow/menu/edit-node/menu.edit.node.component';
+import { WorkflowDeleteNodeComponent } from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
+import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
+import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
+import { WorkflowNodeEditModalComponent } from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
+import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import {
     AddHookWorkflow,
     AddJoinWorkflow,
@@ -22,11 +23,11 @@ import {
     UpdateHookWorkflow,
     UpdateWorkflow
 } from 'app/store/workflow.action';
-import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import {IPopup} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { IPopup } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
-import {finalize} from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -42,6 +43,8 @@ export class WorkflowWNodeComponent implements OnInit {
 
     @ViewChild('menu')
     menu: WorkflowWNodeMenuEditComponent;
+    @ViewChild('workflowRunNode')
+    workflowRunNode: WorkflowNodeRunParamComponent;
 
     // Selected workflow run
     workflowRun: WorkflowRun;
@@ -73,9 +76,7 @@ export class WorkflowWNodeComponent implements OnInit {
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-    ) {
-
-    }
+    ) { }
 
     ngOnInit(): void {
         this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
@@ -118,10 +119,10 @@ export class WorkflowWNodeComponent implements OnInit {
                     this._router.navigate([
                         'node', this.currentNodeRun.id
                     ], {
-                        relativeTo: this._activatedRoute, queryParams: {
-                            name: this.node.name,
-                            node_id: this.node.id, node_ref: this.node.ref
-                        }
+                            relativeTo: this._activatedRoute, queryParams: {
+                                name: this.node.name,
+                                node_id: this.node.id, node_ref: this.node.ref
+                            }
                         });
                 } else {
                     this._router.navigate([
@@ -173,6 +174,9 @@ export class WorkflowWNodeComponent implements OnInit {
                 break;
             case 'join_link':
                 this.linkJoin();
+                break;
+            case 'run':
+                this.run();
                 break;
             case 'delete':
                 this.openDeleteNodeModal();
@@ -321,5 +325,9 @@ export class WorkflowWNodeComponent implements OnInit {
             return;
         }
         this._workflowCoreService.linkJoinEvent(this.node);
+    }
+
+    run(): void {
+        this.workflowRunNode.show();
     }
 }

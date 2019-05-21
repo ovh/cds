@@ -1,18 +1,19 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import {PermissionValue} from 'app/model/permission.model';
-import {IdName, Project} from 'app/model/project.model';
-import {WorkflowHookModel} from 'app/model/workflow.hook.model';
-import {WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow} from 'app/model/workflow.model';
-import {HookService} from 'app/service/hook/hook.service';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {ToastService} from 'app/shared/toast/ToastService';
-import {UpdateWorkflow} from 'app/store/workflow.action';
+import { PermissionValue } from 'app/model/permission.model';
+import { IdName, Project } from 'app/model/project.model';
+import { WorkflowHookModel } from 'app/model/workflow.hook.model';
+import { WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow } from 'app/model/workflow.model';
+import { HookService } from 'app/service/hook/hook.service';
+import { ThemeStore } from 'app/service/services.module';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { UpdateWorkflow } from 'app/store/workflow.action';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
-import {finalize, first} from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-outgoinghook',
@@ -21,6 +22,7 @@ import {finalize, first} from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowWizardOutgoingHookComponent implements OnInit {
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -39,7 +41,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     @Output() outgoinghookChange = new EventEmitter<boolean>();
 
     permissionEnum = PermissionValue;
-    codeMirrorConfig: {};
+    codeMirrorConfig: any;
     loadingModels = false;
     outgoingHookModels: Array<WorkflowHookModel>;
     selectedOutgoingHookModel: WorkflowHookModel;
@@ -52,14 +54,16 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     outgoing_default_payload: {};
     loading = false;
     codeMirrorSkipChange = true;
+    themeSubscription: Subscription;
 
     constructor(
-        private _store: Store, private _translate: TranslateService, private _toast: ToastService,
-        private _hookService: HookService, private _workflowService: WorkflowService
+        private _store: Store,
+        private _translate: TranslateService,
+        private _toast: ToastService,
+        private _hookService: HookService,
+        private _workflowService: WorkflowService,
+        private _theme: ThemeStore
     ) {
-    }
-
-    ngOnInit(): void {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -68,6 +72,15 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
             autoRefresh: true,
             readOnly: this.mode === 'ro'
         };
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
 
         this.loadingModels = true;
         this._hookService.getOutgoingHookModel().pipe(finalize(() => this.loadingModels = false))
@@ -119,21 +132,21 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
                 this.hook.outgoing_hook.config['target_workflow'].value)
                 .pipe(first(), finalize(() => this.loadingHooks = false))
                 .subscribe(wf => {
-                this.outgoing_default_payload = wf.workflow_data.node.context.default_payload;
-                let allHooks = Workflow.getAllHooks(wf);
-                if (allHooks) {
-                    this.availableHooks = allHooks.filter(h => wf.hook_models[h.hook_model_id].name === 'Workflow');
-                } else {
-                    this.availableHooks = [];
-                }
-                if (this.hook || this.hook.outgoing_hook.config['target_hook']) {
-                    if (this.availableHooks
-                        .findIndex(h =>
-                            h.uuid === this.hook.outgoing_hook.config['target_hook'].value) === -1) {
-                        this._outgoingHook.outgoing_hook.config['target_hook'].value = undefined;
+                    this.outgoing_default_payload = wf.workflow_data.node.context.default_payload;
+                    let allHooks = Workflow.getAllHooks(wf);
+                    if (allHooks) {
+                        this.availableHooks = allHooks.filter(h => wf.hook_models[h.hook_model_id].name === 'Workflow');
+                    } else {
+                        this.availableHooks = [];
                     }
-                }
-            });
+                    if (this.hook || this.hook.outgoing_hook.config['target_hook']) {
+                        if (this.availableHooks
+                            .findIndex(h =>
+                                h.uuid === this.hook.outgoing_hook.config['target_hook'].value) === -1) {
+                            this._outgoingHook.outgoing_hook.config['target_hook'].value = undefined;
+                        }
+                    }
+                });
         } else {
             this.availableHooks = null;
             if (this.wSub) {

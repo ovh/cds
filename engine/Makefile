@@ -17,6 +17,8 @@ GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
+
 TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
 TEST_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
@@ -86,7 +88,12 @@ test: test-config clean
 	@for PKG in $(TEST_PKGS); do \
 		echo "Running tests in package $$PKG"; \
 		cd ${GOPATH}/src/$$PKG; \
-		$(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
+		TEMP=`$(PKGS_COMMA_SEP)`; \
+    if [ ! -z "$$TEMP" ]; then \
+		  $(TEST_CMD) -coverpkg $$TEMP > ${GOPATH}/src/$$PKG/tests.log; \
+    else \
+		  $(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
+    fi; \
 	done;
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report

@@ -1,33 +1,38 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { ProjectIntegration } from 'app/model/integration.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { Project } from 'app/model/project.model';
+import { ThemeStore } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Table } from 'app/shared/table/table';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteIntegrationInProject, UpdateIntegrationInProject } from 'app/store/project.action';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { ProjectIntegration } from '../../../../../model/integration.model';
-import { PermissionValue } from '../../../../../model/permission.model';
-import { Project } from '../../../../../model/project.model';
-import { Table } from '../../../../../shared/table/table';
-import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-integration-list',
     templateUrl: './project.integration.list.html',
     styleUrls: ['./project.integration.list.scss']
 })
-export class ProjectIntegrationListComponent extends Table<ProjectIntegration> {
+@AutoUnsubscribe()
+export class ProjectIntegrationListComponent extends Table<ProjectIntegration> implements OnInit {
+    @ViewChild('codeMirror') codemirror: any;
 
     @Input() project: Project;
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
+
     permissionEnum = PermissionValue;
     loading = false;
-    codeMirrorConfig: {};
+    codeMirrorConfig: any;
+    themeSubscription: Subscription;
 
     constructor(
         private _translate: TranslateService,
         private _toast: ToastService,
-        private store: Store
+        private store: Store,
+        private _theme: ThemeStore
     ) {
         super();
         this.codeMirrorConfig = {
@@ -36,6 +41,15 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> {
             lineNumbers: true,
             autoRefresh: true
         };
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     getData(): Array<ProjectIntegration> {

@@ -1,30 +1,32 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript';
-import { Service } from '../../../../model/service.model';
-import { ServiceService } from '../../../../service/services.module';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { Service } from 'app/model/service.model';
+import { ServiceService, ThemeStore } from 'app/service/services.module';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-service-show',
     templateUrl: './service.show.html',
     styleUrls: ['./service.show.scss']
 })
-export class ServiceShowComponent {
+@AutoUnsubscribe()
+export class ServiceShowComponent implements OnInit {
+    @ViewChild('textareaCodeMirror') codemirror: any;
+
     loading: boolean;
     service: Service;
     codeMirrorConfig: any;
     config: any;
     status: string;
-
-    @ViewChild('textareaCodeMirror')
-    codemirror: CodemirrorComponent;
-
     path: Array<PathItem>;
+    themeSubscription: Subscription;
 
     constructor(
         private _serviceService: ServiceService,
-        private _route: ActivatedRoute
+        private _route: ActivatedRoute,
+        private _theme: ThemeStore
     ) {
         this.codeMirrorConfig = this.codeMirrorConfig = {
             matchBrackets: true,
@@ -34,6 +36,16 @@ export class ServiceShowComponent {
             autoRefresh: true,
             readOnly: true
         };
+
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
 
         this._route.params.subscribe(params => {
             const name = params['name'];

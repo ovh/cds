@@ -16,9 +16,6 @@ import (
 func (c *gitlabClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, fmt.Errorf("Not yet implemented")
 }
-func (c *gitlabClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
-	return fmt.Errorf("Not yet implemented")
-}
 
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {

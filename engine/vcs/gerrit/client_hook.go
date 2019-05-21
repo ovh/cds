@@ -10,9 +10,6 @@ import (
 func (c *gerritClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, fmt.Errorf("Not implemented")
 }
-func (c *gerritClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
-	return nil
-}
 
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
 func (c *gerritClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {

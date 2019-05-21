@@ -401,6 +401,7 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 		return "", nil
 	}
 
+	checkout := exportentities.StepCheckout("{{.cds.workspace}}")
 	pip := exportentities.PipelineV1{
 		Name:    pipName,
 		Version: exportentities.PipelineVersion1,
@@ -409,7 +410,7 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 				Name: "First job",
 				Steps: []exportentities.Step{
 					{
-						"checkout": "{{.cds.workspace}}",
+						Checkout: &checkout,
 					},
 				},
 			},

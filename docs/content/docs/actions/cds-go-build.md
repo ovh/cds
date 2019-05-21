@@ -1,6 +1,6 @@
 ---
 title: "cds-go-build"
-card: 
+card:
   name: user-action
 ---
 

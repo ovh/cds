@@ -127,7 +127,7 @@ vcs_ssh_key: proj-ssh-key
 vcs_pgp_key: proj-pgp-key
 ```
 
-Now we this setup you will be able to use the actions [CheckoutApplication]({{< relref "../../actions/checkoutapplication/" >}}) and [Release]({{< relref "../../actions/release/" >}}) in your pipelines.
+Now we this setup you will be able to use the actions [CheckoutApplication]({{< relref "../../actions/builtin-checkoutapplication/" >}}) and [Release]({{< relref "../../actions/builtin-release/" >}}) in your pipelines.
 
 ## Deployment
 
@@ -172,4 +172,4 @@ The list of the availabe deployment platform is available from the Web UI on the
 
 The settings depend on the integration. Please refer to the [integration documentation]({{< relref "../../integrations" >}}).
 
-Now you are ready to use the [DeployApplication]({{< relref "../../actions/deployapplication/" >}}) action in your pipelines.
+Now you are ready to use the [DeployApplication]({{< relref "../../actions/builtin-deployapplication/" >}}) action in your pipelines.

@@ -1,12 +1,9 @@
-/* tslint:disable:no-unused-variable */
-
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {SharedService} from '../shared.service';
-import {SharedModule} from '../shared.module';
-import {StatusIconComponent} from './status.component';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { SharedModule } from '../shared.module';
+import { SharedService } from '../shared.service';
+import { StatusIconComponent } from './status.component';
 
 describe('CDS: Parameter Value Component', () => {
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -14,13 +11,13 @@ describe('CDS: Parameter Value Component', () => {
             providers: [
                 SharedService,
             ],
-            imports : [
+            imports: [
                 SharedModule
             ]
         });
     });
 
-    it('should display success icon', fakeAsync( () => {
+    it('should display success icon', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(StatusIconComponent);
         let component = fixture.debugElement.componentInstance;
@@ -35,7 +32,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('.green.check.icon')).toBeTruthy('Success icon not displayed');
     }));
 
-    it('should display building loader', fakeAsync( () => {
+    it('should display building loader', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(StatusIconComponent);
         let component = fixture.debugElement.componentInstance;
@@ -50,7 +47,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('.blue.loader')).toBeTruthy('Building loader not displayed');
     }));
 
-    it('should display fail icon', fakeAsync( () => {
+    it('should display fail icon', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(StatusIconComponent);
         let component = fixture.debugElement.componentInstance;
@@ -65,7 +62,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('.remove.red.icon')).toBeTruthy('Fail icon not displayed');
     }));
 
-    it('should display disabled icon', fakeAsync( () => {
+    it('should display disabled icon', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(StatusIconComponent);
         let component = fixture.debugElement.componentInstance;
@@ -80,7 +77,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('.ban.grey.icon')).toBeTruthy('Disabled icon not displayed');
     }));
 
-    it('should display skipped icon', fakeAsync( () => {
+    it('should display skipped icon', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(StatusIconComponent);
         let component = fixture.debugElement.componentInstance;
@@ -95,7 +92,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('.ban.grey.icon')).toBeTruthy('Skipped icon not displayed');
     }));
 
-    it('should display waiting icon', fakeAsync( () => {
+    it('should display waiting icon', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(StatusIconComponent);
         let component = fixture.debugElement.componentInstance;
@@ -109,7 +106,5 @@ describe('CDS: Parameter Value Component', () => {
         let compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('.wait.blue.icon')).toBeTruthy('Waiting icon not displayed');
     }));
-
-
 });
 

@@ -123,7 +123,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 
 		if toDownload {
 			var errf error
-			f, errf = os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			f, errf = os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 			if errf != nil {
 				return errf
 			}

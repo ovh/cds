@@ -1,15 +1,15 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Pipeline, PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
+import { ThemeStore } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchAsCodePipeline, ImportPipeline, PreviewPipeline, ResyncPipeline } from 'app/store/pipelines.action';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Pipeline, PipelineStatus } from '../../../../model/pipeline.model';
-import { Project } from '../../../../model/project.model';
-import { PipelineCoreService } from '../../../../service/pipeline/pipeline.core.service';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-ascode-editor',
@@ -17,7 +17,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     styleUrls: ['./pipeline.ascode.editor.scss']
 })
 @AutoUnsubscribe()
-export class PipelineAsCodeEditorComponent {
+export class PipelineAsCodeEditorComponent implements OnInit {
+    @ViewChild('codeMirror') codemirror: any;
 
     // Project that contains the pipeline
     @Input() project: Project;
@@ -40,24 +41,22 @@ export class PipelineAsCodeEditorComponent {
     }
     _open = false;
 
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
-
     asCodeEditorSubscription: Subscription;
     codeMirrorConfig: any;
-
     updated = false;
     loading = false;
     loadingGet = true;
     previewMode = false;
     exportedPip = '';
     statusEnum = PipelineStatus;
+    themeSubscription: Subscription;
 
     constructor(
         private store: Store,
         private _pipCoreService: PipelineCoreService,
         private _toast: ToastService,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _theme: ThemeStore
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -65,13 +64,22 @@ export class PipelineAsCodeEditorComponent {
             lineNumbers: true,
             autoRefresh: true,
         };
+    }
 
+    ngOnInit(): void {
         this.asCodeEditorSubscription = this._pipCoreService.getAsCodeEditor()
             .subscribe((state) => {
                 if (state != null && state.save) {
                     this.save();
                 }
             });
+
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     keyEvent(event: KeyboardEvent) {

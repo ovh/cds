@@ -10,7 +10,7 @@ notoc: true
 ## Synopsis
 
 
-Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:
+Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can create a build variable with the worker command:
 
 	worker export foo bar
 
