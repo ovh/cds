@@ -1342,7 +1342,7 @@ engine config check  SEE ALSO  engine config - Manage CDS Configuration  </descr
       
       <guid>https://ovh.github.io/cds/docs/components/worker/check-secret/</guid>
       <description>worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:</description>
     </item>
     
@@ -1848,7 +1848,7 @@ Synopsis Download logs from a workflow run. You can download all logs files or j
       <guid>https://ovh.github.io/cds/docs/components/worker/download/</guid>
       <description>worker download worker download [--workflow=&amp;lt;workflow-name&amp;gt;] [--number=&amp;lt;run-number&amp;gt;] [--tag=&amp;lt;tag&amp;gt;] [--pattern=&amp;lt;pattern&amp;gt;]
 Synopsis Inside a job, there are two ways to download an artifact:
- with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.  Worker Command:
+ with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.  Worker Command:
 worker download --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt;  Example:
 worker download --pattern=&amp;quot;files.*.yml&amp;quot;  Theses two commands have the same result:
 worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from.</description>
@@ -2029,7 +2029,7 @@ cdsctl workflow export [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --format 
       
       <guid>https://ovh.github.io/cds/docs/components/worker/export/</guid>
       <description> worker export worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt;
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can create a build variable with the worker command:
 worker export foo bar  then, you can use new build variable:
 echo &amp;quot;{{.cds.build.foo}}&amp;quot;  Scope You can use the build variable in :
  another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  </description>
@@ -3560,7 +3560,7 @@ Inside a job, you can add a Tag with the worker command:
       
       <guid>https://ovh.github.io/cds/docs/components/worker/tmpl/</guid>
       <description>worker tmpl worker tmpl inputFile outputFile
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add a replace CDS variables with the real value into a file:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add a replace CDS variables with the real value into a file:
 # create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &amp;lt;input file&amp;gt; &amp;lt;output file&amp;gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
 this a a line in the file, with a CDS variable 2  if it&amp;rsquo;s the RUN n°2 of the current workflow.</description>
     </item>
@@ -3672,7 +3672,7 @@ engine database upgrade [flags]  Examples engine database upgrade --db-password=
       <guid>https://ovh.github.io/cds/docs/components/worker/upload/</guid>
       <description> worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
 Synopsis Inside a job, there are two ways to upload an artifact:
- with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command: worker upload &amp;lt;path&amp;gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
+ with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command: worker upload &amp;lt;path&amp;gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 You can use you storage integration: worker upload &amp;ndash;destination=&amp;ldquo;yourStorageIntegrationName&amp;rdquo;
 worker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  </description>
     </item>

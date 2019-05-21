@@ -18,15 +18,15 @@
 
 <meta name="description"
     content="worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:">
 <meta property="og:description"
     content="worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:">
 <meta name="twitter:description"
     content="worker check-secret worker check-secret fileA fileB
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add check if a file contains a CDS variable of type password or private key:
 #!/bin/bash set -ex # create a file cat &lt;&lt; EOF &gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/components/worker/check-secret/">
 <meta property="og:title" content="check-secret">
@@ -2465,7 +2465,7 @@ Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), 
 
 <h2 id="synopsis">Synopsis</h2>
 
-<p>Inside a step script (<a href="https://ovh.github.io/cds/docs/actions/script/">https://ovh.github.io/cds/docs/actions/script/</a>), you can add check if a file contains a CDS variable of type password or private key:</p>
+<p>Inside a step script (<a href="https://ovh.github.io/cds/docs/actions/builtin-script/">https://ovh.github.io/cds/docs/actions/builtin-script/</a>), you can add check if a file contains a CDS variable of type password or private key:</p>
 
 <pre><code class="language-bash">#!/bin/bash
 

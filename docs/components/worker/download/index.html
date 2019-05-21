@@ -19,21 +19,21 @@
 <meta name="description"
     content="worker download worker download [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]
 Synopsis Inside a job, there are two ways to download an artifact:
- with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.  Worker Command:
+ with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.  Worker Command:
 worker download --tag=&lt;tag&gt; &lt;path&gt;  Example:
 worker download --pattern=&quot;files.*.yml&quot;  Theses two commands have the same result:
 worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from.">
 <meta property="og:description"
     content="worker download worker download [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]
 Synopsis Inside a job, there are two ways to download an artifact:
- with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.  Worker Command:
+ with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.  Worker Command:
 worker download --tag=&lt;tag&gt; &lt;path&gt;  Example:
 worker download --pattern=&quot;files.*.yml&quot;  Theses two commands have the same result:
 worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from.">
 <meta name="twitter:description"
     content="worker download worker download [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]
 Synopsis Inside a job, there are two ways to download an artifact:
- with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.  Worker Command:
+ with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.  Worker Command:
 worker download --tag=&lt;tag&gt; &lt;path&gt;  Example:
 worker download --pattern=&quot;files.*.yml&quot;  Theses two commands have the same result:
 worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from.">
@@ -2478,7 +2478,7 @@ worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run
 
 <ul>
 <li>with a step using action Download Artifacts</li>
-<li>with a step script (<a href="https://ovh.github.io/cds/docs/actions/script/">https://ovh.github.io/cds/docs/actions/script/</a>), using the worker command.</li>
+<li>with a step script (<a href="https://ovh.github.io/cds/docs/actions/builtin-script/">https://ovh.github.io/cds/docs/actions/builtin-script/</a>), using the worker command.</li>
 </ul>
 
 <p>Worker Command:</p>

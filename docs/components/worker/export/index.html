@@ -18,19 +18,19 @@
 
 <meta name="description"
     content=" worker export worker export &lt;varname&gt; &lt;value&gt;
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can create a build variable with the worker command:
 worker export foo bar  then, you can use new build variable:
 echo &quot;{{.cds.build.foo}}&quot;  Scope You can use the build variable in :
  another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  ">
 <meta property="og:description"
     content=" worker export worker export &lt;varname&gt; &lt;value&gt;
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can create a build variable with the worker command:
 worker export foo bar  then, you can use new build variable:
 echo &quot;{{.cds.build.foo}}&quot;  Scope You can use the build variable in :
  another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  ">
 <meta name="twitter:description"
     content=" worker export worker export &lt;varname&gt; &lt;value&gt;
-Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:
+Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can create a build variable with the worker command:
 worker export foo bar  then, you can use new build variable:
 echo &quot;{{.cds.build.foo}}&quot;  Scope You can use the build variable in :
  another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  ">
@@ -2471,7 +2471,7 @@ echo &quot;{{.cds.build.foo}}&quot;  Scope You can use the build variable in :
 
 <h2 id="synopsis">Synopsis</h2>
 
-<p>Inside a step script (<a href="https://ovh.github.io/cds/docs/actions/script/">https://ovh.github.io/cds/docs/actions/script/</a>), you can create a build variable with the worker command:</p>
+<p>Inside a step script (<a href="https://ovh.github.io/cds/docs/actions/builtin-script/">https://ovh.github.io/cds/docs/actions/builtin-script/</a>), you can create a build variable with the worker command:</p>
 
 <pre><code>worker export foo bar
 </code></pre>
@@ -2489,7 +2489,7 @@ echo &quot;{{.cds.build.foo}}&quot;  Scope You can use the build variable in :
 <li>another step of the current job with <code>{{.cds.build.varname}}</code></li>
 <li>the next stages in same pipeline <code>{{.cds.build.varname}}</code></li>
 <li>the next pipelines <code>{{.workflow.pipelineName.build.varname}}</code> with <code>pipelineName</code> the name of the pipeline in your workflow
-<br />
+
 <br /></li>
 </ul>
 

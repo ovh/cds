@@ -1089,7 +1089,7 @@
 	"title": "check-secret",
 	"tags": [],
 	"description": "",
-	"content": " worker check-secret worker check-secret fileA fileB\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:\n#!/bin/bash set -ex # create a file cat \u0026lt;\u0026lt; EOF \u0026gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:\nvariable cds.app.password is used in file myFile  The command will exit 0 if no variable of type password or key is found.\nworker check-secret  SEE ALSO  worker - CDS Worker  "
+	"content": " worker check-secret worker check-secret fileA fileB\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add check if a file contains a CDS variable of type password or private key:\n#!/bin/bash set -ex # create a file cat \u0026lt;\u0026lt; EOF \u0026gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:\nvariable cds.app.password is used in file myFile  The command will exit 0 if no variable of type password or key is found.\nworker check-secret  SEE ALSO  worker - CDS Worker  "
 },
 {
 	"uri": "https://ovh.github.io/cds/development/rest/config/",
@@ -1439,7 +1439,7 @@
 	"title": "download",
 	"tags": [],
 	"description": "",
-	"content": " worker download worker download [--workflow=\u0026lt;workflow-name\u0026gt;] [--number=\u0026lt;run-number\u0026gt;] [--tag=\u0026lt;tag\u0026gt;] [--pattern=\u0026lt;pattern\u0026gt;]\nSynopsis Inside a job, there are two ways to download an artifact:\n with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.  Worker Command:\nworker download --tag=\u0026lt;tag\u0026gt; \u0026lt;path\u0026gt;  Example:\nworker download --pattern=\u0026quot;files.*.yml\u0026quot;  Theses two commands have the same result:\nworker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from. Optional, default: current workflow run --pattern string Pattern matching files to download. Optional, default: * --tag string Tag matching files to download. Optional --workflow string Workflow name to download from. Optional, default: current workflow  SEE ALSO  worker - CDS Worker  "
+	"content": " worker download worker download [--workflow=\u0026lt;workflow-name\u0026gt;] [--number=\u0026lt;run-number\u0026gt;] [--tag=\u0026lt;tag\u0026gt;] [--pattern=\u0026lt;pattern\u0026gt;]\nSynopsis Inside a job, there are two ways to download an artifact:\n with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.  Worker Command:\nworker download --tag=\u0026lt;tag\u0026gt; \u0026lt;path\u0026gt;  Example:\nworker download --pattern=\u0026quot;files.*.yml\u0026quot;  Theses two commands have the same result:\nworker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from. Optional, default: current workflow run --pattern string Pattern matching files to download. Optional, default: * --tag string Tag matching files to download. Optional --workflow string Workflow name to download from. Optional, default: current workflow  SEE ALSO  worker - CDS Worker  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/enable/",
@@ -1579,7 +1579,7 @@
 	"title": "export",
 	"tags": [],
 	"description": "",
-	"content": " worker export worker export \u0026lt;varname\u0026gt; \u0026lt;value\u0026gt;\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can create a build variable with the worker command:\nworker export foo bar  then, you can use new build variable:\necho \u0026quot;{{.cds.build.foo}}\u0026quot;  Scope You can use the build variable in :\n another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  "
+	"content": " worker export worker export \u0026lt;varname\u0026gt; \u0026lt;value\u0026gt;\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can create a build variable with the worker command:\nworker export foo bar  then, you can use new build variable:\necho \u0026quot;{{.cds.build.foo}}\u0026quot;  Scope You can use the build variable in :\n another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/project/favorite/",
@@ -2748,7 +2748,7 @@
 	"title": "tmpl",
 	"tags": [],
 	"description": "",
-	"content": " worker tmpl worker tmpl inputFile outputFile\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add a replace CDS variables with the real value into a file:\n# create a file cat \u0026lt;\u0026lt; EOF \u0026gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl \u0026lt;input file\u0026gt; \u0026lt;output file\u0026gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:\nthis a a line in the file, with a CDS variable 2  if it\u0026rsquo;s the RUN n°2 of the current workflow.\nworker tmpl  SEE ALSO  worker - CDS Worker  "
+	"content": " worker tmpl worker tmpl inputFile outputFile\nSynopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add a replace CDS variables with the real value into a file:\n# create a file cat \u0026lt;\u0026lt; EOF \u0026gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl \u0026lt;input file\u0026gt; \u0026lt;output file\u0026gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:\nthis a a line in the file, with a CDS variable 2  if it\u0026rsquo;s the RUN n°2 of the current workflow.\nworker tmpl  SEE ALSO  worker - CDS Worker  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/token/",
@@ -2832,7 +2832,7 @@
 	"title": "upload",
 	"tags": [],
 	"description": "",
-	"content": " worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload\nSynopsis Inside a job, there are two ways to upload an artifact:\n with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command: worker upload \u0026lt;path\u0026gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml\nYou can use you storage integration: worker upload \u0026ndash;destination=\u0026ldquo;yourStorageIntegrationName\u0026rdquo;\nworker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  "
+	"content": " worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload\nSynopsis Inside a job, there are two ways to upload an artifact:\n with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command: worker upload \u0026lt;path\u0026gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml\nYou can use you storage integration: worker upload \u0026ndash;destination=\u0026ldquo;yourStorageIntegrationName\u0026rdquo;\nworker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/engine/uptodate/",
