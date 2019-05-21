@@ -1,54 +1,59 @@
-import {
-    Component,
-    EventEmitter,
-    Input,
-    Output
-} from '@angular/core';
-import {PermissionValue} from 'app/model/permission.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import {
-    WNode,
-    Workflow,
-} from 'app/model/workflow.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {IPopup} from 'ng2-semantic-ui';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { IPopup } from 'ng2-semantic-ui';
+import { Subscription } from 'rxjs';
 
 @Component({
-
     selector: 'app-workflow-menu-wnode-edit',
     templateUrl: './menu.edit.node.html',
     styleUrls: ['./menu.edit.node.scss'],
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeMenuEditComponent {
+export class WorkflowWNodeMenuEditComponent implements OnInit {
 
     // Project that contains the workflow
     @Input() project: Project;
-    @Input() workflow: Workflow;
+
     @Input() node: WNode;
     _noderun: WorkflowNodeRun;
     @Input('noderun') set noderun(data: WorkflowNodeRun) {
         this._noderun = data;
         this.runnable = this.getCanBeRun();
     }
-    get noderun() {return this._noderun}
+    get noderun() { return this._noderun }
 
     _workflowrun: WorkflowRun;
     @Input('workflowrun') set workflowrun(data: WorkflowRun) {
         this._workflowrun = data;
         this.runnable = this.getCanBeRun();
     }
-    get workflowrun() { return this._workflowrun}
+    get workflowrun() { return this._workflowrun }
 
     @Input() popup: IPopup;
     @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
     permissionEnum = PermissionValue;
     runnable: boolean;
+    storeSubscription: Subscription;
+    workflow: Workflow;
 
-    constructor() {}
+    constructor(
+        private _store: Store
+    ) { }
+
+    ngOnInit(): void {
+        this.storeSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this.workflow = s.workflow;
+            this.runnable = this.getCanBeRun();
+        });
+    }
 
     sendEvent(e: string): void {
         this.popup.close();
