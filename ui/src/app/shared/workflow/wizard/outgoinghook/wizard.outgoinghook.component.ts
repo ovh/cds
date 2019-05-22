@@ -49,7 +49,6 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     availableWorkflows: Array<IdName>;
     loadingHooks: boolean;
     availableHooks: Array<WNodeHook>;
-    wSub: Subscription;
     invalidJSON = false;
     outgoing_default_payload: {};
     loading = false;
@@ -149,9 +148,6 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
                 });
         } else {
             this.availableHooks = null;
-            if (this.wSub) {
-                this.wSub.unsubscribe();
-            }
         }
     }
 

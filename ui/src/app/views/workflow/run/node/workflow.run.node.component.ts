@@ -88,7 +88,7 @@ export class WorkflowNodeRunComponent {
         this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
         let historyChecked = false;
         this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            if (this.workflowName !== s.workflow.name) {
+            if (!s.workflow || this.workflowName !== s.workflow.name) {
                 return;
             }
             this.workflowRun = s.workflowRun;

@@ -7,6 +7,7 @@ import { WorkflowHookModel } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
 import { HookService } from 'app/service/hook/hook.service';
 import { ThemeStore } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { cloneDeep } from 'lodash';
@@ -18,6 +19,7 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './hook.form.html',
     styleUrls: ['./hook.form.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowNodeHookFormComponent implements OnInit {
     @ViewChild('textareaCodeMirror') codemirror: any;
 
