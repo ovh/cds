@@ -40,10 +40,6 @@ func loadDefault(db gorp.SqlExecutor, as ...*sdk.Action) error {
 		return err
 	}
 
-	if err := loadAudits(db, as...); err != nil {
-		return err
-	}
-
 	return loadGroup(db, as...)
 }
 

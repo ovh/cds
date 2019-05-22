@@ -163,16 +163,21 @@ func (api *API) postActionHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		new, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishActionAdd(*new, getAPIConsumer(ctx))
+		event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
 
-		new.Editable = true
+		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
+			return err
+		}
 
-		return service.WriteJSON(w, new, http.StatusCreated)
+		// aggregate extra data for ui
+		newAction.Editable = true
+
+		return service.WriteJSON(w, newAction, http.StatusCreated)
 	}
 }
 
@@ -188,7 +193,10 @@ func (api *API) getActionHandler() service.Handler {
 			return err
 		}
 
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID,
+			action.LoadOptions.Default,
+			action.LoadOptions.WithAudits,
+		)
 		if err != nil {
 			return err
 		}
@@ -220,16 +228,12 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 		if old == nil {
 			return sdk.WithStack(sdk.ErrNoAction)
-		}
-
-		if err := action.LoadOptions.Default(api.mustDB(), old); err != nil {
-			return err
 		}
 
 		var data sdk.Action
@@ -283,16 +287,21 @@ func (api *API) putActionHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		new, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *new, getAPIConsumer(ctx))
+		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
 
-		new.Editable = true
+		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
+			return err
+		}
 
-		return service.WriteJSON(w, new, http.StatusOK)
+		// aggregate extra data for ui
+		newAction.Editable = true
+
+		return service.WriteJSON(w, newAction, http.StatusOK)
 	}
 }
 
@@ -431,9 +440,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, grp.ID,
-			action.LoadOptions.Default,
-		)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, grp.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -525,20 +532,21 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot update action")
 		}
 
-		new, err := action.LoadByID(tx, data.ID, action.LoadOptions.Default)
-		if err != nil {
-			return err
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishActionUpdate(*old, *new, getAPIConsumer(ctx))
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		if err != nil {
+			return err
+		}
 
-		new.Editable = true
+		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
 
-		return service.WriteJSON(w, new, http.StatusOK)
+		// aggregate extra data for ui
+		newAction.Editable = true
+
+		return service.WriteJSON(w, newAction, http.StatusOK)
 	}
 }
 
@@ -583,7 +591,7 @@ func (api *API) getActionExportHandler() service.Handler {
 			return err
 		}
 
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -598,10 +606,6 @@ func (api *API) getActionExportHandler() service.Handler {
 
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return err
-		}
-
-		if err := action.LoadOptions.Default(api.mustDB(), a); err != nil {
 			return err
 		}
 
@@ -687,9 +691,7 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		// check if action exists in database
-		old, err := action.LoadTypeDefaultByNameAndGroupID(tx, data.Name, grp.ID,
-			action.LoadOptions.Default,
-		)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(tx, data.Name, grp.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -719,28 +721,33 @@ func (api *API) importActionHandler() service.Handler {
 			}
 		}
 
-		new, err := action.LoadByID(tx, data.ID, action.LoadOptions.Default)
-		if err != nil {
-			return err
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
 
-		if exists {
-			event.PublishActionUpdate(*old, *new, getAPIConsumer(ctx))
-		} else {
-			event.PublishActionAdd(*new, getAPIConsumer(ctx))
+		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		if err != nil {
+			return err
 		}
 
-		new.Editable = true
+		if exists {
+			event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
+		} else {
+			event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
+		}
+
+		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
+			return err
+		}
+
+		// aggregate extra data for ui
+		newAction.Editable = true
 
 		code := http.StatusCreated
 		if exists {
 			code = http.StatusOK
 		}
-		return service.WriteJSON(w, new, code)
+		return service.WriteJSON(w, newAction, code)
 	}
 }
 

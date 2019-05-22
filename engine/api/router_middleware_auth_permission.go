@@ -21,6 +21,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permModelID":           api.checkWorkerModelPermissions,
 		"permActionName":        api.checkActionPermissions,
 		"permActionBuiltinName": api.checkActionBuiltinPermissions,
+		"permTemplateSlug":      api.checkTemplateSlugPermissions,
 	}
 }
 
@@ -81,4 +82,42 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID ..
 	}
 	grpPerm.Projects = projectPermissions
 	return grpPerm, nil
+}
+
+
+func (api *API) checkTemplateSlugPermissions(templateSlug string, perm int, routeVars map[string]string,  groupID ...int64) error {
+	// try to get template for given path that match user's groups with/without admin grants
+	groupName := routeVars["groupName"]
+
+	if groupName == "" || templateSlug == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group or workflow template slug")
+	}
+
+	u := deprecatedGetUser(ctx)
+
+	// check that group exists
+	g, err := group.LoadGroup(api.mustDB(), groupName)
+	if err != nil {
+		return err
+	}
+
+	if permissionValue > permission.PermissionRead {
+		if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
+			return err
+		}
+	} else {
+		if err := group.CheckUserIsGroupMember(g, u); err != nil {
+			return err
+		}
+	}
+
+	wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+	if err != nil {
+		return err
+	}
+	if wt == nil {
+		return sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	return nil
 }

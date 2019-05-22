@@ -23,17 +23,6 @@ func (c *client) TemplateGet(groupName, templateSlug string) (*sdk.WorkflowTempl
 	return &wt, nil
 }
 
-func (c *client) TemplateGetByID(id int64) (*sdk.WorkflowTemplate, error) {
-	url := fmt.Sprintf("/template/%d", id)
-
-	var wt sdk.WorkflowTemplate
-	if _, err := c.GetJSON(context.Background(), url, &wt); err != nil {
-		return nil, err
-	}
-
-	return &wt, nil
-}
-
 func (c *client) TemplateGetAll() ([]sdk.WorkflowTemplate, error) {
 	url := "/template"
 

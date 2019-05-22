@@ -26,77 +26,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/slug"
 )
-
-func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-		// try to get template for given id or path that match user's groups with/without admin grants
-		vars := mux.Vars(r)
-
-		id, _ := requestVarInt(r, "id") // ignore error, will check if not 0
-		groupName := vars["groupName"]
-		templateSlug := vars["templateSlug"]
-
-		if id == 0 && (groupName == "" || templateSlug == "" || !slug.Valid(templateSlug)) {
-			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid given id or group and template slug")
-		}
-
-		u := getAPIConsumer(ctx)
-
-		var g *sdk.Group
-		var err error
-		if groupName != "" {
-			// check that group exists
-			g, err = group.LoadGroup(api.mustDB(), groupName)
-			if err != nil {
-				return nil, err
-			}
-
-			if needAdmin {
-				if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
-					return nil, err
-				}
-			} else {
-				if err := group.CheckUserIsGroupMember(g, u); err != nil {
-					return nil, err
-				}
-			}
-		}
-		gs := append(u.OldUserStruct.Groups, *group.SharedInfraGroup)
-
-		var wt *sdk.WorkflowTemplate
-		if id != 0 {
-			if u.Admin() {
-				wt, err = workflowtemplate.GetByID(api.mustDB(), id)
-			} else {
-				wt, err = workflowtemplate.GetByIDAndGroupIDs(api.mustDB(), id, sdk.GroupsToIDs(gs))
-			}
-		} else {
-			wt, err = workflowtemplate.GetBySlugAndGroupIDs(api.mustDB(), templateSlug, []int64{g.ID})
-		}
-		if err != nil {
-			return nil, err
-		}
-		if wt == nil {
-			return nil, sdk.WithStack(sdk.ErrNotFound)
-		}
-
-		return context.WithValue(ctx, contextWorkflowTemplate, wt), nil
-	}
-}
-
-func getWorkflowTemplate(c context.Context) *sdk.WorkflowTemplate {
-	i := c.Value(contextWorkflowTemplate)
-	if i == nil {
-		return nil
-	}
-	wt, ok := i.(*sdk.WorkflowTemplate)
-	if !ok {
-		return nil
-	}
-	return wt
-}
 
 func (api *API) getTemplatesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -105,23 +35,18 @@ func (api *API) getTemplatesHandler() service.Handler {
 		var ts []sdk.WorkflowTemplate
 		var err error
 		if u.Admin {
-			ts, err = workflowtemplate.GetAll(api.mustDB())
+			ts, err = workflowtemplate.LoadAll(api.mustDB(),
+				workflowtemplate.LoadOptions.Default,
+				workflowtemplate.LoadOptions.WithAudits,
+			)
 		} else {
-			ts, err = workflowtemplate.GetAllByGroupIDs(api.mustDB(), append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID))
+			ts, err = workflowtemplate.LoadAllByGroupIDs(api.mustDB(),
+				append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID),
+				workflowtemplate.LoadOptions.Default,
+				workflowtemplate.LoadOptions.WithAudits,
+			)
 		}
 		if err != nil {
-			return err
-		}
-
-		tsPointers := make([]*sdk.WorkflowTemplate, len(ts))
-		for i := range ts {
-			tsPointers[i] = &ts[i]
-		}
-
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
-			return err
-		}
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
 			return err
 		}
 
@@ -196,45 +121,74 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		event.PublishWorkflowTemplateAdd(data, u)
-
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), &data); err != nil {
+		newTemplate, err := workflowtemplate.LoadByID(api.mustDB(), data.ID, workflowtemplate.LoadOptions.Default)
+		if err != nil {
 			return err
 		}
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &data); err != nil {
+
+		event.PublishWorkflowTemplateAdd(*newTemplate, u)
+
+		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), newTemplate); err != nil {
 			return err
 		}
-		data.Editable = true
 
-		return service.WriteJSON(w, data, http.StatusOK)
+		// aggregate extra data for ui
+		newTemplate.Editable = true
+
+		return service.WriteJSON(w, newTemplate, http.StatusOK)
 	}
 }
 
 func (api *API) getTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		t := getWorkflowTemplate(ctx)
-
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), t); err != nil {
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID,
+			workflowtemplate.LoadOptions.Default,
+			workflowtemplate.LoadOptions.WithAudits,
+		)
+		if err != nil {
 			return err
 		}
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), t); err != nil {
-			return err
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		if err := group.CheckUserIsGroupAdmin(t.Group, getAPIConsumer(ctx)); err == nil {
 			t.Editable = true
 		}
 
-		return service.WriteJSON(w, t, http.StatusOK)
+		return service.WriteJSON(w, wt, http.StatusOK)
 	}
 }
 
 func (api *API) putTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
+		if err != nil {
+			return err
+		}
+
+		old, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		if err != nil {
+			return err
+		}
+		if old == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+
 		data := sdk.WorkflowTemplate{}
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
@@ -244,7 +198,6 @@ func (api *API) putTemplateHandler() service.Handler {
 		}
 
 		var grp *sdk.Group
-		var err error
 		// if imported from url try to download files then overrides request
 		if data.ImportURL != "" {
 			t := new(bytes.Buffer)
@@ -282,52 +235,56 @@ func (api *API) putTemplateHandler() service.Handler {
 			}
 		}
 
-		ctx, err = api.middlewareTemplate(true)(ctx, w, r)
+		// update fields from request data
+		clone := sdk.WorkflowTemplate(*old)
+		clone.Update(data)
+
+		// execute template with no instance only to check if parsing is ok
+		if _, err := workflowtemplate.Execute(&clone, nil); err != nil {
+			return err
+		}
+
+		if err := workflowtemplate.Update(api.mustDB(), &clone); err != nil {
+			return err
+		}
+
+		newTemplate, err := workflowtemplate.LoadByID(api.mustDB(), clone.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
-		old := getWorkflowTemplate(ctx)
-		u := getAPIConsumer(ctx)
 
-		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
+		event.PublishWorkflowTemplateUpdate(*old, *newTemplate, data.ChangeMessage, deprecatedGetUser(ctx))
+
+		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), newTemplate); err != nil {
 			return err
 		}
 
-		// update fields from request data
-		new := sdk.WorkflowTemplate(*old)
-		new.Update(data)
+		// aggregate extra data for ui
+		newTemplate.Editable = true
 
-		// execute template with no instance only to check if parsing is ok
-		if _, err := workflowtemplate.Execute(&new, nil); err != nil {
-			return err
-		}
-
-		if err := workflowtemplate.Update(api.mustDB(), &new); err != nil {
-			return err
-		}
-
-		event.PublishWorkflowTemplateUpdate(*old, new, data.ChangeMessage, u)
-
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
-			return err
-		}
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &new); err != nil {
-			return err
-		}
-		new.Editable = true
-
-		return service.WriteJSON(w, new, http.StatusOK)
+		return service.WriteJSON(w, newTemplate, http.StatusOK)
 	}
 }
 
 func (api *API) deleteTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(true)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		wt := getWorkflowTemplate(ctx)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		if err != nil {
+			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
 		if err := workflowtemplate.Delete(api.mustDB(), wt); err != nil {
 			return err
@@ -342,7 +299,7 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.AuthentifiedUser, p *s
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return result, sdk.WrapError(err, "Cannot start transaction")
+		return result, sdk.WrapError(err, "cannot start transaction")
 	}
 	defer func() { _ = tx.Rollback() }()
 
@@ -436,7 +393,7 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.AuthentifiedUser, p *s
 	}
 
 	if err := tx.Commit(); err != nil {
-		return result, sdk.WrapError(err, "Cannot commit transaction")
+		return result, sdk.WrapError(err, "cannot commit transaction")
 	}
 
 	if old != nil {
@@ -450,19 +407,25 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.AuthentifiedUser, p *s
 
 func (api *API) postTemplateApplyHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		withImport := FormBool(r, "import")
+		vars := mux.Vars(r)
 
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		u := getAPIConsumer(ctx)
-
-		wt := getWorkflowTemplate(ctx)
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		if err != nil {
 			return err
 		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+
+		withImport := FormBool(r, "import")
 
 		// parse and check request
 		var req sdk.WorkflowTemplateRequest
@@ -530,13 +493,22 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 
 func (api *API) postTemplateBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
-		wt := getWorkflowTemplate(ctx)
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		if err != nil {
 			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		// check all requests
@@ -645,7 +617,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					_, _, err = workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, u, project.DecryptWithBuiltinKey)
 					if err != nil {
-						if errD := errorDefer(sdk.WrapError(err, "Cannot push generated workflow")); errD != nil {
+						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
 							log.Error("%v", errD)
 							return
 						}
@@ -670,14 +642,26 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, _ := requestVarInt(r, "bulkID") // ignore error, will check if not 0
 		if id == 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Invalid given id")
+			return sdk.WrapError(sdk.ErrWrongRequest, "invalid given id")
 		}
 
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
-		wt := getWorkflowTemplate(ctx)
+
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		if err != nil {
+			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
 		u := deprecatedGetUser(ctx)
 
@@ -686,7 +670,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 			return err
 		}
 		if b == nil || (!u.Admin && u.ID != b.UserID) {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template bulk found for id %d", id)
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template bulk found for id %d", id)
 		}
 		sort.Slice(b.Operations, func(i, j int) bool {
 			return b.Operations[i].Request.WorkflowName < b.Operations[j].Request.WorkflowName
@@ -698,11 +682,23 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 
 func (api *API) getTemplateInstancesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
-		t := getWorkflowTemplate(ctx)
+
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		if err != nil {
+			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
 		u := getAPIConsumer(ctx)
 
@@ -711,7 +707,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 			return err
 		}
 
-		is, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDs(api.mustDB(), t.ID, sdk.ProjectsToIDs(ps))
+		is, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDs(api.mustDB(), wt.ID, sdk.ProjectsToIDs(ps))
 		if err != nil {
 			return err
 		}
@@ -748,23 +744,23 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		workflowName := vars["permWorkflowName"]
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
-				return sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot load workflow %s", workflowName)
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot load workflow %s", workflowName)
 			}
 			return sdk.WithStack(err)
 		}
 
 		// return the template instance if workflow is a generated one
-		wti, err := workflowtemplate.GetInstanceByWorkflowID(api.mustDB(), wf.ID)
+		wti, err := workflowtemplate.LoadInstanceByWorkflowID(api.mustDB(), wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
 		if err != nil {
 			return err
 		}
 		if wti == nil {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template instance found")
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template instance found")
 		}
 
 		wti.Project = proj
@@ -775,11 +771,23 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 
 func (api *API) deleteTemplateInstanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
-		t := getWorkflowTemplate(ctx)
+
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		if err != nil {
+			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
 		u := getAPIConsumer(ctx)
 
@@ -793,12 +801,12 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 			return err
 		}
 
-		wti, err := workflowtemplate.GetInstanceByIDForTemplateIDAndProjectIDs(api.mustDB(), instanceID, t.ID, sdk.ProjectsToIDs(ps))
+		wti, err := workflowtemplate.GetInstanceByIDForTemplateIDAndProjectIDs(api.mustDB(), instanceID, wt.ID, sdk.ProjectsToIDs(ps))
 		if err != nil {
 			return err
 		}
 		if wti == nil {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template instance found")
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template instance found")
 		}
 
 		if err := workflowtemplate.DeleteInstance(api.mustDB(), wti); err != nil {
@@ -811,15 +819,22 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 
 func (api *API) postTemplatePullHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		wt := getWorkflowTemplate(ctx)
-
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		if err != nil {
 			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		buf := new(bytes.Buffer)
@@ -830,7 +845,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 		w.Header().Add("Content-Type", "application/tar")
 		w.WriteHeader(http.StatusOK)
 		_, err = io.Copy(w, buf)
-		return sdk.WrapError(err, "Unable to copy content buffer in the response writer")
+		return sdk.WrapError(err, "unable to copy content buffer in the response writer")
 	}
 }
 
@@ -838,7 +853,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Error("%v", sdk.WrapError(err, "Unable to read body"))
+			log.Error("%v", sdk.WrapError(err, "unable to read body"))
 			return sdk.ErrWrongRequest
 		}
 		defer r.Body.Close()
@@ -872,16 +887,11 @@ func (api *API) postTemplatePushHandler() service.Handler {
 
 		msgs, wt, err := workflowtemplate.Push(api.mustDB(), getAPIConsumer(ctx), tr)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot push template")
+			return sdk.WrapError(err, "cannot push template")
 		}
 
-		if wt != nil {
-			if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
-				return err
-			}
-			w.Header().Add(sdk.ResponseTemplateGroupNameHeader, wt.Group.Name)
-			w.Header().Add(sdk.ResponseTemplateSlugHeader, wt.Slug)
-		}
+		w.Header().Add(sdk.ResponseTemplateGroupNameHeader, wt.Group.Name)
+		w.Header().Add(sdk.ResponseTemplateSlugHeader, wt.Slug)
 
 		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
 	}
@@ -889,11 +899,23 @@ func (api *API) postTemplatePushHandler() service.Handler {
 
 func (api *API) getTemplateAuditsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
-		t := getWorkflowTemplate(ctx)
+
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		if err != nil {
+			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
 		since := r.FormValue("sinceVersion")
 		var version int64
@@ -904,8 +926,7 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 			}
 		}
 
-		as, err := workflowtemplate.GetAuditsByTemplateIDsAndEventTypesAndVersionGTE(api.mustDB(),
-			[]int64{t.ID}, []string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"}, version)
+		as, err := workflowtemplate.GetAuditsByTemplateIDAndVersionGTE(api.mustDB(), wt.ID, version)
 		if err != nil {
 			return err
 		}
@@ -916,15 +937,27 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 
 func (api *API) getTemplateUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["permTemplateSlug"]
+
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
-		wfTmpl := getWorkflowTemplate(ctx)
+
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		if err != nil {
+			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
 		wfs, err := workflow.LoadByWorkflowTemplateID(ctx, api.mustDB(), wfTmpl.ID, getAPIConsumer(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load templates")
+			return sdk.WrapError(err, "cannot load templates")
 		}
 
 		return service.WriteJSON(w, wfs, http.StatusOK)

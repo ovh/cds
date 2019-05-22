@@ -10,7 +10,7 @@ import (
 // Push creates or updates a workflow template from a tar.
 func Push(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u sdk.Identifiable) ([]sdk.Message, error) {
 	// check if a template already exists for group with same slug
-	old, err := GetBySlugAndGroupIDs(db, wt.Slug, []int64{wt.Group.ID})
+	old, err := LoadBySlugAndGroupID(db, wt.Slug, wt.GroupID, LoadOptions.Default)
 	if err != nil {
 		return nil, err
 	}
@@ -18,24 +18,35 @@ func Push(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u sdk.Identifiable) ([]
 		if err := Insert(db, wt); err != nil {
 			return nil, err
 		}
-		event.PublishWorkflowTemplateAdd(*wt, u)
 
-		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, wt.Group.Name, wt.Slug)}, nil
+		newTemplate, err := LoadByID(db, wt.ID, LoadOptions.Default)
+		if err != nil {
+			return nil, err
+		}
+
+		event.PublishWorkflowTemplateAdd(*newTemplate, u)
+
+		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, newTemplate.Group.Name, newTemplate.Slug)}, nil
 	}
 
-	new := sdk.WorkflowTemplate(*old)
-	new.Update(*wt)
+	clone := sdk.WorkflowTemplate(*old)
+	clone.Update(*wt)
 
 	// execute template with no instance only to check if parsing is ok
-	if _, err := Execute(&new, nil); err != nil {
+	if _, err := Execute(&clone, nil); err != nil {
 		return nil, err
 	}
 
-	if err := Update(db, &new); err != nil {
+	if err := Update(db, &clone); err != nil {
 		return nil, err
 	}
 
-	event.PublishWorkflowTemplateUpdate(*old, new, "", u)
+	newTemplate, err := LoadByID(db, clone.ID, LoadOptions.Default)
+	if err != nil {
+		return nil, err
+	}
 
-	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, wt.Group.Name, new.Slug)}, nil
+	event.PublishWorkflowTemplateUpdate(*old, *newTemplate, "", u)
+
+	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, newTemplate.Group.Name, newTemplate.Slug)}, nil
 }

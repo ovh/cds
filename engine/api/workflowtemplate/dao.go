@@ -10,151 +10,189 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// GetAll returns all workflow templates.
-func GetAll(db gorp.SqlExecutor) ([]sdk.WorkflowTemplate, error) {
-	wts := []sdk.WorkflowTemplate{}
+func getAll(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.WorkflowTemplate, error) {
+	pwts := []*sdk.WorkflowTemplate{}
 
-	if _, err := db.Select(&wts, "SELECT * FROM workflow_template"); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow templates")
+	if err := gorpmapping.GetAll(db, q, &pwts); err != nil {
+		return nil, sdk.WrapError(err, "cannot get workflow templates")
 	}
-
-	return wts, nil
-}
-
-// GetAllByGroupIDs returns all workflow templates by group ids.
-func GetAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.WorkflowTemplate, error) {
-	wts := []sdk.WorkflowTemplate{}
-
-	if _, err := db.Select(&wts,
-		"SELECT * FROM workflow_template WHERE group_id = ANY(string_to_array($1, ',')::int[])",
-		gorpmapping.IDsToQueryString(groupIDs),
-	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow templates")
-	}
-
-	return wts, nil
-}
-
-// GetAllByIDs returns all workflow templates by ids.
-func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.WorkflowTemplate, error) {
-	wts := []sdk.WorkflowTemplate{}
-
-	if _, err := db.Select(&wts,
-		"SELECT * FROM workflow_template WHERE id = ANY(string_to_array($1, ',')::int[])",
-		gorpmapping.IDsToQueryString(ids),
-	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow templates")
-	}
-
-	return wts, nil
-}
-
-// GetByID returns the workflow template for given id.
-func GetByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowTemplate, error) {
-	w := sdk.WorkflowTemplate{}
-
-	if err := db.SelectOne(&w, "SELECT * FROM workflow_template WHERE id = $1", id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+	if len(pwts) > 0 {
+		for i := range opts {
+			if err := opts[i](db, pwts...); err != nil {
+				return nil, err
+			}
 		}
+	}
+
+	wts := make([]sdk.WorkflowTemplate, len(pwts))
+	for i := range wts {
+		wts[i] = *pwts[i]
+	}
+
+	return wts, nil
+}
+
+func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.WorkflowTemplate, error) {
+	var wt sdk.WorkflowTemplate
+
+	found, err := gorpmapping.Get(db, q, &wt)
+	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get workflow template")
 	}
-
-	return &w, nil
-}
-
-// GetByIDAndGroupIDs returns the workflow template for given id and group ids.
-func GetByIDAndGroupIDs(db gorp.SqlExecutor, id int64, groupIDs []int64) (*sdk.WorkflowTemplate, error) {
-	w := sdk.WorkflowTemplate{}
-
-	if err := db.SelectOne(&w,
-		"SELECT * FROM workflow_template WHERE id = $1 AND group_id = ANY(string_to_array($2, ',')::int[])",
-		id, gorpmapping.IDsToQueryString(groupIDs),
-	); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "Cannot get workflow template")
+	if !found {
+		return nil, nil
 	}
 
-	return &w, nil
-}
-
-// GetBySlugAndGroupIDs returns the workflow template for given slug and group ids.
-func GetBySlugAndGroupIDs(db gorp.SqlExecutor, slug string, groupIDs []int64) (*sdk.WorkflowTemplate, error) {
-	w := sdk.WorkflowTemplate{}
-
-	if err := db.SelectOne(&w,
-		"SELECT * FROM workflow_template WHERE slug = $1 AND group_id = ANY(string_to_array($2, ',')::int[])",
-		slug, gorpmapping.IDsToQueryString(groupIDs),
-	); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+	for i := range opts {
+		if err := opts[i](db, &wt); err != nil {
+			return nil, err
 		}
-		return nil, sdk.WrapError(err, "Cannot get workflow template")
 	}
 
-	return &w, nil
+	return &wt, nil
+}
+
+// LoadAll workflow templates from database.
+func LoadAll(db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.WorkflowTemplate, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_template")
+	return getAll(db, query, opts...)
+}
+
+// LoadAllByGroupIDs returns all workflow templates by group ids.
+func LoadAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.WorkflowTemplate, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_template WHERE group_id = ANY(string_to_array($1, ',')::int[])").
+		Args(gorpmapping.IDsToQueryString(groupIDs))
+	return getAll(db, query, opts...)
+}
+
+// LoadAllByIDs returns all workflow templates by ids.
+func LoadAllByIDs(db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]sdk.WorkflowTemplate, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_template WHERE id = ANY(string_to_array($1, ',')::int[])").
+		Args(gorpmapping.IDsToQueryString(ids))
+	return getAll(db, query, opts...)
+}
+
+// LoadByID retrieves in database the workflow template with given id.
+func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.WorkflowTemplate, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_template WHERE id = $1").Args(id)
+	return get(db, query, opts...)
+}
+
+// LoadBySlugAndGroupID returns the workflow template for given slug and group id.
+func LoadBySlugAndGroupID(db gorp.SqlExecutor, slug string, groupID int64, opts ...LoadOptionFunc) (*sdk.WorkflowTemplate, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_template WHERE slug = $1 AND group_id = $2").Args(slug, groupID)
+	return get(db, query, opts...)
 }
 
 // Insert template in database.
 func Insert(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
-	return sdk.WrapError(gorpmapping.Insert(db, wt), "Unable to insert workflow template %s", wt.Name)
+	return sdk.WrapError(gorpmapping.Insert(db, wt), "unable to insert workflow template %s", wt.Name)
 }
 
 // Update template in database.
 func Update(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
-	return sdk.WrapError(gorpmapping.Update(db, wt), "Unable to update workflow template %s", wt.Name)
+	return sdk.WrapError(gorpmapping.Update(db, wt), "unable to update workflow template %s", wt.Name)
 }
 
 // Delete template in database.
 func Delete(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
-	return sdk.WrapError(gorpmapping.Delete(db, wt), "Unable to delete workflow template %s", wt.Name)
+	return sdk.WrapError(gorpmapping.Delete(db, wt), "unable to delete workflow template %s", wt.Name)
 }
 
 // InsertAudit for workflow template in database.
 func InsertAudit(db gorp.SqlExecutor, awt *sdk.AuditWorkflowTemplate) error {
-	return sdk.WrapError(gorpmapping.Insert(db, awt), "Unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
+	return sdk.WrapError(gorpmapping.Insert(db, awt), "unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
 }
 
-// GetAuditsByTemplateIDsAndEventTypesAndVersionGTE returns all workflow template audits by template ids, event types and version greater or equal.
-func GetAuditsByTemplateIDsAndEventTypesAndVersionGTE(db gorp.SqlExecutor, templateIDs []int64, eventTypes []string, version int64) ([]sdk.AuditWorkflowTemplate, error) {
+// GetAuditsByTemplateIDAndVersionGTE returns all workflow template audits by template id and version greater or equal.
+func GetAuditsByTemplateIDAndVersionGTE(db gorp.SqlExecutor, templateID, version int64) ([]sdk.AuditWorkflowTemplate, error) {
 	awts := []sdk.AuditWorkflowTemplate{}
 
 	if _, err := db.Select(&awts,
 		`SELECT * FROM workflow_template_audit
-     WHERE workflow_template_id = ANY(string_to_array($1, ',')::int[])
-     AND event_type = ANY(string_to_array($2, ',')::text[])
-     AND (data_after->>'version')::int >= $3
+     WHERE workflow_template_id = $1
+     AND (data_after->>'version')::int >= $2
      ORDER BY created DESC`,
-		gorpmapping.IDsToQueryString(templateIDs), strings.Join(eventTypes, ","), version,
+		templateID, version,
 	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow template audits")
+		return nil, sdk.WrapError(err, "cannot get workflow template audits")
 	}
 
 	return awts, nil
 }
 
+// GetAuditLatestByTemplateID returns workflow template latest audit by template id.
+func GetAuditLatestByTemplateID(db gorp.SqlExecutor, templateID int64) (*sdk.AuditWorkflowTemplate, error) {
+	var awt sdk.AuditWorkflowTemplate
+
+	query := gorpmapping.NewQuery(`SELECT * FROM workflow_template_audit WHERE workflow_template_id = $1 ORDER BY created DESC LIMIT 1`).Args(templateID)
+	found, err := gorpmapping.Get(db, query, &awt)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get latest audit for template %d", templateID)
+	}
+	if !found {
+		return nil, nil
+	}
+
+	return &awt, nil
+}
+
+// GetAuditOldestByTemplateID returns workflow template oldtest audit by template id.
+func GetAuditOldestByTemplateID(db gorp.SqlExecutor, templateID int64) (*sdk.AuditWorkflowTemplate, error) {
+	var awt sdk.AuditWorkflowTemplate
+
+	query := gorpmapping.NewQuery(`SELECT * FROM workflow_template_audit WHERE workflow_template_id = $1 ORDER BY created ASC LIMIT 1`).Args(templateID)
+	found, err := gorpmapping.Get(db, query, &awt)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get oldtest audit for template %d", templateID)
+	}
+	if !found {
+		return nil, nil
+	}
+
+	return &awt, nil
+}
+
+func getInstance(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadInstanceOptionFunc) (*sdk.WorkflowTemplateInstance, error) {
+	var wti sdk.WorkflowTemplateInstance
+
+	found, err := gorpmapping.Get(db, q, &wti)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get workflow template instance")
+	}
+	if !found {
+		return nil, nil
+	}
+
+	for i := range opts {
+		if err := opts[i](db, &wti); err != nil {
+			return nil, err
+		}
+	}
+
+	return &wti, nil
+}
+
 // InsertInstance for workflow template in database.
 func InsertInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
-	return sdk.WrapError(gorpmapping.Insert(db, wti), "Unable to insert workflow template relation %d with workflow %d",
+	return sdk.WrapError(gorpmapping.Insert(db, wti), "unable to insert workflow template relation %d with workflow %d",
 		wti.WorkflowTemplateID, wti.WorkflowID)
 }
 
 // UpdateInstance for workflow template in database.
 func UpdateInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
-	return sdk.WrapError(gorpmapping.Update(db, wti), "Unable to update workflow template instance %d", wti.ID)
+	return sdk.WrapError(gorpmapping.Update(db, wti), "unable to update workflow template instance %d", wti.ID)
 }
 
 // DeleteInstance for workflow template in database.
 func DeleteInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
-	return sdk.WrapError(gorpmapping.Delete(db, wti), "Unable to delete workflow template instance %d", wti.ID)
+	return sdk.WrapError(gorpmapping.Delete(db, wti), "unable to delete workflow template instance %d", wti.ID)
 }
 
 // DeleteInstanceNotIDAndWorkflowID removes all instances of a template where not id and workflow id equal in database.
 func DeleteInstanceNotIDAndWorkflowID(db gorp.SqlExecutor, id, workflowID int64) error {
 	_, err := db.Exec("DELETE FROM workflow_template_instance WHERE id != $1 AND workflow_id = $2", id, workflowID)
-	return sdk.WrapError(err, "Unable to remove all instances for workflow %d", workflowID)
+	return sdk.WrapError(err, "unable to remove all instances for workflow %d", workflowID)
 }
 
 // GetInstancesByTemplateIDAndProjectIDs returns all workflow template instances by template id and project ids.
@@ -165,7 +203,7 @@ func GetInstancesByTemplateIDAndProjectIDs(db gorp.SqlExecutor, templateID int64
 		"SELECT * FROM workflow_template_instance WHERE workflow_template_id = $1 AND project_id = ANY(string_to_array($2, ',')::int[])",
 		templateID, gorpmapping.IDsToQueryString(projectIDs),
 	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
+		return nil, sdk.WrapError(err, "cannot get workflow template instances")
 	}
 
 	return wtis, nil
@@ -179,7 +217,7 @@ func GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(db gorp.SqlExecu
 		"SELECT * FROM workflow_template_instance WHERE workflow_template_id = $1 AND project_id = $2 AND (request->>'workflow_name')::text = $3",
 		templateID, projectID, workflowName,
 	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
+		return nil, sdk.WrapError(err, "cannot get workflow template instances")
 	}
 
 	return wtis, nil
@@ -193,24 +231,16 @@ func GetInstancesByWorkflowIDs(db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.
 		"SELECT * FROM workflow_template_instance WHERE workflow_id = ANY(string_to_array($1, ',')::int[])",
 		gorpmapping.IDsToQueryString(workflowIDs),
 	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
+		return nil, sdk.WrapError(err, "cannot get workflow template instances")
 	}
 
 	return wtis, nil
 }
 
-// GetInstanceByWorkflowID returns a workflow template instance by workflow id.
-func GetInstanceByWorkflowID(db gorp.SqlExecutor, workflowID int64) (*sdk.WorkflowTemplateInstance, error) {
-	wti := sdk.WorkflowTemplateInstance{}
-
-	if err := db.SelectOne(&wti, "SELECT * FROM workflow_template_instance WHERE workflow_id = $1", workflowID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "cannot get workflow template instance")
-	}
-
-	return &wti, nil
+// LoadInstanceByWorkflowID returns a workflow template instance by workflow id.
+func LoadInstanceByWorkflowID(db gorp.SqlExecutor, workflowID int64, opts ...LoadInstanceOptionFunc) (*sdk.WorkflowTemplateInstance, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_template_instance WHERE workflow_id = $1").Args(workflowID)
+	return getInstance(db, query, opts...)
 }
 
 // GetInstanceByWorkflowNameAndTemplateIDAndProjectID returns a workflow template instance by workflow name, template id and project id.
@@ -224,7 +254,7 @@ func GetInstanceByWorkflowNameAndTemplateIDAndProjectID(db gorp.SqlExecutor, wor
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "Cannot get workflow template instance")
+		return nil, sdk.WrapError(err, "cannot get workflow template instance")
 	}
 
 	return &wti, nil
@@ -241,7 +271,7 @@ func GetInstanceByIDForTemplateIDAndProjectIDs(db gorp.SqlExecutor, id, template
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "Cannot get workflow template instance")
+		return nil, sdk.WrapError(err, "cannot get workflow template instance")
 	}
 
 	return &wti, nil
@@ -249,7 +279,7 @@ func GetInstanceByIDForTemplateIDAndProjectIDs(db gorp.SqlExecutor, id, template
 
 // InsertInstanceAudit for workflow template instance in database.
 func InsertInstanceAudit(db gorp.SqlExecutor, awti *sdk.AuditWorkflowTemplateInstance) error {
-	return sdk.WrapError(gorpmapping.Insert(db, awti), "Unable to insert audit for workflow template instance %d", awti.WorkflowTemplateInstanceID)
+	return sdk.WrapError(gorpmapping.Insert(db, awti), "unable to insert audit for workflow template instance %d", awti.WorkflowTemplateInstanceID)
 }
 
 // GetInstanceAuditsByInstanceIDsAndEventTypes returns all workflow template instance audits by instance ids and event types.
@@ -263,7 +293,7 @@ func GetInstanceAuditsByInstanceIDsAndEventTypes(db gorp.SqlExecutor, instanceID
      ORDER BY created ASC`,
 		gorpmapping.IDsToQueryString(instanceIDs), strings.Join(eventTypes, ","),
 	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow template instance audits")
+		return nil, sdk.WrapError(err, "cannot get workflow template instance audits")
 	}
 
 	return awtis, nil
@@ -271,13 +301,13 @@ func GetInstanceAuditsByInstanceIDsAndEventTypes(db gorp.SqlExecutor, instanceID
 
 // InsertBulk task for workflow template in database.
 func InsertBulk(db gorp.SqlExecutor, wtb *sdk.WorkflowTemplateBulk) error {
-	return sdk.WrapError(gorpmapping.Insert(db, wtb), "Unable to insert workflow template bulk task for template %d",
+	return sdk.WrapError(gorpmapping.Insert(db, wtb), "unable to insert workflow template bulk task for template %d",
 		wtb.WorkflowTemplateID)
 }
 
 // UpdateBulk task for workflow template in database.
 func UpdateBulk(db gorp.SqlExecutor, wtb *sdk.WorkflowTemplateBulk) error {
-	return sdk.WrapError(gorpmapping.Update(db, wtb), "Unable to update workflow template bulk task %d", wtb.ID)
+	return sdk.WrapError(gorpmapping.Update(db, wtb), "unable to update workflow template bulk task %d", wtb.ID)
 }
 
 // GetBulkByIDAndTemplateID returns the workflow template bulk for given id and template id.
@@ -292,7 +322,7 @@ func GetBulkByIDAndTemplateID(db gorp.SqlExecutor, id, templateID int64) (*sdk.W
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "Cannot get workflow template")
+		return nil, sdk.WrapError(err, "cannot get workflow template")
 	}
 
 	return &b, nil

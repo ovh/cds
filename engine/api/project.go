@@ -431,7 +431,7 @@ func (api *API) addProjectHandler() service.Handler {
 			groupPermission := &p.ProjectGroups[i]
 
 			// Insert group
-			groupID, new, errGroup := group.AddGroup(tx, &groupPermission.Group)
+			groupID, newGroup, errGroup := group.AddGroup(tx, &groupPermission.Group)
 			if groupID == 0 {
 				return errGroup
 			}
@@ -447,7 +447,7 @@ func (api *API) addProjectHandler() service.Handler {
 			}
 
 			// Add user in group
-			if new {
+			if newGroup {
 				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID, true); err != nil {
 					return sdk.WrapError(err, "Cannot add user %s in group %s", JWT(ctx).AuthentifiedUser.Username, groupPermission.Group.Name)
 				}
