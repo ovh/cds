@@ -29,12 +29,6 @@ import (
 	"github.com/ovh/cds/sdk/slug"
 )
 
-type contextKey int
-
-const (
-	contextWorkflowTemplate contextKey = iota
-)
-
 func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
 		// try to get template for given id or path that match user's groups with/without admin grants
@@ -48,7 +42,7 @@ func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w h
 			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid given id or group and template slug")
 		}
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		var g *sdk.Group
 		var err error
@@ -186,7 +180,7 @@ func (api *API) postTemplateHandler() service.Handler {
 
 		data.Version = 0
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
@@ -231,7 +225,7 @@ func (api *API) getTemplateHandler() service.Handler {
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), t); err != nil {
 			return err
 		}
-		if err := group.CheckUserIsGroupAdmin(t.Group, getAuthentifiedUser(ctx)); err == nil {
+		if err := group.CheckUserIsGroupAdmin(t.Group, getAPIConsumer(ctx)); err == nil {
 			t.Editable = true
 		}
 
@@ -293,7 +287,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 		old := getWorkflowTemplate(ctx)
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
@@ -463,7 +457,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		wt := getWorkflowTemplate(ctx)
 		if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
@@ -565,7 +559,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			}
 		}
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		// non admin user should have read/write access to all given project
 		if !u.Admin() {
@@ -710,7 +704,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		}
 		t := getWorkflowTemplate(ctx)
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
 		if err != nil {
@@ -752,11 +746,11 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load projet")
 		}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getAuthentifiedUser(ctx), workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot load workflow %s", workflowName)
@@ -787,7 +781,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 		}
 		t := getWorkflowTemplate(ctx)
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
 		if err != nil {
@@ -876,7 +870,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 			return err
 		}
 
-		msgs, wt, err := workflowtemplate.Push(api.mustDB(), getAuthentifiedUser(ctx), tr)
+		msgs, wt, err := workflowtemplate.Push(api.mustDB(), getAPIConsumer(ctx), tr)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot push template")
 		}
@@ -928,7 +922,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 		}
 		wfTmpl := getWorkflowTemplate(ctx)
 
-		wfs, err := workflow.LoadByWorkflowTemplateID(ctx, api.mustDB(), wfTmpl.ID, getAuthentifiedUser(ctx))
+		wfs, err := workflow.LoadByWorkflowTemplateID(ctx, api.mustDB(), wfTmpl.ID, getAPIConsumer(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load templates")
 		}

@@ -10,21 +10,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store) {
-	if deprecatedGetUser(ctx) != nil {
-		username := deprecatedGetUser(ctx).Username
-		kp := cache.Key("users", username, "perms")
-		kg := cache.Key("users", username, "groups")
-		store.Delete(kp)
-		store.Delete(kg)
-	}
-}
 
 // writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
 // this is a PostMiddlewaare, launch if there no error in handler.

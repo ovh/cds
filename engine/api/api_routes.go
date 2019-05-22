@@ -24,8 +24,8 @@ var (
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.jwtMiddleware, api.authMiddleware, api.tracingMiddleware, api.maintenanceMiddleware)
-	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
+	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware, api.maintenanceMiddleware)
+	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, TracingPostMiddleware)
 
 	r := api.Router
 	r.Handle("/login", ScopeNone(), r.POST(api.loginUserHandler, Auth(false)))
@@ -117,7 +117,6 @@ func (api *API) InitRouter() {
 
 	// Overall health
 	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, Auth(false)))
-	r.Handle("/mon/smtp/ping", ScopeNone(), r.GET(api.smtpPingHandler, Auth(true)))
 	r.Handle("/mon/version", ScopeNone(), r.GET(VersionHandler, Auth(false)))
 	r.Handle("/mon/db/migrate", ScopeNone(), r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
 	r.Handle("/mon/metrics", ScopeNone(), r.GET(observability.StatsHandler, Auth(false)))
@@ -149,7 +148,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", Scope(sdk.AccessTokenScopeProject), r.GET(api.getVariableAuditInProjectHandler))
 	r.Handle("/project/{permProjectKey}/applications", Scope(sdk.AccessTokenScopeProject), r.GET(api.getApplicationsHandler, AllowProvider(true)), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/integrations", Scope(sdk.AccessTokenScopeProject), r.GET(api.getProjectIntegrationsHandler), r.POST(api.postProjectIntegrationHandler))
-	r.Handle("/project/{permProjectKey}/integrations/{integrationName}", Scope(sdk.AccessTokenScopeProject), r.GET(api.getProjectIntegrationHandler, AllowServices(true)), r.PUT(api.putProjectIntegrationHandler), r.DELETE(api.deleteProjectIntegrationHandler))
+	r.Handle("/project/{permProjectKey}/integrations/{integrationName}", Scope(sdk.AccessTokenScopeProject), r.GET(api.getProjectIntegrationHandler /*, AllowServices(true)*/), r.PUT(api.putProjectIntegrationHandler), r.DELETE(api.deleteProjectIntegrationHandler))
 	r.Handle("/project/{permProjectKey}/notifications", Scope(sdk.AccessTokenScopeProject), r.GET(api.getProjectNotificationsHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/all/keys", Scope(sdk.AccessTokenScopeProject), r.GET(api.getAllKeysProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys", Scope(sdk.AccessTokenScopeProject), r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
@@ -238,12 +237,12 @@ func (api *API) InitRouter() {
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", Scope(sdk.AccessTokenScopeProject), r.GET(api.getWorkflowAllRunsHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", Scope(sdk.AccessTokenScopeRun), r.GET(api.getDownloadArtifactHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowRunsHandler, EnableTracing()), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true), EnableTracing()))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/branch/{branch}", Scope(sdk.AccessTokenScopeRun), r.DELETE(api.deleteWorkflowRunsBranchHandler, NeedService()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowRunsHandler, EnableTracing()), r.POSTEXECUTE(api.postWorkflowRunHandler /*, AllowServices(true)*/, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/branch/{branch}", Scope(sdk.AccessTokenScopeRun), r.DELETE(api.deleteWorkflowRunsBranchHandler /*, NeedService()*/))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", Scope(sdk.AccessTokenScopeRun), r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowRunHandler, AllowServices(true)))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowRunHandler /*, AllowServices(true)*/))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", Scope(sdk.AccessTokenScopeRun), r.POSTEXECUTE(api.stopWorkflowRunHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", Scope(sdk.AccessTokenScopeRun), r.POSTEXECUTE(api.postResyncVCSWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", Scope(sdk.AccessTokenScopeRun), r.POST(api.resyncWorkflowRunHandler))
@@ -257,8 +256,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowNodeRunJobStepHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", Scope(sdk.AccessTokenScopeRun), r.POST(api.releaseApplicationWorkflowHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", Scope(sdk.AccessTokenScopeRun), r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true)))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowJobHookDetailsHandler, NeedService()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", Scope(sdk.AccessTokenScopeRun), r.POST(api.postWorkflowJobHookCallbackHandler /*, AllowServices(true)*/))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowJobHookDetailsHandler /*, NeedService()*/))
 
 	// Environment
 	r.Handle("/project/{permProjectKey}/environment", Scope(sdk.AccessTokenScopeProject), r.GET(api.getEnvironmentsHandler), r.POST(api.addEnvironmentHandler))
@@ -280,32 +279,32 @@ func (api *API) InitRouter() {
 
 	// Project storage
 	r.Handle("/project/{permProjectKey}/storage/{integrationName}", Scope(sdk.AccessTokenScopeRunExecution), r.GET(api.getArtifactsStoreHandler))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url/callback", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/staticfiles/{name}", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifactHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url/callback", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/staticfiles/{name}", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 
 	// Cache
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()), r.GET(api.getPullCacheHandler, NeedWorker()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}/url", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, NeedWorker()), r.GET(api.getPullCacheWithTempURLHandler, NeedWorker()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postPushCacheHandler /*, NeedWorker()*/), r.GET(api.getPullCacheHandler /*, NeedWorker()*/))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}/url", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postPushCacheWithTempURLHandler /*, NeedWorker()*/), r.GET(api.getPullCacheWithTempURLHandler /*, NeedWorker()*/))
 
 	//Workflow queue
 	r.Handle("/queue/workflows", Scope(sdk.AccessTokenScopeRun), r.GET(api.getWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/count", Scope(sdk.AccessTokenScopeRun), r.GET(api.countWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/take", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/book", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/attempt", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/infos", Scope(sdk.AccessTokenScopeRunExecution), r.GET(api.getWorkflowJobHandler, NeedWorker(), NeedHatchery(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/vulnerability", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/spawn/infos", Scope(sdk.AccessTokenScopeRunExecution), r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/result", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/log", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker(), MaintenanceAware()))
-	r.Handle("/queue/workflows/log/service", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/coverage", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/test", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/tag", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/variable", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/step", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/take", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postTakeWorkflowJobHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/book", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postBookWorkflowJobHandler /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/attempt", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postIncWorkflowJobAttemptHandler /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/infos", Scope(sdk.AccessTokenScopeRunExecution), r.GET(api.getWorkflowJobHandler /*, NeedWorker()*/ /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/vulnerability", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/spawn/infos", Scope(sdk.AccessTokenScopeRunExecution), r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1) /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/result", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/log", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1) /*, NeedWorker()*/, MaintenanceAware()))
+	r.Handle("/queue/workflows/log/service", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1) /*, NeedHatchery()*/, MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/coverage", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/test", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/tag", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/variable", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobVariableHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/step", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 
 	r.Handle("/variable/type", ScopeNone(), r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", ScopeNone(), r.GET(api.getParameterTypeHandler))
@@ -349,8 +348,8 @@ func (api *API) InitRouter() {
 	r.Handle("/user/token", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
-	r.Handle("/user/{username}", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))
-	r.Handle("/user/{username}/groups", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserGroupsHandler, NeedUsernameOrAdmin(true)))
+	r.Handle("/user/{username}", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserHandler), r.PUT(api.updateUserHandler), r.DELETE(api.deleteUserHandler))
+	r.Handle("/user/{username}/groups", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserGroupsHandler))
 	r.Handle("/user/{username}/confirm/{token}", Scope(sdk.AccessTokenScopeUser), r.GET(api.confirmUserHandler, Auth(false)))
 	r.Handle("/user/{username}/reset", Scope(sdk.AccessTokenScopeUser), r.POST(api.resetUserHandler, Auth(false)))
 
@@ -367,9 +366,9 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/import", Scope(sdk.AccessTokenScopeWorkerModel), r.POST(api.postWorkerModelImportHandler))
 	r.Handle("/worker/model/pattern", Scope(sdk.AccessTokenScopeWorkerModel), r.POST(api.postAddWorkerModelPatternHandler, NeedAdmin(true)), r.GET(api.getWorkerModelPatternsHandler))
 	r.Handle("/worker/model/pattern/{type}/{name}", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelPatternHandler), r.PUT(api.putWorkerModelPatternHandler, NeedAdmin(true)), r.DELETE(api.deleteWorkerModelPatternHandler, NeedAdmin(true)))
-	r.Handle("/worker/model/book/{permModelID}", Scope(sdk.AccessTokenScopeWorkerModel), r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
-	r.Handle("/worker/model/error/{permModelID}", Scope(sdk.AccessTokenScopeWorkerModel), r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery()))
-	r.Handle("/worker/model/enabled", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler, NeedHatchery()))
+	r.Handle("/worker/model/book/{permModelID}", Scope(sdk.AccessTokenScopeWorkerModel), r.PUT(api.bookWorkerModelHandler /*, NeedHatchery()*/))
+	r.Handle("/worker/model/error/{permModelID}", Scope(sdk.AccessTokenScopeWorkerModel), r.PUT(api.spawnErrorWorkerModelHandler /*, NeedHatchery()*/))
+	r.Handle("/worker/model/enabled", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler /*, NeedHatchery()*/))
 	r.Handle("/worker/model/type", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", Scope(sdk.AccessTokenScopeWorkerModel), r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
@@ -378,7 +377,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/capability/type", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getRequirementTypesHandler))
 
 	// Workflows
-	r.Handle("/workflow/hook", Scope(sdk.AccessTokenScopeHooks), r.GET(api.getWorkflowHooksHandler, NeedService()))
+	r.Handle("/workflow/hook", Scope(sdk.AccessTokenScopeHooks), r.GET(api.getWorkflowHooksHandler /*, NeedService()*/))
 	r.Handle("/workflow/hook/model/{model}", ScopeNone(), r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
@@ -389,7 +388,7 @@ func (api *API) InitRouter() {
 
 	// Engine µServices
 	r.Handle("/services/register", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
-	r.Handle("/services/{type}", ScopeNone(), r.GET(api.getExternalServiceHandler, NeedWorker()))
+	r.Handle("/services/{type}", ScopeNone(), r.GET(api.getExternalServiceHandler /*, NeedWorker()*/))
 
 	// Templates
 	r.Handle("/template", Scope(sdk.AccessTokenScopeTemplate), r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))

@@ -29,14 +29,7 @@ func (api *API) getGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load user group from db")
 		}
 
-		isGroupAdmin := false
-		currentUser := deprecatedGetUser(ctx)
-		for _, grAdmin := range g.Admins {
-			if currentUser.ID == grAdmin.ID {
-				isGroupAdmin = true
-			}
-		}
-		if isGroupAdmin {
+		if isGroupAdmin(ctx, g) {
 			tokens, errT := group.LoadTokens(api.mustDB(), name)
 			if errT != nil {
 				return sdk.WrapError(errT, "Cannot load tokens group from db")
@@ -53,7 +46,7 @@ func (api *API) deleteGroupHandler() service.Handler {
 		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		g, errl := group.LoadGroup(api.mustDB(), name)
 		if errl != nil {
@@ -169,10 +162,10 @@ func (api *API) getGroupsHandler() service.Handler {
 		var err error
 
 		withoutDefault := FormBool(r, "withoutDefault")
-		if deprecatedGetUser(ctx).Admin {
+		if isAdmin(ctx) {
 			groups, err = group.LoadGroups(api.mustDB())
 		} else {
-			groups, err = group.LoadGroupByUser(api.mustDB(), deprecatedGetUser(ctx).ID)
+			groups, err = group.LoadGroupByUser(api.mustDB(), JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load group from db")
@@ -214,11 +207,11 @@ func (api *API) addGroupHandler() service.Handler {
 		}
 
 		// Add caller into group
-		if err := group.InsertUserInGroup(tx, g.ID, deprecatedGetUser(ctx).ID, false); err != nil {
-			return sdk.WrapError(err, "Cannot add user %s in group %s", deprecatedGetUser(ctx).Username, g.Name)
+		if err := group.InsertUserInGroup(tx, g.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID, false); err != nil {
+			return sdk.WrapError(err, "Cannot add user %s in group %s", JWT(ctx).AuthentifiedUser.Username, g.Name)
 		}
 		// and set it admin
-		if err := group.SetUserGroupAdmin(tx, g.ID, deprecatedGetUser(ctx).ID); err != nil {
+		if err := group.SetUserGroupAdmin(tx, g.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID); err != nil {
 			return sdk.WrapError(err, "Cannot set user group admin")
 		}
 

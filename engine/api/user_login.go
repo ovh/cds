@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
-	"github.com/ovh/cds/engine/api/auth"
+	
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/service"

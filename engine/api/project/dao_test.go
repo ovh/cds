@@ -133,10 +133,9 @@ func TestLoadAll(t *testing.T) {
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
-	u1, _ := assets.InsertAdminUser(db)
 	u2, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
-	actualGroups1, err := project.LoadAll(nil, db, cache, u1)
+	actualGroups1, err := project.LoadAll(nil, db, cache)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups1) > 1, "This should return more than one project")
 
@@ -146,7 +145,7 @@ func TestLoadAll(t *testing.T) {
 		}
 	}
 
-	actualGroups2, err := project.LoadAll(nil, db, cache, u2)
+	actualGroups2, err := project.LoadAllByGroups(nil, db, cache, u2)
 	t.Log(actualGroups2)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups2) == 1, "This should return one project")
@@ -154,6 +153,11 @@ func TestLoadAll(t *testing.T) {
 	ok, err := project.Exist(db, "test_TestLoadAll")
 	test.NoError(t, err)
 	assert.True(t, ok)
+
+	perms, err := project.FindPermissionByGroupID(db, g.ID)
+	test.NoError(t, err)
+
+	assert.Len(t, perms, 1)
 
 	project.Delete(db, cache, "test_TestLoadAll")
 	project.Delete(db, cache, "test_TestLoadAll1")

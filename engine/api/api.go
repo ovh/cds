@@ -10,19 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/authentication/localauthentication"
-
-	"github.com/ovh/cds/engine/api/authentication/ldapauthentication"
-
-	"github.com/ovh/cds/engine/api/authentication"
-
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/ldapauthentication"
+	"github.com/ovh/cds/engine/api/authentication/localauthentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
@@ -42,7 +38,6 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
@@ -575,12 +570,6 @@ func (a *API) Serve(ctx context.Context) error {
 		a.AuthenticationDrivers["ldap"] = ldapauthentication.New(cfg)
 	} else {
 		a.AuthenticationDrivers["local"] = localauthentication.New()
-	}
-
-	var err error
-	auth.Store, err = sessionstore.Get(ctx, a.Cache, a.Config.HTTP.SessionTTL*60)
-	if err != nil {
-		return err
 	}
 
 	log.Info("Initializing event broker...")

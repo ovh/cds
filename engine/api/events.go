@@ -16,9 +16,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -27,7 +25,7 @@ import (
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
 	UUID    string
-	User    *sdk.AuthentifiedUser
+	User    *sdk.APIConsumer
 	isAlive *abool.AtomicBool
 	w       http.ResponseWriter
 	mutex   sync.Mutex
@@ -184,11 +182,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
-		user := getAuthentifiedUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
-			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
-		}
-
+		user := getAPIConsumer(ctx)
 		uuid := sdk.UUID()
 		client := &eventsBrokerSubscribe{
 			UUID:    uuid,
@@ -235,7 +229,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 }
 
 func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
-	var isSharedInfra bool
+	/* var isSharedInfra bool
 	for _, g := range client.User.OldUserStruct.Groups {
 		if g.ID == group.SharedInfraGroup.ID {
 			isSharedInfra = true
@@ -256,30 +250,12 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 		}
 		return false
 	}
-	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if client.User.Admin() || isSharedInfra || projectPermission >= permission.PermissionRead {
-			return true
-		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if client.User.Admin() || isSharedInfra || projectPermission >= permission.PermissionRead {
-			return true
-		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if client.User.Admin() || isSharedInfra || projectPermission >= permission.PermissionRead {
-			return true
-		}
-		return false
-	}
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
 		if client.User.Admin() || isSharedInfra || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, client.User, permission.PermissionRead) {
 			return true
 		}
 		return false
-	}
+	} */
 	return false
 }
 

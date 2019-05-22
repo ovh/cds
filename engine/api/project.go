@@ -33,14 +33,14 @@ func (api *API) getProjectsHandler() service.Handler {
 		withPermissions := r.FormValue("permission")
 		withIcon := FormBool(r, "withIcon")
 
-		var u = getAuthentifiedUser(ctx)
+		var u = getAPIConsumer(ctx)
 		requestedUserName := r.Header.Get("X-Cds-Username")
 
 		//A provider can make a call for a specific user
 		if getProvider(ctx) != nil && requestedUserName != "" {
 			var err error
 			//Load the specific user
-			u, err = user.LoadUserByUsername(api.mustDB(), requestedUserName)
+			u, err := user.LoadUserByUsername(api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
@@ -48,9 +48,9 @@ func (api *API) getProjectsHandler() service.Handler {
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}
 
-			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
+			/* if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 				return sdk.WrapError(err, "unable to load user '%s' permissions", requestedUserName)
-			}
+			} */
 		}
 
 		opts := []project.LoadOptionFunc{
@@ -67,12 +67,18 @@ func (api *API) getProjectsHandler() service.Handler {
 			opts = append(opts, project.LoadOptions.WithIntegrations, project.LoadOptions.WithWorkflows)
 		}
 
-		if filterByRepo == "" {
-			projects, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u, opts...)
-			if err != nil {
-				return sdk.WrapError(err, "getProjectsHandler")
-			}
+		var projects []sdk.Project
+		var err error
+		if isMaintainer(ctx) || isAdmin(ctx) {
+			projects, err = project.LoadAll(ctx, api.mustDB(), api.Cache, opts...)
+		} else {
+			projects, err = project.LoadAllByGroups(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx), opts...)
+		}
+		if err != nil {
+			return err
+		}
 
+		if filterByRepo == "" {
 			if strings.ToUpper(withPermissions) == "W" {
 				res := make([]sdk.Project, 0, len(projects))
 				for _, p := range projects {
@@ -86,7 +92,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			return service.WriteJSON(w, projects, http.StatusOK)
 		}
 
-		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u sdk.GroupMember) error {
+		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project) error {
 			//Filter the applications by repo
 			apps := []sdk.Application{}
 			for i := range p.Applications {
@@ -119,7 +125,7 @@ func (api *API) getProjectsHandler() service.Handler {
 		}
 		opts = append(opts, &filterByRepoFunc)
 
-		projects, err := project.LoadAllByRepo(api.mustDB(), api.Cache, u, filterByRepo, opts...)
+		projects, err = project.LoadAllByRepo(api.mustDB(), api.Cache, u, filterByRepo, opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
 		}
@@ -159,7 +165,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithIcon)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIcon)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
@@ -172,7 +178,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		if errUp := project.Update(api.mustDB(), api.Cache, proj); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
-		event.PublishUpdateProject(proj, p, getAuthentifiedUser(ctx))
+		event.PublishUpdateProject(proj, p, getAPIConsumer(ctx))
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }
@@ -200,7 +206,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(getAuthentifiedUser(ctx).OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(JWT(ctx).AuthentifiedUser.OldUserStruct.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -248,7 +254,7 @@ func (api *API) getProjectHandler() service.Handler {
 			opts = append(opts, project.LoadOptions.WithLabels)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), opts...)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
@@ -273,9 +279,9 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		}
 
 		// Check is project exist
-		proj, errProj := project.Load(db, api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithLabels)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "putProjectLabelsHandler> Cannot load project from db")
+		proj, err := project.Load(db, api.Cache, key, project.LoadOptions.WithLabels)
+		if err != nil {
+			return err
 		}
 
 		var labelsToUpdate, labelsToAdd []sdk.Label
@@ -334,14 +340,14 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		p, errP := project.Load(db, api.Cache, key, getAuthentifiedUser(ctx),
+		p, errP := project.Load(db, api.Cache, key,
 			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(getAuthentifiedUser(ctx).OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(JWT(ctx).AuthentifiedUser.OldUserStruct.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
 		}
-		event.PublishUpdateProject(p, proj, getAuthentifiedUser(ctx))
+		event.PublishUpdateProject(p, proj, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -442,14 +448,14 @@ func (api *API) addProjectHandler() service.Handler {
 
 			// Add user in group
 			if new {
-				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, deprecatedGetUser(ctx).ID, true); err != nil {
-					return sdk.WrapError(err, "Cannot add user %s in group %s", deprecatedGetUser(ctx).Username, groupPermission.Group.Name)
+				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID, true); err != nil {
+					return sdk.WrapError(err, "Cannot add user %s in group %s", JWT(ctx).AuthentifiedUser.Username, groupPermission.Group.Name)
 				}
 			}
 		}
 
 		for _, v := range p.Variable {
-			if errVar := project.InsertVariable(tx, p, &v, getAuthentifiedUser(ctx)); errVar != nil {
+			if errVar := project.InsertVariable(tx, p, &v, getAPIConsumer(ctx)); errVar != nil {
 				return sdk.WrapError(errVar, "addProjectHandler> Cannot add variable %s in project %s", v.Name, p.Name)
 			}
 		}
@@ -504,7 +510,7 @@ func (api *API) addProjectHandler() service.Handler {
 
 		for i := range integrationModels {
 			pf := &integrationModels[i]
-			if err := propagatePublicIntegrationModelOnProject(tx, api.Cache, *pf, *p, getAuthentifiedUser(ctx)); err != nil {
+			if err := propagatePublicIntegrationModelOnProject(tx, api.Cache, *pf, *p, getAPIConsumer(ctx)); err != nil {
 				return sdk.WrapError(err, "propagatePublicIntegrationModelOnProject error")
 			}
 		}
@@ -514,10 +520,10 @@ func (api *API) addProjectHandler() service.Handler {
 		}
 		p.Permission = permission.PermissionReadWriteExecute
 
-		event.PublishAddProject(p, getAuthentifiedUser(ctx))
+		event.PublishAddProject(p, getAPIConsumer(ctx))
 
-		proj, errL := project.Load(api.mustDB(), api.Cache, p.Key, getAuthentifiedUser(ctx), project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites(getAuthentifiedUser(ctx).OldUserStruct.ID),
+		proj, errL := project.Load(api.mustDB(), api.Cache, p.Key, project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames,
+			project.LoadOptions.WithFavorites(JWT(ctx).AuthentifiedUser.OldUserStruct.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission,
 			project.LoadOptions.WithIntegrations, project.LoadOptions.WithVariables)
 		if errL != nil {
@@ -534,7 +540,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if errProj != nil {
 			if !sdk.ErrorIs(errProj, sdk.ErrNoProject) {
 				return sdk.WrapError(errProj, "deleteProject> load project '%s' from db", key)
@@ -563,7 +569,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteProject(p, getAuthentifiedUser(ctx))
+		event.PublishDeleteProject(p, getAPIConsumer(ctx))
 
 		log.Info("Project %s deleted.", p.Name)
 

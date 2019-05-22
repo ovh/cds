@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	if rc.Options["auth"] != "true" {
+	if !rc.NeedAuth {
 		return ctx, nil
 	}
 

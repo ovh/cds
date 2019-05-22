@@ -29,36 +29,36 @@ func (api *API) getAllKeysProjectHandler() service.Handler {
 			EnvironmentKeys []sdk.EnvironmentKey `json:"environment_key"`
 		}{}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key)
 		if errP != nil {
-			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load project")
+			return errP
 		}
 		projectKeys, errK := project.LoadAllKeysByID(api.mustDB(), p.ID)
 		if errK != nil {
-			return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load project keys")
+			return errK
 		}
 		allkeys.ProjectKeys = projectKeys
 
 		if appName == "" {
 			appKeys, errA := application.LoadAllApplicationKeysByProject(api.mustDB(), p.ID)
 			if errA != nil {
-				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application keys")
+				return errA
 			}
 			allkeys.ApplicationKeys = appKeys
 		} else {
 			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName)
 			if errA != nil {
-				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application")
+				return errA
 			}
 			if errK := application.LoadAllKeys(api.mustDB(), app); errK != nil {
-				return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load application keys")
+				return errK
 			}
 			allkeys.ApplicationKeys = app.Keys
 		}
 
 		envKeys, errP := environment.LoadAllEnvironmentKeysByProject(api.mustDB(), p.ID)
 		if errP != nil {
-			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load environemnt keys")
+			return errP
 		}
 		allkeys.EnvironmentKeys = envKeys
 
@@ -71,7 +71,7 @@ func (api *API) getKeysInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key)
 		if errP != nil {
 			return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
 		}
@@ -90,7 +90,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		keyName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithKeys)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
 		}
@@ -115,7 +115,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectKey(p, deletedKey, getAuthentifiedUser(ctx))
+		event.PublishDeleteProjectKey(p, deletedKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -137,7 +137,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key)
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
 		}
@@ -178,7 +178,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddProjectKey(p, newKey, getAuthentifiedUser(ctx))
+		event.PublishAddProjectKey(p, newKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

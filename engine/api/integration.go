@@ -70,7 +70,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAuthentifiedUser(ctx))
+			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)
@@ -120,7 +120,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAuthentifiedUser(ctx))
+			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)

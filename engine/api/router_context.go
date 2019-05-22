@@ -1,64 +1,36 @@
-package auth
+package api
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
-	"net/http"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type contextKey int
 
 const (
-	ContextUser contextKey = iota
-	ContextHatchery
-	ContextWorker
-	ContextService
-	ContextProvider
-	ContextUserAuthentified
-	ContextAPIConsumer
-	ContextJWT
-	ContextScope
+	contextUserAuthentified contextKey = iota
+	contextProvider
+	contextAPIConsumer
+	contextJWT
+	contextScope
+	contextWorkflowTemplate
 )
 
-var (
-	Store sessionstore.Store
-)
-
-//NewSession inits a new session
-func NewSession(u *sdk.AuthentifiedUser) (sessionstore.SessionKey, error) {
-	session, err := Store.New("")
-	if err != nil {
-		return "", err
+// ContextValues retuns auth values of a context
+func ContextValues(ctx context.Context) map[interface{}]interface{} {
+	return map[interface{}]interface{}{
+		//contextHatchery: ctx.Value(contextHatchery),
+		//contextService:  ctx.Value(contextService),
+		//contextWorker:   ctx.Value(contextWorker),
+		//contextUser:     ctx.Value(contextUser),
 	}
-	log.Info("Auth> New Session for %s", u.Username)
-	Store.Set(session, "username", u.Username)
-	return session, err
-}
-
-//GetUsername retrieve the username from the token
-func GetUsername(token string) (string, error) {
-	var username string
-	err := Store.Get(sessionstore.SessionKey(token), "username", &username)
-	if err != nil {
-		return "", err
-	}
-	if username == "" {
-		return "", nil
-	}
-	return username, nil
 }
 
 //GetWorker returns the worker instance from its id
@@ -101,16 +73,7 @@ func GetService(db *gorp.DbMap, Store cache.Store, hash string) (*sdk.Service, e
 	return srv, nil
 }
 
-// ContextValues retuns auth values of a context
-func ContextValues(ctx context.Context) map[interface{}]interface{} {
-	return map[interface{}]interface{}{
-		ContextHatchery: ctx.Value(ContextHatchery),
-		ContextService:  ctx.Value(ContextService),
-		ContextWorker:   ctx.Value(ContextWorker),
-		ContextUser:     ctx.Value(ContextUser),
-	}
-}
-
+/*
 // CheckWorkerAuth checks worker authentication
 func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, headers http.Header) (context.Context, error) {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
@@ -176,9 +139,10 @@ func GetEphemeralSession_DEPRECATED(ctx context.Context, db gorp.SqlExecutor, se
 	ctx = context.WithValue(ctx, ContextUser, oldUser)
 	ctx = context.WithValue(ctx, ContextUserAuthentified, u)
 	return ctx, nil
-}
+}*/
 
 //CheckAuth checks the auth
+/*
 func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.Request, db gorp.SqlExecutor) (context.Context, error) {
 	//Check persistent session
 	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
@@ -221,3 +185,4 @@ func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.
 
 	return ctx, nil
 }
+*/

@@ -6,7 +6,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -52,7 +51,7 @@ func (api *API) getUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		if !u.Admin() && username != u.Username {
 			return service.WriteJSON(w, nil, http.StatusForbidden)

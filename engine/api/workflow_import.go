@@ -28,7 +28,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		key := vars[permProjectKey]
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -72,7 +72,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		}
 
 		// Browse all node to find IDs
-		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, getAuthentifiedUser(ctx)); err != nil {
+		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Workflow is not valid")
 		}
 
@@ -92,7 +92,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -136,7 +136,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		// load the workflow from database if exists
 		workflowExists, err := workflow.Exists(tx, proj.Key, ew.Name)
@@ -151,7 +151,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			}
 		}
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, getAuthentifiedUser(ctx), workflow.ImportOptions{Force: force})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, getAPIConsumer(ctx), workflow.ImportOptions{Force: force})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
@@ -184,7 +184,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		wfName := vars["permWorkflowName"]
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -196,7 +196,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(errp, "Unable load project")
 		}
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, u, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
@@ -292,7 +292,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			}
 		}
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		//Load project
 		proj, errp := project.Load(db, api.Cache, key, u,

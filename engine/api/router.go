@@ -20,8 +20,8 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -51,13 +51,6 @@ type Router struct {
 		Hits       *stats.Int64Measure
 		SSEClients *stats.Int64Measure
 		SSEEvents  *stats.Int64Measure
-	}
-}
-
-// NewHandlerConfig returns a new HandlerConfig pointer
-func NewHandlerConfig() *service.HandlerConfig {
-	return &service.HandlerConfig{
-		Options: map[string]string{},
 	}
 }
 
@@ -194,7 +187,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx := req.Context()
 
 		// Push scope in the context
-		ctx = context.WithValue(ctx, auth.ContextScope, scope)
+		ctx = context.WithValue(ctx, contextScope, scope)
 
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
@@ -324,12 +317,13 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 // Asynchronous handles an AsynchronousHandlerFunc
 func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int) service.HandlerFunc {
 	chanRequest := make(chan asynchronousRequest, 1000)
-	go processAsyncRequests(r.Background, chanRequest, handler, retry)
-
+	sdk.GoRoutine(r.Background, "", func(ctx context.Context) {
+		processAsyncRequests(ctx, chanRequest, handler, retry)
+	})
 	return func() service.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			async := asynchronousRequest{
-				contextValues: auth.ContextValues(ctx),
+				contextValues: ContextValues(ctx),
 				request:       *r,
 				vars:          mux.Vars(r),
 			}
@@ -350,84 +344,73 @@ var DEPRECATED = func(rc *service.HandlerConfig) {
 
 // GET will set given handler only for GET request
 func (r *Router) GET(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["auth"] = "true"
+	rc.NeedAuth = true
 	rc.Method = "GET"
-	rc.Options["allowServices"] = "false"
-	rc.Options["allowProvider"] = "false"
-
+	rc.PermissionLevel = permission.PermissionRead
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // POST will set given handler only for POST request
 func (r *Router) POST(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["auth"] = "true"
-	rc.Options["allowServices"] = "false"
-	rc.Options["allowProvider"] = "false"
-
+	rc.NeedAuth = true
 	rc.Method = "POST"
+	rc.PermissionLevel = permission.PermissionReadWriteExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
 func (r *Router) POSTEXECUTE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["auth"] = "true"
-	rc.Options["allowServices"] = "false"
+	rc.NeedAuth = true
 	rc.Method = "POST"
-	rc.Options["isExecution"] = "true"
-	rc.Options["allowProvider"] = "false"
-
+	rc.PermissionLevel = permission.PermissionReadExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // PUT will set given handler only for PUT request
 func (r *Router) PUT(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["allowServices"] = "false"
-	rc.Options["auth"] = "true"
-	rc.Options["allowProvider"] = "false"
-
+	rc.NeedAuth = true
 	rc.Method = "PUT"
+	rc.PermissionLevel = permission.PermissionReadWriteExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // DELETE will set given handler only for DELETE request
 func (r *Router) DELETE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["allowServices"] = "false"
-	rc.Options["auth"] = "true"
-	rc.Options["allowProvider"] = "false"
-
+	rc.NeedAuth = true
 	rc.Method = "DELETE"
+	rc.PermissionLevel = permission.PermissionReadWriteExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // NeedAdmin set the route for cds admin only (or not)
 func NeedAdmin(admin bool) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["needAdmin"] = fmt.Sprintf("%v", admin)
+		rc.NeedAdmin = admin
 	}
 	return f
 }
@@ -435,7 +418,7 @@ func NeedAdmin(admin bool) HandlerConfigParam {
 // AllowProvider set the route for external providers
 func AllowProvider(need bool) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["allowProvider"] = fmt.Sprintf("%v", need)
+		rc.AllowProvider = need
 	}
 	return f
 }
@@ -443,56 +426,56 @@ func AllowProvider(need bool) HandlerConfigParam {
 // NeedToken set the route for requests that have the given header
 func NeedToken(k, v string) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["token"] = fmt.Sprintf("%s:%s", k, v)
+		rc.AllowedTokens = append(rc.AllowedTokens, fmt.Sprintf("%s:%s", k, v))
 	}
 	return f
 }
 
 // NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
-func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needUsernameOrAdmin"] = fmt.Sprintf("%v", need)
-	}
-	return f
-}
+//func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
+//	f := func(rc *service.HandlerConfig) {
+//		rc.Options["needUsernameOrAdmin"] = fmt.Sprintf("%v", need)
+//	}
+//	return f
+//}
 
 // NeedHatchery set the route for hatchery only
-func NeedHatchery() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needHatchery"] = "true"
-	}
-	return f
-}
+//func NeedHatchery() HandlerConfigParam {
+//	f := func(rc *service.HandlerConfig) {
+//		rc.Options["needHatchery"] = "true"
+//	}
+//	return f
+//}
 
 // NeedService set the route for hatchery only
-func NeedService() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needService"] = "true"
-	}
-	return f
-}
+//func NeedService() HandlerConfigParam {
+//	f := func(rc *service.HandlerConfig) {
+//		rc.Options["needService"] = "true"
+//	}
+//	return f
+//}
 
 // NeedWorker set the route for worker only
-func NeedWorker() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needWorker"] = "true"
-	}
-	return f
-}
+//func NeedWorker() HandlerConfigParam {
+//	f := func(rc *service.HandlerConfig) {
+//		rc.Options["needWorker"] = "true"
+//	}
+//	return f
+//}
 
 // AllowServices allows CDS service to use this route
-func AllowServices(s bool) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["allowServices"] = fmt.Sprintf("%v", s)
-	}
-	return f
-}
+//func AllowServices(s bool) HandlerConfigParam {
+//	f := func(rc *service.HandlerConfig) {
+//		rc.Options["allowServices"] = fmt.Sprintf("%v", s)
+//	}
+//	return f
+//}
 
 // Auth set manually whether authorisation layer should be applied
 // Authorization is enabled by default
 func Auth(v bool) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["auth"] = fmt.Sprintf("%v", v)
+		rc.NeedAuth = v
 	}
 	return f
 }
@@ -500,7 +483,7 @@ func Auth(v bool) HandlerConfigParam {
 // MaintenanceAware route need CDS maintenance off
 func MaintenanceAware() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["maintenance_aware"] = "true"
+		rc.MaintenanceAware = true
 	}
 	return f
 }
@@ -508,7 +491,7 @@ func MaintenanceAware() HandlerConfigParam {
 // EnableTracing on a route
 func EnableTracing() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["trace_enable"] = "true"
+		rc.EnableTracing = true
 	}
 	return f
 }

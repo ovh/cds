@@ -31,12 +31,11 @@ func TracingMiddlewareFunc(serviceName string, db gorp.SqlExecutor, store cache.
 		name = splittedName[len(splittedName)-1]
 
 		opts := observability.Options{
-			Name:     name,
-			Enable:   rc.Options["trace_enable"] == "true",
-			Init:     rc.Options["trace_new_trace"] == "true",
-			User:     deprecatedGetUser(ctx),
-			Worker:   getWorker(ctx),
-			Hatchery: getHatchery(ctx),
+			Name:   name,
+			Enable: rc.EnableTracing,
+			//			User:     deprecatedGetUser(ctx),
+			//			Worker:   getWorker(ctx),
+			//			Hatchery: getHatchery(ctx),
 		}
 
 		ctx, err := observability.Start(ctx, serviceName, w, req, opts, db, store)

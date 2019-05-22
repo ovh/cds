@@ -56,7 +56,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withTemplate := FormBool(r, "withTemplate")
 		withAsCodeEvents := FormBool(r, "withAsCodeEvents")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -67,7 +67,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			WithLabels:            withLabels,
 			WithAsCodeUpdateEvent: withAsCodeEvents,
 		}
-		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getAuthentifiedUser(ctx), opts)
+		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getAPIConsumer(ctx), opts)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load workflow %s", name)
 		}
@@ -106,7 +106,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			}
 		}
 
-		w1.Permission = permission.WorkflowPermission(key, w1.Name, getAuthentifiedUser(ctx))
+		w1.Permission = permission.WorkflowPermission(key, w1.Name, getAPIConsumer(ctx))
 
 		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
 		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
@@ -151,7 +151,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Cannot convert auditID to int")
 		}
 		db := api.mustDB()
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		proj, errP := project.Load(db, api.Cache, key, u,
 			project.LoadOptions.WithGroups,
@@ -197,7 +197,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowUpdate(key, *wf, *newWf, getAuthentifiedUser(ctx))
+		event.PublishWorkflowUpdate(key, *wf, *newWf, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, *newWf, http.StatusOK)
 	}
@@ -210,7 +210,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 		db := api.mustDB()
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		var label sdk.Label
 		if err := service.UnmarshalBody(r, &label); err != nil {
@@ -280,7 +280,7 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 		}
 
 		db := api.mustDB()
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		proj, errP := project.Load(db, api.Cache, key, u)
 		if errP != nil {
@@ -306,7 +306,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -338,7 +338,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Insert(tx, api.Cache, &wf, p, getAuthentifiedUser(ctx)); err != nil {
+		if err := workflow.Insert(tx, api.Cache, &wf, p, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
@@ -346,12 +346,12 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, p, wf.ID, getAuthentifiedUser(ctx), workflow.LoadOptions{})
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, p, wf.ID, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
 
-		event.PublishWorkflowAdd(p.Key, *wf1, getAuthentifiedUser(ctx))
+		event.PublishWorkflowAdd(p.Key, *wf1, getAPIConsumer(ctx))
 
 		wf1.Permission = permission.PermissionReadWriteExecute
 
@@ -369,7 +369,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -379,7 +379,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAuthentifiedUser(ctx), workflow.LoadOptions{WithIcon: true})
+		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAPIConsumer(ctx), workflow.LoadOptions{WithIcon: true})
 		if errW != nil {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
@@ -407,7 +407,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Update(ctx, tx, api.Cache, &wf, p, getAuthentifiedUser(ctx), workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
+		if err := workflow.Update(ctx, tx, api.Cache, &wf, p, getAPIConsumer(ctx), workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
 			return sdk.WrapError(err, "Cannot update workflow")
 		}
 
@@ -425,7 +425,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, p, wf.ID, getAuthentifiedUser(ctx), workflow.LoadOptions{})
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, p, wf.ID, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
@@ -453,7 +453,7 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx))
 		if errP != nil {
 			return errP
 		}
@@ -472,7 +472,7 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 			return sdk.ErrIconBadSize
 		}
 
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAuthentifiedUser(ctx), workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if err != nil {
 			return err
 		}
@@ -492,12 +492,12 @@ func (api *API) deleteWorkflowIconHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx))
 		if errP != nil {
 			return errP
 		}
 
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAuthentifiedUser(ctx), workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if err != nil {
 			return err
 		}
@@ -517,12 +517,12 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAuthentifiedUser(ctx), workflow.LoadOptions{})
+		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
@@ -541,7 +541,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowDelete(key, *oldW, getAuthentifiedUser(ctx))
+		event.PublishWorkflowDelete(key, *oldW, getAPIConsumer(ctx))
 
 		sdk.GoRoutine(ctx, "deleteWorkflowHandler",
 			func(ctx context.Context) {
@@ -570,7 +570,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		uuid := vars["uuid"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx),
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
@@ -579,7 +579,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getAuthentifiedUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getAPIConsumer(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookHandler> Cannot load Workflow %s/%s", key, name)
 		}

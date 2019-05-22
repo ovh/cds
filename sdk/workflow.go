@@ -19,15 +19,16 @@ var ColorRegexp = regexp.MustCompile(`^#\w{3,8}$`)
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID                      int64                        `json:"id" db:"id" cli:"-"`
-	Name                    string                       `json:"name" db:"name" cli:"name,key"`
-	Description             string                       `json:"description,omitempty" db:"description" cli:"description"`
-	Icon                    string                       `json:"icon,omitempty" db:"icon" cli:"-"`
-	LastModified            time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
-	ProjectID               int64                        `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
-	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission              int                          `json:"permission,omitempty" db:"-" cli:"-"`
+	ID           int64             `json:"id" db:"id" cli:"-"`
+	Name         string            `json:"name" db:"name" cli:"name,key"`
+	Description  string            `json:"description,omitempty" db:"description" cli:"description"`
+	Icon         string            `json:"icon,omitempty" db:"icon" cli:"-"`
+	LastModified time.Time         `json:"last_modified" db:"last_modified" mapstructure:"-"`
+	ProjectID    int64             `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey   string            `json:"project_key" db:"-" cli:"-"`
+	Groups       []GroupPermission `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission   int               `json:"permission,omitempty" db:"-" cli:"-"`
+	// TODO: replace Permission by a editable or runnable flag
 	Metadata                Metadata                     `json:"metadata" yaml:"metadata" db:"-"`
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`

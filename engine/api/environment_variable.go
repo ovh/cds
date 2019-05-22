@@ -77,7 +77,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteVariableFromEnvironmentHandler: Cannot load project %s", key)
 		}
@@ -102,7 +102,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
 		}
 
-		if err := environment.DeleteVariable(tx, env.ID, varToDelete, getAuthentifiedUser(ctx)); err != nil {
+		if err := environment.DeleteVariable(tx, env.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
 		}
 
@@ -116,7 +116,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 		}
 
-		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, getAuthentifiedUser(ctx))
+		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -129,7 +129,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateVariableInEnvironment: Cannot load %s", key)
 		}
@@ -161,7 +161,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errV, "updateVariableInEnvironmentHandler> Cannot load variable %d", newVar.ID)
 		}
 
-		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getAuthentifiedUser(ctx)); err != nil {
+		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 		}
 
@@ -175,7 +175,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 		}
 
-		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, getAuthentifiedUser(ctx))
+		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -188,7 +188,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addVariableInEnvironmentHandler: Cannot load project %s", key)
 		}
@@ -219,9 +219,9 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		var errInsert error
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, getAuthentifiedUser(ctx))
+			errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, getAPIConsumer(ctx))
 		default:
-			errInsert = environment.InsertVariable(tx, env.ID, &newVar, getAuthentifiedUser(ctx))
+			errInsert = environment.InsertVariable(tx, env.ID, &newVar, getAPIConsumer(ctx))
 		}
 		if errInsert != nil {
 			return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
@@ -237,7 +237,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 		}
 
-		event.PublishEnvironmentVariableAdd(key, *env, newVar, getAuthentifiedUser(ctx))
+		event.PublishEnvironmentVariableAdd(key, *env, newVar, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}

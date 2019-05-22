@@ -191,7 +191,7 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 }
 
 // InsertVariable Insert a new variable in the given project
-func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.AuthentifiedUser) error {
+func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
@@ -215,7 +215,7 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 		Type:          sdk.AuditAdd,
 		VariableID:    variable.ID,
 		VariableAfter: variable,
-		Author:        u.Username,
+		Author:        u.GetUsername(),
 		Versionned:    time.Now(),
 	}
 
@@ -226,7 +226,7 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, previousVar *sdk.Variable, u *sdk.AuthentifiedUser) error {
+func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, previousVar *sdk.Variable, u sdk.Identifiable) error {
 	varValue := variable.Value
 	// Clear password for audit
 
@@ -259,7 +259,7 @@ func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 		VariableID:     variable.ID,
 		VariableBefore: previousVar,
 		VariableAfter:  variable,
-		Author:         u.Username,
+		Author:         u.GetUsername(),
 		Versionned:     time.Now(),
 	}
 
@@ -271,7 +271,7 @@ func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // DeleteVariable Delete a variable from the given project
-func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.AuthentifiedUser) error {
+func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u sdk.Identifiable) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1 AND id=$2`
 	_, err := db.Exec(query, proj.ID, variable.ID)
 	if err != nil {
@@ -283,7 +283,7 @@ func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 		Type:           sdk.AuditDelete,
 		VariableID:     variable.ID,
 		VariableBefore: variable,
-		Author:         u.Username,
+		Author:         u.GetUsername(),
 		Versionned:     time.Now(),
 	}
 
@@ -307,7 +307,7 @@ func deleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // AddKeyPair generate a ssh key pair and add them as project variables
-func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.AuthentifiedUser) error {
+func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u sdk.Identifiable) error {
 	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return errGenerate

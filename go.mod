@@ -174,6 +174,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
+	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
 	github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
 	github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
@@ -185,8 +186,8 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
-	github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
+	github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
 	github.com/ovh/symmecrypt v0.2.0
 	github.com/ovh/venom v0.25.0
@@ -226,7 +227,8 @@ require (
 	github.com/spf13/pflag v0.0.0-20171106142849-4c012f6dcd95 // indirect
 	github.com/spf13/viper v1.0.2
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/stretchr/testify v1.3.0
 	github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20171017195756-830351dc03c6 // indirect
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect

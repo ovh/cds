@@ -121,3 +121,27 @@ const (
 	AccessTokenScopeWorkerModel  = "WorkerModel"
 	AccessTokenScopeHatchery     = "Hatchery"
 )
+
+type Permission struct {
+	IDName
+	Role    int   `db:"role"`
+	GroupID int64 `db:"groupID"`
+}
+
+type Permissions []Permission
+
+type GroupPermissions struct {
+	Projects     Permissions
+	Workflows    Permissions
+	Acions       Permissions
+	WorkerModels Permissions
+}
+
+func (perms GroupPermissions) ProjectPermission(key string) (int, bool) {
+	for _, projPerm := range perms.Projects {
+		if projPerm.Name == key {
+			return projPerm.Role, true
+		}
+	}
+	return -1, false
+}

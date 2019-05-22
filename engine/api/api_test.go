@@ -7,15 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/sessionstore"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/localauthentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 )
 

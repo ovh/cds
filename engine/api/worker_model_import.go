@@ -53,7 +53,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		wm, err := worker.ParseAndImport(tx, api.Cache, &eWorkerModel, force, getAuthentifiedUser(ctx))
+		wm, err := worker.ParseAndImport(tx, api.Cache, &eWorkerModel, force, getAPIConsumer(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "cannot parse and import worker model")
 		}

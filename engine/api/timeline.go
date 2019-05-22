@@ -13,7 +13,7 @@ import (
 
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 		currentItem, errS := FormInt(r, "currentItem")
 		if errS != nil {
 			return sdk.WrapError(errS, "getTimelineHandler> Invalid format for current item")

@@ -37,11 +37,11 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 			return sdk.WrapError(err, "Format invalid")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
-		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, getAuthentifiedUser(ctx), w, opts...); err != nil {
+		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, getAPIConsumer(ctx), w, opts...); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -63,12 +63,12 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 			opts = append(opts, exportentities.WorkflowWithPermissions)
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, getAuthentifiedUser(ctx), opts...)
+		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, getAPIConsumer(ctx), opts...)
 		if err != nil {
 			return err
 		}

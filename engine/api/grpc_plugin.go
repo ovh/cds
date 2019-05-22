@@ -23,8 +23,6 @@ func (api *API) postGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 		db := api.mustDB()
-		u := deprecatedGetUser(ctx)
-
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -51,7 +49,7 @@ func (api *API) postGRPCluginHandler() service.Handler {
 				return sdk.WithStack(err)
 			}
 			if old != nil {
-				if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, u.ID); err != nil {
+				if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters); err != nil {
 					return sdk.WrapError(err, "error while updating action %s in database", p.Name)
 				}
 			} else {
@@ -131,7 +129,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
-			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {
+			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters); err != nil {
 				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}

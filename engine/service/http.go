@@ -42,11 +42,17 @@ type RouterConfig struct {
 
 // HandlerConfig is the configuration for one handler
 type HandlerConfig struct {
-	Name         string
-	Method       string
-	Handler      Handler
-	IsDeprecated bool
-	Options      map[string]string
+	Name             string
+	Method           string
+	Handler          Handler
+	IsDeprecated     bool
+	NeedAuth         bool
+	NeedAdmin        bool
+	MaintenanceAware bool
+	EnableTracing    bool
+	AllowProvider    bool
+	AllowedTokens    []string
+	PermissionLevel  int
 }
 
 // Accepted is a helper function used by asynchronous handlers

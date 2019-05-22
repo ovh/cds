@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/auth"
+	
 	"github.com/ovh/cds/sdk"
 )
 

@@ -111,7 +111,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx), project.LoadOptions.Default)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addEnvironmentHandler> Cannot load %s", key)
 		}
@@ -143,7 +143,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
-		event.PublishEnvironmentAdd(key, env, getAuthentifiedUser(ctx))
+		event.PublishEnvironmentAdd(key, env, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -156,7 +156,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		environmentName := vars["environmentName"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -183,7 +183,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentDelete(p.Key, *env, getAuthentifiedUser(ctx))
+		event.PublishEnvironmentDelete(p.Key, *env, getAPIConsumer(ctx))
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
@@ -210,7 +210,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -237,7 +237,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getAuthentifiedUser(ctx))
+		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getAPIConsumer(ctx))
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
@@ -261,7 +261,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
 		}
@@ -300,7 +300,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//Insert variables
 		for _, v := range envPost.Variable {
-			if err := environment.InsertVariable(tx, envPost.ID, &v, getAuthentifiedUser(ctx)); err != nil {
+			if err := environment.InsertVariable(tx, envPost.ID, &v, getAPIConsumer(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
 			}
 		}
@@ -316,7 +316,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}
 
-		event.PublishEnvironmentAdd(p.Key, envPost, getAuthentifiedUser(ctx))
+		event.PublishEnvironmentAdd(p.Key, envPost, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}

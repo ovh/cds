@@ -40,7 +40,7 @@ func (api *API) getRepositoriesManagerForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key)
 		if errproj != nil {
 			return errproj
 		}
@@ -55,7 +55,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 		key := vars[permProjectKey]
 		rmName := vars["name"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getAuthentifiedUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key)
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
 		}
@@ -81,7 +81,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"repositories_manager": rmName,
 			"url":                  url,
 			"request_token":        token,
-			"username":             deprecatedGetUser(ctx).Username,
+			"username":             JWT(ctx).AuthentifiedUser.Username,
 		}
 
 		if token != "" {
@@ -123,7 +123,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, u)
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
@@ -166,7 +166,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAuthentifiedUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
@@ -199,7 +199,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "cannot get token nor verifier from data")
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errP != nil {
 			return sdk.WrapError(errP, "cannot load project %s", projectKey)
 		}
@@ -212,7 +212,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
 			Name:     rmName,
-			Username: deprecatedGetUser(ctx).Username,
+			Username: JWT(ctx).AuthentifiedUser.Username,
 			Data: map[string]string{
 				"token":  username,
 				"secret": secret,
@@ -236,7 +236,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAuthentifiedUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 
@@ -266,7 +266,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "repositoriesManagerAuthorizeCallback> Cannot get token nor verifier from data")
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
@@ -290,7 +290,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
 			Name:     rmName,
-			Username: deprecatedGetUser(ctx).Username,
+			Username: JWT(ctx).AuthentifiedUser.Username,
 			Data: map[string]string{
 				"token":  token,
 				"secret": secret,
@@ -305,7 +305,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAuthentifiedUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -317,7 +317,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 
-		p, errl := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
+		p, errl := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteRepositoriesManagerHandler> Cannot load project %s", projectKey)
 		}
@@ -353,7 +353,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteVCSServer(p, vcsServer.Name, getAuthentifiedUser(ctx))
+		event.PublishDeleteVCSServer(p, vcsServer.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -366,7 +366,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		rmName := vars["name"]
 		sync := FormBool(r, "synchronize")
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errproj != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
@@ -417,7 +417,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Missing repository name 'repo' as a query parameter"))
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getAuthentifiedUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errproj != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
@@ -450,7 +450,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		rmName := vars["name"]
 		fullname := r.FormValue("fullname")
 		db := api.mustDB()
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		app, err := application.LoadByName(db, api.Cache, projectKey, appName)
 		if err != nil {
@@ -497,7 +497,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 
 		// Update default payload of linked workflow root
 		if len(usage.Workflows) > 0 {
-			proj, errP := project.Load(db, api.Cache, projectKey, u)
+			proj, errP := project.Load(db, api.Cache, projectKey)
 			if errP != nil {
 				return sdk.WrapError(errP, "attachRepositoriesManager> Cannot load project")
 			}
@@ -556,7 +556,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 		db := api.mustDB()
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		app, errl := application.LoadByName(db, api.Cache, projectKey, appName)
 		if errl != nil {

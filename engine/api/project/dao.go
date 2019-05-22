@@ -68,7 +68,7 @@ func LoadAllByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 }
 
 // LoadAll returns all projects
-func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
 	return loadprojects(db, store, opts, query)
 }
@@ -377,6 +377,9 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, opts []LoadOpt
 	proj := sdk.Project(*p)
 
 	for _, f := range opts {
+		if f == nil {
+			continue
+		}
 		if err := (*f)(db, store, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return nil, err
 		}
@@ -466,4 +469,19 @@ func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID int64, add bool
 
 	_, err := db.Exec(query, userID, projectID)
 	return sdk.WithStack(err)
+}
+
+func FindPermissionByGroupID(db gorp.SqlExecutor, groupID ...int64) (sdk.Permissions, error) {
+	var perms sdk.Permissions
+	groupIDs := gorpmapping.IDs(groupID)
+	var query = gorpmapping.NewQuery(`
+		SELECT project.id as "id", project.name as "name", project_group.role as "role", project_group.group_id as "group_id"
+		FROM project JOIN project_group ON project.id = project_group.project_id
+		AND project_group.group_id = ANY(string_to_array($1, ',')::int[])
+	`).Args(gorpmapping.IDsToQueryString(groupIDs))
+
+	if err := gorpmapping.GetAll(db, query, &perms); err != nil {
+		return perms, err
+	}
+	return perms, nil
 }

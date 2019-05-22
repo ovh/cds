@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -69,21 +68,6 @@ func (api *API) statusHandler() service.Handler {
 
 		mStatus := api.computeGlobalStatus(srvs)
 		return service.WriteJSON(w, mStatus, status)
-	}
-}
-
-func (api *API) smtpPingHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if deprecatedGetUser(ctx) == nil {
-			return sdk.ErrForbidden
-		}
-
-		message := "mail sent"
-		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), deprecatedGetUser(ctx).Email, false); err != nil {
-			message = err.Error()
-		}
-
-		return service.WriteJSON(w, map[string]string{"message": message}, http.StatusOK)
 	}
 }
 

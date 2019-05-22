@@ -38,7 +38,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 			}
 		}
 
-		currentUser := getAuthentifiedUser(ctx)
+		currentUser := getAPIConsumer(ctx)
 		//User must be admin of the group set in the model
 		var isGroupAdmin bool
 	currentUGroup:
@@ -424,7 +424,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model for id %d", workerModelID)
 		}
 
-		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, getAuthentifiedUser(ctx))
+		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, getAPIConsumer(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load pipelines linked to worker model")
 		}
@@ -482,12 +482,12 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		models := []sdk.Model{}
 		var errbyuser error
 		if binary != "" {
-			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), getAuthentifiedUser(ctx), binary)
+			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), getAPIConsumer(ctx), binary)
 		} else {
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getAuthentifiedUser(ctx), opt)
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getAPIConsumer(ctx), opt)
 		}
 		if errbyuser != nil {
-			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", deprecatedGetUser(ctx).ID)
+			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
 		}
 
 		return service.WriteJSON(w, models, http.StatusOK)
@@ -571,7 +571,7 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 
 func (api *API) getWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if deprecatedGetUser(ctx).ID == 0 {
+		if JWT(ctx).AuthentifiedUser.OldUserStruct.ID == 0 {
 			var username string
 			if deprecatedGetUser(ctx) != nil {
 				username = deprecatedGetUser(ctx).Username
@@ -634,7 +634,7 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 
 func (api *API) getWorkerModelPatternsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if deprecatedGetUser(ctx) == nil || deprecatedGetUser(ctx).ID == 0 {
+		if deprecatedGetUser(ctx) == nil || JWT(ctx).AuthentifiedUser.OldUserStruct.ID == 0 {
 			var username string
 			if deprecatedGetUser(ctx) != nil {
 				username = deprecatedGetUser(ctx).Username

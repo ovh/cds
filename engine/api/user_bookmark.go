@@ -18,7 +18,7 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			return err
 		}
 
-		u := getAuthentifiedUser(ctx)
+		u := getAPIConsumer(ctx)
 
 		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, u, project.LoadOptions.WithIntegrations, project.LoadOptions.WithFavorites(u.OldUserStruct.ID))
 		if err != nil {

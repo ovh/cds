@@ -58,7 +58,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 
 	db := h.dbConnectionFactory.GetDBMap()
 
-	p, errP := project.LoadProjectByNodeRunID(nil, db, h.store, res.BuildID, getAuthentifiedUser(c), project.LoadOptions.WithVariables)
+	p, errP := project.LoadProjectByNodeRunID(nil, db, h.store, res.BuildID, project.LoadOptions.WithVariables)
 	if errP != nil {
 		return new(empty.Empty), sdk.WrapError(errP, "SendResult> Cannot load project")
 	}

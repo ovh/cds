@@ -70,7 +70,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		defer tx.Rollback()
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, api.Cache, pip.ProjectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithGroups)
+		project, err := project.Load(tx, api.Cache, pip.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -83,7 +83,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return err
 		}
 
-		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getAuthentifiedUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
 
@@ -115,7 +115,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getAuthentifiedUser(ctx))
+		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
@@ -188,7 +188,7 @@ func (api *API) updateJobHandler() service.Handler {
 		defer tx.Rollback()
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, api.Cache, pipelineData.ProjectKey, getAuthentifiedUser(ctx), project.LoadOptions.WithGroups)
+		project, err := project.Load(tx, api.Cache, pipelineData.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -201,7 +201,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return err
 		}
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getAuthentifiedUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
 
@@ -230,7 +230,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getAuthentifiedUser(ctx))
+		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
@@ -286,7 +286,7 @@ func (api *API) deleteJobHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getAuthentifiedUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -306,7 +306,7 @@ func (api *API) deleteJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getAuthentifiedUser(ctx))
+		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}

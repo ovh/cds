@@ -1,26 +1,15 @@
 package api
 
-import (
-	"context"
-	"net/http"
-
-	"github.com/gorilla/mux"
-
-	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-)
-
 // Old and Deprecated Authentication
+/*
 func (api *API) authDeprecatedMiddleware_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, bool, error) {
 	headers := req.Header
 
-	if rc.Options["auth"] != "true" {
+	if !rc.NeedAuth {
 		return ctx, false, nil
 	}
 
-	if rc.Options["auth"] == "true" && getProvider(ctx) == nil {
+	if rc.NeedAuth && getProvider(ctx) == nil {
 		switch headers.Get("User-Agent") {
 		case sdk.WorkerAgent:
 			log.Debug("authDeprecatedMiddleware.WorkerAgent")
@@ -77,7 +66,7 @@ func (api *API) authDeprecatedMiddleware_DEPRECATED(ctx context.Context, w http.
 		return ctx, false, nil
 	}
 
-	if rc.Options["needAdmin"] != "true" {
+	if rc.NeedAdmin != "true" {
 		if err := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true")); err != nil {
 			return ctx, false, err
 		}
@@ -93,3 +82,4 @@ func (api *API) authDeprecatedMiddleware_DEPRECATED(ctx context.Context, w http.
 
 	return ctx, true, nil
 }
+*/

@@ -70,7 +70,7 @@ func (api *API) getGroupTokenListHandler() service.Handler {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
 
-		isAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, deprecatedGetUser(ctx).ID)
+		isAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getGroupTokenListHandler> cannot load group admin information '%s'", groupName)
 		}
@@ -97,7 +97,7 @@ func (api *API) deleteTokenHandler() service.Handler {
 			return sdk.WrapError(errT, "deleteTokenHandler> token id is not a number '%s'", vars["tokenid"])
 		}
 
-		isGroupAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, deprecatedGetUser(ctx).ID)
+		isGroupAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
 		if errA != nil {
 			return sdk.WrapError(errT, "deleteTokenHandler> cannot load group admin for user %s", deprecatedGetUser(ctx).Username)
 		}

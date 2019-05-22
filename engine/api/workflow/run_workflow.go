@@ -8,7 +8,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -128,9 +127,10 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
 			}
 
-			if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
-				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.WorkflowData.Node.ID)
-			}
+			// TODO: check permission fo workflow node on handler layer
+			// if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
+			// 	return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.WorkflowData.Node.ID)
+			// }
 
 			// Continue  the current workflow run
 			r1, errmr := manualRunFromNode(ctx, tx, store, p, wr, opts.Manual, fromNode.ID)
@@ -140,10 +140,11 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			report.Merge(r1, nil) // nolint
 
 		} else {
+			// TODO: check permission fo workflow node on handler layer
 			// MANUAL RUN FROM ROOT NODE
-			if !permission.AccessToWorkflowNode(&wr.Workflow, &wr.Workflow.WorkflowData.Node, u, permission.PermissionReadExecute) {
-				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
-			}
+			//			if !permission.AccessToWorkflowNode(&wr.Workflow, &wr.Workflow.WorkflowData.Node, u, permission.PermissionReadExecute) {
+			//				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
+			//			}
 			// Start new workflow
 			r1, errmr := manualRun(ctx, tx, store, p, wr, opts.Manual)
 			if errmr != nil {
