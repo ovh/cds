@@ -192,6 +192,10 @@ a.ui.card:hover,
     color: inherit;
 }
 
+input:read-only {
+    opacity: 0.45
+}
+
 .ui.form input,
 .ui.form textarea,
 .ui.input input {
