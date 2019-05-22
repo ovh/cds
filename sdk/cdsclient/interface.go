@@ -259,8 +259,8 @@ type UserClient interface {
 	ListAllTokens() ([]sdk.Token, error)
 	FindToken(token string) (sdk.Token, error)
 	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
-	ProjectFavoritesList() ([]sdk.Project, error)
-	WorkflowFavoritesList() ([]sdk.Workflow, error)
+	ProjectFavoritesList(username string) ([]sdk.Project, error)
+	WorkflowFavoritesList(username string) ([]sdk.Workflow, error)
 }
 
 // WorkerClient exposes workers functions

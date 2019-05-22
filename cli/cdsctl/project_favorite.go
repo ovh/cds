@@ -60,7 +60,7 @@ var projectFavoriteListCmd = cli.Command{
 }
 
 func projectListFavoriteRun(v cli.Values) (cli.ListResult, error) {
-	projects, err := client.ProjectFavoritesList()
+	projects, err := client.ProjectFavoritesList(cfg.User)
 	if err != nil {
 		return nil, err
 	}

@@ -61,6 +61,8 @@ func (api *API) getUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
+		withFavoritesWorkflows := FormBool(r, "withFavoritesWorkflows")
+		withFavoritesProjects := FormBool(r, "withFavoritesProjects")
 
 		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
@@ -73,6 +75,22 @@ func (api *API) getUserHandler() service.Handler {
 
 		if err = loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
+		}
+
+		if withFavoritesWorkflows {
+			favoritesWorkflows, err := workflow.LoadFavorites(ctx, api.mustDB(), api.Cache, deprecatedGetUser(ctx))
+			if err != nil {
+				return sdk.WrapError(err, "unable to load favorites workflows")
+			}
+			u.FavoritesWorkflows = favoritesWorkflows
+		}
+
+		if withFavoritesProjects {
+			favoritesProjects, err := project.LoadFavorites(ctx, api.mustDB(), api.Cache, deprecatedGetUser(ctx))
+			if err != nil {
+				return sdk.WrapError(err, "unable to load favorites projects")
+			}
+			u.FavoritesProjects = favoritesProjects
 		}
 
 		return service.WriteJSON(w, u, http.StatusOK)
@@ -212,28 +230,6 @@ func (api *API) postTimelineFilterHandler() service.Handler {
 			}
 		}
 		return nil
-	}
-}
-
-// getUserFavoritesWorkflowsHandler get favorite workfows for user
-func (api *API) getUserFavoritesWorkflowsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		favoritesWorkflows, err := workflow.LoadFavorites(ctx, api.mustDB(), api.Cache, deprecatedGetUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "unable to load favorites workflows")
-		}
-		return service.WriteJSON(w, favoritesWorkflows, http.StatusOK)
-	}
-}
-
-// getUserFavoriteProjectsHandler get favorite projects for user
-func (api *API) getUserFavoriteProjectsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		favoritesProjects, err := project.LoadFavorites(ctx, api.mustDB(), api.Cache, deprecatedGetUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "unable to load favorites projects")
-		}
-		return service.WriteJSON(w, favoritesProjects, http.StatusOK)
 	}
 }
 
