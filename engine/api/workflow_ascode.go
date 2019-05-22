@@ -104,6 +104,32 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 		}
 
+		// Check if there is a repository web hook
+		found := false
+		for _, h := range wf.WorkflowData.GetHooks() {
+			if h.HookModelName == sdk.RepositoryWebHookModelName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			h := sdk.NodeHook{
+				Config:        sdk.RepositoryWebHookModel.DefaultConfig,
+				HookModelName: sdk.RepositoryWebHookModel.Name,
+			}
+			wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks, h)
+
+			oldW, errOld := workflow.LoadByID(api.mustDB(), api.Cache, proj, wf.ID, u, workflow.LoadOptions{})
+			if errOld != nil {
+				return errOld
+			}
+
+			if err := workflow.Update(ctx, api.mustDB(), api.Cache, wf, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
+				return err
+			}
+		}
+
+		// Export workflow + push + create pull request
 		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, project.EncryptWithBuiltinKey, u)
 		if err != nil {
 			return sdk.WrapError(errW, "unable to migrate workflow as code")

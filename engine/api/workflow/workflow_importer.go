@@ -3,9 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -55,19 +53,19 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	// Retrieve existing hook
-	oldHooks := oldW.WorkflowData.GetHooksMapRef()
+	oldHooksByRef := oldW.WorkflowData.GetHooksMapRef()
 	for i := range w.WorkflowData.Node.Hooks {
 		h := &w.WorkflowData.Node.Hooks[i]
 		if h.Ref != "" {
-			if oldH, has := oldHooks[h.Ref]; has {
+			if oldH, has := oldHooksByRef[h.Ref]; has {
 				if len(h.Config) == 0 {
 					h.Config = oldH.Config
 				}
 				h.UUID = oldH.UUID
+				continue
 			}
 		}
 	}
-
 	w.ID = oldW.ID
 
 	// HookRegistration after workflow.Update.  It needs hooks to be created on DB

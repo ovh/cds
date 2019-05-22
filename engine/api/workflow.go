@@ -429,6 +429,9 @@ func (api *API) putWorkflowHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
+
+		event.PublishWorkflowUpdate(p.Key, *wf1, *oldW, deprecatedGetUser(ctx))
+
 		wf1.Permission = permission.PermissionReadWriteExecute
 
 		usage, errU := loadWorkflowUsage(api.mustDB(), wf1.ID)
@@ -581,7 +584,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 			return sdk.WrapError(errW, "getWorkflowHookHandler> Cannot load Workflow %s/%s", key, name)
 		}
 
-		whooks := wf.WorkflowData.GetHooksMapRef()
+		whooks := wf.WorkflowData.GetHooks()
 		_, has := whooks[uuid]
 		if !has {
 			return sdk.WrapError(sdk.ErrNotFound, "getWorkflowHookHandler> Cannot load Workflow %s/%s hook %s", key, name, uuid)

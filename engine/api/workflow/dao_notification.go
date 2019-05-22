@@ -3,8 +3,6 @@ package workflow
 import (
 	"database/sql"
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
@@ -77,7 +75,6 @@ func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNot
 		return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> No notification references")
 	}
 
-	log.Info("%+v", n.SourceNodeRefs)
 	for _, s := range n.SourceNodeRefs {
 		nodeFoundRef := w.WorkflowData.NodeByName(s)
 		if nodeFoundRef == nil || nodeFoundRef.ID == 0 {
@@ -95,7 +92,6 @@ func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNot
 	//Insert associations with sources
 	query := "insert into workflow_notification_source(workflow_notification_id, node_id) values ($1, $2)"
 	for i := range n.NodeIDs {
-		log.Warning("%d", n.NodeIDs[i])
 		if _, err := db.Exec(query, n.ID, n.NodeIDs[i]); err != nil {
 			return sdk.WrapError(err, "Unable to insert associations between node %d and notification %d", n.NodeIDs[i], n.ID)
 		}

@@ -396,7 +396,7 @@ export class WorkflowTriggerConditionCache {
 
 export class WorkflowNotification {
     id: number;
-    source_node_id: Array<number>;
+    node_id: Array<number>;
     source_node_ref: Array<string>;
     type: string;
     settings: UserNotificationSettings;
@@ -405,7 +405,7 @@ export class WorkflowNotification {
         this.type = notificationTypes[0];
         this.settings = new UserNotificationSettings();
         this.source_node_ref = new Array<string>();
-        this.source_node_id = new Array<number>();
+        this.node_id = new Array<number>();
     }
 }
 

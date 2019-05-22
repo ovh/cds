@@ -161,6 +161,12 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
+		if wf != nil {
+			event.PublishWorkflowUpdate(proj.Key, *wrkflw, *wf, u)
+		} else {
+			event.PublishWorkflowAdd(proj.Key, *wrkflw, u)
+		}
+
 		if wrkflw != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)

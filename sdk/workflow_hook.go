@@ -15,7 +15,7 @@ type NodeHook struct {
 	Ref           string                 `json:"ref" db:"ref"`
 	NodeID        int64                  `json:"node_id" db:"node_id"`
 	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
-	HookModelName string                 `json:"-" db:"-"`
+	HookModelName string                 `json:"hook_model_name" db:"-"`
 	Config        WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
