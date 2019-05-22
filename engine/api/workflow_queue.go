@@ -139,7 +139,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	//Change worker status
-	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
+	if err := worker.SetToBuilding(tx, store, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
 		return nil, sdk.WrapError(err, "Cannot update worker %s status", getWorker(ctx).Name)
 	}
 

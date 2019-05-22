@@ -475,7 +475,6 @@
   "hook_task_execs": "Executions",
 
   "home_documentation": "Documentation",
-  "home_title": "Welcome to CDS",
 
   "job_add_step": "Add a step",
   "job_delete": "Delete job",
@@ -508,6 +507,7 @@
   "navbar_mark_read": "Mark as read",
   "navbar_see_all": "See all",
   "navbar_general": "Global",
+  "navbar_dark_mode": "Dark mode",
   "navbar_disconnect": "Logout",
 
   "notifications_added": "Notifications added",

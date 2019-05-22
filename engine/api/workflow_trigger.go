@@ -57,6 +57,9 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
 			}
+			if len(params) == 0 {
+				refNode = nil
+			}
 		}
 		if refNode == nil {
 			refNode = wf.WorkflowData.NodeByID(id)
@@ -82,16 +85,14 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
 		}
 
-		if (wr == nil && refNode.IsLinkedToRepo(wf)) || (wr != nil && refNode.IsLinkedToRepo(&wr.Workflow)) {
-			if sdk.ParameterFind(&params, "git.repository") == nil {
-				data.ConditionNames = append(data.ConditionNames, "git.repository")
-				data.ConditionNames = append(data.ConditionNames, "git.branch")
-				data.ConditionNames = append(data.ConditionNames, "git.message")
-				data.ConditionNames = append(data.ConditionNames, "git.author")
-				data.ConditionNames = append(data.ConditionNames, "git.hash")
-				data.ConditionNames = append(data.ConditionNames, "git.hash.short")
-				data.ConditionNames = append(data.ConditionNames, "git.tag")
-			}
+		if sdk.ParameterFind(&params, "git.repository") == nil {
+			data.ConditionNames = append(data.ConditionNames, "git.repository")
+			data.ConditionNames = append(data.ConditionNames, "git.branch")
+			data.ConditionNames = append(data.ConditionNames, "git.message")
+			data.ConditionNames = append(data.ConditionNames, "git.author")
+			data.ConditionNames = append(data.ConditionNames, "git.hash")
+			data.ConditionNames = append(data.ConditionNames, "git.hash.short")
+			data.ConditionNames = append(data.ConditionNames, "git.tag")
 		}
 
 		for _, p := range params {

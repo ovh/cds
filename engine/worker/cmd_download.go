@@ -220,7 +220,7 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 			defer wg.Done()
 
 			path := path.Join(reqArgs.Destination, a.Name)
-			f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 			if err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
 				isInError = true

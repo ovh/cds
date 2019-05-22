@@ -155,6 +155,10 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		return sdk.ErrWrongRequest
 	}
 
+	if method != "GET" {
+		c.consumer.cache.Delete(cacheKey)
+	}
+
 	// Unmarshall the JSON response
 	if v != nil {
 		// If looking for username then pull that from header
@@ -171,8 +175,9 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 				return err
 			}
 		}
-
-		c.consumer.cache.Set(cacheKey, v)
+		if method == "GET" {
+			c.consumer.cache.Set(cacheKey, v)
+		}
 	}
 
 	return nil

@@ -474,7 +474,6 @@
   "hook_task_execs": "Exécutions",
 
   "home_documentation": "Documentation",
-  "home_title": "Bienvenue sur CDS",
 
   "job_add_step": "Nouvelle étape",
   "job_delete": "Supprimer le job",
@@ -507,6 +506,7 @@
   "navbar_mark_read": "Marquer comme lu",
   "navbar_see_all": "Voir tout",
   "navbar_general": "Global",
+  "navbar_dark_mode": "Mode sombre",
   "navbar_disconnect": "Déconnexion",
 
   "notifications_added": "Notifications ajoutées",

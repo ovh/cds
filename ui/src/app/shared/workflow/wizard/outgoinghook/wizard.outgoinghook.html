@@ -2,16 +2,14 @@
     <div class="ui form">
         <h3 class="inline">{{ 'workflow_node_hook_form_title' | translate }}</h3>
         <div class="right floated mb15">
-            <i class="book icon"></i><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks" target="_blank">{{'common_documentation' | translate}}</a>
+            <i class="book icon"></i><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks"
+                target="_blank">{{'common_documentation' | translate}}</a>
         </div>
         <ng-container *ngIf="!loadingModels">
             <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}"
-                        [(ngModel)]="selectedOutgoingHookModel"
-                        (ngModelChange)="updateOutgoingHook()"
-                        [options]="outgoingHookModels"
-                        [isSearchable]="true"
-                        [isDisabled]="mode === 'update' || mode === 'ro'"
-                        labelField="name" #select>
+                [(ngModel)]="selectedOutgoingHookModel" (ngModelChange)="updateOutgoingHook()"
+                [options]="outgoingHookModels" [isSearchable]="true" [isDisabled]="mode === 'update' || mode === 'ro'"
+                labelField="name" #select>
                 <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                 </sui-select-option>
             </sui-select>
@@ -29,20 +27,16 @@
                     <div class="four wide field"><label>{{k}}</label></div>
                     <div class="twelve wide field">
                         <input type="text" [(ngModel)]="hook.outgoing_hook.config[k].value"
-                               (ngModelChange)="pushChange()"
-                               [readonly]="!hook.outgoing_hook.config[k].configurable || mode === 'ro'"
-                               *ngIf="k !== 'payload' && (hook.outgoing_hook.config[k].type === 'string' || !hook.outgoing_hook.config[k].type)"/>
+                            (ngModelChange)="pushChange()"
+                            [readonly]="!hook.outgoing_hook.config[k].configurable || mode === 'ro'"
+                            *ngIf="k !== 'payload' && (hook.outgoing_hook.config[k].type === 'string' || !hook.outgoing_hook.config[k].type)" />
                         <input type="password" [(ngModel)]="hook.outgoing_hook.config[k].value"
-                               (ngModelChange)="pushChange()"
-                               [readonly]="!hook.outgoing_hook.config[k].configurable || mode === 'ro'"
-                               *ngIf="k !== 'payload' && hook.outgoing_hook.config[k].type === 'password'"/>
+                            (ngModelChange)="pushChange()"
+                            [readonly]="!hook.outgoing_hook.config[k].configurable || mode === 'ro'"
+                            *ngIf="k !== 'payload' && hook.outgoing_hook.config[k].type === 'password'" />
                         <ng-container *ngIf="k === 'payload' && hook.outgoing_hook.config[k].type === 'string'">
-                            <codemirror
-                                    [class.invalid]="invalidJSON"
-                                    [(ngModel)]="hook.outgoing_hook.config[k].value"
-                                    [config]="codeMirrorConfig"
-                                    (change)="changeCodeMirror($event)"
-                                    #textareaCodeMirror>
+                            <codemirror [class.invalid]="invalidJSON" [(ngModel)]="hook.outgoing_hook.config[k].value"
+                                [config]="codeMirrorConfig" (change)="changeCodeMirror($event)" #textareaCodeMirror>
                             </codemirror>
                         </ng-container>
                     </div>
@@ -54,21 +48,20 @@
                 <div class="inline fields">
                     <div class="four wide field"><label>project</label></div>
                     <div class="twelve wide field">
-                        <input type="text" [(ngModel)]="hook.outgoing_hook.config['target_project'].value" readonly/>
+                        <input type="text" [(ngModel)]="hook.outgoing_hook.config['target_project'].value"
+                            [disabled]="true" />
                     </div>
                 </div>
                 <div class="inline fields" *ngIf="availableWorkflows">
                     <div class="four wide field"><label>workflow</label></div>
                     <div class="twelve wide field">
                         <sui-select class="selection" placeholder="{{'workflow_name' | translate}}"
-                                    [(ngModel)]="hook.outgoing_hook.config['target_workflow'].value"
-                                    (ngModelChange)="updateWorkflowData(true)"
-                                    [options]="availableWorkflows"
-                                    [isSearchable]="true"
-                                    [isDisabled]="mode === 'ro'"
-                                    labelField="name" #selectWorkflow
-                                    valueField="name">
-                            <sui-select-option *ngFor="let option of selectWorkflow.filteredOptions" [value]="option">{{option.name}}</sui-select-option>
+                            [(ngModel)]="hook.outgoing_hook.config['target_workflow'].value"
+                            (ngModelChange)="updateWorkflowData(true)" [options]="availableWorkflows"
+                            [isSearchable]="true" [isDisabled]="mode === 'ro'" labelField="name" #selectWorkflow
+                            valueField="name">
+                            <sui-select-option *ngFor="let option of selectWorkflow.filteredOptions" [value]="option">
+                                {{option.name}}</sui-select-option>
                         </sui-select>
                     </div>
                 </div>
@@ -76,38 +69,33 @@
                     <div class="four wide field"><label>hook</label></div>
                     <div class="twelve wide field">
                         <sui-select class="selection" placeholder="{{'hook' | translate}}"
-                                    [(ngModel)]="hook.outgoing_hook.config['target_hook'].value"
-                                    (ngModelChange)="updateWorkflowOutgoingHook()"
-                                    [options]="availableHooks"
-                                    [isSearchable]="true"
-                                    [isDisabled]="mode === 'ro'"
-                                    labelField="uuid"
-                                    valueField="uuid"
-                                    #selectHook>
-                            <sui-select-option *ngFor="let option of selectHook.filteredOptions" [value]="option">{{option.name}} </sui-select-option>
+                            [(ngModel)]="hook.outgoing_hook.config['target_hook'].value"
+                            (ngModelChange)="updateWorkflowOutgoingHook()" [options]="availableHooks"
+                            [isSearchable]="true" [isDisabled]="mode === 'ro'" labelField="uuid" valueField="uuid"
+                            #selectHook>
+                            <sui-select-option *ngFor="let option of selectHook.filteredOptions" [value]="option">
+                                {{option.name}} </sui-select-option>
                         </sui-select>
                     </div>
                 </div>
                 <div class="inline fields" *ngIf="availableHooks && hook.outgoing_hook.config['target_hook'].value">
                     <div class="four wide field"><label>payload</label></div>
                     <div class="twelve wide field">
-                        <codemirror
-                                [class.invalid]="invalidJSON"
-                                [(ngModel)]="hook.outgoing_hook.config['payload'].value"
-                                [config]="codeMirrorConfig"
-                                (change)="changeCodeMirror($event)"
-                                #textareaCodeMirror>
+                        <codemirror [class.invalid]="invalidJSON"
+                            [(ngModel)]="hook.outgoing_hook.config['payload'].value" [config]="codeMirrorConfig"
+                            (change)="changeCodeMirror($event)" #textareaCodeMirror>
                         </codemirror>
                     </div>
                 </div>
             </ng-container>
-            <div class="ui info message" *ngIf="!hook.outgoing_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
+            <div class="ui info message" *ngIf="!hook.outgoing_hook.config">
+                {{ 'workflow_node_hook_no_configuration' | translate }}</div>
         </ng-container>
         <ng-container *ngIf="mode === 'update' && workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
             <button class="ui right floated green button"
-                    *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE"
-                    [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
-                    [class.loading]="loading" (click)="updateWorkflow()">
+                *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE"
+                [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                [class.loading]="loading" (click)="updateWorkflow()">
                 {{ 'btn_save' | translate }}
             </button>
         </ng-container>

@@ -3,11 +3,16 @@
 .ui.menu.navbar {
   background-color: $polar_grey_0;
 
+  :host-context(.night) & {
+    background-color: $darkTheme_grey_0;
+  }
+
   i {
     &.favorite {
       color: $cds_favorite_color;
     }
   }
+
   img.item {
     height: 50px;
     padding: 5px 10px;
@@ -31,6 +36,7 @@
   sm-dropdown {
     height: 50px;
     display: flex;
+
     .item {
       color: white;
     }
@@ -40,12 +46,11 @@
     color: black;
   }
 
-
-
   .item {
     padding-top: 0px;
     padding-bottom: 0px;
     color: white;
+
     a {
       color: white;
     }
@@ -58,25 +63,31 @@
   .details {
     .title {
       font-size: 1.1em;
+
       &.bold {
         font-weight: bold;
       }
     }
+
     .notif {
       font-size: 0.8em;
+
       &.bold {
         font-weight: bold;
       }
+
       &.blue {
         color: $cds_color_teal !important;
       }
+
       &.orange {
         color: $cds_color_orange !important;
       }
     }
+
     .info {
       font-size: 0.8em;
-      color: black;
+
       &.mt {
         margin-top: 4px;
       }
@@ -92,14 +103,19 @@
     }
   }
 
-  .notification {
+  .notification {
+    background-color: transparent !important;
+
     &:focus {
       outline-style: none;
     }
+
     margin-left: 10px;
+
     i {
       margin-right: 0px;
     }
+
     .label {
       top: 0.3em;
       left: initial;
@@ -107,16 +123,23 @@
       right: 0.1em;
       line-height: 0.5em;
     }
+
     .nopadding {
       padding: 0;
       color: white;
+
       .menu {
         right: -1em;
+
         &.transition {
           margin-top: 18px;
         }
       }
     }
+  }
+
+  .theme-switch {
+    padding: 10px 16px;
   }
 }
 
@@ -126,35 +149,45 @@
 
 .notif {
   font-size: 0.8em;
+
   &.bold {
     font-weight: bold;
   }
+
   i {
     &.check {
       font-size: 1.5em;
       color: black;
       opacity: 0.3;
+
       &:hover {
         opacity: 1;
       }
     }
   }
+
   .title {
     font-size: 1.3em;
+
     &.bold {
       font-weight: bold;
     }
+
     &.blue {
       color: $cds_color_teal !important;
     }
+
     &.orange {
       color: $cds_color_orange !important;
     }
   }
+
   .info {
     font-size: 1em;
-    color: black;
+    color: inherit;
+    text-decoration: underline;
     display: block;
+
     &.mt {
       margin-top: 4px;
     }
@@ -168,7 +201,6 @@
 sm-select.languageSelect {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
-
 
 .ui.selection.dropdown {
   width: 28rem;

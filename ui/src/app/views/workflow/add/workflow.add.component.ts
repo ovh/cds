@@ -1,27 +1,27 @@
-import { Component, NgZone, ViewChild } from '@angular/core';
+import { Component, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Operation, PerformAsCodeResponse } from 'app/model/operation.model';
+import { Project } from 'app/model/project.model';
+import { Repository } from 'app/model/repositories.model';
+import { VCSStrategy } from 'app/model/vcs.model';
+import { WorkflowTemplate } from 'app/model/workflow-template.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { ImportAsCodeService } from 'app/service/import-as-code/import.service';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { ThemeStore } from 'app/service/services.module';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { SharedService } from 'app/shared/shared.service';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { Operation, PerformAsCodeResponse } from '../../../model/operation.model';
-import { Project } from '../../../model/project.model';
-import { Repository } from '../../../model/repositories.model';
-import { VCSStrategy } from '../../../model/vcs.model';
-import { WorkflowTemplate } from '../../../model/workflow-template.model';
-import { WNode, Workflow } from '../../../model/workflow.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
-import { ImportAsCodeService } from '../../../service/import-as-code/import.service';
-import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
-import { WorkflowTemplateService } from '../../../service/workflow-template/workflow-template.service';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { SharedService } from '../../../shared/shared.service';
-import { ToastService } from '../../../shared/toast/ToastService';
-import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-workflow-add',
@@ -29,16 +29,12 @@ import { CDSWebWorker } from '../../../shared/worker/web.worker';
     styleUrls: ['./workflow.add.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowAddComponent {
+export class WorkflowAddComponent implements OnInit {
+    @ViewChild('codeMirror') codemirror: any;
 
     workflow: Workflow;
     project: Project;
-
     creationMode = 'graphical';
-
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
-
     codeMirrorConfig: any;
     wfToImport = `# Example of workflow
 name: myWorkflow
@@ -62,18 +58,17 @@ workflow:
     webworkerSub: Subscription;
     asCodeResult: PerformAsCodeResponse;
     projectSubscription: Subscription;
-
     templates: Array<WorkflowTemplate>;
     selectedTemplatePath: string;
     selectedTemplate: WorkflowTemplate;
     descriptionRows: number;
-
     updated = false;
     loading = false;
     loadingRepo = false;
     currentStep = 0;
     duplicateWorkflowName = false;
     fileTooLarge = false;
+    themeSubscription: Subscription;
 
     constructor(
         private store: Store,
@@ -85,24 +80,34 @@ workflow:
         private _toast: ToastService,
         private _repoManagerService: RepoManagerService,
         private _workflowTemplateService: WorkflowTemplateService,
-        private _sharedService: SharedService
+        private _sharedService: SharedService,
+        private _theme: ThemeStore
     ) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
-        this._activatedRoute.data.subscribe(datas => {
-            this.project = datas['project'];
-        });
-
-        this.projectSubscription = this.store.select(ProjectState)
-            .pipe(filter((projState) => projState.project && projState.project.key))
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
-
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
         };
+    }
+
+    ngOnInit(): void {
+        this._activatedRoute.data.subscribe(datas => {
+            this.project = datas['project'];
+        });
+
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
+
+        this.projectSubscription = this.store.select(ProjectState)
+            .pipe(filter((projState) => projState.project && projState.project.key))
+            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         this.fetchTemplates();
     }

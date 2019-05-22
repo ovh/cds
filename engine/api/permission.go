@@ -59,6 +59,7 @@ func (api *API) setGroupsAndPermissionsFromGroupID_DEPRECATED(ctx context.Contex
 
 func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, rc *service.HandlerConfig, routeVar map[string]string) bool {
 	if getWorker(ctx) == nil {
+		log.Error("checkWorkerPermission> no worker in ctx")
 		return false
 	}
 
@@ -90,6 +91,9 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 
 		ok = runNodeJob.ID == getWorker(ctx).ActionBuildID
 		api.Cache.SetWithTTL(k, ok, 60*15)
+		if !ok {
+			log.Error("checkWorkerPermission> actionBuildID:%v runNodeJob.ID:%v", getWorker(ctx).ActionBuildID, runNodeJob.ID)
+		}
 		return ok
 	}
 	return true

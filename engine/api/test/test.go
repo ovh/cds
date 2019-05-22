@@ -12,13 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
