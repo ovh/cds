@@ -524,29 +524,6 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 
 	test.Equal(t, res.Favorite, true)
 
-	uri1b := api.Router.GetRoute("GET", api.getUserFavoritesWorkflowsHandler, nil)
-	test.NotEmpty(t, uri1b)
-
-	req1b := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri1b, nil)
-	//Do the request
-	w1b := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w1b, req1b)
-	assert.Equal(t, 200, w1b.Code)
-
-	t.Logf("Body: %s", w1b.Body.String())
-
-	res1b := []sdk.Workflow{}
-	if err := json.Unmarshal(w1b.Body.Bytes(), &res1b); err != nil {
-		t.Fatal(err)
-	}
-	var foundWf bool
-	for _, w := range res1b {
-		if w.Name == wf.Name {
-			foundWf = true
-		}
-	}
-	test.Equal(t, true, foundWf)
-
 	uri2 := api.Router.GetRoute("POST", api.postUserFavoriteHandler, nil)
 	test.NotEmpty(t, uri2)
 
@@ -586,52 +563,6 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	test.Equal(t, res3.Favorite, true)
-
-	uri4 := api.Router.GetRoute("GET", api.getUserFavoriteProjectsHandler, nil)
-	test.NotEmpty(t, uri4)
-
-	req4 := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri4, nil)
-	//Do the request
-	w4 := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w4, req4)
-	assert.Equal(t, 200, w4.Code)
-
-	t.Logf("Body: %s", w4.Body.String())
-
-	res4 := []sdk.Project{}
-	if err := json.Unmarshal(w4.Body.Bytes(), &res4); err != nil {
-		t.Fatal(err)
-	}
-	var found bool
-	for _, p := range res4 {
-		if p.Name == proj.Key {
-			found = true
-		}
-	}
-	test.Equal(t, true, found)
-
-	uri5 := api.Router.GetRoute("GET", api.getUserFavoritesWorkflowsHandler, nil)
-	test.NotEmpty(t, uri5)
-
-	req5 := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri5, paramsProj)
-	//Do the request
-	w5 := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w5, req5)
-	assert.Equal(t, 200, w5.Code)
-
-	t.Logf("Body: %s", w5.Body.String())
-
-	res5 := []sdk.Workflow{}
-	if err := json.Unmarshal(w5.Body.Bytes(), &res5); err != nil {
-		t.Fatal(err)
-	}
-	found = false
-	for _, w := range res5 {
-		if w.Name == wf.Name {
-			found = true
-		}
-	}
-	test.Equal(t, false, found)
 }
 
 // TestVerifyResetExpired test validating reset token when time expired

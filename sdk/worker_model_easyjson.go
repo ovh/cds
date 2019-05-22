@@ -873,25 +873,48 @@ func easyjson1c3bd83cDecodeGithubComOvhCdsSdk3(in *jlexer.Lexer, out *User) {
 			}
 		case "origin":
 			out.Origin = string(in.String())
-		case "favorites":
+		case "favorites_projects":
 			if in.IsNull() {
 				in.Skip()
-				out.Favorites = nil
+				out.FavoritesProjects = nil
 			} else {
 				in.Delim('[')
-				if out.Favorites == nil {
+				if out.FavoritesProjects == nil {
 					if !in.IsDelim(']') {
-						out.Favorites = make([]Favorite, 0, 1)
+						out.FavoritesProjects = make([]Project, 0, 1)
 					} else {
-						out.Favorites = []Favorite{}
+						out.FavoritesProjects = []Project{}
 					}
 				} else {
-					out.Favorites = (out.Favorites)[:0]
+					out.FavoritesProjects = (out.FavoritesProjects)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v14 Favorite
+					var v14 Project
 					easyjson1c3bd83cDecodeGithubComOvhCdsSdk6(in, &v14)
-					out.Favorites = append(out.Favorites, v14)
+					out.FavoritesProjects = append(out.FavoritesProjects, v14)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "favorites_workflows":
+			if in.IsNull() {
+				in.Skip()
+				out.FavoritesWorkflows = nil
+			} else {
+				in.Delim('[')
+				if out.FavoritesWorkflows == nil {
+					if !in.IsDelim(']') {
+						out.FavoritesWorkflows = make([]Workflow, 0, 1)
+					} else {
+						out.FavoritesWorkflows = []Workflow{}
+					}
+				} else {
+					out.FavoritesWorkflows = (out.FavoritesWorkflows)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v15 Workflow
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk7(in, &v15)
+					out.FavoritesWorkflows = append(out.FavoritesWorkflows, v15)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -974,11 +997,11 @@ func easyjson1c3bd83cEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in User) {
 		}
 		{
 			out.RawByte('[')
-			for v15, v16 := range in.Groups {
-				if v15 > 0 {
+			for v16, v17 := range in.Groups {
+				if v16 > 0 {
 					out.RawByte(',')
 				}
-				easyjson1c3bd83cEncodeGithubComOvhCdsSdk4(out, v16)
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk4(out, v17)
 			}
 			out.RawByte(']')
 		}
@@ -994,22 +1017,43 @@ func easyjson1c3bd83cEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in User) {
 		out.String(string(in.Origin))
 	}
 	{
-		const prefix string = ",\"favorites\":"
+		const prefix string = ",\"favorites_projects\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		if in.Favorites == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		if in.FavoritesProjects == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v17, v18 := range in.Favorites {
-				if v17 > 0 {
+			for v18, v19 := range in.FavoritesProjects {
+				if v18 > 0 {
 					out.RawByte(',')
 				}
-				easyjson1c3bd83cEncodeGithubComOvhCdsSdk6(out, v18)
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk6(out, v19)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"favorites_workflows\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.FavoritesWorkflows == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v20, v21 := range in.FavoritesWorkflows {
+				if v20 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk7(out, v21)
 			}
 			out.RawByte(']')
 		}
@@ -1026,7 +1070,7 @@ func easyjson1c3bd83cEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in User) {
 	}
 	out.RawByte('}')
 }
-func easyjson1c3bd83cDecodeGithubComOvhCdsSdk6(in *jlexer.Lexer, out *Favorite) {
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk7(in *jlexer.Lexer, out *Workflow) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1045,48 +1089,1146 @@ func easyjson1c3bd83cDecodeGithubComOvhCdsSdk6(in *jlexer.Lexer, out *Favorite) 
 			continue
 		}
 		switch key {
-		case "project_ids":
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "icon":
+			out.Icon = string(in.String())
+		case "last_modified":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.LastModified).UnmarshalJSON(data))
+			}
+		case "project_id":
+			out.ProjectID = int64(in.Int64())
+		case "project_key":
+			out.ProjectKey = string(in.String())
+		case "root_id":
+			out.RootID = int64(in.Int64())
+		case "root":
 			if in.IsNull() {
 				in.Skip()
-				out.ProjectIDs = nil
+				out.Root = nil
+			} else {
+				if out.Root == nil {
+					out.Root = new(WorkflowNode)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk8(in, out.Root)
+			}
+		case "joins":
+			if in.IsNull() {
+				in.Skip()
+				out.Joins = nil
 			} else {
 				in.Delim('[')
-				if out.ProjectIDs == nil {
+				if out.Joins == nil {
 					if !in.IsDelim(']') {
-						out.ProjectIDs = make([]int64, 0, 8)
+						out.Joins = make([]WorkflowNodeJoin, 0, 1)
 					} else {
-						out.ProjectIDs = []int64{}
+						out.Joins = []WorkflowNodeJoin{}
 					}
 				} else {
-					out.ProjectIDs = (out.ProjectIDs)[:0]
+					out.Joins = (out.Joins)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v19 int64
-					v19 = int64(in.Int64())
-					out.ProjectIDs = append(out.ProjectIDs, v19)
+					var v22 WorkflowNodeJoin
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk9(in, &v22)
+					out.Joins = append(out.Joins, v22)
 					in.WantComma()
 				}
 				in.Delim(']')
 			}
-		case "workflow_ids":
+		case "groups":
 			if in.IsNull() {
 				in.Skip()
-				out.WorkflowIDs = nil
+				out.Groups = nil
 			} else {
 				in.Delim('[')
-				if out.WorkflowIDs == nil {
+				if out.Groups == nil {
 					if !in.IsDelim(']') {
-						out.WorkflowIDs = make([]int64, 0, 8)
+						out.Groups = make([]GroupPermission, 0, 1)
 					} else {
-						out.WorkflowIDs = []int64{}
+						out.Groups = []GroupPermission{}
 					}
 				} else {
-					out.WorkflowIDs = (out.WorkflowIDs)[:0]
+					out.Groups = (out.Groups)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v20 int64
-					v20 = int64(in.Int64())
-					out.WorkflowIDs = append(out.WorkflowIDs, v20)
+					var v23 GroupPermission
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk10(in, &v23)
+					out.Groups = append(out.Groups, v23)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "permission":
+			out.Permission = int(in.Int())
+		case "metadata":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Metadata = make(Metadata)
+				} else {
+					out.Metadata = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v24 string
+					v24 = string(in.String())
+					(out.Metadata)[key] = v24
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "usage":
+			if in.IsNull() {
+				in.Skip()
+				out.Usage = nil
+			} else {
+				if out.Usage == nil {
+					out.Usage = new(Usage)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk11(in, out.Usage)
+			}
+		case "history_length":
+			out.HistoryLength = int64(in.Int64())
+		case "purge_tags":
+			if in.IsNull() {
+				in.Skip()
+				out.PurgeTags = nil
+			} else {
+				in.Delim('[')
+				if out.PurgeTags == nil {
+					if !in.IsDelim(']') {
+						out.PurgeTags = make([]string, 0, 4)
+					} else {
+						out.PurgeTags = []string{}
+					}
+				} else {
+					out.PurgeTags = (out.PurgeTags)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v25 string
+					v25 = string(in.String())
+					out.PurgeTags = append(out.PurgeTags, v25)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "notifications":
+			if in.IsNull() {
+				in.Skip()
+				out.Notifications = nil
+			} else {
+				in.Delim('[')
+				if out.Notifications == nil {
+					if !in.IsDelim(']') {
+						out.Notifications = make([]WorkflowNotification, 0, 1)
+					} else {
+						out.Notifications = []WorkflowNotification{}
+					}
+				} else {
+					out.Notifications = (out.Notifications)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v26 WorkflowNotification
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk12(in, &v26)
+					out.Notifications = append(out.Notifications, v26)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "from_repository":
+			out.FromRepository = string(in.String())
+		case "derived_from_workflow_id":
+			out.DerivedFromWorkflowID = int64(in.Int64())
+		case "derived_from_workflow_name":
+			out.DerivedFromWorkflowName = string(in.String())
+		case "derivation_branch":
+			out.DerivationBranch = string(in.String())
+		case "audits":
+			if in.IsNull() {
+				in.Skip()
+				out.Audits = nil
+			} else {
+				in.Delim('[')
+				if out.Audits == nil {
+					if !in.IsDelim(']') {
+						out.Audits = make([]AuditWorkflow, 0, 1)
+					} else {
+						out.Audits = []AuditWorkflow{}
+					}
+				} else {
+					out.Audits = (out.Audits)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v27 AuditWorkflow
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk13(in, &v27)
+					out.Audits = append(out.Audits, v27)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "pipelines":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Pipelines = make(map[int64]Pipeline)
+				} else {
+					out.Pipelines = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v28 Pipeline
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk14(in, &v28)
+					(out.Pipelines)[key] = v28
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "applications":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Applications = make(map[int64]Application)
+				} else {
+					out.Applications = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v29 Application
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk15(in, &v29)
+					(out.Applications)[key] = v29
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "environments":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Environments = make(map[int64]Environment)
+				} else {
+					out.Environments = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v30 Environment
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk16(in, &v30)
+					(out.Environments)[key] = v30
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "project_integrations":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.ProjectIntegrations = make(map[int64]ProjectIntegration)
+				} else {
+					out.ProjectIntegrations = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v31 ProjectIntegration
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk17(in, &v31)
+					(out.ProjectIntegrations)[key] = v31
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "hook_models":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.HookModels = make(map[int64]WorkflowHookModel)
+				} else {
+					out.HookModels = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v32 WorkflowHookModel
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk18(in, &v32)
+					(out.HookModels)[key] = v32
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "outgoing_hook_models":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.OutGoingHookModels = make(map[int64]WorkflowHookModel)
+				} else {
+					out.OutGoingHookModels = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v33 WorkflowHookModel
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk18(in, &v33)
+					(out.OutGoingHookModels)[key] = v33
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "labels":
+			if in.IsNull() {
+				in.Skip()
+				out.Labels = nil
+			} else {
+				in.Delim('[')
+				if out.Labels == nil {
+					if !in.IsDelim(']') {
+						out.Labels = make([]Label, 0, 1)
+					} else {
+						out.Labels = []Label{}
+					}
+				} else {
+					out.Labels = (out.Labels)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v34 Label
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk19(in, &v34)
+					out.Labels = append(out.Labels, v34)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "to_delete":
+			out.ToDelete = bool(in.Bool())
+		case "favorite":
+			out.Favorite = bool(in.Bool())
+		case "workflow_data":
+			if in.IsNull() {
+				in.Skip()
+				out.WorkflowData = nil
+			} else {
+				if out.WorkflowData == nil {
+					out.WorkflowData = new(WorkflowData)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk20(in, out.WorkflowData)
+			}
+		case "as_code_events":
+			if in.IsNull() {
+				in.Skip()
+				out.AsCodeEvent = nil
+			} else {
+				in.Delim('[')
+				if out.AsCodeEvent == nil {
+					if !in.IsDelim(']') {
+						out.AsCodeEvent = make([]AsCodeEvent, 0, 1)
+					} else {
+						out.AsCodeEvent = []AsCodeEvent{}
+					}
+				} else {
+					out.AsCodeEvent = (out.AsCodeEvent)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v35 AsCodeEvent
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk21(in, &v35)
+					out.AsCodeEvent = append(out.AsCodeEvent, v35)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "from_template":
+			out.FromTemplate = string(in.String())
+		case "template_up_to_date":
+			out.TemplateUpToDate = bool(in.Bool())
+		case "urls":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk22(in, &out.URLs)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk7(out *jwriter.Writer, in Workflow) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	if in.Description != "" {
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	if in.Icon != "" {
+		const prefix string = ",\"icon\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Icon))
+	}
+	{
+		const prefix string = ",\"last_modified\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.LastModified).MarshalJSON())
+	}
+	if in.ProjectID != 0 {
+		const prefix string = ",\"project_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ProjectID))
+	}
+	{
+		const prefix string = ",\"project_key\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ProjectKey))
+	}
+	if in.RootID != 0 {
+		const prefix string = ",\"root_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.RootID))
+	}
+	if in.Root != nil {
+		const prefix string = ",\"root\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk8(out, *in.Root)
+	}
+	if len(in.Joins) != 0 {
+		const prefix string = ",\"joins\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v36, v37 := range in.Joins {
+				if v36 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk9(out, v37)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Groups) != 0 {
+		const prefix string = ",\"groups\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v38, v39 := range in.Groups {
+				if v38 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk10(out, v39)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Permission != 0 {
+		const prefix string = ",\"permission\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Permission))
+	}
+	{
+		const prefix string = ",\"metadata\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Metadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v40First := true
+			for v40Name, v40Value := range in.Metadata {
+				if v40First {
+					v40First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v40Name))
+				out.RawByte(':')
+				out.String(string(v40Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	if in.Usage != nil {
+		const prefix string = ",\"usage\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk11(out, *in.Usage)
+	}
+	{
+		const prefix string = ",\"history_length\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.HistoryLength))
+	}
+	if len(in.PurgeTags) != 0 {
+		const prefix string = ",\"purge_tags\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v41, v42 := range in.PurgeTags {
+				if v41 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v42))
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Notifications) != 0 {
+		const prefix string = ",\"notifications\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v43, v44 := range in.Notifications {
+				if v43 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk12(out, v44)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.FromRepository != "" {
+		const prefix string = ",\"from_repository\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.FromRepository))
+	}
+	if in.DerivedFromWorkflowID != 0 {
+		const prefix string = ",\"derived_from_workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.DerivedFromWorkflowID))
+	}
+	if in.DerivedFromWorkflowName != "" {
+		const prefix string = ",\"derived_from_workflow_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DerivedFromWorkflowName))
+	}
+	if in.DerivationBranch != "" {
+		const prefix string = ",\"derivation_branch\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DerivationBranch))
+	}
+	{
+		const prefix string = ",\"audits\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Audits == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v45, v46 := range in.Audits {
+				if v45 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk13(out, v46)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"pipelines\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Pipelines == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v47First := true
+			for v47Name, v47Value := range in.Pipelines {
+				if v47First {
+					v47First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v47Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk14(out, v47Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"applications\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Applications == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v48First := true
+			for v48Name, v48Value := range in.Applications {
+				if v48First {
+					v48First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v48Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk15(out, v48Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"environments\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Environments == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v49First := true
+			for v49Name, v49Value := range in.Environments {
+				if v49First {
+					v49First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v49Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk16(out, v49Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"project_integrations\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.ProjectIntegrations == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v50First := true
+			for v50Name, v50Value := range in.ProjectIntegrations {
+				if v50First {
+					v50First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v50Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk17(out, v50Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"hook_models\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.HookModels == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v51First := true
+			for v51Name, v51Value := range in.HookModels {
+				if v51First {
+					v51First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v51Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk18(out, v51Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"outgoing_hook_models\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.OutGoingHookModels == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v52First := true
+			for v52Name, v52Value := range in.OutGoingHookModels {
+				if v52First {
+					v52First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v52Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk18(out, v52Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"labels\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Labels == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v53, v54 := range in.Labels {
+				if v53 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk19(out, v54)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"to_delete\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.ToDelete))
+	}
+	{
+		const prefix string = ",\"favorite\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Favorite))
+	}
+	{
+		const prefix string = ",\"workflow_data\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.WorkflowData == nil {
+			out.RawString("null")
+		} else {
+			easyjson1c3bd83cEncodeGithubComOvhCdsSdk20(out, *in.WorkflowData)
+		}
+	}
+	{
+		const prefix string = ",\"as_code_events\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.AsCodeEvent == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v55, v56 := range in.AsCodeEvent {
+				if v55 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk21(out, v56)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.FromTemplate != "" {
+		const prefix string = ",\"from_template\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.FromTemplate))
+	}
+	if in.TemplateUpToDate {
+		const prefix string = ",\"template_up_to_date\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.TemplateUpToDate))
+	}
+	{
+		const prefix string = ",\"urls\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk22(out, in.URLs)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk22(in *jlexer.Lexer, out *URL) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "api_url":
+			out.APIURL = string(in.String())
+		case "ui_url":
+			out.UIURL = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk22(out *jwriter.Writer, in URL) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"api_url\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.APIURL))
+	}
+	{
+		const prefix string = ",\"ui_url\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.UIURL))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *AsCodeEvent) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "workflow_id":
+			out.WorkflowID = int64(in.Int64())
+		case "pullrequest_id":
+			out.PullRequestID = int64(in.Int64())
+		case "pullrequest_url":
+			out.PullRequestURL = string(in.String())
+		case "username":
+			out.Username = string(in.String())
+		case "creation_date":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.CreationDate).UnmarshalJSON(data))
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk21(out *jwriter.Writer, in AsCodeEvent) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowID))
+	}
+	{
+		const prefix string = ",\"pullrequest_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.PullRequestID))
+	}
+	{
+		const prefix string = ",\"pullrequest_url\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.PullRequestURL))
+	}
+	{
+		const prefix string = ",\"username\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Username))
+	}
+	{
+		const prefix string = ",\"creation_date\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.CreationDate).MarshalJSON())
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk20(in *jlexer.Lexer, out *WorkflowData) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "node":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk23(in, &out.Node)
+		case "joins":
+			if in.IsNull() {
+				in.Skip()
+				out.Joins = nil
+			} else {
+				in.Delim('[')
+				if out.Joins == nil {
+					if !in.IsDelim(']') {
+						out.Joins = make([]Node, 0, 1)
+					} else {
+						out.Joins = []Node{}
+					}
+				} else {
+					out.Joins = (out.Joins)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v57 Node
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk23(in, &v57)
+					out.Joins = append(out.Joins, v57)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1101,48 +2243,8938 @@ func easyjson1c3bd83cDecodeGithubComOvhCdsSdk6(in *jlexer.Lexer, out *Favorite) 
 		in.Consumed()
 	}
 }
-func easyjson1c3bd83cEncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in Favorite) {
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk20(out *jwriter.Writer, in WorkflowData) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"project_ids\":"
+		const prefix string = ",\"node\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		if in.ProjectIDs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk23(out, in.Node)
+	}
+	{
+		const prefix string = ",\"joins\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Joins == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v21, v22 := range in.ProjectIDs {
-				if v21 > 0 {
+			for v58, v59 := range in.Joins {
+				if v58 > 0 {
 					out.RawByte(',')
 				}
-				out.Int64(int64(v22))
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk23(out, v59)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk23(in *jlexer.Lexer, out *Node) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "workflow_id":
+			out.WorkflowID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "ref":
+			out.Ref = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		case "triggers":
+			if in.IsNull() {
+				in.Skip()
+				out.Triggers = nil
+			} else {
+				in.Delim('[')
+				if out.Triggers == nil {
+					if !in.IsDelim(']') {
+						out.Triggers = make([]NodeTrigger, 0, 1)
+					} else {
+						out.Triggers = []NodeTrigger{}
+					}
+				} else {
+					out.Triggers = (out.Triggers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v60 NodeTrigger
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk24(in, &v60)
+					out.Triggers = append(out.Triggers, v60)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "context":
+			if in.IsNull() {
+				in.Skip()
+				out.Context = nil
+			} else {
+				if out.Context == nil {
+					out.Context = new(NodeContext)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk25(in, out.Context)
+			}
+		case "outgoing_hook":
+			if in.IsNull() {
+				in.Skip()
+				out.OutGoingHookContext = nil
+			} else {
+				if out.OutGoingHookContext == nil {
+					out.OutGoingHookContext = new(NodeOutGoingHook)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk26(in, out.OutGoingHookContext)
+			}
+		case "parents":
+			if in.IsNull() {
+				in.Skip()
+				out.JoinContext = nil
+			} else {
+				in.Delim('[')
+				if out.JoinContext == nil {
+					if !in.IsDelim(']') {
+						out.JoinContext = make([]NodeJoin, 0, 1)
+					} else {
+						out.JoinContext = []NodeJoin{}
+					}
+				} else {
+					out.JoinContext = (out.JoinContext)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v61 NodeJoin
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk27(in, &v61)
+					out.JoinContext = append(out.JoinContext, v61)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "hooks":
+			if in.IsNull() {
+				in.Skip()
+				out.Hooks = nil
+			} else {
+				in.Delim('[')
+				if out.Hooks == nil {
+					if !in.IsDelim(']') {
+						out.Hooks = make([]NodeHook, 0, 1)
+					} else {
+						out.Hooks = []NodeHook{}
+					}
+				} else {
+					out.Hooks = (out.Hooks)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v62 NodeHook
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk28(in, &v62)
+					out.Hooks = append(out.Hooks, v62)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "groups":
+			if in.IsNull() {
+				in.Skip()
+				out.Groups = nil
+			} else {
+				in.Delim('[')
+				if out.Groups == nil {
+					if !in.IsDelim(']') {
+						out.Groups = make([]GroupPermission, 0, 1)
+					} else {
+						out.Groups = []GroupPermission{}
+					}
+				} else {
+					out.Groups = (out.Groups)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v63 GroupPermission
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk10(in, &v63)
+					out.Groups = append(out.Groups, v63)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk23(out *jwriter.Writer, in Node) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Ref))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"triggers\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Triggers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v64, v65 := range in.Triggers {
+				if v64 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk24(out, v65)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
-		const prefix string = ",\"workflow_ids\":"
+		const prefix string = ",\"context\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		if in.WorkflowIDs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		if in.Context == nil {
+			out.RawString("null")
+		} else {
+			easyjson1c3bd83cEncodeGithubComOvhCdsSdk25(out, *in.Context)
+		}
+	}
+	{
+		const prefix string = ",\"outgoing_hook\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.OutGoingHookContext == nil {
+			out.RawString("null")
+		} else {
+			easyjson1c3bd83cEncodeGithubComOvhCdsSdk26(out, *in.OutGoingHookContext)
+		}
+	}
+	{
+		const prefix string = ",\"parents\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.JoinContext == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v23, v24 := range in.WorkflowIDs {
-				if v23 > 0 {
+			for v66, v67 := range in.JoinContext {
+				if v66 > 0 {
 					out.RawByte(',')
 				}
-				out.Int64(int64(v24))
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk27(out, v67)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"hooks\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Hooks == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v68, v69 := range in.Hooks {
+				if v68 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk28(out, v69)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Groups) != 0 {
+		const prefix string = ",\"groups\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v70, v71 := range in.Groups {
+				if v70 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk10(out, v71)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk28(in *jlexer.Lexer, out *NodeHook) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "uuid":
+			out.UUID = string(in.String())
+		case "ref":
+			out.Ref = string(in.String())
+		case "node_id":
+			out.NodeID = int64(in.Int64())
+		case "hook_model_id":
+			out.HookModelID = int64(in.Int64())
+		case "config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Config = make(WorkflowNodeHookConfig)
+				} else {
+					out.Config = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v72 WorkflowNodeHookConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk29(in, &v72)
+					(out.Config)[key] = v72
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk28(out *jwriter.Writer, in NodeHook) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"uuid\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.UUID))
+	}
+	{
+		const prefix string = ",\"ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Ref))
+	}
+	{
+		const prefix string = ",\"node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.NodeID))
+	}
+	{
+		const prefix string = ",\"hook_model_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.HookModelID))
+	}
+	{
+		const prefix string = ",\"config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v73First := true
+			for v73Name, v73Value := range in.Config {
+				if v73First {
+					v73First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v73Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk29(out, v73Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *WorkflowNodeHookConfigValue) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "value":
+			out.Value = string(in.String())
+		case "configurable":
+			out.Configurable = bool(in.Bool())
+		case "type":
+			out.Type = string(in.String())
+		case "multiple_choice_list":
+			if in.IsNull() {
+				in.Skip()
+				out.MultipleChoiceList = nil
+			} else {
+				in.Delim('[')
+				if out.MultipleChoiceList == nil {
+					if !in.IsDelim(']') {
+						out.MultipleChoiceList = make([]string, 0, 4)
+					} else {
+						out.MultipleChoiceList = []string{}
+					}
+				} else {
+					out.MultipleChoiceList = (out.MultipleChoiceList)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v74 string
+					v74 = string(in.String())
+					out.MultipleChoiceList = append(out.MultipleChoiceList, v74)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk29(out *jwriter.Writer, in WorkflowNodeHookConfigValue) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Value))
+	}
+	{
+		const prefix string = ",\"configurable\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Configurable))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"multiple_choice_list\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.MultipleChoiceList == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v75, v76 := range in.MultipleChoiceList {
+				if v75 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v76))
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk27(in *jlexer.Lexer, out *NodeJoin) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "node_id":
+			out.NodeID = int64(in.Int64())
+		case "parent_name":
+			out.ParentName = string(in.String())
+		case "parent_id":
+			out.ParentID = int64(in.Int64())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk27(out *jwriter.Writer, in NodeJoin) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.NodeID))
+	}
+	if in.ParentName != "" {
+		const prefix string = ",\"parent_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ParentName))
+	}
+	if in.ParentID != 0 {
+		const prefix string = ",\"parent_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ParentID))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk26(in *jlexer.Lexer, out *NodeOutGoingHook) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "node_id":
+			out.NodeID = int64(in.Int64())
+		case "hook_model_id":
+			out.HookModelID = int64(in.Int64())
+		case "config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Config = make(WorkflowNodeHookConfig)
+				} else {
+					out.Config = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v77 WorkflowNodeHookConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk29(in, &v77)
+					(out.Config)[key] = v77
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk26(out *jwriter.Writer, in NodeOutGoingHook) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.NodeID))
+	}
+	{
+		const prefix string = ",\"hook_model_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.HookModelID))
+	}
+	{
+		const prefix string = ",\"config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v78First := true
+			for v78Name, v78Value := range in.Config {
+				if v78First {
+					v78First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v78Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk29(out, v78Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk25(in *jlexer.Lexer, out *NodeContext) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "node_id":
+			out.NodeID = int64(in.Int64())
+		case "pipeline_id":
+			out.PipelineID = int64(in.Int64())
+		case "application_id":
+			out.ApplicationID = int64(in.Int64())
+		case "environment_id":
+			out.EnvironmentID = int64(in.Int64())
+		case "project_integration_id":
+			out.ProjectIntegrationID = int64(in.Int64())
+		case "default_payload":
+			if m, ok := out.DefaultPayload.(easyjson.Unmarshaler); ok {
+				m.UnmarshalEasyJSON(in)
+			} else if m, ok := out.DefaultPayload.(json.Unmarshaler); ok {
+				_ = m.UnmarshalJSON(in.Raw())
+			} else {
+				out.DefaultPayload = in.Interface()
+			}
+		case "default_pipeline_parameters":
+			if in.IsNull() {
+				in.Skip()
+				out.DefaultPipelineParameters = nil
+			} else {
+				in.Delim('[')
+				if out.DefaultPipelineParameters == nil {
+					if !in.IsDelim(']') {
+						out.DefaultPipelineParameters = make([]Parameter, 0, 1)
+					} else {
+						out.DefaultPipelineParameters = []Parameter{}
+					}
+				} else {
+					out.DefaultPipelineParameters = (out.DefaultPipelineParameters)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v79 Parameter
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk30(in, &v79)
+					out.DefaultPipelineParameters = append(out.DefaultPipelineParameters, v79)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "conditions":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk31(in, &out.Conditions)
+		case "mutex":
+			out.Mutex = bool(in.Bool())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk25(out *jwriter.Writer, in NodeContext) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.NodeID))
+	}
+	{
+		const prefix string = ",\"pipeline_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.PipelineID))
+	}
+	{
+		const prefix string = ",\"application_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ApplicationID))
+	}
+	{
+		const prefix string = ",\"environment_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.EnvironmentID))
+	}
+	{
+		const prefix string = ",\"project_integration_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ProjectIntegrationID))
+	}
+	if in.DefaultPayload != nil {
+		const prefix string = ",\"default_payload\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if m, ok := in.DefaultPayload.(easyjson.Marshaler); ok {
+			m.MarshalEasyJSON(out)
+		} else if m, ok := in.DefaultPayload.(json.Marshaler); ok {
+			out.Raw(m.MarshalJSON())
+		} else {
+			out.Raw(json.Marshal(in.DefaultPayload))
+		}
+	}
+	{
+		const prefix string = ",\"default_pipeline_parameters\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.DefaultPipelineParameters == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v80, v81 := range in.DefaultPipelineParameters {
+				if v80 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk30(out, v81)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"conditions\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk31(out, in.Conditions)
+	}
+	{
+		const prefix string = ",\"mutex\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Mutex))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk31(in *jlexer.Lexer, out *WorkflowNodeConditions) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "plain":
+			if in.IsNull() {
+				in.Skip()
+				out.PlainConditions = nil
+			} else {
+				in.Delim('[')
+				if out.PlainConditions == nil {
+					if !in.IsDelim(']') {
+						out.PlainConditions = make([]WorkflowNodeCondition, 0, 1)
+					} else {
+						out.PlainConditions = []WorkflowNodeCondition{}
+					}
+				} else {
+					out.PlainConditions = (out.PlainConditions)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v82 WorkflowNodeCondition
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk32(in, &v82)
+					out.PlainConditions = append(out.PlainConditions, v82)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "lua_script":
+			out.LuaScript = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk31(out *jwriter.Writer, in WorkflowNodeConditions) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if len(in.PlainConditions) != 0 {
+		const prefix string = ",\"plain\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v83, v84 := range in.PlainConditions {
+				if v83 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk32(out, v84)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.LuaScript != "" {
+		const prefix string = ",\"lua_script\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.LuaScript))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk32(in *jlexer.Lexer, out *WorkflowNodeCondition) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "variable":
+			out.Variable = string(in.String())
+		case "operator":
+			out.Operator = string(in.String())
+		case "value":
+			out.Value = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk32(out *jwriter.Writer, in WorkflowNodeCondition) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"variable\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Variable))
+	}
+	{
+		const prefix string = ",\"operator\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Operator))
+	}
+	{
+		const prefix string = ",\"value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Value))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk30(in *jlexer.Lexer, out *Parameter) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		case "value":
+			out.Value = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "advanced":
+			out.Advanced = bool(in.Bool())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk30(out *jwriter.Writer, in Parameter) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Value))
+	}
+	if in.Description != "" {
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	if in.Advanced {
+		const prefix string = ",\"advanced\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Advanced))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk24(in *jlexer.Lexer, out *NodeTrigger) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "parent_node_id":
+			out.ParentNodeID = int64(in.Int64())
+		case "child_node_id":
+			out.ChildNodeID = int64(in.Int64())
+		case "parent_node_name":
+			out.ParentNodeName = string(in.String())
+		case "child_node":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk23(in, &out.ChildNode)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk24(out *jwriter.Writer, in NodeTrigger) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"parent_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ParentNodeID))
+	}
+	{
+		const prefix string = ",\"child_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ChildNodeID))
+	}
+	{
+		const prefix string = ",\"parent_node_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ParentNodeName))
+	}
+	{
+		const prefix string = ",\"child_node\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk23(out, in.ChildNode)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk19(in *jlexer.Lexer, out *Label) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "color":
+			out.Color = string(in.String())
+		case "project_id":
+			out.ProjectID = int64(in.Int64())
+		case "workflow_id":
+			out.WorkflowID = int64(in.Int64())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk19(out *jwriter.Writer, in Label) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"color\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Color))
+	}
+	{
+		const prefix string = ",\"project_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ProjectID))
+	}
+	if in.WorkflowID != 0 {
+		const prefix string = ",\"workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowID))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk18(in *jlexer.Lexer, out *WorkflowHookModel) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		case "author":
+			out.Author = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "identifier":
+			out.Identifier = string(in.String())
+		case "icon":
+			out.Icon = string(in.String())
+		case "command":
+			out.Command = string(in.String())
+		case "default_config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.DefaultConfig = make(WorkflowNodeHookConfig)
+				} else {
+					out.DefaultConfig = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v85 WorkflowNodeHookConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk29(in, &v85)
+					(out.DefaultConfig)[key] = v85
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "disabled":
+			out.Disabled = bool(in.Bool())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in WorkflowHookModel) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"author\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Author))
+	}
+	{
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"identifier\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Identifier))
+	}
+	{
+		const prefix string = ",\"icon\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Icon))
+	}
+	{
+		const prefix string = ",\"command\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Command))
+	}
+	{
+		const prefix string = ",\"default_config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.DefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v86First := true
+			for v86Name, v86Value := range in.DefaultConfig {
+				if v86First {
+					v86First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v86Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk29(out, v86Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"disabled\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Disabled))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk17(in *jlexer.Lexer, out *ProjectIntegration) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "project_id":
+			out.ProjectID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "integration_model_id":
+			out.IntegrationModelID = int64(in.Int64())
+		case "model":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk33(in, &out.Model)
+		case "config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Config = make(IntegrationConfig)
+				} else {
+					out.Config = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v87 IntegrationConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk34(in, &v87)
+					(out.Config)[key] = v87
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "integration_plugins":
+			if in.IsNull() {
+				in.Skip()
+				out.GRPCPlugins = nil
+			} else {
+				in.Delim('[')
+				if out.GRPCPlugins == nil {
+					if !in.IsDelim(']') {
+						out.GRPCPlugins = make([]GRPCPlugin, 0, 1)
+					} else {
+						out.GRPCPlugins = []GRPCPlugin{}
+					}
+				} else {
+					out.GRPCPlugins = (out.GRPCPlugins)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v88 GRPCPlugin
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk35(in, &v88)
+					out.GRPCPlugins = append(out.GRPCPlugins, v88)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk17(out *jwriter.Writer, in ProjectIntegration) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"project_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ProjectID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"integration_model_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.IntegrationModelID))
+	}
+	{
+		const prefix string = ",\"model\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk33(out, in.Model)
+	}
+	{
+		const prefix string = ",\"config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v89First := true
+			for v89Name, v89Value := range in.Config {
+				if v89First {
+					v89First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v89Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk34(out, v89Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	if len(in.GRPCPlugins) != 0 {
+		const prefix string = ",\"integration_plugins\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v90, v91 := range in.GRPCPlugins {
+				if v90 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk35(out, v91)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk35(in *jlexer.Lexer, out *GRPCPlugin) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		case "author":
+			out.Author = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "parameters":
+			if in.IsNull() {
+				in.Skip()
+				out.Parameters = nil
+			} else {
+				in.Delim('[')
+				if out.Parameters == nil {
+					if !in.IsDelim(']') {
+						out.Parameters = make([]Parameter, 0, 1)
+					} else {
+						out.Parameters = []Parameter{}
+					}
+				} else {
+					out.Parameters = (out.Parameters)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v92 Parameter
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk30(in, &v92)
+					out.Parameters = append(out.Parameters, v92)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "binaries":
+			if in.IsNull() {
+				in.Skip()
+				out.Binaries = nil
+			} else {
+				in.Delim('[')
+				if out.Binaries == nil {
+					if !in.IsDelim(']') {
+						out.Binaries = make([]GRPCPluginBinary, 0, 1)
+					} else {
+						out.Binaries = []GRPCPluginBinary{}
+					}
+				} else {
+					out.Binaries = (out.Binaries)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v93 GRPCPluginBinary
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk36(in, &v93)
+					out.Binaries = append(out.Binaries, v93)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "integration":
+			out.Integration = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk35(out *jwriter.Writer, in GRPCPlugin) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"author\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Author))
+	}
+	{
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	if len(in.Parameters) != 0 {
+		const prefix string = ",\"parameters\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v94, v95 := range in.Parameters {
+				if v94 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk30(out, v95)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"binaries\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Binaries == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v96, v97 := range in.Binaries {
+				if v96 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk36(out, v97)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"integration\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Integration))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk36(in *jlexer.Lexer, out *GRPCPluginBinary) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "os":
+			out.OS = string(in.String())
+		case "arch":
+			out.Arch = string(in.String())
+		case "name":
+			out.Name = string(in.String())
+		case "object_path":
+			out.ObjectPath = string(in.String())
+		case "size":
+			out.Size = int64(in.Int64())
+		case "perm":
+			out.Perm = uint32(in.Uint32())
+		case "md5sum":
+			out.MD5sum = string(in.String())
+		case "sha512sum":
+			out.SHA512sum = string(in.String())
+		case "temp_url":
+			out.TempURL = string(in.String())
+		case "entrypoints":
+			if in.IsNull() {
+				in.Skip()
+				out.Entrypoints = nil
+			} else {
+				in.Delim('[')
+				if out.Entrypoints == nil {
+					if !in.IsDelim(']') {
+						out.Entrypoints = make([]string, 0, 4)
+					} else {
+						out.Entrypoints = []string{}
+					}
+				} else {
+					out.Entrypoints = (out.Entrypoints)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v98 string
+					v98 = string(in.String())
+					out.Entrypoints = append(out.Entrypoints, v98)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "cmd":
+			out.Cmd = string(in.String())
+		case "args":
+			if in.IsNull() {
+				in.Skip()
+				out.Args = nil
+			} else {
+				in.Delim('[')
+				if out.Args == nil {
+					if !in.IsDelim(']') {
+						out.Args = make([]string, 0, 4)
+					} else {
+						out.Args = []string{}
+					}
+				} else {
+					out.Args = (out.Args)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v99 string
+					v99 = string(in.String())
+					out.Args = append(out.Args, v99)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "requirements":
+			if in.IsNull() {
+				in.Skip()
+				out.Requirements = nil
+			} else {
+				in.Delim('[')
+				if out.Requirements == nil {
+					if !in.IsDelim(']') {
+						out.Requirements = make(RequirementList, 0, 1)
+					} else {
+						out.Requirements = RequirementList{}
+					}
+				} else {
+					out.Requirements = (out.Requirements)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v100 Requirement
+					if data := in.Raw(); in.Ok() {
+						in.AddError((v100).UnmarshalJSON(data))
+					}
+					out.Requirements = append(out.Requirements, v100)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "file_content":
+			if in.IsNull() {
+				in.Skip()
+				out.FileContent = nil
+			} else {
+				out.FileContent = in.Bytes()
+			}
+		case "plugin_name":
+			out.PluginName = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk36(out *jwriter.Writer, in GRPCPluginBinary) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.OS != "" {
+		const prefix string = ",\"os\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.OS))
+	}
+	if in.Arch != "" {
+		const prefix string = ",\"arch\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Arch))
+	}
+	if in.Name != "" {
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	if in.ObjectPath != "" {
+		const prefix string = ",\"object_path\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ObjectPath))
+	}
+	if in.Size != 0 {
+		const prefix string = ",\"size\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.Size))
+	}
+	if in.Perm != 0 {
+		const prefix string = ",\"perm\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Uint32(uint32(in.Perm))
+	}
+	if in.MD5sum != "" {
+		const prefix string = ",\"md5sum\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.MD5sum))
+	}
+	if in.SHA512sum != "" {
+		const prefix string = ",\"sha512sum\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.SHA512sum))
+	}
+	if in.TempURL != "" {
+		const prefix string = ",\"temp_url\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.TempURL))
+	}
+	if len(in.Entrypoints) != 0 {
+		const prefix string = ",\"entrypoints\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v102, v103 := range in.Entrypoints {
+				if v102 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v103))
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Cmd != "" {
+		const prefix string = ",\"cmd\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Cmd))
+	}
+	if len(in.Args) != 0 {
+		const prefix string = ",\"args\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v104, v105 := range in.Args {
+				if v104 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v105))
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Requirements) != 0 {
+		const prefix string = ",\"requirements\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v106, v107 := range in.Requirements {
+				if v106 > 0 {
+					out.RawByte(',')
+				}
+				out.Raw((v107).MarshalJSON())
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.FileContent) != 0 {
+		const prefix string = ",\"file_content\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Base64Bytes(in.FileContent)
+	}
+	if in.PluginName != "" {
+		const prefix string = ",\"plugin_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.PluginName))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk34(in *jlexer.Lexer, out *IntegrationConfigValue) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "value":
+			out.Value = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk34(out *jwriter.Writer, in IntegrationConfigValue) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Value))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	if in.Description != "" {
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk33(in *jlexer.Lexer, out *IntegrationModel) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "author":
+			out.Author = string(in.String())
+		case "identifier":
+			out.Identifier = string(in.String())
+		case "icon":
+			out.Icon = string(in.String())
+		case "default_config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.DefaultConfig = make(IntegrationConfig)
+				} else {
+					out.DefaultConfig = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v110 IntegrationConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk34(in, &v110)
+					(out.DefaultConfig)[key] = v110
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "deployment_default_config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.DeploymentDefaultConfig = make(IntegrationConfig)
+				} else {
+					out.DeploymentDefaultConfig = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v111 IntegrationConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk34(in, &v111)
+					(out.DeploymentDefaultConfig)[key] = v111
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "public_configurations":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.PublicConfigurations = make(map[string]IntegrationConfig)
+				} else {
+					out.PublicConfigurations = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v112 IntegrationConfig
+					if in.IsNull() {
+						in.Skip()
+					} else {
+						in.Delim('{')
+						if !in.IsDelim('}') {
+							v112 = make(IntegrationConfig)
+						} else {
+							v112 = nil
+						}
+						for !in.IsDelim('}') {
+							key := string(in.String())
+							in.WantColon()
+							var v113 IntegrationConfigValue
+							easyjson1c3bd83cDecodeGithubComOvhCdsSdk34(in, &v113)
+							(v112)[key] = v113
+							in.WantComma()
+						}
+						in.Delim('}')
+					}
+					(out.PublicConfigurations)[key] = v112
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "disabled":
+			out.Disabled = bool(in.Bool())
+		case "hook":
+			out.Hook = bool(in.Bool())
+		case "storage":
+			out.Storage = bool(in.Bool())
+		case "deployment":
+			out.Deployment = bool(in.Bool())
+		case "compute":
+			out.Compute = bool(in.Bool())
+		case "public":
+			out.Public = bool(in.Bool())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk33(out *jwriter.Writer, in IntegrationModel) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"author\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Author))
+	}
+	{
+		const prefix string = ",\"identifier\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Identifier))
+	}
+	{
+		const prefix string = ",\"icon\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Icon))
+	}
+	{
+		const prefix string = ",\"default_config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.DefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v114First := true
+			for v114Name, v114Value := range in.DefaultConfig {
+				if v114First {
+					v114First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v114Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk34(out, v114Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"deployment_default_config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.DeploymentDefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v115First := true
+			for v115Name, v115Value := range in.DeploymentDefaultConfig {
+				if v115First {
+					v115First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v115Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk34(out, v115Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	if len(in.PublicConfigurations) != 0 {
+		const prefix string = ",\"public_configurations\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('{')
+			v116First := true
+			for v116Name, v116Value := range in.PublicConfigurations {
+				if v116First {
+					v116First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v116Name))
+				out.RawByte(':')
+				if v116Value == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+					out.RawString(`null`)
+				} else {
+					out.RawByte('{')
+					v117First := true
+					for v117Name, v117Value := range v116Value {
+						if v117First {
+							v117First = false
+						} else {
+							out.RawByte(',')
+						}
+						out.String(string(v117Name))
+						out.RawByte(':')
+						easyjson1c3bd83cEncodeGithubComOvhCdsSdk34(out, v117Value)
+					}
+					out.RawByte('}')
+				}
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"disabled\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Disabled))
+	}
+	{
+		const prefix string = ",\"hook\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Hook))
+	}
+	{
+		const prefix string = ",\"storage\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Storage))
+	}
+	{
+		const prefix string = ",\"deployment\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Deployment))
+	}
+	{
+		const prefix string = ",\"compute\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Compute))
+	}
+	if in.Public {
+		const prefix string = ",\"public\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Public))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk16(in *jlexer.Lexer, out *Environment) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "variables":
+			if in.IsNull() {
+				in.Skip()
+				out.Variable = nil
+			} else {
+				in.Delim('[')
+				if out.Variable == nil {
+					if !in.IsDelim(']') {
+						out.Variable = make([]Variable, 0, 1)
+					} else {
+						out.Variable = []Variable{}
+					}
+				} else {
+					out.Variable = (out.Variable)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v118 Variable
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk37(in, &v118)
+					out.Variable = append(out.Variable, v118)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "project_key":
+			out.ProjectKey = string(in.String())
+		case "permission":
+			out.Permission = int(in.Int())
+		case "last_modified":
+			out.LastModified = int64(in.Int64())
+		case "keys":
+			if in.IsNull() {
+				in.Skip()
+				out.Keys = nil
+			} else {
+				in.Delim('[')
+				if out.Keys == nil {
+					if !in.IsDelim(']') {
+						out.Keys = make([]EnvironmentKey, 0, 1)
+					} else {
+						out.Keys = []EnvironmentKey{}
+					}
+				} else {
+					out.Keys = (out.Keys)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v119 EnvironmentKey
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk38(in, &v119)
+					out.Keys = append(out.Keys, v119)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "usage":
+			if in.IsNull() {
+				in.Skip()
+				out.Usage = nil
+			} else {
+				if out.Usage == nil {
+					out.Usage = new(Usage)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk11(in, out.Usage)
+			}
+		case "from_repository":
+			out.FromRepository = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk16(out *jwriter.Writer, in Environment) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	if len(in.Variable) != 0 {
+		const prefix string = ",\"variables\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v120, v121 := range in.Variable {
+				if v120 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk37(out, v121)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"project_key\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ProjectKey))
+	}
+	{
+		const prefix string = ",\"permission\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Permission))
+	}
+	{
+		const prefix string = ",\"last_modified\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.LastModified))
+	}
+	{
+		const prefix string = ",\"keys\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Keys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v122, v123 := range in.Keys {
+				if v122 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk38(out, v123)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Usage != nil {
+		const prefix string = ",\"usage\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk11(out, *in.Usage)
+	}
+	if in.FromRepository != "" {
+		const prefix string = ",\"from_repository\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.FromRepository))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk38(in *jlexer.Lexer, out *EnvironmentKey) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "environment_id":
+			out.EnvironmentID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "public":
+			out.Public = string(in.String())
+		case "private":
+			out.Private = string(in.String())
+		case "keyID":
+			out.KeyID = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk38(out *jwriter.Writer, in EnvironmentKey) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"environment_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.EnvironmentID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"public\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Public))
+	}
+	{
+		const prefix string = ",\"private\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Private))
+	}
+	{
+		const prefix string = ",\"keyID\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.KeyID))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk37(in *jlexer.Lexer, out *Variable) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "value":
+			out.Value = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk37(out *jwriter.Writer, in Variable) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.ID != 0 {
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Value))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk15(in *jlexer.Lexer, out *Application) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "icon":
+			out.Icon = string(in.String())
+		case "project_key":
+			out.ProjectKey = string(in.String())
+		case "variables":
+			if in.IsNull() {
+				in.Skip()
+				out.Variable = nil
+			} else {
+				in.Delim('[')
+				if out.Variable == nil {
+					if !in.IsDelim(']') {
+						out.Variable = make([]Variable, 0, 1)
+					} else {
+						out.Variable = []Variable{}
+					}
+				} else {
+					out.Variable = (out.Variable)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v124 Variable
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk37(in, &v124)
+					out.Variable = append(out.Variable, v124)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "permission":
+			out.Permission = int(in.Int())
+		case "notifications":
+			if in.IsNull() {
+				in.Skip()
+				out.Notifications = nil
+			} else {
+				in.Delim('[')
+				if out.Notifications == nil {
+					if !in.IsDelim(']') {
+						out.Notifications = make([]UserNotification, 0, 1)
+					} else {
+						out.Notifications = []UserNotification{}
+					}
+				} else {
+					out.Notifications = (out.Notifications)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v125 UserNotification
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk39(in, &v125)
+					out.Notifications = append(out.Notifications, v125)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "last_modified":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.LastModified).UnmarshalJSON(data))
+			}
+		case "vcs_server":
+			out.VCSServer = string(in.String())
+		case "repository_fullname":
+			out.RepositoryFullname = string(in.String())
+		case "vcs_strategy":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk40(in, &out.RepositoryStrategy)
+		case "metadata":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Metadata = make(Metadata)
+				} else {
+					out.Metadata = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v126 string
+					v126 = string(in.String())
+					(out.Metadata)[key] = v126
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "keys":
+			if in.IsNull() {
+				in.Skip()
+				out.Keys = nil
+			} else {
+				in.Delim('[')
+				if out.Keys == nil {
+					if !in.IsDelim(']') {
+						out.Keys = make([]ApplicationKey, 0, 1)
+					} else {
+						out.Keys = []ApplicationKey{}
+					}
+				} else {
+					out.Keys = (out.Keys)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v127 ApplicationKey
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk41(in, &v127)
+					out.Keys = append(out.Keys, v127)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "usage":
+			if in.IsNull() {
+				in.Skip()
+				out.Usage = nil
+			} else {
+				if out.Usage == nil {
+					out.Usage = new(Usage)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk11(in, out.Usage)
+			}
+		case "deployment_strategies":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.DeploymentStrategies = make(map[string]IntegrationConfig)
+				} else {
+					out.DeploymentStrategies = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v128 IntegrationConfig
+					if in.IsNull() {
+						in.Skip()
+					} else {
+						in.Delim('{')
+						if !in.IsDelim('}') {
+							v128 = make(IntegrationConfig)
+						} else {
+							v128 = nil
+						}
+						for !in.IsDelim('}') {
+							key := string(in.String())
+							in.WantColon()
+							var v129 IntegrationConfigValue
+							easyjson1c3bd83cDecodeGithubComOvhCdsSdk34(in, &v129)
+							(v128)[key] = v129
+							in.WantComma()
+						}
+						in.Delim('}')
+					}
+					(out.DeploymentStrategies)[key] = v128
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "vulnerabilities":
+			if in.IsNull() {
+				in.Skip()
+				out.Vulnerabilities = nil
+			} else {
+				in.Delim('[')
+				if out.Vulnerabilities == nil {
+					if !in.IsDelim(']') {
+						out.Vulnerabilities = make([]Vulnerability, 0, 1)
+					} else {
+						out.Vulnerabilities = []Vulnerability{}
+					}
+				} else {
+					out.Vulnerabilities = (out.Vulnerabilities)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v130 Vulnerability
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk42(in, &v130)
+					out.Vulnerabilities = append(out.Vulnerabilities, v130)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "from_repository":
+			out.FromRepository = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk15(out *jwriter.Writer, in Application) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"icon\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Icon))
+	}
+	{
+		const prefix string = ",\"project_key\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ProjectKey))
+	}
+	if len(in.Variable) != 0 {
+		const prefix string = ",\"variables\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v131, v132 := range in.Variable {
+				if v131 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk37(out, v132)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"permission\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Permission))
+	}
+	if len(in.Notifications) != 0 {
+		const prefix string = ",\"notifications\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v133, v134 := range in.Notifications {
+				if v133 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk39(out, v134)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"last_modified\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.LastModified).MarshalJSON())
+	}
+	if in.VCSServer != "" {
+		const prefix string = ",\"vcs_server\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.VCSServer))
+	}
+	if in.RepositoryFullname != "" {
+		const prefix string = ",\"repository_fullname\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.RepositoryFullname))
+	}
+	if true {
+		const prefix string = ",\"vcs_strategy\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk40(out, in.RepositoryStrategy)
+	}
+	{
+		const prefix string = ",\"metadata\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Metadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v135First := true
+			for v135Name, v135Value := range in.Metadata {
+				if v135First {
+					v135First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v135Name))
+				out.RawByte(':')
+				out.String(string(v135Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"keys\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Keys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v136, v137 := range in.Keys {
+				if v136 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk41(out, v137)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Usage != nil {
+		const prefix string = ",\"usage\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk11(out, *in.Usage)
+	}
+	if len(in.DeploymentStrategies) != 0 {
+		const prefix string = ",\"deployment_strategies\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('{')
+			v138First := true
+			for v138Name, v138Value := range in.DeploymentStrategies {
+				if v138First {
+					v138First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v138Name))
+				out.RawByte(':')
+				if v138Value == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+					out.RawString(`null`)
+				} else {
+					out.RawByte('{')
+					v139First := true
+					for v139Name, v139Value := range v138Value {
+						if v139First {
+							v139First = false
+						} else {
+							out.RawByte(',')
+						}
+						out.String(string(v139Name))
+						out.RawByte(':')
+						easyjson1c3bd83cEncodeGithubComOvhCdsSdk34(out, v139Value)
+					}
+					out.RawByte('}')
+				}
+			}
+			out.RawByte('}')
+		}
+	}
+	if len(in.Vulnerabilities) != 0 {
+		const prefix string = ",\"vulnerabilities\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v140, v141 := range in.Vulnerabilities {
+				if v140 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk42(out, v141)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.FromRepository != "" {
+		const prefix string = ",\"from_repository\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.FromRepository))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk42(in *jlexer.Lexer, out *Vulnerability) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "application_id":
+			out.ApplicationID = int64(in.Int64())
+		case "title":
+			out.Title = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "cve":
+			out.CVE = string(in.String())
+		case "link":
+			out.Link = string(in.String())
+		case "component":
+			out.Component = string(in.String())
+		case "version":
+			out.Version = string(in.String())
+		case "origin":
+			out.Origin = string(in.String())
+		case "severity":
+			out.Severity = string(in.String())
+		case "fix_in":
+			out.FixIn = string(in.String())
+		case "ignored":
+			out.Ignored = bool(in.Bool())
+		case "type":
+			out.Type = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk42(out *jwriter.Writer, in Vulnerability) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"application_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ApplicationID))
+	}
+	{
+		const prefix string = ",\"title\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Title))
+	}
+	{
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"cve\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.CVE))
+	}
+	{
+		const prefix string = ",\"link\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Link))
+	}
+	{
+		const prefix string = ",\"component\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Component))
+	}
+	{
+		const prefix string = ",\"version\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Version))
+	}
+	{
+		const prefix string = ",\"origin\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Origin))
+	}
+	{
+		const prefix string = ",\"severity\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Severity))
+	}
+	{
+		const prefix string = ",\"fix_in\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.FixIn))
+	}
+	{
+		const prefix string = ",\"ignored\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Ignored))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk41(in *jlexer.Lexer, out *ApplicationKey) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "application_id":
+			out.ApplicationID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "public":
+			out.Public = string(in.String())
+		case "private":
+			out.Private = string(in.String())
+		case "keyID":
+			out.KeyID = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk41(out *jwriter.Writer, in ApplicationKey) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"application_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ApplicationID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"public\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Public))
+	}
+	{
+		const prefix string = ",\"private\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Private))
+	}
+	{
+		const prefix string = ",\"keyID\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.KeyID))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk40(in *jlexer.Lexer, out *RepositoryStrategy) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "connection_type":
+			out.ConnectionType = string(in.String())
+		case "ssh_key":
+			out.SSHKey = string(in.String())
+		case "ssh_key_content":
+			out.SSHKeyContent = string(in.String())
+		case "user":
+			out.User = string(in.String())
+		case "password":
+			out.Password = string(in.String())
+		case "branch":
+			out.Branch = string(in.String())
+		case "default_branch":
+			out.DefaultBranch = string(in.String())
+		case "pgp_key":
+			out.PGPKey = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk40(out *jwriter.Writer, in RepositoryStrategy) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"connection_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ConnectionType))
+	}
+	{
+		const prefix string = ",\"ssh_key\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.SSHKey))
+	}
+	if in.SSHKeyContent != "" {
+		const prefix string = ",\"ssh_key_content\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.SSHKeyContent))
+	}
+	{
+		const prefix string = ",\"user\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.User))
+	}
+	{
+		const prefix string = ",\"password\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Password))
+	}
+	if in.Branch != "" {
+		const prefix string = ",\"branch\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Branch))
+	}
+	if in.DefaultBranch != "" {
+		const prefix string = ",\"default_branch\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DefaultBranch))
+	}
+	{
+		const prefix string = ",\"pgp_key\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.PGPKey))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk39(in *jlexer.Lexer, out *UserNotification) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "application_pipeline_id":
+			out.ApplicationPipelineID = int64(in.Int64())
+		case "pipeline":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk14(in, &out.Pipeline)
+		case "environment":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk16(in, &out.Environment)
+		case "notifications":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Notifications = make(map[string]UserNotificationSettings)
+				} else {
+					out.Notifications = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v142 UserNotificationSettings
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk43(in, &v142)
+					(out.Notifications)[key] = v142
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk39(out *jwriter.Writer, in UserNotification) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"application_pipeline_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ApplicationPipelineID))
+	}
+	{
+		const prefix string = ",\"pipeline\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk14(out, in.Pipeline)
+	}
+	{
+		const prefix string = ",\"environment\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk16(out, in.Environment)
+	}
+	{
+		const prefix string = ",\"notifications\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Notifications == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v143First := true
+			for v143Name, v143Value := range in.Notifications {
+				if v143First {
+					v143First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v143Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk43(out, v143Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk43(in *jlexer.Lexer, out *UserNotificationSettings) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "on_success":
+			out.OnSuccess = string(in.String())
+		case "on_failure":
+			out.OnFailure = string(in.String())
+		case "on_start":
+			if in.IsNull() {
+				in.Skip()
+				out.OnStart = nil
+			} else {
+				if out.OnStart == nil {
+					out.OnStart = new(bool)
+				}
+				*out.OnStart = bool(in.Bool())
+			}
+		case "send_to_groups":
+			if in.IsNull() {
+				in.Skip()
+				out.SendToGroups = nil
+			} else {
+				if out.SendToGroups == nil {
+					out.SendToGroups = new(bool)
+				}
+				*out.SendToGroups = bool(in.Bool())
+			}
+		case "send_to_author":
+			if in.IsNull() {
+				in.Skip()
+				out.SendToAuthor = nil
+			} else {
+				if out.SendToAuthor == nil {
+					out.SendToAuthor = new(bool)
+				}
+				*out.SendToAuthor = bool(in.Bool())
+			}
+		case "recipients":
+			if in.IsNull() {
+				in.Skip()
+				out.Recipients = nil
+			} else {
+				in.Delim('[')
+				if out.Recipients == nil {
+					if !in.IsDelim(']') {
+						out.Recipients = make([]string, 0, 4)
+					} else {
+						out.Recipients = []string{}
+					}
+				} else {
+					out.Recipients = (out.Recipients)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v144 string
+					v144 = string(in.String())
+					out.Recipients = append(out.Recipients, v144)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "template":
+			if in.IsNull() {
+				in.Skip()
+				out.Template = nil
+			} else {
+				if out.Template == nil {
+					out.Template = new(UserNotificationTemplate)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk44(in, out.Template)
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk43(out *jwriter.Writer, in UserNotificationSettings) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.OnSuccess != "" {
+		const prefix string = ",\"on_success\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.OnSuccess))
+	}
+	if in.OnFailure != "" {
+		const prefix string = ",\"on_failure\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.OnFailure))
+	}
+	if in.OnStart != nil {
+		const prefix string = ",\"on_start\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(*in.OnStart))
+	}
+	if in.SendToGroups != nil {
+		const prefix string = ",\"send_to_groups\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(*in.SendToGroups))
+	}
+	if in.SendToAuthor != nil {
+		const prefix string = ",\"send_to_author\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(*in.SendToAuthor))
+	}
+	if len(in.Recipients) != 0 {
+		const prefix string = ",\"recipients\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v145, v146 := range in.Recipients {
+				if v145 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v146))
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Template != nil {
+		const prefix string = ",\"template\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk44(out, *in.Template)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk44(in *jlexer.Lexer, out *UserNotificationTemplate) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "subject":
+			out.Subject = string(in.String())
+		case "body":
+			out.Body = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk44(out *jwriter.Writer, in UserNotificationTemplate) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.Subject != "" {
+		const prefix string = ",\"subject\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Subject))
+	}
+	if in.Body != "" {
+		const prefix string = ",\"body\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Body))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk14(in *jlexer.Lexer, out *Pipeline) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "projectKey":
+			out.ProjectKey = string(in.String())
+		case "stages":
+			if in.IsNull() {
+				in.Skip()
+				out.Stages = nil
+			} else {
+				in.Delim('[')
+				if out.Stages == nil {
+					if !in.IsDelim(']') {
+						out.Stages = make([]Stage, 0, 1)
+					} else {
+						out.Stages = []Stage{}
+					}
+				} else {
+					out.Stages = (out.Stages)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v147 Stage
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk45(in, &v147)
+					out.Stages = append(out.Stages, v147)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "parameters":
+			if in.IsNull() {
+				in.Skip()
+				out.Parameter = nil
+			} else {
+				in.Delim('[')
+				if out.Parameter == nil {
+					if !in.IsDelim(']') {
+						out.Parameter = make([]Parameter, 0, 1)
+					} else {
+						out.Parameter = []Parameter{}
+					}
+				} else {
+					out.Parameter = (out.Parameter)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v148 Parameter
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk30(in, &v148)
+					out.Parameter = append(out.Parameter, v148)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "usage":
+			if in.IsNull() {
+				in.Skip()
+				out.Usage = nil
+			} else {
+				if out.Usage == nil {
+					out.Usage = new(Usage)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk11(in, out.Usage)
+			}
+		case "permission":
+			out.Permission = int(in.Int())
+		case "last_modified":
+			out.LastModified = int64(in.Int64())
+		case "from_repository":
+			out.FromRepository = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Pipeline) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"projectKey\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ProjectKey))
+	}
+	{
+		const prefix string = ",\"stages\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Stages == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v149, v150 := range in.Stages {
+				if v149 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk45(out, v150)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Parameter) != 0 {
+		const prefix string = ",\"parameters\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v151, v152 := range in.Parameter {
+				if v151 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk30(out, v152)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Usage != nil {
+		const prefix string = ",\"usage\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk11(out, *in.Usage)
+	}
+	{
+		const prefix string = ",\"permission\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Permission))
+	}
+	{
+		const prefix string = ",\"last_modified\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.LastModified))
+	}
+	{
+		const prefix string = ",\"from_repository\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.FromRepository))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk45(in *jlexer.Lexer, out *Stage) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "build_order":
+			out.BuildOrder = int(in.Int())
+		case "enabled":
+			out.Enabled = bool(in.Bool())
+		case "run_jobs":
+			if in.IsNull() {
+				in.Skip()
+				out.RunJobs = nil
+			} else {
+				in.Delim('[')
+				if out.RunJobs == nil {
+					if !in.IsDelim(']') {
+						out.RunJobs = make([]WorkflowNodeJobRun, 0, 1)
+					} else {
+						out.RunJobs = []WorkflowNodeJobRun{}
+					}
+				} else {
+					out.RunJobs = (out.RunJobs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v153 WorkflowNodeJobRun
+					if data := in.Raw(); in.Ok() {
+						in.AddError((v153).UnmarshalJSON(data))
+					}
+					out.RunJobs = append(out.RunJobs, v153)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "prerequisites":
+			if in.IsNull() {
+				in.Skip()
+				out.Prerequisites = nil
+			} else {
+				in.Delim('[')
+				if out.Prerequisites == nil {
+					if !in.IsDelim(']') {
+						out.Prerequisites = make([]Prerequisite, 0, 2)
+					} else {
+						out.Prerequisites = []Prerequisite{}
+					}
+				} else {
+					out.Prerequisites = (out.Prerequisites)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v154 Prerequisite
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk46(in, &v154)
+					out.Prerequisites = append(out.Prerequisites, v154)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "last_modified":
+			out.LastModified = int64(in.Int64())
+		case "jobs":
+			if in.IsNull() {
+				in.Skip()
+				out.Jobs = nil
+			} else {
+				in.Delim('[')
+				if out.Jobs == nil {
+					if !in.IsDelim(']') {
+						out.Jobs = make([]Job, 0, 1)
+					} else {
+						out.Jobs = []Job{}
+					}
+				} else {
+					out.Jobs = (out.Jobs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v155 Job
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk47(in, &v155)
+					out.Jobs = append(out.Jobs, v155)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "status":
+			out.Status = Status(in.String())
+		case "warnings":
+			if in.IsNull() {
+				in.Skip()
+				out.Warnings = nil
+			} else {
+				in.Delim('[')
+				if out.Warnings == nil {
+					if !in.IsDelim(']') {
+						out.Warnings = make([]PipelineBuildWarning, 0, 1)
+					} else {
+						out.Warnings = []PipelineBuildWarning{}
+					}
+				} else {
+					out.Warnings = (out.Warnings)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v156 PipelineBuildWarning
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk48(in, &v156)
+					out.Warnings = append(out.Warnings, v156)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk45(out *jwriter.Writer, in Stage) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"build_order\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.BuildOrder))
+	}
+	{
+		const prefix string = ",\"enabled\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Enabled))
+	}
+	{
+		const prefix string = ",\"run_jobs\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.RunJobs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v157, v158 := range in.RunJobs {
+				if v157 > 0 {
+					out.RawByte(',')
+				}
+				out.Raw((v158).MarshalJSON())
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"prerequisites\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Prerequisites == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v159, v160 := range in.Prerequisites {
+				if v159 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk46(out, v160)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"last_modified\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.LastModified))
+	}
+	{
+		const prefix string = ",\"jobs\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Jobs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v161, v162 := range in.Jobs {
+				if v161 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk47(out, v162)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"status\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Status))
+	}
+	{
+		const prefix string = ",\"warnings\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Warnings == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v163, v164 := range in.Warnings {
+				if v163 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk48(out, v164)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk48(in *jlexer.Lexer, out *PipelineBuildWarning) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "type":
+			out.Type = string(in.String())
+		case "action":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk49(in, &out.Action)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk48(out *jwriter.Writer, in PipelineBuildWarning) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"action\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk49(out, in.Action)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk49(in *jlexer.Lexer, out *Action) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "group_id":
+			if in.IsNull() {
+				in.Skip()
+				out.GroupID = nil
+			} else {
+				if out.GroupID == nil {
+					out.GroupID = new(int64)
+				}
+				*out.GroupID = int64(in.Int64())
+			}
+		case "name":
+			out.Name = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "enabled":
+			out.Enabled = bool(in.Bool())
+		case "deprecated":
+			out.Deprecated = bool(in.Bool())
+		case "step_name":
+			out.StepName = string(in.String())
+		case "optional":
+			out.Optional = bool(in.Bool())
+		case "always_executed":
+			out.AlwaysExecuted = bool(in.Bool())
+		case "requirements":
+			if in.IsNull() {
+				in.Skip()
+				out.Requirements = nil
+			} else {
+				in.Delim('[')
+				if out.Requirements == nil {
+					if !in.IsDelim(']') {
+						out.Requirements = make(RequirementList, 0, 1)
+					} else {
+						out.Requirements = RequirementList{}
+					}
+				} else {
+					out.Requirements = (out.Requirements)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v165 Requirement
+					if data := in.Raw(); in.Ok() {
+						in.AddError((v165).UnmarshalJSON(data))
+					}
+					out.Requirements = append(out.Requirements, v165)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "parameters":
+			if in.IsNull() {
+				in.Skip()
+				out.Parameters = nil
+			} else {
+				in.Delim('[')
+				if out.Parameters == nil {
+					if !in.IsDelim(']') {
+						out.Parameters = make([]Parameter, 0, 1)
+					} else {
+						out.Parameters = []Parameter{}
+					}
+				} else {
+					out.Parameters = (out.Parameters)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v166 Parameter
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk30(in, &v166)
+					out.Parameters = append(out.Parameters, v166)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "actions":
+			if in.IsNull() {
+				in.Skip()
+				out.Actions = nil
+			} else {
+				in.Delim('[')
+				if out.Actions == nil {
+					if !in.IsDelim(']') {
+						out.Actions = make([]Action, 0, 1)
+					} else {
+						out.Actions = []Action{}
+					}
+				} else {
+					out.Actions = (out.Actions)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v167 Action
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk49(in, &v167)
+					out.Actions = append(out.Actions, v167)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "group":
+			if in.IsNull() {
+				in.Skip()
+				out.Group = nil
+			} else {
+				if out.Group == nil {
+					out.Group = new(Group)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk4(in, out.Group)
+			}
+		case "first_audit":
+			if in.IsNull() {
+				in.Skip()
+				out.FirstAudit = nil
+			} else {
+				if out.FirstAudit == nil {
+					out.FirstAudit = new(AuditAction)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk50(in, out.FirstAudit)
+			}
+		case "last_audit":
+			if in.IsNull() {
+				in.Skip()
+				out.LastAudit = nil
+			} else {
+				if out.LastAudit == nil {
+					out.LastAudit = new(AuditAction)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk50(in, out.LastAudit)
+			}
+		case "editable":
+			out.Editable = bool(in.Bool())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk49(out *jwriter.Writer, in Action) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	if in.GroupID != nil {
+		const prefix string = ",\"group_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(*in.GroupID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"enabled\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Enabled))
+	}
+	{
+		const prefix string = ",\"deprecated\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Deprecated))
+	}
+	if in.StepName != "" {
+		const prefix string = ",\"step_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.StepName))
+	}
+	{
+		const prefix string = ",\"optional\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Optional))
+	}
+	{
+		const prefix string = ",\"always_executed\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.AlwaysExecuted))
+	}
+	{
+		const prefix string = ",\"requirements\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Requirements == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v168, v169 := range in.Requirements {
+				if v168 > 0 {
+					out.RawByte(',')
+				}
+				out.Raw((v169).MarshalJSON())
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"parameters\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Parameters == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v170, v171 := range in.Parameters {
+				if v170 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk30(out, v171)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Actions) != 0 {
+		const prefix string = ",\"actions\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v172, v173 := range in.Actions {
+				if v172 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk49(out, v173)
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Group != nil {
+		const prefix string = ",\"group\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk4(out, *in.Group)
+	}
+	if in.FirstAudit != nil {
+		const prefix string = ",\"first_audit\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk50(out, *in.FirstAudit)
+	}
+	if in.LastAudit != nil {
+		const prefix string = ",\"last_audit\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk50(out, *in.LastAudit)
+	}
+	if in.Editable {
+		const prefix string = ",\"editable\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Editable))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk50(in *jlexer.Lexer, out *AuditAction) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "action_id":
+			out.ActionID = int64(in.Int64())
+		case "data_type":
+			out.DataType = string(in.String())
+		case "data_before":
+			out.DataBefore = string(in.String())
+		case "data_after":
+			out.DataAfter = string(in.String())
+		case "id":
+			out.ID = int64(in.Int64())
+		case "triggered_by":
+			out.TriggeredBy = string(in.String())
+		case "created":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Created).UnmarshalJSON(data))
+			}
+		case "event_type":
+			out.EventType = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk50(out *jwriter.Writer, in AuditAction) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"action_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ActionID))
+	}
+	{
+		const prefix string = ",\"data_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataType))
+	}
+	{
+		const prefix string = ",\"data_before\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataBefore))
+	}
+	{
+		const prefix string = ",\"data_after\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataAfter))
+	}
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"triggered_by\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.TriggeredBy))
+	}
+	{
+		const prefix string = ",\"created\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.Created).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"event_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.EventType))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk47(in *jlexer.Lexer, out *Job) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "pipeline_action_id":
+			out.PipelineActionID = int64(in.Int64())
+		case "pipeline_stage_id":
+			out.PipelineStageID = int64(in.Int64())
+		case "enabled":
+			out.Enabled = bool(in.Bool())
+		case "last_modified":
+			out.LastModified = int64(in.Int64())
+		case "action":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk49(in, &out.Action)
+		case "warnings":
+			if in.IsNull() {
+				in.Skip()
+				out.Warnings = nil
+			} else {
+				in.Delim('[')
+				if out.Warnings == nil {
+					if !in.IsDelim(']') {
+						out.Warnings = make([]PipelineBuildWarning, 0, 1)
+					} else {
+						out.Warnings = []PipelineBuildWarning{}
+					}
+				} else {
+					out.Warnings = (out.Warnings)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v174 PipelineBuildWarning
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk48(in, &v174)
+					out.Warnings = append(out.Warnings, v174)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk47(out *jwriter.Writer, in Job) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"pipeline_action_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.PipelineActionID))
+	}
+	{
+		const prefix string = ",\"pipeline_stage_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.PipelineStageID))
+	}
+	{
+		const prefix string = ",\"enabled\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Enabled))
+	}
+	{
+		const prefix string = ",\"last_modified\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.LastModified))
+	}
+	{
+		const prefix string = ",\"action\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk49(out, in.Action)
+	}
+	{
+		const prefix string = ",\"warnings\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Warnings == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v175, v176 := range in.Warnings {
+				if v175 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk48(out, v176)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk46(in *jlexer.Lexer, out *Prerequisite) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "parameter":
+			out.Parameter = string(in.String())
+		case "expected_value":
+			out.ExpectedValue = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk46(out *jwriter.Writer, in Prerequisite) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"parameter\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Parameter))
+	}
+	{
+		const prefix string = ",\"expected_value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ExpectedValue))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *AuditWorkflow) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "project_key":
+			out.ProjectKey = string(in.String())
+		case "workflow_id":
+			out.WorkflowID = int64(in.Int64())
+		case "data_type":
+			out.DataType = string(in.String())
+		case "data_before":
+			out.DataBefore = string(in.String())
+		case "data_after":
+			out.DataAfter = string(in.String())
+		case "id":
+			out.ID = int64(in.Int64())
+		case "triggered_by":
+			out.TriggeredBy = string(in.String())
+		case "created":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Created).UnmarshalJSON(data))
+			}
+		case "event_type":
+			out.EventType = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk13(out *jwriter.Writer, in AuditWorkflow) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"project_key\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ProjectKey))
+	}
+	{
+		const prefix string = ",\"workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowID))
+	}
+	{
+		const prefix string = ",\"data_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataType))
+	}
+	{
+		const prefix string = ",\"data_before\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataBefore))
+	}
+	{
+		const prefix string = ",\"data_after\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.DataAfter))
+	}
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"triggered_by\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.TriggeredBy))
+	}
+	{
+		const prefix string = ",\"created\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.Created).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"event_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.EventType))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk12(in *jlexer.Lexer, out *WorkflowNotification) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "workflow_id":
+			out.WorkflowID = int64(in.Int64())
+		case "source_node_ref":
+			if in.IsNull() {
+				in.Skip()
+				out.SourceNodeRefs = nil
+			} else {
+				in.Delim('[')
+				if out.SourceNodeRefs == nil {
+					if !in.IsDelim(']') {
+						out.SourceNodeRefs = make([]string, 0, 4)
+					} else {
+						out.SourceNodeRefs = []string{}
+					}
+				} else {
+					out.SourceNodeRefs = (out.SourceNodeRefs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v177 string
+					v177 = string(in.String())
+					out.SourceNodeRefs = append(out.SourceNodeRefs, v177)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "source_node_id":
+			if in.IsNull() {
+				in.Skip()
+				out.SourceNodeIDs = nil
+			} else {
+				in.Delim('[')
+				if out.SourceNodeIDs == nil {
+					if !in.IsDelim(']') {
+						out.SourceNodeIDs = make([]int64, 0, 8)
+					} else {
+						out.SourceNodeIDs = []int64{}
+					}
+				} else {
+					out.SourceNodeIDs = (out.SourceNodeIDs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v178 int64
+					v178 = int64(in.Int64())
+					out.SourceNodeIDs = append(out.SourceNodeIDs, v178)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "node_id":
+			if in.IsNull() {
+				in.Skip()
+				out.NodeIDs = nil
+			} else {
+				in.Delim('[')
+				if out.NodeIDs == nil {
+					if !in.IsDelim(']') {
+						out.NodeIDs = make([]int64, 0, 8)
+					} else {
+						out.NodeIDs = []int64{}
+					}
+				} else {
+					out.NodeIDs = (out.NodeIDs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v179 int64
+					v179 = int64(in.Int64())
+					out.NodeIDs = append(out.NodeIDs, v179)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "type":
+			out.Type = string(in.String())
+		case "settings":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk43(in, &out.Settings)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk12(out *jwriter.Writer, in WorkflowNotification) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.ID != 0 {
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	if in.WorkflowID != 0 {
+		const prefix string = ",\"workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowID))
+	}
+	if len(in.SourceNodeRefs) != 0 {
+		const prefix string = ",\"source_node_ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v180, v181 := range in.SourceNodeRefs {
+				if v180 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v181))
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.SourceNodeIDs) != 0 {
+		const prefix string = ",\"source_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v182, v183 := range in.SourceNodeIDs {
+				if v182 > 0 {
+					out.RawByte(',')
+				}
+				out.Int64(int64(v183))
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.NodeIDs) != 0 {
+		const prefix string = ",\"node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v184, v185 := range in.NodeIDs {
+				if v184 > 0 {
+					out.RawByte(',')
+				}
+				out.Int64(int64(v185))
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"settings\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk43(out, in.Settings)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk11(in *jlexer.Lexer, out *Usage) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "workflows":
+			if in.IsNull() {
+				in.Skip()
+				out.Workflows = nil
+			} else {
+				in.Delim('[')
+				if out.Workflows == nil {
+					if !in.IsDelim(']') {
+						out.Workflows = make([]Workflow, 0, 1)
+					} else {
+						out.Workflows = []Workflow{}
+					}
+				} else {
+					out.Workflows = (out.Workflows)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v186 Workflow
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk7(in, &v186)
+					out.Workflows = append(out.Workflows, v186)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "environments":
+			if in.IsNull() {
+				in.Skip()
+				out.Environments = nil
+			} else {
+				in.Delim('[')
+				if out.Environments == nil {
+					if !in.IsDelim(']') {
+						out.Environments = make([]Environment, 0, 1)
+					} else {
+						out.Environments = []Environment{}
+					}
+				} else {
+					out.Environments = (out.Environments)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v187 Environment
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk16(in, &v187)
+					out.Environments = append(out.Environments, v187)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "pipelines":
+			if in.IsNull() {
+				in.Skip()
+				out.Pipelines = nil
+			} else {
+				in.Delim('[')
+				if out.Pipelines == nil {
+					if !in.IsDelim(']') {
+						out.Pipelines = make([]Pipeline, 0, 1)
+					} else {
+						out.Pipelines = []Pipeline{}
+					}
+				} else {
+					out.Pipelines = (out.Pipelines)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v188 Pipeline
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk14(in, &v188)
+					out.Pipelines = append(out.Pipelines, v188)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "applications":
+			if in.IsNull() {
+				in.Skip()
+				out.Applications = nil
+			} else {
+				in.Delim('[')
+				if out.Applications == nil {
+					if !in.IsDelim(']') {
+						out.Applications = make([]Application, 0, 1)
+					} else {
+						out.Applications = []Application{}
+					}
+				} else {
+					out.Applications = (out.Applications)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v189 Application
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk15(in, &v189)
+					out.Applications = append(out.Applications, v189)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk11(out *jwriter.Writer, in Usage) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if len(in.Workflows) != 0 {
+		const prefix string = ",\"workflows\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v190, v191 := range in.Workflows {
+				if v190 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk7(out, v191)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Environments) != 0 {
+		const prefix string = ",\"environments\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v192, v193 := range in.Environments {
+				if v192 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk16(out, v193)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Pipelines) != 0 {
+		const prefix string = ",\"pipelines\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v194, v195 := range in.Pipelines {
+				if v194 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk14(out, v195)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Applications) != 0 {
+		const prefix string = ",\"applications\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v196, v197 := range in.Applications {
+				if v196 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk15(out, v197)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *GroupPermission) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "group":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk4(in, &out.Group)
+		case "permission":
+			out.Permission = int(in.Int())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk10(out *jwriter.Writer, in GroupPermission) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"group\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk4(out, in.Group)
+	}
+	{
+		const prefix string = ",\"permission\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Permission))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk9(in *jlexer.Lexer, out *WorkflowNodeJoin) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "ref":
+			out.Ref = string(in.String())
+		case "workflow_id":
+			out.WorkflowID = int64(in.Int64())
+		case "source_node_id":
+			if in.IsNull() {
+				in.Skip()
+				out.SourceNodeIDs = nil
+			} else {
+				in.Delim('[')
+				if out.SourceNodeIDs == nil {
+					if !in.IsDelim(']') {
+						out.SourceNodeIDs = make([]int64, 0, 8)
+					} else {
+						out.SourceNodeIDs = []int64{}
+					}
+				} else {
+					out.SourceNodeIDs = (out.SourceNodeIDs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v198 int64
+					v198 = int64(in.Int64())
+					out.SourceNodeIDs = append(out.SourceNodeIDs, v198)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "source_node_ref":
+			if in.IsNull() {
+				in.Skip()
+				out.SourceNodeRefs = nil
+			} else {
+				in.Delim('[')
+				if out.SourceNodeRefs == nil {
+					if !in.IsDelim(']') {
+						out.SourceNodeRefs = make([]string, 0, 4)
+					} else {
+						out.SourceNodeRefs = []string{}
+					}
+				} else {
+					out.SourceNodeRefs = (out.SourceNodeRefs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v199 string
+					v199 = string(in.String())
+					out.SourceNodeRefs = append(out.SourceNodeRefs, v199)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "triggers":
+			if in.IsNull() {
+				in.Skip()
+				out.Triggers = nil
+			} else {
+				in.Delim('[')
+				if out.Triggers == nil {
+					if !in.IsDelim(']') {
+						out.Triggers = make([]WorkflowNodeJoinTrigger, 0, 1)
+					} else {
+						out.Triggers = []WorkflowNodeJoinTrigger{}
+					}
+				} else {
+					out.Triggers = (out.Triggers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v200 WorkflowNodeJoinTrigger
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk51(in, &v200)
+					out.Triggers = append(out.Triggers, v200)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk9(out *jwriter.Writer, in WorkflowNodeJoin) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Ref))
+	}
+	{
+		const prefix string = ",\"workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowID))
+	}
+	if len(in.SourceNodeIDs) != 0 {
+		const prefix string = ",\"source_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v201, v202 := range in.SourceNodeIDs {
+				if v201 > 0 {
+					out.RawByte(',')
+				}
+				out.Int64(int64(v202))
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.SourceNodeRefs) != 0 {
+		const prefix string = ",\"source_node_ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v203, v204 := range in.SourceNodeRefs {
+				if v203 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v204))
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Triggers) != 0 {
+		const prefix string = ",\"triggers\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v205, v206 := range in.Triggers {
+				if v205 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk51(out, v206)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk51(in *jlexer.Lexer, out *WorkflowNodeJoinTrigger) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "join_id":
+			out.WorkflowNodeJoinID = int64(in.Int64())
+		case "workflow_dest_node_id":
+			out.WorkflowDestNodeID = int64(in.Int64())
+		case "workflow_dest_node":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk8(in, &out.WorkflowDestNode)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk51(out *jwriter.Writer, in WorkflowNodeJoinTrigger) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"join_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowNodeJoinID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowDestNodeID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk8(out, in.WorkflowDestNode)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk8(in *jlexer.Lexer, out *WorkflowNode) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "ref":
+			out.Ref = string(in.String())
+		case "workflow_id":
+			out.WorkflowID = int64(in.Int64())
+		case "pipeline_id":
+			out.PipelineID = int64(in.Int64())
+		case "pipeline_name":
+			out.PipelineName = string(in.String())
+		case "pipeline":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk14(in, &out.DeprecatedPipeline)
+		case "context":
+			if in.IsNull() {
+				in.Skip()
+				out.Context = nil
+			} else {
+				if out.Context == nil {
+					out.Context = new(WorkflowNodeContext)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk52(in, out.Context)
+			}
+		case "hooks":
+			if in.IsNull() {
+				in.Skip()
+				out.Hooks = nil
+			} else {
+				in.Delim('[')
+				if out.Hooks == nil {
+					if !in.IsDelim(']') {
+						out.Hooks = make([]WorkflowNodeHook, 0, 1)
+					} else {
+						out.Hooks = []WorkflowNodeHook{}
+					}
+				} else {
+					out.Hooks = (out.Hooks)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v207 WorkflowNodeHook
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk53(in, &v207)
+					out.Hooks = append(out.Hooks, v207)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "forks":
+			if in.IsNull() {
+				in.Skip()
+				out.Forks = nil
+			} else {
+				in.Delim('[')
+				if out.Forks == nil {
+					if !in.IsDelim(']') {
+						out.Forks = make([]WorkflowNodeFork, 0, 1)
+					} else {
+						out.Forks = []WorkflowNodeFork{}
+					}
+				} else {
+					out.Forks = (out.Forks)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v208 WorkflowNodeFork
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk54(in, &v208)
+					out.Forks = append(out.Forks, v208)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "triggers":
+			if in.IsNull() {
+				in.Skip()
+				out.Triggers = nil
+			} else {
+				in.Delim('[')
+				if out.Triggers == nil {
+					if !in.IsDelim(']') {
+						out.Triggers = make([]WorkflowNodeTrigger, 0, 1)
+					} else {
+						out.Triggers = []WorkflowNodeTrigger{}
+					}
+				} else {
+					out.Triggers = (out.Triggers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v209 WorkflowNodeTrigger
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk55(in, &v209)
+					out.Triggers = append(out.Triggers, v209)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "outgoing_hooks":
+			if in.IsNull() {
+				in.Skip()
+				out.OutgoingHooks = nil
+			} else {
+				in.Delim('[')
+				if out.OutgoingHooks == nil {
+					if !in.IsDelim(']') {
+						out.OutgoingHooks = make([]WorkflowNodeOutgoingHook, 0, 1)
+					} else {
+						out.OutgoingHooks = []WorkflowNodeOutgoingHook{}
+					}
+				} else {
+					out.OutgoingHooks = (out.OutgoingHooks)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v210 WorkflowNodeOutgoingHook
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk56(in, &v210)
+					out.OutgoingHooks = append(out.OutgoingHooks, v210)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk8(out *jwriter.Writer, in WorkflowNode) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	if in.Ref != "" {
+		const prefix string = ",\"ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Ref))
+	}
+	{
+		const prefix string = ",\"workflow_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowID))
+	}
+	{
+		const prefix string = ",\"pipeline_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.PipelineID))
+	}
+	{
+		const prefix string = ",\"pipeline_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.PipelineName))
+	}
+	{
+		const prefix string = ",\"pipeline\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk14(out, in.DeprecatedPipeline)
+	}
+	{
+		const prefix string = ",\"context\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Context == nil {
+			out.RawString("null")
+		} else {
+			easyjson1c3bd83cEncodeGithubComOvhCdsSdk52(out, *in.Context)
+		}
+	}
+	if len(in.Hooks) != 0 {
+		const prefix string = ",\"hooks\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v211, v212 := range in.Hooks {
+				if v211 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk53(out, v212)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Forks) != 0 {
+		const prefix string = ",\"forks\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v213, v214 := range in.Forks {
+				if v213 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk54(out, v214)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Triggers) != 0 {
+		const prefix string = ",\"triggers\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v215, v216 := range in.Triggers {
+				if v215 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk55(out, v216)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.OutgoingHooks) != 0 {
+		const prefix string = ",\"outgoing_hooks\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v217, v218 := range in.OutgoingHooks {
+				if v217 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk56(out, v218)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk56(in *jlexer.Lexer, out *WorkflowNodeOutgoingHook) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "ref":
+			out.Ref = string(in.String())
+		case "workflow_node_id":
+			out.WorkflowNodeID = int64(in.Int64())
+		case "workflow_hook_model_id":
+			out.WorkflowHookModelID = int64(in.Int64())
+		case "model":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk18(in, &out.WorkflowHookModel)
+		case "config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Config = make(WorkflowNodeHookConfig)
+				} else {
+					out.Config = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v219 WorkflowNodeHookConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk29(in, &v219)
+					(out.Config)[key] = v219
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "triggers":
+			if in.IsNull() {
+				in.Skip()
+				out.Triggers = nil
+			} else {
+				in.Delim('[')
+				if out.Triggers == nil {
+					if !in.IsDelim(']') {
+						out.Triggers = make([]WorkflowNodeOutgoingHookTrigger, 0, 1)
+					} else {
+						out.Triggers = []WorkflowNodeOutgoingHookTrigger{}
+					}
+				} else {
+					out.Triggers = (out.Triggers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v220 WorkflowNodeOutgoingHookTrigger
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk57(in, &v220)
+					out.Triggers = append(out.Triggers, v220)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk56(out *jwriter.Writer, in WorkflowNodeOutgoingHook) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Ref))
+	}
+	{
+		const prefix string = ",\"workflow_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowNodeID))
+	}
+	{
+		const prefix string = ",\"workflow_hook_model_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowHookModelID))
+	}
+	{
+		const prefix string = ",\"model\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk18(out, in.WorkflowHookModel)
+	}
+	{
+		const prefix string = ",\"config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v221First := true
+			for v221Name, v221Value := range in.Config {
+				if v221First {
+					v221First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v221Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk29(out, v221Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	if len(in.Triggers) != 0 {
+		const prefix string = ",\"triggers\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v222, v223 := range in.Triggers {
+				if v222 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk57(out, v223)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *WorkflowNodeOutgoingHookTrigger) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "workflow_node_outgoing_hook_id":
+			out.WorkflowNodeOutgoingHookID = int64(in.Int64())
+		case "workflow_dest_node_id":
+			out.WorkflowDestNodeID = int64(in.Int64())
+		case "workflow_dest_node":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk8(in, &out.WorkflowDestNode)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk57(out *jwriter.Writer, in WorkflowNodeOutgoingHookTrigger) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"workflow_node_outgoing_hook_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowNodeOutgoingHookID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowDestNodeID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk8(out, in.WorkflowDestNode)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk55(in *jlexer.Lexer, out *WorkflowNodeTrigger) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "workflow_node_id":
+			out.WorkflowNodeID = int64(in.Int64())
+		case "workflow_dest_node_id":
+			out.WorkflowDestNodeID = int64(in.Int64())
+		case "workflow_dest_node":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk8(in, &out.WorkflowDestNode)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk55(out *jwriter.Writer, in WorkflowNodeTrigger) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"workflow_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowNodeID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowDestNodeID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk8(out, in.WorkflowDestNode)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk54(in *jlexer.Lexer, out *WorkflowNodeFork) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "workflow_node_id":
+			out.WorkflowNodeID = int64(in.Int64())
+		case "triggers":
+			if in.IsNull() {
+				in.Skip()
+				out.Triggers = nil
+			} else {
+				in.Delim('[')
+				if out.Triggers == nil {
+					if !in.IsDelim(']') {
+						out.Triggers = make([]WorkflowNodeForkTrigger, 0, 1)
+					} else {
+						out.Triggers = []WorkflowNodeForkTrigger{}
+					}
+				} else {
+					out.Triggers = (out.Triggers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v224 WorkflowNodeForkTrigger
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk58(in, &v224)
+					out.Triggers = append(out.Triggers, v224)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk54(out *jwriter.Writer, in WorkflowNodeFork) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"workflow_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowNodeID))
+	}
+	if len(in.Triggers) != 0 {
+		const prefix string = ",\"triggers\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v225, v226 := range in.Triggers {
+				if v225 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk58(out, v226)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk58(in *jlexer.Lexer, out *WorkflowNodeForkTrigger) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "workflow_node_fork_id":
+			out.WorkflowForkID = int64(in.Int64())
+		case "workflow_dest_node_id":
+			out.WorkflowDestNodeID = int64(in.Int64())
+		case "workflow_dest_node":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk8(in, &out.WorkflowDestNode)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk58(out *jwriter.Writer, in WorkflowNodeForkTrigger) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"workflow_node_fork_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowForkID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowDestNodeID))
+	}
+	{
+		const prefix string = ",\"workflow_dest_node\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk8(out, in.WorkflowDestNode)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowNodeHook) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "uuid":
+			out.UUID = string(in.String())
+		case "ref":
+			out.Ref = string(in.String())
+		case "workflow_node_id":
+			out.WorkflowNodeID = int64(in.Int64())
+		case "workflow_hook_model_id":
+			out.WorkflowHookModelID = int64(in.Int64())
+		case "model":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk18(in, &out.WorkflowHookModel)
+		case "config":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Config = make(WorkflowNodeHookConfig)
+				} else {
+					out.Config = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v227 WorkflowNodeHookConfigValue
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk29(in, &v227)
+					(out.Config)[key] = v227
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk53(out *jwriter.Writer, in WorkflowNodeHook) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"uuid\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.UUID))
+	}
+	{
+		const prefix string = ",\"ref\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Ref))
+	}
+	{
+		const prefix string = ",\"workflow_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowNodeID))
+	}
+	{
+		const prefix string = ",\"workflow_hook_model_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowHookModelID))
+	}
+	{
+		const prefix string = ",\"model\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk18(out, in.WorkflowHookModel)
+	}
+	{
+		const prefix string = ",\"config\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v228First := true
+			for v228Name, v228Value := range in.Config {
+				if v228First {
+					v228First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v228Name))
+				out.RawByte(':')
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk29(out, v228Value)
+			}
+			out.RawByte('}')
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *WorkflowNodeContext) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "workflow_node_id":
+			out.WorkflowNodeID = int64(in.Int64())
+		case "application_id":
+			out.ApplicationID = int64(in.Int64())
+		case "application":
+			if in.IsNull() {
+				in.Skip()
+				out.Application = nil
+			} else {
+				if out.Application == nil {
+					out.Application = new(Application)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk15(in, out.Application)
+			}
+		case "environment":
+			if in.IsNull() {
+				in.Skip()
+				out.Environment = nil
+			} else {
+				if out.Environment == nil {
+					out.Environment = new(Environment)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk16(in, out.Environment)
+			}
+		case "environment_id":
+			out.EnvironmentID = int64(in.Int64())
+		case "project_integration":
+			if in.IsNull() {
+				in.Skip()
+				out.ProjectIntegration = nil
+			} else {
+				if out.ProjectIntegration == nil {
+					out.ProjectIntegration = new(ProjectIntegration)
+				}
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk17(in, out.ProjectIntegration)
+			}
+		case "project_integration_id":
+			out.ProjectIntegrationID = int64(in.Int64())
+		case "default_payload":
+			if m, ok := out.DefaultPayload.(easyjson.Unmarshaler); ok {
+				m.UnmarshalEasyJSON(in)
+			} else if m, ok := out.DefaultPayload.(json.Unmarshaler); ok {
+				_ = m.UnmarshalJSON(in.Raw())
+			} else {
+				out.DefaultPayload = in.Interface()
+			}
+		case "default_pipeline_parameters":
+			if in.IsNull() {
+				in.Skip()
+				out.DefaultPipelineParameters = nil
+			} else {
+				in.Delim('[')
+				if out.DefaultPipelineParameters == nil {
+					if !in.IsDelim(']') {
+						out.DefaultPipelineParameters = make([]Parameter, 0, 1)
+					} else {
+						out.DefaultPipelineParameters = []Parameter{}
+					}
+				} else {
+					out.DefaultPipelineParameters = (out.DefaultPipelineParameters)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v229 Parameter
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk30(in, &v229)
+					out.DefaultPipelineParameters = append(out.DefaultPipelineParameters, v229)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "conditions":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk31(in, &out.Conditions)
+		case "mutex":
+			out.Mutex = bool(in.Bool())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk52(out *jwriter.Writer, in WorkflowNodeContext) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"workflow_node_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkflowNodeID))
+	}
+	{
+		const prefix string = ",\"application_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ApplicationID))
+	}
+	if in.Application != nil {
+		const prefix string = ",\"application\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk15(out, *in.Application)
+	}
+	if in.Environment != nil {
+		const prefix string = ",\"environment\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk16(out, *in.Environment)
+	}
+	{
+		const prefix string = ",\"environment_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.EnvironmentID))
+	}
+	{
+		const prefix string = ",\"project_integration\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.ProjectIntegration == nil {
+			out.RawString("null")
+		} else {
+			easyjson1c3bd83cEncodeGithubComOvhCdsSdk17(out, *in.ProjectIntegration)
+		}
+	}
+	{
+		const prefix string = ",\"project_integration_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ProjectIntegrationID))
+	}
+	if in.DefaultPayload != nil {
+		const prefix string = ",\"default_payload\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if m, ok := in.DefaultPayload.(easyjson.Marshaler); ok {
+			m.MarshalEasyJSON(out)
+		} else if m, ok := in.DefaultPayload.(json.Marshaler); ok {
+			out.Raw(m.MarshalJSON())
+		} else {
+			out.Raw(json.Marshal(in.DefaultPayload))
+		}
+	}
+	if len(in.DefaultPipelineParameters) != 0 {
+		const prefix string = ",\"default_pipeline_parameters\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v230, v231 := range in.DefaultPipelineParameters {
+				if v230 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk30(out, v231)
+			}
+			out.RawByte(']')
+		}
+	}
+	if true {
+		const prefix string = ",\"conditions\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk31(out, in.Conditions)
+	}
+	{
+		const prefix string = ",\"mutex\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Mutex))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk6(in *jlexer.Lexer, out *Project) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "key":
+			out.Key = string(in.String())
+		case "name":
+			out.Name = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "icon":
+			out.Icon = string(in.String())
+		case "workflows":
+			if in.IsNull() {
+				in.Skip()
+				out.Workflows = nil
+			} else {
+				in.Delim('[')
+				if out.Workflows == nil {
+					if !in.IsDelim(']') {
+						out.Workflows = make([]Workflow, 0, 1)
+					} else {
+						out.Workflows = []Workflow{}
+					}
+				} else {
+					out.Workflows = (out.Workflows)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v232 Workflow
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk7(in, &v232)
+					out.Workflows = append(out.Workflows, v232)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "workflow_names":
+			if in.IsNull() {
+				in.Skip()
+				out.WorkflowNames = nil
+			} else {
+				in.Delim('[')
+				if out.WorkflowNames == nil {
+					if !in.IsDelim(']') {
+						out.WorkflowNames = make(IDNames, 0, 1)
+					} else {
+						out.WorkflowNames = IDNames{}
+					}
+				} else {
+					out.WorkflowNames = (out.WorkflowNames)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v233 IDName
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk59(in, &v233)
+					out.WorkflowNames = append(out.WorkflowNames, v233)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "pipelines":
+			if in.IsNull() {
+				in.Skip()
+				out.Pipelines = nil
+			} else {
+				in.Delim('[')
+				if out.Pipelines == nil {
+					if !in.IsDelim(']') {
+						out.Pipelines = make([]Pipeline, 0, 1)
+					} else {
+						out.Pipelines = []Pipeline{}
+					}
+				} else {
+					out.Pipelines = (out.Pipelines)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v234 Pipeline
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk14(in, &v234)
+					out.Pipelines = append(out.Pipelines, v234)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "pipeline_names":
+			if in.IsNull() {
+				in.Skip()
+				out.PipelineNames = nil
+			} else {
+				in.Delim('[')
+				if out.PipelineNames == nil {
+					if !in.IsDelim(']') {
+						out.PipelineNames = make(IDNames, 0, 1)
+					} else {
+						out.PipelineNames = IDNames{}
+					}
+				} else {
+					out.PipelineNames = (out.PipelineNames)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v235 IDName
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk59(in, &v235)
+					out.PipelineNames = append(out.PipelineNames, v235)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "applications":
+			if in.IsNull() {
+				in.Skip()
+				out.Applications = nil
+			} else {
+				in.Delim('[')
+				if out.Applications == nil {
+					if !in.IsDelim(']') {
+						out.Applications = make([]Application, 0, 1)
+					} else {
+						out.Applications = []Application{}
+					}
+				} else {
+					out.Applications = (out.Applications)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v236 Application
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk15(in, &v236)
+					out.Applications = append(out.Applications, v236)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "application_names":
+			if in.IsNull() {
+				in.Skip()
+				out.ApplicationNames = nil
+			} else {
+				in.Delim('[')
+				if out.ApplicationNames == nil {
+					if !in.IsDelim(']') {
+						out.ApplicationNames = make(IDNames, 0, 1)
+					} else {
+						out.ApplicationNames = IDNames{}
+					}
+				} else {
+					out.ApplicationNames = (out.ApplicationNames)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v237 IDName
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk59(in, &v237)
+					out.ApplicationNames = append(out.ApplicationNames, v237)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "groups":
+			if in.IsNull() {
+				in.Skip()
+				out.ProjectGroups = nil
+			} else {
+				in.Delim('[')
+				if out.ProjectGroups == nil {
+					if !in.IsDelim(']') {
+						out.ProjectGroups = make([]GroupPermission, 0, 1)
+					} else {
+						out.ProjectGroups = []GroupPermission{}
+					}
+				} else {
+					out.ProjectGroups = (out.ProjectGroups)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v238 GroupPermission
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk10(in, &v238)
+					out.ProjectGroups = append(out.ProjectGroups, v238)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "variables":
+			if in.IsNull() {
+				in.Skip()
+				out.Variable = nil
+			} else {
+				in.Delim('[')
+				if out.Variable == nil {
+					if !in.IsDelim(']') {
+						out.Variable = make([]Variable, 0, 1)
+					} else {
+						out.Variable = []Variable{}
+					}
+				} else {
+					out.Variable = (out.Variable)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v239 Variable
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk37(in, &v239)
+					out.Variable = append(out.Variable, v239)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "environments":
+			if in.IsNull() {
+				in.Skip()
+				out.Environments = nil
+			} else {
+				in.Delim('[')
+				if out.Environments == nil {
+					if !in.IsDelim(']') {
+						out.Environments = make([]Environment, 0, 1)
+					} else {
+						out.Environments = []Environment{}
+					}
+				} else {
+					out.Environments = (out.Environments)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v240 Environment
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk16(in, &v240)
+					out.Environments = append(out.Environments, v240)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "labels":
+			if in.IsNull() {
+				in.Skip()
+				out.Labels = nil
+			} else {
+				in.Delim('[')
+				if out.Labels == nil {
+					if !in.IsDelim(']') {
+						out.Labels = make([]Label, 0, 1)
+					} else {
+						out.Labels = []Label{}
+					}
+				} else {
+					out.Labels = (out.Labels)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v241 Label
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk19(in, &v241)
+					out.Labels = append(out.Labels, v241)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "permission":
+			out.Permission = int(in.Int())
+		case "created":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Created).UnmarshalJSON(data))
+			}
+		case "last_modified":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.LastModified).UnmarshalJSON(data))
+			}
+		case "metadata":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Metadata = make(Metadata)
+				} else {
+					out.Metadata = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v242 string
+					v242 = string(in.String())
+					(out.Metadata)[key] = v242
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "keys":
+			if in.IsNull() {
+				in.Skip()
+				out.Keys = nil
+			} else {
+				in.Delim('[')
+				if out.Keys == nil {
+					if !in.IsDelim(']') {
+						out.Keys = make([]ProjectKey, 0, 1)
+					} else {
+						out.Keys = []ProjectKey{}
+					}
+				} else {
+					out.Keys = (out.Keys)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v243 ProjectKey
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk60(in, &v243)
+					out.Keys = append(out.Keys, v243)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "vcs_servers":
+			if in.IsNull() {
+				in.Skip()
+				out.VCSServers = nil
+			} else {
+				in.Delim('[')
+				if out.VCSServers == nil {
+					if !in.IsDelim(']') {
+						out.VCSServers = make([]ProjectVCSServer, 0, 1)
+					} else {
+						out.VCSServers = []ProjectVCSServer{}
+					}
+				} else {
+					out.VCSServers = (out.VCSServers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v244 ProjectVCSServer
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk61(in, &v244)
+					out.VCSServers = append(out.VCSServers, v244)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "integrations":
+			if in.IsNull() {
+				in.Skip()
+				out.Integrations = nil
+			} else {
+				in.Delim('[')
+				if out.Integrations == nil {
+					if !in.IsDelim(']') {
+						out.Integrations = make([]ProjectIntegration, 0, 1)
+					} else {
+						out.Integrations = []ProjectIntegration{}
+					}
+				} else {
+					out.Integrations = (out.Integrations)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v245 ProjectIntegration
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk17(in, &v245)
+					out.Integrations = append(out.Integrations, v245)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "features":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Features = make(map[string]bool)
+				} else {
+					out.Features = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v246 bool
+					v246 = bool(in.Bool())
+					(out.Features)[key] = v246
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "favorite":
+			out.Favorite = bool(in.Bool())
+		case "urls":
+			easyjson1c3bd83cDecodeGithubComOvhCdsSdk22(in, &out.URLs)
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in Project) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"key\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Key))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"icon\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Icon))
+	}
+	if len(in.Workflows) != 0 {
+		const prefix string = ",\"workflows\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v247, v248 := range in.Workflows {
+				if v247 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk7(out, v248)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.WorkflowNames) != 0 {
+		const prefix string = ",\"workflow_names\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v249, v250 := range in.WorkflowNames {
+				if v249 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk59(out, v250)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Pipelines) != 0 {
+		const prefix string = ",\"pipelines\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v251, v252 := range in.Pipelines {
+				if v251 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk14(out, v252)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.PipelineNames) != 0 {
+		const prefix string = ",\"pipeline_names\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v253, v254 := range in.PipelineNames {
+				if v253 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk59(out, v254)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Applications) != 0 {
+		const prefix string = ",\"applications\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v255, v256 := range in.Applications {
+				if v255 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk15(out, v256)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.ApplicationNames) != 0 {
+		const prefix string = ",\"application_names\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v257, v258 := range in.ApplicationNames {
+				if v257 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk59(out, v258)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.ProjectGroups) != 0 {
+		const prefix string = ",\"groups\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v259, v260 := range in.ProjectGroups {
+				if v259 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk10(out, v260)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Variable) != 0 {
+		const prefix string = ",\"variables\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v261, v262 := range in.Variable {
+				if v261 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk37(out, v262)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Environments) != 0 {
+		const prefix string = ",\"environments\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v263, v264 := range in.Environments {
+				if v263 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk16(out, v264)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.Labels) != 0 {
+		const prefix string = ",\"labels\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v265, v266 := range in.Labels {
+				if v265 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk19(out, v266)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"permission\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Permission))
+	}
+	{
+		const prefix string = ",\"created\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.Created).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"last_modified\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.LastModified).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"metadata\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Metadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v267First := true
+			for v267Name, v267Value := range in.Metadata {
+				if v267First {
+					v267First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v267Name))
+				out.RawByte(':')
+				out.String(string(v267Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"keys\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Keys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v268, v269 := range in.Keys {
+				if v268 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk60(out, v269)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"vcs_servers\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.VCSServers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v270, v271 := range in.VCSServers {
+				if v270 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk61(out, v271)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"integrations\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Integrations == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v272, v273 := range in.Integrations {
+				if v272 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk17(out, v273)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"features\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.Features == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v274First := true
+			for v274Name, v274Value := range in.Features {
+				if v274First {
+					v274First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v274Name))
+				out.RawByte(':')
+				out.Bool(bool(v274Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"favorite\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Favorite))
+	}
+	{
+		const prefix string = ",\"urls\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		easyjson1c3bd83cEncodeGithubComOvhCdsSdk22(out, in.URLs)
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk61(in *jlexer.Lexer, out *ProjectVCSServer) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "name":
+			out.Name = string(in.String())
+		case "username":
+			out.Username = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk61(out *jwriter.Writer, in ProjectVCSServer) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"username\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Username))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk60(in *jlexer.Lexer, out *ProjectKey) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "project_id":
+			out.ProjectID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "public":
+			out.Public = string(in.String())
+		case "private":
+			out.Private = string(in.String())
+		case "keyID":
+			out.KeyID = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk60(out *jwriter.Writer, in ProjectKey) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"project_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ProjectID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"public\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Public))
+	}
+	{
+		const prefix string = ",\"private\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Private))
+	}
+	{
+		const prefix string = ",\"keyID\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.KeyID))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	out.RawByte('}')
+}
+func easyjson1c3bd83cDecodeGithubComOvhCdsSdk59(in *jlexer.Lexer, out *IDName) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
+		case "name":
+			out.Name = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		case "icon":
+			out.Icon = string(in.String())
+		case "labels":
+			if in.IsNull() {
+				in.Skip()
+				out.Labels = nil
+			} else {
+				in.Delim('[')
+				if out.Labels == nil {
+					if !in.IsDelim(']') {
+						out.Labels = make([]Label, 0, 1)
+					} else {
+						out.Labels = []Label{}
+					}
+				} else {
+					out.Labels = (out.Labels)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v275 Label
+					easyjson1c3bd83cDecodeGithubComOvhCdsSdk19(in, &v275)
+					out.Labels = append(out.Labels, v275)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1c3bd83cEncodeGithubComOvhCdsSdk59(out *jwriter.Writer, in IDName) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Name))
+	}
+	if in.Description != "" {
+		const prefix string = ",\"description\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Description))
+	}
+	if in.Icon != "" {
+		const prefix string = ",\"icon\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Icon))
+	}
+	if len(in.Labels) != 0 {
+		const prefix string = ",\"labels\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v276, v277 := range in.Labels {
+				if v276 > 0 {
+					out.RawByte(',')
+				}
+				easyjson1c3bd83cEncodeGithubComOvhCdsSdk19(out, v277)
 			}
 			out.RawByte(']')
 		}
@@ -1193,9 +11225,9 @@ func easyjson1c3bd83cDecodeGithubComOvhCdsSdk2(in *jlexer.Lexer, out *ModelDocke
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v25 string
-					v25 = string(in.String())
-					(out.Envs)[key] = v25
+					var v278 string
+					v278 = string(in.String())
+					(out.Envs)[key] = v278
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -1288,16 +11320,16 @@ func easyjson1c3bd83cEncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in ModelDock
 		}
 		{
 			out.RawByte('{')
-			v26First := true
-			for v26Name, v26Value := range in.Envs {
-				if v26First {
-					v26First = false
+			v279First := true
+			for v279Name, v279Value := range in.Envs {
+				if v279First {
+					v279First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v26Name))
+				out.String(string(v279Name))
 				out.RawByte(':')
-				out.String(string(v26Value))
+				out.String(string(v279Value))
 			}
 			out.RawByte('}')
 		}

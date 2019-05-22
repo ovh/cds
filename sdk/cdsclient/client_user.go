@@ -150,20 +150,33 @@ func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) 
 	return res, nil
 }
 
-func (c *client) ProjectFavoritesList() ([]sdk.Project, error) {
-	var projects []sdk.Project
-	if _, err := c.GetJSON(context.Background(), "/user/favorite/projects", &projects); err != nil {
-		return projects, err
+func (c *client) ProjectFavoritesList(username string) ([]sdk.Project, error) {
+	res := sdk.User{}
+	mods := []RequestModifier{}
+	mods = append(mods, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withFavoritesProjects", "true")
+		r.URL.RawQuery = q.Encode()
+	})
+
+	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username), &res, mods...); err != nil {
+		return nil, err
 	}
-	return projects, nil
+	return res.FavoritesProjects, nil
 }
 
-func (c *client) WorkflowFavoritesList() ([]sdk.Workflow, error) {
-	var workflows []sdk.Workflow
-	if _, err := c.GetJSON(context.Background(), "/user/favorite/workflows", &workflows); err != nil {
-		return workflows, err
+func (c *client) WorkflowFavoritesList(username string) ([]sdk.Workflow, error) {
+	res := sdk.User{}
+	mods := []RequestModifier{}
+	mods = append(mods, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withFavoritesWorkflows", "true")
+		r.URL.RawQuery = q.Encode()
+	})
+	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username), &res, mods...); err != nil {
+		return nil, err
 	}
-	return workflows, nil
+	return res.FavoritesWorkflows, nil
 }
 
 func (c *client) UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error) {

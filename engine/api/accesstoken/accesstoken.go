@@ -46,7 +46,6 @@ func New(u sdk.User, groups []sdk.Group, origin, desc string, expiration time.Ti
 
 	var tmpUser = u
 	tmpUser.Auth = sdk.Auth{}
-	tmpUser.Favorites = nil
 	tmpUser.Groups = nil
 	tmpUser.Permissions = sdk.UserPermissions{}
 	token.User = tmpUser

@@ -62,7 +62,7 @@ var workflowFavoriteListCmd = cli.Command{
 }
 
 func workflowListFavoriteRun(v cli.Values) (cli.ListResult, error) {
-	workflows, err := client.WorkflowFavoritesList()
+	workflows, err := client.WorkflowFavoritesList(cfg.User)
 	if err != nil {
 		return nil, err
 	}
