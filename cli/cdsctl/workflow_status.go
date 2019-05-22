@@ -63,14 +63,16 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	runs, err := client.WorkflowRunList(v.GetString(_ProjectKey), v.GetString(_WorkflowName), 0, 1)
-	if err != nil {
-		return nil, err
+	if runNumber == 0 {
+		runs, err := client.WorkflowRunList(v.GetString(_ProjectKey), v.GetString(_WorkflowName), 0, 1)
+		if err != nil {
+			return nil, err
+		}
+		if len(runs) != 1 {
+			return nil, fmt.Errorf("workflow run not found")
+		}
+		runNumber = runs[0].Number
 	}
-	if len(runs) != 1 {
-		return nil, fmt.Errorf("workflow run not found")
-	}
-	runNumber = runs[0].Number
 
 	run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 	if err != nil {
