@@ -25,6 +25,7 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 		From        string `cli:"from"`
 		URL         string `cli:"url"`
 		API         string `cli:"api"`
+		Favorite    bool   `cli:"favorite"`
 	}{
 		ProjectKey:  w.ProjectKey,
 		Name:        w.Name,
@@ -32,6 +33,7 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 		From:        w.FromRepository,
 		URL:         w.URLs.UIURL,
 		API:         w.URLs.APIURL,
+		Favorite:    w.Favorite,
 	}
 	return wrkflw, nil
 }

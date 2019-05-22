@@ -215,6 +215,28 @@ func (api *API) postTimelineFilterHandler() service.Handler {
 	}
 }
 
+// getUserFavoritesWorkflowsHandler get favorite workfows for user
+func (api *API) getUserFavoritesWorkflowsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		favoritesWorkflows, err := workflow.LoadFavorites(ctx, api.mustDB(), api.Cache, deprecatedGetUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "unable to load favorites workflows")
+		}
+		return service.WriteJSON(w, favoritesWorkflows, http.StatusOK)
+	}
+}
+
+// getUserFavoriteProjectsHandler get favorite projects for user
+func (api *API) getUserFavoriteProjectsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		favoritesProjects, err := project.LoadFavorites(ctx, api.mustDB(), api.Cache, deprecatedGetUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "unable to load favorites projects")
+		}
+		return service.WriteJSON(w, favoritesProjects, http.StatusOK)
+	}
+}
+
 // postUserFavoriteHandler post favorite user for workflow or project
 func (api *API) postUserFavoriteHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
