@@ -126,10 +126,6 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 			return false, nil
 		}
 		cancelSendResult()
-		if ctx.Err() != nil {
-			log.Info("takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
-			return false, nil
-		}
 		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %v - try: %d - new try in 15s", lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
