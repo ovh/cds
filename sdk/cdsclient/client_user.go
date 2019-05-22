@@ -150,6 +150,22 @@ func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) 
 	return res, nil
 }
 
+func (c *client) ProjectFavoritesList() ([]sdk.Project, error) {
+	var projects []sdk.Project
+	if _, err := c.GetJSON(context.Background(), "/user/favorite/projects", &projects); err != nil {
+		return projects, err
+	}
+	return projects, nil
+}
+
+func (c *client) WorkflowFavoritesList() ([]sdk.Workflow, error) {
+	var workflows []sdk.Workflow
+	if _, err := c.GetJSON(context.Background(), "/user/favorite/workflows", &workflows); err != nil {
+		return workflows, err
+	}
+	return workflows, nil
+}
+
 func (c *client) UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error) {
 	var ticker = time.NewTicker(time.Second)
 	var callbackRequest = sdk.UserLoginCallbackRequest{

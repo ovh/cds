@@ -248,6 +248,41 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 	return res, nil
 }
 
+// LoadFavorites returns all favorites workflows for one user
+func LoadFavorites(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User) ([]sdk.Workflow, error) {
+	var end func()
+	_, end = observability.Span(ctx, "workflow.LoadFavorites")
+	defer end()
+
+	dbRes := []Workflow{}
+
+	query := `SELECT workflow.*
+			FROM workflow
+			JOIN workflow_favorite ON workflow.id = workflow_id
+			join project on project.id = workflow.project_id
+			WHERE user_id = $1`
+
+	if _, err := db.Select(&dbRes, query, u.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Unable to load favorites workflows")
+	}
+
+	res := make([]sdk.Workflow, len(dbRes))
+	for i, w := range dbRes {
+		var err error
+		w.Favorite = true
+		w.ProjectKey, err = db.SelectStr("SELECT projectkey FROM project WHERE id = $1", w.ProjectID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot load project key for workflow %s and project_id %d", w.Name, w.ProjectID)
+		}
+		res[i] = sdk.Workflow(w)
+	}
+
+	return res, nil
+}
+
 // LoadAllNames loads all workflow names for a project.
 func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) (sdk.IDNames, error) {
 	query := `

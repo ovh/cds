@@ -80,6 +80,21 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk
 	return loadprojects(db, store, u, opts, query, args...)
 }
 
+// LoadFavorites returns all favorites projects for one user
+func LoadFavorites(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User) ([]sdk.Project, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.LoadFavorites")
+	defer end()
+
+	query := `SELECT project.*
+			FROM project
+			JOIN project_favorite ON project.id = project_id
+			WHERE user_id = $1`
+
+	args := []interface{}{u.ID}
+	return loadprojects(db, store, u, nil, query, args...)
+}
+
 // LoadPermissions loads all projects where group has access
 func LoadPermissions(db gorp.SqlExecutor, groupID int64) ([]sdk.ProjectGroup, error) {
 	res := []sdk.ProjectGroup{}
@@ -303,12 +318,12 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 	return load(nil, db, store, u, opts, "select project.* from project where id = $1", id)
 }
 
-// Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
+// Load returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func Load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	return load(nil, db, store, u, opts, "select project.* from project where projectkey = $1", key)
 }
 
-// LoadByPipelineID loads a project from workflow iD
+// LoadProjectByWorkflowID loads a project from workflow iD
 func LoadProjectByWorkflowID(db gorp.SqlExecutor, store cache.Store, u *sdk.User, workflowID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
