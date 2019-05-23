@@ -46,22 +46,28 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	start := time.Now()
 
 	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
-	ctx, cancel := context.WithCancel(ctx)
+	ctxWithCancel, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
-	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
+	workflowNodeJobRun := &sdk.WorkflowNodeJobRun{}
+	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker, workflowNodeJobRun *sdk.WorkflowNodeJobRun) {
 		var nbConnrefused int
 		for {
 			select {
-			case <-ctx.Done():
+			case <-ctxWithCancel.Done():
 				return
 			case _, ok := <-tick.C:
 				if !ok {
 					return
 				}
-				j := &sdk.WorkflowNodeJobRun{}
-				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
+
+				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctxWithCancel, 5*time.Second)
 				defer cancelGetJSON()
-				code, err := w.client.(cdsclient.Raw).GetJSON(ctxGetJSON, fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
+				code, err := w.client.(cdsclient.Raw).GetJSON(ctxGetJSON, fmt.Sprintf("/queue/workflows/%d/infos", jobID), workflowNodeJobRun)
+				if workflowNodeJobRun.Status == sdk.StatusStopping.String() {
+					log.Info("Job status is stopping on API")
+					cancel()
+					return
+				}
 				if err != nil {
 					if code == http.StatusNotFound {
 						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
@@ -82,42 +88,50 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 					continue // do not kill the worker here, could be a timeout
 				}
 
-				if j.Status != sdk.StatusBuilding.String() {
-					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
+				if workflowNodeJobRun.Status != sdk.StatusBuilding.String() {
+					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", workflowNodeJobRun.Status, err)
 					cancel()
 					return
 				}
 
 			}
 		}
-	}(cancel, job.ID, tick)
+	}(cancel, job.ID, tick, workflowNodeJobRun)
 
 	// Reset build variables
 	w.currentJob.buildVariables = nil
 	//Run !
-	res := w.processJob(ctx, info)
+	res := w.processJob(ctxWithCancel, info)
 	tick.Stop()
+
+	if ctxWithCancel.Err() != nil && workflowNodeJobRun != nil && workflowNodeJobRun.Status == sdk.StatusStopping.String() {
+		res.Status = sdk.StatusStopped.String()
+		log.Debug("takeWorkflowJob> job is stopped")
+	}
 
 	now, _ := ptypes.TimestampProto(time.Now())
 	res.RemoteTime = now
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
 	//Wait until the logchannel is empty
-	w.drainLogsAndCloseLogger(ctx)
+	w.drainLogsAndCloseLogger(ctxWithCancel)
 	res.BuildID = job.ID
 	// Try to send result through grpc
 	if w.grpc.conn != nil {
 		client := grpc.NewWorkflowQueueClient(w.grpc.conn)
-		_, err := client.SendResult(ctx, &res)
+		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 5*time.Second)
+		_, err := client.SendResult(ctxSendResult, &res)
 		if err == nil {
+			cancelSendResult()
 			return false, nil
 		}
+		cancelSendResult()
 		log.Error("Unable to send result through grpc: %v", err)
 	}
 
 	var lasterr error
 	for try := 1; try <= 10; try++ {
-		log.Info("takeWorkflowJob> Sending build result...")
+		log.Info("takeWorkflowJob> Sending build result with status %s...", res.Status)
 		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 5*time.Second)
 		lasterr = w.client.QueueSendResult(ctxSendResult, job.ID, res)
 		if lasterr == nil {
@@ -126,7 +140,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 			return false, nil
 		}
 		cancelSendResult()
-		if ctx.Err() != nil {
+		if ctxWithCancel.Err() != nil {
 			log.Info("takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
 			return false, nil
 		}

@@ -136,8 +136,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		job.Start = time.Now()
 		job.Status = status.String()
 
-	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped, sdk.StatusStopped:
-		if currentStatus != string(sdk.StatusWaiting) && currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
+	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped, sdk.StatusStopping, sdk.StatusStopped:
+		if currentStatus != string(sdk.StatusWaiting) && currentStatus != string(sdk.StatusBuilding) && currentStatus != string(sdk.StatusStopping) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
 			log.Debug("workflow.UpdateNodeJobRunStatus> Status is %s, cannot update %d to %s", currentStatus, job.ID, status)
 			// too late, Nate
 			return nil, nil
@@ -153,6 +153,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		}
 
 		wf.LastExecution = time.Now()
+		log.Debug("UpdateNodeJobRunStatus> call UpdateWorkflowRun job.ID=%d status=%s", job.ID, job.Status)
 		if err := UpdateWorkflowRun(ctx, db, wf); err != nil {
 			return nil, sdk.WrapError(err, "Cannot update WorkflowRun %d", wf.ID)
 		}
@@ -171,6 +172,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		}
 	}
 
+	log.Debug("UpdateNodeJobRunStatus> call UpdateNodeJobRun job.ID=%d status=%s", job.ID, job.Status)
 	if err := UpdateNodeJobRun(ctx, db, job); err != nil {
 		return nil, sdk.WrapError(err, "Cannot update WorkflowNodeJobRun %d", job.ID)
 	}

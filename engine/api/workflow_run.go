@@ -316,7 +316,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: getService(ctx) == nil,
-				Language:                 r.Header.Get("Accept-Language"),
+				Language:                r.Header.Get("Accept-Language"),
 			},
 		)
 		if err != nil {
@@ -418,7 +418,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop workflow node run %d", wnr.ID)
 			}
 			report.Merge(r1, nil) // nolint
-			wnr.Status = sdk.StatusStopped.String()
+			wnr.Status = sdk.StatusStopping.String()
 
 			// If it's a outgoing hook, we stop the child
 			if wnr.OutgoingHook != nil {
@@ -464,7 +464,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	}
 
 	run.LastExecution = time.Now()
-	run.Status = sdk.StatusStopped.String()
+	run.Status = sdk.StatusStopping.String()
 	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
 		return nil, sdk.WrapError(errU, "Unable to update workflow run %d", run.ID)
 	}

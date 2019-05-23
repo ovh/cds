@@ -122,6 +122,8 @@ func StatusFromString(in string) Status {
 		return StatusSkipped
 	case StatusStopped.String():
 		return StatusStopped
+	case StatusStopping.String():
+		return StatusStopping
 	case StatusWorkerPending.String():
 		return StatusWorkerPending
 	case StatusWorkerRegistering.String():
@@ -155,6 +157,7 @@ const (
 	StatusUnknown           Status = "Unknown"
 	StatusSkipped           Status = "Skipped"
 	StatusStopped           Status = "Stopped"
+	StatusStopping          Status = "Stopping"
 	StatusWorkerPending     Status = "Pending"
 	StatusWorkerRegistering Status = "Registering"
 )
@@ -162,7 +165,7 @@ const (
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
 func StatusIsTerminated(status string) bool {
 	switch status {
-	case StatusBuilding.String(), StatusWaiting.String():
+	case StatusBuilding.String(), StatusWaiting.String(), StatusStopping.String():
 		return false
 	default:
 		return true

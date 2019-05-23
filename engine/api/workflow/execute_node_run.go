@@ -192,6 +192,12 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 					stagesTerminated++
 					break
 				}
+				if stage.Status == sdk.StatusStopping {
+					nr.Done = time.Now()
+					newStatus = sdk.StatusStopping.String()
+					stagesTerminated++
+					break
+				}
 
 				if sdk.StatusIsTerminated(stage.Status.String()) {
 					stagesTerminated++
@@ -566,6 +572,10 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusSuccess
 				}
+			case sdk.StatusStopping.String():
+				if finalStatus != sdk.StatusStopped {
+					finalStatus = sdk.StatusStopping
+				}
 			case sdk.StatusStopped.String():
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusStopped
@@ -712,7 +722,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	// Update stages from node run
 	stopWorkflowNodeRunStages(tx, nodeRun)
 
-	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Status = sdk.StatusStopping.String()
 	nodeRun.Done = time.Now()
 	if errU := UpdateNodeRun(tx, nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
@@ -730,7 +740,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 	}
 	nodeRun.Callback.Done = time.Now()
 	nodeRun.Callback.Log += "\nStopped"
-	nodeRun.Callback.Status = sdk.StatusStopped.String()
+	nodeRun.Callback.Status = sdk.StatusStopping.String()
 	nodeRun.Status = nodeRun.Callback.Status
 
 	srvs, err := services.FindByType(db, services.TypeHooks)
@@ -745,7 +755,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 		}
 	}
 
-	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Status = sdk.StatusStopping.String()
 	nodeRun.Done = time.Now()
 	if errU := UpdateNodeRun(dbFunc(), nodeRun); errU != nil {
 		return sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
@@ -843,7 +853,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 		}
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
-		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, tx, store, proj, njr, sdk.StatusStopped)); err != nil {
+		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, tx, store, proj, njr, sdk.StatusStopping)); err != nil {
 			chanErr <- sdk.WrapError(err, "Cannot update node job run")
 			tx.Rollback()
 			wg.Done()
