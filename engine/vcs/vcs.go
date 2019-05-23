@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/vcs/bitbucketcloud"
 	"github.com/ovh/cds/engine/vcs/bitbucketserver"
 	"github.com/ovh/cds/engine/vcs/gerrit"
 	"github.com/ovh/cds/engine/vcs/github"
@@ -92,7 +93,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		), nil
 	}
 	if serverCfg.Bitbucket != nil {
-		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey,
+		return bitbucketserver.New(serverCfg.Bitbucket.ConsumerKey,
 			[]byte(serverCfg.Bitbucket.PrivateKey),
 			serverCfg.URL,
 			s.Cfg.API.HTTP.URL,
@@ -102,6 +103,19 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			serverCfg.Bitbucket.Token,
 			s.Cache,
 			serverCfg.Bitbucket.Status.Disable,
+		), nil
+	}
+	if serverCfg.BitbucketCloud != nil {
+		return bitbucketcloud.New(serverCfg.BitbucketCloud.ClientID,
+			serverCfg.BitbucketCloud.ClientSecret,
+			serverCfg.URL,
+			s.Cfg.UI.HTTP.URL,
+			serverCfg.BitbucketCloud.ProxyWebhook,
+			serverCfg.BitbucketCloud.Username,
+			serverCfg.BitbucketCloud.Token,
+			s.Cache,
+			serverCfg.BitbucketCloud.Status.Disable,
+			!serverCfg.BitbucketCloud.Status.ShowDetail,
 		), nil
 	}
 	if serverCfg.Gitlab != nil {

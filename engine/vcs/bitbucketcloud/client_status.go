@@ -1,4 +1,4 @@
-package github
+package bitbucketcloud
 
 import (
 	"bytes"
@@ -6,12 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -27,9 +25,8 @@ type statusData struct {
 }
 
 //SetStatus Users with push access can create commit statuses for a given ref:
-//https://developer.github.com/v3/repos/statuses/#create-a-status
-func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
-	if g.DisableStatus {
+func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
+	if client.DisableStatus {
 		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
 	}
@@ -38,7 +35,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var err error
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.DisableStatusDetail)
+		data, err = processEventWorkflowNodeRun(event, client.uiURL, client.DisableStatusDetail)
 	default:
 		log.Error("github.SetStatus> Unknown event %v", event)
 		return nil
@@ -52,22 +49,21 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		return nil
 	}
 
-	ghStatus := CreateStatus{
+	bbStatus := Status{
 		Description: data.desc,
-		TargetURL:   data.urlPipeline,
+		URL:         data.urlPipeline,
 		State:       data.status,
-		Context:     data.context,
+		Name:        data.context,
 	}
 
-	path := fmt.Sprintf("/repos/%s/statuses/%s", data.repoFullName, data.hash)
-
-	b, err := json.Marshal(ghStatus)
+	path := fmt.Sprintf("/repositories/%s/commit/%s/statuses/build", data.repoFullName, data.hash)
+	b, err := json.Marshal(bbStatus)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal github status")
 	}
 	buf := bytes.NewBuffer(b)
 
-	res, err := g.post(path, "application/json", buf, nil)
+	res, err := client.post(path, "application/json", buf, nil)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
 	}
@@ -80,64 +76,57 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
+		return sdk.WrapError(err, "Unable to create status on bitbucket cloud. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
 	}
 
-	s := &Status{}
-	if err := json.Unmarshal(body, s); err != nil {
+	var resp Status
+	if err := json.Unmarshal(body, &resp); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
-	log.Debug("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
+	log.Debug("SetStatus> Status %d %s created at %v", resp.UUID, resp.Links.Self.Href, resp.CreatedOn)
 
 	return nil
 }
 
-func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
-	url := "/repos/" + repo + "/statuses/" + ref
-	status, body, _, err := g.get(url)
+func (client *bitbucketcloudClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+	url := fmt.Sprintf("/repositories/%s/commit/%s/statuses", repo, ref)
+	status, body, _, err := client.get(url)
 	if err != nil {
-		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses")
+		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "bitbucketcloudClient.ListStatuses")
 	}
 	if status >= 400 {
 		return []sdk.VCSCommitStatus{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
-	ss := []Status{}
-
-	//Github may return 304 status because we are using conditional request with ETag based headers
-	if status == http.StatusNotModified {
-		//If repo isn't updated, lets get them from cache
-		g.Cache.Get(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), &ss)
-	} else {
-		if err := json.Unmarshal(body, &ss); err != nil {
-			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
-		}
-		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), ss, 61*60)
+	var ss []Status
+	if err := json.Unmarshal(body, &ss); err != nil {
+		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
 	}
 
-	vcsStatuses := []sdk.VCSCommitStatus{}
+	vcsStatuses := make([]sdk.VCSCommitStatus, 0, len(ss))
 	for _, s := range ss {
-		if !strings.HasPrefix(s.Context, "CDS/") {
+		if !strings.HasPrefix(s.Name, "CDS/") {
 			continue
 		}
 		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
-			CreatedAt:  s.CreatedAt,
-			Decription: s.Context,
+			CreatedAt:  s.CreatedOn,
+			Decription: s.Description,
 			Ref:        ref,
-			State:      processGithubState(s),
+			State:      processBbitbucketState(s),
 		})
 	}
 
 	return vcsStatuses, nil
 }
 
-func processGithubState(s Status) string {
+func processBbitbucketState(s Status) string {
 	switch s.State {
-	case "success":
+	case "SUCCESSFUL":
 		return sdk.StatusSuccess.String()
-	case "error", "failure":
+	case "FAILED":
 		return sdk.StatusFail.String()
+	case "STOPPED":
+		return sdk.StatusStopped.String()
 	default:
 		return sdk.StatusBuilding.String()
 	}
@@ -149,7 +138,7 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "Error durring consumption")
 	}
-	//We only manage status Success and Failure
+	//We only manage status Success, Failure and Stopped
 	if eventNR.Status == sdk.StatusChecking.String() ||
 		eventNR.Status == sdk.StatusDisabled.String() ||
 		eventNR.Status == sdk.StatusNeverBuilt.String() ||
@@ -161,11 +150,13 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 
 	switch eventNR.Status {
 	case sdk.StatusFail.String():
-		data.status = "error"
+		data.status = "FAILED"
 	case sdk.StatusSuccess.String():
-		data.status = "success"
+		data.status = "SUCCESSFUL"
+	case sdk.StatusStopped.String():
+		data.status = "STOPPED"
 	default:
-		data.status = "pending"
+		data.status = "INPROGRESS"
 	}
 	data.hash = eventNR.Hash
 	data.repoFullName = eventNR.RepositoryFullName
@@ -178,7 +169,7 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 		eventNR.Number,
 	)
 
-	//CDS can avoid sending github targer url in status, if it's disable
+	//CDS can avoid sending bitbucket targer url in status, if it's disable
 	if disabledStatusDetail {
 		data.urlPipeline = ""
 	}

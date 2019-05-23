@@ -1,304 +1,169 @@
-package github
+package bitbucketcloud
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
-	"reflect"
 	"strings"
-	"time"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func arrayContains(array interface{}, s interface{}) bool {
-	b := sdk.InterfaceSlice(array)
-	for _, i := range b {
-		if reflect.DeepEqual(i, s) {
-			return true
-		}
-	}
-	return false
-}
-
-func findAncestors(allCommits []Commit, since string) []string {
-	ancestors := []string{}
-	var i int
-	var limit = len(allCommits) * len(allCommits)
-
-ancestorLoop:
-	if i > limit {
-		return ancestors
-	}
-
-	for _, c := range allCommits {
-		i++
-		if c.Sha == since {
-			for _, p := range c.Parents {
-				if !arrayContains(ancestors, p.Sha) {
-					ancestors = append(ancestors, p.Sha)
-					goto ancestorLoop
-				}
-			}
-		} else if arrayContains(ancestors, c.Sha) {
-			for _, p := range c.Parents {
-				if !arrayContains(ancestors, p.Sha) {
-					ancestors = append(ancestors, p.Sha)
-					goto ancestorLoop
-				}
-			}
-		}
-
-	}
-	return ancestors
-}
-
-func filterCommits(allCommits []Commit, since, until string) []Commit {
-	commits := []Commit{}
-
-	sinceAncestors := findAncestors(allCommits, since)
-	untilAncestors := findAncestors(allCommits, until)
-
-	//We have to delete all common ancestors between sinceAncestors and untilAncestors
-	toDelete := []string{}
-	for _, c := range untilAncestors {
-		if c == since {
-			toDelete = append(toDelete, c)
-		}
-		if arrayContains(sinceAncestors, c) {
-			toDelete = append(toDelete, c)
-		}
-	}
-
-	for _, d := range toDelete {
-		for i, x := range untilAncestors {
-			if x == d {
-				untilAncestors = append(untilAncestors[:i], untilAncestors[i+1:]...)
-			}
-		}
-	}
-
-	untilAncestors = append(untilAncestors, until)
-	for _, c := range allCommits {
-		if arrayContains(untilAncestors, c.Sha) {
-			commits = append(commits, c)
-		}
-	}
-
-	return commits
-}
-
 // Commits returns the commits list on a branch between a commit SHA (since) until another commit SHA (until). The branch is given by the branch of the first commit SHA (since)
-func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, until string) ([]sdk.VCSCommit, error) {
+func (client *bitbucketcloudClient) Commits(ctx context.Context, repo, theBranch, since, until string) ([]sdk.VCSCommit, error) {
 	var commitsResult []sdk.VCSCommit
-
-	log.Debug("Looking for commits on repo %s since = %s until = %s", repo, since, until)
-	if g.Cache.Get(cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
-		return commitsResult, nil
-	}
-	var sinceDate time.Time
-	// Calculate since commit
-	if since == "" {
-		// If no since commit, take from the begining of the branch
-		b, errB := g.Branch(ctx, repo, theBranch)
-		if errB != nil {
-			return nil, errB
-		}
-		if b == nil {
-			return nil, fmt.Errorf("Commits>Cannot find branch %s", theBranch)
-		}
-		for _, c := range b.Parents {
-			cp, errCP := g.Commit(ctx, repo, c)
-			if errCP != nil {
-				return nil, errCP
-			}
-			d := time.Unix(cp.Timestamp/1000, 0)
-			if d.After(sinceDate) {
-				// To not get the parent commit
-				sinceDate = d.Add(1 * time.Second)
-			}
-		}
-	} else {
-		sinceCommit, errC := g.Commit(ctx, repo, since)
-		if errC != nil {
-			return nil, errC
-		}
-		sinceDate = time.Unix(sinceCommit.Timestamp/1000, 0)
-	}
-
-	var untilDate time.Time
-	if until == "" {
-		// If no until commit take until the end of the branch
-		untilDate = time.Now()
-	} else {
-		untilCommit, errC := g.Commit(ctx, repo, until)
-		if errC != nil {
-			return nil, errC
-		}
-		untilDate = time.Unix(untilCommit.Timestamp/1000, 0)
-	}
-
 	//Get Commit List
-	theCommits, err := g.allCommitBetween(repo, untilDate, sinceDate, theBranch)
+	theCommits, err := client.allCommitBetween(ctx, repo, since, until, theBranch)
 	if err != nil {
-		return nil, err
-	}
-	if since != "" {
-		log.Debug("filter commit (%d) between %s and %s", len(theCommits), since, until)
-		theCommits = filterCommits(theCommits, since, until)
+		return nil, sdk.WrapError(err, "cannot load all commit between since=%s and until=%s on branch %s", since, until, theBranch)
 	}
 
+	commitsResult = make([]sdk.VCSCommit, 0, len(theCommits))
 	//Convert to sdk.VCSCommit
 	for _, c := range theCommits {
+		email := strings.Trim(rawEmailCommitRegexp.FindString(c.Author.Raw), "<>")
 		commit := sdk.VCSCommit{
-			Timestamp: c.Commit.Author.Date.Unix() * 1000,
-			Message:   c.Commit.Message,
-			Hash:      c.Sha,
-			URL:       c.HTMLURL,
+			Timestamp: c.Date.Unix() * 1000,
+			Message:   c.Message,
+			Hash:      c.Hash,
+			URL:       c.Links.HTML.Href,
 			Author: sdk.VCSAuthor{
-				DisplayName: c.Commit.Author.Name,
-				Email:       c.Commit.Author.Email,
-				Name:        c.Commit.Author.Name,
-				Avatar:      c.Author.AvatarURL,
+				DisplayName: c.Author.User.DisplayName,
+				Email:       email,
+				Name:        c.Author.User.Username,
+				Avatar:      c.Author.User.Links.Avatar.Href,
 			},
 		}
 
 		commitsResult = append(commitsResult, commit)
 	}
 
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
-
 	return commitsResult, nil
 }
 
-func (g *githubClient) allCommitBetween(repo string, untilDate time.Time, sinceDate time.Time, branch string) ([]Commit, error) {
-	var commits = []Commit{}
-	urlValues := url.Values{}
-	urlValues.Add("sha", branch)
-	urlValues.Add("since", sinceDate.Format(time.RFC3339))
-	urlValues.Add("until", untilDate.Format(time.RFC3339))
-	var nextPage = "/repos/" + repo + "/commits"
-
+func (client *bitbucketcloudClient) allCommitBetween(ctx context.Context, repo, sinceCommit, untilCommit, branch string) ([]Commit, error) {
+	var commits []Commit
+	params := url.Values{}
+	params.Add("exclude", sinceCommit)
+	path := fmt.Sprintf("/repositories/%s/commits/%s", repo, branch)
+	nextPage := 1
+	addCommit := untilCommit == ""
 	for {
-		if nextPage != "" {
-			if strings.Contains(nextPage, "?") {
-				nextPage += "&"
-			} else {
-				nextPage += "?"
-			}
-			status, body, headers, err := g.get(nextPage+urlValues.Encode(), withoutETag)
-			if err != nil {
-				log.Warning("githubClient.Commits> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				log.Warning("githubClient.Commits> Error %s", errorAPI(body))
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			nextCommits := []Commit{}
+		if nextPage != 1 {
+			params.Set("page", fmt.Sprintf("%d", nextPage))
+		}
 
-			if err := json.Unmarshal(body, &nextCommits); err != nil {
-				log.Warning("githubClient.Commits> Unable to parse github commits: %s", err)
-				return nil, err
-			}
+		var response Commits
+		if err := client.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+			return nil, sdk.WrapError(err, "Unable to get commits")
+		}
+		if cap(commits) == 0 {
+			commits = make([]Commit, 0, response.Size)
+		}
 
-			commits = append(commits, nextCommits...)
-			nextPage = getNextPage(headers)
-		} else {
+		// Add only between commits
+		for _, commit := range response.Values {
+			if addCommit {
+				commits = append(commits, commit)
+			}
+			if untilCommit != "" && commit.Hash == untilCommit {
+				addCommit = true
+			}
+		}
+
+		if response.Next == "" {
 			break
+		} else {
+			nextPage++
 		}
 	}
+
 	return commits, nil
 }
 
 // Commit Get a single commit
-// https://developer.github.com/v3/repos/commits/#get-a-single-commit
-func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCommit, error) {
-	url := "/repos/" + repo + "/commits/" + hash
-	status, body, _, err := g.get(url)
+func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCommit, error) {
+	var commit sdk.VCSCommit
+	url := fmt.Sprintf("/repositories/%s/commit/%s", repo, hash)
+	status, body, _, err := client.get(url)
 	if err != nil {
-		log.Warning("githubClient.Commit> Error %s", err)
-		return sdk.VCSCommit{}, err
+		log.Warning("bitbucketcloudClient.Commit> Error %s", err)
+		return commit, err
 	}
 	if status >= 400 {
-		return sdk.VCSCommit{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
+		return commit, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
-	c := Commit{}
-
-	//Github may return 304 status because we are using conditional request with ETag based headers
-	if status == http.StatusNotModified {
-		//If repo isn't updated, lets get them from cache
-		g.Cache.Get(cache.Key("vcs", "github", "commit", g.OAuthToken, url), &c)
-	} else {
-		if err := json.Unmarshal(body, &c); err != nil {
-			log.Warning("githubClient.Commit> Unable to parse github commit: %s", err)
-			return sdk.VCSCommit{}, err
-		}
-		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "commit", g.OAuthToken, url), c, 61*60)
+	var c Commit
+	if err := json.Unmarshal(body, &c); err != nil {
+		log.Warning("bitbucketcloudClient.Commit> Unable to parse github commit: %s", err)
+		return sdk.VCSCommit{}, err
 	}
 
-	commit := sdk.VCSCommit{
-		Timestamp: c.Commit.Author.Date.Unix() * 1000,
-		Message:   c.Commit.Message,
-		Hash:      c.Sha,
+	email := strings.Trim(rawEmailCommitRegexp.FindString(c.Author.Raw), "<>")
+	commit = sdk.VCSCommit{
+		Timestamp: c.Date.Unix() * 1000,
+		Message:   c.Message,
+		Hash:      c.Hash,
+		URL:       c.Links.HTML.Href,
 		Author: sdk.VCSAuthor{
-			DisplayName: c.Commit.Author.Name,
-			Email:       c.Commit.Author.Email,
-			Name:        c.Author.Login,
-			Avatar:      c.Author.AvatarURL,
+			DisplayName: c.Author.User.DisplayName,
+			Email:       email,
+			Name:        c.Author.User.Username,
+			Avatar:      c.Author.User.Links.Avatar.Href,
 		},
-		URL: c.HTMLURL,
 	}
 
 	return commit, nil
 }
 
-func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
-	var commits []sdk.VCSCommit
-	url := fmt.Sprintf("/repos/%s/compare/%s...%s", repo, base, head)
-	status, body, _, err := g.get(url)
-	if err != nil {
-		log.Warning("githubClient.CommitsBetweenRefs> Error %s", err)
-		return commits, err
-	}
-	if status >= 400 {
-		return commits, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
-	}
-
-	var diff DiffCommits
-	//Github may return 304 status because we are using conditional request with ETag based headers
-	if status == http.StatusNotModified {
-		//If repo isn't updated, lets get them from cache
-		g.Cache.Get(cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url), &commits)
-	} else {
-		if err := json.Unmarshal(body, &diff); err != nil {
-			log.Warning("githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
-			return commits, err
+func (client *bitbucketcloudClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
+	var commits []Commit
+	params := url.Values{}
+	params.Add("exclude", base)
+	path := fmt.Sprintf("/repositories/%s/commits/%s", repo, head)
+	nextPage := 1
+	for {
+		if nextPage != 1 {
+			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}
 
-		commits = make([]sdk.VCSCommit, len(diff.Commits))
-		for i, commit := range diff.Commits {
-			commits[i] = sdk.VCSCommit{
-				Timestamp: commit.Commit.Author.Date.Unix() * 1000,
-				Message:   commit.Commit.Message,
-				Hash:      commit.Sha,
-				Author: sdk.VCSAuthor{
-					DisplayName: commit.Commit.Author.Name,
-					Email:       commit.Commit.Author.Email,
-					Name:        commit.Author.Login,
-					Avatar:      commit.Author.AvatarURL,
-				},
-				URL: commit.HTMLURL,
-			}
+		var response Commits
+		if err := client.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+			return nil, sdk.WrapError(err, "Unable to get commits")
 		}
-		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url), &commits, 61*60)
+		if cap(commits) == 0 {
+			commits = make([]Commit, 0, response.Size)
+		}
+		commits = append(commits, response.Values...)
+
+		if response.Next == "" {
+			break
+		} else {
+			nextPage++
+		}
 	}
 
-	return commits, nil
+	commitsResult := make([]sdk.VCSCommit, 0, len(commits))
+	//Convert to sdk.VCSCommit
+	for _, c := range commits {
+		email := strings.Trim(rawEmailCommitRegexp.FindString(c.Author.Raw), "<>")
+		commit := sdk.VCSCommit{
+			Timestamp: c.Date.Unix() * 1000,
+			Message:   c.Message,
+			Hash:      c.Hash,
+			URL:       c.Links.HTML.Href,
+			Author: sdk.VCSAuthor{
+				DisplayName: c.Author.User.DisplayName,
+				Email:       email,
+				Name:        c.Author.User.Username,
+				Avatar:      c.Author.User.Links.Avatar.Href,
+			},
+		}
+
+		commitsResult = append(commitsResult, commit)
+	}
+
+	return commitsResult, nil
 }

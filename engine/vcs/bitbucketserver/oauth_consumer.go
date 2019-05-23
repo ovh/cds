@@ -1,4 +1,4 @@
-package bitbucket
+package bitbucketserver
 
 import (
 	"context"
@@ -69,7 +69,7 @@ func (g *bitbucketConsumer) AuthorizeToken(ctx context.Context, token, verifier 
 var instancesAuthorizedClient = map[string]*bitbucketClient{}
 
 //GetAuthorized returns an authorized client
-func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
+func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string, _ int64) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &bitbucketClient{

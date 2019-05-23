@@ -1,6 +1,8 @@
-package github
+package bitbucketcloud
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,36 +10,29 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
-
-	"github.com/ovh/cds/sdk"
 )
 
 //Github http var
 var (
-	RateLimitLimit     = 5000
-	RateLimitRemaining = 5000
-	RateLimitReset     = int(time.Now().Unix())
-
 	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 )
 
-func (g *githubConsumer) postForm(path string, data url.Values, headers map[string][]string) (int, []byte, error) {
+func (consumer *bitbucketcloudConsumer) postForm(url string, data url.Values, headers map[string][]string) (int, []byte, error) {
 	body := strings.NewReader(data.Encode())
 
-	req, err := http.NewRequest(http.MethodPost, g.GitHubURL+path, body)
+	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		return 0, nil, err
 	}
+	req.SetBasicAuth(consumer.ClientID, consumer.ClientSecret)
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+g.ClientID)
 	for k, h := range headers {
 		for i := range h {
 			req.Header.Add(k, h[i])
@@ -55,34 +50,13 @@ func (g *githubConsumer) postForm(path string, data url.Values, headers map[stri
 	}
 
 	if res.StatusCode > 400 {
-		ghErr := &ghError{}
-		if err := json.Unmarshal(resBody, ghErr); err == nil {
-			return res.StatusCode, resBody, ghErr
+		var errBb Error
+		if err := json.Unmarshal(resBody, &errBb); err == nil {
+			return res.StatusCode, resBody, errBb
 		}
 	}
 
 	return res.StatusCode, resBody, nil
-}
-
-func (c *githubClient) setETag(path string, headers http.Header) {
-	etag := headers.Get("ETag")
-
-	r, _ := regexp.Compile(".*\"(.*)\".*")
-	s := r.FindStringSubmatch(etag)
-	if len(s) == 2 {
-		etag = s[1]
-	}
-
-	if etag != "" {
-		//Put etag for this path in cache for 15 minutes
-		c.Cache.SetWithTTL(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 15*60)
-	}
-}
-
-func (c *githubClient) getETag(path string) string {
-	var s string
-	c.Cache.Get(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
-	return s
 }
 
 func getNextPage(headers http.Header) string {
@@ -103,111 +77,77 @@ func getNextPage(headers http.Header) string {
 	return ""
 }
 
-type getArgFunc func(c *githubClient, req *http.Request, path string)
-
-func withETag(c *githubClient, req *http.Request, path string) {
-	etag := c.getETag(path)
-	if etag != "" {
-		req.Header.Add("If-None-Match", fmt.Sprintf("W/\"%s\"", etag))
-	}
-}
-func withoutETag(c *githubClient, req *http.Request, path string) {}
-
 type postOptions struct {
 	skipDefaultBaseURL bool
 	asUser             bool
 }
 
-func (c *githubClient) post(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
-	if opts == nil {
-		opts = new(postOptions)
-	}
-	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, c.GitHubAPIURL) {
-		path = c.GitHubAPIURL + path
-	}
-
-	req, err := http.NewRequest(http.MethodPost, path, body)
+func (client *bitbucketcloudClient) post(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodPost, rootURL+path, body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", bodyType)
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && c.token != "" {
-		req.SetBasicAuth(c.username, c.token)
+	if opts.asUser && client.token != "" {
+		req.SetBasicAuth(client.username, client.token)
 	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 	}
 
-	log.Debug("Github API>> Request URL %s", req.URL.String())
+	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }
 
-func (c *githubClient) patch(path string, opts *postOptions) (*http.Response, error) {
+func (client *bitbucketcloudClient) patch(path string, opts *postOptions) (*http.Response, error) {
 	if opts == nil {
 		opts = new(postOptions)
 	}
-	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, c.GitHubAPIURL) {
-		path = c.GitHubAPIURL + path
-	}
 
-	req, err := http.NewRequest(http.MethodPatch, path, nil)
+	req, err := http.NewRequest(http.MethodPatch, rootURL+path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && c.token != "" {
-		req.SetBasicAuth(c.username, c.token)
+	if opts.asUser && client.token != "" {
+		req.SetBasicAuth(client.username, client.token)
 	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 	}
 
-	log.Debug("Github API>> Request URL %s", req.URL.String())
+	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }
 
-func (c *githubClient) put(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
 	if opts == nil {
 		opts = new(postOptions)
 	}
-	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, c.GitHubAPIURL) {
-		path = c.GitHubAPIURL + path
-	}
 
-	req, err := http.NewRequest(http.MethodPut, path, body)
+	req, err := http.NewRequest(http.MethodPut, rootURL+path, body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", bodyType)
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && c.token != "" {
-		req.SetBasicAuth(c.username, c.token)
+	if opts.asUser && client.token != "" {
+		req.SetBasicAuth(client.username, client.token)
 	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 	}
 
-	log.Debug("Github API>> Request URL %s", req.URL.String())
+	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }
 
-func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
-	if isRateLimitReached() {
-		return 0, nil, nil, ErrorRateLimit
-	}
-
-	if !strings.HasPrefix(path, c.GitHubAPIURL) {
-		path = c.GitHubAPIURL + path
-	}
-
-	callURL, err := url.ParseRequestURI(path)
+func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, error) {
+	callURL, err := url.ParseRequestURI(rootURL + path)
 	if err != nil {
 		return 0, nil, nil, err
 	}
@@ -216,20 +156,10 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	if err != nil {
 		return 0, nil, nil, err
 	}
+	fmt.Println("callURL", callURL.String())
 
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
-
-	if opts == nil {
-		withETag(c, req, path)
-	} else {
-		for _, o := range opts {
-			o(c, req, path)
-		}
-	}
-
-	log.Debug("Github API>> Request GitHubURL %s", req.URL.String())
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -243,8 +173,8 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	case http.StatusMovedPermanently, http.StatusTemporaryRedirect, http.StatusFound:
 		location := res.Header.Get("Location")
 		if location != "" {
-			log.Debug("Github API>> Response Follow redirect :%s", location)
-			return c.get(location)
+			log.Debug("Bitbucket Cloud API>> Response Follow redirect :%s", location)
+			return client.get(location)
 		}
 	case http.StatusUnauthorized:
 		return res.StatusCode, nil, nil, ErrorUnauthorized
@@ -252,58 +182,101 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 
 	resBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		fmt.Println("err", err)
 		return res.StatusCode, nil, nil, err
-	}
-
-	c.setETag(path, res.Header)
-
-	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
-	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
-	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
-
-	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
-		RateLimitLimit, _ = strconv.Atoi(rateLimitLimit)
-		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
-		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
 	}
 
 	return res.StatusCode, resBody, res.Header, nil
 }
 
-func (c *githubClient) delete(path string) error {
-	if isRateLimitReached() {
-		return ErrorRateLimit
-	}
-
-	if !strings.HasPrefix(path, c.GitHubAPIURL) {
-		path = c.GitHubAPIURL + path
-	}
-
-	req, err := http.NewRequest(http.MethodDelete, path, nil)
+func (client *bitbucketcloudClient) delete(path string) error {
+	req, err := http.NewRequest(http.MethodDelete, rootURL+path, nil)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
-	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
-	log.Debug("Github API>> Request URL %s", req.URL.String())
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return sdk.WrapError(err, "Cannot do delete request")
 	}
 
-	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
-	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
-	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
-
-	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
-		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
-		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
-	}
-
 	if res.StatusCode != 204 {
-		return fmt.Errorf("github>delete wrong status code %d on url %s", res.StatusCode, path)
+		return fmt.Errorf("Bitbucket cloud>delete wrong status code %d on url %s", res.StatusCode, path)
 	}
 	return nil
+}
+
+func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}) error {
+	// create the URI
+	uri, err := url.Parse(rootURL + path)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if params != nil && len(params) > 0 {
+		uri.RawQuery = params.Encode()
+	}
+
+	// create the request
+	req := &http.Request{
+		URL:        uri,
+		Method:     method,
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Close:      true,
+		Header:     http.Header{},
+	}
+
+	if values != nil && len(values) > 0 {
+		buf := bytes.NewBuffer(values)
+		req.Body = ioutil.NopCloser(buf)
+		req.ContentLength = int64(buf.Len())
+	}
+
+	// // sign the request
+	// if opts != nil && opts.asUser && client.token != "" {
+	// 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	// } else {
+	// 	if err := client.consumer.Sign(req, token); err != nil {
+	// 		return err
+	// 	}
+	// }
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+
+	// ensure the appropriate content-type is set for POST,
+	// assuming the field is not populated
+	if (req.Method == "POST" || req.Method == "PUT") && len(req.Header.Get("Content-Type")) == 0 {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	// make the request using the default http client
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return sdk.WrapError(err, "HTTP Error")
+	}
+
+	// Read the bytes from the body (make sure we defer close the body)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	// Check for an http error status (ie not 200 StatusOK)
+	switch resp.StatusCode {
+	case 404:
+		return sdk.ErrNotFound
+	case 403:
+		return sdk.ErrForbidden
+	case 401:
+		return sdk.ErrUnauthorized
+	case 400:
+		log.Warning("bitbucketClient.do> %s", string(body))
+		return sdk.ErrWrongRequest
+	}
+
+	return json.Unmarshal(body, v)
 }

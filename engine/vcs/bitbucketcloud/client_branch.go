@@ -1,89 +1,54 @@
-package github
+package bitbucketcloud
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"net/url"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // Branches returns list of branches for a repo
-// https://developer.github.com/v3/repos/branches/#list-branches
-func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
-	var branches = []Branch{}
-	var nextPage = "/repos/" + fullname + "/branches"
-
-	repo, err := g.repoByFullname(fullname)
-	if err != nil {
-		return nil, err
-	}
-
-	var noEtag bool
-	var attempt int
-
+func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+	var branches []Branch
+	path := fmt.Sprintf("/repositories/%s/refs/branches", fullname)
+	params := url.Values{}
+	params.Set("pagelen", "100")
+	params.Set("sort", "-target.date")
+	nextPage := 1
 	for {
-		if nextPage != "" {
+		if nextPage != 1 {
+			params.Set("page", fmt.Sprintf("%d", nextPage))
+		}
 
-			var opt getArgFunc
-			if noEtag {
-				opt = withoutETag
-			} else {
-				opt = withETag
-			}
+		var response Branches
+		if err := client.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+			return nil, sdk.WrapError(err, "Unable to get repos")
+		}
+		if cap(branches) == 0 {
+			branches = make([]Branch, 0, response.Size)
+		}
 
-			attempt++
-			status, body, headers, err := g.get(nextPage, opt)
-			if err != nil {
-				log.Warning("githubClient.Branches> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			nextBranches := []Branch{}
+		branches = append(branches, response.Values...)
 
-			//Github may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				g.Cache.Get(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
-				if len(branches) != 0 || attempt > 5 {
-					//We found branches, let's exit the loop
-					break
-				}
-				//If we did not found any branch in cache, let's retry (same nextPage) without etag
-				noEtag = true
-				continue
-			} else {
-				if err := json.Unmarshal(body, &nextBranches); err != nil {
-					log.Warning("githubClient.Branches> Unable to parse github branches: %s", err)
-					return nil, err
-				}
-			}
-
-			branches = append(branches, nextBranches...)
-			nextPage = getNextPage(headers)
-		} else {
+		if response.Next == "" {
 			break
+		} else {
+			nextPage++
 		}
 	}
 
-	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
-
-	branchesResult := []sdk.VCSBranch{}
+	branchesResult := make([]sdk.VCSBranch, 0, len(branches))
 	for _, b := range branches {
 		branch := sdk.VCSBranch{
 			DisplayID:    b.Name,
 			ID:           b.Name,
-			LatestCommit: b.Commit.Sha,
-			Default:      b.Name == repo.DefaultBranch,
+			LatestCommit: b.Target.Hash,
 		}
-		for _, p := range b.Commit.Parents {
-			branch.Parents = append(branch.Parents, p.Sha)
+		for _, p := range b.Target.Parents {
+			branch.Parents = append(branch.Parents, p.Hash)
 		}
 		branchesResult = append(branchesResult, branch)
 	}
@@ -92,58 +57,41 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 }
 
 // Branch returns only detail of a branch
-func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (*sdk.VCSBranch, error) {
-	cacheBranchKey := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch)
-	repo, err := g.repoByFullname(fullname)
+func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBranch string) (*sdk.VCSBranch, error) {
+	repo, err := client.repoByFullname(fullname)
 	if err != nil {
 		return nil, err
 	}
 
-	url := "/repos/" + fullname + "/branches/" + theBranch
-	status, body, _, err := g.get(url)
+	url := fmt.Sprintf("/repositories/%s/refs/branches/%s", fullname, theBranch)
+	status, body, _, err := client.get(url)
 	if err != nil {
-		g.Cache.Delete(cacheBranchKey)
 		return nil, err
 	}
 	if status >= 400 {
-		g.Cache.Delete(cacheBranchKey)
 		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 	}
 
-	//Github may return 304 status because we are using conditional request with ETag based headers
 	var branch Branch
-	if status == http.StatusNotModified {
-		//If repos aren't updated, lets get them from cache
-		if !g.Cache.Get(cacheBranchKey, &branch) {
-			log.Error("Unable to get branch (%s) from the cache", cacheBranchKey)
-		}
-
-	} else {
-		if err := json.Unmarshal(body, &branch); err != nil {
-			log.Warning("githubClient.Branch> Unable to parse github branch: %s", err)
-			return nil, err
-		}
+	if err := json.Unmarshal(body, &branch); err != nil {
+		log.Warning("bitbucketcloudClient.Branch> Unable to parse github branch: %s", err)
+		return nil, err
 	}
 
 	if branch.Name == "" {
-		log.Warning("githubClient.Branch> Cannot find branch %v: %s", branch, theBranch)
-		g.Cache.Delete(cacheBranchKey)
-		return nil, fmt.Errorf("githubClient.Branch > Cannot find branch %s", theBranch)
+		return nil, fmt.Errorf("bitbucketcloudClient.Branch > Cannot find branch %s", theBranch)
 	}
-
-	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch), branch, 61*60)
 
 	branchResult := &sdk.VCSBranch{
 		DisplayID:    branch.Name,
 		ID:           branch.Name,
-		LatestCommit: branch.Commit.Sha,
-		Default:      branch.Name == repo.DefaultBranch,
+		LatestCommit: branch.Target.Hash,
+		Default:      branch.Name == repo.Mainbranch.Name,
 	}
 
-	if branch.Commit.Sha != "" {
-		for _, p := range branch.Commit.Parents {
-			branchResult.Parents = append(branchResult.Parents, p.Sha)
+	if branch.Target.Hash != "" {
+		for _, p := range branch.Target.Parents {
+			branchResult.Parents = append(branchResult.Parents, p.Hash)
 		}
 	}
 

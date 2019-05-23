@@ -1,4 +1,4 @@
-package github
+package bitbucketcloud
 
 import (
 	"context"
@@ -21,21 +21,21 @@ var (
 )
 
 //GetEvents calls Github et returns GithubEvents as []interface{}
-func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
-	log.Debug("githubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
+func (client *bitbucketcloudClient) GetEvents(ctx context.Context, fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+	log.Debug("bitbucketcloudClient.GetEvents> loading events for %s after %v", fullname, dateRef)
 	var events = []interface{}{}
 
 	interval := 60 * time.Second
 
-	status, body, headers, err := g.get("/repos/" + fullname + "/events")
+	status, body, headers, err := client.get("/repos/" + fullname + "/events")
 	if err != nil {
-		log.Warning("githubClient.GetEvents> Error %s", err)
+		log.Warning("bitbucketcloudClient.GetEvents> Error %s", err)
 		return nil, interval, err
 	}
 
 	if status >= http.StatusBadRequest {
 		err := sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-		log.Warning("githubClient.GetEvents> Error http %s", err)
+		log.Warning("bitbucketcloudClient.GetEvents> Error http %s", err)
 		return nil, interval, err
 	}
 
@@ -45,11 +45,11 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 
 	nextEvents := []Event{}
 	if err := json.Unmarshal(body, &nextEvents); err != nil {
-		log.Warning("githubClient.GetEvents> Unable to parse github events: %s", err)
+		log.Warning("bitbucketcloudClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
 
-	log.Debug("githubClient.GetEvents> Found %d events...", len(nextEvents))
+	log.Debug("bitbucketcloudClient.GetEvents> Found %d events...", len(nextEvents))
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
 		var skipEvent bool
@@ -103,7 +103,7 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 }
 
 //PushEvents returns push events as commits
-func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPushEvent, error) {
+func (client *bitbucketcloudClient) PushEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPushEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -143,12 +143,12 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 
 	res := []sdk.VCSPushEvent{}
 	for b, c := range lastCommitPerBranch {
-		branch, err := g.Branch(ctx, fullname, b)
+		branch, err := client.Branch(ctx, fullname, b)
 		if err != nil || branch == nil {
 			if strings.Contains(err.Error(), "Branch not found") {
-				log.Debug("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+				log.Debug("bitbucketcloudClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			} else {
-				log.Warning("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+				log.Warning("bitbucketcloudClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			}
 			continue
 		}
@@ -163,7 +163,7 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 }
 
 //CreateEvents checks create events from a event list
-func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSCreateEvent, error) {
+func (client *bitbucketcloudClient) CreateEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSCreateEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -179,9 +179,9 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 	res := []sdk.VCSCreateEvent{}
 	for _, e := range events {
 		b := e.Payload.Ref
-		branch, err := g.Branch(ctx, fullname, b)
+		branch, err := client.Branch(ctx, fullname, b)
 		if err != nil || branch == nil {
-			errtxt := fmt.Sprintf("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			errtxt := fmt.Sprintf("bitbucketcloudClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			if err != nil && !strings.Contains(errtxt, "Branch not found") {
 				log.Warning(errtxt)
 			} else {
@@ -193,9 +193,9 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 			Branch: *branch,
 		}
 
-		c, err := g.Commit(ctx, fullname, branch.LatestCommit)
+		c, err := client.Commit(ctx, fullname, branch.LatestCommit)
 		if err != nil {
-			log.Warning("githubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
+			log.Warning("bitbucketcloudClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
 			continue
 		}
 		event.Commit = c
@@ -203,13 +203,13 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 		res = append(res, event)
 	}
 
-	log.Debug("githubClient.CreateEvents> found %d create events : %#v", len(res), res)
+	log.Debug("bitbucketcloudClient.CreateEvents> found %d create events : %#v", len(res), res)
 
 	return res, nil
 }
 
 //DeleteEvents checks delete events from a event list
-func (g *githubClient) DeleteEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSDeleteEvent, error) {
+func (client *bitbucketcloudClient) DeleteEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSDeleteEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -232,12 +232,12 @@ func (g *githubClient) DeleteEvents(ctx context.Context, fullname string, iEvent
 		res = append(res, event)
 	}
 
-	log.Debug("githubClient.DeleteEvents> found %d delete events : %#v", len(res), res)
+	log.Debug("bitbucketcloudClient.DeleteEvents> found %d delete events : %#v", len(res), res)
 	return res, nil
 }
 
 //PullRequestEvents checks pull request events from a event list
-func (g *githubClient) PullRequestEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+func (client *bitbucketcloudClient) PullRequestEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -258,47 +258,47 @@ func (g *githubClient) PullRequestEvents(ctx context.Context, fullname string, i
 		event := sdk.VCSPullRequestEvent{
 			Action: e.Payload.Action,
 			Repo:   e.Payload.PullRequest.Head.Repo.FullName,
-			Head: sdk.VCSPushEvent{
-				Branch: sdk.VCSBranch{
-					ID:           e.Payload.PullRequest.Head.Ref,
-					DisplayID:    e.Payload.PullRequest.Head.Ref,
-					LatestCommit: e.Payload.PullRequest.Head.Sha,
-				},
-				Commit: sdk.VCSCommit{
-					Author: sdk.VCSAuthor{
-						Name:        e.Payload.PullRequest.Head.User.Name,
-						DisplayName: e.Payload.PullRequest.Head.User.Login,
-						Email:       e.Payload.PullRequest.Head.User.Email,
-					},
-					Hash:    e.Payload.PullRequest.Head.Sha,
-					Message: e.Payload.PullRequest.Head.Label,
-				},
-				CloneURL: e.Payload.PullRequest.Head.Repo.CloneURL,
-				Repo:     e.Payload.PullRequest.Head.Repo.FullName,
-			},
-			Base: sdk.VCSPushEvent{
-				Branch: sdk.VCSBranch{
-					ID:           e.Payload.PullRequest.Base.Ref,
-					DisplayID:    e.Payload.PullRequest.Base.Ref,
-					LatestCommit: e.Payload.PullRequest.Base.Sha,
-				},
-				Commit: sdk.VCSCommit{
-					Author: sdk.VCSAuthor{
-						Name:        e.Payload.PullRequest.Base.User.Name,
-						DisplayName: e.Payload.PullRequest.Base.User.Login,
-						Email:       e.Payload.PullRequest.Base.User.Email,
-					},
-					Hash:    e.Payload.PullRequest.Base.Sha,
-					Message: e.Payload.PullRequest.Base.Label,
-				},
-				CloneURL: e.Payload.PullRequest.Base.Repo.CloneURL,
-				Repo:     e.Payload.PullRequest.Base.Repo.FullName,
-			},
+			// Head: sdk.VCSPushEvent{
+			// 	Branch: sdk.VCSBranch{
+			// 		ID:           e.Payload.PullRequest.Head.Ref,
+			// 		DisplayID:    e.Payload.PullRequest.Head.Ref,
+			// 		LatestCommit: e.Payload.PullRequest.Head.Sha,
+			// 	},
+			// 	Commit: sdk.VCSCommit{
+			// 		Author: sdk.VCSAuthor{
+			// 			Name:        e.Payload.PullRequest.Head.User.Name,
+			// 			DisplayName: e.Payload.PullRequest.Head.User.Login,
+			// 			Email:       e.Payload.PullRequest.Head.User.Email,
+			// 		},
+			// 		Hash:    e.Payload.PullRequest.Head.Sha,
+			// 		Message: e.Payload.PullRequest.Head.Label,
+			// 	},
+			// 	CloneURL: e.Payload.PullRequest.Head.Repo.CloneURL,
+			// 	Repo:     e.Payload.PullRequest.Head.Repo.FullName,
+			// },
+			// Base: sdk.VCSPushEvent{
+			// 	Branch: sdk.VCSBranch{
+			// 		ID:           e.Payload.PullRequest.Base.Ref,
+			// 		DisplayID:    e.Payload.PullRequest.Base.Ref,
+			// 		LatestCommit: e.Payload.PullRequest.Base.Sha,
+			// 	},
+			// 	Commit: sdk.VCSCommit{
+			// 		Author: sdk.VCSAuthor{
+			// 			Name:        e.Payload.PullRequest.Base.User.Name,
+			// 			DisplayName: e.Payload.PullRequest.Base.User.Login,
+			// 			Email:       e.Payload.PullRequest.Base.User.Email,
+			// 		},
+			// 		Hash:    e.Payload.PullRequest.Base.Sha,
+			// 		Message: e.Payload.PullRequest.Base.Label,
+			// 	},
+			// 	CloneURL: e.Payload.PullRequest.Base.Repo.CloneURL,
+			// 	Repo:     e.Payload.PullRequest.Base.Repo.FullName,
+			// },
 		}
 		res = append(res, event)
 	}
 
-	log.Debug("githubClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
+	log.Debug("bitbucketcloudClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
 
 	return res, nil
 }

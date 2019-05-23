@@ -1,7 +1,8 @@
-package github
+package bitbucketcloud
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -9,8 +10,9 @@ import (
 )
 
 var (
-	_ sdk.VCSAuthorizedClient = &githubClient{}
-	_ sdk.VCSServer           = &githubConsumer{}
+	_                    sdk.VCSAuthorizedClient = &bitbucketcloudClient{}
+	_                    sdk.VCSServer           = &bitbucketcloudConsumer{}
+	rawEmailCommitRegexp                         = regexp.MustCompile(`<(.*)>`)
 )
 
 // Timestamp represents a time that can be unmarshalled from a JSON string
@@ -74,117 +76,29 @@ type WebHookConfig struct {
 	ContentType string `json:"content_type"`
 }
 
-// User represents a GitHub user.
+// User represents a public bitbucketcloud user.
 type User struct {
-	Login             string    `json:"login,omitempty"`
-	ID                int       `json:"id,omitempty"`
-	AvatarURL         string    `json:"avatar_url,omitempty"`
-	HTMLURL           string    `json:"html_url,omitempty"`
-	GravatarID        string    `json:"gravatar_id,omitempty"`
-	Name              string    `json:"name,omitempty"`
-	Company           string    `json:"company,omitempty"`
-	Blog              string    `json:"blog,omitempty"`
-	Location          string    `json:"location,omitempty"`
-	Email             string    `json:"email,omitempty"`
-	Hireable          bool      `json:"hireable,omitempty"`
-	Bio               string    `json:"bio,omitempty"`
-	PublicRepos       int       `json:"public_repos,omitempty"`
-	PublicGists       int       `json:"public_gists,omitempty"`
-	Followers         int       `json:"followers,omitempty"`
-	Following         int       `json:"following,omitempty"`
-	CreatedAt         Timestamp `json:"created_at,omitempty"`
-	UpdatedAt         Timestamp `json:"updated_at,omitempty"`
-	SuspendedAt       Timestamp `json:"suspended_at,omitempty"`
-	Type              string    `json:"type,omitempty"`
-	SiteAdmin         bool      `json:"site_admin,omitempty"`
-	TotalPrivateRepos int       `json:"total_private_repos,omitempty"`
-	OwnedPrivateRepos int       `json:"owned_private_repos,omitempty"`
-	PrivateGists      int       `json:"private_gists,omitempty"`
-	DiskUsage         int       `json:"disk_usage,omitempty"`
-	Collaborators     int       `json:"collaborators,omitempty"`
-	Plan              Plan      `json:"plan,omitempty"`
-	URL               string    `json:"url,omitempty"`
-	EventsURL         string    `json:"events_url,omitempty"`
-	FollowingURL      string    `json:"following_url,omitempty"`
-	FollowersURL      string    `json:"followers_url,omitempty"`
-	GistsURL          string    `json:"gists_url,omitempty"`
-	OrganizationsURL  string    `json:"organizations_url,omitempty"`
-	ReceivedEventsURL string    `json:"received_events_url,omitempty"`
-	ReposURL          string    `json:"repos_url,omitempty"`
-	StarredURL        string    `json:"starred_url,omitempty"`
-	SubscriptionsURL  string    `json:"subscriptions_url,omitempty"`
-}
-
-// Repository represents a GitHub repository.
-type Repository struct {
-	ID               int             `json:"id,omitempty"`
-	Owner            User            `json:"owner,omitempty"`
-	Name             string          `json:"name,omitempty"`
-	FullName         string          `json:"full_name,omitempty"`
-	Description      string          `json:"description,omitempty"`
-	Homepage         string          `json:"homepage,omitempty"`
-	DefaultBranch    string          `json:"default_branch,omitempty"`
-	MasterBranch     string          `json:"master_branch,omitempty"`
-	CreatedAt        Timestamp       `json:"created_at,omitempty"`
-	PushedAt         Timestamp       `json:"pushed_at,omitempty"`
-	UpdatedAt        Timestamp       `json:"updated_at,omitempty"`
-	HTMLURL          string          `json:"html_url,omitempty"`
-	CloneURL         string          `json:"clone_url,omitempty"`
-	GitURL           string          `json:"git_url,omitempty"`
-	MirrorURL        string          `json:"mirror_url,omitempty"`
-	SSHURL           string          `json:"ssh_url,omitempty"`
-	SVNURL           string          `json:"svn_url,omitempty"`
-	Language         string          `json:"language,omitempty"`
-	Fork             bool            `json:"fork"`
-	ForksCount       int             `json:"forks_count,omitempty"`
-	NetworkCount     int             `json:"network_count,omitempty"`
-	OpenIssuesCount  int             `json:"open_issues_count,omitempty"`
-	StargazersCount  int             `json:"stargazers_count,omitempty"`
-	SubscribersCount int             `json:"subscribers_count,omitempty"`
-	WatchersCount    int             `json:"watchers_count,omitempty"`
-	Size             int             `json:"size,omitempty"`
-	AutoInit         bool            `json:"auto_init,omitempty"`
-	Parent           *Repository     `json:"parent,omitempty"`
-	Source           *Repository     `json:"source,omitempty"`
-	Organization     Organization    `json:"organization,omitempty"`
-	Permissions      map[string]bool `json:"permissions,omitempty"`
-	URL              string          `json:"url,omitempty"`
-	ArchiveURL       string          `json:"archive_url,omitempty"`
-	AssigneesURL     string          `json:"assignees_url,omitempty"`
-	BlobsURL         string          `json:"blobs_url,omitempty"`
-	BranchesURL      string          `json:"branches_url,omitempty"`
-	CollaboratorsURL string          `json:"collaborators_url,omitempty"`
-	CommentsURL      string          `json:"comments_url,omitempty"`
-	CommitsURL       string          `json:"commits_url,omitempty"`
-	CompareURL       string          `json:"compare_url,omitempty"`
-	ContentsURL      string          `json:"contents_url,omitempty"`
-	ContributorsURL  string          `json:"contributors_url,omitempty"`
-	DeploymentsURL   string          `json:"deployments_url,omitempty"`
-	DownloadsURL     string          `json:"downloads_url,omitempty"`
-	EventsURL        string          `json:"events_url,omitempty"`
-	ForksURL         string          `json:"forks_url,omitempty"`
-	GitCommitsURL    string          `json:"git_commits_url,omitempty"`
-	GitRefsURL       string          `json:"git_refs_url,omitempty"`
-	GitTagsURL       string          `json:"git_tags_url,omitempty"`
-	HooksURL         string          `json:"hooks_url,omitempty"`
-	IssueCommentURL  string          `json:"issue_comment_url,omitempty"`
-	IssueEventsURL   string          `json:"issue_events_url,omitempty"`
-	IssuesURL        string          `json:"issues_url,omitempty"`
-	KeysURL          string          `json:"keys_url,omitempty"`
-	LabelsURL        string          `json:"labels_url,omitempty"`
-	LanguagesURL     string          `json:"languages_url,omitempty"`
-	MergesURL        string          `json:"merges_url,omitempty"`
-	MilestonesURL    string          `json:"milestones_url,omitempty"`
-	NotificationsURL string          `json:"notifications_url,omitempty"`
-	PullsURL         string          `json:"pulls_url,omitempty"`
-	ReleasesURL      string          `json:"releases_url,omitempty"`
-	StargazersURL    string          `json:"stargazers_url,omitempty"`
-	StatusesURL      string          `json:"statuses_url,omitempty"`
-	SubscribersURL   string          `json:"subscribers_url,omitempty"`
-	SubscriptionURL  string          `json:"subscription_url,omitempty"`
-	TagsURL          string          `json:"tags_url,omitempty"`
-	TreesURL         string          `json:"trees_url,omitempty"`
-	TeamsURL         string          `json:"teams_url,omitempty"`
+	Username    string `json:"username"`
+	Website     string `json:"website"`
+	DisplayName string `json:"display_name"`
+	UUID        string `json:"uuid"`
+	Links       struct {
+		Hooks        Link `json:"hooks"`
+		Self         Link `json:"self"`
+		Repositories Link `json:"repositories"`
+		HTML         Link `json:"html"`
+		Followers    Link `json:"followers"`
+		Avatar       Link `json:"avatar"`
+		Following    Link `json:"following"`
+		Snippets     Link `json:"snippets"`
+	} `json:"links"`
+	Nickname      string    `json:"nickname"`
+	CreatedOn     time.Time `json:"created_on"`
+	IsStaff       bool      `json:"is_staff"`
+	Location      string    `json:"location"`
+	AccountStatus string    `json:"account_status"`
+	Type          string    `json:"type"`
+	AccountID     string    `json:"account_id"`
 }
 
 // Organization represents a GitHub organization account.
@@ -230,103 +144,9 @@ type Plan struct {
 	PrivateRepos  int    `json:"private_repos,omitempty"`
 }
 
-// Branch represents a repository branch
-type Branch struct {
-	Name       string     `json:"name,omitempty"`
-	Commit     Commit     `json:"commit,omitempty"`
-	Protection Protection `json:"protection,omitempty"`
-}
-
 // Protection represents a repository branch's protection
 type Protection struct {
 	Enabled bool `json:"enabled,omitempty"`
-}
-
-// Commit represents a GitHub commit.
-type Commit struct {
-	Sha    string `json:"sha"`
-	Commit struct {
-		Author struct {
-			Name  string    `json:"name"`
-			Email string    `json:"email"`
-			Date  Timestamp `json:"date"`
-		} `json:"author"`
-		Committer struct {
-			Name  string    `json:"name"`
-			Email string    `json:"email"`
-			Date  Timestamp `json:"date"`
-		} `json:"committer"`
-		Message string `json:"message"`
-		Tree    struct {
-			Sha string `json:"sha"`
-			URL string `json:"url"`
-		} `json:"tree"`
-		URL          string `json:"url"`
-		CommentCount int    `json:"comment_count"`
-	} `json:"commit"`
-	URL         string `json:"url"`
-	HTMLURL     string `json:"html_url"`
-	CommentsURL string `json:"comments_url"`
-	Author      struct {
-		Login             string `json:"login"`
-		ID                int    `json:"id"`
-		AvatarURL         string `json:"avatar_url"`
-		GravatarID        string `json:"gravatar_id"`
-		URL               string `json:"url"`
-		HTMLURL           string `json:"html_url"`
-		FollowersURL      string `json:"followers_url"`
-		FollowingURL      string `json:"following_url"`
-		GistsURL          string `json:"gists_url"`
-		StarredURL        string `json:"starred_url"`
-		SubscriptionsURL  string `json:"subscriptions_url"`
-		OrganizationsURL  string `json:"organizations_url"`
-		ReposURL          string `json:"repos_url"`
-		EventsURL         string `json:"events_url"`
-		ReceivedEventsURL string `json:"received_events_url"`
-		Type              string `json:"type"`
-		SiteAdmin         bool   `json:"site_admin"`
-	} `json:"author"`
-	Committer struct {
-		Login             string `json:"login"`
-		ID                int    `json:"id"`
-		AvatarURL         string `json:"avatar_url"`
-		GravatarID        string `json:"gravatar_id"`
-		URL               string `json:"url"`
-		HTMLURL           string `json:"html_url"`
-		FollowersURL      string `json:"followers_url"`
-		FollowingURL      string `json:"following_url"`
-		GistsURL          string `json:"gists_url"`
-		StarredURL        string `json:"starred_url"`
-		SubscriptionsURL  string `json:"subscriptions_url"`
-		OrganizationsURL  string `json:"organizations_url"`
-		ReposURL          string `json:"repos_url"`
-		EventsURL         string `json:"events_url"`
-		ReceivedEventsURL string `json:"received_events_url"`
-		Type              string `json:"type"`
-		SiteAdmin         bool   `json:"site_admin"`
-	} `json:"committer"`
-	Parents []struct {
-		Sha     string `json:"sha"`
-		URL     string `json:"url"`
-		HTMLURL string `json:"html_url"`
-	} `json:"parents"`
-	Stats struct {
-		Total     int `json:"total"`
-		Additions int `json:"additions"`
-		Deletions int `json:"deletions"`
-	} `json:"stats"`
-	Files []struct {
-		Sha         string `json:"sha"`
-		Filename    string `json:"filename"`
-		Status      string `json:"status"`
-		Additions   int    `json:"additions"`
-		Deletions   int    `json:"deletions"`
-		Changes     int    `json:"changes"`
-		BlobURL     string `json:"blob_url"`
-		RawURL      string `json:"raw_url"`
-		ContentsURL string `json:"contents_url"`
-		Patch       string `json:"patch"`
-	} `json:"files"`
 }
 
 // Tree represents a GitHub tree.
@@ -396,45 +216,6 @@ type Event struct {
 		URL        string `json:"url"`
 		AvatarURL  string `json:"avatar_url"`
 	} `json:"org"`
-}
-
-//CreateStatus represents create a Status API Payload
-type CreateStatus struct {
-	State       string `json:"state"`
-	TargetURL   string `json:"target_url"`
-	Description string `json:"description"`
-	Context     string `json:"context"`
-}
-
-//Status represents Create a Status from API
-type Status struct {
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	State       string    `json:"state"`
-	TargetURL   string    `json:"target_url"`
-	Description string    `json:"description"`
-	ID          int       `json:"id"`
-	URL         string    `json:"url"`
-	Context     string    `json:"context"`
-	Creator     struct {
-		Login             string `json:"login"`
-		ID                int    `json:"id"`
-		AvatarURL         string `json:"avatar_url"`
-		GravatarID        string `json:"gravatar_id"`
-		URL               string `json:"url"`
-		HTMLURL           string `json:"html_url"`
-		FollowersURL      string `json:"followers_url"`
-		FollowingURL      string `json:"following_url"`
-		GistsURL          string `json:"gists_url"`
-		StarredURL        string `json:"starred_url"`
-		SubscriptionsURL  string `json:"subscriptions_url"`
-		OrganizationsURL  string `json:"organizations_url"`
-		ReposURL          string `json:"repos_url"`
-		EventsURL         string `json:"events_url"`
-		ReceivedEventsURL string `json:"received_events_url"`
-		Type              string `json:"type"`
-		SiteAdmin         bool   `json:"site_admin"`
-	} `json:"creator"`
 }
 
 //RateLimit represents Rate Limit API
@@ -734,4 +515,212 @@ type Ref struct {
 		Sha  string `json:"sha"`
 		URL  string `json:"url"`
 	} `json:"object"`
+}
+
+type AccessToken struct {
+	AccessToken  string `json:"access_token"`
+	Scopes       string `json:"scopes"`
+	ExpiresIn    int64  `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+}
+
+type Link struct {
+	Href string `json:"href"`
+	Name string `json:"name"`
+}
+
+type Repositories struct {
+	Pagelen  int          `json:"pagelen"`
+	Page     int          `json:"page"`
+	Size     int64        `json:"size"`
+	Values   []Repository `json:"values"`
+	Next     string       `json:"next"`
+	Previous string       `json:"previous,omitempty"`
+}
+
+type Repository struct {
+	Scm     string `json:"scm"`
+	Website string `json:"website"`
+	HasWiki bool   `json:"has_wiki"`
+	Name    string `json:"name"`
+	Links   struct {
+		Watchers     Link   `json:"watchers"`
+		Branches     Link   `json:"branches"`
+		Tags         Link   `json:"tags"`
+		Commits      Link   `json:"commits"`
+		Clone        []Link `json:"clone"`
+		Self         Link   `json:"self"`
+		Source       Link   `json:"source"`
+		HTML         Link   `json:"html"`
+		Avatar       Link   `json:"avatar"`
+		Hooks        Link   `json:"hooks"`
+		Forks        Link   `json:"forks"`
+		Downloads    Link   `json:"downloads"`
+		Issues       Link   `json:"issues"`
+		Pullrequests Link   `json:"pullrequests"`
+	} `json:"links"`
+	ForkPolicy string    `json:"fork_policy"`
+	UUID       string    `json:"uuid"`
+	Language   string    `json:"language"`
+	CreatedOn  time.Time `json:"created_on"`
+	Mainbranch struct {
+		Type string `json:"type"`
+		Name string `json:"name"`
+	} `json:"mainbranch"`
+	FullName    string    `json:"full_name"`
+	HasIssues   bool      `json:"has_issues"`
+	Owner       User      `json:"owner"`
+	UpdatedOn   time.Time `json:"updated_on"`
+	Size        int       `json:"size"`
+	Type        string    `json:"type"`
+	Slug        string    `json:"slug"`
+	IsPrivate   bool      `json:"is_private"`
+	Description string    `json:"description"`
+}
+
+type Status struct {
+	UUID        string    `json:"uuid"`
+	Key         string    `json:"key"`
+	RefName     string    `json:"refname"` //optional
+	URL         string    `json:"url"`
+	State       string    `json:"state"` // SUCCESSFUL / FAILED / INPROGRESS / STOPPED
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedOn   time.Time `json:"created_on"`
+	UpdatedOn   time.Time `json:"updated_on"`
+	Links       struct {
+		Self   Link `json:"self"`
+		Commit Link `json:"commit"`
+	} `json:"links"`
+}
+
+type Branches struct {
+	Pagelen  int      `json:"pagelen"`
+	Page     int      `json:"page"`
+	Size     int64    `json:"size"`
+	Values   []Branch `json:"values"`
+	Next     string   `json:"next"`
+	Previous string   `json:"previous,omitempty"`
+}
+
+type Branch struct {
+	Heads []struct {
+		Hash  string `json:"hash"`
+		Type  string `json:"type"`
+		Links Link   `json:"links"`
+	} `json:"heads"`
+	Name  string `json:"name"`
+	Links struct {
+		Commits struct {
+			Href string `json:"href"`
+		} `json:"commits"`
+		Self struct {
+			Href string `json:"href"`
+		} `json:"self"`
+		HTML struct {
+			Href string `json:"href"`
+		} `json:"html"`
+	} `json:"links"`
+	DefaultMergeStrategy string   `json:"default_merge_strategy"`
+	MergeStrategies      []string `json:"merge_strategies"`
+	Type                 string   `json:"type"`
+	Target               struct {
+		Hash       string `json:"hash"`
+		Repository struct {
+			Links struct {
+				Self   Link `json:"self"`
+				HTML   Link `json:"html"`
+				Avatar Link `json:"avatar"`
+			} `json:"links"`
+			Type     string `json:"type"`
+			Name     string `json:"name"`
+			FullName string `json:"full_name"`
+			UUID     string `json:"uuid"`
+		} `json:"repository"`
+		Links struct {
+			Self     Link `json:"self"`
+			Comments Link `json:"comments"`
+			Patch    Link `json:"patch"`
+			HTML     Link `json:"html"`
+			Diff     Link `json:"diff"`
+			Approve  Link `json:"approve"`
+			Statuses Link `json:"statuses"`
+		} `json:"links"`
+		Author struct {
+			Raw  string `json:"raw"`
+			Type string `json:"type"`
+		} `json:"author"`
+		Parents []struct {
+			Hash  string `json:"hash"`
+			Type  string `json:"type"`
+			Links struct {
+				Self Link `json:"self"`
+				HTML Link `json:"html"`
+			} `json:"links"`
+		} `json:"parents"`
+		Date    time.Time `json:"date"`
+		Message string    `json:"message"`
+		Type    string    `json:"type"`
+	} `json:"target"`
+}
+
+type Commits struct {
+	Pagelen  int      `json:"pagelen"`
+	Page     int      `json:"page"`
+	Size     int64    `json:"size"`
+	Values   []Commit `json:"values"`
+	Next     string   `json:"next"`
+	Previous string   `json:"previous,omitempty"`
+}
+
+type Commit struct {
+	Rendered struct {
+		Message struct {
+			Raw    string `json:"raw"`
+			Markup string `json:"markup"`
+			HTML   string `json:"html"`
+			Type   string `json:"type"`
+		} `json:"message"`
+	} `json:"rendered"`
+	Hash       string `json:"hash"`
+	Repository struct {
+		Links struct {
+			Self   Link `json:"self"`
+			HTML   Link `json:"html"`
+			Avatar Link `json:"avatar"`
+		} `json:"links"`
+		Type     string `json:"type"`
+		Name     string `json:"name"`
+		FullName string `json:"full_name"`
+		UUID     string `json:"uuid"`
+	} `json:"repository"`
+	Links struct {
+		Self     Link `json:"self"`
+		Comments Link `json:"comments"`
+		Patch    Link `json:"patch"`
+		HTML     Link `json:"html"`
+		Diff     Link `json:"diff"`
+		Approve  Link `json:"approve"`
+		Statuses Link `json:"statuses"`
+	} `json:"links"`
+	Author struct {
+		Raw  string `json:"raw"`
+		Type string `json:"type"`
+		User User   `json:"user"`
+	} `json:"author,omitempty"`
+	Summary struct {
+		Raw    string `json:"raw"`
+		Markup string `json:"markup"`
+		HTML   string `json:"html"`
+		Type   string `json:"type"`
+	} `json:"summary"`
+	Parents []struct {
+		Hash  string `json:"hash"`
+		Type  string `json:"type"`
+		Links Link   `json:"links"`
+	} `json:"parents"`
+	Date    time.Time `json:"date"`
+	Message string    `json:"message"`
+	Type    string    `json:"type"`
 }

@@ -1,104 +1,135 @@
-package github
+package bitbucketcloud
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"strings"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-//Github const
-var (
-	requestedScope = []string{"user:email", "repo", "admin:repo_hook"} //https://developer.github.com/v3/oauth/#scopes
-)
-
-//AuthorizeRedirect returns the request token, the Authorize GitHubURL
-//doc: https://developer.github.com/v3/oauth/#web-application-flow
-func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
-	// GET https://github.com/login/oauth/authorize
-	// with parameters : client_id, redirect_uri, scope, state
+//AuthorizeRedirect returns the request token, the Authorize Bitbucket cloud
+func (consumer *bitbucketcloudConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	requestToken, err := sdk.GenerateHash()
 	if err != nil {
 		return "", "", err
 	}
 
 	val := url.Values{}
-	val.Add("client_id", g.ClientID)
-	//Leave the default value set in github. If we would it to be tweakable; we should do it this way: val.Add("redirect_uri", g.AuthorizationCallbackURL)
-	val.Add("scope", strings.Join(requestedScope, " "))
-	val.Add("state", requestToken)
+	val.Add("client_id", consumer.ClientID)
+	val.Add("response_type", "code")
 
-	authorizeURL := fmt.Sprintf("%s/login/oauth/authorize?%s", g.GitHubURL, val.Encode())
+	authorizeURL := fmt.Sprintf("https://bitbucket.org/site/oauth2/authorize?%s", val.Encode())
 
 	return requestToken, authorizeURL, nil
 }
 
-//AuthorizeToken returns the authorized token (and its secret)
+//AuthorizeToken returns the authorized token (and its refresh_token)
 //from the request token and the verifier got on authorize url
-func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
-	log.Debug("AuthorizeToken> Github send code %s for state %s", code, state)
-	//POST https://github.com/login/oauth/access_token
-	//Parameters:
-	//	client_id
-	//	client_secret
-	//	code
-	//	state
+func (consumer *bitbucketcloudConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
+	log.Debug("AuthorizeToken> Bitbucketcloud send code %s", code)
 
 	params := url.Values{}
-	params.Add("client_id", g.ClientID)
-	params.Add("client_secret", g.ClientSecret)
 	params.Add("code", code)
-	params.Add("state", state)
+	params.Add("grant_type", "authorization_code")
 
 	headers := map[string][]string{}
 	headers["Accept"] = []string{"application/json"}
 
-	status, res, err := g.postForm("/login/oauth/access_token", params, headers)
+	status, res, err := consumer.postForm("https://bitbucket.org/site/oauth2/access_token", params, headers)
 	if err != nil {
 		return "", "", err
 	}
 
-	if status < 200 && status >= 400 {
-		return "", "", fmt.Errorf("Github error (%d) %s ", status, string(res))
+	if status < 200 || status >= 400 {
+		return "", "", fmt.Errorf("Bitbucket cloud error (%d) %s ", status, string(res))
 	}
 
-	ghResponse := map[string]string{}
-	if err := json.Unmarshal(res, &ghResponse); err != nil {
-		return "", "", fmt.Errorf("Unable to parse github response (%d) %s ", status, string(res))
+	var resp AccessToken
+	if err := json.Unmarshal(res, &resp); err != nil {
+		return "", "", fmt.Errorf("Unable to parse bitbucketcloud response (%d) %s ", status, string(res))
 	}
 
-	//Github return scope as "scope":"repo,gist"
-	//Should we check scopes ?	ghScope := strings.Split(ghResponse["scope"], ",")
+	return resp.AccessToken, resp.RefreshToken, nil
+}
 
-	return ghResponse["access_token"], state, nil
+//RefreshToken returns the refreshed authorized token
+func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refreshToken string) (string, string, error) {
+	params := url.Values{}
+	params.Add("refresh_token", refreshToken)
+	params.Add("grant_type", "refresh_token")
+
+	headers := map[string][]string{}
+	headers["Accept"] = []string{"application/json"}
+
+	status, res, err := consumer.postForm("https://bitbucket.org/site/oauth2/access_token", params, headers)
+	if err != nil {
+		return "", "", err
+	}
+
+	if status < 200 || status >= 400 {
+		return "", "", fmt.Errorf("Bitbucket cloud error (%d) %s ", status, string(res))
+	}
+
+	var resp AccessToken
+	if err := json.Unmarshal(res, &resp); err != nil {
+		return "", "", fmt.Errorf("Unable to parse bitbucketcloud response (%d) %s ", status, string(res))
+	}
+
+	return resp.AccessToken, resp.RefreshToken, nil
 }
 
 //keep client in memory
-var instancesAuthorizedClient = map[string]*githubClient{}
+var instancesAuthorizedClient = map[string]*bitbucketcloudClient{}
 
 //GetAuthorized returns an authorized client
-func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
+func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, accessToken, refreshToken string, created int64) (sdk.VCSAuthorizedClient, error) {
+	createdTime := time.Unix(created, 0)
+
 	c, ok := instancesAuthorizedClient[accessToken]
-	if !ok {
-		c = &githubClient{
-			ClientID:            g.ClientID,
-			OAuthToken:          accessToken,
-			GitHubURL:           g.GitHubURL,
-			GitHubAPIURL:        g.GitHubAPIURL,
-			Cache:               g.Cache,
-			uiURL:               g.uiURL,
-			DisableStatus:       g.disableStatus,
-			DisableStatusDetail: g.disableStatusDetail,
-			apiURL:              g.apiURL,
-			proxyURL:            g.proxyURL,
-			username:            g.username,
-			token:               g.token,
+	if createdTime.Add(2 * time.Hour).Before(time.Now()) {
+		if !ok {
+			c = &bitbucketcloudClient{
+				ClientID:            consumer.ClientID,
+				OAuthToken:          accessToken,
+				RefreshToken:        refreshToken,
+				Cache:               consumer.Cache,
+				apiURL:              consumer.apiURL,
+				uiURL:               consumer.uiURL,
+				DisableStatus:       consumer.disableStatus,
+				DisableStatusDetail: consumer.disableStatusDetail,
+				proxyURL:            consumer.proxyURL,
+				username:            consumer.username,
+				token:               consumer.token,
+			}
+			instancesAuthorizedClient[accessToken] = c
 		}
-		instancesAuthorizedClient[accessToken] = c
+	} else {
+		if ok {
+			delete(instancesAuthorizedClient, accessToken)
+		}
+		newAccessToken, _, err := consumer.RefreshToken(ctx, refreshToken)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot refresh token")
+		}
+		c = &bitbucketcloudClient{
+			ClientID:            consumer.ClientID,
+			OAuthToken:          newAccessToken,
+			RefreshToken:        refreshToken,
+			Cache:               consumer.Cache,
+			apiURL:              consumer.apiURL,
+			uiURL:               consumer.uiURL,
+			DisableStatus:       consumer.disableStatus,
+			DisableStatusDetail: consumer.disableStatusDetail,
+			proxyURL:            consumer.proxyURL,
+			username:            consumer.username,
+			token:               consumer.token,
+		}
+		instancesAuthorizedClient[newAccessToken] = c
 	}
-	return c, c.RateLimit()
+
+	return c, nil
 }

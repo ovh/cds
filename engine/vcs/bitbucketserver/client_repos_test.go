@@ -1,4 +1,4 @@
-package bitbucket
+package bitbucketserver
 
 import (
 	"context"

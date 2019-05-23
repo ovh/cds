@@ -79,9 +79,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":                  url,
-			"request_token":        token,
-			"username":             deprecatedGetUser(ctx).Username,
+			"url":           url,
+			"request_token": token,
+			"username":      deprecatedGetUser(ctx).Username,
 		}
 
 		if token != "" {
@@ -153,8 +153,9 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			Name:     rmName,
 			Username: username,
 			Data: map[string]string{
-				"token":  token,
-				"secret": secret,
+				"token":   token,
+				"secret":  secret,
+				"created": fmt.Sprintf("%d", time.Now().Unix()),
 			},
 		}
 

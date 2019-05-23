@@ -1,9 +1,9 @@
-package github
+package bitbucketcloud
 
 import (
 	"context"
 	"encoding/json"
-	"net/http"
+	"fmt"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -11,29 +11,50 @@ import (
 )
 
 // User Get a single user
-// https://developer.github.com/v3/users/#get-a-single-user
-func (g *githubClient) User(ctx context.Context, username string) (User, error) {
+func (client *bitbucketcloudClient) User(ctx context.Context, username string) (User, error) {
+	var user User
 	url := "/users/" + username
-	status, body, _, err := g.get(url)
-	if err != nil {
-		log.Warning("githubClient.User> Error %s", err)
-		return User{}, err
-	}
-	if status >= 400 {
-		return User{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
-	}
-	user := User{}
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", client.OAuthToken, url)
 
-	//Github may return 304 status because we are using conditional request with ETag based headers
-	if status == http.StatusNotModified {
-		//If repo isn't updated, lets get them from cache
-		g.Cache.Get(cache.Key("vcs", "github", "users", g.OAuthToken, url), &user)
-	} else {
-		if err := json.Unmarshal(body, &user); err != nil {
-			return User{}, err
+	if !client.Cache.Get(cacheKey, &user) {
+		status, body, _, err := client.get(url)
+		if err != nil {
+			log.Warning("bitbucketcloudClient.CurrentUser> Error %s", err)
+			return user, err
 		}
-		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "users", g.OAuthToken, url), user, 61*60)
+		if status >= 400 {
+			return user, sdk.NewError(sdk.ErrUserNotFound, errorAPI(body))
+		}
+		if err := json.Unmarshal(body, &user); err != nil {
+			return user, err
+		}
+		//Put the body on cache for 1 hour
+		client.Cache.SetWithTTL(cacheKey, user, 60*60)
+	}
+
+	return user, nil
+}
+
+// User Get a current user
+func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, error) {
+	var user User
+	url := "/user"
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", client.OAuthToken, url)
+
+	if !client.Cache.Get(cacheKey, &user) {
+		status, body, _, err := client.get(url)
+		if err != nil {
+			log.Warning("bitbucketcloudClient.CurrentUser> Error %s", err)
+			return user, err
+		}
+		if status >= 400 {
+			return user, sdk.NewError(sdk.ErrUserNotFound, errorAPI(body))
+		}
+		if err := json.Unmarshal(body, &user); err != nil {
+			return user, err
+		}
+		//Put the body on cache for 1 hour
+		client.Cache.SetWithTTL(cacheKey, user, 60*60)
 	}
 
 	return user, nil

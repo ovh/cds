@@ -1,4 +1,4 @@
-package github
+package bitbucketcloud
 
 import (
 	"encoding/json"

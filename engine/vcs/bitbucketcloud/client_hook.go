@@ -1,4 +1,4 @@
-package github
+package bitbucketcloud
 
 import (
 	"bytes"
@@ -15,14 +15,14 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	url := "/repos/" + repo + "/hooks"
-	if g.proxyURL != "" {
+	if client.proxyURL != "" {
 		lastIndexSlash := strings.LastIndex(hook.URL, "/")
-		if g.proxyURL[len(g.proxyURL)-1] == '/' {
+		if client.proxyURL[len(client.proxyURL)-1] == '/' {
 			lastIndexSlash++
 		}
-		hook.URL = g.proxyURL + hook.URL[lastIndexSlash:]
+		hook.URL = client.proxyURL + hook.URL[lastIndexSlash:]
 	}
 
 	r := WebhookCreate{
@@ -38,9 +38,9 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal body %+v", r)
 	}
-	res, err := g.post(url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := client.post(url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
-		return sdk.WrapError(err, "github.CreateHook")
+		return sdk.WrapError(err, "bitbucketcloud.CreateHook")
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
@@ -51,8 +51,8 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		if strings.Contains(string(body), "Hook already exists on this repository") {
 			return nil
 		}
-		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - Body: %s. ", res.StatusCode, body)
-		return sdk.WrapError(err, "github.CreateHook. Data : %s", b)
+		err := fmt.Errorf("Unable to create webhook on bitbucketcloud. Status code : %d - Body: %s. ", res.StatusCode, body)
+		return sdk.WrapError(err, "bitbucketcloud.CreateHook. Data : %s", b)
 	}
 
 	if err := json.Unmarshal(body, &r); err != nil {
@@ -62,36 +62,33 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	return nil
 }
 
-func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook, error) {
+func (client *bitbucketcloudClient) getHooks(ctx context.Context, fullname string) ([]Webhook, error) {
 	var webhooks = []Webhook{}
 	var nextPage = "/repos/" + fullname + "/hooks"
-	cacheKey := cache.Key("vcs", "github", "hooks", g.OAuthToken, "/repos/"+fullname+"/hooks")
-	opts := []getArgFunc{withETag}
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "hooks", client.OAuthToken, "/repos/"+fullname+"/hooks")
 
 	for nextPage != "" {
-		status, body, headers, err := g.get(nextPage, opts...)
+		status, body, headers, err := client.get(nextPage)
 		if err != nil {
-			log.Warning("githubClient.PullRequests> Error %s", err)
+			log.Warning("bitbucketcloudClient.PullRequests> Error %s", err)
 			return nil, sdk.WithStack(err)
 		}
 		if status >= 400 {
 			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 		}
-		opts[0] = withETag
 		nextHooks := []Webhook{}
 
-		//Github may return 304 status because we are using conditional request with ETag based headers
+		//bitbucketcloud may return 304 status because we are using conditional request with ETag based headers
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
-			if !g.Cache.Get(cacheKey, &webhooks) {
-				opts[0] = withoutETag
-				log.Error("Unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
+			if !client.Cache.Get(cacheKey, &webhooks) {
+				log.Error("Unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, client.OAuthToken, ""))
 				continue
 			}
 			break
 		} else {
 			if err := json.Unmarshal(body, &nextHooks); err != nil {
-				log.Warning("githubClient.getHooks> Unable to parse github hooks: %s", err)
+				log.Warning("bitbucketcloudClient.getHooks> Unable to parse bitbucketcloud hooks: %s", err)
 				return nil, err
 			}
 		}
@@ -100,12 +97,12 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cacheKey, webhooks, 61*60)
+	client.Cache.SetWithTTL(cacheKey, webhooks, 61*60)
 	return webhooks, nil
 }
 
-func (g *githubClient) GetHook(ctx context.Context, fullname, webhookURL string) (sdk.VCSHook, error) {
-	hooks, err := g.getHooks(ctx, fullname)
+func (client *bitbucketcloudClient) GetHook(ctx context.Context, fullname, webhookURL string) (sdk.VCSHook, error) {
+	hooks, err := client.getHooks(ctx, fullname)
 	if err != nil {
 		return sdk.VCSHook{}, sdk.WithStack(err)
 	}
@@ -125,9 +122,9 @@ func (g *githubClient) GetHook(ctx context.Context, fullname, webhookURL string)
 
 	return sdk.VCSHook{}, sdk.WithStack(sdk.ErrNotFound)
 }
-func (g *githubClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
+func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
 	return fmt.Errorf("Not yet implemented")
 }
-func (g *githubClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
-	return g.delete("/repos/" + repo + "/hooks/" + hook.ID)
+func (client *bitbucketcloudClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
+	return client.delete("/repos/" + repo + "/hooks/" + hook.ID)
 }

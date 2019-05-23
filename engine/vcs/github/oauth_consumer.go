@@ -62,7 +62,7 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 		return "", "", err
 	}
 
-	if status < 200 && status >= 400 {
+	if status < 200 || status >= 400 {
 		return "", "", fmt.Errorf("Github error (%d) %s ", status, string(res))
 	}
 
