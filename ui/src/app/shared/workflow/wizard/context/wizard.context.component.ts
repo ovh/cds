@@ -29,6 +29,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     @Input('node') set node(data: WNode) {
         if (data) {
             this.editableNode = cloneDeep(data);
+            if (this.editableNode.context.application_id !== 0 && this.applications) {
+                this.change();
+            }
             this.updateVCSStatusCheck();
         }
     };
@@ -63,6 +66,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         this.applications = cloneDeep(this.project.application_names) || [];
         this.applications.unshift(voidApp);
         this.updateVCSStatusCheck();
+        if (this.editableNode.context.application_id !== 0) {
+            this.change();
+        }
     }
 
     pushChange(): void {
