@@ -186,7 +186,7 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 	}
 	defer tx.Rollback() // nolint
 
-	query := `SELECT name, status, action_build_id, job_type FROM worker WHERE id = $1 FOR UPDATE`
+	query := `SELECT name, status, action_build_id, job_type FROM worker WHERE id = $1 FOR UPDATE SKIP LOCKED`
 	var st, name string
 	var jobID sql.NullInt64
 	var jobType sql.NullString

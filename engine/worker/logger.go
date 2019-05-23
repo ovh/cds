@@ -149,8 +149,9 @@ func (wk *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log)
 
 func (wk *currentWorker) drainLogsAndCloseLogger() {
 	var i int
-	for (len(wk.logger.logChan) > 0 || (wk.logger.llist != nil && wk.logger.llist.Len() > 0)) && i < 60 {
-		log.Debug("Draining logs...")
+	max := 15
+	for (len(wk.logger.logChan) > 0 || (wk.logger.llist != nil && wk.logger.llist.Len() > 0)) && i <= max {
+		log.Debug("Draining logs... %d/%d", i, max)
 		i++
 		time.Sleep(1 * time.Second)
 	}

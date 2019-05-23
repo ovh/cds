@@ -278,6 +278,7 @@ type WorkerClient interface {
 	WorkerModelsByBinary(binary string) ([]sdk.Model, error)
 	WorkerModelsByState(state string) ([]sdk.Model, error)
 	WorkerRegister(ctx context.Context, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
+	WorkerUnregister(ctx context.Context) error
 	WorkerSetStatus(ctx context.Context, status sdk.Status) error
 }
 

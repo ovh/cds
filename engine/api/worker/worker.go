@@ -44,7 +44,7 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	var statusS string
 	var pbJobID sql.NullInt64
 	var jobType sql.NullString
-	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
+	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_name, group_id FROM worker WHERE worker.id = $1`
 
 	if err := db.QueryRow(query, id).Scan(&w.ID, &pbJobID, &jobType, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryName, &w.GroupID); err != nil {
 		return nil, err

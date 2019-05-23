@@ -57,6 +57,19 @@ func (c *client) WorkerRegister(ctx context.Context, form sdk.WorkerRegistration
 	return &w, w.Uptodate, nil
 }
 
+func (c *client) WorkerUnregister(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	code, err := c.PostJSON(ctx, "/worker/unregister", nil, nil)
+	if code == http.StatusUnauthorized {
+		return sdk.ErrUnauthorized
+	}
+	if code > 300 && err == nil {
+		return fmt.Errorf("HTTP %d", code)
+	}
+	return err
+}
+
 func (c *client) WorkerSetStatus(ctx context.Context, status sdk.Status) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

@@ -45,6 +45,11 @@ func restartDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.
 				_ = tx.Rollback()
 				continue
 			}
+			if err := releaseWorkerActionBuildId(tx, deadJob); err != nil {
+				log.Warning("restartDeadJob> Cannot set action_build_id (%d) to null in worker: %v", deadJob.ID, err)
+				_ = tx.Rollback()
+				continue
+			}
 		}
 
 		if err := tx.Commit(); err != nil {

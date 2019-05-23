@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -49,15 +48,7 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 func (w *currentWorker) unregister() error {
 	log.Info("Unregistering worker")
 	w.id = ""
-	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
-	if err != nil {
-		return err
-	}
-	if code > 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
+	return w.client.WorkerUnregister(context.Background())
 }
 
 // LoopPath return the list of evailable command in path
