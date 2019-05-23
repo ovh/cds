@@ -281,7 +281,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 		// Wait for a result
 		select {
 		case <-ctx.Done():
-			log.Error("CDS Worker execution canceled: %v", ctx.Err())
+			log.Warning("CDS Worker execution canceled: %v", ctx.Err())
 			sendLog("CDS Worker execution canceled")
 			res = sdk.Result{
 				Status: sdk.StatusFail.String(),

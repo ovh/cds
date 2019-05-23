@@ -127,7 +127,11 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 
 			if err := ctx.Err(); err != nil {
-				log.Error("Exiting worker: %v", err)
+				if strings.Contains(err.Error(), "context canceled") {
+					log.Info("Exiting worker canceled: %v", err)
+				} else {
+					log.Error("Exiting worker: %v", err)
+				}
 			} else {
 				log.Info("Exiting worker")
 			}

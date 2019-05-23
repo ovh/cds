@@ -58,7 +58,11 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	//Start the server
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			log.Error("%v", err)
+			if strings.Contains(err.Error(), "Server closed") {
+				log.Info("%v", err)
+			} else {
+				log.Error("%v", err)
+			}
 		}
 	}()
 

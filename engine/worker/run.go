@@ -89,7 +89,7 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 	return nil
 }
 
-func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
+func (w *currentWorker) startAction(ctx context.Context, ctxWithCancel context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
 	// Process action build arguments
 	var project, workflow, node, job, runNumber string
 	for _, abp := range *params {
@@ -127,7 +127,7 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 	}
 
 	log.Info("startAction> project:%s workflow:%s node:%s job:%s run:%s", project, workflow, node, job, runNumber)
-	return w.runJob(ctx, a, buildID, params, secrets, stepOrder, stepName)
+	return w.runJob(ctx, ctxWithCancel, a, buildID, params, secrets, stepOrder, stepName)
 }
 
 func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) error {
@@ -149,7 +149,7 @@ func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 	return nil
 }
 
-func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
+func (w *currentWorker) runJob(ctx context.Context, ctxWithCancel context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
 	log.Info("runJob> start run %d stepOrder:%d", buildID, stepOrder)
 	defer func() { log.Info("runJob> end run %d stepOrder:%d", buildID, stepOrder) }()
 	// Replace variable placeholder that may have been added by last step
@@ -178,12 +178,12 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	//If the action if a edge of the action tree; run it
 	switch a.Type {
 	case sdk.BuiltinAction:
-		return w.runBuiltin(ctx, a, buildID, params, secrets, stepOrder)
+		return w.runBuiltin(ctxWithCancel, a, buildID, params, secrets, stepOrder)
 	case sdk.PluginAction:
 		//Define a loggin function
 		sendLog := getLogger(w, buildID, stepOrder)
 		//Run the plugin
-		return w.runGRPCPlugin(ctx, a, buildID, params, stepOrder, sendLog)
+		return w.runGRPCPlugin(ctxWithCancel, a, buildID, params, stepOrder, sendLog)
 	}
 
 	// There is is no children actions (action is empty) to do, success !
@@ -195,7 +195,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	}
 
 	//Run children actions
-	r, nDisabled := w.runSteps(ctx, a.Actions, a, buildID, params, secrets, stepOrder, stepName, 0)
+	r, nDisabled := w.runSteps(ctx, ctxWithCancel, a.Actions, a, buildID, params, secrets, stepOrder, stepName, 0)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= len(a.Actions) {
 		r.Status = sdk.StatusDisabled.String()
@@ -204,7 +204,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	return r
 }
 
-func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
+func (w *currentWorker) runSteps(ctx context.Context, ctxWithCancel context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
 	log.Info("runSteps> start run %d stepOrder:%d len(steps):%d context=%p", buildID, stepOrder, len(steps), ctx)
 	defer func() {
 		log.Info("runSteps> end run %d stepOrder:%d len(steps):%d context=%p (%s)", buildID, stepOrder, len(steps), ctx, ctx.Err())
@@ -237,7 +237,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 		}
 		if !child.Enabled || w.manualExit {
 			// Update step status and continue
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
+			if err := w.updateStepStatus(ctx, ctxWithCancel, buildID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 
@@ -252,12 +252,12 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 
 		if !criticalStepFailed || child.AlwaysExecuted {
 			// Update step status
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
+			if err := w.updateStepStatus(ctx, ctxWithCancel, buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 			_ = w.sendLog(buildID, fmt.Sprintf("Starting step \"%s\"\n", childName), w.currentJob.currentStep, false)
 
-			r = w.startAction(ctx, &child, buildID, params, secrets, w.currentJob.currentStep, childName)
+			r = w.startAction(ctx, ctxWithCancel, &child, buildID, params, secrets, w.currentJob.currentStep, childName)
 			if r.Status != sdk.StatusSuccess.String() && !child.Optional {
 				criticalStepFailed = true
 			}
@@ -269,12 +269,12 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			}
 
 			// Update step status
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, r.Status); err != nil {
+			if err := w.updateStepStatus(ctx, ctxWithCancel, buildID, w.currentJob.currentStep, r.Status); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 		} else if criticalStepFailed && !child.AlwaysExecuted { // Update status of steps which are never built
 			// Update step status
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusNeverBuilt.String()); err != nil {
+			if err := w.updateStepStatus(ctx, ctxWithCancel, buildID, w.currentJob.currentStep, sdk.StatusNeverBuilt.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusNeverBuilt.String(), buildID, err)
 			}
 		}
@@ -289,7 +289,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 	return r, nbDisabledChildren
 }
 
-func (w *currentWorker) updateStepStatus(ctx context.Context, buildID int64, stepOrder int, status string) error {
+func (w *currentWorker) updateStepStatus(ctx context.Context, ctxWithCancel context.Context, buildID int64, stepOrder int, status string) error {
 	step := sdk.StepStatus{
 		StepOrder: stepOrder,
 		Status:    status,
@@ -309,7 +309,7 @@ func (w *currentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 			return nil
 		}
 		cancel()
-		if ctx.Err() != nil {
+		if ctxWithCancel.Err() != nil {
 			return fmt.Errorf("updateStepStatus> step:%d job:%d worker is cancelled", stepOrder, buildID)
 		}
 		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 15s", stepOrder, code, lasterr, try)
@@ -357,7 +357,7 @@ func workingDirectory(basedir string, jobInfo *sdk.WorkflowNodeJobRunData, suffi
 	return dir
 }
 
-func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNodeJobRunData) sdk.Result {
+func (w *currentWorker) processJob(ctx context.Context, ctxWithCancel context.Context, jobInfo *sdk.WorkflowNodeJobRunData) sdk.Result {
 	t0 := time.Now()
 	// Timeout must be the same as the goroutine which stop jobs in package api/workflow
 	ctx, cancel := context.WithTimeout(ctx, 24*time.Hour)
@@ -445,7 +445,7 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 	}
 
 	logsecrets = jobInfo.Secrets
-	res := w.startAction(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, &jobInfo.NodeJobRun.Parameters, logsecrets, -1, "")
+	res := w.startAction(ctx, ctxWithCancel, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, &jobInfo.NodeJobRun.Parameters, logsecrets, -1, "")
 	logsecrets = nil
 
 	if err := teardownBuildDirectory(wd); err != nil {
