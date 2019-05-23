@@ -7,18 +7,6 @@
                     {{'workflow_template_help_add_from' | translate: {projectKey: projectKey, workflowName:
                     workflowName} }}
                 </div>
-                <div *ngIf="projectKey && workflowName" class="ui green message">
-                    {{'workflow_template_help_add_from' | translate: {projectKey: projectKey, workflowName:
-                    workflowName} }}
-                </div>
-                <div *ngIf="projectKey && workflowName" class="ui orange message">
-                    {{'workflow_template_help_add_from' | translate: {projectKey: projectKey, workflowName:
-                    workflowName} }}
-                </div>
-                <div *ngIf="projectKey && workflowName" class="ui red message">
-                    {{'workflow_template_help_add_from' | translate: {projectKey: projectKey, workflowName:
-                    workflowName} }}
-                </div>
                 <app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate"
                     [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate($event)"></app-workflow-template-form>
             </div>
