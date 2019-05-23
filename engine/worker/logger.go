@@ -147,12 +147,11 @@ func (wk *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log)
 	}
 }
 
-func (wk *currentWorker) drainLogsAndCloseLogger(c context.Context) error {
+func (wk *currentWorker) drainLogsAndCloseLogger() {
 	var i int
 	for (len(wk.logger.logChan) > 0 || (wk.logger.llist != nil && wk.logger.llist.Len() > 0)) && i < 60 {
 		log.Debug("Draining logs...")
 		i++
 		time.Sleep(1 * time.Second)
 	}
-	return c.Err()
 }

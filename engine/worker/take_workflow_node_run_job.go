@@ -114,7 +114,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
 	//Wait until the logchannel is empty
-	w.drainLogsAndCloseLogger(ctxWithCancel)
+	w.drainLogsAndCloseLogger()
 	res.BuildID = job.ID
 	// Try to send result through grpc
 	if w.grpc.conn != nil {

@@ -109,7 +109,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		//Definition of the function which must be called to stop the worker
 		var endFunc = func() {
 			log.Info("Stopping the worker")
-			w.drainLogsAndCloseLogger(ctx)
+			w.drainLogsAndCloseLogger()
 			registerTick.Stop()
 			refreshTick.Stop()
 			w.unregister()

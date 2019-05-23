@@ -365,7 +365,7 @@ func (w *currentWorker) processJob(ctx context.Context, ctxWithCancel context.Co
 
 	defer func() { log.Info("processJob> Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
 	defer cancel()
-	defer w.drainLogsAndCloseLogger(ctx)
+	defer w.drainLogsAndCloseLogger()
 
 	// Setup working directory
 	wd := workingDirectory(w.basedir, jobInfo, "run")

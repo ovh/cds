@@ -50,7 +50,7 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 	defer func() {
 		log.Info("runBuiltin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
-	defer w.drainLogsAndCloseLogger(ctx)
+	defer w.drainLogsAndCloseLogger()
 
 	//Define a loggin function
 	sendLog := getLogger(w, buildID, stepOrder)

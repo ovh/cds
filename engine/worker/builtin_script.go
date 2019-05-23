@@ -275,7 +275,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			chanRes <- res
 		}()
 
-		defer w.drainLogsAndCloseLogger(ctx)
+		defer w.drainLogsAndCloseLogger()
 
 		var res sdk.Result
 		// Wait for a result
