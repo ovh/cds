@@ -78,7 +78,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     constructor(
         private _repoManagerService: RepoManagerService,
         private _theme: ThemeStore,
-        public _sharedService: SharedService // use in html
+        public _sharedService: SharedService // used in html
     ) {
         this.codeMirrorConfig = {
             mode: 'shell',
