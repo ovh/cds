@@ -18,6 +18,7 @@ const (
 	contextProvider
 	contextAPIConsumer
 	contextJWT
+	contextJWTRaw
 	contextScope
 	contextWorkflowTemplate
 )
@@ -39,9 +40,9 @@ func GetWorker(db *gorp.DbMap, Store cache.Store, workerID, workerName string) (
 
 	key := cache.Key("worker", workerID)
 	b := Store.Get(key, w)
-	if !b || w.ActionBuildID == 0 {
+	if !b || w.JobRunID == 0 {
 		var err error
-		w, err = worker.LoadWorker(db, workerID)
+		w, err = worker.LoadByID(db, workerID)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load worker '%s': %s", workerName, err)
 		}
@@ -68,117 +69,3 @@ func GetService(db *gorp.DbMap, Store cache.Store, hash string) (*sdk.Service, e
 	}
 	return srv, nil
 }
-
-/*
-// CheckWorkerAuth checks worker authentication
-func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, headers http.Header) (context.Context, error) {
-	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
-	}
-	workerID := string(id)
-
-	name := headers.Get(cdsclient.RequestedNameHeader)
-	w, err := GetWorker(db, Store, workerID, name)
-	if err != nil {
-		return ctx, err
-	}
-
-	//TODO
-	// Worker authentication against jwt token
-
-	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: w.Name})
-	ctx = context.WithValue(ctx, ContextWorker, w)
-	return ctx, nil
-}
-
-// CheckServiceAuth checks services authentication
-func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, Store cache.Store, headers http.Header) (context.Context, error) {
-	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad service key syntax: %s", err)
-	}
-
-	serviceHash := string(id)
-	if serviceHash == "" {
-		return ctx, fmt.Errorf("missing service Hash")
-	}
-
-	srv, err := GetService(db, Store, serviceHash)
-	if err != nil {
-		return ctx, err
-	}
-	//TODO
-	// Service authentication against jwt token
-
-	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
-	if srv.Type == services.TypeHatchery {
-		ctx = context.WithValue(ctx, ContextHatchery, srv)
-	} else {
-		ctx = context.WithValue(ctx, ContextService, srv)
-	}
-	return ctx, nil
-}
-
-// GetEphemeralSession_DEPRECATED have to be deprecated
-func GetEphemeralSession_DEPRECATED(ctx context.Context, db gorp.SqlExecutor, sessionToken, username string) (context.Context, error) {
-	u, err := user.LoadUserByUsername(db, username)
-	if err != nil {
-		return ctx, err
-	}
-
-	oldUser, err := user.GetDeprecatedUser(db, u)
-	if err != nil {
-		return ctx, err
-	}
-
-	ctx = context.WithValue(ctx, ContextUser, oldUser)
-	ctx = context.WithValue(ctx, ContextUserAuthentified, u)
-	return ctx, nil
-}*/
-
-//CheckAuth checks the auth
-/*
-func CheckAuth_DEPRECATED(ctx context.Context, w http.ResponseWriter, req *http.Request, db gorp.SqlExecutor) (context.Context, error) {
-	//Check persistent session
-	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		var ok bool
-		ctx, ok = getUserPersistentSession_DEPRECATED(ctx, db, req.Header)
-		if ok {
-			return ctx, nil
-		}
-		return ctx, sdk.WithStack(sdk.ErrSessionNotFound)
-	}
-
-	//Check other session
-	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
-	if sessionToken == "" {
-		//Accept session in request
-		sessionToken = req.FormValue("session")
-	}
-	if sessionToken == "" {
-		return ctx, sdk.WithStack(sdk.ErrSessionNotFound)
-	}
-
-	exists, err := Store.Exists(sessionstore.SessionKey(sessionToken))
-	if err != nil {
-		return ctx, sdk.WithStack(err)
-	}
-
-	username, err := GetUsername(sessionToken)
-	if err != nil {
-		return ctx, sdk.WithStack(err)
-	}
-
-	ctx, err = GetEphemeralSession_DEPRECATED(ctx, db, sessionToken, username)
-	if err != nil {
-		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %v", username, err))
-	}
-
-	if !exists {
-		return ctx, sdk.WithStack(sdk.ErrSessionNotFound)
-	}
-
-	return ctx, nil
-}
-*/

@@ -161,7 +161,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	//Don't wait for ack
 	if waitForAckString != "true" {
 		return &actionplugin.ActionResult{
-			Status: sdk.StatusSuccess.String(),
+			Status: sdk.StatusSuccess,
 		}, nil
 	}
 
@@ -198,7 +198,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	}
 	if ack.Result == "OK" {
 		return &actionplugin.ActionResult{
-			Status: sdk.StatusSuccess.String(),
+			Status: sdk.StatusSuccess,
 		}, nil
 	}
 
@@ -228,7 +228,7 @@ func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error
 	fmt.Println(msg)
 	return &actionplugin.ActionResult{
 		Details: msg,
-		Status:  sdk.StatusFail.String(),
+		Status:  sdk.StatusFail,
 	}, nil
 }
 

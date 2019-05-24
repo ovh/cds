@@ -40,10 +40,10 @@ func TestCanBeRun(t *testing.T) {
 		},
 	}
 	wnrs[nodeRoot.ID] = []sdk.WorkflowNodeRun{
-		{ID: 3, WorkflowNodeID: nodeRoot.ID, Status: sdk.StatusBuilding.String()},
+		{ID: 3, WorkflowNodeID: nodeRoot.ID, Status: sdk.StatusDisabled},
 	}
 	wnrs[node1.ID] = []sdk.WorkflowNodeRun{
-		{ID: 3, WorkflowNodeID: node1.ID, Status: sdk.StatusFail.String()},
+		{ID: 3, WorkflowNodeID: node1.ID, Status: sdk.StatusFail},
 	}
 	wr := &sdk.WorkflowRun{
 		Workflow: sdk.Workflow{
@@ -66,9 +66,9 @@ func TestCanBeRun(t *testing.T) {
 		status   string
 		canBeRun bool
 	}{
-		{status: sdk.StatusBuilding.String(), canBeRun: false},
+		{status: sdk.StatusDisabled, canBeRun: false},
 		{status: "", canBeRun: false},
-		{status: sdk.StatusSuccess.String(), canBeRun: true},
+		{status: sdk.StatusSuccess, canBeRun: true},
 	}
 
 	for _, tc := range ts {
@@ -337,7 +337,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 			},
 		}, u, nil)
 		test.NoError(t, errWr)
-		wfr.Status = sdk.StatusBuilding.String()
+		wfr.Status = sdk.StatusDisabled
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
@@ -528,7 +528,7 @@ vcs_ssh_key: proj-blabla
 		}, u, nil)
 		test.NoError(t, errWr)
 
-		wfr.Status = sdk.StatusFail.String()
+		wfr.Status = sdk.StatusFail
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
@@ -543,7 +543,7 @@ vcs_ssh_key: proj-blabla
 	for _, wfRun := range wruns {
 		if wfRun.ToDelete {
 			toDeleteNb++
-			if wfRun.Status == sdk.StatusSuccess.String() {
+			if wfRun.Status == sdk.StatusSuccess {
 				wfInSuccess = true
 			}
 		}
@@ -709,7 +709,7 @@ vcs_ssh_key: proj-blabla
 		}, u, nil)
 		test.NoError(t, errWr)
 
-		wfr.Status = sdk.StatusFail.String()
+		wfr.Status = sdk.StatusFail
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 

@@ -22,7 +22,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 
 		if pkey == nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "cds.project variable not found.",
 			}
 			sendLog(res.Reason)
@@ -31,7 +31,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 
 		if wName == nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "cds.workflow variable not found.",
 			}
 			sendLog(res.Reason)
@@ -40,7 +40,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 
 		if workflowNum == nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "cds.run.number variable not found.",
 			}
 			sendLog(res.Reason)
@@ -49,7 +49,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 
 		if tag == nil || tag.Value == "" {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "Tag name is not set. Nothing to perform.",
 			}
 			sendLog(res.Reason)
@@ -58,7 +58,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 
 		if title == nil || title.Value == "" {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "Release title is not set.",
 			}
 			sendLog(res.Reason)
@@ -67,7 +67,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 
 		if releaseNote == nil || releaseNote.Value == "" {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "Release not is not set.",
 			}
 			sendLog(res.Reason)
@@ -77,7 +77,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 		wRunNumber, errI := strconv.ParseInt(workflowNum.Value, 10, 64)
 		if errI != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("Workflow number is not a number. Got %s: %s", workflowNum.Value, errI),
 			}
 			sendLog(res.Reason)
@@ -94,13 +94,13 @@ func runRelease(w *currentWorker) BuiltInAction {
 
 		if err := w.client.WorkflowNodeRunRelease(pkey.Value, wName.Value, wRunNumber, w.currentJob.wJob.WorkflowNodeRunID, req); err != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("Cannot make workflow node run release: %s", err),
 			}
 			sendLog(res.Reason)
 			return res
 		}
 
-		return sdk.Result{Status: sdk.StatusSuccess.String()}
+		return sdk.Result{Status: sdk.StatusSuccess}
 	}
 }

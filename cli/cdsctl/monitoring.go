@@ -284,10 +284,10 @@ const (
 )
 
 func (ui *Termui) staticRender() {
-	checking, checkingColor := statusShort(sdk.StatusChecking.String())
-	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
-	building, buildingColor := statusShort(sdk.StatusBuilding.String())
-	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
+	checking, checkingColor := statusShort(sdk.StatusChecking)
+	waiting, waitingColor := statusShort(sdk.StatusWaiting)
+	building, buildingColor := statusShort(sdk.StatusDisabled)
+	disabled, disabledColor := statusShort(sdk.StatusDisabled)
 	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend:](fg-cyan) [Checking:%s](%s) [Waiting:%s](%s) [Building:%s](%s) [Disabled:%s](%s)",
 		checking, checkingColor,
 		waiting, waitingColor,
@@ -542,10 +542,10 @@ func (ui *Termui) updateQueue(baseURL string) {
 		duration := time.Since(job.Queued)
 		s := sdk.Status(job.Status)
 
-		if (maxWaiting == 0 || maxWaiting < duration) && job.Status == sdk.StatusWaiting.String() {
+		if (maxWaiting == 0 || maxWaiting < duration) && job.Status == sdk.StatusWaiting {
 			maxWaiting = duration
 		}
-		if (maxBuilding == 0 || maxBuilding < duration) && job.Status == sdk.StatusBuilding.String() {
+		if (maxBuilding == 0 || maxBuilding < duration) && job.Status == sdk.StatusDisabled {
 			maxBuilding = duration
 		}
 
@@ -611,7 +611,7 @@ func (ui *Termui) generateQueueJobLine(idx int, id int64, parameters []sdk.Param
 	row[2] = pad(run, 7)
 	row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+workflow, 30), pad(node, 20))
 
-	if status == sdk.StatusBuilding.String() {
+	if status == sdk.StatusDisabled {
 		row[1] = pad(fmt.Sprintf(" %s.%s ", executedJob.WorkerName, executedJob.WorkerID), 27)
 	} else if bookedBy.ID != 0 {
 		row[1] = pad(fmt.Sprintf(" %s.%d ", bookedBy.Name, bookedBy.ID), 27)
@@ -626,7 +626,7 @@ func (ui *Termui) generateQueueJobLine(idx int, id int64, parameters []sdk.Param
 	color = strings.Replace(color, "fg", "bg", 1)
 
 	var c string
-	if status == sdk.StatusWaiting.String() {
+	if status == sdk.StatusWaiting {
 		if duration > 60*time.Second {
 			c = "fg-black,bg-red"
 		} else if duration > 15*time.Second {
@@ -640,13 +640,13 @@ func (ui *Termui) generateQueueJobLine(idx int, id int64, parameters []sdk.Param
 
 func statusShort(status string) (string, string) {
 	switch status {
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return "w", "fg-cyan"
-	case sdk.StatusBuilding.String():
+	case sdk.StatusDisabled:
 		return "b", "fg-blue"
-	case sdk.StatusDisabled.String():
+	case sdk.StatusDisabled:
 		return "d", "fg-white"
-	case sdk.StatusChecking.String():
+	case sdk.StatusChecking:
 		return "c", "fg-yellow"
 	}
 	return status, "fg-default"
@@ -654,13 +654,13 @@ func statusShort(status string) (string, string) {
 
 func statusWeight(status string) int {
 	switch status {
-	case sdk.StatusDisabled.String():
+	case sdk.StatusDisabled:
 		return 4
-	case sdk.StatusBuilding.String():
+	case sdk.StatusDisabled:
 		return 3
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return 2
-	case sdk.StatusChecking.String():
+	case sdk.StatusChecking:
 		return 1
 	}
 	return 0

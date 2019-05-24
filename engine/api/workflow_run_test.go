@@ -926,8 +926,8 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 		var wrGet sdk.WorkflowRun
 		assert.NoError(t, json.Unmarshal(recGet.Body.Bytes(), &wrGet))
 
-		if wrGet.Status != sdk.StatusPending.String() {
-			assert.Equal(t, sdk.StatusBuilding.String(), wrGet.Status)
+		if wrGet.Status != sdk.StatusPending {
+			assert.Equal(t, sdk.StatusDisabled, wrGet.Status)
 			break
 		}
 		cpt++
@@ -1231,8 +1231,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		var wrGet sdk.WorkflowRun
 		assert.NoError(t, json.Unmarshal(recGet.Body.Bytes(), &wrGet))
 
-		if wrGet.Status != sdk.StatusPending.String() {
-			assert.Equal(t, sdk.StatusFail.String(), wrGet.Status)
+		if wrGet.Status != sdk.StatusPending {
+			assert.Equal(t, sdk.StatusFail, wrGet.Status)
 			assert.Equal(t, 1, len(wrGet.Infos))
 			assert.Equal(t, wrGet.Infos[0].Message.ID, sdk.MsgWorkflowError.ID)
 			return
@@ -1600,7 +1600,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk
 	jobRun.Job.StepStatus = []sdk.StepStatus{
 		{
 			StepOrder: 1,
-			Status:    sdk.StatusBuilding.String(),
+			Status:    sdk.StatusDisabled,
 		},
 	}
 

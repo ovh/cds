@@ -14,7 +14,7 @@ import (
 
 func runArtifactUpload(wk *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, wJobID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
-		res := sdk.Result{Status: sdk.StatusSuccess.String()}
+		res := sdk.Result{Status: sdk.StatusSuccess}
 
 		path := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))
 		if path == "" {
@@ -23,7 +23,7 @@ func runArtifactUpload(wk *currentWorker) BuiltInAction {
 
 		tag := sdk.ParameterFind(&a.Parameters, "tag")
 		if tag == nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("tag variable is empty. aborting")
 			sendLog(res.Reason)
 			return res
@@ -32,14 +32,14 @@ func runArtifactUpload(wk *currentWorker) BuiltInAction {
 		// Global all files matching filePath
 		filesPath, err := filepath.Glob(path)
 		if err != nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("cannot perform globbing of pattern '%s': %s", path, err)
 			sendLog(res.Reason)
 			return res
 		}
 
 		if len(filesPath) == 0 {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("Pattern '%s' matched no file", path)
 			sendLog(res.Reason)
 			return res
@@ -90,7 +90,7 @@ func runArtifactUpload(wk *currentWorker) BuiltInAction {
 		wgErrors.Wait()
 
 		if !globalError.IsEmpty() {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("Error: %v", globalError.Error())
 			return res
 		}

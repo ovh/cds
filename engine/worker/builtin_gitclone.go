@@ -44,7 +44,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				//Setup the key
 				if err := vcs.SetupSSHKeyDEPRECATED(nil, keysDirectory, privateKey); err != nil {
 					res := sdk.Result{
-						Status: sdk.StatusFail.String(),
+						Status: sdk.StatusFail,
 						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
 					}
 					sendLog(res.Reason)
@@ -54,7 +54,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				// TODO: to delete after migration
 				if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
 					res := sdk.Result{
-						Status: sdk.StatusFail.String(),
+						Status: sdk.StatusFail,
 						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
 					}
 					sendLog(res.Reason)
@@ -62,7 +62,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				}
 			} else {
 				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
+					Status: sdk.StatusFail,
 					Reason: fmt.Sprintf("Unable to setup ssh key. Cannot find your secret/key '%s'", privateKey.Value),
 				}
 				sendLog(res.Reason)
@@ -75,7 +75,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				key, errK = vcs.GetSSHKeyDEPRECATED(*params, keysDirectory, privateKey)
 				if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
 					res := sdk.Result{
-						Status: sdk.StatusFail.String(),
+						Status: sdk.StatusFail,
 						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
 					}
 					sendLog(res.Reason)
@@ -86,7 +86,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				key, errK = vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
 				if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
 					res := sdk.Result{
-						Status: sdk.StatusFail.String(),
+						Status: sdk.StatusFail,
 						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
 					}
 					sendLog(res.Reason)
@@ -127,7 +127,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			gitURL, auth, errExtract = extractVCSInformations(*params, secrets)
 			if errExtract != nil {
 				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
+					Status: sdk.StatusFail,
 					Reason: fmt.Sprintf("Could not use VCS Auth Strategy from application: %v", errExtract),
 				}
 				sendLog(res.Reason)
@@ -137,7 +137,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 
 		if gitURL == "" {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("Git repository URL is not set. Nothing to perform."),
 			}
 			sendLog(res.Reason)
@@ -148,7 +148,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if !strings.HasPrefix(gitURL, "http") {
 			if sdk.ErrorIs(errK, sdk.ErrKeyNotFound) || key == nil {
 				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
+					Status: sdk.StatusFail,
 					Reason: fmt.Sprintf("SSH Key not found. Unable to perform git clone"),
 				}
 				sendLog(res.Reason)
@@ -230,7 +230,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 
 	if err != nil {
 		res := sdk.Result{
-			Status: sdk.StatusFail.String(),
+			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Unable to git clone: %s", err),
 		}
 		sendLog(res.Reason)
@@ -259,14 +259,14 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 
 	if errTag != nil {
 		res := sdk.Result{
-			Status: sdk.StatusFail.String(),
+			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Unable to list tag for getting current version: %s", errTag),
 		}
 		sendLog(res.Reason)
 		return res
 	}
 
-	return sdk.Result{Status: sdk.StatusSuccess.String()}
+	return sdk.Result{Status: sdk.StatusSuccess}
 }
 
 func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, branch, commit string, sendLog LoggerFunc) error {
@@ -345,7 +345,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 
 		if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
 			}
 			sendLog(res.Reason)

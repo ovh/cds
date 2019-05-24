@@ -12,7 +12,7 @@ import (
 
 func runServeStaticFiles(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
-		res := sdk.Result{Status: sdk.StatusSuccess.String()}
+		res := sdk.Result{Status: sdk.StatusSuccess}
 
 		path := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))
 		if path == "" {
@@ -21,7 +21,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 
 		name := sdk.ParameterFind(&a.Parameters, "name")
 		if name == nil || name.Value == "" {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("name parameter is empty. aborting")
 			sendLog(res.Reason)
 			return res
@@ -31,14 +31,14 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		// Global all files matching filePath
 		filesPath, err := filepath.Glob(path)
 		if err != nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("cannot perform globbing of pattern '%s': %s", path, err)
 			sendLog(res.Reason)
 			return res
 		}
 
 		if len(filesPath) == 0 {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("Pattern '%s' matched no file", path)
 			sendLog(res.Reason)
 			return res
@@ -53,7 +53,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		if entrypoint.Value == "" && len(filesPath) == 1 {
 			fileStat, errS := os.Stat(filesPath[0])
 			if errS != nil {
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				res.Reason = fmt.Sprintf("Cannot stat file %s : %v", filesPath[0], errS)
 				sendLog(res.Reason)
 				return res
@@ -70,7 +70,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		sendLog("Fetching files in progress...")
 		file, _, err := sdk.CreateTarFromPaths(filepath.Join(w.currentJob.workingDirectory, filepath.Dir(path)), filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 		if err != nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("Cannot tar files: %v", err)
 			sendLog(res.Reason)
 			return res
@@ -82,7 +82,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		sendLog(fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
 		publicURL, _, _, err := w.client.QueueStaticFilesUpload(ctx, projectKey, integrationName, buildID, name.Value, entrypoint.Value, staticKey, file)
 		if err != nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("Cannot upload static files: %v", err)
 			sendLog(res.Reason)
 			return res

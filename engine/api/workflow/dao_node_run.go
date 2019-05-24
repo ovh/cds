@@ -293,7 +293,7 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		s := &r.Stages[i]
 		for j := range s.RunJobs {
 			rj := &s.RunJobs[j]
-			if rj.Status == sdk.StatusWaiting.String() {
+			if rj.Status == sdk.StatusWaiting {
 				rj.QueuedSeconds = time.Now().Unix() - rj.Queued.Unix()
 			}
 		}

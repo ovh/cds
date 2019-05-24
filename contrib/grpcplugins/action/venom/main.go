@@ -71,7 +71,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	if err != nil {
 		fmt.Printf("VENOM - parallel arg must be an integer\n")
 		return &actionplugin.ActionResult{
-			Status: sdk.StatusSuccess.String(),
+			Status: sdk.StatusSuccess,
 		}, nil
 	}
 
@@ -196,7 +196,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	}
 
 	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
@@ -218,7 +218,7 @@ func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error
 	fmt.Println(msg)
 	return &actionplugin.ActionResult{
 		Details: msg,
-		Status:  sdk.StatusFail.String(),
+		Status:  sdk.StatusFail,
 	}, nil
 }
 

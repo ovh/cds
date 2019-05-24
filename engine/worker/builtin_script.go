@@ -118,10 +118,10 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 		chanRes := make(chan sdk.Result)
 
 		go func() {
-			res := sdk.Result{Status: sdk.StatusSuccess.String()}
+			res := sdk.Result{Status: sdk.StatusSuccess}
 			script, err := prepareScriptContent(&a.Parameters)
 			if err != nil {
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 				sendLog(res.Reason)
 				chanRes <- res
@@ -132,7 +132,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				defer deferFunc()
 			}
 			if err != nil {
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 				sendLog(res.Reason)
 				chanRes <- res
@@ -140,7 +140,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 
 			log.Info("runScriptAction> %s %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"))
 			cmd := exec.CommandContext(ctx, script.shell, script.opts...)
-			res.Status = sdk.StatusUnknown.String()
+			res.Status = sdk.StatusUnknown
 
 			env := os.Environ()
 			cmd.Env = []string{"CI=1"}
@@ -196,7 +196,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				log.Warning("runScriptAction: Cannot get worker path: %s", err)
 				res.Reason = "Failure due to internal error (Worker Path)"
 				sendLog(res.Reason)
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				chanRes <- res
 			}
 
@@ -213,7 +213,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				log.Warning("runScriptAction: Cannot get stdout pipe: %s", err)
 				res.Reason = "Failure due to internal error"
 				sendLog(res.Reason)
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				chanRes <- res
 			}
 
@@ -222,7 +222,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				log.Warning("runScriptAction: Cannot get stderr pipe: %s", err)
 				res.Reason = "Failure due to internal error"
 				sendLog(res.Reason)
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				chanRes <- res
 			}
 
@@ -258,7 +258,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			if err := cmd.Start(); err != nil {
 				res.Reason = fmt.Sprintf("%s\n", err)
 				sendLog(res.Reason)
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				chanRes <- res
 			}
 
@@ -267,11 +267,11 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			if err := cmd.Wait(); err != nil {
 				res.Reason = fmt.Sprintf("%s\n", err)
 				sendLog(res.Reason)
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				chanRes <- res
 			}
 
-			res.Status = sdk.StatusSuccess.String()
+			res.Status = sdk.StatusSuccess
 			chanRes <- res
 		}()
 
@@ -284,7 +284,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			log.Error("CDS Worker execution canceled: %v", ctx.Err())
 			sendLog("CDS Worker execution canceled")
 			res = sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "CDS Worker execution canceled",
 			}
 			break

@@ -93,7 +93,7 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 	}
 
 	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
@@ -115,6 +115,6 @@ func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error
 	fmt.Println(msg)
 	return &actionplugin.ActionResult{
 		Details: msg,
-		Status:  sdk.StatusFail.String(),
+		Status:  sdk.StatusFail,
 	}, nil
 }

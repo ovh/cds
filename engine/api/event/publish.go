@@ -26,7 +26,7 @@ func publishEvent(e sdk.Event) {
 	// the StatusWaiting is not useful to be sent on repomanager.
 	// the building status (or success / failed) is already sent just after
 	if e.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
-		if e.Payload["Status"] == sdk.StatusWaiting.String() {
+		if e.Payload["Status"] == sdk.StatusWaiting {
 			toSkipSendReposManager = true
 		}
 	}

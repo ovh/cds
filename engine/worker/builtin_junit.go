@@ -18,7 +18,7 @@ import (
 func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
-		res.Status = sdk.StatusFail.String()
+		res.Status = sdk.StatusFail
 
 		p := sdk.ParameterValue(a.Parameters, "path")
 		if p == "" {
@@ -68,7 +68,7 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 		data, err := json.Marshal(tests)
 		if err != nil {
 			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			sendLog(res.Reason)
 			return res
 		}
@@ -98,7 +98,7 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 
 		if errPost != nil {
 			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", errPost)
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			sendLog(res.Reason)
 			return res
 		}
@@ -199,9 +199,9 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 		v.Total = v.TotalKO + v.TotalOK + v.TotalSkipped
 	}
 
-	res.Status = sdk.StatusFail.String()
+	res.Status = sdk.StatusFail
 	if v.TotalKO == 0 {
-		res.Status = sdk.StatusSuccess.String()
+		res.Status = sdk.StatusSuccess
 	}
 	return reasons
 }

@@ -138,7 +138,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			continue
 		}
 
-		if statusFound.State == sdk.StatusBuilding.String() {
+		if statusFound.State == sdk.StatusDisabled {
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 				log.Error("resyncCommitStatus> Error sending status %s err: %v", details, err)
 			}
@@ -146,15 +146,15 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		switch statusFound.State {
-		case sdk.StatusBuilding.String():
+		case sdk.StatusDisabled:
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 				log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 			}
 			continue
 
-		case sdk.StatusSuccess.String():
+		case sdk.StatusSuccess:
 			switch nodeRun.Status {
-			case sdk.StatusSuccess.String():
+			case sdk.StatusSuccess:
 				continue
 			default:
 				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
@@ -162,9 +162,9 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				}
 				continue
 			}
-		case sdk.StatusFail.String():
+		case sdk.StatusFail:
 			switch nodeRun.Status {
-			case sdk.StatusFail.String():
+			case sdk.StatusFail:
 				continue
 			default:
 				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
@@ -173,9 +173,9 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				continue
 			}
 
-		case sdk.StatusSkipped.String():
+		case sdk.StatusSkipped:
 			switch nodeRun.Status {
-			case sdk.StatusDisabled.String(), sdk.StatusNeverBuilt.String(), sdk.StatusSkipped.String():
+			case sdk.StatusDisabled, sdk.StatusNeverBuilt, sdk.StatusSkipped:
 				continue
 			default:
 				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
@@ -323,7 +323,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		//Send comment on pull request
-		if nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusStopped.String() {
+		if nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusStopped {
 			for _, pr := range prs {
 				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
 					if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {

@@ -23,7 +23,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		gitURL, auth, err := extractVCSInformations(*params, secrets)
 		if err != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: err.Error(),
 			}
 			sendLog(res.Reason)

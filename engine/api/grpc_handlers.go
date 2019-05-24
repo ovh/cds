@@ -63,7 +63,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 		return new(empty.Empty), sdk.WrapError(errP, "SendResult> Cannot load project")
 	}
 
-	wr, errW := worker.LoadWorker(db, workerID)
+	wr, errW := worker.LoadByID(db, workerID)
 	if errW != nil {
 		return new(empty.Empty), sdk.WrapError(errW, "SendResult> Cannot load worker info")
 	}

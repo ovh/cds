@@ -57,7 +57,7 @@ func (c *client) WorkerRegister(ctx context.Context, form sdk.WorkerRegistration
 	return &w, w.Uptodate, nil
 }
 
-func (c *client) WorkerSetStatus(ctx context.Context, status sdk.Status) error {
+func (c *client) WorkerSetStatus(ctx context.Context, status string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	var uri string
@@ -67,7 +67,7 @@ func (c *client) WorkerSetStatus(ctx context.Context, status sdk.Status) error {
 	case sdk.StatusWaiting:
 		uri = fmt.Sprintf("/worker/waiting")
 	default:
-		return fmt.Errorf("Unsupported status: %s", status.String())
+		return fmt.Errorf("Unsupported status: %s", status)
 	}
 
 	code, err := c.PostJSON(ctx, uri, nil, nil)

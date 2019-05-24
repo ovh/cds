@@ -76,6 +76,25 @@ ALTER TABLE services ADD COLUMN IF NOT EXISTS sig BYTEA;
 ALTER TABLE services ALTER COLUMN hash DROP NOT NULL;
 SELECT create_unique_index('services', 'IDX_SERVICES_TOKENID', 'token_id');
 
+ALTER TABLE worker RENAME TO old_worker;
+
+CREATE TABLE worker
+(
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    last_beat TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    model_id BIGINT NOT NULL,
+    job_run_id BIGINT,
+    hatchery_id BIGINT NOT NULL
+);
+
+SELECT create_foreign_key('FK_WORKER_MODEL', 'worker', 'worker_model', 'model_id', 'id');
+select create_index('worker','IDX_WORKER_MODEL', 'model_id,id');
+SELECT create_foreign_key('FK_WORKER_WORKFLOW_NODE_RUN_JOB', 'worker', 'workflow_node_run_job', 'job_run_id', 'id');
+SELECT create_unique_index('worker', 'IDX_WORKER_JOB_RUN', 'job_run_id');
+SELECT create_unique_index('worker', 'IDX_WORKER_NAME', 'name');
+SELECT create_foreign_key('FK_WORKER_SERVICES', 'worker', 'services', 'hatchery_id', 'id');
 
 -- +migrate Down
 
@@ -85,3 +104,5 @@ DROP TABLE "authentified_user_migration";
 DROP TABLE "user_local_authentication";
 DROP TABLE "user_contact";
 DROP TABLE "authentified_user";
+DROP TABLE "worker";
+ALTER TABLE old_worker RENAME TO worker;

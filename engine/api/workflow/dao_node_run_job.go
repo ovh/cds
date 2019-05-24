@@ -71,7 +71,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	}
 
 	if len(filter.Statuses) == 0 {
-		filter.Statuses = []string{sdk.StatusWaiting.String()}
+		filter.Statuses = []string{sdk.StatusWaiting}
 	}
 
 	containsService := []bool{true, false}
@@ -241,7 +241,7 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
 	var deadJobsDB []JobRun
 	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE status = $1 AND worker_id IS NULL`
-	if _, err := db.Select(&deadJobsDB, query, sdk.StatusBuilding.String()); err != nil {
+	if _, err := db.Select(&deadJobsDB, query, sdk.StatusDisabled); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -352,8 +352,8 @@ func getHatcheryInfo(store cache.Store, j *JobRun) {
 // replaceWorkflowJobRunInQueue restart workflow node job
 func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
 	query := "UPDATE workflow_node_run_job SET status = $1, retry = $2, worker_id = NULL WHERE id = $3"
-	if _, err := db.Exec(query, sdk.StatusWaiting.String(), wNodeJob.Retry+1, wNodeJob.ID); err != nil {
-		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting.String())
+	if _, err := db.Exec(query, sdk.StatusWaiting, wNodeJob.Retry+1, wNodeJob.ID); err != nil {
+		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting)
 	}
 
 	query = "UPDATE worker SET status = $2, action_build_id = NULL where action_build_id = $1"

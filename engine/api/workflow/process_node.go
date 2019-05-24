@@ -406,14 +406,14 @@ func getParentsStatus(wr *sdk.WorkflowRun, parents []*sdk.WorkflowNodeRun) strin
 		for _, v := range wr.WorkflowNodeRuns {
 			for _, run := range v {
 				if p.ID == run.ID {
-					if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
+					if run.Status == sdk.StatusFail || run.Status == sdk.StatusStopped {
 						return run.Status
 					}
 				}
 			}
 		}
 	}
-	return sdk.StatusSuccess.String()
+	return sdk.StatusSuccess
 }
 
 func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.WorkflowNodeRun, subNumber int, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) *sdk.WorkflowNodeRun {

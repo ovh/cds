@@ -33,7 +33,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 
 		if !tagLevelValid {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "Tag level is mandatory. It must be: 'major' or 'minor' or 'patch'",
 			}
 			sendLog(res.Reason)
@@ -43,7 +43,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		gitURL, auth, errR := extractVCSInformations(*params, secrets)
 		if errR != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: errR.Error(),
 			}
 			sendLog(res.Reason)
@@ -58,7 +58,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		cdsSemver := sdk.ParameterFind(params, "cds.semver")
 		if cdsSemver == nil || cdsSemver.Value == "" {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("cds.semver is empty"),
 			}
 			sendLog(res.Reason)
@@ -68,7 +68,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		smver, errT := semver.ParseTolerant(cdsSemver.Value)
 		if errT != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("cds.version '%s' is not semver compatible", cdsSemver.Value),
 			}
 			sendLog(res.Reason)
@@ -94,7 +94,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		if tagPrerelease != nil && tagPrerelease.Value != "" {
 			if !r.MatchString(tagPrerelease.Value) {
 				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
+					Status: sdk.StatusFail,
 					Reason: fmt.Sprintf("tagPrerelease '%s' must comprise only ASCII alphanumerics and hyphen [0-9A-Za-z-.].", tagPrerelease.Value),
 				}
 				sendLog(res.Reason)
@@ -107,7 +107,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		if tagMetadata != nil && tagMetadata.Value != "" {
 			if !r.MatchString(tagMetadata.Value) {
 				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
+					Status: sdk.StatusFail,
 					Reason: fmt.Sprintf("tagMetadata '%s' must comprise only ASCII alphanumerics and hyphen [0-9A-Za-z-.].", tagMetadata.Value),
 				}
 				sendLog(res.Reason)
@@ -129,7 +129,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 
 		if userTag == "" {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: "No user find to perform tag",
 			}
 			sendLog(res.Reason)
@@ -153,7 +153,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 
 			if err := ioutil.WriteFile("pgp.pub.key", []byte(auth.SignKey.Public), 0600); err != nil {
 				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
+					Status: sdk.StatusFail,
 					Reason: "Cannot create pgp key file.",
 				}
 				sendLog(res.Reason)
@@ -161,7 +161,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			}
 			if err := ioutil.WriteFile("pgp.key", []byte(tagOpts.SignKey), 0600); err != nil {
 				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
+					Status: sdk.StatusFail,
 					Reason: "Cannot create pgp key file.",
 				}
 				sendLog(res.Reason)
@@ -199,7 +199,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 
 		if err != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("Unable to git tag: %s", err),
 			}
 			sendLog(res.Reason)
@@ -214,13 +214,13 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		_, errV := w.addVariableInPipelineBuild(semverVar, params)
 		if errV != nil {
 			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
+				Status: sdk.StatusFail,
 				Reason: fmt.Sprintf("Unable to save semver variable: %s", errV),
 			}
 			sendLog(res.Reason)
 			return res
 		}
 		time.Sleep(5 * time.Second)
-		return sdk.Result{Status: sdk.StatusSuccess.String()}
+		return sdk.Result{Status: sdk.StatusSuccess}
 	}
 }

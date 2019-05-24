@@ -375,7 +375,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
 			)
 
-			if workflowRuns[0].Status == sdk.StatusFail.String() {
+			if workflowRuns[0].Status == sdk.StatusFail {
 				observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}
@@ -405,8 +405,8 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 
 	for _, wn := range run.WorkflowNodeRuns {
 		for _, wnr := range wn {
-			if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess.String() ||
-				wnr.Status == sdk.StatusFail.String() || wnr.Status == sdk.StatusSkipped.String()) {
+			if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess ||
+				wnr.Status == sdk.StatusFail || wnr.Status == sdk.StatusSkipped) {
 				log.Debug("stopWorkflowRun> cannot stop this workflow node run with current status %s", wnr.Status)
 				continue
 			}
@@ -416,7 +416,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop workflow node run %d", wnr.ID)
 			}
 			report.Merge(r1, nil) // nolint
-			wnr.Status = sdk.StatusStopped.String()
+			wnr.Status = sdk.StatusStopped
 
 			// If it's a outgoing hook, we stop the child
 			if wnr.OutgoingHook != nil {
@@ -462,7 +462,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	}
 
 	run.LastExecution = time.Now()
-	run.Status = sdk.StatusStopped.String()
+	run.Status = sdk.StatusStopped
 	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
 		return nil, sdk.WrapError(errU, "Unable to update workflow run %d", run.ID)
 	}
@@ -702,7 +702,7 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 		observability.Tag(observability.TagProjectKey, p.Key),
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 	)
-	if wr.Status == sdk.StatusFail.String() {
+	if wr.Status == sdk.StatusFail {
 		observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 	}
 
@@ -824,7 +824,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				}
 			}
 
-			lastRun.Status = sdk.StatusWaiting.String()
+			lastRun.Status = sdk.StatusWaiting
 		} else {
 			var errWf error
 			wf, errWf = workflow.Load(ctx, api.mustDB(), api.Cache, p, name, u, workflow.LoadOptions{
@@ -867,7 +867,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	}()
 
 	// IF NEW WORKFLOW RUN
-	if wfRun.Status == sdk.StatusPending.String() {
+	if wfRun.Status == sdk.StatusPending {
 		// BECOME AS CODE ?
 		if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
 			tx, err := db.Begin()
@@ -956,11 +956,11 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			ID: sdk.MsgWorkflowConditionError.ID,
 		}
 		if len(wfRun.WorkflowNodeRuns) == 0 {
-			wfRun.Status = sdk.StatusNeverBuilt.String()
+			wfRun.Status = sdk.StatusNeverBuilt
 		}
 	} else {
 		log.Error("unable to start workflow: %v", err)
-		wfRun.Status = sdk.StatusFail.String()
+		wfRun.Status = sdk.StatusFail
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
 			Args: []interface{}{sdk.Cause(err).Error()},

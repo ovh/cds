@@ -747,7 +747,7 @@ func TestNoStage(t *testing.T) {
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
 
-	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
+	assert.Equal(t, sdk.StatusSuccess, nodeRun.Status)
 }
 
 func TestNoJob(t *testing.T) {
@@ -821,5 +821,5 @@ func TestNoJob(t *testing.T) {
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
 
-	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
+	assert.Equal(t, sdk.StatusSuccess, nodeRun.Status)
 }

@@ -64,6 +64,18 @@ func JWT(c context.Context) *sdk.AccessToken {
 	return u
 }
 
+func JWTRaw(c context.Context) string {
+	i := c.Value(contextJWTRaw)
+	if i == nil {
+		return ""
+	}
+	u, ok := i.(string)
+	if !ok {
+		return ""
+	}
+	return u
+}
+
 func getProvider(c context.Context) *string {
 	i := c.Value(contextProvider)
 	if i == nil {

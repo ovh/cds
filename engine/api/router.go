@@ -431,46 +431,6 @@ func NeedToken(k, v string) HandlerConfigParam {
 	return f
 }
 
-// NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
-//func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
-//	f := func(rc *service.HandlerConfig) {
-//		rc.Options["needUsernameOrAdmin"] = fmt.Sprintf("%v", need)
-//	}
-//	return f
-//}
-
-// NeedHatchery set the route for hatchery only
-//func NeedHatchery() HandlerConfigParam {
-//	f := func(rc *service.HandlerConfig) {
-//		rc.Options["needHatchery"] = "true"
-//	}
-//	return f
-//}
-
-// NeedService set the route for hatchery only
-//func NeedService() HandlerConfigParam {
-//	f := func(rc *service.HandlerConfig) {
-//		rc.Options["needService"] = "true"
-//	}
-//	return f
-//}
-
-// NeedWorker set the route for worker only
-//func NeedWorker() HandlerConfigParam {
-//	f := func(rc *service.HandlerConfig) {
-//		rc.Options["needWorker"] = "true"
-//	}
-//	return f
-//}
-
-// AllowServices allows CDS service to use this route
-//func AllowServices(s bool) HandlerConfigParam {
-//	f := func(rc *service.HandlerConfig) {
-//		rc.Options["allowServices"] = fmt.Sprintf("%v", s)
-//	}
-//	return f
-//}
-
 // Auth set manually whether authorisation layer should be applied
 // Authorization is enabled by default
 func Auth(v bool) HandlerConfigParam {

@@ -58,7 +58,7 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 	f, ok := mapBuiltinActions[a.Name]
 	if !ok {
 		res := sdk.Result{
-			Status: sdk.StatusFail.String(),
+			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Unknown builtin step: %s\n", a.Name),
 		}
 		return res
@@ -190,7 +190,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	case <-ctx.Done():
 		log.Error("CDS Worker execution cancelled: %v", ctx.Err())
 		return sdk.Result{
-			Status: sdk.StatusFail.String(),
+			Status: sdk.StatusFail,
 			Reason: "CDS Worker execution cancelled",
 		}
 	case res := <-chanRes:
@@ -213,7 +213,7 @@ func actionPluginClientStop(ctx context.Context, actionPluginClient actionplugin
 func pluginFail(chanRes chan<- sdk.Result, sendLog LoggerFunc, reason string) {
 	res := sdk.Result{
 		Reason: reason,
-		Status: sdk.StatusFail.String(),
+		Status: sdk.StatusFail,
 	}
 	sendLog(res.Reason)
 	chanRes <- res

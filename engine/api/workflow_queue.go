@@ -149,8 +149,8 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(errn, "Cannot get node run")
 	}
 
-	if noderun.Status == sdk.StatusWaiting.String() {
-		noderun.Status = sdk.StatusBuilding.String()
+	if noderun.Status == sdk.StatusWaiting {
+		noderun.Status = sdk.StatusDisabled
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
 			return nil, sdk.WrapError(err, "Cannot get node run")
 		}
@@ -429,7 +429,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			observability.Current(ctx,
 				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
 
-			if workflowRuns[0].Status == sdk.StatusFail.String() {
+			if workflowRuns[0].Status == sdk.StatusFail {
 				observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}

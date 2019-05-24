@@ -116,6 +116,7 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 	}
 
 	log.Debug("authJWTMiddleware> checking jwt token %s...", jwt[:12])
+	ctx = context.WithValue(ctx, contextJWTRaw, jwt)
 
 	// Get the access token
 	token, valid, err := accesstoken.IsValid(api.mustDB(), jwt)

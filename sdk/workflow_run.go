@@ -94,7 +94,7 @@ func (r *WorkflowRun) PendingOutgoingHook() map[string]*WorkflowNodeRun {
 		}
 		for j := range runs {
 			nr := &runs[j]
-			if nr.Status != StatusWaiting.String() && nr.Status != StatusBuilding.String() {
+			if nr.Status != StatusWaiting && nr.Status != StatusBuilding {
 				continue
 			}
 			nrs[nr.UUID] = nr

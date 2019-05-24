@@ -16,7 +16,7 @@ import (
 
 func runArtifactDownload(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
-		res := &sdk.Result{Status: sdk.StatusSuccess.String()}
+		res := &sdk.Result{Status: sdk.StatusSuccess}
 
 		project := sdk.ParameterValue(*params, "cds.project")
 		workflow := sdk.ParameterValue(*params, "cds.workflow")
@@ -37,7 +37,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		}
 
 		if err := os.MkdirAll(destPath, os.FileMode(0744)); err != nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("Unable to create %s: %v", destPath, err)
 			sendLog(res.Reason)
 			return *res
@@ -47,14 +47,14 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 
 		n, err := strconv.ParseInt(number, 10, 64)
 		if err != nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = fmt.Sprintf("cds.run.number variable is not valid. aborting")
 			sendLog(res.Reason)
 			return *res
 		}
 		artifacts, err := w.client.WorkflowRunArtifacts(project, workflow, n)
 		if err != nil {
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			res.Reason = err.Error()
 			log.Warning("Cannot download artifacts: %s", err)
 			sendLog(res.Reason)
@@ -86,7 +86,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 				destFile := path.Join(destPath, a.Name)
 				f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 				if err != nil {
-					res.Status = sdk.StatusFail.String()
+					res.Status = sdk.StatusFail
 					res.Reason = err.Error()
 					log.Warning("Cannot download artifact (OpenFile) %s: %s", destFile, err)
 					sendLog(res.Reason)
@@ -94,14 +94,14 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 				}
 				sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
 				if err := w.client.WorkflowNodeRunArtifactDownload(project, workflow, *a, f); err != nil {
-					res.Status = sdk.StatusFail.String()
+					res.Status = sdk.StatusFail
 					res.Reason = err.Error()
 					log.Warning("Cannot download artifact %s: %s", destFile, err)
 					sendLog(res.Reason)
 					return
 				}
 				if err := f.Close(); err != nil {
-					res.Status = sdk.StatusFail.String()
+					res.Status = sdk.StatusFail
 					res.Reason = err.Error()
 					log.Warning("Cannot download artifact %s: %s", destFile, err)
 					sendLog(res.Reason)

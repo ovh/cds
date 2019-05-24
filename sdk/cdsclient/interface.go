@@ -230,7 +230,7 @@ type ProjectVariablesClient interface {
 
 // QueueClient exposes queue related functions
 type QueueClient interface {
-	QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error)
+	QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error)
@@ -277,7 +277,7 @@ type WorkerClient interface {
 	WorkerModelsByBinary(binary string) ([]sdk.Model, error)
 	WorkerModelsByState(state string) ([]sdk.Model, error)
 	WorkerRegister(ctx context.Context, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
-	WorkerSetStatus(ctx context.Context, status sdk.Status) error
+	WorkerSetStatus(ctx context.Context, status string) error
 }
 
 // HookClient exposes functions used for hooks services

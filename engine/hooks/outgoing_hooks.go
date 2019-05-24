@@ -161,7 +161,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 		if t.NbErrors >= s.Cfg.RetryError {
 			// Send error callback
 			callbackData.Done = time.Now()
-			callbackData.Status = sdk.StatusFail.String()
+			callbackData.Status = sdk.StatusFail
 			callbackData.Log = err.Error()
 
 			// Post the callback
@@ -230,7 +230,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 	}
 
 	callbackData.Log = fmt.Sprintf("Workflow %s/%s #%d.%d has been started", targetProject, targetWorkflow, targetRun.Number, targetRun.LastSubNumber)
-	callbackData.Status = sdk.StatusBuilding.String()
+	callbackData.Status = sdk.StatusDisabled
 	callbackData.WorkflowRunNumber = &targetRun.Number
 
 	// Post the callback
@@ -257,7 +257,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 		return nil
 	}
 
-	if wr.Status != sdk.StatusBuilding.String() {
+	if wr.Status != sdk.StatusDisabled {
 		log.Error("Hooks> workflow %s/%s #%s status: %s", pkey, workflow, run, wr.Status)
 		return nil
 	}
@@ -280,7 +280,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 		if t.NbErrors >= s.Cfg.RetryError {
 			// Send error callback
 			callbackData.Done = time.Now()
-			callbackData.Status = sdk.StatusFail.String()
+			callbackData.Status = sdk.StatusFail
 			callbackData.Log = err.Error()
 
 			// Post the callback
@@ -362,7 +362,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 	callbackData.Done = time.Now()
 	callbackData.Log = logBuffer.String()
-	callbackData.Status = sdk.StatusSuccess.String()
+	callbackData.Status = sdk.StatusSuccess
 
 	// Post the callback
 	if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {

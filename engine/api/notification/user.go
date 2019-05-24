@@ -147,15 +147,15 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 	}
 
 	switch nodeRun.Status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		if check(notif.Settings.OnSuccess) {
 			return true
 		}
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		if check(notif.Settings.OnFailure) {
 			return true
 		}
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return notif.Settings.OnStart != nil && *notif.Settings.OnStart
 	}
 

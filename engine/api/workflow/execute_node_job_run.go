@@ -102,7 +102,7 @@ func (r *ProcessorReport) Errors() []error {
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
 // the dbFunc parameter is only used to send status to the repository manager
-func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) (*ProcessorReport, error) {
+func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.UpdateNodeJobRunStatus",
 		observability.Tag(observability.TagWorkflowNodeJobRun, job.ID),
@@ -112,7 +112,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	report := new(ProcessorReport)
 
-	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
+	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status)
 
 	_, next := observability.Span(ctx, "workflow.LoadRunByID")
 	nodeRun, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
@@ -129,12 +129,12 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	switch status {
 	case sdk.StatusBuilding:
-		if currentStatus != sdk.StatusWaiting.String() {
+		if currentStatus != sdk.StatusWaiting {
 			return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
 				job.ID, status, sdk.StatusWaiting, currentStatus)
 		}
 		job.Start = time.Now()
-		job.Status = status.String()
+		job.Status = status
 
 	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped, sdk.StatusStopped:
 		if currentStatus != string(sdk.StatusWaiting) && currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
@@ -143,7 +143,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 			return nil, nil
 		}
 		job.Done = time.Now()
-		job.Status = status.String()
+		job.Status = status
 
 		_, next := observability.Span(ctx, "workflow.LoadRunByID")
 		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{})
@@ -157,7 +157,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 			return nil, sdk.WrapError(err, "Cannot update WorkflowRun %d", wf.ID)
 		}
 	default:
-		return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status.String())
+		return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status)
 	}
 
 	//If the job has been set to building, set the stage to building
@@ -313,7 +313,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 }
 
 func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
-	if status != sdk.StatusWaiting.String() {
+	if status != sdk.StatusWaiting {
 		k := keyBookJob(jobID)
 		h := sdk.Service{}
 		if store.Get(k, &h) {
@@ -670,7 +670,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 
 	for iS := range wNodeJob.Job.StepStatus {
 		step := &wNodeJob.Job.StepStatus[iS]
-		if step.Status == sdk.StatusNeverBuilt.String() || step.Status == sdk.StatusSkipped.String() || step.Status == sdk.StatusDisabled.String() {
+		if step.Status == sdk.StatusNeverBuilt || step.Status == sdk.StatusSkipped || step.Status == sdk.StatusDisabled {
 			continue
 		}
 		l, errL := LoadStepLogs(db, wNodeJob.ID, int64(step.StepOrder))
@@ -678,7 +678,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 			return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while load step logs")
 		}
 		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
-		step.Status = sdk.StatusWaiting.String()
+		step.Status = sdk.StatusWaiting
 		step.Done = time.Time{}
 		if l != nil { // log could be nil here
 			l.Done = nil

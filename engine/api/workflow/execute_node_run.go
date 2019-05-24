@@ -54,7 +54,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.Job = j.Job
 			rj.Header = j.Header
 		}
-		if rj.Status != sdk.StatusStopped.String() {
+		if rj.Status != sdk.StatusStopped {
 			isStopped = false
 		}
 	}
@@ -63,9 +63,9 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 		stage.Status = sdk.StatusStopped
 	}
 
-	if n.Status == sdk.StatusWaiting.String() {
+	if n.Status == sdk.StatusWaiting {
 		nodeUpdated = true
-		n.Status = sdk.StatusBuilding.String()
+		n.Status = sdk.StatusDisabled
 	}
 
 	if nodeUpdated {
@@ -106,7 +106,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 	//If no stages ==> success
 	if len(nr.Stages) == 0 {
-		newStatus = sdk.StatusSuccess.String()
+		newStatus = sdk.StatusSuccess
 		nr.Done = time.Now()
 	}
 
@@ -116,11 +116,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		stage := &nr.Stages[stageIndex]
 		log.Debug("workflow.execute> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
-		if stage.Status.String() == "" {
+		if stage.Status == "" {
 			stage.Status = sdk.StatusWaiting
 
 			if stageIndex == 0 {
-				newStatus = sdk.StatusWaiting.String()
+				newStatus = sdk.StatusWaiting
 			}
 
 			if len(stage.Jobs) == 0 {
@@ -139,11 +139,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 			// check for failure caused by action not usable or requirements problem
 			if sdk.StatusFail == stage.Status {
-				newStatus = sdk.StatusFail.String()
+				newStatus = sdk.StatusFail
 				break
 			}
 
-			if sdk.StatusIsTerminated(stage.Status.String()) {
+			if sdk.StatusIsTerminated(stage.Status) {
 				stagesTerminated++
 				continue
 			}
@@ -152,11 +152,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 		// check for failure caused by action not usable or requirements problem
 		if sdk.StatusFail == stage.Status {
-			newStatus = sdk.StatusFail.String()
+			newStatus = sdk.StatusFail
 			break
 		}
 
-		if sdk.StatusIsTerminated(stage.Status.String()) {
+		if sdk.StatusIsTerminated(stage.Status) {
 			stagesTerminated++
 		}
 
@@ -167,7 +167,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		}
 
 		if stage.Status == sdk.StatusBuilding {
-			newStatus = sdk.StatusBuilding.String()
+			newStatus = sdk.StatusDisabled
 			var end bool
 
 			_, next := observability.Span(ctx, "workflow.syncStage")
@@ -182,25 +182,25 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				//The stage is over
 				if stage.Status == sdk.StatusFail {
 					nr.Done = time.Now()
-					newStatus = sdk.StatusFail.String()
+					newStatus = sdk.StatusFail
 					stagesTerminated++
 					break
 				}
 				if stage.Status == sdk.StatusStopped {
 					nr.Done = time.Now()
-					newStatus = sdk.StatusStopped.String()
+					newStatus = sdk.StatusStopped
 					stagesTerminated++
 					break
 				}
 
-				if sdk.StatusIsTerminated(stage.Status.String()) {
+				if sdk.StatusIsTerminated(stage.Status) {
 					stagesTerminated++
 					nr.Done = time.Now()
 				}
 
 				if stageIndex == len(nr.Stages)-1 {
 					nr.Done = time.Now()
-					newStatus = sdk.StatusSuccess.String()
+					newStatus = sdk.StatusSuccess
 					stagesTerminated++
 					break
 				}
@@ -215,7 +215,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		var counterStatus statusCounter
 		if len(nr.Stages) > 0 {
 			for _, stage := range nr.Stages {
-				computeRunStatus(stage.Status.String(), &counterStatus)
+				computeRunStatus(stage.Status, &counterStatus)
 			}
 			newStatus = getRunStatus(counterStatus)
 		}
@@ -223,7 +223,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 	nr.Status = newStatus
 
-	if sdk.StatusIsTerminated(nr.Status) && nr.Status != sdk.StatusNeverBuilt.String() {
+	if sdk.StatusIsTerminated(nr.Status) && nr.Status != sdk.StatusNeverBuilt {
 		nr.Done = time.Now()
 	}
 
@@ -241,7 +241,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	//Delete jobs only when node is over
 	if sdk.StatusIsTerminated(nr.Status) {
-		if nr.Status != sdk.StatusStopped.String() {
+		if nr.Status != sdk.StatusStopped {
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
@@ -399,7 +399,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			WorkflowNodeRunID:         run.ID,
 			Start:                     time.Time{},
 			Queued:                    time.Now(),
-			Status:                    sdk.StatusWaiting.String(),
+			Status:                    sdk.StatusWaiting,
 			Parameters:                jobParams,
 			ExecGroups:                groups,
 			IntegrationPluginBinaries: integrationPluginBinaries,
@@ -413,17 +413,17 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 
 		if !stage.Enabled || !wjob.Job.Enabled {
-			wjob.Status = sdk.StatusDisabled.String()
+			wjob.Status = sdk.StatusDisabled
 			skippedOrDisabledJobs++
 		} else if !conditionsOK {
-			wjob.Status = sdk.StatusSkipped.String()
+			wjob.Status = sdk.StatusSkipped
 			skippedOrDisabledJobs++
 		}
 
 		// If there is any error in the previous operation, mark the job as failed
 		if !spawnErrs.IsEmpty() {
 			failedJobs++
-			wjob.Status = sdk.StatusFail.String()
+			wjob.Status = sdk.StatusFail
 
 			for _, e := range spawnErrs {
 				msg := sdk.SpawnMsg{
@@ -513,13 +513,13 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	for indexJob := range stage.RunJobs {
 		runJob := &stage.RunJobs[indexJob]
 		// If job is runnning, sync it
-		if runJob.Status == sdk.StatusBuilding.String() || runJob.Status == sdk.StatusWaiting.String() {
+		if runJob.Status == sdk.StatusDisabled || runJob.Status == sdk.StatusWaiting {
 			runJobDB, errJob := LoadNodeJobRun(db, store, runJob.ID)
 			if errJob != nil {
 				return stageEnd, errJob
 			}
 
-			if runJobDB.Status == sdk.StatusBuilding.String() || runJobDB.Status == sdk.StatusWaiting.String() {
+			if runJobDB.Status == sdk.StatusDisabled || runJobDB.Status == sdk.StatusWaiting {
 				stageEnd = false
 			}
 			spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)
@@ -551,22 +551,22 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	finalStageLoop:
 		for _, runJob := range stage.RunJobs {
 			switch runJob.Status {
-			case sdk.StatusDisabled.String():
+			case sdk.StatusDisabled:
 				if finalStatus == sdk.StatusBuilding {
 					finalStatus = sdk.StatusDisabled
 				}
-			case sdk.StatusSkipped.String():
+			case sdk.StatusSkipped:
 				if finalStatus == sdk.StatusBuilding || finalStatus == sdk.StatusDisabled {
 					finalStatus = sdk.StatusSkipped
 				}
-			case sdk.StatusFail.String():
+			case sdk.StatusFail:
 				finalStatus = sdk.StatusFail
 				break finalStageLoop
-			case sdk.StatusSuccess.String():
+			case sdk.StatusSuccess:
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusSuccess
 				}
-			case sdk.StatusStopped.String():
+			case sdk.StatusStopped:
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusStopped
 				}
@@ -712,7 +712,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	// Update stages from node run
 	stopWorkflowNodeRunStages(tx, nodeRun)
 
-	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Status = sdk.StatusStopped
 	nodeRun.Done = time.Now()
 	if errU := UpdateNodeRun(tx, nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
@@ -730,7 +730,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 	}
 	nodeRun.Callback.Done = time.Now()
 	nodeRun.Callback.Log += "\nStopped"
-	nodeRun.Callback.Status = sdk.StatusStopped.String()
+	nodeRun.Callback.Status = sdk.StatusStopped
 	nodeRun.Status = nodeRun.Callback.Status
 
 	srvs, err := services.FindByType(db, services.TypeHooks)
@@ -745,7 +745,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 		}
 	}
 
-	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Status = sdk.StatusStopped
 	nodeRun.Done = time.Now()
 	if errU := UpdateNodeRun(dbFunc(), nodeRun); errU != nil {
 		return sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
@@ -795,18 +795,18 @@ func stopWorkflowNodeRunStages(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun
 			}
 
 			if !sdk.StatusIsTerminated(runj.Status) {
-				runj.Status = sdk.StatusStopped.String()
+				runj.Status = sdk.StatusStopped
 				runj.Done = time.Now()
 			}
 			for iStep := range runj.Job.StepStatus {
 				stepStat := &runj.Job.StepStatus[iStep]
 				if !sdk.StatusIsTerminated(stepStat.Status) {
-					stepStat.Status = sdk.StatusStopped.String()
+					stepStat.Status = sdk.StatusStopped
 					stepStat.Done = time.Now()
 				}
 			}
 		}
-		if !sdk.StatusIsTerminated(stag.Status.String()) {
+		if !sdk.StatusIsTerminated(stag.Status) {
 			stag.Status = sdk.StatusStopped
 		}
 	}

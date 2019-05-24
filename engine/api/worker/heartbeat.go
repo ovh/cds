@@ -14,12 +14,12 @@ const workerHeartbeatTimeout = 300.0
 
 // disableDeadWorkers put status disabled to all dead workers with status Registering, Waiting or Building
 func disableDeadWorkers(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
-	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusWorkerRegistering.String(), sdk.StatusBuilding.String(), sdk.StatusWaiting.String()})
+	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusWorkerRegistering, sdk.StatusBuilding, sdk.StatusWaiting})
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load dead workers")
 	}
 	for i := range workers {
-		log.Debug("Disable worker %s[%s] LastBeat:%v hatchery:%s status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].HatcheryName, workers[i].Status)
+		log.Debug("Disable worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
 		if errD := SetStatus(db, workers[i].ID, sdk.StatusDisabled); errD != nil {
 			log.Warning("Cannot disable worker %v: %v", workers[i].ID, errD)
 		}
@@ -30,12 +30,12 @@ func disableDeadWorkers(ctx context.Context, db *gorp.DbMap, store cache.Store) 
 
 // deleteDeadWorkers delete all workers which is disabled
 func deleteDeadWorkers(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
-	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusDisabled.String()})
+	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusDisabled})
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load dead workers")
 	}
 	for i := range workers {
-		log.Debug("deleteDeadWorkers> Delete worker %s[%s] LastBeat:%v hatchery:%s status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].HatcheryName, workers[i].Status)
+		log.Debug("deleteDeadWorkers> Delete worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
 		tx, err := db.Begin()
 		if err != nil {
 			log.Error("deleteDeadWorkers> Cannot create transaction")

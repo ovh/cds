@@ -86,7 +86,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if apiEvent.EventType == "sdk.EventRunWorkflowJob" {
 				jobRunID, ok := apiEvent.Payload["ID"].(float64)
 				status, okStatus := apiEvent.Payload["Status"].(string)
-				if ok && okStatus && status == sdk.StatusWaiting.String() {
+				if ok && okStatus && status == sdk.StatusWaiting {
 					// wait for the grace time before pushing the job in the channel
 					go func() {
 						time.Sleep(time.Duration(graceTime) * time.Second)
@@ -103,7 +103,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 						}
 
 						// push the job in the channel
-						if job.Status == sdk.StatusWaiting.String() && job.BookedBy.Name == "" {
+						if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
 							job.Header["SSE"] = "true"
 							jobs <- *job
 						}
@@ -153,14 +153,14 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	}
 }
 
-func (c *client) QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error) {
+func (c *client) QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	wJobs := []sdk.WorkflowNodeJobRun{}
 
 	url, _ := url.Parse("/queue/workflows")
 	if len(status) > 0 {
 		q := url.Query()
 		for _, s := range status {
-			q.Add("status", s.String())
+			q.Add("status", s)
 		}
 		url.RawQuery = q.Encode()
 	}

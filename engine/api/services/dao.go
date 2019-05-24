@@ -29,10 +29,10 @@ func FindByName(db gorp.SqlExecutor, name string) (*sdk.Service, error) {
 	return findOne(db, query, name)
 }
 
-// FindByHash a service by its hash
-func FindByHash(db gorp.SqlExecutor, hash string) (*sdk.Service, error) {
-	query := "SELECT * FROM services WHERE hash = $1"
-	return findOne(db, query, hash)
+// FindByID a service by its id
+func FindByID(db gorp.SqlExecutor, id int64) (*sdk.Service, error) {
+	query := "SELECT * FROM services WHERE id = $1"
+	return findOne(db, query, id)
 }
 
 // FindByType services by type

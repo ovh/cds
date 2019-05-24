@@ -14,7 +14,7 @@ import (
 func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
-		res.Status = sdk.StatusFail.String()
+		res.Status = sdk.StatusFail
 
 		p := sdk.ParameterValue(a.Parameters, "path")
 		if p == "" {
@@ -66,7 +66,7 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 		data, errM := json.Marshal(report)
 		if errM != nil {
 			res.Reason = fmt.Sprintf("Coverage parser: failed to marshal report for cds api: %v", errM)
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			sendLog(res.Reason)
 			return res
 		}
@@ -80,7 +80,7 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 
 		if err != nil {
 			res.Reason = fmt.Sprintf("Coverage parser: failed to send coverage details: %s", err)
-			res.Status = sdk.StatusFail.String()
+			res.Status = sdk.StatusFail
 			sendLog(res.Reason)
 			return res
 		}
@@ -89,13 +89,13 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 			covPercent := (float64(report.CoveredLines) / float64(report.TotalLines)) * 100
 			if covPercent < minReq {
 				res.Reason = fmt.Sprintf("Coverage: minimum coverage failed: %.2f%% < %.2f%%", covPercent, minReq)
-				res.Status = sdk.StatusFail.String()
+				res.Status = sdk.StatusFail
 				sendLog(res.Reason)
 				return res
 			}
 		}
 
-		res.Status = sdk.StatusSuccess.String()
+		res.Status = sdk.StatusSuccess
 		return res
 	}
 }

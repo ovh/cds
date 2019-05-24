@@ -44,7 +44,7 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 	}
 
 	report, _ = report.Merge(r1, nil)
-	wr.Status = sdk.StatusWaiting.String()
+	wr.Status = sdk.StatusWaiting
 
 	return report, conditionOK, nil
 }
@@ -77,7 +77,7 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 		nodeRun := &wr.WorkflowNodeRuns[k][0]
 
 		//Trigger only if the node is over (successful or not)
-		if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt.String() {
+		if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt {
 			//Find the node in the workflow
 			node := mapNodes[nodeRun.WorkflowNodeID]
 			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{nodeRun}, node, int(nodeRun.SubNumber))
@@ -120,13 +120,13 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				break
 			}
 
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusStopped.String() {
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt || nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusStopped {
 				//One of the sources have not been completed
 				ok = false
 				break
 			}
 
-			if nodeRun.Status == sdk.StatusFail.String() {
+			if nodeRun.Status == sdk.StatusFail {
 				sourcesFail++
 			}
 

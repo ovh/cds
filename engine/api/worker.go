@@ -58,24 +58,23 @@ func (api *API) registerWorkerHandler() service.Handler {
 
 func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := r.ParseForm(); err != nil {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse form: %v", err)
+		var workers []sdk.Worker
+		var err error
+		if !isAdmin(ctx) {
+			h, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			workers, err = worker.LoadByHatcheryID(api.mustDB(), h.ID)
+			if err != nil {
+				return err
+			}
+		} else {
+			workers, err = worker.LoadAll(api.mustDB())
+			if err != nil {
+				return err
+			}
 		}
-
-		h, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return err
-		}
-
-		var hatcheryName string
-		if h != nil {
-			hatcheryName = h.Name
-		}
-		workers, err := worker.LoadWorkers(api.mustDB(), hatcheryName)
-		if err != nil {
-			return err
-		}
-
 		return service.WriteJSON(w, workers, http.StatusOK)
 	}
 }
@@ -86,18 +85,22 @@ func (api *API) disableWorkerHandler() service.Handler {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		// TODO: check if the JWT is legit to disable this worker
-
-		wor, err := worker.LoadWorker(api.mustDB(), id)
+		wk, err := worker.LoadByID(api.mustDB(), id)
 		if err != nil {
-			if sdk.Cause(err) != sql.ErrNoRows {
-				return sdk.WrapError(err, "Cannot load worker %s", id)
-			}
-			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
+			return err
 		}
 
-		if wor.Status == sdk.StatusBuilding {
-			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
+		if !isAdmin(ctx) {
+			if wk.Status == sdk.StatusBuilding {
+				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
+			}
+			jwt, err := services.LoadClearJWT(api.mustDB(), wk.HatcheryID)
+			if err != nil {
+				return err
+			}
+			if jwt != JWTRaw(ctx) {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 		}
 
 		if err := DisableWorker(api.mustDB(), id); err != nil {
@@ -207,7 +210,7 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 		return nil
 	}
 
-	if st == sdk.StatusBuilding.String() && jobID.Valid && jobType.Valid {
+	if st == sdk.StatusDisabled && jobID.Valid && jobType.Valid {
 		// Worker is awol while building !
 		// We need to restart this action
 		switch jobType.String {

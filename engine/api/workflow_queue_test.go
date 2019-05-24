@@ -151,7 +151,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 
 		wrGet := &sdk.WorkflowRun{}
 		test.NoError(t, json.Unmarshal(recGet.Body.Bytes(), wrGet))
-		if wrGet.Status != sdk.StatusPending.String() {
+		if wrGet.Status != sdk.StatusPending {
 			wr = wrGet
 			break
 		}
@@ -469,7 +469,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	//Send result
 	res := sdk.Result{
 		Duration:   "10",
-		Status:     sdk.StatusSuccess.String(),
+		Status:     sdk.StatusSuccess,
 		RemoteTime: now,
 		BuildID:    ctx.job.ID,
 	}
@@ -581,7 +581,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	assert.Equal(t, 204, rec.Code)
 
 	step := sdk.StepStatus{
-		Status:    sdk.StatusSuccess.String(),
+		Status:    sdk.StatusSuccess,
 		StepOrder: 0,
 	}
 

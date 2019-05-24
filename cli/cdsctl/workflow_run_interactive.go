@@ -31,7 +31,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 					for _, job := range stage.RunJobs {
 						status, _ := statusShort(job.Status)
 						var start, end string
-						if job.Status != sdk.StatusWaiting.String() {
+						if job.Status != sdk.StatusWaiting {
 							start = fmt.Sprintf("start:%s", job.Start)
 						}
 						if job.Done.After(job.Start) {
@@ -39,7 +39,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 						}
 
 						jobLine := fmt.Sprintf("%s  %s/%s/%s/%s %s %s \n", status, v.GetString(_WorkflowName), wnr.WorkflowNodeName, stage.Name, job.Job.Action.Name, start, end)
-						if job.Status == sdk.StatusFail.String() {
+						if job.Status == sdk.StatusFail {
 							newOutput += fmt.Sprintf(tm.Color(tm.Bold(jobLine), tm.RED))
 						} else {
 							newOutput += fmt.Sprintf(tm.Bold(jobLine))
@@ -62,7 +62,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 								line = strings.Trim(line, " ")
 								titleStep := fmt.Sprintf("%s / step %d", job.Job.Action.Name, step.StepOrder)
 								// RED color on step failed
-								if step.Status == sdk.StatusFail.String() {
+								if step.Status == sdk.StatusFail {
 									if !failedOnStepKnowned {
 										// hide "Starting" text on resume
 										failedOn = fmt.Sprintf("%s%s / %s / %s / %s %s \n", failedOn, v.GetString(_WorkflowName), wnr.WorkflowNodeName, stage.Name, titleStep, strings.Replace(line, "Starting", "", 1))
@@ -92,7 +92,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 			}
 		}
 
-		if wo.Status == sdk.StatusFail.String() || wo.Status == sdk.StatusSuccess.String() {
+		if wo.Status == sdk.StatusFail || wo.Status == sdk.StatusSuccess {
 			break
 		}
 		time.Sleep(2 * time.Second)
@@ -103,7 +103,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 		tm.Printf("Workflow: %s - RUN %d.%d - %s %s \n", v.GetString(_WorkflowName), wo.Number, wo.LastSubNumber, wo.Status, iconStatus)
 		tm.Printf("Start: %s - End %s\n", wo.Start, wo.LastModified)
 		tm.Printf("Duration: %s\n", sdk.Round(wo.LastModified.Sub(wo.Start), time.Second).String())
-		if wo.Status == sdk.StatusFail.String() {
+		if wo.Status == sdk.StatusFail {
 			tm.Println(tm.Color(fmt.Sprintf("Failed on: %s", failedOn), tm.RED))
 		}
 

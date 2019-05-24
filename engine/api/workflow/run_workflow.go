@@ -58,7 +58,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			return nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
 		if !hasRun {
-			wr.Status = sdk.StatusNeverBuilt.String()
+			wr.Status = sdk.StatusNeverBuilt
 			wr.LastExecution = time.Now()
 			report.Add(wr)
 			return report, sdk.WithStack(sdk.ErrConditionsNotOk)
@@ -99,7 +99,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 	}
 
-	wr.Status = sdk.StatusWaiting.String()
+	wr.Status = sdk.StatusWaiting
 	if err := UpdateWorkflowRun(ctx, tx, wr); err != nil {
 		return report, err
 	}

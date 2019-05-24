@@ -190,13 +190,13 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplug
 	}
 
 	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
 func (e *arsenalDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
 	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
@@ -214,6 +214,6 @@ func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, 
 	fmt.Println(msg)
 	return &integrationplugin.DeployResult{
 		Details: msg,
-		Status:  sdk.StatusFail.String(),
+		Status:  sdk.StatusFail,
 	}, nil
 }
