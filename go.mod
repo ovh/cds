@@ -175,6 +175,7 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
+	github.com/olivere/elastic v6.2.17+incompatible // indirect
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -267,7 +268,7 @@ require (
 	gopkg.in/ini.v1 v1.28.0 // indirect
 	gopkg.in/ldap.v2 v2.3.0
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
-	gopkg.in/olivere/elastic.v5 v5.0.69
+	gopkg.in/olivere/elastic.v6 v6.2.17
 	gopkg.in/ory-am/dockertest.v2 v2.2.3 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.0
 	gopkg.in/stomp.v1 v1.0.1 // indirect
