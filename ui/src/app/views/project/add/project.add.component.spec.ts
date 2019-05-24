@@ -27,6 +27,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
@@ -50,6 +52,8 @@ describe('CDS: Project Show Component', () => {
                 TranslateService,
                 TranslateParser,
                 GroupService,
+                WorkflowService,
+                WorkflowRunService,
                 { provide: ToastService, useClass: MockToast }
             ],
             imports: [

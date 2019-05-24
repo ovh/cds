@@ -1,22 +1,23 @@
-import { Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { Group } from 'app/model/group.model';
 import { User } from 'app/model/user.model';
 import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import { omit } from 'lodash';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript';
 import { finalize } from 'rxjs/operators/finalize';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-worker-model-form',
     templateUrl: './worker-model.form.html',
     styleUrls: ['./worker-model.form.scss']
 })
-export class WorkerModelFormComponent implements OnChanges {
-    @ViewChild('codeMirror')
-    codemirror: CodemirrorComponent;
-    codeMirrorConfig: any;
+@AutoUnsubscribe()
+export class WorkerModelFormComponent implements OnInit, OnChanges {
+    @ViewChild('codeMirror') codemirror: any;
 
     _workerModel: WorkerModel;
     @Input() set workerModel(wm: WorkerModel) {
@@ -30,6 +31,7 @@ export class WorkerModelFormComponent implements OnChanges {
     get workerModel(): WorkerModel { return this._workerModel; }
     @Input() currentUser: User;
     @Input() loading: boolean;
+    @Input() currentUser: User;
     @Input() types: Array<string>;
     @Input() communications: Array<string>;
     @Input() groups: Array<Group>;
@@ -38,6 +40,7 @@ export class WorkerModelFormComponent implements OnChanges {
     @Output() saveAsCode = new EventEmitter();
     @Output() delete = new EventEmitter();
 
+    codeMirrorConfig: any;
     asCode = false;
     loadingAsCode = false;
     workerModelAsCode: string;
@@ -47,10 +50,12 @@ export class WorkerModelFormComponent implements OnChanges {
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
+    themeSubscription: Subscription;
 
     constructor(
         private _sharedService: SharedService,
-        private _workerModelService: WorkerModelService
+        private _workerModelService: WorkerModelService,
+        private _theme: ThemeStore
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -58,6 +63,15 @@ export class WorkerModelFormComponent implements OnChanges {
             lineNumbers: true,
             autoRefresh: true,
         };
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get().subscribe(t => {
+            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
     }
 
     ngOnChanges(): void {

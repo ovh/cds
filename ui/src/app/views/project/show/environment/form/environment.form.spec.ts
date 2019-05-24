@@ -17,12 +17,13 @@ import { NavbarService } from '../../../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../../../service/project/project.service';
 import { ProjectStore } from '../../../../../service/project/project.store';
-import { ServicesModule } from '../../../../../service/services.module';
+import { ServicesModule, WorkflowRunService } from '../../../../../service/services.module';
 import { VariableService } from '../../../../../service/variable/variable.service';
 import { SharedModule } from '../../../../../shared/shared.module';
 import { ToastService } from '../../../../../shared/toast/ToastService';
 import { ProjectModule } from '../../../project.module';
 import { ProjectEnvironmentFormComponent } from './environment.form.component';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 
 describe('CDS: Environment From Component', () => {
 
@@ -42,7 +43,9 @@ describe('CDS: Environment From Component', () => {
                 VariableService,
                 PipelineService,
                 NavbarService,
-                EnvironmentService
+                EnvironmentService,
+                WorkflowService,
+                WorkflowRunService,
             ],
             imports: [
                 ProjectModule,

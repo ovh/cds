@@ -172,7 +172,7 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 
 func searchRepository(pkey, repoManagerName, repoFullname string) (string, error) {
 	var resync bool
-	for !resync {
+	for {
 		// Get repositories from the repository manager
 		repos, err := client.RepositoriesList(pkey, repoManagerName, resync)
 		if err != nil {
@@ -183,15 +183,17 @@ func searchRepository(pkey, repoManagerName, repoFullname string) (string, error
 		// Search the repo
 		for _, r := range repos {
 			// r.Fullname = CDS/demo
-			if strings.ToLower(r.Fullname) == repoFullname {
+			if strings.ToLower(r.Fullname) == strings.ToLower(repoFullname) {
 				fmt.Printf(" * using repository %s from %s", cli.Magenta(r.Fullname), cli.Magenta(repoManagerName))
 				fmt.Println()
 				return r.Fullname, nil
 			}
 		}
+		if resync {
+			break
+		}
 		resync = true
 	}
-
 	return "", fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoFullname, repoManagerName)
 }
 
@@ -399,6 +401,7 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 		return "", nil
 	}
 
+	checkout := exportentities.StepCheckout("{{.cds.workspace}}")
 	pip := exportentities.PipelineV1{
 		Name:    pipName,
 		Version: exportentities.PipelineVersion1,
@@ -407,7 +410,7 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 				Name: "First job",
 				Steps: []exportentities.Step{
 					{
-						"checkout": "{{.cds.workspace}}",
+						Checkout: &checkout,
 					},
 				},
 			},
@@ -487,6 +490,11 @@ func workflowInitRun(c cli.Values) error {
 		}
 	}
 
+	workflowName := repoShortname
+	if c.GetString("workflow") != "" {
+		workflowName = c.GetString("workflow")
+	}
+
 	if len(files) == 0 {
 		repoManagerName, err := interactiveChooseVCSServer(proj, gitRepo)
 		if err != nil {
@@ -510,11 +518,6 @@ func workflowInitRun(c cli.Values) error {
 		pipName, existingPip, err := interactiveChoosePipeline(pkey, c.GetString("pipeline"))
 		if err != nil {
 			return err
-		}
-
-		workflowName := repoShortname
-		if c.GetString("workflow") != "" {
-			workflowName = c.GetString("workflow")
 		}
 
 		wFilePath, err := craftWorkflowFile(workflowName, appName, pipName, dotCDS)
@@ -579,7 +582,7 @@ func workflowInitRun(c cli.Values) error {
 		fmt.Printf("error: unable to setup git local config to store cds project key: %v\n", err)
 	}
 
-	if err := gitRepo.LocalConfigSet("cds", "workflow", repoShortname); err != nil {
+	if err := gitRepo.LocalConfigSet("cds", "workflow", workflowName); err != nil {
 		fmt.Printf("error: unable to setup git local config to store cds workflow name: %v\n", err)
 	}
 

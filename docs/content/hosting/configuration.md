@@ -31,6 +31,16 @@ Create your database relations
 $ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir $PATH_TO_CDS/engine/sql --limit 0
 ```
 
+Download workers binaries
+
+```bash
+$ $PATH_TO_CDS/engine download workers --config my_conf_file.toml
+Reading configuration file my_conf_file.toml
+Downloading worker for os windows and arch amd64 into /tmp/cds/download...
+Downloading worker for os windows and arch 386 into /tmp/cds/download...
+...
+```
+
 Run CDS
 
 ```bash

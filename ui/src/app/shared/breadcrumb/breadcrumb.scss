@@ -1,12 +1,20 @@
 @import '../../../common';
+
 .CDSbreadcrumb {
   padding: 15px;
   z-index: 100;
   height: $navbarHeight;
   position: relative;
-  background: #FFFFFF;
   box-shadow: 0px 1px 2px 0 rgba(34, 36, 38, 0.15);
   margin: 0;
   padding: 1em 1em;
   border: 1px solid rgba(34, 36, 38, 0.15);
+
+  :host-context(.night) & {
+    border-color: $darkTheme_grey_4;
+    box-shadow: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
 }

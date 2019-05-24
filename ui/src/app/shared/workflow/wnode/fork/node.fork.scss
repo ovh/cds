@@ -7,6 +7,30 @@
     stroke: $polar_grey_3;
     transform-origin: 21px 21px;
     transform: rotate(45deg);
+    fill: white;
+    :host-context(.night) & {
+        fill: $darkTheme_grey_1;
+        stroke: $darkTheme_grey_5;
+        &.success {
+            fill: $darkTheme_night_green;
+            stroke: $darkTheme_green;
+        }
+        &.fail {
+            fill: $darkTheme_night_red;
+            stroke: $darkTheme_red;
+        }
+        &.building {
+            fill: $darkTheme_night_blue;
+            stroke: $darkTheme_blue;
+        }
+        &.inactive {
+            fill: $darkTheme_night_grey;
+            stroke: grey;
+        }
+        &.active {
+          stroke: $cds_color_teal;
+        }
+    }
     &.success {
       fill: $cds_color_light_green;
       stroke: $cds_color_green;

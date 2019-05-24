@@ -22,30 +22,31 @@ const (
 
 // Workflow is the "as code" representation of a sdk.Workflow
 type Workflow struct {
-	Name        string  `json:"name" yaml:"name"`
+	Name        string  `json:"name" yaml:"name" jsonschema_description:"The name of the workflow."`
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
-	Version     string  `json:"version,omitempty" yaml:"version,omitempty"`
-	Template    *string `json:"template,omitempty" yaml:"template,omitempty"`
-	// This will be filled for complex workflows
-	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty"`
-	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty"`
-	// This will be filled for simple workflows
-	DependsOn              []string                       `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions             *sdk.WorkflowNodeConditions    `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	When                   []string                       `json:"when,omitempty" yaml:"when,omitempty"` //This is used only for manual and success condition
-	PipelineName           string                         `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	Payload                map[string]interface{}         `json:"payload,omitempty" yaml:"payload,omitempty"`
-	Parameters             map[string]string              `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	ApplicationName        string                         `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName        string                         `json:"environment,omitempty" yaml:"environment,omitempty"`
-	ProjectIntegrationName string                         `json:"integration,omitempty" yaml:"integration,omitempty"`
-	PipelineHooks          []HookEntry                    `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
-	Permissions            map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"`
-	Metadata               map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	PurgeTags              []string                       `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
-	HistoryLength          *int64                         `json:"history_length,omitempty" yaml:"history_length,omitempty"`
-	Notifications          []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"`               // This is used when the workflow have only one pipeline
-	MapNotifications       map[string][]NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have more than one pipeline
+	Version     string  `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"Version for the yaml syntax, latest is v1.0."`
+	Template    *string `json:"template,omitempty" yaml:"template,omitempty" jsonschema_description:"Optional path of the template used to generate the workflow."`
+	// this will be filled for complex workflows
+	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty" jsonschema_description:"Workflow nodes list."`
+	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
+	// this will be filled for simple workflows
+	DependsOn              []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty" jsonschema_description:"Names of the parent nodes, can be pipelines, forks or joins."`
+	Conditions             *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty" jsonschema_description:"Conditions to run this node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/run-conditions."`
+	When                   []string                    `json:"when,omitempty" yaml:"when,omitempty" jsonschema_description:"Set manual and status condition (ex: 'success')."` //This is used only for manual and success condition
+	PipelineName           string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty" jsonschema_description:"The name of a pipeline used for pipeline node."`
+	Payload                map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Parameters             map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty" jsonschema_description:"List of parameters for the workflow."`
+	ApplicationName        string                      `json:"application,omitempty" yaml:"application,omitempty" jsonschema_description:"The application to use in the context of the node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/pipeline-context"`
+	EnvironmentName        string                      `json:"environment,omitempty" yaml:"environment,omitempty" jsonschema_description:"The environment to use in the context of the node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/pipeline-context"`
+	ProjectIntegrationName string                      `json:"integration,omitempty" yaml:"integration,omitempty" jsonschema_description:"The integration to use in the context of the node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/pipeline-context"`
+	PipelineHooks          []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
+	// extra workflow data
+	Permissions      map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
+	Metadata         map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	PurgeTags        []string                       `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
+	Notifications    []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"` // This is used when the workflow have only one pipeline
+	HistoryLength    *int64                         `json:"history_length,omitempty" yaml:"history_length,omitempty"`
+	MapNotifications map[string][]NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have more than one pipeline
 }
 
 // WorkflowPulled contains all the yaml base64 that are needed to generate a workflow tar file.
@@ -65,24 +66,24 @@ type WorkflowPulledItem struct {
 // NodeEntry represents a node as code
 type NodeEntry struct {
 	ID                     int64                       `json:"-" yaml:"-"`
-	DependsOn              []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions             *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	When                   []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is used only for manual and success condition
-	PipelineName           string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	ApplicationName        string                      `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName        string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
-	ProjectIntegrationName string                      `json:"integration,omitempty" yaml:"integration,omitempty"`
-	OneAtATime             *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
+	DependsOn              []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty" jsonschema_description:"Names of the parent nodes, can be pipelines, forks or joins."`
+	Conditions             *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty" jsonschema_description:"Conditions to run this node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/run-conditions."`
+	When                   []string                    `json:"when,omitempty" yaml:"when,omitempty" jsonschema_description:"Set manual and status condition (ex: 'success')."` //This is used only for manual and success condition
+	PipelineName           string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty" jsonschema_description:"The name of a pipeline used for pipeline node."`
+	ApplicationName        string                      `json:"application,omitempty" yaml:"application,omitempty" jsonschema_description:"The application to use in the context of the node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/pipeline-context"`
+	EnvironmentName        string                      `json:"environment,omitempty" yaml:"environment,omitempty" jsonschema_description:"The environment to use in the context of the node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/pipeline-context"`
+	ProjectIntegrationName string                      `json:"integration,omitempty" yaml:"integration,omitempty" jsonschema_description:"The integration to use in the context of the node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/pipeline-context"`
+	OneAtATime             *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty" jsonschema_description:"Set to true if you want to limit the execution of this node to one at a time."`
 	Payload                map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
-	Parameters             map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Parameters             map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty" jsonschema_description:"List of parameters for the workflow."`
 	OutgoingHookModelName  string                      `json:"trigger,omitempty" yaml:"trigger,omitempty"`
 	OutgoingHookConfig     map[string]string           `json:"config,omitempty" yaml:"config,omitempty"`
-	Permissions            map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Permissions            map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the node (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
 }
 
 // HookEntry represents a hook as code
 type HookEntry struct {
-	Model  string            `json:"type,omitempty" yaml:"type,omitempty"`
+	Model  string            `json:"type,omitempty" yaml:"type,omitempty" jsonschema_description:"Model of the hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/hooks"`
 	Ref    string            `json:"ref,omitempty" yaml:"ref,omitempty"`
 	Config map[string]string `json:"config,omitempty" yaml:"config,omitempty"`
 }

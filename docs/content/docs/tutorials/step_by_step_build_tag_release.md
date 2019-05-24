@@ -11,7 +11,7 @@ card:
 In this tutorial, you will create a CDS Workflow with the Web UI.
 
 * Create a workflow using two pipelines: one for building, a second for tagging
-* You will discover the [GitTag]({{< relref "/docs/actions/gittag.md" >}}) action, which create tag compatible which [Semantic Verstionning 2.0.0](https://semver.org/)
+* You will discover the [GitTag]({{< relref "/docs/actions/builtin-gittag.md" >}}) action, which create tag compatible which [Semantic Verstionning 2.0.0](https://semver.org/)
 
 {{% /notice %}}
 
@@ -232,7 +232,7 @@ Tag is created on GitHub.
 
 ## 9 - Release Action
 
-[Release action]({{< relref "/docs/actions/release.md" >}}) action is implemented for GitHub only. 
+[Release action]({{< relref "/docs/actions/builtin-release.md" >}}) action is implemented for GitHub only. 
 You can use it to create a release from a tag and push some artifacts on it.
 
 {{%expand "view screenshots..." %}}

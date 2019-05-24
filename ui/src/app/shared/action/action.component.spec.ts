@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -8,16 +6,17 @@ import { XHRBackend } from '@angular/http';
 import { MockBackend } from '@angular/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
-import { Action } from '../../model/action.model';
-import { Parameter } from '../../model/parameter.model';
-import { Project } from '../../model/project.model';
-import { Requirement } from '../../model/requirement.model';
-import { ActionService } from '../../service/action/action.service';
-import { ParameterService } from '../../service/parameter/parameter.service';
-import { RepoManagerService } from '../../service/repomanager/project.repomanager.service';
-import { RequirementService } from '../../service/requirement/requirement.service';
-import { RequirementStore } from '../../service/requirement/requirement.store';
-import { WorkerModelService } from '../../service/worker-model/worker-model.service';
+import { Action } from 'app/model/action.model';
+import { Parameter } from 'app/model/parameter.model';
+import { Project } from 'app/model/project.model';
+import { Requirement } from 'app/model/requirement.model';
+import { ActionService } from 'app/service/action/action.service';
+import { ParameterService } from 'app/service/parameter/parameter.service';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { RequirementService } from 'app/service/requirement/requirement.service';
+import { RequirementStore } from 'app/service/requirement/requirement.store';
+import { ThemeStore } from 'app/service/services.module';
+import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { ParameterEvent } from '../parameter/parameter.event.model';
 import { RequirementEvent } from '../requirements/requirement.event.model';
 import { SharedModule } from '../shared.module';
@@ -27,7 +26,6 @@ import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
 
 describe('CDS: Action Component', () => {
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
@@ -43,7 +41,8 @@ describe('CDS: Action Component', () => {
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
-                { provide: APP_BASE_HREF, useValue: '/' }
+                { provide: APP_BASE_HREF, useValue: '/' },
+                ThemeStore
             ],
             imports: [
                 RouterTestingModule.withRoutes([]),
@@ -267,7 +266,5 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.action = action;
 
         expect(fixture.componentInstance.steps.length).toBe(2);
-
     }));
-})
-    ;
+});

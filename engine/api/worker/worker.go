@@ -380,15 +380,17 @@ func SetStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 }
 
 // SetToBuilding sets action_build_id and status to building on given worker
-func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jobType string) error {
+func SetToBuilding(db gorp.SqlExecutor, store cache.Store, workerID string, actionBuildID int64, jobType string) error {
 	query := `UPDATE worker SET status = $1, action_build_id = $2, job_type = $3 WHERE id = $4`
 
 	res, errE := db.Exec(query, sdk.StatusBuilding.String(), actionBuildID, jobType, workerID)
 	if errE != nil {
-		return errE
+		return sdk.WithStack(errE)
 	}
 
 	_, err := res.RowsAffected()
+	// delete the worker from the cache
+	store.Delete(cache.Key("worker", workerID))
 	return err
 }
 

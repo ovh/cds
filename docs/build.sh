@@ -17,7 +17,7 @@ function generateUserActionsDocumentation {
 cat << EOF > ${ACTION_FILE}
 ---
 title: "${actionName}"
-card: 
+card:
   name: user-action
 ---
 EOF
@@ -41,7 +41,7 @@ function generatePluginsDocumentation {
 cat << EOF > ${PLUGIN_FILE}
 ---
 title: "plugin-${pluginName}"
-card: 
+card:
   name: plugin
 ---
 EOF
@@ -53,5 +53,26 @@ EOF
   done;
 }
 
+function generateBuiltinActionsDocumentation {
+  for action in `ls ./actions/builtin-*.part.md`; do
+
+  echo "work on ${action}"
+
+  filename=$(basename "$action")
+  actionName=${filename/builtin-/}
+  actionName=${actionName/.part.md/}
+
+  ACTION_FILE="content/docs/actions/builtin-${actionName}.md"
+
+  echo "generate ${ACTION_FILE}"
+
+  cdsctl action builtin doc "${actionName}" > $ACTION_FILE
+
+  cat ${action} >> $ACTION_FILE
+
+  done;
+}
+
 generateUserActionsDocumentation
 generatePluginsDocumentation
+generateBuiltinActionsDocumentation

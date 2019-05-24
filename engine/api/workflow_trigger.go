@@ -48,23 +48,21 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			}
 		}
 
-		refNode := wf.WorkflowData.NodeByID(id)
-		if refNode == nil {
-			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
-		}
-
 		params := []sdk.Parameter{}
-		// If there is a workflow run, try to get build parameter from it
+		var refNode *sdk.Node
 		if wr != nil {
+			refNode = wr.Workflow.WorkflowData.NodeByID(id)
 			var errp error
 			params, errp = workflow.NodeBuildParametersFromRun(*wr, id)
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
 			}
+			if len(params) == 0 {
+				refNode = nil
+			}
 		}
-
-		// If node node found in last workflow run
-		if len(params) == 0 {
+		if refNode == nil {
+			refNode = wf.WorkflowData.NodeByID(id)
 			var errp error
 			ancestorIds := refNode.Ancestors(wf.WorkflowData)
 			params, errp = workflow.NodeBuildParametersFromWorkflow(ctx, api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
@@ -83,16 +81,18 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			}
 		}
 
-		if refNode.IsLinkedToRepo(wf) {
-			if sdk.ParameterFind(&params, "git.repository") == nil {
-				data.ConditionNames = append(data.ConditionNames, "git.repository")
-				data.ConditionNames = append(data.ConditionNames, "git.branch")
-				data.ConditionNames = append(data.ConditionNames, "git.message")
-				data.ConditionNames = append(data.ConditionNames, "git.author")
-				data.ConditionNames = append(data.ConditionNames, "git.hash")
-				data.ConditionNames = append(data.ConditionNames, "git.hash.short")
-				data.ConditionNames = append(data.ConditionNames, "git.tag")
-			}
+		if refNode == nil {
+			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+		}
+
+		if sdk.ParameterFind(&params, "git.repository") == nil {
+			data.ConditionNames = append(data.ConditionNames, "git.repository")
+			data.ConditionNames = append(data.ConditionNames, "git.branch")
+			data.ConditionNames = append(data.ConditionNames, "git.message")
+			data.ConditionNames = append(data.ConditionNames, "git.author")
+			data.ConditionNames = append(data.ConditionNames, "git.hash")
+			data.ConditionNames = append(data.ConditionNames, "git.hash.short")
+			data.ConditionNames = append(data.ConditionNames, "git.tag")
 		}
 
 		for _, p := range params {

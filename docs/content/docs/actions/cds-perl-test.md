@@ -1,6 +1,6 @@
 ---
 title: "cds-perl-test"
-card: 
+card:
   name: user-action
 ---
 

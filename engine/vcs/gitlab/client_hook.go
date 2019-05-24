@@ -16,9 +16,6 @@ import (
 func (c *gitlabClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, fmt.Errorf("Not yet implemented")
 }
-func (c *gitlabClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
-	return fmt.Errorf("Not yet implemented")
-}
 
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
@@ -34,6 +31,20 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		}
 	} else {
 		url = hook.URL
+	}
+
+	// if the hook already exists, do not recreate it
+	hs, resp, err := c.client.Projects.ListProjectHooks(repo, nil)
+	if err != nil {
+		return sdk.WrapError(err, "cannot list gitlab project hooks for %s", repo)
+	}
+	if resp.StatusCode >= 400 {
+		return sdk.WithStack(fmt.Errorf("cannot list project hooks. Http %d, Repo %s", resp.StatusCode, repo))
+	}
+	for i := range hs {
+		if hs[i].URL == url {
+			return nil
+		}
 	}
 
 	opt := gitlab.AddProjectHookOptions{

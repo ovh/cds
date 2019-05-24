@@ -60,7 +60,6 @@ type VCSAuthorizedClient interface {
 	//Hooks
 	CreateHook(ctx context.Context, repo string, hook *VCSHook) error
 	GetHook(ctx context.Context, repo, url string) (VCSHook, error)
-	UpdateHook(ctx context.Context, repo, url string, hook VCSHook) error
 	DeleteHook(ctx context.Context, repo string, hook VCSHook) error
 
 	//Events

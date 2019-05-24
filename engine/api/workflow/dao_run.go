@@ -42,6 +42,7 @@ type LoadRunOptions struct {
 	WithLightTests          bool
 	WithVulnerabilities     bool
 	DisableDetailledNodeRun bool
+	Language                string
 }
 
 // insertWorkflowRun inserts in table "workflow_run""
@@ -261,7 +262,13 @@ func LoadRunIDsWithOldModel(db gorp.SqlExecutor) ([]int64, error) {
 }
 
 // LoadRun returns a specific run
-func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+func LoadRun(ctx context.Context, db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	_, end := observability.Span(ctx, "workflow.LoadRun",
+		observability.Tag(observability.TagProjectKey, projectkey),
+		observability.Tag(observability.TagWorkflow, workflowname),
+		observability.Tag(observability.TagWorkflowRun, number),
+	)
+	defer end()
 	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join project on workflow_run.project_id = project.id
@@ -958,7 +965,6 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 			return err
 		}
 		wnr.CanBeRun = CanBeRun(wr, wnr)
-
 		if loadOpts.WithArtifacts {
 			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
 			if errA != nil {
@@ -982,7 +988,11 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 			}
 			wnr.Coverage = cov
 		}
-
+		var l = loadOpts.Language
+		if l == "" {
+			l = "en"
+		}
+		wnr.Translate(l)
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
 	}
 

@@ -18,6 +18,8 @@ github.com/Microsoft/go-winio
 github.com/Nvveen/Gotty
 # github.com/Shopify/sarama v1.17.0
 github.com/Shopify/sarama
+# github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
+github.com/alecthomas/jsonschema
 # github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 github.com/andygrunwald/go-gerrit
 # github.com/aokoli/goutils v1.1.0
@@ -224,7 +226,7 @@ github.com/fatih/color
 github.com/fatih/structs
 # github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b
 github.com/fernet/fernet-go
-# github.com/fsamin/go-dump v1.0.8
+# github.com/fsamin/go-dump v1.0.9
 github.com/fsamin/go-dump
 # github.com/fsamin/go-repo v0.1.1
 github.com/fsamin/go-repo
@@ -246,14 +248,13 @@ github.com/gin-gonic/gin/render
 github.com/gizak/termui
 # github.com/go-gorp/gorp v2.0.0+incompatible => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
 github.com/go-gorp/gorp
-# github.com/go-redis/redis v6.14.1+incompatible
+# github.com/go-redis/redis v6.15.2+incompatible
 github.com/go-redis/redis
 github.com/go-redis/redis/internal
 github.com/go-redis/redis/internal/consistenthash
 github.com/go-redis/redis/internal/hashtag
 github.com/go-redis/redis/internal/pool
 github.com/go-redis/redis/internal/proto
-github.com/go-redis/redis/internal/singleflight
 github.com/go-redis/redis/internal/util
 # github.com/go-sql-driver/mysql v0.0.0-20180113200744-2cc627ac8def
 github.com/go-sql-driver/mysql
@@ -417,6 +418,9 @@ github.com/nsf/termbox-go
 github.com/nwaples/rardecode
 # github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
 github.com/olekukonko/tablewriter
+# github.com/olivere/elastic v6.2.17+incompatible
+github.com/olivere/elastic/config
+github.com/olivere/elastic/uritemplates
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.1
@@ -724,10 +728,8 @@ gopkg.in/inf.v0
 gopkg.in/ini.v1
 # gopkg.in/ldap.v2 v2.3.0
 gopkg.in/ldap.v2
-# gopkg.in/olivere/elastic.v5 v5.0.69
-gopkg.in/olivere/elastic.v5
-gopkg.in/olivere/elastic.v5/config
-gopkg.in/olivere/elastic.v5/uritemplates
+# gopkg.in/olivere/elastic.v6 v6.2.17
+gopkg.in/olivere/elastic.v6
 # gopkg.in/square/go-jose.v2 v2.3.0
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher

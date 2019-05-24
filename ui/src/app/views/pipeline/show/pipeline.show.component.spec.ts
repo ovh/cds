@@ -25,6 +25,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
@@ -42,6 +44,8 @@ describe('CDS: Pipeline Show', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
+                WorkflowService,
+                WorkflowRunService,
                 AuthentificationStore
             ],
             imports: [

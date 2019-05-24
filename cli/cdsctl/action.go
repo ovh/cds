@@ -10,7 +10,9 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	actionSDK "github.com/ovh/cds/sdk/action"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 var actionCmd = cli.Command{
@@ -34,6 +36,7 @@ func action() *cobra.Command {
 		cli.NewCommand(actionBuiltinCmd, nil, []*cobra.Command{
 			cli.NewListCommand(actionBuiltinListCmd, actionBuiltinListRun, nil),
 			cli.NewGetCommand(actionBuiltinShowCmd, actionBuiltinShowRun, nil),
+			cli.NewCommand(actionBuiltinDocCmd, actionBuiltinDocRun, nil),
 		}),
 	})
 }
@@ -149,7 +152,7 @@ func actionDeleteRun(v cli.Values) error {
 
 var actionDocCmd = cli.Command{
 	Name:  "doc",
-	Short: "Generate Action Documentation: cdsctl action doc <path-to-file>",
+	Short: "Generate action documentation: cdsctl action doc <path-to-file>",
 	Args: []cli.Arg{
 		{Name: "path"},
 	},
@@ -273,4 +276,32 @@ func actionBuiltinShowRun(v cli.Values) (interface{}, error) {
 	}
 
 	return newActionDisplay(*action), nil
+}
+
+var actionBuiltinDocCmd = cli.Command{
+	Name:  "doc",
+	Short: "Generate Builtin action documentation: cdsctl action builtin doc <name>",
+	Args: []cli.Arg{
+		{Name: "name"},
+	},
+}
+
+func actionBuiltinDocRun(v cli.Values) error {
+	n := v.GetString("name")
+
+	var found bool
+	var m actionSDK.Manifest
+	for i := range actionSDK.List {
+		if slug.Convert(actionSDK.List[i].Action.Name) == slug.Convert(n) {
+			found = true
+			m = actionSDK.List[i]
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("Invalid given action name %s", n)
+	}
+
+	fmt.Println(m.Markdown())
+	return nil
 }
