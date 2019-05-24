@@ -464,7 +464,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	}
 
 	run.LastExecution = time.Now()
-	run.Status = sdk.StatusStopping.String()
+	run.Status = sdk.StatusStopped.String()
 	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
 		return nil, sdk.WrapError(errU, "Unable to update workflow run %d", run.ID)
 	}
