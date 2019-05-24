@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	dump "github.com/fsamin/go-dump"
-	repo "github.com/fsamin/go-repo"
+	"github.com/fsamin/go-dump"
+	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -61,6 +61,17 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	for runNumber == 0 {
 		runNumber, _ = workflowNodeForCurrentRepo(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 		time.Sleep(500 * time.Millisecond)
+	}
+
+	if runNumber == 0 {
+		runs, err := client.WorkflowRunList(v.GetString(_ProjectKey), v.GetString(_WorkflowName), 0, 1)
+		if err != nil {
+			return nil, err
+		}
+		if len(runs) != 1 {
+			return nil, fmt.Errorf("workflow run not found")
+		}
+		runNumber = runs[0].Number
 	}
 
 	run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
@@ -135,6 +146,16 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 	}
 	if errRunNumber != nil {
 		return nil, errRunNumber
+	}
+	if runNumber == 0 {
+		runs, err := client.WorkflowRunList(v.GetString(_ProjectKey), v.GetString(_WorkflowName), 0, 1)
+		if err != nil {
+			return nil, err
+		}
+		if len(runs) != 1 {
+			return 0, fmt.Errorf("workflow run not found")
+		}
+		runNumber = runs[0].Number
 	}
 
 	run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)

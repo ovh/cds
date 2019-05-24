@@ -1387,14 +1387,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app
 	}
 
-	uptOpts := UpdateOptions{
-		DisableHookManagement: !isDefaultBranch,
-		OldWorkflow:           oldWf,
-	}
-	if err := Update(ctx, tx, store, wf, proj, uptOpts); err != nil {
-		return nil, nil, sdk.WrapError(err, "Unable to update workflow")
-	}
-
 	allMsg = append(allMsg, msgList...)
 
 	if !isDefaultBranch {
