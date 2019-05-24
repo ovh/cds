@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gopkg.in/olivere/elastic.v6"
@@ -125,7 +124,7 @@ func (s *Service) postMetricsHandler() service.Handler {
 			s.mergeMetric(&metric, existingMetric.Value)
 		}
 
-		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexMetrics).Id(id).Type(fmt.Sprintf("%T", sdk.Metric{})).Timestamp(strconv.Itoa(int(metric.Date.Unix()))).BodyJson(metric).Do(context.Background())
+		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexMetrics).Id(id).Type(fmt.Sprintf("%T", sdk.Metric{})).BodyJson(metric).Do(context.Background())
 		if errI != nil {
 			return sdk.WrapError(errI, "Unable to insert event")
 		}
