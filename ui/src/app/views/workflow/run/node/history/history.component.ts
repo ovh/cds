@@ -39,7 +39,9 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
                     if (nodeRun.status === PipelineStatus.SUCCESS) {
                         return ['check', 'green', 'icon'];
                     }
-                    if (nodeRun.status === PipelineStatus.WAITING || nodeRun.status === PipelineStatus.BUILDING) {
+                    if (nodeRun.status === PipelineStatus.WAITING
+                        || nodeRun.status === PipelineStatus.BUILDING
+                        || nodeRun.status === PipelineStatus.STOPPING) {
                         return ['wait', 'blue', 'icon'];
                     }
                     if (PipelineStatus.neverRun(nodeRun.status)) {

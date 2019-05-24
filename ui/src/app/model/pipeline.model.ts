@@ -14,6 +14,7 @@ export class PipelineStatus {
     static SKIPPED = 'Skipped';
     static NEVER_BUILT = 'Never Built';
     static STOPPED = 'Stopped';
+    static STOPPING = 'Stopping';
     static PENDING = 'Pending';
 
     static neverRun(status: string) {
@@ -21,7 +22,7 @@ export class PipelineStatus {
     }
 
     static isActive(status: string) {
-        return status === this.WAITING || status === this.BUILDING || status === this.PENDING;
+        return status === this.WAITING || status === this.BUILDING || status === this.PENDING || status === this.STOPPING;
     }
 
     static isDone(status: string) {

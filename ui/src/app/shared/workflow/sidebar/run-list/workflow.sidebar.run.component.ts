@@ -119,7 +119,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     }
 
     getDuration(status: string, start: string, done: string): string {
-        if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING) {
+        if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING || status === PipelineStatus.STOPPING) {
             return this._duration.duration(new Date(start), new Date());
         }
         if (!done) {

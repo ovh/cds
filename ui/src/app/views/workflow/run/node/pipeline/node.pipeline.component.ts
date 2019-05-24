@@ -117,7 +117,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             this.nodeRun.stages.forEach((s, sIndex) => {
                 if (!this.manual && previousRun && (!previousRun.stages[sIndex].status ||
                     previousRun.stages[sIndex].status === PipelineStatus.NEVER_BUILT) &&
-                    (s.status === PipelineStatus.WAITING || s.status === PipelineStatus.BUILDING)) {
+                    (s.status === PipelineStatus.WAITING || s.status === PipelineStatus.BUILDING || s.status === PipelineStatus.STOPPING)) {
                   this.selectedJob(s.jobs[0]);
                 }
                 if (s.run_jobs) {
@@ -165,6 +165,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                                this.jobTime.set(rj.job.pipeline_action_id, this._durationService.duration(new Date(rj.queued), new Date()));
                                break;
                            case this.pipelineStatusEnum.BUILDING:
+                           case this.pipelineStatusEnum.STOPPING:
                                stillRunning = true;
                                this.jobTime.set(rj.job.pipeline_action_id, this._durationService.duration(new Date(rj.start), new Date()));
                                break;

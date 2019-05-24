@@ -110,9 +110,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
 
         this.zone = new NgZone({enableLongStackTrace: false});
-        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING || this.currentStatus === this.pipelineBuildStatusEnum.WAITING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
-            (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
+        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING
+            || this.currentStatus === this.pipelineBuildStatusEnum.STOPPING
+            || this.currentStatus === this.pipelineBuildStatusEnum.WAITING
+            || (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)
+            || (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
         }
 

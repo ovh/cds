@@ -102,7 +102,9 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
             this.loading = true;
         }
 
-        if (this.jobStatus !== PipelineStatus.WAITING && this.jobStatus !== PipelineStatus.BUILDING) {
+        if (this.jobStatus !== PipelineStatus.WAITING
+            && this.jobStatus !== PipelineStatus.BUILDING
+            && this.jobStatus !== PipelineStatus.STOPPING) {
             if (this.nodeJobRun.spawninfos && this.nodeJobRun.spawninfos.length > 0) {
                 this.spawnInfos = this.getSpawnInfos(this.nodeJobRun.spawninfos);
             }
