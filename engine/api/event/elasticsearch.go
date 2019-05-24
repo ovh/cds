@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
-	"gopkg.in/olivere/elastic.v5"
+	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
