@@ -40,6 +40,7 @@ import (
 	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
@@ -729,6 +730,11 @@ func (a *API) Serve(ctx context.Context) error {
 		a.listenMaintenance(ctx)
 	}, a.PanicDump())
 
+	sdk.GoRoutine(ctx, "workermodel.Initialize", func(ctx context.Context) {
+		if err := workermodel.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
+			log.Error("error while initializing worker models routine: %s", err)
+		}
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
 			log.Error("error while initializing workers routine: %s", err)
@@ -782,10 +788,10 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	// migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 	// 	return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
-  // }})
-  migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-    return migrate.ActionModelRequirements(a.Cache, a.DBConnectionFactory.GetDBMap)
-  }})
+	// }})
+	migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.ActionModelRequirements(a.Cache, a.DBConnectionFactory.GetDBMap)
+	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {

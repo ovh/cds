@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -17,7 +17,7 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 			return sdk.WrapError(errr, "invalid permModelID")
 		}
 
-		if _, err := worker.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
+		if _, err := workermodel.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -43,7 +43,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := worker.LoadWorkerModelByID(tx, workerModelID)
+		model, err := workermodel.LoadByID(tx, workerModelID)
 		if err != nil {
 			return err
 		}
@@ -52,7 +52,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 			return nil
 		}
 
-		if err := worker.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm); err != nil {
+		if err := workermodel.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm); err != nil {
 			return sdk.WrapError(err, "cannot update spawn error on worker model")
 		}
 
@@ -62,7 +62,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
-		worker.UnbookForRegister(api.Cache, workerModelID)
+		workermodel.UnbookForRegister(api.Cache, workerModelID)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -75,7 +75,7 @@ func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "this route can be called only by hatchery: %+v", h)
 		}
 
-		models, err := worker.LoadWorkerModelsUsableOnGroupWithClearPassword(api.mustDB(), api.Cache, *h.GroupID)
+		models, err := workermodel.LoadAllUsableOnGroupWithClearPassword(api.mustDB(), api.Cache, *h.GroupID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models for hatchery %d with group %d", h.ID, *h.GroupID)
 		}

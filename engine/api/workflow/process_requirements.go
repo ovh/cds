@@ -7,7 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
@@ -126,7 +126,7 @@ func processNodeJobRunRequirementsGetModel(db gorp.SqlExecutor, model string, ex
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidJobRequirementWorkerModelPermission, "group %s should have execution permission", g.Name)
 		}
 
-		wm, err = worker.LoadWorkerModelByNameAndGroupID(db, modelPath[1], g.ID)
+		wm, err = workermodel.LoadByNameAndGroupID(db, modelPath[1], g.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -134,14 +134,14 @@ func processNodeJobRunRequirementsGetModel(db gorp.SqlExecutor, model string, ex
 		var err error
 
 		// if there is no group info, try to find a shared.infra model for given name
-		wm, err = worker.LoadWorkerModelByNameAndGroupID(db, modelName, group.SharedInfraGroup.ID)
+		wm, err = workermodel.LoadByNameAndGroupID(db, modelName, group.SharedInfraGroup.ID)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoWorkerModel) {
 			return nil, err
 		}
 
 		// if there is no shared.infra model we will try to find one for exec groups, backward compatibility for existing workflow runs.
 		if wm == nil {
-			wms, err := worker.LoadWorkerModelsByNameAndGroupIDs(db, modelName, execsGroupIDs)
+			wms, err := workermodel.LoadAllByNameAndGroupIDs(db, modelName, execsGroupIDs)
 			if err != nil {
 				return nil, err
 			}

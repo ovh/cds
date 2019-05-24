@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -35,7 +35,7 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := worker.CreateModel(tx, deprecatedGetUser(ctx), data)
+		model, err := workermodel.Create(tx, deprecatedGetUser(ctx), data)
 		if err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		api.Cache.DeleteAll(key)
 
 		// reload complete worker model
-		new, err := worker.LoadWorkerModelByID(api.mustDB(), model.ID)
+		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		old, errLoad := worker.LoadWorkerModelByNameAndGroupIDWithClearPassword(api.mustDB(), modelName, g.ID)
+		old, errLoad := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), modelName, g.ID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "cannot load worker model")
 		}
@@ -87,7 +87,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		if err := worker.CopyModelTypeData(u, old, &data); err != nil {
+		if err := workermodel.CopyModelTypeData(u, old, &data); err != nil {
 			return err
 		}
 
@@ -101,7 +101,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := worker.UpdateModel(tx, u, old, data)
+		model, err := workermodel.Update(tx, u, old, data)
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
 
-		new, err := worker.LoadWorkerModelByID(api.mustDB(), model.ID)
+		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		m, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
@@ -146,7 +146,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
 
-		if err := worker.DeleteWorkerModel(tx, m.ID); err != nil {
+		if err := workermodel.Delete(tx, m.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete worker model")
 		}
 
@@ -174,7 +174,7 @@ func (api *API) getWorkerModelHandler() service.Handler {
 		}
 
 		// FIXME implements load options for worker model dao.
-		m, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
@@ -193,10 +193,10 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "cannot parse form")
 		}
 
-		var opt *worker.StateLoadOption
+		var opt *workermodel.StateLoadOption
 		stateString := r.FormValue("state")
 		if stateString != "" {
-			o := worker.StateLoadOption(stateString)
+			o := workermodel.StateLoadOption(stateString)
 			if err := o.IsValid(); err != nil {
 				return err
 			}
@@ -210,9 +210,9 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		models := []sdk.Model{}
 		var err error
 		if binary != "" {
-			models, err = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), u, binary)
+			models, err = workermodel.LoadAllByUserAndBinary(api.mustDB(), u, binary)
 		} else {
-			models, err = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, u, opt)
+			models, err = workermodel.LoadAllByUser(api.mustDB(), api.Cache, u, opt)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models")
@@ -234,7 +234,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return err
 		}
 
-		m, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
@@ -263,7 +263,7 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 			groupIDs[i] = proj.ProjectGroups[i].Group.ID
 		}
 
-		models, err := worker.LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(api.mustDB(), append(groupIDs, group.SharedInfraGroup.ID))
+		models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(api.mustDB(), append(groupIDs, group.SharedInfraGroup.ID))
 		if err != nil {
 			return err
 		}
@@ -291,7 +291,7 @@ func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 			return err
 		}
 
-		wms, err := worker.LoadWorkerModelsActiveAndNotDeprecatedForGroupIDs(api.mustDB(), []int64{g.ID, group.SharedInfraGroup.ID})
+		wms, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(api.mustDB(), []int64{g.ID, group.SharedInfraGroup.ID})
 		if err != nil {
 			return err
 		}

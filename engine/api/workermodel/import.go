@@ -1,4 +1,4 @@
-package worker
+package workermodel
 
 import (
 	"github.com/go-gorp/gorp"
@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-// ParseAndImport parse and import an exportentities.WorkerModel
+// ParseAndImport parse and import an exportentities.WorkerModel.
 func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
 	data := eWorkerModel.GetWorkerModel()
 
@@ -31,14 +31,14 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *export
 	}
 
 	// check if a model already exists for given info, if exists but not force update returns an error
-	old, err := LoadWorkerModelByNameAndGroupIDWithClearPassword(db, data.Name, grp.ID)
+	old, err := LoadByNameAndGroupIDWithClearPassword(db, data.Name, grp.ID)
 	if err != nil {
 		// validate worker model type fields
 		if err := data.IsValidType(); err != nil {
 			return nil, err
 		}
 
-		return CreateModel(db, u, data)
+		return Create(db, u, data)
 	} else if force {
 		if err := CopyModelTypeData(u, old, &data); err != nil {
 			return nil, err
@@ -49,7 +49,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *export
 			return nil, err
 		}
 
-		return UpdateModel(db, u, old, data)
+		return Update(db, u, old, data)
 	}
 
 	return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)

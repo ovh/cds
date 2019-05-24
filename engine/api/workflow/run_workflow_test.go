@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -313,7 +313,7 @@ func TestManualRun3(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByNameAndGroupID(db, "TestManualRun", g.ID)
+	model, _ := workermodel.LoadByNameAndGroupID(db, "TestManualRun", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "TestManualRun",
@@ -331,7 +331,7 @@ func TestManualRun3(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(db, model); err != nil {
+		if err := workermodel.Insert(db, model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}

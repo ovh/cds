@@ -1,4 +1,4 @@
-package worker
+package workermodel
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// CreateModel returns a new worker model for given data.
-func CreateModel(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, error) {
+// Create returns a new worker model for given data.
+func Create(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
@@ -29,7 +29,7 @@ func CreateModel(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, 
 	}
 
 	// check if worker model already exists
-	if _, err := LoadWorkerModelByNameAndGroupID(db, data.Name, grp.ID); err == nil {
+	if _, err := LoadByNameAndGroupID(db, data.Name, grp.ID); err == nil {
 		return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)
 	}
 
@@ -45,7 +45,7 @@ func CreateModel(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, 
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
-		modelPattern, err := LoadWorkerModelPatternByName(db, data.Type, data.PatternName)
+		modelPattern, err := LoadPatternByName(db, data.Type, data.PatternName)
 		if err != nil {
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model name"))
 		}
@@ -76,15 +76,15 @@ func CreateModel(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, 
 		Origin:   u.Origin,
 	}
 
-	if err := InsertWorkerModel(db, &model); err != nil {
+	if err := Insert(db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot add worker model")
 	}
 
 	return &model, nil
 }
 
-// UpdateModel from given data.
-func UpdateModel(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
+// Update from given data.
+func Update(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
@@ -102,7 +102,7 @@ func UpdateModel(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Mode
 		}
 
 		// check that no worker model already exists for same group/name
-		if _, err := LoadWorkerModelByNameAndGroupID(db, data.Name, grp.ID); err == nil {
+		if _, err := LoadByNameAndGroupID(db, data.Name, grp.ID); err == nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrAlreadyExist, "an action already exists for given name on this group")
 		}
 	}
@@ -114,7 +114,7 @@ func UpdateModel(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Mode
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
-		modelPattern, err := LoadWorkerModelPatternByName(db, data.Type, data.PatternName)
+		modelPattern, err := LoadPatternByName(db, data.Type, data.PatternName)
 		if err != nil {
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model name"))
 		}
@@ -146,7 +146,7 @@ func UpdateModel(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Mode
 	model.Update(data)
 
 	// update model in db
-	if err := UpdateWorkerModel(db, &model); err != nil {
+	if err := UpdateDB(db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot update worker model")
 	}
 

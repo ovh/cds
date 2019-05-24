@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -199,7 +199,7 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName strin
 		}
 	}
 
-	m, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+	m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
 	if err != nil {
 		return err
 	}
@@ -217,7 +217,7 @@ func (api *API) checkWorkerModelIDPermissions(ctx context.Context, modelID strin
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model id %s", modelID)
 	}
 
-	m, err := worker.LoadWorkerModelByID(api.mustDB(), id)
+	m, err := workermodel.LoadByID(api.mustDB(), id)
 	if err != nil {
 		return err
 	}

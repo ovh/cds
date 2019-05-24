@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -25,7 +25,7 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 			return err
 		}
 
-		wm, err := worker.LoadWorkerModelByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		wm, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
@@ -45,7 +45,7 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 			opts = append(opts, exportentities.WorkerModelLoadOptions.HideAdminFields)
 		}
 
-		if _, err := worker.Export(*wm, f, w, opts...); err != nil {
+		if _, err := workermodel.Export(*wm, f, w, opts...); err != nil {
 			return err
 		}
 

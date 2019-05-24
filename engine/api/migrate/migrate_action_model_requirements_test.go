@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -25,9 +25,9 @@ func TestActionModelRequirements_WithExistingRequirements(t *testing.T) {
 		Name: sdk.RandomString(10),
 		Type: sdk.Docker,
 	}
-	test.NoError(t, worker.InsertWorkerModelPattern(db, &p))
+	test.NoError(t, workermodel.InsertPattern(db, &p))
 
-	m, err := worker.CreateModel(db, u, sdk.Model{
+	m, err := workermodel.Create(db, u, sdk.Model{
 		Type:        sdk.Docker,
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,
@@ -74,7 +74,7 @@ func TestActionModelRequirements_WithoutExistingRequirements(t *testing.T) {
 		Name: sdk.RandomString(10),
 		Type: sdk.Docker,
 	}
-	test.NoError(t, worker.InsertWorkerModelPattern(db, &p))
+	test.NoError(t, workermodel.InsertPattern(db, &p))
 
 	m := sdk.Model{
 		Name: sdk.RandomString(10),
@@ -97,9 +97,9 @@ func TestActionModelRequirements_WithLockedExistingRequirements(t *testing.T) {
 		Name: sdk.RandomString(10),
 		Type: sdk.Docker,
 	}
-	test.NoError(t, worker.InsertWorkerModelPattern(db, &p))
+	test.NoError(t, workermodel.InsertPattern(db, &p))
 
-	m, err := worker.CreateModel(db, u, sdk.Model{
+	m, err := workermodel.Create(db, u, sdk.Model{
 		Type:        sdk.Docker,
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,

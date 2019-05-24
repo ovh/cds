@@ -1,4 +1,4 @@
-package worker_test
+package workermodel_test
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -38,7 +38,7 @@ func TestCreateModel(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, worker.InsertWorkerModelPattern(db, &pattern))
+	test.NoError(t, workermodel.InsertPattern(db, &pattern))
 
 	tests := []struct {
 		Name   string
@@ -87,7 +87,7 @@ func TestCreateModel(t *testing.T) {
 				ModelDocker: sdk.ModelDocker{
 					Cmd:   pattern.Model.Cmd,
 					Shell: pattern.Model.Shell,
-					Envs:  worker.MergeModelEnvsWithDefaultEnvs(pattern.Model.Envs),
+					Envs:  workermodel.MergeModelEnvsWithDefaultEnvs(pattern.Model.Envs),
 				},
 			},
 		},
@@ -113,7 +113,7 @@ func TestCreateModel(t *testing.T) {
 				ModelDocker: sdk.ModelDocker{
 					Cmd:   "my custom cmd",
 					Shell: "my custom shell",
-					Envs: worker.MergeModelEnvsWithDefaultEnvs(map[string]string{
+					Envs: workermodel.MergeModelEnvsWithDefaultEnvs(map[string]string{
 						"custom": "value",
 					}),
 				},
@@ -131,7 +131,7 @@ func TestCreateModel(t *testing.T) {
 			Result: sdk.Model{
 				Provision: 5,
 				ModelDocker: sdk.ModelDocker{
-					Envs: worker.MergeModelEnvsWithDefaultEnvs(nil),
+					Envs: workermodel.MergeModelEnvsWithDefaultEnvs(nil),
 				},
 			},
 		},
@@ -147,7 +147,7 @@ func TestCreateModel(t *testing.T) {
 			Result: sdk.Model{
 				Provision: 5,
 				ModelDocker: sdk.ModelDocker{
-					Envs: worker.MergeModelEnvsWithDefaultEnvs(nil),
+					Envs: workermodel.MergeModelEnvsWithDefaultEnvs(nil),
 				},
 			},
 		},
@@ -155,7 +155,7 @@ func TestCreateModel(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			res, err := worker.CreateModel(db, test.User, test.Data)
+			res, err := workermodel.Create(db, test.User, test.Data)
 			if test.Error {
 				assert.Error(t, err)
 			} else {
@@ -194,7 +194,7 @@ func TestUpdateModel(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, worker.InsertWorkerModelPattern(db, &pattern))
+	test.NoError(t, workermodel.InsertPattern(db, &pattern))
 
 	tests := []struct {
 		Name   string
@@ -248,7 +248,7 @@ func TestUpdateModel(t *testing.T) {
 				ModelDocker: sdk.ModelDocker{
 					Cmd:   pattern.Model.Cmd,
 					Shell: pattern.Model.Shell,
-					Envs:  worker.MergeModelEnvsWithDefaultEnvs(pattern.Model.Envs),
+					Envs:  workermodel.MergeModelEnvsWithDefaultEnvs(pattern.Model.Envs),
 				},
 			},
 		},
@@ -258,17 +258,17 @@ func TestUpdateModel(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			if test.Old != nil {
 				var err error
-				test.Old, err = worker.CreateModel(db, test.User, *test.Old)
+				test.Old, err = workermodel.Create(db, test.User, *test.Old)
 				if !assert.NoError(t, err) {
 					t.FailNow()
 				}
-				test.Old, err = worker.LoadWorkerModelByID(db, test.Old.ID)
+				test.Old, err = workermodel.LoadByID(db, test.Old.ID)
 				if !assert.NoError(t, err) {
 					t.FailNow()
 				}
 			}
 
-			res, err := worker.UpdateModel(db, test.User, test.Old, test.Data)
+			res, err := workermodel.Update(db, test.User, test.Old, test.Data)
 			if test.Error {
 				assert.Error(t, err)
 			} else {
@@ -298,9 +298,9 @@ func TestCopyModelTypeData(t *testing.T) {
 	data := sdk.Model{}
 
 	// model type cannot be different
-	assert.Error(t, worker.CopyModelTypeData(&sdk.User{}, &old, &data))
+	assert.Error(t, workermodel.CopyModelTypeData(&sdk.User{}, &old, &data))
 
 	data.Type = sdk.Docker
-	assert.NoError(t, worker.CopyModelTypeData(&sdk.User{}, &old, &data))
+	assert.NoError(t, workermodel.CopyModelTypeData(&sdk.User{}, &old, &data))
 	assert.Equal(t, old.ModelDocker, data.ModelDocker)
 }

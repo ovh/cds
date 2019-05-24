@@ -8,7 +8,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -53,7 +53,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		wm, err := worker.ParseAndImport(tx, api.Cache, &eWorkerModel, force, deprecatedGetUser(ctx))
+		wm, err := workermodel.ParseAndImport(tx, api.Cache, &eWorkerModel, force, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "cannot parse and import worker model")
 		}
@@ -62,7 +62,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		new, err := worker.LoadWorkerModelByID(api.mustDB(), wm.ID)
+		new, err := workermodel.LoadByID(api.mustDB(), wm.ID)
 		if err != nil {
 			return err
 		}

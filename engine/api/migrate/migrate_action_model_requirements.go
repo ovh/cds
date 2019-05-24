@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/workermodel"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -19,7 +19,7 @@ func ActionModelRequirements(store cache.Store, DBFunc func() *gorp.DbMap) error
 	log.Info("migrate>ActionModelRequirements> Start migration")
 
 	// get all existing model from database
-	wms, err := worker.LoadWorkerModelsNotSharedInfra(db)
+	wms, err := workermodel.LoadAllNotSharedInfra(db)
 	if err != nil {
 		return err
 	}

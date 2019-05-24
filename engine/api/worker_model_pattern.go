@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -22,7 +22,7 @@ func (api *API) getWorkerModelPatternsHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
 		}
 
-		modelPatterns, err := worker.LoadWorkerModelPatterns(api.mustDB())
+		modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model patterns")
 		}
@@ -44,7 +44,7 @@ func (api *API) getWorkerModelPatternHandler() service.Handler {
 		patternName := vars["name"]
 		patternType := vars["type"]
 
-		modelPattern, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		modelPattern, err := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model patterns")
 		}
@@ -86,7 +86,7 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 		}
 
 		// Insert model pattern in db
-		if err := worker.InsertWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
+		if err := workermodel.InsertPattern(api.mustDB(), &modelPattern); err != nil {
 			return sdk.WrapError(err, "cannot add worker model pattern")
 		}
 
@@ -130,7 +130,7 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 			return sdk.ErrInvalidPatternModel
 		}
 
-		oldWmp, errOld := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		oldWmp, errOld := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
 		if errOld != nil {
 			if sdk.Cause(errOld) == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrNotFound, "putWorkerModelPatternHandler> cannot load worker model pattern (%s/%s) : %v", patternType, patternName, errOld)
@@ -139,7 +139,7 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 		}
 		modelPattern.ID = oldWmp.ID
 
-		if err := worker.UpdateWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
+		if err := workermodel.UpdatePattern(api.mustDB(), &modelPattern); err != nil {
 			return sdk.WrapError(err, "cannot update worker model pattern")
 		}
 
@@ -153,7 +153,7 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 		patternName := vars["name"]
 		patternType := vars["type"]
 
-		wmp, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		wmp, err := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
 		if err != nil {
 			if sdk.Cause(err) == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrNotFound, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s)", patternType, patternName)
@@ -161,7 +161,7 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
 		}
 
-		if err := worker.DeleteWorkerModelPattern(api.mustDB(), wmp.ID); err != nil {
+		if err := workermodel.DeletePattern(api.mustDB(), wmp.ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
 		}
 

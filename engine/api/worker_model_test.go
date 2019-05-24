@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -25,23 +25,23 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, err := worker.LoadWorkerModels(api.mustDB())
+	models, err := workermodel.LoadAll(api.mustDB())
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
 
-	modelPatterns, err := worker.LoadWorkerModelPatterns(api.mustDB())
+	modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
 	test.NoError(t, err)
 
 	for _, wmp := range modelPatterns {
-		test.NoError(t, worker.DeleteWorkerModelPattern(api.mustDB(), wmp.ID))
+		test.NoError(t, workermodel.DeletePattern(api.mustDB(), wmp.ID))
 	}
 }
 
@@ -50,14 +50,14 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, errlw := worker.LoadWorkerModels(api.mustDB())
+	models, errlw := workermodel.LoadAll(api.mustDB())
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -110,14 +110,14 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, errlw := worker.LoadWorkerModels(api.mustDB())
+	models, errlw := workermodel.LoadAll(api.mustDB())
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -201,7 +201,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, worker.InsertWorkerModel(db, &model))
+	test.NoError(t, workermodel.Insert(db, &model))
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
@@ -556,7 +556,7 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, worker.InsertWorkerModelPattern(api.mustDB(), &pattern))
+	test.NoError(t, workermodel.InsertPattern(api.mustDB(), &pattern))
 
 	model := sdk.Model{
 		Name:        "Test1",
@@ -645,7 +645,7 @@ func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, worker.InsertWorkerModelPattern(api.mustDB(), &pattern))
+	test.NoError(t, workermodel.InsertPattern(api.mustDB(), &pattern))
 
 	vars := map[string]string{
 		"groupName":     g.Name,
@@ -905,7 +905,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	test.Equal(t, sdk.PasswordPlaceholder, resp.ModelDocker.Password, "Worker model should not return password, but placeholder")
 
-	wm, errL := worker.LoadWorkerModelByNameAndGroupIDWithClearPassword(api.mustDB(), resp.Name, resp.GroupID)
+	wm, errL := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), resp.Name, resp.GroupID)
 	test.NoError(t, errL)
 
 	pw, errPw := secret.DecryptValue(wm.ModelDocker.Password)
