@@ -7,9 +7,8 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
-	
+
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
@@ -68,27 +67,8 @@ func (api *API) loginUserHandler() service.Handler {
 		if err := group.CheckUserInDefaultGroup(api.mustDB(), oldUser.ID); err != nil {
 			log.Warning("Auth> Error while check user in default group:%s\n", err)
 		}
-		var sessionKey sessionstore.SessionKey
-		var errs error
-		if !logFromCLI {
-			//Standard login, new session
-			sessionKey, err = auth.NewSession(authUser)
-			if errs != nil {
-				log.Error("Auth> Error while creating new session: %s\n", errs)
-			}
-		} else {
-			//CLI login, generate user key as persistent session
-			sessionKey, errs = auth.NewPersistentSession(api.mustDB(), authUser)
-			if errs != nil {
-				log.Error("Auth> Error while creating new session: %s\n", errs)
-			}
-		}
 
 		var loginUserResponse sdk.UserLoginResponse
-		if sessionKey != "" {
-			w.Header().Set(sdk.SessionTokenHeader, string(sessionKey))
-			loginUserResponse.Token = string(sessionKey)
-		}
 		return service.WriteJSON(w, loginUserResponse, http.StatusOK)
 	}
 }

@@ -5,7 +5,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type service sdk.Service
+type service struct {
+	sdk.Service
+	EncryptedJWT []byte `db:"encrypted_jwt" json:"-"`
+}
 
 func init() {
 	gorpmapping.Register(

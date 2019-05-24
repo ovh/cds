@@ -6,8 +6,16 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
+
+// FindByTokenID a service by its token_id
+func FindByTokenID(db gorp.SqlExecutor, tokenID string) (*sdk.Service, error) {
+	query := "SELECT * FROM services WHERE token_id = $1"
+	return findOne(db, query, tokenID)
+}
 
 // FindByNameAndType a service by its name and type
 func FindByNameAndType(db gorp.SqlExecutor, name, stype string) (*sdk.Service, error) {
@@ -63,13 +71,19 @@ func findOne(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Servi
 		if err == sql.ErrNoRows {
 			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
-		return nil, sdk.WrapError(err, "service not found")
+		return nil, sdk.WithStack(err)
 	}
-	s := sdk.Service(sdb)
-	if s.Name == "" {
+	isValid, err := gorpmapping.CheckSignature(db, &sdb)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, sdk.WithStack(sdk.ErrCorruptedData)
+	}
+	if sdb.Name == "" {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return &s, nil
+	return &sdb.Service, nil
 }
 
 func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Service, error) {
@@ -82,33 +96,55 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 	}
 	ss := make([]sdk.Service, 0, len(sdbs))
 	for i := 0; i < len(sdbs); i++ {
-		ss = append(ss, sdk.Service(sdbs[i]))
+		isValid, err := gorpmapping.CheckSignature(db, &sdbs[i])
+		if err != nil {
+			log.Error("services.findAll> unable to load service id=%d: %v", sdbs[i].ID, err)
+		}
+		if !isValid {
+			log.Error("services.findAll> unable to load service id=%d: %v", sdbs[i].ID, sdk.WithStack(sdk.ErrCorruptedData))
+		}
+		ss = append(ss, sdbs[i].Service)
 	}
 	return ss, nil
 }
 
 // Insert a service
 func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
-	sdb := service(*s)
-	if err := db.Insert(&sdb); err != nil {
-		return sdk.WrapError(err, "unable to insert service %s", s.Name)
+	sdb := service{
+		Service: *s,
 	}
-	*s = sdk.Service(sdb)
+	if err := gorpmapping.Encrypt(sdb.ClearJWT, &sdb.EncryptedJWT, []byte(sdb.Name)); err != nil {
+		return err
+	}
+	sdb.ClearJWT = ""
+	if err := gorpmapping.InsertAndSign(db, &sdb); err != nil {
+		return err
+	}
+	*s = sdb.Service
 	return nil
 }
 
 // Update a service
 func Update(db gorp.SqlExecutor, s *sdk.Service) error {
-	sdb := service(*s)
-	if _, err := db.Update(&sdb); err != nil {
-		return sdk.WrapError(err, "unable to update service %s", s.Name)
+	sdb := service{
+		Service: *s,
 	}
+	if err := gorpmapping.Encrypt(sdb.ClearJWT, &sdb.EncryptedJWT, []byte(sdb.Name)); err != nil {
+		return err
+	}
+	sdb.ClearJWT = ""
+	if err := gorpmapping.UpdatetAndSign(db, &sdb); err != nil {
+		return err
+	}
+	*s = sdb.Service
 	return nil
 }
 
 // Delete a service
 func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
-	sdb := service(*s)
+	sdb := service{
+		Service: *s,
+	}
 	if _, err := db.Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "unable to delete service %s", s.Name)
 	}
@@ -126,4 +162,17 @@ func FindDeadServices(db gorp.SqlExecutor, t time.Duration) ([]sdk.Service, erro
 		return nil, sdk.WrapError(err, "Unable to find dead services")
 	}
 	return services, nil
+}
+
+func LoadClearJWT(db gorp.SqlExecutor, id int64) (string, error) {
+	query := gorpmapping.NewQuery("select encrypted_jwt from services where id = $1").Args(id)
+	var encryptedJWT []byte
+	if _, err := gorpmapping.Get(db, query, &encryptedJWT); err != nil {
+		return "", err
+	}
+	var clearJWT string
+	if err := gorpmapping.Decrypt(encryptedJWT, &clearJWT); err != nil {
+		return "", err
+	}
+	return clearJWT, nil
 }

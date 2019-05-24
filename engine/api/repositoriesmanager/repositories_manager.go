@@ -28,7 +28,7 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.V
 	if err != nil {
 		return vcsServer, sdk.WrapError(err, "Unable to load services")
 	}
-	if _, err := services.DoJSONRequest(ctx, srvs, "GET", fmt.Sprintf("/vcs/%s", vcsName), nil, &vcsServer); err != nil {
+	if _, err := services.DoJSONRequest(ctx, db, srvs, "GET", fmt.Sprintf("/vcs/%s", vcsName), nil, &vcsServer); err != nil {
 		return vcsServer, sdk.WithStack(err)
 	}
 	return vcsServer, nil
@@ -42,7 +42,7 @@ func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string
 	}
 
 	vcsServers := make(map[string]sdk.VCSConfiguration)
-	if _, err := services.DoJSONRequest(ctx, srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
+	if _, err := services.DoJSONRequest(ctx, db, srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return vcsServers, nil
@@ -61,6 +61,7 @@ type vcsClient struct {
 	secret string
 	srvs   []sdk.Service
 	cache  *gocache.Cache
+	dbFunc func() *gorp.DbMap
 }
 
 func (c *vcsClient) Cache() *gocache.Cache {
@@ -90,7 +91,8 @@ func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name str
 }
 
 func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
-	srv, err := services.FindByType(c.dbFunc(), services.TypeVCS)
+	db := c.dbFunc()
+	srv, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
 	}
@@ -98,7 +100,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
 	log.Info("Performing request on %s", path)
-	if _, err := services.DoJSONRequest(ctx, srv, "GET", path, nil, &res); err != nil {
+	if _, err := services.DoJSONRequest(ctx, db, srv, "GET", path, nil, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}
 
@@ -106,7 +108,8 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 }
 
 func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret string) (string, string, error) {
-	srv, err := services.FindByType(c.dbFunc(), services.TypeVCS)
+	db := c.dbFunc()
+	srv, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
 	}
@@ -118,7 +121,7 @@ func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret s
 
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	if _, err := services.DoJSONRequest(ctx, srv, "POST", path, body, &res); err != nil {
+	if _, err := services.DoJSONRequest(ctx, db, srv, "POST", path, body, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}
 
@@ -200,7 +203,7 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 }
 
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
-	code, err := services.DoJSONRequest(ctx, c.srvs, method, path, in, out, func(req *http.Request) {
+	code, err := services.DoJSONRequest(ctx, c.dbFunc(), c.srvs, method, path, in, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
@@ -224,7 +227,7 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 }
 
 func (c *vcsClient) postMultipart(ctx context.Context, path string, fileContent []byte, out interface{}) (int, error) {
-	return services.PostMultipart(ctx, c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
+	return services.PostMultipart(ctx, c.dbFunc(), c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})

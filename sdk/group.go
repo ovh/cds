@@ -48,6 +48,7 @@ func (g Group) IsMember(group *Group, u GroupMember) bool {
 	return false
 }
 
+// TODO Fix this because it relies on username with is not a good thing
 func (g Group) IsAdmin(group *Group, u IdentifiableGroupMember) bool {
 	for _, g := range u.GetGroups() {
 		if g.ID == group.ID {

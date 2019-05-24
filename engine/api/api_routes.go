@@ -97,8 +97,8 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/user", Scope(sdk.AccessTokenScopeGroup), r.POST(api.addUserInGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}", Scope(sdk.AccessTokenScopeGroup), r.DELETE(api.removeUserFromGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}/admin", Scope(sdk.AccessTokenScopeGroup), r.POST(api.setUserGroupAdminHandler), r.DELETE(api.removeUserGroupAdminHandler))
-	r.Handle("/group/{permGroupName}/token", Scope(sdk.AccessTokenScopeGroup), r.GET(api.getGroupTokenListHandler), r.POST(api.generateTokenHandler))
-	r.Handle("/group/{permGroupName}/token/{tokenid}", Scope(sdk.AccessTokenScopeGroup), r.DELETE(api.deleteTokenHandler))
+	//r.Handle("/group/{permGroupName}/token", Scope(sdk.AccessTokenScopeGroup), r.GET(api.getGroupTokenListHandler), r.POST(api.generateTokenHandler))
+	//r.Handle("/group/{permGroupName}/token/{tokenid}", Scope(sdk.AccessTokenScopeGroup), r.DELETE(api.deleteTokenHandler))
 
 	// Hatchery
 	r.Handle("/hatchery/count/{workflowNodeRunID}", Scope(sdk.AccessTokenScopeHatchery), r.GET(api.hatcheryCountHandler))
@@ -345,8 +345,6 @@ func (api *API) InitRouter() {
 	r.Handle("/user/favorite", Scope(sdk.AccessTokenScopeUser), r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/timeline", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
-	r.Handle("/user/token", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserTokenListHandler))
-	r.Handle("/user/token/{token}", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/{username}", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserHandler), r.PUT(api.updateUserHandler), r.DELETE(api.deleteUserHandler))
 	r.Handle("/user/{username}/groups", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserGroupsHandler))

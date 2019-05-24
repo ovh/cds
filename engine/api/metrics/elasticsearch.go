@@ -40,7 +40,7 @@ func Init(c context.Context, DBFunc func() *gorp.DbMap) {
 				continue
 			}
 
-			code, errD := services.DoJSONRequest(context.Background(), esServices, "POST", "/metrics", e, nil)
+			code, errD := services.DoJSONRequest(context.Background(), DBFunc(), esServices, "POST", "/metrics", e, nil)
 			if code >= 400 || errD != nil {
 				log.Error("metrics.pushInElasticSearch> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
 				continue
@@ -63,7 +63,7 @@ func GetMetrics(db gorp.SqlExecutor, key string, appID int64, metricName string)
 	}
 
 	var esMetrics []elastic.SearchHit
-	if _, err := services.DoJSONRequest(context.Background(), srvs, "GET", "/metrics", metricsRequest, &esMetrics); err != nil {
+	if _, err := services.DoJSONRequest(context.Background(), db, srvs, "GET", "/metrics", metricsRequest, &esMetrics); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get metrics")
 	}
 

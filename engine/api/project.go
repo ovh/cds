@@ -33,7 +33,6 @@ func (api *API) getProjectsHandler() service.Handler {
 		withPermissions := r.FormValue("permission")
 		withIcon := FormBool(r, "withIcon")
 
-		var u = getAPIConsumer(ctx)
 		requestedUserName := r.Header.Get("X-Cds-Username")
 
 		//A provider can make a call for a specific user
@@ -104,7 +103,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			ws := []sdk.Workflow{}
 			//Filter the workflow by applications
 			for i := range p.Workflows {
-				w, err := workflow.LoadByID(db, store, p, p.Workflows[i].ID, u, workflow.LoadOptions{})
+				w, err := workflow.LoadByID(ctx, db, store, p, p.Workflows[i].ID, workflow.LoadOptions{})
 				if err != nil {
 					return err
 				}
@@ -125,9 +124,16 @@ func (api *API) getProjectsHandler() service.Handler {
 		}
 		opts = append(opts, &filterByRepoFunc)
 
-		projects, err = project.LoadAllByRepo(api.mustDB(), api.Cache, u, filterByRepo, opts...)
-		if err != nil {
-			return sdk.WrapError(err, "getProjectsHandler")
+		if isMaintainer(ctx) || isAdmin(ctx) {
+			projects, err = project.LoadAllByRepo(api.mustDB(), api.Cache, filterByRepo, opts...)
+			if err != nil {
+				return err
+			}
+		} else {
+			projects, err = project.LoadAllByRepoAndGroups(api.mustDB(), api.Cache, getAPIConsumer(ctx), filterByRepo, opts...)
+			if err != nil {
+				return err
+			}
 		}
 
 		if strings.ToUpper(withPermissions) == "W" {

@@ -40,7 +40,7 @@ func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupM
 }
 
 // LoadAllByRepo returns all projects with an application linked to the repo
-func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	query := `SELECT DISTINCT project.*
 	FROM  project
 	JOIN  application on project.id = application.project_id

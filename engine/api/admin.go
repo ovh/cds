@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -45,12 +44,6 @@ func (api *API) getAdminServicesHandler() service.Handler {
 			return err
 		}
 
-		for i := range srvs {
-			srv := &srvs[i]
-			srv.Hash = ""
-			srv.Token = ""
-		}
-
 		return service.WriteJSON(w, srvs, http.StatusOK)
 	}
 }
@@ -77,18 +70,6 @@ func (api *API) getAdminServiceHandler() service.Handler {
 		srv, err := services.FindByName(api.mustDB(), name)
 		if err != nil {
 			return err
-		}
-		srv.Hash = ""
-		srv.Token = ""
-		if srv.GroupID != nil {
-			g, err := group.LoadGroupByID(api.mustDB(), *srv.GroupID)
-			if err != nil {
-				if !sdk.ErrorIs(err, sdk.ErrGroupNotFound) {
-					return sdk.WithStack(err)
-				}
-			} else {
-				srv.Group = g
-			}
 		}
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
@@ -134,7 +115,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 		}
 
 		query := r.FormValue("query")
-		btes, code, err := services.DoRequest(ctx, srvs, method, query, nil)
+		btes, code, err := services.DoRequest(ctx, api.mustDB(), srvs, method, query, nil)
 		if err != nil {
 			return sdk.NewError(sdk.Error{
 				Status:  code,
@@ -165,7 +146,7 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 		}
 		defer r.Body.Close()
 
-		btes, code, err := services.DoRequest(ctx, srvs, method, query, body)
+		btes, code, err := services.DoRequest(ctx, api.mustDB(), srvs, method, query, body)
 		if err != nil {
 			return sdk.NewError(sdk.Error{
 				Status:  code,

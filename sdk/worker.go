@@ -11,7 +11,6 @@ type Worker struct {
 	ID            string    `json:"id" cli:"-"`
 	Name          string    `json:"name" cli:"name,key"`
 	LastBeat      time.Time `json:"lastbeat" cli:"lastbeat"`
-	GroupID       int64     `json:"group_id" cli:"-"`
 	ModelID       int64     `json:"model_id" cli:"-"`
 	ActionBuildID int64     `json:"action_build_id" cli:"-"`
 	Model         *Model    `json:"model" cli:"-"`

@@ -63,7 +63,7 @@ loopModels:
 		}
 
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-		if models[k].NbSpawnErr > 5 && *h.Service().GroupID != models[k].ID {
+		if models[k].NbSpawnErr > 5 {
 			log.Warning("hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}

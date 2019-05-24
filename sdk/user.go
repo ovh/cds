@@ -1,6 +1,9 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -54,6 +57,24 @@ type AuthentifiedUser struct {
 	DateCreation  time.Time    `json:"date_creation" yaml:"date_creation" db:"date_creation"`
 	Contacts      UserContacts `json:"contacts" yaml:"contacts" db:"-"`
 	OldUserStruct *User        `json:"old_user_struct" yaml:"old_user_struct" db:"-"`
+}
+
+// Value returns driver.Value from workflow template request.
+func (w AuthentifiedUser) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal AuthentifiedUser")
+}
+
+// Scan workflow template request.
+func (w *AuthentifiedUser) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal AuthentifiedUser")
 }
 
 func (u AuthentifiedUser) GetGroups() []Group {

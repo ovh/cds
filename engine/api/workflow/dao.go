@@ -279,7 +279,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 }
 
 // Load loads a workflow for a given user (ie. checking permissions)
-func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, u sdk.GroupMember, opts LoadOptions) (*sdk.Workflow, error) {
+func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, opts LoadOptions) (*sdk.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Load",
 		observability.Tag(observability.TagWorkflow, name),
 		observability.Tag(observability.TagProjectKey, proj.Key),
@@ -313,13 +313,13 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
 		and workflow.name = $2`, icon)
-	res, err := load(ctx, db, store, proj, opts, u, query, proj.Key, name)
+	res, err := load(ctx, db, store, proj, opts, query, proj.Key, name)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow %s in project %s", name, proj.Key)
 	}
 	res.ProjectKey = proj.Key
 
-	if err := IsValid(ctx, store, db, res, proj, u); err != nil {
+	if err := IsValid(ctx, store, db, res, proj); err != nil {
 		return nil, sdk.WrapError(err, "Unable to valid workflow")
 	}
 
@@ -336,12 +336,12 @@ func LoadWorkflowIDsWithNotifications(db gorp.SqlExecutor) ([]int64, error) {
 	return ids, sdk.WrapError(err, "unable to select workflow with notification")
 }
 
-func LoadAndLock(db gorp.SqlExecutor, id int64, store cache.Store, proj *sdk.Project, opts LoadOptions, u sdk.GroupMember) (*sdk.Workflow, error) {
+func LoadAndLock(ctx context.Context, db gorp.SqlExecutor, id int64, store cache.Store, proj *sdk.Project, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select *
 		from workflow
 		where id = $1 FOR UPDATE SKIP LOCKED`
-	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
+	res, err := load(ctx, db, store, proj, opts, query, id)
 	if err != nil {
 		if err == sdk.ErrWorkflowNotFound {
 			err = sdk.ErrLocked
@@ -352,24 +352,24 @@ func LoadAndLock(db gorp.SqlExecutor, id int64, store cache.Store, proj *sdk.Pro
 }
 
 // LoadByID loads a workflow for a given user (ie. checking permissions)
-func LoadByID(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int64, u sdk.GroupMember, opts LoadOptions) (*sdk.Workflow, error) {
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select *
 		from workflow
 		where id = $1`
-	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
+	res, err := load(ctx, db, store, proj, opts, query, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
 	}
 
-	if err := IsValid(context.TODO(), store, db, res, proj, u); err != nil {
+	if err := IsValid(ctx, store, db, res, proj); err != nil {
 		return nil, sdk.WrapError(err, "Unable to valid workflow")
 	}
 	return res, nil
 }
 
 // LoadByPipelineName loads a workflow for a given project key and pipeline name (ie. checking permissions)
-func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.Workflow, error) {
+func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.Workflow, error) {
 	dbRes := []Workflow{}
 	query := `
 		select distinct workflow.*
@@ -398,7 +398,7 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 }
 
 // LoadByApplicationName loads a workflow for a given project key and application name (ie. checking permissions)
-func LoadByApplicationName(db gorp.SqlExecutor, projectKey string, appName string) ([]sdk.Workflow, error) {
+func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey string, appName string) ([]sdk.Workflow, error) {
 	dbRes := []Workflow{}
 	query := `
 		select distinct workflow.*
@@ -428,7 +428,7 @@ func LoadByApplicationName(db gorp.SqlExecutor, projectKey string, appName strin
 }
 
 // LoadByEnvName loads a workflow for a given project key and environment name (ie. checking permissions)
-func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.Workflow, error) {
+func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.Workflow, error) {
 	dbRes := []Workflow{}
 	query := `
 		select distinct workflow.*
@@ -511,7 +511,7 @@ func LoadByWorkflowTemplateIDByGroups(ctx context.Context, db gorp.SqlExecutor, 
 	return loadByWorkflowTemplateID(ctx, db, query, args)
 }
 
-func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOptions, u sdk.GroupMember, query string, args ...interface{}) (*sdk.Workflow, error) {
+func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOptions, query string, args ...interface{}) (*sdk.Workflow, error) {
 	t0 := time.Now()
 	dbRes := Workflow{}
 
@@ -593,14 +593,14 @@ func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID int64) (bool, error) {
 }
 
 // Insert inserts a new workflow
-func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u sdk.GroupMember) error {
-	if err := IsValid(context.TODO(), store, db, w, p, u); err != nil {
+func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project) error {
+	if err := IsValid(ctx, store, db, w, p); err != nil {
 		return sdk.WrapError(err, "Unable to validate workflow")
 	}
 
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
-		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(context.TODO(), db, store, p, w); err != nil {
+		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, p, w); err != nil {
 			log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
 		}
 	}
@@ -663,7 +663,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 
 	// Manage new hooks
 	if len(w.WorkflowData.Node.Hooks) > 0 {
-		if err := hookRegistration(context.TODO(), db, store, p, w, nil); err != nil {
+		if err := hookRegistration(ctx, db, store, p, w, nil); err != nil {
 			return err
 		}
 	}
@@ -688,7 +688,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	return nil
 }
 
-func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
+func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
 	nodes := w.WorkflowData.Array()
 	var maxJoinNumber int
 	maxNumberByPipeline := map[int64]int{}
@@ -709,7 +709,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			}
 			_, has := w.Pipelines[nodes[i].Context.PipelineID]
 			if !has {
-				p, errPip := pipeline.LoadPipelineByID(context.TODO(), db, nodes[i].Context.PipelineID, true)
+				p, errPip := pipeline.LoadPipelineByID(ctx, db, nodes[i].Context.PipelineID, true)
 				if errPip != nil {
 					return sdk.WrapError(errPip, "renameNode> Unable to load pipeline %d", nodes[i].Context.PipelineID)
 				}
@@ -854,8 +854,8 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 }
 
 // Update updates a workflow
-func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u sdk.GroupMember, uptOption UpdateOptions) error {
-	if err := IsValid(ctx, store, db, w, p, u); err != nil {
+func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, uptOption UpdateOptions) error {
+	if err := IsValid(ctx, store, db, w, p); err != nil {
 		return err
 	}
 
@@ -952,7 +952,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 }
 
 // IsValid cheks workflow validity
-func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project, u sdk.GroupMember) error {
+func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
@@ -1263,7 +1263,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			return nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
 		}
 		if workflowExists {
-			oldWf, err = Load(ctx, db, store, proj, data.wrkflw.Name, u, LoadOptions{WithIcon: true})
+			oldWf, err = Load(ctx, db, store, proj, data.wrkflw.Name, LoadOptions{WithIcon: true})
 			if err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
 			}
@@ -1391,7 +1391,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		DisableHookManagement: !isDefaultBranch,
 		OldWorkflow:           oldWf,
 	}
-	if err := Update(ctx, tx, store, wf, proj, u, uptOpts); err != nil {
+	if err := Update(ctx, tx, store, wf, proj, uptOpts); err != nil {
 		return nil, nil, sdk.WrapError(err, "Unable to update workflow")
 	}
 

@@ -21,7 +21,7 @@ import (
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
 // UpdateAsCode does a workflow pull and start an operation to push cds files into the git repository
-func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, encryptFunc sdk.EncryptFunc, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
+func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable, encryptFunc sdk.EncryptFunc) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
@@ -43,7 +43,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 
 	// Export workflow
-	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, u, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot pull workflow")
 	}
@@ -81,7 +81,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 			},
 		},
 		User: sdk.User{
-			Username: u.Username,
+			Username: u.GetUsername(),
 			Email:    u.Email(),
 		},
 	}
@@ -93,9 +93,9 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 
 	if wf.FromRepository == "" {
-		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.Username)
+		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.GetUsername())
 	} else {
-		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
+		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.GetUsername())
 	}
 
 	multipartData := &services.MultiPartData{
@@ -236,7 +236,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				CreationDate:   time.Now(),
 			}
 
-			oldW, errOld := LoadByID(db, store, p, wf.ID, u, LoadOptions{})
+			oldW, errOld := LoadByID(ctx, db, store, p, wf.ID, LoadOptions{})
 			if errOld != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to load workflow: %v", err)
 				ope.Status = sdk.OperationStatusError

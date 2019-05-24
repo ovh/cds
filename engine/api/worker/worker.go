@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -32,9 +31,9 @@ func DeleteWorker(db gorp.SqlExecutor, id string) error {
 }
 
 // InsertWorker inserts worker representation into database
-func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker, groupID int64) error {
-	query := `INSERT INTO worker (id, name, last_beat, model, status, hatchery_name, group_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.ModelID, w.Status.String(), w.HatcheryName, groupID)
+func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker) error {
+	query := `INSERT INTO worker (id, name, last_beat, model, status, hatchery_name) VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.ModelID, w.Status.String(), w.HatcheryName)
 	return err
 }
 
@@ -44,9 +43,9 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	var statusS string
 	var pbJobID sql.NullInt64
 	var jobType sql.NullString
-	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
+	query := `SELECT id, action_build_id, job_type, name, last_beat,  model, status, hatchery_name FROM worker WHERE worker.id = $1 FOR UPDATE`
 
-	if err := db.QueryRow(query, id).Scan(&w.ID, &pbJobID, &jobType, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryName, &w.GroupID); err != nil {
+	if err := db.QueryRow(query, id).Scan(&w.ID, &pbJobID, &jobType, &w.Name, &w.LastBeat, &w.ModelID, &statusS, &w.HatcheryName); err != nil {
 		return nil, err
 	}
 	w.Status = sdk.StatusFromString(statusS)
@@ -66,12 +65,12 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_name FROM worker ORDER BY name ASC`
+	query := `SELECT id, name, last_beat,  model, status, hatchery_name FROM worker ORDER BY name ASC`
 	args := []interface{}{}
 
 	if hatcheryName != "" {
 		// TODO: remove the hatchery name from worker worker table !
-		query = `SELECT id, name, last_beat, group_id, model, status, hatchery_name FROM worker WHERE hatchery_name = $1 ORDER BY name ASC`
+		query = `SELECT id, name, last_beat,  model, status, hatchery_name FROM worker WHERE hatchery_name = $1 ORDER BY name ASC`
 		args = []interface{}{hatcheryName}
 	}
 
@@ -83,7 +82,7 @@ func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error)
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.ModelID, &statusS, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +97,7 @@ func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error)
 func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
-	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_name
+	query := `SELECT id, action_build_id, job_type, name, last_beat,  model, status, hatchery_name
 				FROM worker
 				WHERE status = ANY(string_to_array($1, ',')::text[])
 				AND now() - last_beat > $2 * INTERVAL '1' SECOND
@@ -115,7 +114,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]s
 		var worker sdk.Worker
 		var pbJobID sql.NullInt64
 		var jobType sql.NullString
-		err = rows.Scan(&worker.ID, &pbJobID, &jobType, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &pbJobID, &jobType, &worker.Name, &worker.LastBeat, &worker.ModelID, &statusS, &worker.HatcheryName)
 		if err != nil {
 			log.Warning("LoadDeadWorkers> Error scanning workers")
 			return nil, err
@@ -154,8 +153,8 @@ func RefreshWorker(db gorp.SqlExecutor, w *sdk.Worker) error {
 		mname = w.Model.Name
 	}
 	if n != 1 {
-		return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("unknown worker '%s' Name:%s GroupID:%d ModelID:%d Model:%s HatcheryName:%s",
-			w.ID, w.Name, w.GroupID, w.ModelID, mname, w.HatcheryName))
+		return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("unknown worker '%s' Name:%s ModelID:%d Model:%s HatcheryName:%s",
+			w.ID, w.Name, w.ModelID, mname, w.HatcheryName))
 	}
 
 	return nil
@@ -204,17 +203,17 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	}
 
 	// Load token
-	t, errL := token.LoadToken(db, key)
-	if errL != nil {
-		log.Warning("RegisterWorker> Cannot register worker. Caused by: %s", errL)
-		return nil, errL
-	}
+	//t, errL := token.LoadToken(db, key)
+	//if errL != nil {
+	//	log.Warning("RegisterWorker> Cannot register worker. Caused by: %s", errL)
+	//	return nil, errL
+	//}
 
-	if hatchery != nil && hatchery.GroupID != nil {
-		if *hatchery.GroupID != t.GroupID {
-			return nil, sdk.ErrForbidden
-		}
-	}
+	//if hatchery != nil && hatchery.GroupID != nil {
+	//	if *hatchery.GroupID != t.GroupID {
+	//		return nil, sdk.ErrForbidden
+	//	}
+	//}
 
 	//Load Model
 	var m *sdk.Model
@@ -231,8 +230,8 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	//If worker is public it can run every model
 	//Private worker for a group cannot run a private model for another group
 	if m != nil {
-		if t.GroupID != group.SharedInfraGroup.ID && t.GroupID != m.GroupID && m.GroupID != group.SharedInfraGroup.ID {
-			log.Warning("RegisterWorker> worker %s (%d) cannot be spawned as %s (%d)", name, t.GroupID, m.Name, m.GroupID)
+		if /*t.GroupID != group.SharedInfraGroup.ID && t.GroupID != m.GroupID &&*/ m.GroupID != group.SharedInfraGroup.ID {
+			log.Warning("RegisterWorker> worker %s cannot be spawned as %s (%d)", name, m.Name, m.GroupID)
 			return nil, sdk.ErrForbidden
 		}
 	}
@@ -251,7 +250,6 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 		ModelID: modelID,
 		Model:   m,
 		Status:  sdk.StatusWaiting,
-		GroupID: t.GroupID,
 	}
 
 	if hatchery != nil {
@@ -264,7 +262,7 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	}
 	defer tx.Rollback()
 
-	if err := InsertWorker(tx, w, t.GroupID); err != nil {
+	if err := InsertWorker(tx, w); err != nil {
 		log.Warning("registerWorker: Cannot insert worker in database: %s", err)
 		return nil, err
 	}
@@ -355,11 +353,8 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 		return w, err
 	}
 
-	// Useful to let models cache in hatchery refresh
 	keyWorkerModel := keyBookWorkerModel(modelID)
 	store.UpdateTTL(keyWorkerModel, modelsCacheTTLInSeconds+10)
-	// delete from cache by group
-	store.Delete(cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", t.GroupID)))
 
 	return w, nil
 }

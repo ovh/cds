@@ -12,8 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -40,20 +38,13 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		// Load token
-		t, errL := token.LoadToken(api.mustDB(), srv.Token)
-		if errL != nil {
-			return sdk.NewError(sdk.ErrUnauthorized, sdk.WrapError(errL, "Cannot register service"))
-		}
+		srv.TokenID = JWT(ctx).ID
 
 		//Service must be with a sharedinfra group token
 		// except for hatchery: users can start hatchery with their group
-		if t.GroupID != group.SharedInfraGroup.ID && srv.Type != services.TypeHatchery {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Cannot register service for group %d with service %s", t.GroupID, srv.Type)
+		if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
+			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", JWT(ctx).ID, srv.Type)
 		}
-
-		srv.GroupID = &t.GroupID
-		srv.IsSharedInfra = srv.GroupID == &group.SharedInfraGroup.ID
 		srv.Uptodate = srv.Version == sdk.VERSION
 		for i := range srv.MonitoringStatus.Lines {
 			s := &srv.MonitoringStatus.Lines[i]
@@ -77,21 +68,12 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		//Try to find the service, and keep; else generate a new one
 		oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
 		if oldSrv != nil {
-			srv.Hash = oldSrv.Hash
 			srv.ID = oldSrv.ID
-		} else if sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			//Generate a hash
-			hash, errsession := sessionstore.NewSessionKey()
-			if errsession != nil {
-				return sdk.WrapError(errsession, "Unable to create session")
-			}
-			srv.Hash = string(hash)
-		} else {
+		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 			return sdk.WithStack(errOldSrv)
 		}
 
 		srv.LastHeartbeat = time.Now()
-		srv.Token = ""
 
 		if oldSrv != nil {
 			if err := services.Update(tx, srv); err != nil {
@@ -114,14 +96,10 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 func (api *API) serviceAPIHeartbeat(c context.Context) {
 	tick := time.NewTicker(30 * time.Second).C
 
-	hash, errsession := sessionstore.NewSessionKey()
-	if errsession != nil {
-		log.Error("serviceAPIHeartbeat> Unable to create session:%v", errsession)
-		return
-	}
+	var u = sdk.AuthentifiedUser{} // TODO: fake user for the API ?
 
 	// first call
-	api.serviceAPIHeartbeatUpdate(c, api.mustDB(), hash)
+	api.serviceAPIHeartbeatUpdate(api.mustDB(), u)
 
 	for {
 		select {
@@ -131,12 +109,12 @@ func (api *API) serviceAPIHeartbeat(c context.Context) {
 				return
 			}
 		case <-tick:
-			api.serviceAPIHeartbeatUpdate(c, api.mustDB(), hash)
+			api.serviceAPIHeartbeatUpdate(api.mustDB(), u)
 		}
 	}
 }
 
-func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, hash sessionstore.SessionKey) {
+func (api *API) serviceAPIHeartbeatUpdate(db *gorp.DbMap, authUser sdk.AuthentifiedUser) {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
@@ -149,15 +127,14 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 	json.Unmarshal(b, &srvConfig) // nolint
 
 	srv := &sdk.Service{
-		Name:             event.GetCDSName(),
+		CanonicalService: sdk.CanonicalService{
+			Name:       event.GetCDSName(),
+			Type:       services.TypeAPI,
+			Config:     srvConfig,
+			Maintainer: authUser,
+		},
 		MonitoringStatus: api.Status(),
-		Hash:             string(hash),
 		LastHeartbeat:    time.Now(),
-		Type:             services.TypeAPI,
-		Config:           srvConfig,
-	}
-	if group.SharedInfraGroup != nil {
-		srv.GroupID = &group.SharedInfraGroup.ID
 	}
 
 	//Try to find the service, and keep; else generate a new one

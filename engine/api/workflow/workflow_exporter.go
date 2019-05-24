@@ -19,11 +19,11 @@ import (
 )
 
 // Export a workflow
-func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, u *sdk.AuthentifiedUser, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
 	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
-	wf, errload := Load(ctx, db, cache, proj, name, u, LoadOptions{})
+	wf, errload := Load(ctx, db, cache, proj, name, LoadOptions{})
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
@@ -58,7 +58,7 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts 
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
 func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format,
-	encryptFunc sdk.EncryptFunc, u *sdk.AuthentifiedUser, opts ...exportentities.WorkflowOptions) (exportentities.WorkflowPulled, error) {
+	encryptFunc sdk.EncryptFunc, opts ...exportentities.WorkflowOptions) (exportentities.WorkflowPulled, error) {
 	ctx, end := observability.Span(ctx, "workflow.Pull")
 	defer end()
 
@@ -67,7 +67,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	options := LoadOptions{
 		DeepPipeline: true,
 	}
-	wf, errload := Load(ctx, db, cache, proj, name, u, options)
+	wf, errload := Load(ctx, db, cache, proj, name, options)
 	if errload != nil {
 		return wp, sdk.WrapError(errload, "cannot load workflow %s", name)
 	}

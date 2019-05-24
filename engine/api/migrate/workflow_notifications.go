@@ -1,6 +1,8 @@
 package migrate
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -49,7 +51,7 @@ func migrateNotification(db *gorp.DbMap, store cache.Store, id int64) error {
 		return err
 	}
 
-	wf, err := workflow.LoadAndLock(tx, id, store, proj, workflow.LoadOptions{}, nil)
+	wf, err := workflow.LoadAndLock(context.Background(), tx, id, store, proj, workflow.LoadOptions{})
 	if err != nil {
 		return err
 	}

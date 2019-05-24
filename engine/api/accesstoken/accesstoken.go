@@ -34,12 +34,12 @@ func Init(issuer string, k []byte) error {
 const OriginUI = "UI"
 
 // New returns a new access token for a user
-func New(u sdk.AuthentifiedUser, groups []sdk.Group, scopes []string, origin, desc string, expiration time.Time) (sdk.AccessToken, string, error) {
+func New(u sdk.AuthentifiedUser, groups []sdk.Group, scopes []string, origin, name string, expiration time.Time) (sdk.AccessToken, string, error) {
 	var token sdk.AccessToken
 	token.ID = sdk.UUID()
 	token.Created = time.Now()
 	token.ExpireAt = expiration
-	token.Description = desc
+	token.Name = name
 	token.Origin = origin
 	token.Status = sdk.AccessTokenStatusEnabled
 	token.Groups = groups

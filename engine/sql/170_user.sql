@@ -46,7 +46,7 @@ DROP TABLE IF EXISTS access_token;
 CREATE TABLE access_token
 (
     id VARCHAR(64) PRIMARY KEY,
-    description VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     user_id VARCHAR(36),
     created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     expired_at TIMESTAMP WITH TIME ZONE,
@@ -66,7 +66,16 @@ CREATE TABLE access_token_group
 SELECT create_foreign_key_idx_cascade('FK_ACCESS_TOKEN_USER', 'access_token', 'authentified_user', 'user_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACCESS_TOKEN_GROUP_ACCESS_TOKEN', 'access_token_group', 'access_token', 'access_token_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACCESS_TOKEN_GROUP_GROUP', 'access_token_group', 'group', 'group_id', 'id');
-SELECT create_unique_index('access_token', 'IDX_ACCESS_TOKEN', 'user_id,description');
+SELECT create_unique_index('access_token', 'IDX_ACCESS_TOKEN', 'user_id,name');
+
+ALTER TABLE services ADD COLUMN IF NOT EXISTS token_id VARCHAR(64);
+ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS encrypted_jwt BYTEA;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS sig BYTEA;
+ALTER TABLE services ALTER COLUMN hash DROP NOT NULL;
+SELECT create_unique_index('services', 'IDX_SERVICES_TOKENID', 'token_id');
+
 
 -- +migrate Down
 

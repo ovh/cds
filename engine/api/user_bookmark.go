@@ -18,32 +18,30 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			return err
 		}
 
-		u := getAPIConsumer(ctx)
-
-		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, u, project.LoadOptions.WithIntegrations, project.LoadOptions.WithFavorites(u.OldUserStruct.ID))
+		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, project.LoadOptions.WithIntegrations, project.LoadOptions.WithFavorites(JWT(ctx).AuthentifiedUser.OldUserStruct.ID))
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		switch params.Type {
 		case "workflow":
-			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, u, workflow.LoadOptions{})
+			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, workflow.LoadOptions{})
 			if errW != nil {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}
 
-			wf.Favorite, errW = workflow.IsFavorite(api.mustDB(), wf, u.OldUserStruct.ID)
+			wf.Favorite, errW = workflow.IsFavorite(api.mustDB(), wf, JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
 			if errW != nil {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow favorite %s/%s", params.ProjectKey, params.WorkflowName)
 			}
-			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, u.OldUserStruct.ID, !wf.Favorite); err != nil {
+			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID, !wf.Favorite); err != nil {
 				return sdk.WrapError(err, "Cannot change workflow %s/%s favorite", params.ProjectKey, params.WorkflowName)
 			}
 			wf.Favorite = !wf.Favorite
 
 			return service.WriteJSON(w, wf, http.StatusOK)
 		case "project":
-			if err := project.UpdateFavorite(api.mustDB(), p.ID, u.OldUserStruct.ID, !p.Favorite); err != nil {
+			if err := project.UpdateFavorite(api.mustDB(), p.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID, !p.Favorite); err != nil {
 				return sdk.WrapError(err, "Cannot change workflow %s favorite", p.Key)
 			}
 			p.Favorite = !p.Favorite

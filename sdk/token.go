@@ -73,7 +73,7 @@ func (g *APIConsumer) GetDEPRECATEDUserStruct() *User {
 // AccessToken is either a Personnal Access Token or a Group Access Token
 type AccessToken struct {
 	ID                 string           `json:"id" cli:"id,key" db:"id"`
-	Description        string           `json:"description" cli:"description" db:"description"`
+	Name               string           `json:"name" cli:"name" db:"name"`
 	AuthentifiedUserID string           `json:"user_id,omitempty" db:"user_id"`
 	AuthentifiedUser   AuthentifiedUser `json:"user" db:"-"`
 	ExpireAt           time.Time        `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`

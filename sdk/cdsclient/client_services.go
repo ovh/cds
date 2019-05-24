@@ -23,12 +23,11 @@ func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 		return "", err
 	}
 	c.isService = true
-	c.config.Hash = s.Hash
 	c.service = &s
 
 	if !s.Uptodate {
 		log.Warning("-=-=-=-=- Please update your cds engine binary - current version:%s -=-=-=-=-", sdk.VersionString())
 	}
 
-	return s.Hash, nil
+	return "s.Hash", nil
 }

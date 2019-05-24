@@ -57,7 +57,7 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u sdk.IdentifiableGroupMember, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
@@ -70,11 +70,11 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	// Browse all node to find IDs
-	if err := IsValid(ctx, store, db, w, proj, u); err != nil {
+	if err := IsValid(ctx, store, db, w, proj); err != nil {
 		return nil, nil, sdk.WrapError(err, "Workflow is not valid")
 	}
 
-	if err := RenameNode(db, w); err != nil {
+	if err := RenameNode(ctx, db, w); err != nil {
 		return nil, nil, sdk.WrapError(err, "Unable to rename node")
 	}
 

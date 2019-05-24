@@ -450,7 +450,6 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		rmName := vars["name"]
 		fullname := r.FormValue("fullname")
 		db := api.mustDB()
-		u := getAPIConsumer(ctx)
 
 		app, err := application.LoadByName(db, api.Cache, projectKey, appName)
 		if err != nil {
@@ -490,7 +489,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		usage, errU := loadApplicationUsage(db, projectKey, appName)
+		usage, errU := loadApplicationUsage(ctx, db, projectKey, appName)
 		if errU != nil {
 			return sdk.WrapError(errU, "attachRepositoriesManager> Cannot load application usage")
 		}
@@ -503,12 +502,12 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 			}
 
 			for _, wf := range usage.Workflows {
-				wfDB, errWL := workflow.LoadByID(db, api.Cache, proj, wf.ID, u, workflow.LoadOptions{})
+				wfDB, errWL := workflow.LoadByID(ctx, db, api.Cache, proj, wf.ID, workflow.LoadOptions{})
 				if errWL != nil {
 					return errWL
 				}
 
-				wfOld, errWL := workflow.LoadByID(db, api.Cache, proj, wf.ID, u, workflow.LoadOptions{})
+				wfOld, errWL := workflow.LoadByID(ctx, db, api.Cache, proj, wf.ID, workflow.LoadOptions{})
 				if errWL != nil {
 					return errWL
 				}
@@ -535,16 +534,16 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				}
 				wf.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, &wf, proj, u, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
+				if err := workflow.Update(ctx, db, api.Cache, &wf, proj, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
 					return sdk.WrapError(err, "Cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 
-				event.PublishWorkflowUpdate(proj.Key, wf, *wfOld, u)
+				event.PublishWorkflowUpdate(proj.Key, wf, *wfOld, getAPIConsumer(ctx))
 
 			}
 		}
 
-		event.PublishApplicationRepositoryAdd(projectKey, *app, u)
+		event.PublishApplicationRepositoryAdd(projectKey, *app, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}

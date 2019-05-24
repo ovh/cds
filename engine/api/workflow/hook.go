@@ -63,7 +63,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		if err != nil {
 			return err
 		}
-		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+		code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 		if errHooks != nil || code >= 400 {
 			// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 			// so, it's just a warn log
@@ -140,7 +140,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 		hooks := wf.WorkflowData.GetHooks()
 		// Create hook on µservice
-		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", hooks, &hooks)
+		code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodPost, "/task/bulk", hooks, &hooks)
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}

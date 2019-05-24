@@ -26,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/feature"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
@@ -233,7 +232,9 @@ func New() *API {
 func (*API) Service() sdk.Service {
 	return sdk.Service{
 		LastHeartbeat: time.Time{},
-		Type:          services.TypeAPI,
+		CanonicalService: sdk.CanonicalService{
+			Type: services.TypeAPI,
+		},
 	}
 }
 
@@ -685,10 +686,11 @@ func (a *API) Serve(ctx context.Context) error {
 	for _, s := range a.Config.Services {
 		serv := sdk.ExternalService{
 			Service: sdk.Service{
-				Name:    s.Name,
-				Type:    s.Type,
-				HTTPURL: fmt.Sprintf("%s:%s%s", s.URL, s.Port, s.Path),
-				GroupID: &group.SharedInfraGroup.ID,
+				CanonicalService: sdk.CanonicalService{
+					Name:    s.Name,
+					Type:    s.Type,
+					HTTPURL: fmt.Sprintf("%s:%s%s", s.URL, s.Port, s.Path),
+				},
 			},
 			HealthPort: s.HealthPort,
 			HealthPath: s.HealthPath,

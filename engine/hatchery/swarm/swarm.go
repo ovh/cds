@@ -338,7 +338,8 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		"hatchery":            h.Config.Name,
 	}
 
-	dockerOpts, errDockerOpts := h.computeDockerOpts(h.CDSClient().GetService().IsSharedInfra, spawnArgs.Requirements)
+	// TODO: Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one
+	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
 	if errDockerOpts != nil {
 		return name, errDockerOpts
 	}

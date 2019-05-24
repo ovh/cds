@@ -237,14 +237,9 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Au
 
 // LoadWorkerModelsUsableOnGroup returns worker models for a group
 func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
-	key := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", groupID))
-
 	ms := []WorkerModel{}
 	var err error
 	models := []sdk.Model{}
-	if store.Get(key, &models) {
-		return models, nil
-	}
 
 	// note about restricted field on worker model:
 	// if restricted = true, worker model can be launched by a user hatchery only
@@ -272,8 +267,6 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, group
 		}
 		models = append(models, sdk.Model(ms[i]))
 	}
-
-	store.SetWithTTL(key, models, modelsCacheTTLInSeconds)
 
 	return models, nil
 }

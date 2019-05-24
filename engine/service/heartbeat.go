@@ -83,11 +83,11 @@ func (c *Common) Register(status func() sdk.MonitoringStatus, cfg interface{}) e
 		return err
 	}
 
-	hash, err := c.Client.ServiceRegister(sdk.Service{
-		Name:             c.Name,
-		HTTPURL:          c.HTTPURL,
-		LastHeartbeat:    time.Time{},
-		Token:            c.Token,
+	/* hash, err := c.Client.ServiceRegister(sdk.Service{
+		Name:          c.Name,
+		HTTPURL:       c.HTTPURL,
+		LastHeartbeat: time.Time{},
+		//Token:            c.Token,
 		Type:             c.Type,
 		MonitoringStatus: status(),
 		Config:           srvConfig,
@@ -95,8 +95,7 @@ func (c *Common) Register(status func() sdk.MonitoringStatus, cfg interface{}) e
 	})
 	if err != nil {
 		return sdk.WithStack(err)
-	}
+	} */
 
-	c.Hash = hash
 	return nil
 }

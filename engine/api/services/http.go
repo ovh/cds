@@ -3,7 +3,6 @@ package services
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +13,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
@@ -29,8 +29,7 @@ type MultiPartData struct {
 var HTTPClient sdk.HTTPClient
 
 // DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
-func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
-
+func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -67,7 +66,7 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, body.Bytes(), mods...)
+			res, code, err := doRequest(ctx, db, srv, method, path, body.Bytes(), mods...)
 			if err != nil {
 				return code, sdk.WrapError(err, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 			}
@@ -90,7 +89,7 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 }
 
 // DoJSONRequest performs an http request on a service
-func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -98,7 +97,7 @@ func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string,
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			code, err := doJSONRequest(ctx, srv, method, path, in, out, mods...)
+			code, err := doJSONRequest(ctx, db, srv, method, path, in, out, mods...)
 			if err == nil {
 				return code, nil
 			}
@@ -113,7 +112,7 @@ func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string,
 }
 
 // DoJSONRequest performs an http request on service
-func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	var b = []byte{}
 	var err error
 
@@ -125,7 +124,7 @@ func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, i
 	}
 
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
-	res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, b, mods...)
+	res, code, err := doRequest(ctx, db, srv, method, path, b, mods...)
 	if err != nil {
 		return code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
@@ -140,7 +139,7 @@ func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, i
 }
 
 // PostMultipart post a file content through multipart upload
-func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", filename)
@@ -161,7 +160,7 @@ func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filenam
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, "POST", path, body.Bytes(), mods...)
+			res, code, err := doRequest(ctx, db, srv, "POST", path, body.Bytes(), mods...)
 			lastCode = code
 			lastErr = err
 
@@ -183,7 +182,7 @@ func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filenam
 }
 
 // DoRequest performs an http request on a service
-func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -191,7 +190,7 @@ func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, arg
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			btes, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, args, mods...)
+			btes, code, err := doRequest(ctx, db, srv, method, path, args, mods...)
 			if err == nil {
 				return btes, code, nil
 			}
@@ -206,14 +205,14 @@ func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, arg
 }
 
 // doRequest performs an http request on service
-func doRequest(ctx context.Context, httpURL string, hash string, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
 		}
 	}
 
-	callURL, err := url.ParseRequestURI(httpURL + path)
+	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -245,9 +244,13 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 	}
 
 	// Authentify the request with the hash
-	if hash != "" {
-		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
-		req.Header.Set(sdk.AuthHeader, basedHash)
+	// load the clear JWT
+	jwt, err := LoadClearJWT(db, srv.ID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if jwt != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", jwt))
 	}
 
 	log.Debug("services.DoRequest> request %v", req.URL)

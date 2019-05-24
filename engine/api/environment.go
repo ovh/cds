@@ -36,7 +36,7 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 		if withUsage {
 			for iEnv := range environments {
 				environments[iEnv].Usage = &sdk.Usage{}
-				wf, errW := workflow.LoadByEnvName(tx, projectKey, environments[iEnv].Name)
+				wf, errW := workflow.LoadByEnvName(ctx, tx, projectKey, environments[iEnv].Name)
 				if errW != nil {
 					return sdk.WrapError(errW, "getEnvironmentsHandler> Cannot load workflows linked to environment %s from db", environments[iEnv].Name)
 				}
@@ -66,7 +66,7 @@ func (api *API) getEnvironmentHandler() service.Handler {
 		env.Usage = &sdk.Usage{}
 
 		if withUsage {
-			wf, errW := workflow.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+			wf, errW := workflow.LoadByEnvName(ctx, api.mustDB(), projectKey, environmentName)
 			if errW != nil {
 				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environment %s in project %s", environmentName, projectKey)
 			}
@@ -82,7 +82,7 @@ func (api *API) getEnvironmentUsageHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		environmentName := vars["environmentName"]
-		usage, err := loadEnvironmentUsage(api.mustDB(), projectKey, environmentName)
+		usage, err := loadEnvironmentUsage(ctx, api.mustDB(), projectKey, environmentName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load usage for environment %s in project %s", environmentName, projectKey)
 		}
@@ -91,10 +91,10 @@ func (api *API) getEnvironmentUsageHandler() service.Handler {
 	}
 }
 
-func loadEnvironmentUsage(db gorp.SqlExecutor, projectKey, envName string) (sdk.Usage, error) {
+func loadEnvironmentUsage(ctx context.Context, db gorp.SqlExecutor, projectKey, envName string) (sdk.Usage, error) {
 	usage := sdk.Usage{}
 
-	wf, errW := workflow.LoadByEnvName(db, projectKey, envName)
+	wf, errW := workflow.LoadByEnvName(ctx, db, projectKey, envName)
 	if errW != nil {
 		return usage, sdk.WrapError(errW, "loadEnvironmentUsage> Cannot load workflows linked to environment %s in project %s", envName, projectKey)
 	}

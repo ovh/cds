@@ -6,7 +6,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -18,7 +17,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
+		if JWT(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
@@ -51,17 +50,11 @@ func (api *API) getUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		u := getAPIConsumer(ctx)
-
-		if !u.Admin() && username != u.Username {
+		if JWT(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
-			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
-		}
-
-		return service.WriteJSON(w, u, http.StatusOK)
+		return service.WriteJSON(w, JWT(ctx).AuthentifiedUser, http.StatusOK)
 	}
 }
 
@@ -119,16 +112,9 @@ func (api *API) getUsersHandler() service.Handler {
 // getUserLoggedHandler check if the current user is connected
 func (api *API) getUserLoggedHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		h := r.Header.Get(sdk.SessionTokenHeader)
-		if h == "" {
+		if JWT(ctx) == nil {
 			return sdk.ErrUnauthorized
 		}
-
-		key := sessionstore.SessionKey(h)
-		if ok, _ := auth.Store.Exists(key); !ok {
-			return sdk.ErrUnauthorized
-		}
-
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }

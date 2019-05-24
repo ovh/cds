@@ -316,8 +316,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		return false
 	}
 
-	// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-	if model.NbSpawnErr > 5 && *h.Service().GroupID != model.ID {
+	if model.NbSpawnErr > 5 {
 		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}

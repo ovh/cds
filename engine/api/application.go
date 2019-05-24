@@ -51,7 +51,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 
 		if withUsage {
 			for i := range applications {
-				usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applications[i].Name)
+				usage, errU := loadApplicationUsage(ctx, api.mustDB(), projectKey, applications[i].Name)
 				if errU != nil {
 					return sdk.WrapError(errU, "getApplicationHandler> Cannot load application usage")
 				}
@@ -97,7 +97,7 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 
 		if withUsage {
-			usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applicationName)
+			usage, errU := loadApplicationUsage(ctx, api.mustDB(), projectKey, applicationName)
 			if errU != nil {
 				return sdk.WrapError(errU, "getApplicationHandler> Cannot load application usage")
 			}
@@ -109,10 +109,10 @@ func (api *API) getApplicationHandler() service.Handler {
 }
 
 // loadApplicationUsage return usage of application
-func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usage, error) {
+func loadApplicationUsage(ctx context.Context, db gorp.SqlExecutor, projKey, appName string) (sdk.Usage, error) {
 	usage := sdk.Usage{}
 
-	wf, errW := workflow.LoadByApplicationName(db, projKey, appName)
+	wf, errW := workflow.LoadByApplicationName(ctx, db, projKey, appName)
 	if errW != nil {
 		return usage, sdk.WrapError(errW, "loadApplicationUsage> Cannot load workflows linked to application %s in project %s", appName, projKey)
 	}

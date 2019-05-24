@@ -7,22 +7,29 @@ import (
 	"time"
 )
 
+type CanonicalService struct {
+	ID         int64            `json:"id" db:"id"`
+	Name       string           `json:"name" db:"name" cli:"name,key"`
+	TokenID    string           `json:"token_id" db:"token_id" cli:"token_id"`
+	Type       string           `json:"type" db:"type" cli:"type"`
+	HTTPURL    string           `json:"http_url" db:"http_url" cli:"url"`
+	Config     ServiceConfig    `json:"config" db:"config" cli:"-"`
+	PublicKey  []byte           `json:"public_key" db:"public_key"`
+	Maintainer AuthentifiedUser `json:"maintainer" db:"maintainer"`
+}
+
+func (s CanonicalService) Canonical() ([]byte, error) {
+	return json.Marshal(s)
+}
+
 // Service is a µService registered on CDS API
 type Service struct {
-	ID               int64            `json:"id" db:"id"`
-	Name             string           `json:"name" db:"name" cli:"name,key"`
-	Type             string           `json:"type" db:"type" cli:"type"`
-	HTTPURL          string           `json:"http_url" db:"http_url" cli:"url"`
+	CanonicalService
 	LastHeartbeat    time.Time        `json:"last_heartbeat" db:"last_heartbeat" cli:"heartbeat"`
-	Hash             string           `json:"hash" db:"hash"`
-	Token            string           `json:"token" db:"-"`
-	GroupID          *int64           `json:"group_id" db:"group_id"`
-	Group            *Group           `json:"group" db:"-"`
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
-	Config           ServiceConfig    `json:"config" db:"config" cli:"-"`
-	IsSharedInfra    bool             `json:"is_shared_infra" db:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
+	ClearJWT         string           `json:"clear_jwt" db:"-"`
 }
 
 type ServiceConfig map[string]interface{}

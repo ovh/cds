@@ -231,7 +231,7 @@ func (api *API) getPipelineHandler() service.Handler {
 		}
 
 		if withWorkflows {
-			wf, errW := workflow.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
+			wf, errW := workflow.LoadByPipelineName(ctx, api.mustDB(), projectKey, pipelineName)
 			if errW != nil {
 				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}

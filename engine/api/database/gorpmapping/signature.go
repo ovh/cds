@@ -48,9 +48,17 @@ func sign(i interface{}) ([]byte, error) {
 		return nil, sdk.WithStack(err)
 	}
 
-	clearContent, err := json.Marshal(i)
-	if err != nil {
-		return nil, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+	var clearContent []byte
+	if cannonical, ok := i.(Canonicaller); ok {
+		clearContent, err = cannonical.Canonical()
+		if err != nil {
+			return nil, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+		}
+	} else {
+		clearContent, err = json.Marshal(i)
+		if err != nil {
+			return nil, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+		}
 	}
 
 	btes, err := k.Encrypt(clearContent)
@@ -67,16 +75,23 @@ func checkSign(i interface{}, sig []byte) (bool, error) {
 		return false, sdk.WithStack(fmt.Errorf("unable to the load the key: %v", err))
 	}
 
-	clearContent, err := json.Marshal(i)
-	if err != nil {
-		return false, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+	var clearContent []byte
+	if cannonical, ok := i.(Canonicaller); ok {
+		clearContent, err = cannonical.Canonical()
+		if err != nil {
+			return false, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+		}
+	} else {
+		clearContent, err = json.Marshal(i)
+		if err != nil {
+			return false, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+		}
 	}
 
 	decryptedSig, err := k.Decrypt([]byte(sig))
 	if err != nil {
 		return false, sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
 	}
-
 	return string(clearContent) == string(decryptedSig), nil
 }
 
@@ -103,4 +118,8 @@ func dbSign(db gorp.SqlExecutor, i interface{}) error {
 		return sdk.WithStack(fmt.Errorf("%d number of rows affected (table=%s, key=%s, id=%v)", n, table, key, id))
 	}
 	return nil
+}
+
+type Canonicaller interface {
+	Canonical() ([]byte, error)
 }

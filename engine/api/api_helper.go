@@ -20,7 +20,7 @@ func isGroupMember(ctx context.Context, g *sdk.Group) bool {
 
 func isMaintainer(ctx context.Context) bool {
 	u := getAPIConsumer(ctx)
-	return u.Maintainer()
+	return u.Maintainer() || u.Admin()
 }
 
 func isAdmin(ctx context.Context) bool {

@@ -48,7 +48,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	// Put the granted user in the context
 	var APIConsumer = sdk.APIConsumer{
-		Fullname:   token.Description, // TODO
+		Fullname:   token.Name,
 		OnBehalfOf: token.AuthentifiedUser,
 		Groups:     token.Groups,
 	}
@@ -99,7 +99,6 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 	// Try to load the token from the cookie or from the authorisation bearer header
 	jwtCookie, _ := req.Cookie("jwt_token")
 	if jwtCookie != nil {
-		log.Debug("ajwtMiddleware> reading jwt token cookie")
 		jwt = jwtCookie.Value
 		// Checking X-XSRF-TOKEN header if the token is used from a cookie
 		xsrfToken = req.Header.Get("X-XSRF-TOKEN")
@@ -109,13 +108,14 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 		}
 	}
 
-	// For now if there is no JWT token fallback to deprecated code
 	if jwt == "" {
-		log.Debug("ajwtMiddleware> skipping jwt token verification")
+		if rc.NeedAuth {
+			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+		}
 		return ctx, nil
 	}
 
-	log.Debug("ajwtMiddleware> checking jwt token %s...", jwt[:12])
+	log.Debug("authJWTMiddleware> checking jwt token %s...", jwt[:12])
 
 	// Get the access token
 	token, valid, err := accesstoken.IsValid(api.mustDB(), jwt)

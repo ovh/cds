@@ -167,7 +167,7 @@ type dockerOpts struct {
 	extraHosts []string
 }
 
-func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
+func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dockerOpts, error) {
 	dockerOpts := &dockerOpts{}
 
 	// support for add-host on hatchery configuration
@@ -184,11 +184,11 @@ func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk
 	for _, r := range requirements {
 		switch r.Type {
 		case sdk.ModelRequirement:
-			if err := dockerOpts.computeDockerOptsOnModelRequirement(isSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnModelRequirement(r); err != nil {
 				return nil, err
 			}
 		case sdk.VolumeRequirement:
-			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(isSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(r); err != nil {
 				return nil, err
 			}
 		}
@@ -197,7 +197,7 @@ func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk
 	return dockerOpts, nil
 }
 
-func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req sdk.Requirement) error {
+func (d *dockerOpts) computeDockerOptsOnModelRequirement(req sdk.Requirement) error {
 	// args are separated by a space
 	// example: myGroup/golang:1.9.1 --port=8080:8080/tcp
 	for idx, opt := range strings.Split(req.Value, " ") {
@@ -224,7 +224,7 @@ func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req
 	return nil
 }
 
-func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(isSharedInfra bool, req sdk.Requirement) error {
+func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(req sdk.Requirement) error {
 	// args are separated by a space
 	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
 	for idx, opt := range strings.Split(req.Value, " ") {

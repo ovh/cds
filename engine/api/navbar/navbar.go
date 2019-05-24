@@ -12,7 +12,7 @@ import (
 )
 
 // LoadNavbarData returns just the needed data for the ui navbar
-func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
+func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	// Admin can gets all project
 	// Users can gets only their projects
 
@@ -23,7 +23,7 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.AuthentifiedU
 	return loadNavbarAsUser(db, store, u)
 }
 
-func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
+func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT
@@ -98,7 +98,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.Authentifi
 	return data, nil
 }
 
-func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
+func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT

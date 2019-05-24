@@ -8,7 +8,6 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -30,9 +29,10 @@ func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) er
 		return sdk.WrapError(err, "Cannot InitializeDefaultGroupName")
 	}
 
-	if err := token.Initialize(dbGorp, defaultValues.SharedInfraToken); err != nil {
-		return sdk.WrapError(err, "Cannot InitializeDefaultGroupName")
-	}
+	// TODO:
+	// if err := token.Initialize(dbGorp, defaultValues.SharedInfraToken); err != nil {
+	// 	return sdk.WrapError(err, "Cannot InitializeDefaultGroupName")
+	// }
 
 	if err := action.CreateBuiltinActions(dbGorp); err != nil {
 		return sdk.WrapError(err, "Cannot setup builtin actions")

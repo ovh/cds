@@ -59,17 +59,21 @@ func (api *API) registerWorkerHandler() service.Handler {
 func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(err, "cannot parse form")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse form: %v", err)
+		}
+
+		h, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
 		}
 
 		var hatcheryName string
-		h := getHatchery(ctx)
 		if h != nil {
 			hatcheryName = h.Name
 		}
-		workers, errl := worker.LoadWorkers(api.mustDB(), hatcheryName)
-		if errl != nil {
-			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
+		workers, err := worker.LoadWorkers(api.mustDB(), hatcheryName)
+		if err != nil {
+			return err
 		}
 
 		return service.WriteJSON(w, workers, http.StatusOK)
@@ -81,6 +85,8 @@ func (api *API) disableWorkerHandler() service.Handler {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		id := vars["id"]
+
+		// TODO: check if the JWT is legit to disable this worker
 
 		wor, err := worker.LoadWorker(api.mustDB(), id)
 		if err != nil {
@@ -112,6 +118,8 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 func (api *API) refreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO: check if the JWT is legit to update this worker
+
 		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
@@ -130,6 +138,8 @@ func (api *API) unregisterWorkerHandler() service.Handler {
 
 func (api *API) workerCheckingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO: check if the JWT is legit to update this worker
+
 		workerC := getWorker(ctx)
 		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
 		if errW != nil {
@@ -149,6 +159,8 @@ func (api *API) workerCheckingHandler() service.Handler {
 
 func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO: check if the JWT is legit to update this worker
+
 		workerC := getWorker(ctx)
 		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
 		if errW != nil {
