@@ -498,7 +498,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			}
 		}
 
-		data, err := ea.Action()
+		data, err := ea.GetAction()
 		if err != nil {
 			return err
 		}
@@ -667,7 +667,7 @@ func (api *API) importActionHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
-		data, err := ea.Action()
+		data, err := ea.GetAction()
 		if err != nil {
 			return err
 		}

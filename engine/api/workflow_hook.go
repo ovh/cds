@@ -248,7 +248,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowJobHookCallbackHandler> Cannot load project")
 		}
-		wr, err := workflow.LoadRun(tx, key, workflowName, number, workflow.LoadRunOptions{
+		wr, err := workflow.LoadRun(ctx, tx, key, workflowName, number, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
@@ -302,7 +302,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 
 		db := api.mustDB()
 
-		wr, err := workflow.LoadRun(db, key, workflowName, number, workflow.LoadRunOptions{
+		wr, err := workflow.LoadRun(ctx, db, key, workflowName, number, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/sguiheux/go-coverage"
-	"gopkg.in/olivere/elastic.v5"
+	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"

@@ -153,7 +153,7 @@ func (ui *Termui) execLoadData() error {
 	}
 
 	start = time.Now()
-	if _, err := client.WorkerModels(); err != nil {
+	if _, err := client.WorkerModels(nil); err != nil {
 		return err
 	}
 	ui.elapsedWorkerModels = time.Since(start)

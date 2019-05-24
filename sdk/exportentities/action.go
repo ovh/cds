@@ -70,8 +70,8 @@ func newSteps(a sdk.Action) []Step {
 	return res
 }
 
-// Action returns an sdk.Action
-func (ea *Action) Action() (sdk.Action, error) {
+// GetAction returns an sdk.Action
+func (ea *Action) GetAction() (sdk.Action, error) {
 	a := sdk.Action{
 		Name:        ea.Name,
 		Group:       &sdk.Group{Name: ea.Group},

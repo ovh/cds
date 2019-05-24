@@ -34,7 +34,7 @@ type Application struct {
 	FromRepository       string                       `json:"from_repository,omitempty" db:"from_repository" cli:"-"`
 }
 
-// IsValid returns error if the application is not valid
+// IsValid returns error if the application is not valid.
 func (app Application) IsValid() error {
 	if !NamePatternRegex.MatchString(app.Name) {
 		return NewError(ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", NamePattern))

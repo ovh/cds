@@ -32,7 +32,7 @@ const routes: Routes = [
             { path: 'worker-model', component: WorkerModelListComponent, data: { title: 'Worker model' } },
             { path: 'worker-model/add', component: WorkerModelAddComponent, data: { title: 'Add • Worker model' } },
             {
-                path: 'worker-model/:workerModelName',
+                path: 'worker-model/:groupName/:workerModelName',
                 component: WorkerModelEditComponent,
                 data: { title: '{workerModelName} • Worker model' }
             },

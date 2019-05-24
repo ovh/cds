@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -67,7 +68,7 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, modelID int6
 	var m *sdk.Model
 	if modelID != 0 {
 		var errM error
-		m, errM = LoadWorkerModelByID(db, modelID)
+		m, errM = workermodel.LoadByID(db, modelID)
 		if errM != nil {
 			log.Warning("RegisterWorker> Cannot load model: %s", errM)
 			return nil, errM
@@ -114,7 +115,7 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, modelID int6
 			}
 			defer ntx.Rollback()
 
-			existingCapas, err := LoadWorkerModelCapabilities(ntx, modelID)
+			existingCapas, err := workermodel.LoadCapabilities(ntx, modelID)
 			if err != nil {
 				log.Warning("RegisterWorker> Unable to load worker model capabilities: %s", err)
 				return
@@ -170,7 +171,7 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, modelID int6
 			}
 
 			if OS != "" && arch != "" {
-				if err := updateOSAndArch(db, modelID, OS, arch); err != nil {
+				if err := workermodel.UpdateOSAndArch(db, modelID, OS, arch); err != nil {
 					log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", modelID, err)
 					return
 				}
@@ -180,8 +181,8 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, modelID int6
 				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
 			}
 		}()
-		if err := updateRegistration(tx, modelID); err != nil {
-			log.Warning("registerWorker> Unable updateRegistration: %s", err)
+		if err := workermodel.UpdateRegistration(tx, modelID); err != nil {
+			log.Warning("registerWorker> Unable to update registration: %s", err)
 		}
 	}
 

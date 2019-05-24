@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -99,7 +99,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot insert job in database")
 		}
 
-		if err := worker.ComputeRegistrationNeeds(tx, rs, job.Action.Requirements); err != nil {
+		if err := workermodel.ComputeRegistrationNeeds(tx, rs, job.Action.Requirements); err != nil {
 			return sdk.WrapError(err, "cannot compute registration needs")
 		}
 
@@ -214,7 +214,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot update pipeline job in database")
 		}
 
-		if err := worker.ComputeRegistrationNeeds(tx, rs, job.Action.Requirements); err != nil {
+		if err := workermodel.ComputeRegistrationNeeds(tx, rs, job.Action.Requirements); err != nil {
 			return sdk.WrapError(err, "cannot compute registration needs")
 		}
 

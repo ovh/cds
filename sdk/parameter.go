@@ -49,7 +49,7 @@ type Parameter struct {
 	Advanced    bool   `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 }
 
-// IsValid returns parameter validity.
+// IsValid returns error if the parameter is not valid.
 func (p Parameter) IsValid() error {
 	found := false
 	for _, t := range AvailableParameterType {

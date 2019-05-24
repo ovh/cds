@@ -258,7 +258,13 @@ func LoadRunIDsWithOldModel(db gorp.SqlExecutor) ([]int64, error) {
 }
 
 // LoadRun returns a specific run
-func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+func LoadRun(ctx context.Context, db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	_, end := observability.Span(ctx, "workflow.LoadRun",
+		observability.Tag(observability.TagProjectKey, projectkey),
+		observability.Tag(observability.TagWorkflow, workflowname),
+		observability.Tag(observability.TagWorkflowRun, number),
+	)
+	defer end()
 	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join project on workflow_run.project_id = project.id

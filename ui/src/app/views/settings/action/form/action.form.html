@@ -38,12 +38,14 @@
                         <modal-content>
                             <div class="ui form">
                                 <div class="field">
-                                    <app-requirements-list [suggest]="suggest" [requirements]="action.requirements"
-                                        [edit]="action.editable" (onChange)="action.hasChanged = true"
-                                        (event)="requirementEvent($event)"></app-requirements-list>
+                                    <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
+                                        [requirements]="action.requirements" [edit]="action.editable"
+                                        (onChange)="action.hasChanged = true" (event)="requirementEvent($event)">
+                                    </app-requirements-list>
                                     <div class="requirementForm" *ngIf="action.editable">
-                                        <app-requirements-form [suggest]="suggest" [config]="configRequirements"
-                                            [modal]="requirementModal" (event)="requirementEvent($event)">
+                                        <app-requirements-form [workerModels]="workerModels" [suggest]="suggest"
+                                            [config]="configRequirements" [modal]="requirementModal"
+                                            (event)="requirementEvent($event)">
                                         </app-requirements-form>
                                     </div>
                                 </div>

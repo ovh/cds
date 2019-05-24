@@ -357,12 +357,11 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		// only modelName
 		if r.Type == sdk.ModelRequirement {
 			modelName := strings.Split(r.Value, " ")[0]
-			modelPath := strings.SplitN(modelName, "/", 2)
-			if len(modelPath) == 2 {
-				modelName = modelPath[1]
-			}
-			if modelName != model.Name {
-				log.Debug("canRunJob> %d - job %d - model requirement from requirement r.Value(%s) don't match model.Name(%s)", j.timestamp, j.id, r.Value, model.Name)
+			isGroupModel := modelName == fmt.Sprintf("%s/%s", model.Group.Name, model.Name)
+			isSharedInfraModel := model.Group.Name == sdk.SharedInfraGroupName && modelName == model.Name
+			isSameName := modelName == model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
+			if !isGroupModel && !isSharedInfraModel && !isSameName {
+				log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
 				return false
 			}
 		}

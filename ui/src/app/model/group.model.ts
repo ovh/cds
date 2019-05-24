@@ -1,7 +1,7 @@
 import {Token} from './token.model';
 import {User} from './user.model';
 
-export const adminGroupName = 'shared.infra';
+export const SharedInfraGroupName = 'shared.infra';
 
 export class Group {
     id: number;

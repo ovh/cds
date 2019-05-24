@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
@@ -108,7 +109,6 @@ func Encrypt(data []byte) ([]byte, error) {
 // Decrypt data using aes+hmac algorithm
 // Init() must be called before any decryption
 func Decrypt(data []byte) ([]byte, error) {
-
 	if !strings.HasPrefix(string(data), prefix) {
 		return data, nil
 	}
@@ -216,4 +216,26 @@ func EncryptS(ptype string, value string) (sql.NullString, []byte, error) {
 
 	d, err := Encrypt([]byte(value))
 	return n, d, err
+}
+
+// DecryptValue decrypt value for password.
+func DecryptValue(v string) (string, error) {
+	b, err64 := base64.StdEncoding.DecodeString(v)
+	if err64 != nil {
+		return "", sdk.WrapError(err64, "cannot decode string")
+	}
+	secret, errD := Decrypt(b)
+	if errD != nil {
+		return "", sdk.WrapError(errD, "cannot decrypt password")
+	}
+	return string(secret), nil
+}
+
+// EncryptValue encrypt value for password.
+func EncryptValue(v string) (string, error) {
+	encryptedSecret, err := Encrypt([]byte(v))
+	if err != nil {
+		return "", sdk.WrapError(err, "cannot encrypt password")
+	}
+	return base64.StdEncoding.EncodeToString(encryptedSecret), nil
 }

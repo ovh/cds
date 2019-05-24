@@ -276,7 +276,7 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
+		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run [%s/%d]", name, number)
 		}
@@ -309,12 +309,12 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 
 		// loadRun, DisableDetailledNodeRun = false for calls from CDS Service
 		// as hook service. It's needed to have the buildParameters.
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number,
+		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
 				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: getService(ctx) == nil,
-				Language:                 r.Header.Get("Accept-Language"),
+				Language:                r.Header.Get("Accept-Language"),
 			},
 		)
 		if err != nil {
@@ -336,7 +336,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		run, errL := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
+		run, errL := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if errL != nil {
 			return sdk.WrapError(errL, "stopWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -438,7 +438,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 					targetProject := wnr.OutgoingHook.Config[sdk.HookConfigTargetProject].Value
 					targetWorkflow := wnr.OutgoingHook.Config[sdk.HookConfigTargetWorkflow].Value
 
-					targetRun, errL := workflow.LoadRun(dbFunc(), targetProject, targetWorkflow, *wnr.Callback.WorkflowRunNumber, workflow.LoadRunOptions{})
+					targetRun, errL := workflow.LoadRun(ctx, dbFunc(), targetProject, targetWorkflow, *wnr.Callback.WorkflowRunNumber, workflow.LoadRunOptions{})
 					if errL != nil {
 						log.Error("stopWorkflowRun> Unable to load last workflow run: %v", errL)
 						continue
@@ -499,7 +499,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		return sdk.WrapError(err, "updateParentWorkflowRun> Cannot load project")
 	}
 
-	parentWR, err := workflow.LoadRun(
+	parentWR, err := workflow.LoadRun(ctx,
 		dbFunc(),
 		run.RootRun().HookEvent.ParentWorkflow.Key,
 		run.RootRun().HookEvent.ParentWorkflow.Name,
@@ -532,7 +532,7 @@ func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {
 			return err
 		}
 
-		run, errR := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		run, errR := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "getWorkflowNodeRunHistoryHandler")
 		}
@@ -566,7 +566,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		}
 
 		var wf *sdk.Workflow
-		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wfRun, errW := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errW != nil {
 			wf, errW = workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getAPIConsumer(ctx), workflow.LoadOptions{})
 			if errW != nil {
@@ -686,7 +686,7 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 		return nil, sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
 	}
 
-	wr, errLw := workflow.LoadRun(tx, p.Key, workflowName, nodeRun.Number, workflow.LoadRunOptions{})
+	wr, errLw := workflow.LoadRun(ctx, tx, p.Key, workflowName, nodeRun.Number, workflow.LoadRunOptions{})
 	if errLw != nil {
 		return nil, sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", workflowName)
 	}
@@ -796,9 +796,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		var lastRun *sdk.WorkflowRun
 		if opts.Number != nil {
 			var errlr error
-			_, next := observability.Span(ctx, "workflow.LoadRun")
-			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
-			next()
+			lastRun, errlr = workflow.LoadRun(ctx, api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
 			}
@@ -932,7 +930,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	r1, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
 	report.Merge(r1, nil) // nolint
 	if errS != nil {
-		r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", p.Key, wf.Name))
+		r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "unable to start workflow %s/%s", p.Key, wf.Name))
 		report.Merge(r1, nil) // nolint
 		return
 	}
@@ -1080,7 +1078,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 			return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
 		}
 
-		wr, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
+		wr, errW := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
 		if errW != nil {
 			return errW
 		}
@@ -1184,25 +1182,25 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		workflowName := vars["permWorkflowName"]
 		number, errN := requestVarInt(r, "number")
 		if errN != nil {
-			return sdk.WrapError(errN, "getWorkflowNodeRunJobBuildLogsHandler> Number: invalid number")
+			return sdk.WrapError(errN, "number: invalid number")
 		}
 		nodeRunID, errNI := requestVarInt(r, "nodeRunID")
 		if errNI != nil {
-			return sdk.WrapError(errNI, "getWorkflowNodeRunJobBuildLogsHandler> id: invalid number")
+			return sdk.WrapError(errNI, "id: invalid number")
 		}
 		runJobID, errJ := requestVarInt(r, "runJobId")
 		if errJ != nil {
-			return sdk.WrapError(errJ, "getWorkflowNodeRunJobBuildLogsHandler> runJobId: invalid number")
+			return sdk.WrapError(errJ, "runJobId: invalid number")
 		}
 		stepOrder, errS := requestVarInt(r, "stepOrder")
 		if errS != nil {
-			return sdk.WrapError(errS, "getWorkflowNodeRunJobBuildLogsHandler> stepOrder: invalid number")
+			return sdk.WrapError(errS, "stepOrder: invalid number")
 		}
 
 		// Check nodeRunID is link to workflow
 		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errNR != nil {
-			return sdk.WrapError(errNR, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
+			return sdk.WrapError(errNR, "cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 		}
 
 		var stepStatus string
@@ -1225,13 +1223,13 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		if stepStatus == "" {
-			return sdk.WrapError(sdk.ErrStepNotFound, "getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
+			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
 				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey)
 		}
 
 		logs, errL := workflow.LoadStepLogs(api.mustDB(), runJobID, stepOrder)
 		if errL != nil {
-			return sdk.WrapError(errL, "getWorkflowNodeRunJobStepHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
+			return sdk.WrapError(errL, "cannot load log for runJob %d on step %d", runJobID, stepOrder)
 		}
 
 		ls := &sdk.Log{}
@@ -1278,7 +1276,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(errP, "postResyncVCSWorkflowRunHandler> Cannot load project")
 		}
 
-		wfr, errW := workflow.LoadRun(db, key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wfr, errW := workflow.LoadRun(ctx, db, key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errW != nil {
 			return sdk.WrapError(errW, "postResyncVCSWorkflowRunHandler> Cannot load workflow run")
 		}

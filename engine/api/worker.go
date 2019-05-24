@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -48,7 +49,7 @@ func (api *API) registerWorkerHandler() service.Handler {
 
 		if params.RegistrationOnly {
 			log.Debug("removing book from cache : %+v", params)
-			worker.UnbookForRegister(api.Cache, params.ModelID)
+			workermodel.UnbookForRegister(api.Cache, params.ModelID)
 		}
 
 		// Return worker info to worker itself

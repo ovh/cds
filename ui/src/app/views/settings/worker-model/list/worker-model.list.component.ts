@@ -47,7 +47,7 @@ export class WorkerModelListComponent extends Table<WorkerModel> {
     loadWorkerModels(filter: string) {
         this.binaryValue = '';
         this.loading = true;
-        this._workerModelService.getWorkerModels(filter)
+        this._workerModelService.getAll(filter)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wms => {
                 this.workerModels = wms;
@@ -90,7 +90,7 @@ export class WorkerModelListComponent extends Table<WorkerModel> {
             this.currentPage = 1;
             return;
         }
-        this._workerModelService.getWorkerModels(this.selectedFilter, binary)
+        this._workerModelService.getAll(this.selectedFilter, binary)
             .pipe(finalize(() => {
                 this.loading = false;
                 this.searchView = false;
