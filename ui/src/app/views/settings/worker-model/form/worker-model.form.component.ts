@@ -31,7 +31,6 @@ export class WorkerModelFormComponent implements OnInit, OnChanges {
     get workerModel(): WorkerModel { return this._workerModel; }
     @Input() currentUser: User;
     @Input() loading: boolean;
-    @Input() currentUser: User;
     @Input() types: Array<string>;
     @Input() communications: Array<string>;
     @Input() groups: Array<Group>;
