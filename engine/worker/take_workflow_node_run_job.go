@@ -101,7 +101,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	// Reset build variables
 	w.currentJob.buildVariables = nil
 	//Run !
-	res := w.processJob(ctx, ctxWithCancel, info)
+	res := w.processJob(ctxWithCancel, info)
 	tick.Stop()
 
 	if ctxWithCancel.Err() != nil && workflowNodeJobRun != nil && workflowNodeJobRun.Status == sdk.StatusStopping.String() {
