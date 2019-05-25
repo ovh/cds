@@ -1,0 +1,125 @@
+use config::{Config, ConfigError, Environment, File};
+use sdk_cds::service::APIConfiguration;
+
+#[derive(Default, Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct Configuration {
+    pub badge: BadgeConfiguration,
+}
+
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
+pub struct BadgeConfiguration {
+    pub url: String,
+    pub name: String,
+    pub mode: String,
+    pub api: APIConfiguration,
+    pub database: DatabaseConfiguration,
+    pub kafka: KafkaConfiguration,
+    pub http: HTTPConfiguration,
+}
+
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
+pub struct DatabaseConfiguration {
+    pub user: String,
+    pub password: String,
+    pub name: String,
+    pub host: String,
+    pub port: i32,
+    pub sslmode: String,
+    pub maxconn: i32,
+    pub timeout: i32,
+}
+
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
+pub struct KafkaConfiguration {
+    pub group: String,
+    pub user: String,
+    pub password: String,
+    pub broker: String,
+    pub topic: String,
+}
+
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+pub struct HTTPConfiguration {
+    #[serde(default = "default_addr")]
+    pub addr: String,
+    #[serde(default)]
+    pub port: i32,
+}
+
+fn default_addr() -> String {
+    "0.0.0.0".to_string()
+}
+
+pub fn get_configuration(filename: &str) -> Result<BadgeConfiguration, ConfigError> {
+    let mut settings = Config::default();
+    settings
+        .merge(File::with_name(filename))?
+        .merge(Environment::with_prefix("CDS"))?;
+
+    let conf: Configuration = settings.try_into()?;
+    Ok(conf.badge)
+}
+
+pub fn get_example_config_file() -> &'static str {
+    r#"#############################
+# CDS Badge Service Settings
+#############################
+[badge]
+  url = "http://localhost:8086"
+
+  # Name of this CDS badge Service
+  name = "cds-badge"
+
+  mode = "kafka"
+
+  ######################
+  # CDS API Settings
+  #######################
+  [badge.api]
+    maxHeartbeatFailures = 10
+    requestTimeout = 10
+    token = "USECDSAPITOKEN"
+
+    [badge.api.grpc]
+      insecure = true
+      url = "http://localhost:8082"
+
+    [badge.api.http]
+      insecure = true
+      url = "http://localhost:8081"
+
+  ######################
+  # CDS Badge Database Settings (postgresql)
+  #######################
+  [badge.database]
+    user = ""
+    password = ""
+    name = ""
+    host = "localhost"
+    port = 5432
+    maxconn = 20
+    timeout = 3000
+
+  ######################
+  # CDS Badge Kafka Settings (kafka mode only)
+  #######################
+  [badge.kafka]
+    broker = "localhost:9092"
+    password = ""
+    topic = "cds"
+    user = ""
+    group = "" # optional
+
+  ######################
+  # CDS Badge HTTP Configuration
+  #######################
+  [badge.http]
+
+    # Listen address without port, example: 127.0.0.1
+    # addr = ""
+    port = 8088"#
+}
