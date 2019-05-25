@@ -63,6 +63,9 @@ Set value to `appId` and `secret`
         # proxyWebhook = ""
         secret = "xxxx"
 
+        # OAuth Application Callback URL
+        OAuthCallbackURL = "http://your-cds-api:8081/repositories_manager/oauth2/callback"
+
         [vcs.servers.Gitlab.gitlab.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
