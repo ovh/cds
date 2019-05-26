@@ -50,11 +50,29 @@ func versionRun(v cli.Values) error {
 		m["api-url"] = "-"
 	}
 
+	var baseURL string
+	configUser, err := client.ConfigUser()
+	if err != nil {
+		return err
+	}
+
+	if b, ok := configUser[sdk.ConfigURLUIKey]; ok {
+		baseURL = b
+	}
+
+	if baseURL == "" {
+		fmt.Println("Unable to retrieve UI URI")
+		return nil
+	}
+
+	m["ui-url"] = baseURL
+
 	format := v.GetString("format")
 	if format == "" {
 		fmt.Println(m["version"])
 		fmt.Printf("CDS api version: %s\n", m["api-version"])
 		fmt.Printf("CDS URL: %s\n", m["api-url"])
+		fmt.Printf("CDS UI: %s\n", m["ui-url"])
 		fmt.Printf("keychain support: %v\n", m["keychain"])
 		return nil
 	}
