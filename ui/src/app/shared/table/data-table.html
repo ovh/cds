@@ -76,6 +76,13 @@
                             {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
                         </span>
                     </ng-container>
+                    <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
+                        <input type="text" value="{{c.selector}}">
+                        <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                            ngxClipboard [cbContent]="c.selector">
+                            <i class="copy icon"></i>
+                        </button>
+                    </div>
                     <ng-container *ngSwitchDefault>
                         <ng-container *ngIf="c.selector && c.translate">
                             {{c.selector | translate}}

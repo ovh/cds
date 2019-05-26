@@ -16,6 +16,7 @@ export enum ColumnType {
     BUTTON = 'button',
     CONFIRM_BUTTON = 'confirm-button',
     LABEL = 'label',
+    TEXT_COPY = 'text-copy'
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;
