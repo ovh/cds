@@ -1,34 +1,49 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { TaskExecution } from 'app/model/workflow.hook.model';
+import { ThemeStore } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
-import { TaskExecution } from '../../../../../model/workflow.hook.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-workflow-node-hook-details',
   templateUrl: './hook.details.component.html',
   styleUrls: ['./hook.details.component.scss']
 })
-export class WorkflowNodeHookDetailsComponent {
-  codeMirrorConfig: any;
+@AutoUnsubscribe()
+export class WorkflowNodeHookDetailsComponent implements OnInit {
+  @ViewChild('code') codemirror: any;
+  @ViewChild('nodeHookDetailsModal') nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
 
-  // Ng semantic modal
-  @ViewChild('nodeHookDetailsModal')
-  public nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
   modal: ActiveModal<boolean, boolean, void>;
   modalConfig: TemplateModalConfig<boolean, boolean, void>;
-
   task: TaskExecution;
+  codeMirrorConfig: any;
+  themeSubscription: Subscription;
 
-  constructor(private _modalService: SuiModalService) {
+  constructor(
+    private _modalService: SuiModalService,
+    private _theme: ThemeStore
+  ) {
     this.codeMirrorConfig = {
-      matchBrackets: true,
-      autoCloseBrackets: true,
-      mode: 'application/json',
+      tchBrackets: true,
+      autoCloeBrackets: true,
+      de: 'application/json',
       lineWrapping: true,
       autoRefresh: true,
-      readOnly: true
+      adOnly: true
     };
+  }
+
+  ngOnInit(): void {
+    this.themeSubscription = this._theme.get().subscribe(t => {
+      this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+      if (this.codemirror && this.codemirror.instance) {
+        this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+      }
+    });
   }
 
   show(taskExec: TaskExecution): void {
@@ -40,7 +55,6 @@ export class WorkflowNodeHookDetailsComponent {
       } catch (e) {
         this.task.webhook.request_body = body;
       }
-
     }
     this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookDetailsModal);
     this.modal = this._modalService.open(this.modalConfig);

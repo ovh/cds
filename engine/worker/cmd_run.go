@@ -265,10 +265,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				var continueTakeJob = true
 
 				// Is the worker is "single use": unregister and exit the worker
-				if w.singleUse && ctx.Err() == nil {
-					log.Warning("worker single-use but cancelled")
-				} else if w.singleUse {
-					log.Info("worker single-use, see for next jobs now...")
+				if w.singleUse {
 					continueTakeJob = false
 				}
 

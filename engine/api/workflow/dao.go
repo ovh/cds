@@ -1601,16 +1601,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	if err := Update(ctx, tx, store, wf, wf, proj, u); err != nil {
-		return nil, nil, sdk.WrapError(err, "Unable to update workflow")
-	}
-
-	if isDefaultBranch {
-		if errHr := HookRegistration(ctx, tx, store, oldWf, *wf, proj); errHr != nil {
-			return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
-		}
-	}
-
 	allMsg = append(allMsg, msgList...)
 
 	if !isDefaultBranch {

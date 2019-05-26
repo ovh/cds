@@ -29,6 +29,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     @Input('node') set node(data: WNode) {
         if (data) {
             this.editableNode = cloneDeep(data);
+            if (this.editableNode.context.application_id !== 0 && this.applications) {
+                this.change();
+            }
             this.updateVCSStatusCheck();
         }
     };
@@ -63,6 +66,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         this.applications = cloneDeep(this.project.application_names) || [];
         this.applications.unshift(voidApp);
         this.updateVCSStatusCheck();
+        if (this.editableNode.context.application_id !== 0) {
+            this.change();
+        }
     }
 
     pushChange(): void {
@@ -86,7 +92,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
             return;
         }
         this._store.dispatch(new FetchApplication({projectKey: this.project.key, applicationName: this.applications[i].name}));
-        this._store.select(ApplicationsState.selectApplication(this.project.key, this.applications[i].name))
+        this._store.selectOnce(ApplicationsState.selectApplication(this.project.key, this.applications[i].name))
             .pipe(filter((app) => app != null), first())
             .subscribe((app: Application) => {
                 this.showCheckStatus = app.repository_fullname && app.repository_fullname !== '';

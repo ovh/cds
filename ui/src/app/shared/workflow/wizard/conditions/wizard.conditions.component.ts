@@ -80,7 +80,13 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         private _theme: ThemeStore
     ) {
         super();
+    }
 
+    getData(): Array<WorkflowNodeCondition> {
+        return undefined;
+    }
+
+    ngOnInit(): void {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -90,13 +96,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             autoRefresh: true,
             readOnly: this.readonly,
         };
-    }
 
-    getData(): Array<WorkflowNodeCondition> {
-        return undefined;
-    }
-
-    ngOnInit(): void {
         this.themeSubscription = this._theme.get().subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {

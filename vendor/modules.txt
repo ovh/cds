@@ -418,6 +418,9 @@ github.com/nsf/termbox-go
 github.com/nwaples/rardecode
 # github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
 github.com/olekukonko/tablewriter
+# github.com/olivere/elastic v6.2.17+incompatible
+github.com/olivere/elastic/config
+github.com/olivere/elastic/uritemplates
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.1
@@ -725,10 +728,8 @@ gopkg.in/inf.v0
 gopkg.in/ini.v1
 # gopkg.in/ldap.v2 v2.3.0
 gopkg.in/ldap.v2
-# gopkg.in/olivere/elastic.v5 v5.0.69
-gopkg.in/olivere/elastic.v5
-gopkg.in/olivere/elastic.v5/config
-gopkg.in/olivere/elastic.v5/uritemplates
+# gopkg.in/olivere/elastic.v6 v6.2.17
+gopkg.in/olivere/elastic.v6
 # gopkg.in/square/go-jose.v2 v2.3.0
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher

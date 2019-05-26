@@ -16,7 +16,7 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 
 	requirements, errR := w.client.Requirements()
 	if errR != nil {
-		log.Warning("register> unable to get requirements : %s", errR)
+		log.Warning("register> unable to get requirements: %v", errR)
 		return errR
 	}
 

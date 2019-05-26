@@ -490,6 +490,11 @@ func workflowInitRun(c cli.Values) error {
 		}
 	}
 
+	workflowName := repoShortname
+	if c.GetString("workflow") != "" {
+		workflowName = c.GetString("workflow")
+	}
+
 	if len(files) == 0 {
 		repoManagerName, err := interactiveChooseVCSServer(proj, gitRepo)
 		if err != nil {
@@ -513,11 +518,6 @@ func workflowInitRun(c cli.Values) error {
 		pipName, existingPip, err := interactiveChoosePipeline(pkey, c.GetString("pipeline"))
 		if err != nil {
 			return err
-		}
-
-		workflowName := repoShortname
-		if c.GetString("workflow") != "" {
-			workflowName = c.GetString("workflow")
 		}
 
 		wFilePath, err := craftWorkflowFile(workflowName, appName, pipName, dotCDS)
@@ -582,7 +582,7 @@ func workflowInitRun(c cli.Values) error {
 		fmt.Printf("error: unable to setup git local config to store cds project key: %v\n", err)
 	}
 
-	if err := gitRepo.LocalConfigSet("cds", "workflow", repoShortname); err != nil {
+	if err := gitRepo.LocalConfigSet("cds", "workflow", workflowName); err != nil {
 		fmt.Printf("error: unable to setup git local config to store cds workflow name: %v\n", err)
 	}
 
