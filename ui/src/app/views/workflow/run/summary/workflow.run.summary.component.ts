@@ -32,7 +32,7 @@ export class WorkflowRunSummaryComponent {
     }
 
     @Input() project: Project;
-    @Input() workflow: Workflow;
+    workflow: Workflow;
     workflowRun: WorkflowRun;
     subWR: Subscription;
     @Input() workflowName: string;
@@ -51,6 +51,7 @@ export class WorkflowRunSummaryComponent {
     constructor(private _workflowRunService: WorkflowRunService,
                 private _toast: ToastService, private _translate: TranslateService, private _store: Store) {
         this.subWR = this._store.select(WorkflowState.getCurrent()).subscribe((state: WorkflowStateModel) => {
+            this.workflow = state.workflow;
             this.workflowRun = state.workflowRun;
             if (this.workflowRun) {
                 if (this.workflowRun.tags) {
