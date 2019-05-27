@@ -33,7 +33,7 @@ jobs:
   stage: Stage1
   steps:
   - artifactUpload:
-      name: '{{.cds.workspace}}/myFile'
+      path: '{{.cds.workspace}}/myFile'
       tag: '{{.cds.version}}'
 
 ```

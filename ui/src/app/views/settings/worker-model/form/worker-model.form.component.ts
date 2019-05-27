@@ -19,9 +19,18 @@ import { Subscription } from 'rxjs/Subscription';
 export class WorkerModelFormComponent implements OnInit, OnChanges {
     @ViewChild('codeMirror') codemirror: any;
 
-    @Input() workerModel: WorkerModel;
-    @Input() loading: boolean;
+    _workerModel: WorkerModel;
+    @Input() set workerModel(wm: WorkerModel) {
+        if (wm) {
+            this._workerModel = { ...wm };
+            if (this._workerModel && this._workerModel.model_docker && this._workerModel.model_docker.envs) {
+                this.envNames = Object.keys(this._workerModel.model_docker.envs);
+            }
+        }
+    }
+    get workerModel(): WorkerModel { return this._workerModel; }
     @Input() currentUser: User;
+    @Input() loading: boolean;
     @Input() types: Array<string>;
     @Input() communications: Array<string>;
     @Input() groups: Array<Group>;
@@ -65,9 +74,6 @@ export class WorkerModelFormComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(): void {
-        if (this.workerModel && this.workerModel.model_docker && this.workerModel.model_docker.envs) {
-            this.envNames = Object.keys(this.workerModel.model_docker.envs);
-        }
     }
 
     loadAsCode(): void {
@@ -89,7 +95,7 @@ pattern_name: basic_unix`;
         }
 
         this.loadingAsCode = true
-        this._workerModelService.exportWorkerModel(this.workerModel.id)
+        this._workerModelService.export(this.workerModel.group.name, this.workerModel.name)
             .pipe(finalize(() => this.loadingAsCode = false))
             .subscribe((wmStr) => this.workerModelAsCode = wmStr);
     }

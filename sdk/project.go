@@ -87,7 +87,7 @@ func (proj *Project) SetPipeline(pip Pipeline) {
 	}
 }
 
-// IsValid returns error if the project is not valid
+// IsValid returns error if the project is not valid.
 func (proj Project) IsValid() error {
 	if !NamePatternRegex.MatchString(proj.Key) {
 		return NewError(ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", NamePattern))

@@ -1,5 +1,5 @@
 <div *ngIf="workflowRun" class="workflowRun">
-    <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflow]="workflow"
+    <app-workflow-run-summary [(direction)]="direction" [project]="project"
         [workflowName]="workflowName" (relaunch)="relaunch()"
         [class.above]="workflowRun.status === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>

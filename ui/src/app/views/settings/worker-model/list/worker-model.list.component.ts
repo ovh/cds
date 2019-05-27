@@ -75,7 +75,7 @@ export class WorkerModelListComponent {
                     }
 
                     return {
-                        link: `/settings/worker-model/${wm.name}`,
+                        link: `/settings/worker-model/${wm.group.name}/${wm.name}`,
                         value: wm.name,
                         icons: icons
                     };
@@ -108,7 +108,7 @@ export class WorkerModelListComponent {
 
     loadWorkerModels() {
         this.loading = true;
-        this._workerModelService.getWorkerModels(this.selectedState, this.binaryValue)
+        this._workerModelService.getAll(this.selectedState, this.binaryValue)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wms => {
                 this.workerModels = wms;

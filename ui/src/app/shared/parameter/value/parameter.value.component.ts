@@ -6,6 +6,7 @@ import { RepositoriesManager, Repository } from 'app/model/repositories.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -76,7 +77,8 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
 
     constructor(
         private _repoManagerService: RepoManagerService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        public _sharedService: SharedService // used in html
     ) {
         this.codeMirrorConfig = {
             mode: 'shell',

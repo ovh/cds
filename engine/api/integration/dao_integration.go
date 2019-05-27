@@ -2,12 +2,12 @@ package integration
 
 import (
 	"database/sql"
-	"encoding/base64"
+
+	"github.com/ovh/cds/engine/api/secret"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -55,7 +55,7 @@ func LoadProjectIntegrationByName(db gorp.SqlExecutor, key string, name string, 
 	for k, v := range p.Config {
 		if v.Type == sdk.IntegrationConfigTypePassword {
 			if clearPwd {
-				decryptedValue, errD := decryptIntegrationValue(v.Value)
+				decryptedValue, errD := secret.DecryptValue(v.Value)
 				if errD != nil {
 					return p, sdk.WrapError(errD, "LoadProjectIntegrationByName> Cannot decrypt value")
 				}
@@ -83,7 +83,7 @@ func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64, clearPassword boo
 	for k, v := range pp.Config {
 		if v.Type == sdk.IntegrationConfigTypePassword {
 			if clearPassword {
-				secret, errD := decryptIntegrationValue(v.Value)
+				secret, errD := secret.DecryptValue(v.Value)
 				if errD != nil {
 					return nil, sdk.WrapError(errD, "LoadIntegrationByID> Cannot decrypt password")
 				}
@@ -121,7 +121,7 @@ func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64, clearPassword bo
 		for k, v := range pp.Config {
 			if v.Type == sdk.IntegrationConfigTypePassword {
 				if clearPassword {
-					secret, errD := decryptIntegrationValue(v.Value)
+					secret, errD := secret.DecryptValue(v.Value)
 					if errD != nil {
 						return nil, sdk.WrapError(errD, "LoadIntegrationByID> Cannot decrypt password")
 					}
@@ -138,31 +138,11 @@ func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64, clearPassword bo
 	return integrations, nil
 }
 
-func decryptIntegrationValue(v string) (string, error) {
-	b, err64 := base64.StdEncoding.DecodeString(v)
-	if err64 != nil {
-		return "", sdk.WrapError(err64, "decryptIntegrationValue> cannot decode string")
-	}
-	secret, errD := secret.Decrypt(b)
-	if errD != nil {
-		return "", sdk.WrapError(errD, "decryptIntegrationValue> Cannot decrypt password")
-	}
-	return string(secret), nil
-}
-
-func encryptIntegrationValue(v string) (string, error) {
-	encryptedSecret, errE := secret.Encrypt([]byte(v))
-	if errE != nil {
-		return "", sdk.WrapError(errE, "encryptIntegrationValue> Cannot encrypt password")
-	}
-	return base64.StdEncoding.EncodeToString(encryptedSecret), nil
-}
-
 // InsertIntegration inserts a integration
 func InsertIntegration(db gorp.SqlExecutor, pp *sdk.ProjectIntegration) error {
 	for k, v := range pp.Config {
 		if v.Type == sdk.IntegrationConfigTypePassword {
-			s, errS := encryptIntegrationValue(v.Value)
+			s, errS := secret.EncryptValue(v.Value)
 			if errS != nil {
 				return sdk.WrapError(errS, "InsertIntegration> Cannot encrypt password")
 			}
@@ -182,7 +162,7 @@ func InsertIntegration(db gorp.SqlExecutor, pp *sdk.ProjectIntegration) error {
 func UpdateIntegration(db gorp.SqlExecutor, pp sdk.ProjectIntegration) error {
 	for k, v := range pp.Config {
 		if v.Type == sdk.IntegrationConfigTypePassword {
-			s, errS := encryptIntegrationValue(v.Value)
+			s, errS := secret.EncryptValue(v.Value)
 			if errS != nil {
 				return sdk.WrapError(errS, "UpdateIntegration> Cannot encrypt password")
 			}

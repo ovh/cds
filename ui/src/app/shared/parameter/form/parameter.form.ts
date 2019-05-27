@@ -1,10 +1,10 @@
-import {Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {AllKeys} from '../../../model/keys.model';
-import {Parameter} from '../../../model/parameter.model';
-import {Project} from '../../../model/project.model';
-import {ParameterService} from '../../../service/parameter/parameter.service';
-import {SharedService} from '../../shared.service';
-import {ParameterEvent} from '../parameter.event.model';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AllKeys } from '../../../model/keys.model';
+import { Parameter } from '../../../model/parameter.model';
+import { Project } from '../../../model/project.model';
+import { ParameterService } from '../../../service/parameter/parameter.service';
+import { SharedService } from '../../shared.service';
+import { ParameterEvent } from '../parameter.event.model';
 
 @Component({
     selector: 'app-parameter-form',
@@ -12,18 +12,20 @@ import {ParameterEvent} from '../parameter.event.model';
     styleUrls: ['./parameter.form.scss']
 })
 export class ParameterFormComponent {
-
-    parameterTypes: string[];
-    newParameter: Parameter;
+    @ViewChild('selectType') selectType: ElementRef;
 
     @Input() project: Project;
     @Input() suggest: Array<string>;
     @Input() keys: AllKeys;
-    @ViewChild('selectType') selectType: ElementRef;
-
     @Output() createParameterEvent = new EventEmitter<ParameterEvent>();
 
-    constructor(private _paramService: ParameterService, public _sharedService: SharedService) {
+    parameterTypes: string[];
+    newParameter: Parameter;
+
+    constructor(
+        private _paramService: ParameterService,
+        public _sharedService: SharedService // used in html
+    ) {
         this.newParameter = new Parameter();
         this.parameterTypes = this._paramService.getTypesFromCache();
         if (!this.parameterTypes) {

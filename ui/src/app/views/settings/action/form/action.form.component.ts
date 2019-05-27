@@ -1,16 +1,18 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Action } from 'app/model/action.model';
+import { Group } from 'app/model/group.model';
+import { AllKeys } from 'app/model/keys.model';
+import { Parameter } from 'app/model/parameter.model';
+import { Requirement } from 'app/model/requirement.model';
+import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
+import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
+import { StepEvent } from 'app/shared/action/step/step.event';
+import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
+import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
+import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
-import { Action } from '../../../../model/action.model';
-import { Group } from '../../../../model/group.model';
-import { AllKeys } from '../../../../model/keys.model';
-import { Parameter } from '../../../../model/parameter.model';
-import { Requirement } from '../../../../model/requirement.model';
-import { StepEvent } from '../../../../shared/action/step/step.event';
-import { ParameterEvent } from '../../../../shared/parameter/parameter.event.model';
-import { RequirementEvent } from '../../../../shared/requirements/requirement.event.model';
-import { SharedService } from '../../../../shared/shared.service';
 
 @Component({
     selector: 'app-action-form',
@@ -53,11 +55,13 @@ export class ActionFormComponent implements OnDestroy {
     collapsed = true;
     configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
     stepFormExpended: boolean;
+    workerModels: Array<WorkerModel>;
 
     constructor(
         private sharedService: SharedService,
         private _actionService: ActionService,
-        private dragulaService: DragulaService
+        private dragulaService: DragulaService,
+        private _workerModelService: WorkerModelService
     ) {
         dragulaService.createGroup('bag-nonfinal', {
             moves: (el, source, handle) => {
@@ -86,6 +90,9 @@ export class ActionFormComponent implements OnDestroy {
         if (this.action.group_id) {
             this._actionService.getAllForGroup(this.action.group_id).subscribe(as => {
                 this.actions = as.filter(a => this.action.id !== a.id);
+            });
+            this._workerModelService.getAllForGroup(this.action.group_id).subscribe(wms => {
+                this.workerModels = wms;
             });
         }
     }

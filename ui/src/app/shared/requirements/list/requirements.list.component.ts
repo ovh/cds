@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { finalize, first } from 'rxjs/operators';
+import { SharedInfraGroupName } from 'app/model/group.model';
+import { first } from 'rxjs/operators';
 import { Requirement } from '../../../model/requirement.model';
 import { WorkerModel } from '../../../model/worker-model.model';
 import { RequirementStore } from '../../../service/requirement/requirement.store';
-import { WorkerModelService } from '../../../service/worker-model/worker-model.service';
 import { Table } from '../../table/table';
 import { RequirementEvent } from '../requirement.event.model';
 
@@ -18,39 +18,41 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
 
-    @Input('suggest')
-    set suggest(data: string[]) {
+    _suggest: string[] = [];
+    @Input() set suggest(data: string[]) {
         if (data) {
             this._suggest = data;
         } else {
             this._suggest = [];
         }
     }
+    get suggest() { return this._suggest; }
 
-    get suggest() {
-        return this._suggest;
-    }
+    _workerModels: Array<WorkerModel>;
+    @Input() set workerModels(wms: Array<WorkerModel>) {
+        if (wms) {
+            this._workerModels = wms;
 
-    get suggestWithWorkerModel() {
-        return this._suggestWithWorkerModel;
+            this.suggestWithWorkerModel = wms.map(wm => {
+                if (wm.group.name !== SharedInfraGroupName) {
+                    return `${wm.group.name}/${wm.name}`;
+                }
+                return wm.name;
+            }).concat(this._suggest);
+        }
     }
-
-    get suggestWithOSArch() {
-        return this._suggestWithOSArch;
-    }
+    get workerModels() { return this._workerModels; }
 
     @Output() event = new EventEmitter<RequirementEvent>();
     @Output() onChange = new EventEmitter<Requirement[]>();
 
     availableRequirements: Array<string>;
-    workerModels: Array<WorkerModel>;
-    _suggest: string[] = [];
-    _suggestWithWorkerModel: Array<string> = [];
-    _suggestWithOSArch: Array<string> = [];
+    suggestWithWorkerModel: Array<string> = [];
+    suggestWithOSArch: Array<string> = [];
 
-    loading = true;
-
-    constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
+    constructor(
+        private _requirementStore: RequirementStore,
+    ) {
         super();
         this.nbElementsByPage = 5;
 
@@ -62,17 +64,8 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
     }
 
     ngOnInit() {
-        this._workerModelService.getWorkerModels(null)
-            .pipe(finalize(() => this.loading = false), first())
-            .subscribe(wms => {
-                this.workerModels = wms;
-                if (Array.isArray(this.workerModels)) {
-                    this._suggestWithWorkerModel = this.workerModels.map(wm => wm.name).concat(this._suggest);
-                }
-            });
-
         this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe(values => {
-            this._suggestWithOSArch = values.concat(this.suggest);
+            this.suggestWithOSArch = values.concat(this.suggest);
         });
     }
 

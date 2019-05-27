@@ -28,12 +28,12 @@ export class WorkflowNodeHookDetailsComponent implements OnInit {
     private _theme: ThemeStore
   ) {
     this.codeMirrorConfig = {
-      tchBrackets: true,
-      autoCloeBrackets: true,
-      de: 'application/json',
+      matchBrackets: true,
+      autoCloseBrackets: true,
+      mode: 'application/json',
       lineWrapping: true,
       autoRefresh: true,
-      adOnly: true
+      readOnly: true
     };
   }
 

@@ -51,7 +51,7 @@ export class WorkerModelPatternListComponent {
         ];
 
         this.loading = true;
-        this._workerModelService.getWorkerModelPatterns()
+        this._workerModelService.getPatterns()
             .pipe(finalize(() => this.loading = false))
             .subscribe(wmp => this.workerModelPatterns = wmp);
     }

@@ -35,7 +35,7 @@ export class WorkerModelPatternAddComponent {
     ) {
         this.currentUser = this._authentificationStore.getUser();
         this.loading = true;
-        this._workerModelService.getWorkerModelTypes()
+        this._workerModelService.getTypes()
             .pipe(finalize(() => this.loading = false))
             .subscribe(wmt => this.workerModelTypes = wmt);
         this.pattern = new ModelPattern();
