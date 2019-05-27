@@ -363,7 +363,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model", Scope(sdk.AccessTokenScopeWorkerModel), r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
 	r.Handle("/worker/model/book/{permModelID}", Scope(sdk.AccessTokenScopeWorkerModel), r.PUT(api.bookWorkerModelHandler /*NeedHatchery()*/))
 	r.Handle("/worker/model/error/{permModelID}", Scope(sdk.AccessTokenScopeWorkerModel), r.PUT(api.spawnErrorWorkerModelHandler /*NeedHatchery()*/))
-	r.Handle("/worker/model/enabled", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler /* NeedHatchery()*/))
+	r.Handle("/worker/model/enabled", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler /*NeedHatchery()*/))
 	r.Handle("/worker/model/type", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/capability/type", Scope(sdk.AccessTokenScopeWorkerModel), r.GET(api.getRequirementTypesHandler))

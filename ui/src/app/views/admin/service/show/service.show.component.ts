@@ -28,7 +28,7 @@ export class ServiceShowComponent implements OnInit {
         private _route: ActivatedRoute,
         private _theme: ThemeStore
     ) {
-        this.codeMirrorConfig = this.codeMirrorConfig = {
+        this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
             mode: 'application/json',
@@ -36,7 +36,6 @@ export class ServiceShowComponent implements OnInit {
             autoRefresh: true,
             readOnly: true
         };
-
     }
 
     ngOnInit(): void {

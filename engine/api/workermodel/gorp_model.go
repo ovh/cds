@@ -202,7 +202,3 @@ func (wmp *workerModelPattern) PostInsert(s gorp.SqlExecutor) error {
 func (wmp *workerModelPattern) PostUpdate(s gorp.SqlExecutor) error {
 	return wmp.PostInsert(s)
 }
-
-func init() {
-	gorpmapping.Register(gorpmapping.New(sdk.Worker{}, "worker", false, "id"))
-}

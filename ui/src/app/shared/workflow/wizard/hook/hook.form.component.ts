@@ -66,7 +66,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _theme: ThemeStore
-    ) {
+    ) { }
+
+    ngOnInit(): void {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -75,9 +77,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             autoRefresh: true,
             readOnly: this.mode === 'ro',
         };
-    }
 
-    ngOnInit(): void {
         this.themeSubscription = this._theme.get().subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {

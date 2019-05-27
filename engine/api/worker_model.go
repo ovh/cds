@@ -210,9 +210,9 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		models := []sdk.Model{}
 		var err error
 		if binary != "" {
-			models, err = workermodel.LoadAllByUserAndBinary(api.mustDB(), getAPIConsumer(ctx), binary)
+			models, err = workermodel.LoadAllByUserAndBinary(api.mustDB(), u, binary)
 		} else {
-			models, err = workermodel.LoadAllByUser(api.mustDB(), api.Cache, getAPIConsumer(ctx), opt)
+			models, err = workermodel.LoadAllByUser(api.mustDB(), api.Cache, u, opt)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models")
@@ -258,7 +258,17 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet %s", key)
 		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		groupIDs := make([]int64, len(proj.ProjectGroups))
+		for i := range proj.ProjectGroups {
+			groupIDs[i] = proj.ProjectGroups[i].Group.ID
+		}
+
+		models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(api.mustDB(), append(groupIDs, group.SharedInfraGroup.ID))
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, models, http.StatusOK)
 	}
 }
 
