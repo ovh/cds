@@ -51,11 +51,10 @@ Parameters  directory: The name of a directory to clone into.</description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/actions/builtin-coverage/</guid>
-      <description> Coverage is a builtin action, you can&amp;rsquo;t modify it.
+      <description>Coverage is a builtin action, you can&amp;rsquo;t modify it.
 CDS Builtin Action. Parse given file to extract coverage results.
-Parameters  format: Coverage report format. minimum: Minimum percentage of coverage required (-1 means no minimum). path: Path of the coverage report file.  Requirements No Requirement
-YAML example Example of a pipeline using Coverage action:
-{}  </description>
+Coverage report will be linked to the application from the pipeline context. You will be able to see the coverage history in the application home page.
+Parameters  format: Coverage report format. minimum: Minimum percentage of coverage required (-1 means no minimum). path: Path of the coverage report file.  Requirements No Requirement</description>
     </item>
     
     <item>
