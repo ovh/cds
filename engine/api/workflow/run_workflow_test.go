@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -140,9 +140,12 @@ func TestManualRun1(t *testing.T) {
 	//TestLoadNodeRun
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
-	//don't want to compare queueSeconds attributes
+
+	//don't want to compare queueSeconds attributes and spawn infos attributes
 	nodeRun.Stages[0].RunJobs[0].QueuedSeconds = 0
 	lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].QueuedSeconds = 0
+	nodeRun.Stages[0].RunJobs[0].SpawnInfos = nil
+	lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].SpawnInfos = nil
 
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0], nodeRun)
 
@@ -313,7 +316,7 @@ func TestManualRun3(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(db, "TestManualRun")
+	model, _ := workermodel.LoadByNameAndGroupID(db, "TestManualRun", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "TestManualRun",
@@ -331,7 +334,7 @@ func TestManualRun3(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(db, model); err != nil {
+		if err := workermodel.Insert(db, model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}

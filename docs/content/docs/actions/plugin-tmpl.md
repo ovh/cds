@@ -1,6 +1,6 @@
 ---
 title: "plugin-tmpl"
-card: 
+card:
   name: plugin
 ---
 

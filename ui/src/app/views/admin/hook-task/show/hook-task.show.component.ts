@@ -27,7 +27,7 @@ export class HookTaskShowComponent {
         private _translate: TranslateService,
         private _route: ActivatedRoute
     ) {
-        this.codeMirrorConfig = this.codeMirrorConfig = {
+        this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
             mode: 'application/json',

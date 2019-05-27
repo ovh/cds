@@ -1,22 +1,21 @@
 .repomanager {
-  margin-top: 50px;
-}
-.ui.grid {
-  .column {
-    .title {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-  }
-}
-.ui.form .fields {
-  margin-bottom: 0px;
+    margin-top: 50px;
 }
 
-.ui.attached.top.segment {
-  background-color: #eaefef;
+.ui.grid {
+    .column {
+        .title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+    }
 }
+
+.ui.form .fields {
+    margin-bottom: 0px;
+}
+
 .proj-icon {
-  height: 5em;
-  width: 5em;
+    height: 5em;
+    width: 5em;
 }

@@ -19,6 +19,8 @@ import { RepoManagerService } from '../../../service/repomanager/project.repoman
 import { VariableService } from '../../../service/variable/variable.service';
 import { SharedModule } from '../../shared.module';
 import { RepoManagerFormComponent } from './repomanager.form.component';
+import {WorkflowService} from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 
 
 describe('CDS: Project RepoManager Form Component', () => {
@@ -39,7 +41,9 @@ describe('CDS: Project RepoManager Form Component', () => {
                 ToasterService,
                 TranslateService,
                 TranslateParser,
-                NavbarService
+                NavbarService,
+                WorkflowService,
+                WorkflowRunService
             ],
             imports: [
                 SharedModule,

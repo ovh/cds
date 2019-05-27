@@ -192,6 +192,42 @@ func GetRequirementsDistinctBinary(db gorp.SqlExecutor) (sdk.RequirementList, er
 	return rs, nil
 }
 
+// GetRequirementsTypeModelAndValueStartByWithLock returns action requirements from database for given criteria.
+// This func is used for migration purpose and needs to lock selected rows.
+func GetRequirementsTypeModelAndValueStartByWithLock(db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
+	rs := []sdk.Requirement{}
+
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM action_requirement
+    WHERE type = 'model' AND value LIKE $1
+    FOR UPDATE SKIP LOCKED
+  `).Args(value + "%")
+
+	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
+		return nil, sdk.WrapError(err, "cannot get requirements")
+	}
+
+	return rs, nil
+}
+
+// GetRequirementsTypeModelAndValueStartBy returns action requirements from database for given criteria.
+func GetRequirementsTypeModelAndValueStartBy(db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
+	rs := []sdk.Requirement{}
+
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM action_requirement
+    WHERE type = 'model' AND value LIKE $1
+  `).Args(value + "%")
+
+	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
+		return nil, sdk.WrapError(err, "cannot get requirements")
+	}
+
+	return rs, nil
+}
+
 // InsertRequirement in database.
 func InsertRequirement(db gorp.SqlExecutor, r *sdk.Requirement) error {
 	if r.Name == "" || r.Type == "" || r.Value == "" {
@@ -200,24 +236,9 @@ func InsertRequirement(db gorp.SqlExecutor, r *sdk.Requirement) error {
 	return sdk.WithStack(gorpmapping.Insert(db, r))
 }
 
-// UpdateRequirementsValue updates all action_requirement.value given a value and a type then returns action IDs.
-func UpdateRequirementsValue(db gorp.SqlExecutor, oldValue, newValue, reqType string) ([]int64, error) {
-	rows, err := db.Query("UPDATE action_requirement SET value = $1 WHERE value = $2 AND type = $3 RETURNING action_id", newValue, oldValue, reqType)
-	if err != nil {
-		return nil, sdk.WrapError(err, "cannot update action requirements (newValue=%s, oldValue=%s, reqType=%v)", newValue, oldValue, reqType)
-	}
-	defer rows.Close()
-
-	var actionID int64
-	var actionIDs = []int64{}
-	for rows.Next() {
-		if err := rows.Scan(&actionID); err != nil {
-			return nil, sdk.WrapError(err, "unable to scan action id")
-		}
-		actionIDs = append(actionIDs, actionID)
-	}
-
-	return actionIDs, nil
+// UpdateRequirement in database.
+func UpdateRequirement(db gorp.SqlExecutor, r *sdk.Requirement) error {
+	return sdk.WrapError(gorpmapping.Update(db, r), "unable to update action requirement %d", r.ID)
 }
 
 func insertParameter(db gorp.SqlExecutor, p *actionParameter) error {

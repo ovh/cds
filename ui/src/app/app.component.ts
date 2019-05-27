@@ -6,15 +6,16 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
-import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
+import {bufferTime, filter, map, mergeMap} from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { environment } from '../environments/environment';
 import { AppService } from './app.service';
-import { Event } from './model/event.model';
+import {Event, EventType} from './model/event.model';
 import { AuthentificationStore } from './service/auth/authentification.store';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
+import { ThemeStore } from './service/theme/theme.store';
 import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
 import { CDSSharedWorker } from './shared/worker/shared.worker';
@@ -27,37 +28,39 @@ import { CDSWorker } from './shared/worker/worker';
     styleUrls: ['./app.component.scss']
 })
 @AutoUnsubscribe()
-export class AppComponent  implements OnInit {
-
+export class AppComponent implements OnInit {
     open: boolean;
     isConnected = false;
     versionWorker: CDSWebWorker;
-
     sseWorker: CDSWorker;
     heartbeatToken: number;
-
     zone: NgZone;
-
     currentVersion = 0;
     showUIUpdatedBanner = false;
-
     languageSubscriber: Subscription;
+    themeSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
     _sseSubscription: Subscription;
-
     displayResolver = false;
     toasterConfig: any;
-
     lastPing: number;
+    currentTheme: string;
 
-    constructor(_translate: TranslateService, private _language: LanguageStore,
-                private _activatedRoute: ActivatedRoute, private _titleService: Title,
-                private _authStore: AuthentificationStore, private _router: Router,
-                private _notification: NotificationService, private _appService: AppService,
-                private _toastService: ToastService) {
-        this.zone = new NgZone({enableLongStackTrace: false});
+    constructor(
+        _translate: TranslateService,
+        private _language: LanguageStore,
+        private _theme: ThemeStore,
+        private _activatedRoute: ActivatedRoute,
+        private _titleService: Title,
+        private _authStore: AuthentificationStore,
+        private _router: Router,
+        private _notification: NotificationService,
+        private _appService: AppService,
+        private _toastService: ToastService
+    ) {
+        this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
@@ -65,11 +68,19 @@ export class AppComponent  implements OnInit {
         _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
         registerLocaleData(browserLang.match(/fr/) ? localeFR : localeEN);
 
-        this.languageSubscriber = this._language.get().subscribe( l => {
+        this.languageSubscriber = this._language.get().subscribe(l => {
             if (l) {
                 _translate.use(l);
             } else {
                 _language.set(browserLang.match(/en|fr/) ? browserLang : 'en');
+            }
+        });
+
+        this.themeSubscriber = this._theme.get().subscribe(t => {
+            if (t) {
+                document.body.className = t;
+            } else {
+                _theme.set('light');
             }
         });
 
@@ -183,11 +194,23 @@ export class AppComponent  implements OnInit {
             .pipe(
                 filter((e) => e != null),
                 bufferTime(2000),
-                filter((events) => events.length !== 0)
+                filter((events) => events.length !== 0),
+
             )
             .subscribe((events) => {
                 this.zone.run(() => {
-                    for (let e of events) {
+                    let resultEvents = (<Array<Event>>events).reduce( (results, e) => {
+                        if (!e.type_event || e.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) !== 0) {
+                            results.push(e);
+                        } else {
+                            let wr = results.find( re => re.project_key === e.project_key && re.workflow_name === e.workflow_name);
+                            if (!wr) {
+                                results.push(e);
+                            }
+                        }
+                        return results;
+                    }, new Array<Event>());
+                    for (let e of resultEvents) {
                         if (e.healthCheck != null) {
                             this.lastPing = (new Date()).getTime();
                             // 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
@@ -208,7 +231,7 @@ export class AppComponent  implements OnInit {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
         this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
         this.versionWorker.start({});
-        this.versionWorker.response().subscribe( msg => {
+        this.versionWorker.response().subscribe(msg => {
             if (msg) {
                 this.zone.run(() => {
                     let versionJSON = Number(JSON.parse(msg).version);

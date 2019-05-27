@@ -1,0 +1,96 @@
+<ng-template let-context let-modal="modal" #nodeEditModal>
+    <ng-container *ngIf="node">
+        <div class="header">
+            <div class="modalHeader">
+                <ng-container *ngIf="!hook">{{node.name}}</ng-container>
+                <ng-container *ngIf="hook">{{ 'workflow_node_hook_modal_title' | translate }}</ng-container>
+            </div>
+        </div>
+        <div class="content">
+            <div class="ui grid">
+                <div class="four wide column">
+                    <div class="ui secondary vertical pointing menu">
+                        <ng-container *ngIf="!hook">
+                            <ng-container *ngIf="node.type === 'pipeline'">
+                                <a class="item" [class.active]="selected === 'context'" (click)="changeView('context')">
+                                    {{ 'workflow_node_context_label' | translate }}
+                                </a>
+                            </ng-container>
+                            <ng-container *ngIf="node.type === 'pipeline'">
+                                <a class="item" [class.active]="selected === 'input'" (click)="changeView('input')">
+                                    {{ 'workflow_node_input' | translate }}
+                                </a>
+                            </ng-container>
+                            <ng-container *ngIf="node.type === 'outgoinghook'">
+                                <a class="item" [class.active]="selected === 'outgoinghook'"
+                                    (click)="changeView('outgoinghook')">
+                                    {{ 'workflow_node_type_outgoing_hook' | translate }}
+                                </a>
+                            </ng-container>
+                            <a class="item" [class.active]="selected === 'conditions'"
+                                (click)="changeView('conditions')">
+                                {{ 'workflow_node_condition_label' | translate }}
+                            </a>
+                            <a class="item" [class.active]="selected === 'permissions'"
+                                (click)="changeView('permissions')">
+                                {{ 'common_permissions' | translate }}
+                            </a>
+                        </ng-container>
+                        <ng-container *ngIf="hook">
+                            <a class="item" [class.active]="selected === 'hook'" (click)="changeView('hook')">
+                                Hook
+                            </a>
+                        </ng-container>
+                    </div>
+                </div>
+                <div class="twelve wide column">
+                    <div [ngSwitch]="selected">
+                        <ng-container *ngSwitchCase="'context'">
+                            <app-workflow-node-context [project]="project" [workflow]="workflow" [readonly]="readonly"
+                                [node]="node" (contextChange)="pushChange($event)"></app-workflow-node-context>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'input'">
+                            <ng-container *ngIf="!nodeRun">
+                                <app-workflow-node-input [project]="project" [workflow]="workflow" [readonly]="readonly"
+                                    [node]="node" (inputChange)="pushChange($event)"></app-workflow-node-input>
+                            </ng-container>
+                            <ng-container *ngIf="nodeRun">
+                                <app-workflow-node-input [project]="project" [workflow]="workflow" [readonly]="true"
+                                    [noderun]="nodeRun" (inputChange)="pushChange($event)"></app-workflow-node-input>
+                            </ng-container>
+
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'outgoinghook'">
+                            <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow"
+                                [mode]="readonly?'ro':'update'" [hook]="node" (outgoinghookChange)="pushChange($event)">
+                            </app-workflow-node-outgoinghook>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'conditions'">
+                            <app-workflow-node-conditions [project]="project" [workflow]="workflow"
+                                [readonly]="readonly" [node]="node" (conditionsChange)="pushChange($event)">
+                            </app-workflow-node-conditions>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'permissions'">
+                            <ng-container *ngIf="groups">
+                                <app-permission-list [permissions]="groups" (event)="groupManagement($event)"
+                                    (permissionChange)="pushChange($event)"
+                                    [edit]="(workflow.from_repository && workflow.from_repository.length > 0)?false:!readonly">
+                                </app-permission-list>
+                            </ng-container>
+                            <ng-container
+                                *ngIf="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
+                                <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>
+                                <app-permission-form (createGroupPermissionEvent)="groupManagement($event)"
+                                    [loading]="loading"></app-permission-form>
+                            </ng-container>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'hook'">
+                            <app-workflow-node-hook-form [project]="project" [workflow]="workflow" [node]="node"
+                                [hook]="hook" [mode]="readonly?'ro':'update'"></app-workflow-node-hook-form>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</ng-template>

@@ -1,60 +1,52 @@
 <div id="CDSHome">
     <div class="ui row" *ngIf="!loading">
-      <div class="ui grid">
-        <div class="ui row">
-          <div class="one wide column">
-          </div>
-          <div class="twelve wide column">
-            <h1 class="ui header">{{ 'home_title' | translate }}</h1>
-          </div>
-          <div class="three wide column">
-
-          </div>
-        </div>
-        <div class="ui row">
-          <div class="one wide column">
-          </div>
-          <div class="ten wide column border-right">
-            <div class="ui secondary pointing menu">
-                <a class="item" [class.active]="selectedTab === 'timeline'" (click)="selectTab('timeline')">{{'timeline_title' | translate}}</a>
-                <a class="item" [class.active]="selectedTab === 'heatmap'" (click)="selectTab('heatmap')">{{'heatmap' | translate}}</a>
-                <a class="item" [class.active]="selectedTab === 'filter'" (click)="selectTab('filter')"><i class="filter icon"></i></a>
+        <div class="ui grid">
+            <div class="ui row">
+                <div class="one wide column"></div>
+                <div class="ten wide column border-right">
+                    <div class="ui secondary pointing menu">
+                        <a class="item" [class.active]="selectedTab === 'timeline'"
+                            (click)="selectTab('timeline')">{{'timeline_title' | translate}}</a>
+                        <a class="item" [class.active]="selectedTab === 'heatmap'"
+                            (click)="selectTab('heatmap')">{{'heatmap' | translate}}</a>
+                        <a class="item" [class.active]="selectedTab === 'filter'" (click)="selectTab('filter')"><i
+                                class="filter icon"></i></a>
+                    </div>
+                    <ng-container [ngSwitch]="selectedTab">
+                        <ng-container *ngSwitchCase="'timeline'">
+                            <app-home-timeline></app-home-timeline>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'heatmap'">
+                            <app-home-heatmap></app-home-heatmap>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'filter'">
+                            <app-home-filter [filter]="filter"></app-home-filter>
+                        </ng-container>
+                    </ng-container>
+                </div>
+                <div class="five wide column">
+                    <div>
+                        <a class="fluid ui blue basic button link" href="https://ovh.github.io/cds" target="_blank">
+                            <i class="book icon"></i>Guide
+                        </a>
+                    </div>
+                    <div>
+                        <a class="fluid ui blue basic button link mt5" href="" [routerLink]="['/broadcast']">
+                            <i class="bell icon"></i>{{'broadcast_list_title' | translate}}
+                        </a>
+                    </div>
+                    <app-home-broadcast [loading]="loadingBroadcasts" [broadcasts]="broadcasts"></app-home-broadcast>
+                    <div>
+                        <a class="fluid ui blue basic button link mt5" href="" [routerLink]="['/favorite']">
+                            <i class="book icon"></i>{{'navbar_favorites' | translate}}
+                        </a>
+                    </div>
+                    <ng-container *ngIf="user.admin">
+                        <app-home-favorite [bookmarks]="favorites"></app-home-favorite>
+                    </ng-container>
+                </div>
             </div>
-            <ng-container [ngSwitch]="selectedTab">
-                <ng-container *ngSwitchCase="'timeline'">
-                    <app-home-timeline></app-home-timeline>
-                </ng-container>
-                <ng-container *ngSwitchCase="'heatmap'">
-                    <app-home-heatmap></app-home-heatmap>
-                </ng-container>
-                <ng-container *ngSwitchCase="'filter'">
-                    <app-home-filter [filter]="filter"></app-home-filter>
-                </ng-container>
-            </ng-container>
-          </div>
-          <div class="five wide column">
-              <div>
-                  <a class="fluid ui blue basic button link" href="https://ovh.github.io/cds" target="_blank">
-                      <i class="book icon"></i>Guide
-                  </a>
-              </div>
-              <div>
-                  <a class="fluid ui blue basic button link mt5" href="" [routerLink]="['/broadcast']">
-                      <i class="bell icon"></i>{{'broadcast_list_title' | translate}}
-                  </a>
-              </div>
-              <app-home-broadcast [loading]="loadingBroadcasts" [broadcasts]="broadcasts"></app-home-broadcast>
-              <div>
-                  <a class="fluid ui blue basic button link mt5" href="" [routerLink]="['/favorite']">
-                      <i class="book icon"></i>{{'navbar_favorites' | translate}}
-                  </a>
-              </div>
-              <ng-container *ngIf="user.admin">
-                  <app-home-favorite [bookmarks]="favorites"></app-home-favorite>
-              </ng-container>
-          </div>
         </div>
-      </div>
     </div>
     <div class="ui active text loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
 </div>

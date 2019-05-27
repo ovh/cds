@@ -48,7 +48,10 @@ export class ParameterListComponent extends Table<Parameter> implements OnInit {
 
     private _parameters: Array<Parameter>;
 
-    constructor(private _paramService: ParameterService, public _sharedService: SharedService) {
+    constructor(
+        private _paramService: ParameterService,
+        public _sharedService: SharedService // used in html
+    ) {
         super();
         this.parameterTypes = this._paramService.getTypesFromCache();
         if (!this.parameterTypes) {

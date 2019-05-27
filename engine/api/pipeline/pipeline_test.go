@@ -1,17 +1,22 @@
 package pipeline_test
 
 import (
+	"fmt"
+	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestInsertPipeline(t *testing.T) {
@@ -185,4 +190,110 @@ func TestLoadByWorkflowID(t *testing.T) {
 
 	assert.Equal(t, 1, len(actuals))
 	assert.Equal(t, pip.ID, actuals[0].ID)
+}
+
+func TestLoadByWorkerModel(t *testing.T) {
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	g1 := group.SharedInfraGroup
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	uAdmin, _ := assets.InsertAdminUser(db)
+	uLambda1, _ := assets.InsertLambdaUser(db)
+	uLambda2, _ := assets.InsertLambdaUser(db, g2)
+
+	model1 := sdk.Model{Name: sdk.RandomString(10), Group: g1, GroupID: g1.ID}
+	model2 := sdk.Model{Name: sdk.RandomString(10), Group: g2, GroupID: g2.ID}
+
+	projectKey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey, nil)
+
+	assert.NoError(t, group.InsertGroupInProject(db, proj.ID, g2.ID, permission.PermissionReadWriteExecute))
+
+	// first pipeline with requirement shared.infra/model
+	pip1 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, uAdmin))
+	job1 := sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Requirements: []sdk.Requirement{{
+				Type:  sdk.ModelRequirement,
+				Name:  fmt.Sprintf("%s/%s --privileged", model1.Group.Name, model1.Name),
+				Value: fmt.Sprintf("%s/%s --privileged", model1.Group.Name, model1.Name),
+			}},
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(db, &job1, 0, &pip1))
+
+	// second pipeline with requirement model
+	pip2 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, uAdmin))
+	job2 := sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Requirements: []sdk.Requirement{{
+				Type:  sdk.ModelRequirement,
+				Name:  fmt.Sprintf("%s --privileged", model1.Name),
+				Value: fmt.Sprintf("%s --privileged", model1.Name),
+			}},
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(db, &job2, 0, &pip2))
+
+	// third pipeline with requirement group/model
+	pip3 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, uAdmin))
+	job3 := sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Requirements: []sdk.Requirement{{
+				Type:  sdk.ModelRequirement,
+				Name:  fmt.Sprintf("%s/%s --privileged", model2.Group.Name, model2.Name),
+				Value: fmt.Sprintf("%s/%s --privileged", model2.Group.Name, model2.Name),
+			}},
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(db, &job3, 0, &pip3))
+
+	pips, err := pipeline.LoadByWorkerModel(db, uAdmin, &model1)
+	assert.NoError(t, err)
+	if !assert.Equal(t, 2, len(pips)) {
+		t.FailNow()
+	}
+	sort.Slice(pips, func(i, j int) bool { return pips[i].ID < pips[j].ID })
+	assert.Equal(t, pip1.Name, pips[0].Name)
+	assert.Equal(t, pip2.Name, pips[1].Name)
+
+	pips, err = pipeline.LoadByWorkerModel(db, uAdmin, &model2)
+	assert.NoError(t, err)
+
+	if !assert.Equal(t, 1, len(pips)) {
+		t.FailNow()
+	}
+	assert.Equal(t, pip3.Name, pips[0].Name)
+
+	pips, err = pipeline.LoadByWorkerModel(db, uLambda1, &model1)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(pips))
+
+	pips, err = pipeline.LoadByWorkerModel(db, uLambda2, &model1)
+	assert.NoError(t, err)
+	if !assert.Equal(t, 2, len(pips)) {
+		t.FailNow()
+	}
+	sort.Slice(pips, func(i, j int) bool { return pips[i].ID < pips[j].ID })
+	assert.Equal(t, pip1.Name, pips[0].Name)
+	assert.Equal(t, pip2.Name, pips[1].Name)
+
+	pips, err = pipeline.LoadByWorkerModel(db, uLambda2, &model2)
+	assert.NoError(t, err)
+
+	if !assert.Equal(t, 1, len(pips)) {
+		t.FailNow()
+	}
+	assert.Equal(t, pip3.Name, pips[0].Name)
 }

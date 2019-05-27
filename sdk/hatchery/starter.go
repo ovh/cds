@@ -158,8 +158,12 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	ctxSendSpawnInfo, next := observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
 	start := time.Now()
 	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
-		ID:   sdk.MsgSpawnInfoHatcheryStarts.ID,
-		Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name},
+		ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
+		Args: []interface{}{
+			h.Service().Name,
+			fmt.Sprintf("%d", h.ID()),
+			fmt.Sprintf("%s/%s", j.model.Group.Name, j.model.Name),
+		},
 	})
 	next()
 

@@ -17,13 +17,13 @@ type Pipeliner interface {
 
 // PipelineV1 represents exported sdk.Pipeline
 type PipelineV1 struct {
-	Version      string                    `json:"version,omitempty" yaml:"version,omitempty"`
-	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
-	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
-	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Stages       []string                  `json:"stages,omitempty" yaml:"stages,omitempty"` //Here Stage.Jobs will NEVER be set
-	StageOptions map[string]Stage          `json:"options,omitempty" yaml:"options,omitempty"`
-	Jobs         []Job                     `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Version      string                    `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"The version for the current pipeline file (v1.0)."`
+	Name         string                    `json:"name,omitempty" yaml:"name,omitempty" jsonschema_description:"The name of the pipeline."`
+	Description  string                    `json:"description,omitempty" yaml:"description,omitempty" jsonschema_description:"The description of the pipeline."`
+	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty" jsonschema_description:"The list of parameters of the pipeline."`
+	Stages       []string                  `json:"stages,omitempty" yaml:"stages,omitempty" jsonschema_description:"The list of stage's names for the pipeline."`
+	StageOptions map[string]Stage          `json:"options,omitempty" yaml:"options,omitempty" jsonschema_description:"The options for stages of the pipeline."` //Here Stage.Jobs will NEVER be set
+	Jobs         []Job                     `json:"jobs,omitempty" yaml:"jobs,omitempty" jsonschema_description:"The list of jobs for the pipeline."`
 }
 
 // PipelineVersion is a version
@@ -44,38 +44,14 @@ type Stage struct {
 
 // Job represents exported sdk.Job
 type Job struct {
-	Name           string        `json:"job,omitempty" yaml:"job,omitempty"`     //This will ONLY be set with Pipelinev1
-	Stage          string        `json:"stage,omitempty" yaml:"stage,omitempty"` //This will ONLY be set with Pipelinev1
-	Description    string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty"`
-	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
-	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty"`
-	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
-}
-
-// Step represents exported step used in a job
-type Step map[string]interface{}
-
-// IsValid returns true is the step is valid
-func (s Step) IsValid() bool {
-	keys := []string{}
-	for k := range s {
-		if k != "enabled" && k != "optional" && k != "always_executed" && k != "name" {
-			keys = append(keys, k)
-		}
-	}
-	return len(keys) == 1
-}
-
-func (s Step) key() string {
-	keys := []string{}
-	for k := range s {
-		if k != "enabled" && k != "optional" && k != "always_executed" && k != "name" {
-			keys = append(keys, k)
-		}
-	}
-	return keys[0]
+	Name           string        `json:"job,omitempty" yaml:"job,omitempty" jsonschema_description:"The name of the job."`
+	Stage          string        `json:"stage,omitempty" yaml:"stage,omitempty" jsonschema_description:"The name of the stage for the job."`
+	Description    string        `json:"description,omitempty" yaml:"description,omitempty" jsonschema_description:"The description of the job."`
+	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty" jsonschema_description:"Job is enabled by default, you can set this option to disable a job."`
+	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty" jsonschema_description:"The list of steps for the job."`
+	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" jsonschema_description:"The list of requirements for the jobs."`
+	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty" jsonschema_description:"Set this option to ignore job's errors."`
+	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty" jsonschema_description:"Set this option to execute the job even if a previous step failed."`
 }
 
 // Requirement represents an exported sdk.Requirement
@@ -210,61 +186,13 @@ func newJobs(jobs []sdk.Job) map[string]Job {
 func computeSteps(steps []Step) ([]sdk.Action, error) {
 	res := make([]sdk.Action, len(steps))
 	for i, s := range steps {
-		a, err := computeStep(s)
+		a, err := s.toAction()
 		if err != nil {
 			return nil, err
 		}
 		res[i] = *a
 	}
 	return res, nil
-}
-
-func computeStep(s Step) (*sdk.Action, error) {
-	if !s.IsValid() {
-		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "malformatted step")
-	}
-
-	if a, ok, err := s.AsArtifactDownload(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsArtifactUpload(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsServeStaticFiles(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsJUnitReport(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsGitClone(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsCheckoutApplication(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsDeployApplication(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsCoverageAction(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsScript(); ok {
-		return a, err
-	}
-
-	if a, ok, err := s.AsAction(); ok {
-		return a, err
-	}
-
-	return nil, nil
 }
 
 func computeJobRequirements(req []Requirement) []sdk.Requirement {

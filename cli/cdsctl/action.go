@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	actionSDK "github.com/ovh/cds/sdk/action"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 var actionCmd = cli.Command{
@@ -35,6 +36,7 @@ func action() *cobra.Command {
 		cli.NewCommand(actionBuiltinCmd, nil, []*cobra.Command{
 			cli.NewListCommand(actionBuiltinListCmd, actionBuiltinListRun, nil),
 			cli.NewGetCommand(actionBuiltinShowCmd, actionBuiltinShowRun, nil),
+			cli.NewCommand(actionBuiltinDocCmd, actionBuiltinDocRun, nil),
 		}),
 	})
 }
@@ -66,14 +68,6 @@ type actionDisplay struct {
 	Type     string `cli:"Type"`
 }
 
-func actionParsePath(path string) (string, string, error) {
-	pathSplitted := strings.Split(path, "/")
-	if len(pathSplitted) != 2 {
-		return "", "", fmt.Errorf("invalid given action path")
-	}
-	return pathSplitted[0], pathSplitted[1], nil
-}
-
 var actionListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS actions",
@@ -102,7 +96,7 @@ var actionShowCmd = cli.Command{
 }
 
 func actionShowRun(v cli.Values) (interface{}, error) {
-	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +136,7 @@ var actionDeleteCmd = cli.Command{
 }
 
 func actionDeleteRun(v cli.Values) error {
-	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
 	if err != nil {
 		return err
 	}
@@ -158,7 +152,7 @@ func actionDeleteRun(v cli.Values) error {
 
 var actionDocCmd = cli.Command{
 	Name:  "doc",
-	Short: "Generate Action Documentation: cdsctl action doc <path-to-file>",
+	Short: "Generate action documentation: cdsctl action doc <path-to-file>",
 	Args: []cli.Arg{
 		{Name: "path"},
 	},
@@ -183,7 +177,7 @@ func actionDocRun(v cli.Values) error {
 		return err
 	}
 
-	act, errapp := ea.Action()
+	act, errapp := ea.GetAction()
 	if errapp != nil {
 		return errapp
 	}
@@ -233,7 +227,7 @@ var actionExportCmd = cli.Command{
 }
 
 func actionExportRun(v cli.Values) error {
-	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
 	if err != nil {
 		return err
 	}
@@ -282,4 +276,32 @@ func actionBuiltinShowRun(v cli.Values) (interface{}, error) {
 	}
 
 	return newActionDisplay(*action), nil
+}
+
+var actionBuiltinDocCmd = cli.Command{
+	Name:  "doc",
+	Short: "Generate Builtin action documentation: cdsctl action builtin doc <name>",
+	Args: []cli.Arg{
+		{Name: "name"},
+	},
+}
+
+func actionBuiltinDocRun(v cli.Values) error {
+	n := v.GetString("name")
+
+	var found bool
+	var m actionSDK.Manifest
+	for i := range actionSDK.List {
+		if slug.Convert(actionSDK.List[i].Action.Name) == slug.Convert(n) {
+			found = true
+			m = actionSDK.List[i]
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("Invalid given action name %s", n)
+	}
+
+	fmt.Println(m.Markdown())
+	return nil
 }

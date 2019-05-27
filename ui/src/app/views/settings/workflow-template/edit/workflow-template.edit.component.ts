@@ -227,6 +227,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
             .subscribe(res => {
                 this.oldWorkflowTemplate = { ...res };
                 this.workflowTemplate = res;
+                this.updatePath();
                 this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);

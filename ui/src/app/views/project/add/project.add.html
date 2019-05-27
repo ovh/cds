@@ -53,7 +53,7 @@
             </div>
             <div class="row">
                 <div class="right aligned column">
-                    <button class="ui green button" [class.loading]="loading"><i class="save icon"></i>{{ 'btn_create' | translate }}</button>
+                    <button class="ui green button" name="createproject" [class.loading]="loading"><i class="save icon"></i>{{ 'btn_create' | translate }}</button>
                 </div>
             </div>
         </div>
@@ -65,6 +65,6 @@
     </modal-content>
     <modal-actions>
         <div class="ui grey button" (click)="modalCreateGroup.hide()">{{ 'btn_cancel' | translate }}</div>
-        <div class="ui green button" (click)="createGroup()" [class.loading]="loading" [class.disabled]="loading">{{ 'btn_create' | translate }}</div>
+        <div class="ui green button" name="creategroup" (click)="createGroup()" [class.loading]="loading" [class.disabled]="loading">{{ 'btn_create' | translate }}</div>
     </modal-actions>
 </sm-modal>

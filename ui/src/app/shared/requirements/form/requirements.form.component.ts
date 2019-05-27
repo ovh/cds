@@ -1,13 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { SharedInfraGroupName } from 'app/model/group.model';
+import { Requirement } from 'app/model/requirement.model';
+import { WorkerModel } from 'app/model/worker-model.model';
+import { RequirementStore } from 'app/service/requirement/requirement.store';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
-import { finalize, first } from 'rxjs/operators';
-import { adminGroupName, GroupPermission } from '../../../model/group.model';
-import { PermissionValue } from '../../../model/permission.model';
-import { Requirement } from '../../../model/requirement.model';
-import { WorkerModel } from '../../../model/worker-model.model';
-import { RequirementStore } from '../../../service/requirement/requirement.store';
-import { WorkerModelService } from '../../../service/worker-model/worker-model.service';
+import { first } from 'rxjs/operators';
 import { RequirementEvent } from '../requirement.event.model';
 
 export const OSArchitecture = 'os-architecture';
@@ -18,8 +16,7 @@ export const OSArchitecture = 'os-architecture';
     styleUrls: ['./requirements.form.scss']
 })
 export class RequirementsFormComponent implements OnInit {
-
-    @Input('suggest')
+    @Input()
     set suggest(data: Array<string>) {
         if (data) {
             this._suggest = data;
@@ -27,40 +24,43 @@ export class RequirementsFormComponent implements OnInit {
             this._suggest = [];
         }
     }
+    get suggest() { return this._suggest; }
 
-    get suggest() {
-        return this._suggest;
-    }
+    _workerModels: Array<WorkerModel>;
+    @Input() set workerModels(wms: Array<WorkerModel>) {
+        if (wms) {
+            this._workerModels = wms;
 
-    get suggestWithOsArch() {
-        return this._suggestWithOsArch;
+            this.suggestWithWorkerModel = wms.map(wm => {
+                if (wm.group.name !== SharedInfraGroupName) {
+                    return `${wm.group.name}/${wm.name}`;
+                }
+                return wm.name;
+            }).concat(this._suggest);
+        }
     }
+    get workerModels() { return this._workerModels; }
 
-    get suggestWithWorkerModel() {
-        return this._suggestWithWorkerModel;
-    }
 
     @Input() modal: SemanticModalComponent;
-    @Input() groupsPermission: Array<GroupPermission>;
-    @Input() config: {disableModel?: boolean, disableHostname?: boolean};
+    @Input() config: { disableModel?: boolean, disableHostname?: boolean };
 
     @Output() event = new EventEmitter<RequirementEvent>();
 
     newRequirement: Requirement = new Requirement('binary');
     availableRequirements: Array<string>;
-    workerModels: Array<WorkerModel>;
     _suggest: Array<string> = [];
-    _suggestWithWorkerModel: Array<string> = [];
-    _suggestWithOsArch:  Array<string> = [];
-    loading = true;
+    suggestWithWorkerModel: Array<string> = [];
+    suggestWithOsArch: Array<string> = [];
     workerModelLinked: WorkerModel;
     isFormValid = false;
     modelTypeClass: string;
     popupText: string;
 
-    constructor(private _requirementStore: RequirementStore,
-        private _workerModelService: WorkerModelService,
-        private _translate: TranslateService) {
+    constructor(
+        private _requirementStore: RequirementStore,
+        private _translate: TranslateService
+    ) {
         this._requirementStore.getAvailableRequirements().subscribe(r => {
             this.availableRequirements = new Array<string>();
             // user does not need to add plugin prequisite manually, so we remove it from list
@@ -77,32 +77,8 @@ export class RequirementsFormComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._workerModelService.getWorkerModels('active')
-            .pipe(
-              first(),
-              finalize(() => this.loading = false)
-            )
-            .subscribe( wms => {
-                this.workerModels = wms;
-                if (Array.isArray(this.workerModels)) {
-                    let filteredWm = this.workerModels;
-
-                    if (this.groupsPermission) {
-                        filteredWm = this.workerModels.filter((wm) => {
-                            let groupPerm = this.groupsPermission.find((grp) => {
-                                return grp.group.name === wm.group.name && grp.permission >= PermissionValue.READ_EXECUTE;
-                            });
-
-                            return groupPerm != null || wm.group.name === adminGroupName;
-                        });
-                    }
-
-                    this._suggestWithWorkerModel = filteredWm.map(wm => wm.name).concat(this._suggest);
-                }
-            });
-
         this._requirementStore.getRequirementsTypeValues(OSArchitecture).pipe(first()).subscribe(values => {
-            this._suggestWithOsArch = values.concat(this._suggest);
+            this.suggestWithOsArch = values.concat(this._suggest);
         });
     }
 
@@ -154,7 +130,7 @@ export class RequirementsFormComponent implements OnInit {
 
     closeModal() {
         if (this.modal) {
-          this.modal.hide();
+            this.modal.hide();
         }
     }
 

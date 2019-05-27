@@ -15,6 +15,7 @@ require (
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/Shopify/sarama v1.17.0
 	github.com/Shopify/toxiproxy v2.1.3+incompatible // indirect
+	github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect
 	github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53 // indirect
@@ -71,7 +72,7 @@ require (
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
-	github.com/fsamin/go-dump v1.0.8
+	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.1
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
@@ -81,7 +82,7 @@ require (
 	github.com/gizak/termui v0.0.0-20170306115353-798ffb9cbbe4
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-gorp/gorp v2.0.0+incompatible
-	github.com/go-redis/redis v6.14.1+incompatible
+	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-sql-driver/mysql v0.0.0-20180113200744-2cc627ac8def // indirect
 	github.com/go-stomp/stomp v1.0.1 // indirect
 	github.com/gocql/gocql v0.0.0-20181018123354-22229812a83e // indirect
@@ -174,6 +175,7 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
+	github.com/olivere/elastic v6.2.17+incompatible // indirect
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -266,7 +268,7 @@ require (
 	gopkg.in/ini.v1 v1.28.0 // indirect
 	gopkg.in/ldap.v2 v2.3.0
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
-	gopkg.in/olivere/elastic.v5 v5.0.69
+	gopkg.in/olivere/elastic.v6 v6.2.17
 	gopkg.in/ory-am/dockertest.v2 v2.2.3 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.0
 	gopkg.in/stomp.v1 v1.0.1 // indirect
@@ -280,7 +282,6 @@ require (
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v0.2.0 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
-
 )
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f

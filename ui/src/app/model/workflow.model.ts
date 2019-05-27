@@ -310,7 +310,6 @@ export class Workflow {
 
     static getParentNodeIds(workflowRun: WorkflowRun, currentNodeID: number): number[] {
         let ancestors = new Array<number>();
-
         let nodes = Workflow.getAllNodes(workflowRun.workflow);
         if (nodes) {
             loop: for (let i = 0; i < nodes.length; i++) {
@@ -336,6 +335,9 @@ export class Workflow {
                             break loop;
                         }
                     }
+                }
+                if (n.id === currentNodeID && n.type === WNodeType.JOIN) {
+                    ancestors.push(...n.parents.map(p => p.parent_id));
                 }
             }
         }
@@ -648,6 +650,7 @@ export class WNodeContext {
     node_id: number;
     pipeline_id: number;
     application_id: number;
+    disable_vcs_status: boolean;
     environment_id: number;
     project_integration_id: number;
     default_payload: {};

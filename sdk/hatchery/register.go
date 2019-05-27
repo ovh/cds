@@ -70,7 +70,7 @@ loopModels:
 
 		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
 			if err := h.CDSClient().WorkerModelBook(models[k].ID); err != nil {
-				log.Debug("hatchery> workerRegister> WorkerModelBook on model %s err: %v", models[k].Name, err)
+				log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
 			} else {
 				log.Info("hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
 				//Ask for the creation

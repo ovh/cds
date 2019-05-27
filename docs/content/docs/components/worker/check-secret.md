@@ -11,7 +11,7 @@ notoc: true
 
 
 
-Inside a step script (https://ovh.github.io/cds/docs/actions/script/), you can add check if a file contains a CDS variable of type password or private key:
+Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add check if a file contains a CDS variable of type password or private key:
 
 ```bash
 #!/bin/bash

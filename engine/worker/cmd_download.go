@@ -34,7 +34,7 @@ func cmdDownload(w *currentWorker) *cobra.Command {
 Inside a job, there are two ways to download an artifact:
 
 * with a step using action Download Artifacts
-* with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command.
+* with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.
 
 Worker Command:
 
@@ -220,7 +220,7 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 			defer wg.Done()
 
 			path := path.Join(reqArgs.Destination, a.Name)
-			f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 			if err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
 				isInError = true
