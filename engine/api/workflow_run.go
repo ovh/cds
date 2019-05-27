@@ -405,6 +405,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 
 	workflow.AddWorkflowRunInfo(run, false, spwnMsg)
 
+	var oneNodeIsStopping bool
 	for _, wn := range run.WorkflowNodeRuns {
 		for _, wnr := range wn {
 			if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess.String() ||
@@ -413,12 +414,18 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 				continue
 			}
 
+			if wnr.Status == sdk.StatusWaiting.String() {
+				wnr.Status = sdk.StatusStopped.String()
+			} else {
+				wnr.Status = sdk.StatusStopping.String()
+				oneNodeIsStopping = true
+			}
+
 			r1, errS := workflow.StopWorkflowNodeRun(ctx, dbFunc, store, p, wnr, stopInfos)
 			if errS != nil {
 				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop workflow node run %d", wnr.ID)
 			}
 			report.Merge(r1, nil) // nolint
-			wnr.Status = sdk.StatusStopping.String()
 
 			// If it's a outgoing hook, we stop the child
 			if wnr.OutgoingHook != nil {
@@ -464,7 +471,11 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	}
 
 	run.LastExecution = time.Now()
-	run.Status = sdk.StatusStopped.String()
+	if oneNodeIsStopping {
+		run.Status = sdk.StatusStopping.String()
+	} else {
+		run.Status = sdk.StatusStopped.String()
+	}
 	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
 		return nil, sdk.WrapError(errU, "Unable to update workflow run %d", run.ID)
 	}

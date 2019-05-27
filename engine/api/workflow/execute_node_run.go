@@ -247,13 +247,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	//Delete jobs only when node is over
 	if sdk.StatusIsTerminated(nr.Status) {
-		if nr.Status != sdk.StatusStopped.String() {
-			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
-			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
-			}
-			report, _ = report.Merge(r1, nil)
+		r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+		if err != nil {
+			return nil, sdk.WrapError(err, "Unable to reprocess workflow")
 		}
+		report, _ = report.Merge(r1, nil)
 
 		//Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, nr.ID); err != nil {
@@ -722,7 +720,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	// Update stages from node run
 	stopWorkflowNodeRunStages(tx, nodeRun)
 
-	if nodeRun.Status == sdk.StatusWaiting.String() {
+	if nodeRun.Status == sdk.StatusWaiting.String() || nodeRun.Status == sdk.StatusStopped.String() {
 		nodeRun.Status = sdk.StatusStopped.String()
 	} else {
 		nodeRun.Status = sdk.StatusStopping.String()

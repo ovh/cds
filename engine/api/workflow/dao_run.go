@@ -42,7 +42,7 @@ type LoadRunOptions struct {
 	WithLightTests          bool
 	WithVulnerabilities     bool
 	DisableDetailledNodeRun bool
-	Language                 string
+	Language                string
 }
 
 // insertWorkflowRun inserts in table "workflow_run""
@@ -631,7 +631,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 
 // CreateRun creates a new workflow run and insert it
 func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) (*sdk.WorkflowRun, error) {
-	number, err := NextRunNumber(db, wf.ID)
+	number, err := nextRunNumber(db, wf.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get next run number")
 	}
@@ -703,7 +703,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 // UpdateRunNum Update run number for the given workflow
 func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	if num == 1 {
-		if _, err := NextRunNumber(db, w.ID); err != nil {
+		if _, err := nextRunNumber(db, w.ID); err != nil {
 			return sdk.WrapError(err, "Cannot create run number")
 		}
 		return nil
@@ -718,7 +718,7 @@ func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
-func NextRunNumber(db gorp.SqlExecutor, workflowID int64) (int64, error) {
+func nextRunNumber(db gorp.SqlExecutor, workflowID int64) (int64, error) {
 	i, err := db.SelectInt("select workflow_sequences_nextval($1)", workflowID)
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
