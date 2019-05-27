@@ -21,7 +21,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new hatchery local
@@ -218,30 +217,25 @@ func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
-	wName := fmt.Sprintf("%s-%s", h.Service().Name, namesgenerator.GetRandomNameCDS(0))
-	if spawnArgs.RegisterOnly {
-		wName = "register-" + wName
-	}
-
+func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", wName,
-			spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d", wName,
+			spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.JobID)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s) - %s", wName,
-			spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s)", wName,
+			spawnArgs.Model.ModelVirtualMachine.Image)
 	}
 
 	// Generate a random string 16 chars length
 	bs := make([]byte, 16)
 	if _, err := rand.Read(bs); err != nil {
-		return "", err
+		return err
 	}
 	rndstr := hex.EncodeToString(bs)[0:16]
 	basedir := path.Join(h.Config.Basedir, rndstr)
 	// Create the directory
 	if err := os.MkdirAll(basedir, os.FileMode(0755)); err != nil {
-		return "", err
+		return err
 	}
 
 	udataParam := sdk.WorkerArgs{
@@ -263,16 +257,16 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	if spawnArgs.Model.ModelVirtualMachine.Cmd == "" {
-		return "", fmt.Errorf("hatchery local> Cannot launch main worker command because it's empty")
+		return fmt.Errorf("hatchery local> Cannot launch main worker command because it's empty")
 	}
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelVirtualMachine.Cmd)
 	if errt != nil {
-		return "", errt
+		return errt
 	}
 	var buffer bytes.Buffer
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
-		return "", errTmpl
+		return errTmpl
 	}
 
 	cmdSplitted := strings.Split(buffer.String(), " -")
@@ -301,7 +295,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	if err := cmd.Start(); err != nil {
 		log.Error("hatchery> local> %v", err)
-		return "", err
+		return err
 	}
 
 	log.Debug("worker %s has been spawned by %s", wName, h.Name)

@@ -186,7 +186,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	observability.Current(ctx, observability.Tag(observability.TagWorker, name))
-	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
+	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s", name)
 
 	// Choose a dockerEngine
 	var dockerClient *dockerClient

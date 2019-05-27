@@ -39,7 +39,6 @@ func (api *API) Status() sdk.MonitoringStatus {
 	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(api.Router.StatusPanic()))
 	m.Lines = append(m.Lines, getStatusLine(event.Status()))
-	m.Lines = append(m.Lines, getStatusLine(api.Cache.Status()))
 	m.Lines = append(m.Lines, getStatusLine(sessionstore.Status))
 	m.Lines = append(m.Lines, getStatusLine(api.SharedStorage.Status()))
 	m.Lines = append(m.Lines, getStatusLine(mail.Status()))

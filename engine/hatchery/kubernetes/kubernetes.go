@@ -27,7 +27,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new hatchery local
@@ -235,11 +234,10 @@ func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirement
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
-	name := fmt.Sprintf("k8s-%s-%s", strings.Replace(strings.ToLower(spawnArgs.Model.Name), ".", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
+func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+	name := fmt.Sprintf("k8s-%s", spawnArgs.WorkerName)
 	label := "execution"
 	if spawnArgs.RegisterOnly {
-		name = "register-" + name
 		label = "register"
 	}
 
@@ -261,7 +259,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			memory, err = strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
 				log.Warning("spawnKubernetesDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
-				return "", err
+				return err
 			}
 		}
 	}
@@ -286,11 +284,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
-		return "", errt
+		return errt
 	}
 	var buffer bytes.Buffer
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
-		return "", errTmpl
+		return errTmpl
 	}
 
 	cmd := buffer.String()
@@ -324,7 +322,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
 	if errEnv != nil {
-		return "", errEnv
+		return errEnv
 	}
 
 	for envName, envValue := range envTemplated {
@@ -387,7 +385,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	secretName := "cds-credreg-" + spawnArgs.Model.Name
 	if spawnArgs.Model.ModelDocker.Private {
 		if err := h.createSecret(secretName, spawnArgs.Model); err != nil {
-			return "", sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Name)
+			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Name)
 		}
 		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretName}}
 		podSchema.ObjectMeta.Labels[LABEL_SECRET] = secretName
@@ -431,7 +429,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", name)
 
-	return pod.Name, err
+	return err
 }
 
 // WorkersStarted returns the number of instances started but

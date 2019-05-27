@@ -5,6 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
+
+	"github.com/ovh/cds/engine/api/accesstoken"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -21,35 +25,89 @@ import (
 
 func (api *API) registerWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		params := &sdk.WorkerRegistrationForm{}
-		if err := service.UnmarshalBody(r, params); err != nil {
+		// First get the jwt token to checks where this registration is coming from
+		jwt := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+		if jwt == "" {
+			return sdk.WithStack(sdk.ErrUnauthorized)
+		}
+
+		token, err := worker.VerifyToken(api.mustDB(), jwt)
+		if err != nil {
+			log.Error("registerWorkerHandler> unauthorized worker jwt token %s: %v", jwt[:12], err)
+			return sdk.WithStack(sdk.ErrUnauthorized)
+		}
+
+		var registrationForm sdk.WorkerRegistrationForm
+		if err := service.UnmarshalBody(r, registrationForm); err != nil {
 			return sdk.WrapError(err, "Unable to parse registration form")
 		}
 
 		// Check that hatchery exists
-		var hatch *sdk.Service
-		if params.HatcheryName != "" {
-			var errH error
-			hatch, errH = services.FindByNameAndType(api.mustDB(), params.HatcheryName, services.TypeHatchery)
-			if errH != nil {
-				return sdk.WrapError(errH, "registerWorkerHandler> Unable to load hatchery %s", params.HatcheryName)
-			}
+		hatch, err := services.FindByNameAndType(api.mustDB(), token.Worker.HatcheryName, services.TypeHatchery)
+		if err != nil {
+			return sdk.WrapError(err, "registerWorkerHandler> Unable to load hatchery %s", token.Worker.HatcheryName)
 		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
 
 		// Try to register worker
-		wk, err := worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.ModelID, hatch, params.BinaryCapabilities, params.OS, params.Arch)
+		wk, err := worker.RegisterWorker(tx, token.Worker, hatch, registrationForm)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
-			return sdk.WrapError(err, "[%s] Registering failed", params.Name)
+			return sdk.WrapError(err, "[%s] Registering failed", token.Worker.WorkerName)
 		}
 
-		wk.Uptodate = params.Version == sdk.VERSION
+		wk.Uptodate = registrationForm.Version == sdk.VERSION
 
 		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
 
-		if params.RegistrationOnly {
-			log.Debug("removing book from cache : %+v", params)
-			workermodel.UnbookForRegister(api.Cache, params.ModelID)
+		//If the worker is registered for a model and it gave us BinaryCapabilities...
+		if len(registrationForm.BinaryCapabilities) > 0 && token.Worker.Model.ID != 0 {
+			go func() {
+				if err := workermodel.UpdateCapabilities(api.mustDB(), api.Cache, token.Worker, registrationForm); err != nil {
+					log.Error("updateWorkerModelCapabilities> %v", err)
+				}
+			}()
+			if err := workermodel.UpdateRegistration(tx, api.Cache, token.Worker.Model.ID); err != nil {
+				log.Warning("registerWorker> Unable to update registration: %s", err)
+			}
+		}
+
+		// All is fine, we now have to generate a JWToken for the worker
+		var groups []sdk.Group
+
+		if token.Worker.JobID != 0 {
+			job, err := workflow.LoadNodeJobRun(tx, api.Cache, token.Worker.JobID)
+			if err != nil {
+				return sdk.NewError(sdk.ErrForbidden, err)
+			}
+			groups = job.ExecGroups
+		}
+
+		// TODO:
+		// we probably should remove shareinfra from the groups
+		// and make the intersection with hatchery accesstoken group
+
+		jwtoken, jwt, err := accesstoken.New(hatch.Maintainer, groups, Scope(sdk.AccessTokenScopeRunExecution), token.Worker.HatcheryName, token.Worker.WorkerName, time.Now().Add(24*time.Hour))
+		if err != nil {
+			return err
+		}
+
+		if err := accesstoken.Insert(tx, &jwtoken); err != nil {
+			return err
+		}
+
+		wk.AccessTokenID = jwtoken.ID
+		if err := worker.Update(tx, wk); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		// Return worker info to worker itself
@@ -122,10 +180,13 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 func (api *API) refreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO: check if the JWT is legit to update this worker
+		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		if err != nil {
+			return err
+		}
 
-		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
-			return sdk.WrapError(err, "cannot refresh last beat of %s", getWorker(ctx).ID)
+		if err := worker.RefreshWorker(api.mustDB(), wk); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
+			return sdk.WrapError(err, "cannot refresh last beat of %s", wk.Name)
 		}
 		return nil
 	}
@@ -133,8 +194,12 @@ func (api *API) refreshWorkerHandler() service.Handler {
 
 func (api *API) unregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := DisableWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
-			return sdk.WrapError(err, "cannot delete worker %s", getWorker(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		if err != nil {
+			return err
+		}
+		if err := DisableWorker(api.mustDB(), wk.ID); err != nil {
+			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
 		return nil
 	}
@@ -142,16 +207,13 @@ func (api *API) unregisterWorkerHandler() service.Handler {
 
 func (api *API) workerCheckingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO: check if the JWT is legit to update this worker
-
-		workerC := getWorker(ctx)
-		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
-		if errW != nil {
-			return sdk.WrapError(errW, "workerCheckingHandler> Unable to load worker %s", workerC.ID)
+		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		if err != nil {
+			return err
 		}
 
 		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusChecking); err != nil {
-			return sdk.WrapError(err, "cannot update worker %s", workerC.ID)
+			return sdk.WrapError(err, "cannot update worker %s", wk.ID)
 		}
 		key := cache.Key("worker", wk.ID)
 		wk.Status = sdk.StatusChecking
@@ -163,12 +225,9 @@ func (api *API) workerCheckingHandler() service.Handler {
 
 func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO: check if the JWT is legit to update this worker
-
-		workerC := getWorker(ctx)
-		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
-		if errW != nil {
-			return sdk.WrapError(errW, "workerWaitingHandler> Unable to load worker %s", workerC.ID)
+		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		if err != nil {
+			return err
 		}
 
 		if wk.Status == sdk.StatusWaiting {
@@ -181,12 +240,8 @@ func (api *API) workerWaitingHandler() service.Handler {
 		}
 
 		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
-			return sdk.WrapError(err, "cannot update worker %s", workerC.ID)
+			return sdk.WrapError(err, "cannot update worker %s", wk.ID)
 		}
-		key := cache.Key("worker", wk.ID)
-		wk.Status = sdk.StatusWaiting
-		api.Cache.Set(key, wk)
-
 		return nil
 	}
 }

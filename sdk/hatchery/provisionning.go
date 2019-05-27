@@ -3,11 +3,13 @@ package hatchery
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 var (
@@ -70,14 +72,17 @@ func provisioning(h Interface, models []sdk.Model) {
 			existing := h.WorkersStartedByModel(&models[k])
 			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
-					if name, errSpawn := h.SpawnWorker(context.Background(), SpawnArguments{Model: m, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
-						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
+					arg := SpawnArguments{
+						WorkerName: fmt.Sprintf("%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+					}
+					if errSpawn := h.SpawnWorker(context.Background(), arg); errSpawn != nil {
+						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, errSpawn)
 						var spawnError = sdk.SpawnErrorForm{
 							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),
 							Logs:  []byte(errSpawn.Error()),
 						}
 						if err := h.CDSClient().WorkerModelSpawnError(m.ID, spawnError); err != nil {
-							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
+							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, errSpawn)
 						}
 					}
 				}(models[k])

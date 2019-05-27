@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 type workerStarterRequest struct {
@@ -100,7 +102,13 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			// increment nbRegisteringWorkerModels, but no decrement.
 			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
-			if _, err := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); err != nil {
+			arg := SpawnArguments{
+				WorkerName:   fmt.Sprintf("register-%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+				Model:        *m,
+				RegisterOnly: true,
+				HatcheryName: h.ServiceName(),
+			}
+			if err := h.SpawnWorker(j.ctx, arg); err != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
@@ -169,7 +177,14 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
 	_, next = observability.Span(ctx, "hatchery.SpawnWorker")
-	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
+	arg := SpawnArguments{
+		WorkerName:   fmt.Sprintf("%s-%s", strings.ToLower(j.model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+		Model:        j.model,
+		JobID:        j.id,
+		Requirements: j.requirements,
+		HatcheryName: h.ServiceName(),
+	}
+	errSpawn := h.SpawnWorker(j.ctx, arg)
 	next()
 	if errSpawn != nil {
 		ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"), observability.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
@@ -188,7 +203,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		Args: []interface{}{
 			h.Service().Name,
 			fmt.Sprintf("%d", h.ID()),
-			workerName,
+			arg.WorkerName,
 			sdk.Round(time.Since(start), time.Second).String()},
 	})
 	next()

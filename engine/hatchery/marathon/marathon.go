@@ -212,9 +212,9 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	defer end()
 
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s)", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image)
 	}
 
 	var logJob string

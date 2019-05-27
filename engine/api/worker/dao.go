@@ -25,6 +25,23 @@ func Insert(db gorp.SqlExecutor, w *sdk.Worker) error {
 	return gorpmapping.Insert(db, w)
 }
 
+func Update(db gorp.SqlExecutor, w *sdk.Worker) error {
+	return gorpmapping.Update(db, w)
+}
+
+func LoadByAccessTokenID(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE access_token_id = $1").Args(id)
+	var w sdk.Worker
+	found, err := gorpmapping.Get(db, query, &w)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &w, nil
+}
+
 func LoadByID(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE id = $1").Args(id)
 	var w sdk.Worker

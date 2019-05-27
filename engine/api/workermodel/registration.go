@@ -3,12 +3,14 @@ package workermodel
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -100,7 +102,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 }
 
 // UpdateRegistration updates need_registration to false and last_registration time, reset err registration.
-func UpdateRegistration(db gorp.SqlExecutor, modelID int64) error {
+func UpdateRegistration(db gorp.SqlExecutor, store cache.Store, modelID int64) error {
 	query := `UPDATE worker_model SET need_registration=false, check_registration=false, last_registration = $2, nb_spawn_err=0, last_spawn_err=NULL, last_spawn_err_log=NULL WHERE id = $1`
 	res, err := db.Exec(query, modelID, time.Now())
 	if err != nil {
@@ -112,6 +114,7 @@ func UpdateRegistration(db gorp.SqlExecutor, modelID int64) error {
 		return sdk.WithStack(err)
 	}
 	log.Debug("UpdateRegistration> %d worker model updated", rows)
+	UnbookForRegister(store, modelID)
 	return nil
 }
 
@@ -152,4 +155,83 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.S
 func UnbookForRegister(store cache.Store, id int64) {
 	k := KeyBookWorkerModel(id)
 	store.Delete(k)
+}
+
+func UpdateCapabilities(db *gorp.DbMap, store cache.Store, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
+	//Start a new tx for this goroutine
+	ntx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer ntx.Rollback()
+
+	existingCapas, err := LoadCapabilities(ntx, spawnArgs.Model.ID)
+	if err != nil {
+		log.Warning("RegisterWorker> Unable to load worker model capabilities: %s", err)
+		return sdk.WithStack(err)
+	}
+
+	var newCapas []string
+	for _, b := range registrationForm.BinaryCapabilities {
+		var found bool
+		for _, c := range existingCapas {
+			if b == c.Value {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newCapas = append(newCapas, b)
+		}
+	}
+	if len(newCapas) > 0 {
+		log.Debug("Updating model %d binary capabilities with %d capabilities", spawnArgs.Model.ID, len(newCapas))
+		for _, b := range newCapas {
+			query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
+			if _, err := ntx.Exec(query, spawnArgs.Model.ID, b, b, string(sdk.BinaryRequirement)); err != nil {
+				//Ignore errors because we let the database to check constraints...
+				log.Debug("registerWorker> Cannot insert into worker_capability: %v", err)
+				return sdk.WithStack(err)
+			}
+		}
+	}
+
+	var capaToDelete []string
+	for _, existingCapa := range existingCapas {
+		var found bool
+		for _, currentCapa := range registrationForm.BinaryCapabilities {
+			if existingCapa.Value == currentCapa {
+				found = true
+				break
+			}
+		}
+		if !found {
+			capaToDelete = append(capaToDelete, existingCapa.Value)
+		}
+	}
+
+	if len(capaToDelete) > 0 {
+		log.Debug("Updating model %d binary capabilities with %d capabilities to delete", spawnArgs.Model.ID, len(capaToDelete))
+		query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND type=$3`
+		if _, err := db.Exec(query, spawnArgs.Model.ID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
+			//Ignore errors because we let the database to check constraints...
+			log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
+			return sdk.WithStack(err)
+
+		}
+	}
+
+	if registrationForm.OS != "" && registrationForm.Arch != "" {
+		if err := UpdateOSAndArch(db, spawnArgs.Model.ID, registrationForm.OS, registrationForm.Arch); err != nil {
+			log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", spawnArgs.Model.ID, err)
+			return sdk.WithStack(err)
+		}
+	}
+
+	if err := ntx.Commit(); err != nil {
+		log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
+		return sdk.WithStack(err)
+	}
+
+	return nil
 }

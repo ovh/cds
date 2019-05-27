@@ -6,8 +6,6 @@ import (
 	"io"
 	"strings"
 	"time"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // PubSub represents a subscriber
@@ -36,7 +34,6 @@ type Store interface {
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
-	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{})
 	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int

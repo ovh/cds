@@ -32,7 +32,13 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 			}
 			return service.WriteJSON(w, rs.Values(), http.StatusOK)
 		case sdk.ModelRequirement:
-			models, err := workermodel.LoadAllByUser(api.mustDB(), api.Cache, &JWT(ctx).AuthentifiedUser, nil)
+			var models []sdk.Model
+			var err error
+			if !isMaintainer(ctx) && !isAdmin(ctx) {
+				models, err = workermodel.LoadAllByGroups(api.mustDB(), sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), nil)
+			} else {
+				models, err = workermodel.LoadAll(api.mustDB())
+			}
 			if err != nil {
 				return sdk.WrapError(err, "cannot load worker models")
 			}

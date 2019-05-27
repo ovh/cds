@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-redis/redis"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -315,14 +314,6 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 	return redisMsg.Payload, nil
 }
 
-// Status returns the status of the local cache
-func (s *RedisStore) Status() sdk.MonitoringStatusLine {
-	if s.Client.Ping().Err() == nil {
-		return sdk.MonitoringStatusLine{Component: "Cache Ping", Value: "OK", Status: sdk.MonitoringStatusOK}
-	}
-	return sdk.MonitoringStatusLine{Component: "Cache Ping", Value: "KO", Status: sdk.MonitoringStatusAlert}
-}
-
 // RemoveFromQueue removes a member from a list
 func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) {
 	s.Client.LRem(rootKey, 0, memberKey)
@@ -355,7 +346,7 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 		Max: "+inf",
 	}).Result()
 	if err != nil {
-		return sdk.WrapError(err, "redis zrange error")
+		return fmt.Errorf("redis zrange error: %v", err)
 	}
 
 	keys := make([]string, len(values))
@@ -366,7 +357,7 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	if len(keys) > 0 {
 		res, err := s.Client.MGet(keys...).Result()
 		if err != nil {
-			return sdk.WrapError(err, "redis mget error")
+			return fmt.Errorf("redis mget error: %v", err)
 		}
 
 		for i := range members {

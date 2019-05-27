@@ -86,7 +86,8 @@ CREATE TABLE worker
     status VARCHAR(255) NOT NULL,
     model_id BIGINT NOT NULL,
     job_run_id BIGINT,
-    hatchery_id BIGINT NOT NULL
+    hatchery_id BIGINT NOT NULL,
+    access_token_id VARCHAR(64) REFERENCES access_token(id)
 );
 
 SELECT create_foreign_key('FK_WORKER_MODEL', 'worker', 'worker_model', 'model_id', 'id');
@@ -95,6 +96,8 @@ SELECT create_foreign_key('FK_WORKER_WORKFLOW_NODE_RUN_JOB', 'worker', 'workflow
 SELECT create_unique_index('worker', 'IDX_WORKER_JOB_RUN', 'job_run_id');
 SELECT create_unique_index('worker', 'IDX_WORKER_NAME', 'name');
 SELECT create_foreign_key('FK_WORKER_SERVICES', 'worker', 'services', 'hatchery_id', 'id');
+
+-- TODO DELETE CASCASDE access_token when worker is removed
 
 -- +migrate Down
 

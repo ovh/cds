@@ -2,9 +2,11 @@ package hatchery
 
 import (
 	"context"
+	"crypto/rsa"
 
 	"go.opencensus.io/stats"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -56,13 +58,20 @@ type CommonConfiguration struct {
 	} `toml:"logOptions" comment:"Hatchery Log Configuration" json:"logOptions"`
 }
 
+// WorkerJWTClaims is the specific claims format for Worker JWT
+type WorkerJWTClaims struct {
+	jwt.StandardClaims
+	Worker SpawnArguments
+}
+
 // SpawnArguments contains arguments to func SpawnWorker
 type SpawnArguments struct {
-	Model        sdk.Model
-	JobID        int64
-	Requirements []sdk.Requirement
-	RegisterOnly bool
-	LogInfo      string
+	WorkerName   string            `json:"worker_model"`
+	Model        sdk.Model         `json:"model"`
+	JobID        int64             `json:"job_id"`
+	Requirements []sdk.Requirement `json:"requirements"`
+	RegisterOnly bool              `json:"register_only"`
+	HatcheryName string            `json:"hatchery_name"`
 }
 
 // Interface describe an interface for each hatchery mode
@@ -78,7 +87,7 @@ type SpawnArguments struct {
 // ID returns hatchery id
 type Interface interface {
 	Init() error
-	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) (string, error)
+	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() []string
@@ -96,6 +105,7 @@ type Interface interface {
 	Metrics() *Metrics
 	PanicDumpDirectory() (string, error)
 	WorkerModelsEnabled() ([]sdk.Model, error)
+	PrivateKey() *rsa.PrivateKey
 }
 
 type Metrics struct {

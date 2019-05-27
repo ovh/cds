@@ -28,9 +28,9 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s model:%s for job %d - %s", name, spawnArgs.Model.Name, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s model:%s for job %d", name, spawnArgs.Model.Name, spawnArgs.JobID)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s model:%s - %s", name, spawnArgs.Model.Name, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s model:%s", name, spawnArgs.Model.Name)
 	}
 
 	if h.hatch == nil {
