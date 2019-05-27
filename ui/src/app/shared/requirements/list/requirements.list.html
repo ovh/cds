@@ -26,7 +26,7 @@
                     </ng-template>
                 </td>
                 <td class="border">
-                    <div *ngIf="!loading && r.type === 'service'">
+                    <div *ngIf="r.type === 'service'">
                         <div class="ui fluid" *ngIf="edit;else rName">
                             <label for="requirementname">
                             {{ 'requirement_hostname_service' | translate }}
@@ -40,15 +40,15 @@
 
                     <div *ngIf="edit;else rValue">
                         <div *ngIf="r.type !== 'model' && r.type !== 'os-architecture'">
-                            <label for="requirementvalue" *ngIf="!loading && (r.type === 'service')">
+                            <label for="requirementvalue" *ngIf="r.type === 'service'">
                                 {{ 'requirement_value_service' | translate }}
                             </label>
                             <input name="requirementvalue" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="r.value" (ngModelChange)="change(r)" [no-match-found-text]="false">
                         </div>
-                        <div *ngIf="!loading && r.type === 'os-architecture'">
+                        <div *ngIf="r.type === 'os-architecture'">
                             <input name="value-os-architecture" auto-complete autocomplete="off" type="text" [source]="suggestWithOSArch" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change(r)" [no-match-found-text]="false">
                         </div>
-                        <div *ngIf="!loading && r.type === 'model' && workerModels">
+                        <div *ngIf="r.type === 'model' && workerModels">
                             <div class="ui grid">
                                 <div class="ui fourteen wide column">
                                         <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change(r)" [no-match-found-text]="false">
@@ -60,7 +60,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
+                        <div *ngIf="r.type === 'model' || r.type === 'service'">
                             <label for="opts">
                                 {{ 'requirement_options' | translate }}
                             </label>

@@ -26,7 +26,6 @@ func TestInsertWorker(t *testing.T) {
 	if err := InsertWorker(db, w, 0); err != nil {
 		t.Fatalf("Cannot insert worker: %s", err)
 	}
-
 }
 
 func TestDeletetWorker(t *testing.T) {

@@ -103,7 +103,6 @@ export class WorkflowTemplateFormComponent {
         }
     }
 
-    codeMirrorConfig: any;
     descriptionRows: number;
     templateParameterTypes: Array<string>;
     parameterKeys: Array<string>;

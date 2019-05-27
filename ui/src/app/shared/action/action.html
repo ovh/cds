@@ -38,19 +38,20 @@
                         <modal-content>
                             <div class="ui form">
                                 <div class="field">
-                                    <app-requirements-list [suggest]="suggest"
+                                    <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
                                         [requirements]="editableAction.requirements" [edit]="edit"
                                         (onChange)="editableAction.hasChanged = true"
                                         (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit && pipeline">
                                         <h3>{{ 'requirement_add' | translate }}</h3>
-                                        <app-requirements-form [groupsPermission]="pipeline.groups"
+                                        <app-requirements-form [workerModels]="workerModels"
                                             [config]="configRequirements" [suggest]="suggest" [modal]="requirementModal"
                                             (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
                                     <div class="requirementForm" *ngIf="edit && !pipeline">
-                                        <app-requirements-form [suggest]="suggest" [config]="configRequirements"
-                                            [modal]="requirementModal" (event)="requirementEvent($event)">
+                                        <app-requirements-form [workerModels]="workerModels" [suggest]="suggest"
+                                            [config]="configRequirements" [modal]="requirementModal"
+                                            (event)="requirementEvent($event)">
                                         </app-requirements-form>
                                     </div>
                                 </div>
@@ -110,7 +111,8 @@
         {{ 'step_nonfinal_no' | translate }}
     </div>
 
-    <div class="ui bottomBtnsWrapper segment" *ngIf="edit && !(pipeline && pipeline.previewMode) && !(pipeline && pipeline.from_repository)">
+    <div class="ui bottomBtnsWrapper segment"
+        *ngIf="edit && !(pipeline && pipeline.previewMode) && !(pipeline && pipeline.from_repository)">
         <div class="ui grid">
             <div [ngClass]="editableAction.showAddStep ? 'sixteen wide column' : (editableAction.id ? 'seven wide column' : 'eight wide column')"
                 *ngIf="publicActions.length > 0">

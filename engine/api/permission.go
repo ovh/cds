@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
@@ -26,7 +26,8 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permProjectKey":        api.checkProjectPermissions,
 		"permWorkflowName":      api.checkWorkflowPermissions,
 		"permGroupName":         api.checkGroupPermissions,
-		"permModelID":           api.checkWorkerModelPermissions,
+		"permModelID":           api.checkWorkerModelIDPermissions,
+		"permModelName":         api.checkWorkerModelPermissions,
 		"permActionName":        api.checkActionPermissions,
 		"permActionBuiltinName": api.checkActionBuiltinPermissions,
 		"permTemplateSlug":      api.checkTemplateSlugPermissions,
@@ -61,6 +62,7 @@ func (api *API) deprecatedSetGroupsAndPermissionsFromGroupID(ctx context.Context
 
 func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, rc *service.HandlerConfig, routeVar map[string]string) bool {
 	if getWorker(ctx) == nil {
+		log.Error("checkWorkerPermission> no worker in ctx")
 		return false
 	}
 
@@ -92,6 +94,9 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 
 		ok = runNodeJob.ID == getWorker(ctx).ActionBuildID
 		api.Cache.SetWithTTL(k, ok, 60*15)
+		if !ok {
+			log.Error("checkWorkerPermission> actionBuildID:%v runNodeJob.ID:%v", getWorker(ctx).ActionBuildID, runNodeJob.ID)
+		}
 		return ok
 	}
 	return true
@@ -174,50 +179,65 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 	return sdk.WrapError(sdk.ErrForbidden, "user not authorized for group %s", groupName)
 }
 
-func (api *API) checkWorkerModelPermissions(ctx context.Context, modelID string, permissionValue int, routeVar map[string]string) error {
+func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName string, permissionValue int, routeVars map[string]string) error {
+	// try to get worker model for given path that match user's groups with/without admin grants
+	groupName := routeVars["groupName"]
+
+	if groupName == "" || modelName == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group or worker model name")
+	}
+
+	u := deprecatedGetUser(ctx)
+
+	// check that group exists
+	g, err := group.LoadGroup(api.mustDB(), groupName)
+	if err != nil {
+		return err
+	}
+
+	if permissionValue > permission.PermissionRead {
+		if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
+			return err
+		}
+	} else {
+		if err := group.CheckUserIsGroupMember(g, u); err != nil {
+			return err
+		}
+	}
+
+	m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+	if err != nil {
+		return err
+	}
+	if m == nil {
+		return sdk.WithStack(sdk.ErrNoWorkerModel)
+	}
+
+	return nil
+}
+
+// This will works only for hatchery.
+func (api *API) checkWorkerModelIDPermissions(ctx context.Context, modelID string, permissionValue int, routeVar map[string]string) error {
 	id, err := strconv.ParseInt(modelID, 10, 64)
 	if err != nil {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given worker model id %s", modelID)
 	}
 
-	m, err := worker.LoadWorkerModelByID(api.mustDB(), id)
+	m, err := workermodel.LoadByID(api.mustDB(), id)
 	if err != nil {
 		return err
 	}
 
 	h := getHatchery(ctx)
-	if h != nil && h.GroupID != nil {
-		if *h.GroupID == group.SharedInfraGroup.ID || m.GroupID == *h.GroupID {
-			return nil
-		}
+	if h == nil || h.GroupID == nil {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "user not authorized for worker model %s", modelID)
 	}
 
-	if api.checkWorkerModelPermissionsByUser(m, deprecatedGetUser(ctx), permissionValue) {
+	if *h.GroupID == group.SharedInfraGroup.ID || m.GroupID == *h.GroupID {
 		return nil
 	}
+
 	return sdk.NewErrorFrom(sdk.ErrForbidden, "user not authorized for worker model %s", modelID)
-}
-
-func (api *API) checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.User, permissionValue int) bool {
-	if u.Admin {
-		return true
-	}
-
-	for _, g := range u.Groups {
-		if g.ID == m.GroupID {
-			for _, a := range g.Admins {
-				if a.ID == u.ID {
-					return true
-				}
-			}
-
-			if permissionValue == permission.PermissionRead {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (api *API) checkActionPermissions(ctx context.Context, actionName string, permissionValue int, routeVars map[string]string) error {

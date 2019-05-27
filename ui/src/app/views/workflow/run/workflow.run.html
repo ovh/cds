@@ -1,34 +1,25 @@
 <div *ngIf="workflowRun" class="workflowRun">
-    <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflow]="workflow" [workflowName]="workflowName"
-        (relaunch)="relaunch()" [class.above]="workflowRun.status === pipelineStatusEnum.PENDING">
+    <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflow]="workflow"
+        [workflowName]="workflowName" (relaunch)="relaunch()"
+        [class.above]="workflowRun.status === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
     <ng-container *ngIf="workflowRun.status !== pipelineStatusEnum.PENDING; else pendingBlock">
         <app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowRun]="workflowRun">
         </app-workflow-graph>
     </ng-container>
     <ng-template #pendingBlock>
-        <div class="ui full segment">
-            <sui-dimmer class="inverted" isDimmed="true" [isClickable]="false">
-                <div class="loading">
-                    <div class="sk-folding-cube">
-                        <div class="sk-cube1 sk-cube"></div>
-                        <div class="sk-cube2 sk-cube"></div>
-                        <div class="sk-cube4 sk-cube"></div>
-                        <div class="sk-cube3 sk-cube"></div>
-                    </div>
-                    <div>{{'workflow_run_scheduling' | translate }}</div>
+        <div class="loadingWrapper">
+            <div class="loading">
+                <div class="sk-folding-cube">
+                    <div class="sk-cube1 sk-cube"></div>
+                    <div class="sk-cube2 sk-cube"></div>
+                    <div class="sk-cube4 sk-cube"></div>
+                    <div class="sk-cube3 sk-cube"></div>
                 </div>
-
-            </sui-dimmer>
-
+                {{'workflow_run_scheduling' | translate }}
+            </div>
         </div>
     </ng-template>
-
-</div>
-<div class="ui full segment" *ngIf="loadingRun && workflowRun">
-    <sui-dimmer class="inverted" [isDimmed]="true" [isClickable]="false">
-        <div class="ui text active loader">{{ 'workflow_loading' | translate }}</div>
-    </sui-dimmer>
 </div>
 <div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
 <app-workflow-node-run-param *ngIf="workflowRun" #workflowRunParam [project]="project" [workflow]="workflowRun.workflow"

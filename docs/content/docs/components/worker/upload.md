@@ -13,7 +13,7 @@ notoc: true
 Inside a job, there are two ways to upload an artifact:
 
 * with a step using action Upload Artifacts
-* with a step script (https://ovh.github.io/cds/docs/actions/script/), using the worker command: `worker upload <path>`
+* with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command: `worker upload <path>`
 
 `worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml`
 

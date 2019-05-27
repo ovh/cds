@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -54,7 +55,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		//Load worker model
 		workerModel := getWorker(ctx).Name
 		if getWorker(ctx).ModelID != 0 {
-			wm, errModel := worker.LoadWorkerModelByID(api.mustDB(), getWorker(ctx).ModelID)
+			wm, errModel := workermodel.LoadByID(api.mustDB(), getWorker(ctx).ModelID)
 			if errModel != nil {
 				return sdk.ErrNoWorkerModel
 			}
@@ -139,7 +140,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	//Change worker status
-	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
+	if err := worker.SetToBuilding(tx, store, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
 		return nil, sdk.WrapError(err, "Cannot update worker %s status", getWorker(ctx).Name)
 	}
 

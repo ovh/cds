@@ -24,6 +24,11 @@ type WebHook struct {
 	URL           string            `json:"url"`
 }
 
+// GetWebHooksResponse represent the response send by bitbucket when listing webhooks
+type GetWebHooksResponse struct {
+	Values []WebHook `json:"values"`
+}
+
 type Branch struct {
 	ID         string `json:"id"`
 	DisplayID  string `json:"displayId"`

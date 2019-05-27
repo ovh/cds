@@ -97,13 +97,15 @@ func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...inter
 		}
 	}
 
-	if t.Failed() {
-		return
-	}
-
 	for _, x := range s2 {
 		if !ArrayContains(s1, x) {
 			assert.Fail(t, "EqualValuesWithoutOrder failed", msgAndArgs...)
 		}
+	}
+
+	if t.Failed() {
+		t.Logf("Expected: %v", a)
+		t.Logf("Actual: %v", b)
+		assert.FailNow(t, "Equal failed", msgAndArgs...)
 	}
 }

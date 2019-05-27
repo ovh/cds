@@ -1,20 +1,18 @@
-/* tslint:disable:no-unused-variable */
-
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {SharedModule} from '../../shared.module';
-import {ParameterService} from '../../../service/parameter/parameter.service';
-import {ParameterListComponent} from './parameter.component';
-import {Parameter} from '../../../model/parameter.model';
-import {ParameterEvent} from '../parameter.event.model';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
-import {APP_BASE_HREF} from '@angular/common';
+import { APP_BASE_HREF } from '@angular/common';
+import { HttpRequest } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Parameter } from 'app/model/parameter.model';
+import { ParameterService } from 'app/service/parameter/parameter.service';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { ThemeStore } from 'app/service/services.module';
+import { SharedModule } from '../../shared.module';
+import { ParameterEvent } from '../parameter.event.model';
+import { ParameterListComponent } from './parameter.component';
 
 describe('CDS: Parameter List Component', () => {
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -25,9 +23,10 @@ describe('CDS: Parameter List Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
-                { provide: APP_BASE_HREF, useValue : '/' }
+                { provide: APP_BASE_HREF, useValue: '/' },
+                ThemeStore
             ],
-            imports : [
+            imports: [
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 TranslateModule.forRoot(),
@@ -37,7 +36,7 @@ describe('CDS: Parameter List Component', () => {
     });
 
 
-    it('should load component + update description', fakeAsync( () => {
+    it('should load component + update description', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
 
         let typeMock = ['string', 'password'];

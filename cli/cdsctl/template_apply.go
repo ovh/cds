@@ -82,21 +82,13 @@ func templateApplyCmd(name string) cli.Command {
 	}
 }
 
-func templateParsePath(path string) (string, string, error) {
-	pathSplitted := strings.Split(path, "/")
-	if len(pathSplitted) != 2 {
-		return "", "", fmt.Errorf("jnvalid given template path")
-	}
-	return pathSplitted[0], pathSplitted[1], nil
-}
-
 func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
 	var template *sdk.WorkflowTemplate
 
 	// search template path from params or suggest one
 	templatePath := v.GetString("template-path")
 	if templatePath != "" {
-		groupName, templateSlug, err := templateParsePath(templatePath)
+		groupName, templateSlug, err := cli.ParsePath(templatePath)
 		if err != nil {
 			return nil, err
 		}

@@ -27,7 +27,7 @@ func TestNewWorkerModelAndGetWorkerModel(t *testing.T) {
 		Name:        "myITModel",
 		Type:        "docker",
 		Description: "my worker model",
-		Group:       sdk.Group{Name: "shared.infra"},
+		Group:       &sdk.Group{Name: "shared.infra"},
 		ModelDocker: sdk.ModelDocker{
 			Image: "foo/model/go:latest",
 			Shell: "sh -c",
@@ -42,8 +42,7 @@ func TestNewWorkerModelAndGetWorkerModel(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, string(wmYaml), string(exportedYaml))
 
-	imported, err := wm.GetWorkerModel()
-	test.NoError(t, err)
+	imported := wm.GetWorkerModel()
 	importedYaml, err := yaml.Marshal(imported)
 	test.NoError(t, err)
 	assert.Equal(t, string(sdkWmYaml), string(importedYaml))

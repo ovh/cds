@@ -1,5 +1,5 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {SharedService} from '../../shared.service';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { SharedService } from '../../shared.service';
 
 @Component({
     selector: 'app-variable-value',
@@ -7,16 +7,15 @@ import {SharedService} from '../../shared.service';
     styleUrls: ['./variable.value.scss']
 })
 export class VariableValueComponent implements OnInit {
-
     @Input() type: string;
-    @Input() value: string|number|boolean;
+    @Input() value: string | number | boolean;
     @Input() disabled: boolean;
-
-    @Output() valueChange = new EventEmitter<string|number|boolean>();
+    @Output() valueChange = new EventEmitter<string | number | boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
 
-    constructor(public _sharedService: SharedService) {
-    }
+    constructor(
+        public _sharedService: SharedService // used in html
+    ) { }
 
     ngOnInit(): void {
         if (this.type === 'boolean') {
@@ -31,5 +30,4 @@ export class VariableValueComponent implements OnInit {
     sendValueChanged(): void {
         this.valueUpdating.emit(true);
     }
-
 }

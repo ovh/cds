@@ -317,6 +317,12 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		}
 	}
 
+	if rr.PipelineParameters.Valid {
+		if err := gorpmapping.JSONNullString(rr.PipelineParameters, &r.PipelineParameters); err != nil {
+			return nil, sdk.WrapError(err, "Error loading node run %d: PipelineParameters", r.ID)
+		}
+	}
+
 	if !opts.DisableDetailledNodeRun {
 		if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {
 			return nil, sdk.WrapError(err, "Error loading node run %d : SourceNodeRuns", r.ID)
@@ -332,11 +338,6 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		}
 		if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
 			return nil, sdk.WrapError(err, "Error loading node run %d: BuildParameters", r.ID)
-		}
-		if rr.PipelineParameters.Valid {
-			if err := gorpmapping.JSONNullString(rr.PipelineParameters, &r.PipelineParameters); err != nil {
-				return nil, sdk.WrapError(err, "Error loading node run %d: PipelineParameters", r.ID)
-			}
 		}
 	}
 

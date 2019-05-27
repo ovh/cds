@@ -22,6 +22,7 @@ var templateCmd = cli.Command{
 
 func template() *cobra.Command {
 	return cli.NewCommand(templateCmd, nil, []*cobra.Command{
+		cli.NewListCommand(templateListCmd, templateListRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templateApplyCmd("apply"), templateApplyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templateBulkCmd, templateBulkRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
@@ -30,6 +31,34 @@ func template() *cobra.Command {
 		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templateDetachCmd, templateDetachRun, nil, withAllCommandModifiers()...),
 	})
+}
+
+var templateListCmd = cli.Command{
+	Name:    "list",
+	Short:   "Get all available workflow template from CDS",
+	Example: "cdsctl template list",
+}
+
+func templateListRun(v cli.Values) (cli.ListResult, error) {
+	wts, err := client.TemplateGetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	type TemplateDisplay struct {
+		Path        string `cli:"path,key"`
+		Name        string `cli:"name"`
+		Description string `cli:"description"`
+	}
+
+	tds := make([]TemplateDisplay, len(wts))
+	for i := range wts {
+		tds[i].Path = fmt.Sprintf("%s/%s", wts[i].Group.Name, wts[i].Slug)
+		tds[i].Name = wts[i].Name
+		tds[i].Description = wts[i].Description
+	}
+
+	return cli.AsListResult(tds), nil
 }
 
 var templatePullCmd = cli.Command{
@@ -228,11 +257,11 @@ func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	type TemplateInstanceDisplay struct {
-		ID       int64  `cli:"ID,key"`
-		Created  string `cli:"Created"`
-		Project  string `cli:"Project"`
-		Workflow string `cli:"Workflow"`
-		Params   string `cli:"Params"`
+		ID       int64  `cli:"id,key"`
+		Created  string `cli:"created"`
+		Project  string `cli:"project"`
+		Workflow string `cli:"workflow"`
+		Params   string `cli:"params"`
 	}
 
 	tids := make([]TemplateInstanceDisplay, len(wtis))

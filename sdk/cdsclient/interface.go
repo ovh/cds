@@ -56,7 +56,7 @@ type ExportImportInterface interface {
 	WorkflowExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
 	WorkflowPull(projectKey, name string, mods ...RequestModifier) (*tar.Reader, error)
 	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
-	WorkerModelExport(id int64, format string) ([]byte, error)
+	WorkerModelExport(groupName, name, format string) ([]byte, error)
 	WorkerModelImport(content io.Reader, format string, force bool) (*sdk.Model, error)
 	WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error)
 	WorkflowAsCodeInterface
@@ -268,14 +268,11 @@ type WorkerClient interface {
 	WorkerRefresh(ctx context.Context) error
 	WorkerDisable(ctx context.Context, id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
-	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
-	WorkerModel(name string) (sdk.Model, error)
-	WorkerModelDelete(name string) error
+	WorkerModel(groupName, name string) (sdk.Model, error)
+	WorkerModelDelete(groupName, name string) error
 	WorkerModelSpawnError(id int64, info sdk.SpawnErrorForm) error
+	WorkerModels(*WorkerModelFilter) ([]sdk.Model, error)
 	WorkerModelsEnabled() ([]sdk.Model, error)
-	WorkerModels() ([]sdk.Model, error)
-	WorkerModelsByBinary(binary string) ([]sdk.Model, error)
-	WorkerModelsByState(state string) ([]sdk.Model, error)
 	WorkerRegister(ctx context.Context, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
 	WorkerSetStatus(ctx context.Context, status sdk.Status) error
 }

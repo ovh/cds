@@ -73,15 +73,5 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 		return runs[0].Number, nil
 	}
 
-	// If no run number, get the latest
-	runs, err = client.WorkflowRunList(projectKey, workflowName, 0, 1)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(runs) != 1 {
-		return 0, fmt.Errorf("workflow run not found")
-	}
-
-	return runs[0].Number, nil
+	return 0, nil
 }

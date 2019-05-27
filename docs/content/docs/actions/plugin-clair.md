@@ -1,6 +1,6 @@
 ---
 title: "plugin-clair"
-card: 
+card:
   name: plugin
 ---
 

@@ -336,6 +336,7 @@ func (h *HatcheryLocal) WorkersStarted() []string {
 // WorkerModelsEnabled returns worker model enabled
 func (h *HatcheryLocal) WorkerModelsEnabled() ([]sdk.Model, error) {
 	h.ModelLocal.GroupID = *h.Service().GroupID
+	h.ModelLocal.Group = h.Service().Group
 	return []sdk.Model{h.ModelLocal}, nil
 }
 

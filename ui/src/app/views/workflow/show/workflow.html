@@ -1,7 +1,7 @@
 <div *ngIf="detailedWorkflow && project; then workflowPart;else loadingPart"></div>
 <ng-template #workflowPart>
     <div class="workflowShow">
-        <div class="CDSmenu over">
+        <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
                 <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs" (click)="showTab('workflows')">
                     <i class="share alternate icon"></i>

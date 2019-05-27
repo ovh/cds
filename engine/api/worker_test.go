@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -37,7 +38,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
+	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), "Test1", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -55,7 +56,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
+		if err := workermodel.Insert(api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -122,7 +123,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
+	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), "Test1", g.ID)
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -140,7 +141,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
+		if err := workermodel.Insert(api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}

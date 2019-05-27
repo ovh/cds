@@ -1,29 +1,28 @@
-/* tslint:disable:no-unused-variable */
-
-import {TestBed, async, getTestBed} from '@angular/core/testing';
-import {APP_BASE_HREF} from '@angular/common';
-import {MockBackend} from '@angular/http/testing';
-import {Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
-import {AppModule} from '../../app.module';
-import {AuthentificationStore} from '../auth/authentification.store';
-import {User} from '../../model/user.model';
-import {UserService} from './user.service';
-import {RouterModule} from '@angular/router';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
+import { APP_BASE_HREF } from '@angular/common';
+import { HttpRequest } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { Injector } from '@angular/core';
+import { async, getTestBed, TestBed } from '@angular/core/testing';
+import { Response, ResponseOptions } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
+import { RouterModule } from '@angular/router';
+import { AppModule } from 'app/app.module';
+import { User } from 'app/model/user.model';
+import { AuthentificationStore } from '../auth/authentification.store';
+import { ThemeStore } from '../services.module';
+import { UserService } from './user.service';
 
 describe('CDS: User Service + Authent Store', () => {
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 { provide: APP_BASE_HREF, useValue: '/' },
                 AuthentificationStore,
-                UserService
+                UserService,
+                ThemeStore
             ],
-            imports : [
+            imports: [
                 AppModule,
                 RouterModule,
                 HttpClientTestingModule
@@ -32,7 +31,7 @@ describe('CDS: User Service + Authent Store', () => {
 
     });
 
-    it('login', async( () => {
+    it('login', async(() => {
         const http = TestBed.get(HttpTestingController);
         let connectedChecked = false;
         let started = false;
@@ -51,7 +50,7 @@ describe('CDS: User Service + Authent Store', () => {
 
         let authenStore = TestBed.get(AuthentificationStore);
         // Assertion
-        authenStore.getUserlst().subscribe( user => {
+        authenStore.getUserlst().subscribe(user => {
             if (started) {
                 connectedChecked = true;
                 expect(user.id).toBe(1, 'Wrong user id');
@@ -62,12 +61,11 @@ describe('CDS: User Service + Authent Store', () => {
         // Begin test
         started = true;
         let userService = TestBed.get(UserService);
-        userService.login(u).subscribe( () => {});
+        userService.login(u).subscribe(() => { });
         http.expectOne('http://localhost:8081/login').flush(loginResponse);
 
 
         // Final assertion
         expect(connectedChecked).toBeTruthy('User never connected');
-
     }));
 });
