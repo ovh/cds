@@ -12,9 +12,10 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -24,39 +25,39 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, err := worker.LoadWorkerModels(api.mustDB())
+	models, err := workermodel.LoadAll(api.mustDB())
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
 
-	modelPatterns, err := worker.LoadWorkerModelPatterns(api.mustDB())
+	modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
 	test.NoError(t, err)
 
 	for _, wmp := range modelPatterns {
-		test.NoError(t, worker.DeleteWorkerModelPattern(api.mustDB(), wmp.ID))
+		test.NoError(t, workermodel.DeletePattern(api.mustDB(), wmp.ID))
 	}
 }
 
-func Test_addWorkerModelAsAdmin(t *testing.T) {
+func Test_postWorkerModelAsAdmin(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
 	//Loading all models
-	models, errlw := worker.LoadWorkerModels(api.mustDB())
+	models, errlw := workermodel.LoadAll(api.mustDB())
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -83,17 +84,10 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 				"CDS_TEST": "THIS IS A TEST",
 			},
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -116,14 +110,14 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, errlw := worker.LoadWorkerModels(api.mustDB())
+	models, errlw := workermodel.LoadAll(api.mustDB())
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -163,7 +157,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -195,7 +189,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 	test.NotNil(t, gr)
 
 	model := sdk.Model{
-		Name:    "Test1" + grName,
+		Name:    sdk.RandomString(10),
 		GroupID: gr.ID,
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
@@ -206,15 +200,8 @@ func Test_WorkerModelUsage(t *testing.T) {
 				"CDS_TEST": "THIS IS A TEST",
 			},
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
-	test.NoError(t, worker.InsertWorkerModel(db, &model))
+	test.NoError(t, workermodel.Insert(db, &model))
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
@@ -250,9 +237,9 @@ func Test_WorkerModelUsage(t *testing.T) {
 			Enabled: true,
 			Requirements: []sdk.Requirement{
 				{
-					Name:  "Test1" + grName,
+					Name:  fmt.Sprintf("%s/%s", grName, model.Name),
 					Type:  sdk.ModelRequirement,
-					Value: "Test1" + grName,
+					Value: fmt.Sprintf("%s/%s", grName, model.Name),
 				},
 			},
 		},
@@ -284,7 +271,8 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"modelID": fmt.Sprintf("%d", model.ID),
+		"groupName":     gr.Name,
+		"permModelName": model.Name,
 	}
 	uri := router.GetRoute("GET", api.getWorkerModelUsageHandler, vars)
 	test.NotEmpty(t, uri)
@@ -303,7 +291,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 	test.Equal(t, proj.Key, pipelines[0].ProjectKey)
 }
 
-func Test_addWorkerModelWithWrongRequest(t *testing.T) {
+func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -326,17 +314,10 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 			Cmd:   "worker",
 		},
 		GroupID: g.ID,
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -353,13 +334,6 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	model = sdk.Model{
 		GroupID: g.ID,
 		Type:    sdk.Docker,
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -381,13 +355,6 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
@@ -407,13 +374,6 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 		Type: sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
 		},
 	}
 
@@ -442,7 +402,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_addWorkerModelAsAGroupMember(t *testing.T) {
+func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -464,18 +424,12 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
+			Shell: "sh",
 		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri, "Route route found")
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -484,12 +438,12 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 403, w.Code, "Status code should be 403")
+	assert.Equal(t, 403, w.Code, "Status code should be 403 because only a group admin can create a model")
 
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -512,18 +466,12 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
+			Shell: "sh",
 		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -537,7 +485,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -563,17 +511,10 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 			Shell: "sh -c",
 			Cmd:   "worker --api={{.API}}",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -590,7 +531,7 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 }
 
-func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -615,7 +556,7 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, worker.InsertWorkerModelPattern(api.mustDB(), &pattern))
+	test.NoError(t, workermodel.InsertPattern(api.mustDB(), &pattern))
 
 	model := sdk.Model{
 		Name:        "Test1",
@@ -627,17 +568,10 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 			Flavor: "vps-ssd-1",
 			Cmd:    "worker --api={{.API}}",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -655,9 +589,9 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	test.Equal(t, "apt-get install curl -y", newModel.ModelVirtualMachine.PreCmd, "Pre worker command is not good")
 }
 
-// Test_addWorkerModelAsAGroupAdminWithProvision test the provioning
+// Test_postWorkerModelAsAGroupAdminWithProvision test the provioning
 // For a group Admin, it is allowed to set a provision only for restricted model
-func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
+func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -685,7 +619,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	//Do the request
@@ -711,12 +645,13 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, worker.InsertWorkerModelPattern(api.mustDB(), &pattern))
+	test.NoError(t, workermodel.InsertPattern(api.mustDB(), &pattern))
 
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", wm.ID),
+		"groupName":     g.Name,
+		"permModelName": model.Name,
 	}
-	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
 	// API will set provisioning to 0 for a non-restricted model
@@ -735,7 +670,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	assert.Equal(t, "./worker", wmUpdated.ModelDocker.Cmd)
 }
 
-func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
+func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -770,18 +705,12 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
-		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
+			Shell: "sh",
 		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -790,12 +719,12 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 403, w.Code)
+	assert.Equal(t, 403, w.Code, "Status code should be 403 because only a group admin can create a model")
 
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_updateWorkerModel(t *testing.T) {
+func Test_putWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -824,17 +753,10 @@ func Test_updateWorkerModel(t *testing.T) {
 			Shell: "sh -c",
 			Cmd:   "worker",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -851,31 +773,22 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	model2 := sdk.Model{
 		Name:       "Test1bis",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
 		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
 			Shell: "sh -c",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-			{
-				Name:  "capa2",
-				Type:  sdk.BinaryRequirement,
-				Value: "2",
-			},
-		},
 	}
 
 	//Prepare request
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", model.ID),
+		"groupName":     g.Name,
+		"permModelName": model.Name,
 	}
-	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
@@ -889,7 +802,7 @@ func Test_updateWorkerModel(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
-func Test_updateWorkerModelWithPassword(t *testing.T) {
+func Test_putWorkerModelWithPassword(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -931,7 +844,7 @@ func Test_updateWorkerModelWithPassword(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -948,6 +861,8 @@ func Test_updateWorkerModelWithPassword(t *testing.T) {
 
 	model2 := sdk.Model{
 		Name:       "Test1bis",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
 		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
 			Image:    "buildpack-deps:jessie",
@@ -973,9 +888,10 @@ func Test_updateWorkerModelWithPassword(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", model.ID),
+		"groupName":     g.Name,
+		"permModelName": model.Name,
 	}
-	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
@@ -989,10 +905,10 @@ func Test_updateWorkerModelWithPassword(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	test.Equal(t, sdk.PasswordPlaceholder, resp.ModelDocker.Password, "Worker model should not return password, but placeholder")
 
-	wm, errL := worker.LoadWorkerModelByIDWithPassword(api.mustDB(), resp.ID)
+	wm, errL := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), resp.Name, resp.GroupID)
 	test.NoError(t, errL)
 
-	pw, errPw := worker.DecryptValue(wm.ModelDocker.Password)
+	pw, errPw := secret.DecryptValue(wm.ModelDocker.Password)
 	test.NoError(t, errPw)
 
 	test.Equal(t, "testpw", pw)
@@ -1027,17 +943,10 @@ func Test_deleteWorkerModel(t *testing.T) {
 			Cmd:   "worker",
 			Shell: "sh -c",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -1054,7 +963,8 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", model.ID),
+		"groupName":     g.Name,
+		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("DELETE", api.deleteWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1068,7 +978,6 @@ func Test_deleteWorkerModel(t *testing.T) {
 	assert.Equal(t, 204, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
-
 }
 
 func Test_getWorkerModel(t *testing.T) {
@@ -1095,17 +1004,10 @@ func Test_getWorkerModel(t *testing.T) {
 			Shell: "sh -c",
 			Cmd:   "worker",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -1131,7 +1033,6 @@ func Test_getWorkerModel(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
-
 }
 
 func Test_getWorkerModels(t *testing.T) {
@@ -1158,17 +1059,10 @@ func Test_getWorkerModels(t *testing.T) {
 			Shell: "sh -c",
 			Cmd:   "worker",
 		},
-		RegisteredCapabilities: sdk.RequirementList{
-			{
-				Name:  "capa1",
-				Type:  sdk.BinaryRequirement,
-				Value: "1",
-			},
-		},
 	}
 
 	//Prepare request
-	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
@@ -1200,26 +1094,124 @@ func Test_getWorkerModels(t *testing.T) {
 
 	assert.Equal(t, 1, len(results))
 	assert.Equal(t, "Test1", results[0].Name)
-	assert.Equal(t, 1, len(results[0].RegisteredCapabilities))
 	assert.Equal(t, u.Fullname, results[0].CreatedBy.Fullname)
 }
 
-func Test_addWorkerModelCapa(t *testing.T) {
+// This test create a worker model then an action that will use it.
+// Next the model group and name will be updated and we want to check if the requirement was updated.
+func Test_renameWorkerModel(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
-}
+	// create new group
+	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-func Test_getWorkerModelTypes(t *testing.T) {
+	// create new group
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-}
+	// create admin user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
 
-func Test_getWorkerModelCapaTypes(t *testing.T) {
+	// prepare post model request
+	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
 
-}
+	initialName := sdk.RandomString(10)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Model{
+		Name:    initialName,
+		GroupID: g1.ID,
+		Type:    sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Cmd:   "worker",
+			Shell: "sh",
+		},
+	})
 
-func Test_updateWorkerModelCapa(t *testing.T) {
+	// send post model request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
 
-}
+	// check created model
+	assert.Equal(t, 200, w.Code)
+	var result sdk.Model
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+	assert.Equal(t, g1.Name, result.Group.Name)
+	assert.Equal(t, initialName, result.Name)
 
-func Test_deleteWorkerModelCapa(t *testing.T) {
+	// prepare post action request
+	uri = router.GetRoute("POST", api.postActionHandler, nil)
+	test.NotEmpty(t, uri)
 
+	actionName := sdk.RandomString(10)
+	modelPath := fmt.Sprintf("%s/%s --privileged", result.Group.Name, result.Name)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Action{
+		Name:    actionName,
+		GroupID: &g1.ID,
+		Requirements: []sdk.Requirement{{
+			Type:  sdk.ModelRequirement,
+			Name:  modelPath,
+			Value: modelPath,
+		}},
+	})
+
+	// send post action request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// check created action
+	assert.Equal(t, 201, w.Code)
+	var action sdk.Action
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &action))
+	assert.Equal(t, g1.Name, action.Group.Name)
+	assert.Equal(t, actionName, action.Name)
+	assert.Equal(t, 1, len(action.Requirements))
+	assert.Equal(t, modelPath, action.Requirements[0].Value)
+
+	// prepare put model request
+	uri = router.GetRoute("PUT", api.putWorkerModelHandler, map[string]string{
+		"groupName":     result.Group.Name,
+		"permModelName": result.Name,
+	})
+	test.NotEmpty(t, uri)
+
+	newName := sdk.RandomString(10)
+	result.Name = newName
+	result.GroupID = g2.ID
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, result)
+
+	// send put model request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// check updated model
+	assert.Equal(t, 200, w.Code)
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+	assert.Equal(t, g2.Name, result.Group.Name)
+	assert.Equal(t, newName, result.Name)
+
+	// prepare get action request
+	uri = router.GetRoute("GET", api.getActionHandler, map[string]string{
+		"groupName":      action.Group.Name,
+		"permActionName": action.Name,
+	})
+	test.NotEmpty(t, uri)
+
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	// send get action request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	// check action
+	updatedModelPath := fmt.Sprintf("%s/%s --privileged", result.Group.Name, result.Name)
+	assert.Equal(t, 200, w.Code)
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &action))
+	assert.Equal(t, g1.Name, action.Group.Name)
+	assert.Equal(t, actionName, action.Name)
+	assert.Equal(t, 1, len(action.Requirements))
+	assert.Equal(t, updatedModelPath, action.Requirements[0].Value)
 }

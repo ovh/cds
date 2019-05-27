@@ -940,7 +940,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	r1, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
 	report.Merge(r1, nil) // nolint
 	if errS != nil {
-		r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", p.Key, wf.Name))
+		r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "unable to start workflow %s/%s", p.Key, wf.Name))
 		report.Merge(r1, nil) // nolint
 		return
 	}
@@ -1194,25 +1194,25 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		workflowName := vars["permWorkflowName"]
 		number, errN := requestVarInt(r, "number")
 		if errN != nil {
-			return sdk.WrapError(errN, "getWorkflowNodeRunJobBuildLogsHandler> Number: invalid number")
+			return sdk.WrapError(errN, "number: invalid number")
 		}
 		nodeRunID, errNI := requestVarInt(r, "nodeRunID")
 		if errNI != nil {
-			return sdk.WrapError(errNI, "getWorkflowNodeRunJobBuildLogsHandler> id: invalid number")
+			return sdk.WrapError(errNI, "id: invalid number")
 		}
 		runJobID, errJ := requestVarInt(r, "runJobId")
 		if errJ != nil {
-			return sdk.WrapError(errJ, "getWorkflowNodeRunJobBuildLogsHandler> runJobId: invalid number")
+			return sdk.WrapError(errJ, "runJobId: invalid number")
 		}
 		stepOrder, errS := requestVarInt(r, "stepOrder")
 		if errS != nil {
-			return sdk.WrapError(errS, "getWorkflowNodeRunJobBuildLogsHandler> stepOrder: invalid number")
+			return sdk.WrapError(errS, "stepOrder: invalid number")
 		}
 
 		// Check nodeRunID is link to workflow
 		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errNR != nil {
-			return sdk.WrapError(errNR, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
+			return sdk.WrapError(errNR, "cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 		}
 
 		var stepStatus string
@@ -1235,13 +1235,13 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		if stepStatus == "" {
-			return sdk.WrapError(sdk.ErrStepNotFound, "getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
+			return sdk.WrapError(sdk.ErrStepNotFound, "cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
 				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey)
 		}
 
 		logs, errL := workflow.LoadStepLogs(api.mustDB(), runJobID, stepOrder)
 		if errL != nil {
-			return sdk.WrapError(errL, "getWorkflowNodeRunJobStepHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
+			return sdk.WrapError(errL, "cannot load log for runJob %d on step %d", runJobID, stepOrder)
 		}
 
 		ls := &sdk.Log{}

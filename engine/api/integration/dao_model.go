@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -38,7 +39,7 @@ func LoadModel(db gorp.SqlExecutor, modelID int64, clearPassword bool) (sdk.Inte
 	if clearPassword {
 		for pfName, pfCfg := range pm.PublicConfigurations {
 			newCfg := pfCfg.Clone()
-			if err := newCfg.DecryptSecrets(decryptIntegrationValue); err != nil {
+			if err := newCfg.DecryptSecrets(secret.DecryptValue); err != nil {
 				return sdk.IntegrationModel{}, sdk.WrapError(err, "unable to encrypt config")
 			}
 			pm.PublicConfigurations[pfName] = newCfg
@@ -65,7 +66,7 @@ func LoadModelByName(db gorp.SqlExecutor, name string, clearPassword bool) (sdk.
 	if clearPassword {
 		for pfName, pfCfg := range pm.PublicConfigurations {
 			newCfg := pfCfg.Clone()
-			if err := newCfg.DecryptSecrets(decryptIntegrationValue); err != nil {
+			if err := newCfg.DecryptSecrets(secret.DecryptValue); err != nil {
 				return sdk.IntegrationModel{}, sdk.WrapError(err, "unable to encrypt config")
 			}
 			pm.PublicConfigurations[pfName] = newCfg
@@ -138,7 +139,7 @@ func (pm *integrationModel) PostGet(db gorp.SqlExecutor) error {
 	}{}
 
 	query := `SELECT default_config, grpc_plugin.name as "plugin_name", deployment_default_config, public_configurations
-	FROM integration_model 
+	FROM integration_model
 	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.integration_model_id = integration_model.id
 	WHERE integration_model.id = $1`
 	if err := db.SelectOne(&res, query, pm.ID); err != nil {
@@ -175,7 +176,7 @@ func (pm *integrationModel) PostUpdate(db gorp.SqlExecutor) error {
 	cfg := make(map[string]sdk.IntegrationConfig, len(pm.PublicConfigurations))
 	for pfName, pfCfg := range pm.PublicConfigurations {
 		newCfg := pfCfg.Clone()
-		if err := newCfg.EncryptSecrets(encryptIntegrationValue); err != nil {
+		if err := newCfg.EncryptSecrets(secret.EncryptValue); err != nil {
 			return sdk.WrapError(err, "unable to encrypt config")
 		}
 		cfg[pfName] = newCfg

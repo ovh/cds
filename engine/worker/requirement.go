@@ -115,12 +115,17 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	if w.model.ID == 0 {
 		return false, nil
 	}
+
 	modelName := strings.Split(r.Value, " ")[0]
 	modelPath := strings.SplitN(modelName, "/", 2)
 	if len(modelPath) == 2 {
-		modelName = modelPath[1]
+		// if the requirement contains group info (myGroup/myModel) check that it match current worker model
+		return modelName == fmt.Sprintf("%s/%s", w.model.Group.Name, w.model.Name), nil
 	}
-	return modelName == w.model.Name, nil
+
+	isSharedInfra := w.model.Group.Name == sdk.SharedInfraGroupName && modelName == w.model.Name
+	isSameName := modelName == w.model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
+	return isSharedInfra || isSameName, nil
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {

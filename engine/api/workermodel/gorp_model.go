@@ -1,4 +1,4 @@
-package worker
+package workermodel
 
 import (
 	"database/sql"
@@ -8,14 +8,17 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
-// WorkerModel is a gorp wrapper around sdk.Model
-type WorkerModel sdk.Model
+func init() {
+	gorpmapping.Register(gorpmapping.New(WorkerModel{}, "worker_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(workerModelPattern{}, "worker_model_pattern", true, "id"))
+}
 
-// workerModelPattern is a gorp wrapper around sdk.ModelPattern
-type workerModelPattern sdk.ModelPattern
+// WorkerModel is a gorp wrapper around sdk.Model.
+type WorkerModel sdk.Model
 
 //PostInsert is a DB Hook on WorkerModel
 func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
@@ -30,11 +33,11 @@ func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 	var modelBtes []byte
 	switch m.Type {
 	case sdk.Docker:
-		m.ModelDocker.Envs = mergeWithDefaultEnvs(m.ModelDocker.Envs)
+		m.ModelDocker.Envs = MergeModelEnvsWithDefaultEnvs(m.ModelDocker.Envs)
 		var err error
 		if m.ModelDocker.Private {
 			if m.ModelDocker.Password != "" {
-				m.ModelDocker.Password, err = EncryptValue(m.ModelDocker.Password)
+				m.ModelDocker.Password, err = secret.EncryptValue(m.ModelDocker.Password)
 				if err != nil {
 					return sdk.WrapError(err, "cannot encrypt docker password")
 				}
@@ -113,8 +116,13 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	//Load created_by
 	m.CreatedBy = sdk.User{}
 	var createdBy, model, registeredOS, registeredArch, lastSpawnErr, lastSpawnErrLogs sql.NullString
-	err := s.QueryRow("select created_by, model, registered_os, registered_arch, last_spawn_err, last_spawn_err_log from worker_model where id = $1", m.ID).Scan(&createdBy, &model, &registeredOS, &registeredArch, &lastSpawnErr, &lastSpawnErrLogs)
-	if err != nil {
+	if err := s.QueryRow(`
+    SELECT
+      created_by, model, registered_os, registered_arch, last_spawn_err, last_spawn_err_log
+    FROM worker_model
+    WHERE id = $1
+  `, m.ID).Scan(&createdBy, &model, &registeredOS,
+		&registeredArch, &lastSpawnErr, &lastSpawnErrLogs); err != nil {
 		return sdk.WrapError(err, "unable to load created_by, model, registered_os, registered_arch")
 	}
 
@@ -160,6 +168,9 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	return nil
 }
 
+// workerModelPattern is a gorp wrapper around sdk.ModelPattern
+type workerModelPattern sdk.ModelPattern
+
 //PostGet load capabilitites and createdBy user
 func (wmp *workerModelPattern) PostGet(s gorp.SqlExecutor) error {
 	modelStr, err := s.SelectNullStr("SELECT model FROM worker_model_pattern WHERE id = $1", wmp.ID)
@@ -192,9 +203,4 @@ func (wmp *workerModelPattern) PostInsert(s gorp.SqlExecutor) error {
 //PostUpdate is a DB Hook on workerModelPattern
 func (wmp *workerModelPattern) PostUpdate(s gorp.SqlExecutor) error {
 	return wmp.PostInsert(s)
-}
-
-func init() {
-	gorpmapping.Register(gorpmapping.New(WorkerModel{}, "worker_model", true, "id"))
-	gorpmapping.Register(gorpmapping.New(workerModelPattern{}, "worker_model_pattern", true, "id"))
 }

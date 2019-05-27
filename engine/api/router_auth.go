@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -106,7 +107,7 @@ func (api *API) authDeprecatedMiddleware(ctx context.Context, w http.ResponseWri
 
 		if workerCtx.ModelID != 0 {
 			// worker have a model, load model, then load model's group
-			m, err := worker.LoadWorkerModelByID(api.mustDB(), workerCtx.ModelID)
+			m, err := workermodel.LoadByID(api.mustDB(), workerCtx.ModelID)
 			if err != nil {
 				return ctx, false, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s - name:%s modelID:%d", err, workerCtx.Name, workerCtx.ModelID)
 			}

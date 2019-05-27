@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -15,10 +14,6 @@ import (
 func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	db := DBFunc()
 	tickHeart := time.NewTicker(10 * time.Second)
-
-	sdk.GoRoutine(c, "insertFirstPatterns", func(ctx context.Context) {
-		insertFirstPatterns(db)
-	})
 
 	for {
 		select {
