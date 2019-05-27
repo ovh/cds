@@ -51,7 +51,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int, exceptWfJobID *int64) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -87,9 +87,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				jobRunID, ok := apiEvent.Payload["ID"].(float64)
 				status, okStatus := apiEvent.Payload["Status"].(string)
 				if ok && okStatus && status == sdk.StatusWaiting.String() {
-					// wait for the grace time before pushing the job in the channel
 					go func() {
-						time.Sleep(time.Duration(graceTime) * time.Second)
 						job, err := c.QueueJobInfo(int64(jobRunID))
 
 						// Do not log the error if the job does not exist

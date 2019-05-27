@@ -102,7 +102,7 @@ func Create(ctx context.Context, h Interface) error {
 
 	sdk.GoRoutine(ctx, "queuePolling",
 		func(ctx context.Context) {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, errs, 20*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, errs, 20*time.Second, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
 			}
