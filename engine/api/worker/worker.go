@@ -190,8 +190,8 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, modelID int6
 		return w, err
 	}
 
-	keyWorkerModel := keyBookWorkerModel(modelID)
-	store.UpdateTTL(keyWorkerModel, modelsCacheTTLInSeconds+10)
+	keyWorkerModel := workermodel.KeyBookWorkerModel(modelID)
+	store.UpdateTTL(keyWorkerModel, 360+10)
 
 	return w, nil
 }

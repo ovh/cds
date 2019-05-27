@@ -37,7 +37,7 @@ func (api *API) registerWorkerHandler() service.Handler {
 		}
 
 		// Try to register worker
-		wk, err := worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.Token, params.ModelID, hatch, params.BinaryCapabilities, params.OS, params.Arch)
+		wk, err := worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.ModelID, hatch, params.BinaryCapabilities, params.OS, params.Arch)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "[%s] Registering failed", params.Name)

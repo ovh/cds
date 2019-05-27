@@ -10,7 +10,7 @@ import (
 )
 
 // ParseAndImport parse and import an exportentities.WorkerModel.
-func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
+func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool) (*sdk.Model, error) {
 	data := eWorkerModel.GetWorkerModel()
 
 	// group name should be set
@@ -38,9 +38,9 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *export
 			return nil, err
 		}
 
-		return Create(db, u, data)
+		return Create(db, data)
 	} else if force {
-		if err := CopyModelTypeData(u, old, &data); err != nil {
+		if err := CopyModelTypeData(old, &data); err != nil {
 			return nil, err
 		}
 
@@ -49,7 +49,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *export
 			return nil, err
 		}
 
-		return Update(db, u, old, data)
+		return Update(db, old, data)
 	}
 
 	return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)

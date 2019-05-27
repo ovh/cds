@@ -262,29 +262,6 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkerModelPatternHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if JWT(ctx).AuthentifiedUser.OldUserStruct.ID == 0 {
-			var username string
-			if deprecatedGetUser(ctx) != nil {
-				username = deprecatedGetUser(ctx).Username
-			}
-			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
-		}
-			groupIDs := make([]int64, len(proj.ProjectGroups))
-		for i := range proj.ProjectGroups {
-			groupIDs[i] = proj.ProjectGroups[i].Group.ID
-		}
-
-		models, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(api.mustDB(), append(groupIDs, group.SharedInfraGroup.ID))
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, models, http.StatusOK)
-	}
-}
-
 func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		groupID, err := requestVarInt(r, "groupID")
@@ -300,16 +277,7 @@ func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 
 		u := deprecatedGetUser(ctx)
 
-func (api *API) getWorkerModelPatternsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if deprecatedGetUser(ctx) == nil || JWT(ctx).AuthentifiedUser.OldUserStruct.ID == 0 {
-			var username string
-			if deprecatedGetUser(ctx) != nil {
-				username = deprecatedGetUser(ctx).Username
-			}
-			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
-		}
-			if err := group.CheckUserIsGroupMember(g, u); err != nil {
+		if err := group.CheckUserIsGroupMember(g, u); err != nil {
 			return err
 		}
 

@@ -113,59 +113,33 @@ func LoadAllActiveAndNotDeprecatedForGroupIDs(db gorp.SqlExecutor, groupIDs []in
 	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs))
 }
 
-// LoadAllByUser returns worker models list according to user's groups
-func LoadAllByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts *StateLoadOption) ([]sdk.Model, error) {
-	prefixKey := "api:workermodels"
-
-	if opts != nil {
-		prefixKey += fmt.Sprintf(":%v", *opts)
-	}
-	key := cache.Key(prefixKey, user.Username)
+// LoadAllByGroups returns worker models list according to user's groups
+func LoadAllByGroups(db gorp.SqlExecutor, groupIDs []int64, opts *StateLoadOption) ([]sdk.Model, error) {
 	models := []sdk.Model{}
-	if store.Get(key, &models) {
-		return models, nil
-	}
 
 	additionalFilters := getAdditionalSQLFilters(opts)
-	var query string
-	var args []interface{}
-	if user.Admin {
-		query = fmt.Sprintf(`
-      SELECT %s
-      FROM worker_model
-      JOIN "group" ON worker_model.group_id = "group".id
-    `, modelColumns)
-		if len(additionalFilters) > 0 {
-			query += fmt.Sprintf(" WHERE %s", strings.Join(additionalFilters, " AND "))
-		}
-	} else {
-		query = fmt.Sprintf(`
+	query := fmt.Sprintf(`
       SELECT %s
 			  FROM worker_model
 			  JOIN "group" ON worker_model.group_id = "group".id
-			  WHERE group_id IN (
-          SELECT group_id
-          FROM group_user
-          WHERE user_id = $1
-        )
+			  WHERE group_id IN = ANY(string_to_array($1, ',')::int[])
 			UNION
       SELECT %s
         FROM worker_model
 			  JOIN "group" on worker_model.group_id = "group".id
         WHERE group_id = $2
     `, modelColumns, modelColumns)
-		if len(additionalFilters) > 0 {
-			query += fmt.Sprintf(" AND %s", strings.Join(additionalFilters, " AND "))
-		}
-
-		args = []interface{}{user.ID, group.SharedInfraGroup.ID}
+	if len(additionalFilters) > 0 {
+		query += fmt.Sprintf(" AND %s", strings.Join(additionalFilters, " AND "))
 	}
+
+	args := []interface{}{gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID}
+
 	models, err := loadAll(db, false, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	store.SetWithTTL(key, models, CacheTTLInSeconds)
 	return models, nil
 }
 

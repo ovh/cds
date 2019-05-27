@@ -13,7 +13,7 @@ import (
 )
 
 // Create returns a new worker model for given data.
-func Create(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, error) {
+func Create(db gorp.SqlExecutor, data sdk.Model) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
@@ -24,9 +24,6 @@ func Create(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, error
 	if err != nil {
 		return nil, err
 	}
-	if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-		return nil, err
-	}
 
 	// check if worker model already exists
 	if _, err := LoadByNameAndGroupID(db, data.Name, grp.ID); err == nil {
@@ -34,14 +31,14 @@ func Create(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, error
 	}
 
 	// provision is allowed only for CDS Admin or by user with a restricted model
-	if !u.Admin && !data.Restricted {
-		data.Provision = 0
-	}
+	//if !u.Admin && !data.Restricted {
+	//	data.Provision = 0
+	//}
 
 	// if current user is not admin and model is not restricted, a pattern should be given
-	if !u.Admin && !data.Restricted && data.PatternName == "" {
-		return nil, sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "missing model pattern name")
-	}
+	//if !u.Admin && !data.Restricted && data.PatternName == "" {
+	//	return nil, sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "missing model pattern name")
+	//}
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
@@ -67,15 +64,6 @@ func Create(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, error
 	var model sdk.Model
 	model.Update(data)
 
-	model.CreatedBy = sdk.User{
-		Email:    u.Email,
-		Username: u.Username,
-		Admin:    u.Admin,
-		Fullname: u.Fullname,
-		ID:       u.ID,
-		Origin:   u.Origin,
-	}
-
 	if err := Insert(db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot add worker model")
 	}
@@ -84,7 +72,7 @@ func Create(db gorp.SqlExecutor, u *sdk.User, data sdk.Model) (*sdk.Model, error
 }
 
 // Update from given data.
-func Update(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
+func Update(db gorp.SqlExecutor, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
@@ -96,11 +84,6 @@ func Update(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Model) (*
 	}
 
 	if old.GroupID != data.GroupID || old.Name != data.Name {
-		// check that the group exists and user is admin for group id
-		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-			return nil, err
-		}
-
 		// check that no worker model already exists for same group/name
 		if _, err := LoadByNameAndGroupID(db, data.Name, grp.ID); err == nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrAlreadyExist, "an action already exists for given name on this group")
@@ -108,9 +91,9 @@ func Update(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Model) (*
 	}
 
 	// provision is allowed only for CDS Admin or by user with a restricted model
-	if !u.Admin && !data.Restricted {
-		data.Provision = 0
-	}
+	//if !u.Admin && !data.Restricted {
+	//	data.Provision = 0
+	//}
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
@@ -174,24 +157,24 @@ func Update(db gorp.SqlExecutor, u *sdk.User, old *sdk.Model, data sdk.Model) (*
 }
 
 // CopyModelTypeData try to set missing type info for given model data.
-func CopyModelTypeData(u *sdk.User, old, data *sdk.Model) error {
+func CopyModelTypeData(old, data *sdk.Model) error {
 	// if current user is not admin and model is not restricted and a pattern is not given, reuse old model info
-	if !u.Admin && !data.Restricted && data.PatternName == "" {
-		if old.Type != data.Type {
-			return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
-		}
-		// set pattern data on given model
-		switch data.Type {
-		case sdk.Docker:
-			data.ModelDocker.Cmd = old.ModelDocker.Cmd
-			data.ModelDocker.Shell = old.ModelDocker.Shell
-			data.ModelDocker.Envs = old.ModelDocker.Envs
-		default:
-			data.ModelVirtualMachine.PreCmd = old.ModelVirtualMachine.PreCmd
-			data.ModelVirtualMachine.Cmd = old.ModelVirtualMachine.Cmd
-			data.ModelVirtualMachine.PostCmd = old.ModelVirtualMachine.PostCmd
-		}
-	}
+	//if !u.Admin && !data.Restricted && data.PatternName == "" {
+	//	if old.Type != data.Type {
+	//		return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
+	//	}
+	//	// set pattern data on given model
+	//	switch data.Type {
+	//	case sdk.Docker:
+	//		data.ModelDocker.Cmd = old.ModelDocker.Cmd
+	//		data.ModelDocker.Shell = old.ModelDocker.Shell
+	//		data.ModelDocker.Envs = old.ModelDocker.Envs
+	//	default:
+	//		data.ModelVirtualMachine.PreCmd = old.ModelVirtualMachine.PreCmd
+	//		data.ModelVirtualMachine.Cmd = old.ModelVirtualMachine.Cmd
+	//		data.ModelVirtualMachine.PostCmd = old.ModelVirtualMachine.PostCmd
+	//	}
+	//}
 
 	return nil
 }

@@ -4,6 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/services"
+
+	"github.com/ovh/cds/engine/api/workermodel"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -18,12 +22,19 @@ import (
 
 func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 	g := &sdk.Group{
-		Name: "test-group-model",
+		Name: sdk.RandomString(10),
 	}
 
 	g1, _ := group.LoadGroup(db, g.Name)
 	if g1 != nil {
-		group.DeleteGroupAndDependencies(db, g1)
+		models, _ := workermodel.LoadAllByGroups(db, []int64{g.ID}, nil)
+		for _, m := range models {
+			workermodel.Delete(db, m.ID)
+		}
+
+		if err := group.DeleteGroupAndDependencies(db, g1); err != nil {
+			t.Logf("unable to delete group: %v", err)
+		}
 	}
 
 	if err := group.InsertGroup(db, g); err != nil {
@@ -51,7 +62,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 		UserLastModified: time.Now(),
 	}
 
-	if err := worker.InsertWorkerModel(db, &m); err != nil {
+	if err := workermodel.Insert(db, &m); err != nil {
 		t.Fatalf("Cannot insert worker model: %s", err)
 	}
 
@@ -92,6 +103,9 @@ func insertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) *sdk.Servi
 		},
 		ClearJWT: signedToken,
 	}
+
+	test.NoError(t, services.Insert(db, &srv))
+
 	return &srv
 }
 
@@ -117,7 +131,7 @@ func TestInsert(t *testing.T) {
 	}
 
 	if err := worker.Insert(db, w); err != nil {
-		t.Fatalf("Cannot insert worker: %s", err)
+		t.Fatalf("Cannot insert worker %+v: %v", w, err)
 	}
 }
 
