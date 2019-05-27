@@ -157,7 +157,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		go func(ctx context.Context, exceptID *int64) {
-			if err := w.client.QueuePolling(ctx, wjobs, errs, 2*time.Second, 0, "", nil, exceptID); err != nil {
+			if err := w.client.QueuePolling(ctx, wjobs, errs, 2*time.Second, "", nil, exceptID); err != nil {
 				log.Info("Queues polling stopped: %v", err)
 			}
 		}(ctx, &exceptJobID)
