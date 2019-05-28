@@ -43,7 +43,7 @@ module.exports = function (config) {
         autoWatch: true,
         concurrency: 1,
         browsers: ['ChromeHeadless'],
-        browserNoActivityTimeout: 60000,
+        browserNoActivityTimeout: 80000,
         customLaunchers: {
             ChromeHeadless: {
                 base: 'Chrome',

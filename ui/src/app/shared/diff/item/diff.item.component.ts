@@ -32,7 +32,9 @@ export class DiffItemComponent implements OnInit, OnChanges {
 
     constructor(
         private _theme: ThemeStore
-    ) {
+    ) { }
+
+    ngOnInit() {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -42,9 +44,7 @@ export class DiffItemComponent implements OnInit, OnChanges {
             readOnly: true,
             lineNumbers: true
         };
-    }
 
-    ngOnInit() {
         this.themeSubscription = this._theme.get().subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codeLeft && this.codeLeft.instance) {

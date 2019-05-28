@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 
 	"github.com/ovh/cds/sdk"
@@ -31,7 +31,7 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 			}
 			return service.WriteJSON(w, rs.Values(), http.StatusOK)
 		case sdk.ModelRequirement:
-			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), nil)
+			models, err := workermodel.LoadAllByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), nil)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load worker models")
 			}

@@ -68,7 +68,9 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         private _translate: TranslateService,
         private _toast: ToastService,
         private _theme: ThemeStore
-    ) {
+    ) { }
+
+    ngOnInit(): void {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -77,9 +79,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             autoRefresh: true,
             readOnly: this.readonly
         };
-    }
 
-    ngOnInit(): void {
         this.themeSubscription = this._theme.get().subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {

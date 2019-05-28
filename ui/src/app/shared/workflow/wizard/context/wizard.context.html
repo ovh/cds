@@ -30,7 +30,7 @@
             <div class="twelve wide field">
                 <sui-select class="fluid selection"
                             [(ngModel)]="node.context.application_id"
-                            (ngModelChange)="updateVCSStatusCheck(true)"
+                            (ngModelChange)="change()"
                             [options]="applications"
                             labelField="name"
                             valueField="id"

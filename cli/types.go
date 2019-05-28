@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // FlagType for cli flag.
@@ -275,4 +277,17 @@ func AsListResult(i interface{}) ListResult {
 	}
 
 	return res
+}
+
+// ParsePath returns group and itme name from given path.
+func ParsePath(path string) (string, string, error) {
+	pathSplitted := strings.Split(path, "/")
+	// if no group name given suppose that is a shared.infra item
+	if len(pathSplitted) == 1 {
+		return sdk.SharedInfraGroupName, pathSplitted[0], nil
+	}
+	if len(pathSplitted) != 2 {
+		return "", "", fmt.Errorf("invalid given path")
+	}
+	return pathSplitted[0], pathSplitted[1], nil
 }

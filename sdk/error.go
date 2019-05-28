@@ -763,7 +763,7 @@ func WithStack(err error) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.New(""),
+			root:      errors.New(e.Error()),
 			stack:     callers(),
 			httpError: e,
 		}

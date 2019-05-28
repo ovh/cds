@@ -204,7 +204,7 @@ func (api *API) getActionHandler() service.Handler {
 		if err := action.LoadOptions.Default(api.mustDB(), a); err != nil {
 			return err
 		}
-		if err := group.CheckUserIsGroupAdmin(a.Group, deprecatedGetUser(ctx)); err == nil {
+		if err := group.CheckUserIsGroupAdmin(g, deprecatedGetUser(ctx)); err == nil {
 			a.Editable = true
 		}
 
@@ -224,16 +224,12 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 		if old == nil {
 			return sdk.WithStack(sdk.ErrNoAction)
-		}
-
-		if err := action.LoadOptions.Default(api.mustDB(), old); err != nil {
-			return err
 		}
 
 		var data sdk.Action
@@ -501,7 +497,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			}
 		}
 
-		data, err := ea.Action()
+		data, err := ea.GetAction()
 		if err != nil {
 			return err
 		}
@@ -675,7 +671,7 @@ func (api *API) importActionHandler() service.Handler {
 			return err
 		}
 
-		data, err := ea.Action()
+		data, err := ea.GetAction()
 		if err != nil {
 			return err
 		}

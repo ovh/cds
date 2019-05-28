@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -69,14 +68,6 @@ type actionDisplay struct {
 	Type     string `cli:"Type"`
 }
 
-func actionParsePath(path string) (string, string, error) {
-	pathSplitted := strings.Split(path, "/")
-	if len(pathSplitted) != 2 {
-		return "", "", fmt.Errorf("invalid given action path")
-	}
-	return pathSplitted[0], pathSplitted[1], nil
-}
-
 var actionListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS actions",
@@ -105,7 +96,7 @@ var actionShowCmd = cli.Command{
 }
 
 func actionShowRun(v cli.Values) (interface{}, error) {
-	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +136,7 @@ var actionDeleteCmd = cli.Command{
 }
 
 func actionDeleteRun(v cli.Values) error {
-	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
 	if err != nil {
 		return err
 	}
@@ -186,7 +177,7 @@ func actionDocRun(v cli.Values) error {
 		return err
 	}
 
-	act, errapp := ea.Action()
+	act, errapp := ea.GetAction()
 	if errapp != nil {
 		return errapp
 	}
@@ -236,7 +227,7 @@ var actionExportCmd = cli.Command{
 }
 
 func actionExportRun(v cli.Values) error {
-	groupName, actionName, err := actionParsePath(v.GetString("action-path"))
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
 	if err != nil {
 		return err
 	}

@@ -48,8 +48,8 @@ func (c *client) EnvironmentExport(projectKey, name string, exportFormat string)
 	return body, nil
 }
 
-func (c *client) WorkerModelExport(id int64, format string) ([]byte, error) {
-	path := fmt.Sprintf("/worker/model/%d/export?format=%s", id, url.QueryEscape(format))
+func (c *client) WorkerModelExport(groupName, name, format string) ([]byte, error) {
+	path := fmt.Sprintf("/worker/model/%s/%s/export?format=%s", groupName, name, url.QueryEscape(format))
 	bodyReader, _, _, err := c.Stream(context.Background(), "GET", path, nil, true)
 	if err != nil {
 		return nil, err
