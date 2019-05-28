@@ -258,7 +258,7 @@ export class AppService {
         }
         this._store.selectOnce(WorkflowState)
             .pipe(
-                filter((wf) => wf != null && !wf.workflow
+                filter((wf) => wf != null && wf.workflow
                     && (wf.projectKey !== event.project_key || wf.workflow.name !== event.workflow_name)))
             .subscribe(() => {
                 if (event.type_event === EventType.WORKFLOW_DELETE) {
