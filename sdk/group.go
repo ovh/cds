@@ -48,12 +48,11 @@ func (group Group) IsMember(u GroupMember) bool {
 	return false
 }
 
-// TODO Fix this because it relies on username which is not a good thing
 func (group Group) IsAdmin(u AuthentifiedUser) bool {
 	for _, g := range u.GetGroups() {
 		if g.ID == group.ID {
 			for _, adm := range g.Admins {
-				if adm.Username == u.GetUsername() {
+				if adm.ID == u.OldUserStruct.ID {
 					return true
 				}
 			}
