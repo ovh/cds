@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/secret"
@@ -113,70 +112,44 @@ func LoadAllActiveAndNotDeprecatedForGroupIDs(db gorp.SqlExecutor, groupIDs []in
 	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs))
 }
 
-// LoadAllByGroups returns worker models list according to user's groups
-func LoadAllByGroups(db gorp.SqlExecutor, groupIDs []int64, opts *StateLoadOption) ([]sdk.Model, error) {
-	models := []sdk.Model{}
+// LoadAllByGroupIDs returns worker models list for given group ids.
+func LoadAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64, opts *StateLoadOption) ([]sdk.Model, error) {
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    WHERE group_id = ANY(string_to_array($1, ',')::int[])
+  `, modelColumns)
 
 	additionalFilters := getAdditionalSQLFilters(opts)
-	query := fmt.Sprintf(`
-      SELECT %s
-			  FROM worker_model
-			  JOIN "group" ON worker_model.group_id = "group".id
-			  WHERE group_id IN = ANY(string_to_array($1, ',')::int[])
-			UNION
-      SELECT %s
-        FROM worker_model
-			  JOIN "group" on worker_model.group_id = "group".id
-        WHERE group_id = $2
-    `, modelColumns, modelColumns)
 	if len(additionalFilters) > 0 {
 		query += fmt.Sprintf(" AND %s", strings.Join(additionalFilters, " AND "))
 	}
 
-	args := []interface{}{gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID}
-
-	models, err := loadAll(db, false, query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	return models, nil
+	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs))
 }
 
-// LoadAllUsableOnGroupWithClearPassword returns worker models for a group.
-func LoadAllUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store cache.Store, groupID int64) ([]sdk.Model, error) {
-	key := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", groupID))
-
-	models := make([]sdk.Model, 0)
-	if store.Get(key, &models) {
-		return models, nil
-	}
-
+// LoadAllUsableWithClearPasswordByGroupIDs returns usable worker models for given group ids.
+func LoadAllUsableWithClearPasswordByGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.Model, error) {
 	// note about restricted field on worker model:
-	// if restricted = true, worker model can be launched by a user hatchery only
+	// if restricted = true, worker model can be launched by a group hatchery only
 	// so, a 'shared.infra' hatchery need all its worker models and all others with restricted = false
 
-	var query string
-	if groupID == group.SharedInfraGroup.ID { // shared infra, return all models, excepts restricted
-		query = fmt.Sprintf(`
-      SELECT %s
-      FROM worker_model
-      JOIN "group" ON worker_model.group_id = "group".id
-      WHERE (worker_model.restricted = false OR worker_model.group_id = $1)
-      AND worker_model.disabled = false
-      ORDER by name
-    `, modelColumns)
-	} else { // not shared infra, returns only selected worker models
-		query = fmt.Sprintf(`
-      SELECT %s
-      FROM worker_model
-      JOIN "group" ON worker_model.group_id = "group".id
-      WHERE worker_model.group_id = $1
-      AND worker_model.disabled = false
-      ORDER by name
-    `, modelColumns)
-	}
-	models, err := loadAll(db, true, query, groupID)
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    WHERE (
+      worker_model.group_id = ANY(string_to_array($1, ',')::int[])
+      OR (
+        $2 = ANY(string_to_array($1, ',')::int[]
+        AND worker_model.restricted = false
+      )
+    )
+    AND worker_model.disabled = false
+    ORDER by name
+  `, modelColumns)
+	models, err := loadAll(db, true, query, gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -191,38 +164,34 @@ func LoadAllUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store cache.Stor
 		}
 	}
 
-	store.SetWithTTL(key, models, CacheTTLInSeconds)
-
 	return models, nil
 }
 
-// LoadAllByUserAndBinary returns worker models list according to user's groups and binary capability
-func LoadAllByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary string) ([]sdk.Model, error) {
-	if user.Admin {
-		query := fmt.Sprintf(`
-			SELECT %s
-				FROM worker_model
-					JOIN "group" ON worker_model.group_id = "group".id
-					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-					WHERE worker_capability.type = 'binary' AND worker_capability.argument = $1
-    `, modelColumns)
-		return loadAll(db, false, query, binary)
-	}
-
+// LoadAllByBinary returns worker models list with given binary capability.
+func LoadAllByBinary(db gorp.SqlExecutor, binary string) ([]sdk.Model, error) {
 	query := fmt.Sprintf(`
     SELECT %s
-      FROM worker_model
-        JOIN "group" ON worker_model.group_id = "group".id
-        JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-      WHERE group_id IN (SELECT group_id FROM group_user WHERE user_id = $1) AND worker_capability.type = 'binary' AND worker_capability.argument = $3
-    UNION
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+    WHERE worker_capability.type = 'binary'
+    AND worker_capability.argument = $1
+  `, modelColumns)
+	return loadAll(db, false, query, binary)
+}
+
+// LoadAllByBinaryAndGroupIDs returns worker models list with given binary capability for group ids.
+func LoadAllByBinaryAndGroupIDs(db gorp.SqlExecutor, binary string, groupIDs []int64) ([]sdk.Model, error) {
+	query := fmt.Sprintf(`
     SELECT %s
-      FROM worker_model
-        JOIN "group" ON worker_model.group_id = "group".id
-        JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-      WHERE group_id = $2 AND worker_capability.type = 'binary' AND worker_capability.argument = $3
-  `, modelColumns, modelColumns)
-	return loadAll(db, false, query, user.ID, group.SharedInfraGroup.ID, binary)
+    FROM worker_model
+    JOIN "group" ON worker_model.group_id = "group".id
+    JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+    WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
+    AND worker_capability.type = 'binary'
+    AND worker_capability.argument = $2
+  `, modelColumns)
+	return loadAll(db, false, query, groupIDs, binary)
 }
 
 func scanAll(db gorp.SqlExecutor, rows []dbResultWMS, withPassword bool) ([]sdk.Model, error) {

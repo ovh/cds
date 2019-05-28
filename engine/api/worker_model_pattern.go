@@ -14,14 +14,6 @@ import (
 
 func (api *API) getWorkerModelPatternsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if deprecatedGetUser(ctx) == nil || deprecatedGetUser(ctx).ID == 0 {
-			var username string
-			if deprecatedGetUser(ctx) != nil {
-				username = deprecatedGetUser(ctx).Username
-			}
-			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
-		}
-
 		modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model patterns")
@@ -33,13 +25,6 @@ func (api *API) getWorkerModelPatternsHandler() service.Handler {
 
 func (api *API) getWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if deprecatedGetUser(ctx).ID == 0 {
-			var username string
-			if deprecatedGetUser(ctx) != nil {
-				username = deprecatedGetUser(ctx).Username
-			}
-			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
-		}
 		vars := mux.Vars(r)
 		patternName := vars["name"]
 		patternType := vars["type"]
@@ -55,22 +40,25 @@ func (api *API) getWorkerModelPatternHandler() service.Handler {
 
 func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Unmarshal body
+		if !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		var modelPattern sdk.ModelPattern
 		if err := service.UnmarshalBody(r, &modelPattern); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal body")
+			return err
 		}
 
 		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
-			return sdk.ErrInvalidName
+			return sdk.WithStack(sdk.ErrInvalidName)
 		}
 
 		if modelPattern.Model.Cmd == "" {
-			return sdk.ErrInvalidPatternModel
+			return sdk.WithStack(sdk.ErrInvalidPatternModel)
 		}
 
 		if modelPattern.Type == sdk.Docker && modelPattern.Model.Shell == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postAddWorkerModelPatternHandler> Cannot add a worker model pattern for %s without shell command", sdk.Docker)
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot add a worker model pattern for %s without shell command", sdk.Docker)
 		}
 
 		var typeFound bool
@@ -80,9 +68,8 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 				break
 			}
 		}
-
 		if !typeFound {
-			return sdk.ErrInvalidPatternModel
+			return sdk.WithStack(sdk.ErrInvalidPatternModel)
 		}
 
 		// Insert model pattern in db
@@ -96,26 +83,29 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 
 func (api *API) putWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 		patternName := vars["name"]
 		patternType := vars["type"]
 
-		// Unmarshal body
 		var modelPattern sdk.ModelPattern
 		if err := service.UnmarshalBody(r, &modelPattern); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal body")
+			return err
 		}
 
 		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
-			return sdk.ErrInvalidName
+			return sdk.WithStack(sdk.ErrInvalidName)
 		}
 
 		if modelPattern.Model.Cmd == "" {
-			return sdk.ErrInvalidPatternModel
+			return sdk.WithStack(sdk.ErrInvalidPatternModel)
 		}
 
 		if modelPattern.Type == sdk.Docker && modelPattern.Model.Shell == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "putWorkerModelPatternHandler> Cannot update a worker model pattern for %s without shell command", sdk.Docker)
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot update a worker model pattern for %s without shell command", sdk.Docker)
 		}
 
 		var typeFound bool
@@ -125,7 +115,6 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 				break
 			}
 		}
-
 		if !typeFound {
 			return sdk.ErrInvalidPatternModel
 		}
@@ -133,9 +122,9 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 		oldWmp, errOld := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
 		if errOld != nil {
 			if sdk.Cause(errOld) == sql.ErrNoRows {
-				return sdk.WrapError(sdk.ErrNotFound, "putWorkerModelPatternHandler> cannot load worker model pattern (%s/%s) : %v", patternType, patternName, errOld)
+				return sdk.WrapError(sdk.ErrNotFound, "cannot load worker model pattern (%s/%s) : %v", patternType, patternName, errOld)
 			}
-			return sdk.WrapError(errOld, "putWorkerModelPatternHandler> cannot load worker model pattern")
+			return sdk.WrapError(errOld, "cannot load worker model pattern")
 		}
 		modelPattern.ID = oldWmp.ID
 
@@ -149,6 +138,10 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 
 func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 		patternName := vars["name"]
 		patternType := vars["type"]
@@ -156,13 +149,13 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 		wmp, err := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)
 		if err != nil {
 			if sdk.Cause(err) == sql.ErrNoRows {
-				return sdk.WrapError(sdk.ErrNotFound, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s)", patternType, patternName)
+				return sdk.WrapError(sdk.ErrNotFound, "cannot load worker model by name (%s/%s)", patternType, patternName)
 			}
-			return sdk.WrapError(err, "Cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
+			return sdk.WrapError(err, "cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
 		}
 
 		if err := workermodel.DeletePattern(api.mustDB(), wmp.ID); err != nil {
-			return sdk.WrapError(err, "Cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
+			return sdk.WrapError(err, "cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)

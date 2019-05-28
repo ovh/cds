@@ -140,15 +140,15 @@ func KeyBookWorkerModel(id int64) string {
 }
 
 // BookForRegister books a worker model for register, used by hatcheries
-func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
+func BookForRegister(store cache.Store, id int64, serviceID int64) error {
 	k := KeyBookWorkerModel(id)
-	h := sdk.Service{}
-	if !store.Get(k, &h) {
+	var bookedByServiceID int64
+	if !store.Get(k, &bookedByServiceID) {
 		// worker model not already booked, book it for 6 min
-		store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds)
-		return nil, nil
+		store.SetWithTTL(k, serviceID, bookRegisterTTLInSeconds)
+		return nil
 	}
-	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "worker model %d already booked by %s (%d)", id, h.Name, h.ID)
+	return sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "worker model %d already booked by service %d", id, bookedByServiceID)
 }
 
 // UnbookForRegister release the book

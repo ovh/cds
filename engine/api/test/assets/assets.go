@@ -396,7 +396,7 @@ func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 
 	g1, _ := group.LoadGroup(db, g.Name)
 	if g1 != nil {
-		models, _ := workermodel.LoadAllByGroups(db, []int64{g.ID}, nil)
+		models, _ := workermodel.LoadAllByGroupIDs(db, []int64{g.ID}, nil)
 		for _, m := range models {
 			workermodel.Delete(db, m.ID)
 		}

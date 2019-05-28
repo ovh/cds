@@ -30,16 +30,6 @@ func Create(db gorp.SqlExecutor, data sdk.Model) (*sdk.Model, error) {
 		return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)
 	}
 
-	// provision is allowed only for CDS Admin or by user with a restricted model
-	//if !u.Admin && !data.Restricted {
-	//	data.Provision = 0
-	//}
-
-	// if current user is not admin and model is not restricted, a pattern should be given
-	//if !u.Admin && !data.Restricted && data.PatternName == "" {
-	//	return nil, sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "missing model pattern name")
-	//}
-
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
 		modelPattern, err := LoadPatternByName(db, data.Type, data.PatternName)
@@ -89,11 +79,6 @@ func Update(db gorp.SqlExecutor, old *sdk.Model, data sdk.Model) (*sdk.Model, er
 			return nil, sdk.NewErrorFrom(sdk.ErrAlreadyExist, "an action already exists for given name on this group")
 		}
 	}
-
-	// provision is allowed only for CDS Admin or by user with a restricted model
-	//if !u.Admin && !data.Restricted {
-	//	data.Provision = 0
-	//}
 
 	// if a model pattern is given try to get it from database
 	if data.PatternName != "" {
@@ -158,23 +143,23 @@ func Update(db gorp.SqlExecutor, old *sdk.Model, data sdk.Model) (*sdk.Model, er
 
 // CopyModelTypeData try to set missing type info for given model data.
 func CopyModelTypeData(old, data *sdk.Model) error {
-	// if current user is not admin and model is not restricted and a pattern is not given, reuse old model info
-	//if !u.Admin && !data.Restricted && data.PatternName == "" {
-	//	if old.Type != data.Type {
-	//		return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
-	//	}
-	//	// set pattern data on given model
-	//	switch data.Type {
-	//	case sdk.Docker:
-	//		data.ModelDocker.Cmd = old.ModelDocker.Cmd
-	//		data.ModelDocker.Shell = old.ModelDocker.Shell
-	//		data.ModelDocker.Envs = old.ModelDocker.Envs
-	//	default:
-	//		data.ModelVirtualMachine.PreCmd = old.ModelVirtualMachine.PreCmd
-	//		data.ModelVirtualMachine.Cmd = old.ModelVirtualMachine.Cmd
-	//		data.ModelVirtualMachine.PostCmd = old.ModelVirtualMachine.PostCmd
-	//	}
-	//}
+	// if model is not restricted and a pattern is not given, reuse old model info
+	if !data.Restricted && data.PatternName == "" {
+		if old.Type != data.Type {
+			return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
+		}
+		// set pattern data on given model
+		switch data.Type {
+		case sdk.Docker:
+			data.ModelDocker.Cmd = old.ModelDocker.Cmd
+			data.ModelDocker.Shell = old.ModelDocker.Shell
+			data.ModelDocker.Envs = old.ModelDocker.Envs
+		default:
+			data.ModelVirtualMachine.PreCmd = old.ModelVirtualMachine.PreCmd
+			data.ModelVirtualMachine.Cmd = old.ModelVirtualMachine.Cmd
+			data.ModelVirtualMachine.PostCmd = old.ModelVirtualMachine.PostCmd
+		}
+	}
 
 	return nil
 }

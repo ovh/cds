@@ -29,13 +29,25 @@ func (api *API) postWorkerModelHandler() service.Handler {
 			return err
 		}
 
+		if !isAdmin(ctx) {
+			// provision is allowed only for CDS Admin or by user with a restricted model
+			if !data.Restricted {
+				data.Provision = 0
+			}
+
+			// if current user is not admin and model is not restricted, a pattern should be given
+			if !data.Restricted && data.PatternName == "" {
+				return sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "missing model pattern name")
+			}
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "cannot begin transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := workermodel.Create(tx, deprecatedGetUser(ctx), data)
+		model, err := workermodel.Create(tx, data)
 		if err != nil {
 			return err
 		}
@@ -61,8 +73,6 @@ func (api *API) postWorkerModelHandler() service.Handler {
 
 func (api *API) putWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
-
 		vars := mux.Vars(r)
 
 		groupName := vars["groupName"]
@@ -87,8 +97,15 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		if err := workermodel.CopyModelTypeData(u, old, &data); err != nil {
-			return err
+		if !isAdmin(ctx) {
+			// provision is allowed only for CDS Admin or by user with a restricted model
+			if !data.Restricted {
+				data.Provision = 0
+			}
+
+			if err := workermodel.CopyModelTypeData(old, &data); err != nil {
+				return err
+			}
 		}
 
 		if err := data.IsValidType(); err != nil {
@@ -101,7 +118,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := workermodel.Update(tx, u, old, data)
+		model, err := workermodel.Update(tx, old, data)
 		if err != nil {
 			return err
 		}
@@ -173,13 +190,13 @@ func (api *API) getWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		// FIXME implements load options for worker model dao.
+		// FIXME implements load options for worker model dao
 		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
 
-		if err := group.CheckUserIsGroupAdmin(g, deprecatedGetUser(ctx)); err == nil {
+		if isGroupAdmin(ctx, g) || isAdmin(ctx) {
 			m.Editable = true
 		}
 
@@ -205,14 +222,21 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 
 		binary := r.FormValue("binary")
 
-		u := deprecatedGetUser(ctx)
-
 		models := []sdk.Model{}
 		var err error
-		if binary != "" {
-			models, err = workermodel.LoadAllByUserAndBinary(api.mustDB(), u, binary)
+		if isMaintainer(ctx) || isAdmin(ctx) {
+			if binary != "" {
+				models, err = workermodel.LoadAllByBinary(api.mustDB(), binary)
+			} else {
+				models, err = workermodel.LoadAll(api.mustDB())
+			}
 		} else {
-			models, err = workermodel.LoadAllByUser(api.mustDB(), api.Cache, u, opt)
+			groupIDs := append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID)
+			if binary != "" {
+				models, err = workermodel.LoadAllByBinaryAndGroupIDs(api.mustDB(), binary, groupIDs)
+			} else {
+				models, err = workermodel.LoadAllByGroupIDs(api.mustDB(), groupIDs, opt)
+			}
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models")
@@ -239,7 +263,13 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
 
-		pips, err := pipeline.LoadByWorkerModel(api.mustDB(), deprecatedGetUser(ctx), m)
+		pips := []sdk.Pipeline{}
+		if isMaintainer(ctx) || isAdmin(ctx) {
+			pips, err = pipeline.LoadByWorkerModel(api.mustDB(), m)
+		} else {
+			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(api.mustDB(), m,
+				append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID))
+		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipelines linked to worker model")
 		}
@@ -253,7 +283,7 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet %s", key)
 		}
@@ -285,9 +315,7 @@ func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 			return err
 		}
 
-		u := deprecatedGetUser(ctx)
-
-		if err := group.CheckUserIsGroupMember(g, u); err != nil {
+		if isGroupMember(ctx, g) || isAdmin(ctx) {
 			return err
 		}
 

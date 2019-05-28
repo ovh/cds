@@ -39,9 +39,8 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 			return err
 		}
 
-		u := deprecatedGetUser(ctx)
 		opts := []exportentities.WorkerModelOption{}
-		if u != nil && !u.Admin && !wm.Restricted {
+		if !(isMaintainer(ctx) || isAdmin(ctx)) && !wm.Restricted {
 			opts = append(opts, exportentities.WorkerModelLoadOptions.HideAdminFields)
 		}
 
