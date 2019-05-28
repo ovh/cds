@@ -16,6 +16,8 @@ github.com/Azure/go-autorest/autorest/date
 github.com/Microsoft/go-winio
 # github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5
 github.com/Nvveen/Gotty
+# github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752
+github.com/SSSaaS/sssa-golang
 # github.com/Shopify/sarama v1.17.0
 github.com/Shopify/sarama
 # github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
@@ -240,6 +242,8 @@ github.com/gambol99/go-marathon
 # github.com/garyburd/redigo v1.6.0
 github.com/garyburd/redigo/redis
 github.com/garyburd/redigo/internal
+# github.com/ghodss/yaml v1.0.0
+github.com/ghodss/yaml
 # github.com/gin-gonic/gin v1.1.4
 github.com/gin-gonic/gin
 github.com/gin-gonic/gin/binding
@@ -351,6 +355,8 @@ github.com/jgsqware/xnet
 github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v1.1.5
 github.com/json-iterator/go
+# github.com/juju/errors v0.0.0-20190207033735-e65537c515d7
+github.com/juju/errors
 # github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f
 github.com/julienschmidt/httprouter
 # github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
@@ -396,6 +402,11 @@ github.com/mcuadros/go-defaults
 github.com/mgutz/ansi
 # github.com/mholt/archiver v3.1.1+incompatible
 github.com/mholt/archiver
+# github.com/miscreant/miscreant-go v0.0.0-20181010193435-325cbd69228b
+github.com/miscreant/miscreant-go
+github.com/miscreant/miscreant-go/block
+github.com/miscreant/miscreant-go/cmac
+github.com/miscreant/miscreant-go/pmac
 # github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
@@ -410,6 +421,16 @@ github.com/mndrix/tap-go
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
+# github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
+github.com/nbutton23/zxcvbn-go
+github.com/nbutton23/zxcvbn-go/match
+github.com/nbutton23/zxcvbn-go/matching
+github.com/nbutton23/zxcvbn-go/scoring
+github.com/nbutton23/zxcvbn-go/utils/math
+github.com/nbutton23/zxcvbn-go/adjacency
+github.com/nbutton23/zxcvbn-go/entropy
+github.com/nbutton23/zxcvbn-go/frequency
+github.com/nbutton23/zxcvbn-go/data
 # github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
 github.com/ncw/swift
 # github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace
@@ -435,8 +456,20 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
 github.com/ovh/cds/sdk/interpolate
+# github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd
+github.com/ovh/configstore
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
+# github.com/ovh/symmecrypt v0.2.0
+github.com/ovh/symmecrypt/keyloader
+github.com/ovh/symmecrypt/ciphers/hmac
+github.com/ovh/symmecrypt
+github.com/ovh/symmecrypt/ciphers/aesgcm
+github.com/ovh/symmecrypt/ciphers/aespmacsiv
+github.com/ovh/symmecrypt/ciphers/chacha20poly1305
+github.com/ovh/symmecrypt/ciphers/xchacha20poly1305
+github.com/ovh/symmecrypt/seal
+github.com/ovh/symmecrypt/symutils
 # github.com/ovh/venom v0.25.0
 github.com/ovh/venom
 github.com/ovh/venom/context/default
@@ -533,7 +566,7 @@ github.com/spf13/viper
 github.com/spf13/viper/remote
 # github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 github.com/streadway/amqp
-# github.com/stretchr/testify v1.2.2
+# github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 # github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 github.com/tevino/abool
@@ -630,6 +663,7 @@ golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/chacha20poly1305
 # golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
