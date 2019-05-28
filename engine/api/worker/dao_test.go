@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/services"
 
 	"github.com/ovh/cds/engine/api/workermodel"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
@@ -71,35 +71,26 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func insertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) *sdk.Service {
-	u, _ := assets.InsertLambdaUser(db, &grp)
+	usr1, _ := assets.InsertLambdaUser(db)
+
+	exp := time.Now().Add(5 * time.Minute)
+	token, signedToken, err := accesstoken.New(*usr1, []sdk.Group{grp}, []string{sdk.AccessTokenScopeHatchery}, "cds_test", "cds test", exp)
+	test.NoError(t, err)
+
+	test.NoError(t, accesstoken.Insert(db, &token))
 
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)
 	publicKey, err := jws.ExportPublicKey(privateKey)
 	test.NoError(t, err)
 
-	id := sdk.UUID()
-	claims := sdk.AccessTokenJWTClaims{
-		ID:     id,
-		Groups: sdk.GroupsToIDs([]sdk.Group{grp}),
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    "services-TestDAO-token",
-			Subject:   "services-TestDAO-token",
-			Id:        id,
-			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-		},
-	}
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
-	signedToken, err := jwtToken.SignedString(privateKey)
-	test.NoError(t, err)
-
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name:       sdk.RandomString(10),
-			Type:       "type-service-test",
+			Type:       services.TypeHatchery,
 			PublicKey:  publicKey,
-			Maintainer: *u,
+			Maintainer: *usr1,
+			TokenID:    token.ID,
 		},
 		ClearJWT: signedToken,
 	}
@@ -133,6 +124,15 @@ func TestInsert(t *testing.T) {
 	if err := worker.Insert(db, w); err != nil {
 		t.Fatalf("Cannot insert worker %+v: %v", w, err)
 	}
+
+	wks, err := worker.LoadByHatcheryID(db, h.ID)
+	test.NoError(t, err)
+	assert.Len(t, wks, 1)
+
+	if len(wks) == 1 {
+		assert.Equal(t, "foofoo", wks[0].ID)
+	}
+
 }
 
 func TestLoadWorkers(t *testing.T) {
