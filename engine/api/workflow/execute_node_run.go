@@ -65,7 +65,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 
 	if n.Status == sdk.StatusWaiting {
 		nodeUpdated = true
-		n.Status = sdk.StatusDisabled
+		n.Status = sdk.StatusBuilding
 	}
 
 	if nodeUpdated {
@@ -167,7 +167,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		}
 
 		if stage.Status == sdk.StatusBuilding {
-			newStatus = sdk.StatusDisabled
+			newStatus = sdk.StatusBuilding
 			var end bool
 
 			_, next := observability.Span(ctx, "workflow.syncStage")
@@ -515,13 +515,13 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	for indexJob := range stage.RunJobs {
 		runJob := &stage.RunJobs[indexJob]
 		// If job is runnning, sync it
-		if runJob.Status == sdk.StatusDisabled || runJob.Status == sdk.StatusWaiting {
+		if runJob.Status == sdk.StatusBuilding || runJob.Status == sdk.StatusWaiting {
 			runJobDB, errJob := LoadNodeJobRun(db, store, runJob.ID)
 			if errJob != nil {
 				return stageEnd, errJob
 			}
 
-			if runJobDB.Status == sdk.StatusDisabled || runJobDB.Status == sdk.StatusWaiting {
+			if runJobDB.Status == sdk.StatusBuilding || runJobDB.Status == sdk.StatusWaiting {
 				stageEnd = false
 			}
 			spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)

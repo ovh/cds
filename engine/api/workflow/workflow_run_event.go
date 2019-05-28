@@ -138,7 +138,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			continue
 		}
 
-		if statusFound.State == sdk.StatusDisabled {
+		if statusFound.State == sdk.StatusBuilding {
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 				log.Error("resyncCommitStatus> Error sending status %s err: %v", details, err)
 			}
@@ -146,7 +146,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		switch statusFound.State {
-		case sdk.StatusDisabled:
+		case sdk.StatusBuilding:
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 				log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 			}

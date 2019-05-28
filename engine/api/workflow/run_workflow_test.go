@@ -71,7 +71,7 @@ func TestManualRun1(t *testing.T) {
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -101,9 +101,9 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -231,7 +231,7 @@ func TestManualRun2(t *testing.T) {
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -261,9 +261,9 @@ func TestManualRun2(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -413,11 +413,11 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -469,8 +469,10 @@ func TestManualRun3(t *testing.T) {
 
 		//BookNodeJobRun
 		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Service{
-			Name: "Hatchery",
-			ID:   1,
+			CanonicalService: sdk.CanonicalService{
+				Name: "Hatchery",
+				ID:   1,
+			},
 		})
 		assert.NoError(t, err)
 		if t.Failed() {
@@ -696,7 +698,7 @@ func TestNoStage(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -726,8 +728,8 @@ func TestNoStage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -770,7 +772,7 @@ func TestNoJob(t *testing.T) {
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -800,8 +802,8 @@ func TestNoJob(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)

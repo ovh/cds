@@ -35,8 +35,7 @@ func TestImport(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
-	mockService := &sdk.Service{Name: "service_test", Type: "hooks"}
-	services.Delete(db, mockService)
+	mockService, _ := assets.InsertService(t, db, "service_test", services.TypeHooks)
 	test.NoError(t, services.Insert(db, mockService))
 
 	//Mock HTTPClient from services package
@@ -74,7 +73,7 @@ func TestImport(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	hookModels, err := workflow.LoadHookModels(db)
@@ -471,7 +470,7 @@ func TestImport(t *testing.T) {
 			}
 			var wf *sdk.Workflow
 			if workflowExists {
-				wf, err = workflow.Load(context.TODO(), db, cache, proj, tt.args.w.Name, u, workflow.LoadOptions{WithIcon: true})
+				wf, err = workflow.Load(context.TODO(), db, cache, proj, tt.args.w.Name, workflow.LoadOptions{WithIcon: true})
 				if err != nil {
 					t.Errorf("%s", err)
 				}

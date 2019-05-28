@@ -233,7 +233,7 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 		return nil
 	}
 
-	if st == sdk.StatusDisabled && jobID.Valid && jobType.Valid {
+	if st == sdk.StatusBuilding && jobID.Valid && jobType.Valid {
 		// Worker is awol while building !
 		// We need to restart this action
 		wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)

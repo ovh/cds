@@ -16,7 +16,7 @@ func TestComputeRunStatus(t *testing.T) {
 	assert.Equal(t, 0, runStatus.failed)
 	assert.Equal(t, 0, runStatus.stoppped)
 
-	computeRunStatus(sdk.StatusDisabled, runStatus)
+	computeRunStatus(sdk.StatusBuilding, runStatus)
 
 	assert.Equal(t, 1, runStatus.success)
 	assert.Equal(t, 1, runStatus.building)
@@ -37,12 +37,12 @@ func TestGetWorkflowRunStatus(t *testing.T) {
 		status    string
 	}{
 		{runStatus: statusCounter{success: 1, building: 0, failed: 0, stoppped: 0}, status: sdk.StatusSuccess},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 0, stoppped: 0}, status: sdk.StatusDisabled},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 0}, status: sdk.StatusDisabled},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 0, stoppped: 0}, status: sdk.StatusBuilding},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 0}, status: sdk.StatusBuilding},
 		{runStatus: statusCounter{success: 1, building: 0, failed: 1, stoppped: 1}, status: sdk.StatusFail},
 		{runStatus: statusCounter{success: 1, building: 0, failed: 0, stoppped: 1}, status: sdk.StatusStopped},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1}, status: sdk.StatusDisabled},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1, skipped: 1}, status: sdk.StatusDisabled},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1}, status: sdk.StatusBuilding},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1, skipped: 1}, status: sdk.StatusBuilding},
 		{runStatus: statusCounter{success: 0, building: 0, failed: 1, stoppped: 0, skipped: 1}, status: sdk.StatusFail},
 		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 1}, status: sdk.StatusSkipped},
 		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 1, disabled: 1}, status: sdk.StatusSkipped},

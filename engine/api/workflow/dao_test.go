@@ -5,14 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fsamin/go-dump"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"sort"
 	"testing"
+
+	"github.com/fsamin/go-dump"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -32,7 +33,7 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
@@ -55,7 +56,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -73,9 +74,9 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -114,7 +115,7 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_ 1",
@@ -132,7 +133,7 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 		},
 	}
 
-	assert.Error(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.Error(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 }
 
 func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
@@ -167,7 +168,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -188,9 +189,9 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -239,7 +240,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -318,9 +319,9 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -381,7 +382,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -457,7 +458,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		},
 	}
 
-	assert.Error(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.Error(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 }
 
 func assertEqualNode(t *testing.T, n1, n2 *sdk.Node) {
@@ -545,7 +546,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -588,9 +589,9 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
@@ -599,10 +600,10 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.WorkflowData.Node.Context.PipelineID = pip2.ID
 	w1.WorkflowData.Node.Context.ApplicationID = app2.ID
 
-	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, u, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, workflow.UpdateOptions{}))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
+	w2, err := workflow.LoadByID(context.TODO(), db, cache, proj, w1.ID, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
@@ -659,7 +660,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -765,10 +766,10 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -893,7 +894,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip7))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -1066,10 +1067,10 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	workflow.Sort(&w)
@@ -1155,12 +1156,12 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//w1old := *w1
@@ -1189,12 +1190,12 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, w1))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, w1))
 
-	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, u, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, workflow.UpdateOptions{}))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
+	w2, err := workflow.LoadByID(context.TODO(), db, cache, proj, w1.ID, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(w1)
@@ -1240,8 +1241,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		}
 	}
 
-	mockHookSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeHooks}
-	test.NoError(t, services.Insert(db, mockHookSservice))
+	mockHookSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeHooks)
 	defer func() {
 		services.Delete(db, mockHookSservice) // nolint
 	}()
@@ -1315,7 +1315,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -1439,10 +1439,10 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u), "unable to insert workflow")
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj), "unable to insert workflow")
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)

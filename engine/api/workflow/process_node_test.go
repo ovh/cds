@@ -51,8 +51,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithoutPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -174,7 +173,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		"git.repository": "sguiheux/demo",
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var hookEvent sdk.WorkflowNodeRunHookEvent
@@ -221,8 +220,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithHashOnlyProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -334,7 +332,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		"git.repository": "sguiheux/demo",
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var hookEvent sdk.WorkflowNodeRunHookEvent
@@ -380,8 +378,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -481,7 +478,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -526,8 +523,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -620,7 +616,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -673,8 +669,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -842,7 +837,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -911,8 +906,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1015,7 +1009,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1079,8 +1073,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1193,7 +1186,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1253,8 +1246,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1382,7 +1374,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1447,8 +1439,7 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -1586,7 +1577,7 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1658,8 +1649,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) //nolint
 	}()
@@ -1796,7 +1786,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1860,9 +1850,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 			"secret": "bar",
 		},
 	}))
-
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -1983,7 +1971,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual

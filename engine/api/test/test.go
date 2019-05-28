@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/configstore"
 )
 
 //DBDriver is exported for testing purpose
@@ -115,6 +116,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 			},
 		},
 	}
+	configstore.AllowProviderOverride()
 
 	signatureKeyConfig := sigKeys.GetKeys(gorpmapping.KeySignIdentifier)
 	encryptionKeyConfig := encryptKeys.GetKeys(gorpmapping.KeyEcnryptionIdentifier)

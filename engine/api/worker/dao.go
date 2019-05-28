@@ -98,7 +98,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]s
 // SetStatus sets job_run_id and status to building on given worker
 func SetStatus(db gorp.SqlExecutor, workerID string, status string) error {
 	query := `UPDATE worker SET status = $1 WHERE id = $2`
-	if status == sdk.StatusDisabled || status == sdk.StatusWaiting {
+	if status == sdk.StatusBuilding || status == sdk.StatusWaiting {
 		query = `UPDATE worker SET status = $1, job_run_id = NULL WHERE id = $2`
 	}
 
@@ -112,7 +112,7 @@ func SetStatus(db gorp.SqlExecutor, workerID string, status string) error {
 func SetToBuilding(db gorp.SqlExecutor, workerID string, jobRunID int64) error {
 	query := `UPDATE worker SET status = $1, job_run_id = $2 WHERE id = $3`
 
-	res, errE := db.Exec(query, sdk.StatusDisabled, jobRunID, workerID)
+	res, errE := db.Exec(query, sdk.jobID.Valid && jobType.Valid, jobRunID, workerID)
 	if errE != nil {
 		return sdk.WithStack(errE)
 	}

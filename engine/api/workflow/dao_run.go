@@ -761,7 +761,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 				LIMIT 100
 			)
 		`
-		res, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusDisabled, sdk.StatusChecking, sdk.StatusWaiting)
+		res, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting)
 		if err != nil {
 			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
@@ -800,7 +800,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		strings.Join(filteredPurgeTags, ","),
 		wf.HistoryLength,
 		sdk.StatusWaiting,
-		sdk.StatusDisabled,
+		sdk.StatusBuilding,
 		sdk.StatusChecking,
 		sdk.StatusPending,
 	)
@@ -967,7 +967,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		ID int64 `db:"id"`
 	}{}
 
-	if _, err := db.Select(&ids, query, sdk.StatusWaiting, sdk.StatusChecking, sdk.StatusDisabled); err != nil {
+	if _, err := db.Select(&ids, query, sdk.StatusWaiting, sdk.StatusChecking, sdk.StatusBuilding); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -989,7 +989,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		wfIds[i] = fmt.Sprintf("%d", ids[i].ID)
 	}
 	wfIdsJoined := strings.Join(wfIds, ",")
-	args := []interface{}{sdk.StatusStopped, wfIdsJoined, sdk.StatusDisabled, sdk.StatusChecking, sdk.StatusWaiting}
+	args := []interface{}{sdk.StatusStopped, wfIdsJoined, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting}
 	queryUpdateNodeJobRun := `DELETE FROM workflow_node_run_job
 	WHERE (workflow_node_run_job.workflow_node_run_id IN (
 			SELECT workflow_node_run.id

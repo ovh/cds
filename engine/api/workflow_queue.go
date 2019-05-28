@@ -151,7 +151,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	if noderun.Status == sdk.StatusWaiting {
-		noderun.Status = sdk.StatusDisabled
+		noderun.Status = sdk.StatusBuilding
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
 			return nil, sdk.WrapError(err, "Cannot get node run")
 		}

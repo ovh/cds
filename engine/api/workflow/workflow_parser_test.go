@@ -48,7 +48,7 @@ func TestParseAndImport(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	tests := []struct {
 		name    string
@@ -91,7 +91,7 @@ func TestParseAndImport(t *testing.T) {
 			}
 
 			if err == nil {
-				w, errW := workflow.Load(context.TODO(), db, cache, proj, tt.input.Name, u, workflow.LoadOptions{})
+				w, errW := workflow.Load(context.TODO(), db, cache, proj, tt.input.Name, workflow.LoadOptions{})
 				assert.NoError(t, errW)
 				b, _ := json.Marshal(w)
 				t.Logf("Workflow = \n%s", string(b))

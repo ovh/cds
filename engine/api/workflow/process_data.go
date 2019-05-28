@@ -54,7 +54,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}(oldStatus, wr)
 	////
 
-	wr.Status = sdk.StatusDisabled
+	wr.Status = sdk.StatusBuilding
 	maxsn := MaxSubNumber(wr.WorkflowNodeRuns)
 	wr.LastSubNumber = maxsn
 

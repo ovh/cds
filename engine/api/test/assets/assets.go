@@ -89,7 +89,7 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 }
 
 // InsertAdminUser have to be used only for tests
-func InsertAdminUser(db *gorp.DbMap) (*sdk.AuthentifiedUser, string) {
+func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	var u = &sdk.AuthentifiedUser{
 		Username:     sdk.RandomString(10),
 		Fullname:     sdk.RandomString(10),
@@ -457,6 +457,36 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 		CanonicalService: sdk.CanonicalService{
 			Name:       sdk.RandomString(10),
 			Type:       services.TypeHatchery,
+			PublicKey:  publicKey,
+			Maintainer: *usr1,
+			TokenID:    token.ID,
+		},
+		ClearJWT: signedToken,
+	}
+
+	test.NoError(t, services.Insert(db, &srv))
+
+	return &srv, privateKey
+}
+
+func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) (*sdk.Service, *rsa.PrivateKey) {
+	usr1, _ := InsertAdminUser(db)
+
+	exp := time.Now().Add(5 * time.Minute)
+	token, signedToken, err := accesstoken.New(*usr1, nil, []string{sdk.AccessTokenScopeALL}, "cds_test", name, exp)
+	test.NoError(t, err)
+
+	test.NoError(t, accesstoken.Insert(db, &token))
+
+	privateKey, err := jws.NewRandomRSAKey()
+	test.NoError(t, err)
+	publicKey, err := jws.ExportPublicKey(privateKey)
+	test.NoError(t, err)
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:       name,
+			Type:       serviceType,
 			PublicKey:  publicKey,
 			Maintainer: *usr1,
 			TokenID:    token.ID,
