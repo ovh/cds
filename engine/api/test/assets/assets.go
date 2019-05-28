@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
@@ -21,8 +23,12 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -381,4 +387,84 @@ func NewAction(id int64, ps ...sdk.Parameter) sdk.Action {
 		Enabled:    true,
 		Parameters: ps,
 	}
+}
+
+func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
+	g := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+
+	g1, _ := group.LoadGroup(db, g.Name)
+	if g1 != nil {
+		models, _ := workermodel.LoadAllByGroups(db, []int64{g.ID}, nil)
+		for _, m := range models {
+			workermodel.Delete(db, m.ID)
+		}
+
+		if err := group.DeleteGroupAndDependencies(db, g1); err != nil {
+			t.Logf("unable to delete group: %v", err)
+		}
+	}
+
+	if err := group.InsertGroup(db, g); err != nil {
+		t.Fatalf("Unable to create group %s", err)
+	}
+
+	return g
+}
+
+func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID int64) *sdk.Model {
+	m := sdk.Model{
+		Name: name,
+		Type: sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "foo/bar:3.4",
+		},
+		GroupID: groupID,
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa_1",
+				Type:  sdk.BinaryRequirement,
+				Value: "capa_1",
+			},
+		},
+		UserLastModified: time.Now(),
+	}
+
+	if err := workermodel.Insert(db, &m); err != nil {
+		t.Fatalf("Cannot insert worker model: %s", err)
+	}
+
+	assert.NotEqual(t, 0, m.ID)
+	return &m
+}
+
+func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey) {
+	usr1, _ := InsertLambdaUser(db)
+
+	exp := time.Now().Add(5 * time.Minute)
+	token, signedToken, err := accesstoken.New(*usr1, []sdk.Group{grp}, []string{sdk.AccessTokenScopeHatchery}, "cds_test", "cds test", exp)
+	test.NoError(t, err)
+
+	test.NoError(t, accesstoken.Insert(db, &token))
+
+	privateKey, err := jws.NewRandomRSAKey()
+	test.NoError(t, err)
+	publicKey, err := jws.ExportPublicKey(privateKey)
+	test.NoError(t, err)
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:       sdk.RandomString(10),
+			Type:       services.TypeHatchery,
+			PublicKey:  publicKey,
+			Maintainer: *usr1,
+			TokenID:    token.ID,
+		},
+		ClearJWT: signedToken,
+	}
+
+	test.NoError(t, services.Insert(db, &srv))
+
+	return &srv, privateKey
 }

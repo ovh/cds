@@ -100,8 +100,10 @@ func Update(db gorp.SqlExecutor, token *sdk.AccessToken) error {
 }
 
 // Delete a token in database
-func Delete(db gorp.SqlExecutor, token *sdk.AccessToken) error {
-	dbToken := accessToken(*token)
+func Delete(db gorp.SqlExecutor, id string) error {
+	dbToken := accessToken{
+		ID: id,
+	}
 	n, err := db.Delete(&dbToken)
 	if err != nil {
 		return sdk.WithStack(err)

@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
+	"github.com/ovh/cds/engine/api/cache"
 
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/go-gorp/gorp"
 
@@ -20,19 +22,16 @@ import (
 var ErrNoWorker = fmt.Errorf("cds: no worker found")
 
 // RefreshWorker Update worker last_beat
-func RefreshWorker(db gorp.SqlExecutor, w *sdk.Worker) error {
-	if w == nil {
-		return sdk.WrapError(sdk.ErrUnknownError, "RefreshWorker> Invalid worker")
-	}
+func RefreshWorker(db gorp.SqlExecutor, id string) error {
 	query := `UPDATE worker SET last_beat = now() WHERE id = $1`
-	res, err := db.Exec(query, w.ID)
+	res, err := db.Exec(query, id)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to update worker: %s", w.ID)
+		return sdk.WrapError(err, "Unable to update worker: %s", id)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return sdk.WrapError(err, "Unable to refresh worker: %s", w.ID)
+		return sdk.WrapError(err, "Unable to refresh worker: %s", id)
 	}
 	if n == 0 {
 		return sdk.WithStack(errors.New("unable to refresh worker"))
@@ -60,11 +59,10 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, hatchery *sdk.Service, registrationForm sdk.WorkerRegistrationForm) (*sdk.Worker, error) {
+func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.SpawnArguments, hatchery *sdk.Service, registrationForm sdk.WorkerRegistrationForm, execsgroups []sdk.Group) (*sdk.Worker, error) {
 	if spawnArgs.WorkerName == "" {
 		return nil, sdk.WithStack(sdk.ErrWrongRequest)
 	}
-
 	// Load Model
 	model, err := workermodel.LoadByID(db, spawnArgs.Model.ID)
 	if err != nil {
@@ -93,14 +91,26 @@ func RegisterWorker(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, hatc
 
 	//Instanciate a new worker
 	w := &sdk.Worker{
-		ID:      sdk.UUID(),
-		Name:    spawnArgs.WorkerName,
-		ModelID: spawnArgs.Model.ID,
-		Status:  sdk.StatusWaiting,
+		ID:       sdk.UUID(),
+		Name:     spawnArgs.WorkerName,
+		ModelID:  spawnArgs.Model.ID,
+		Status:   sdk.StatusWaiting,
+		LastBeat: time.Now(),
 	}
+	w.Uptodate = registrationForm.Version == sdk.VERSION
 
 	if err := Insert(db, w); err != nil {
 		return nil, err
+	}
+
+	//If the worker is registered for a model and it gave us BinaryCapabilities...
+	if spawnArgs.RegisterOnly && len(registrationForm.BinaryCapabilities) > 0 && spawnArgs.Model.ID != 0 {
+		if err := workermodel.UpdateCapabilities(db, spawnArgs, registrationForm); err != nil {
+			log.Error("updateWorkerModelCapabilities> %v", err)
+		}
+		if err := workermodel.UpdateRegistration(db, store, spawnArgs.Model.ID); err != nil {
+			log.Warning("registerWorker> Unable to update registration: %s", err)
+		}
 	}
 
 	return w, nil

@@ -28,7 +28,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	}
 	//2. Delete all workers
 	for _, w := range workers {
-		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
+		if err := worker.Delete(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -113,7 +113,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	}
 	//2. Delete all workers
 	for _, w := range workers {
-		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
+		if err := worker.Delete(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}

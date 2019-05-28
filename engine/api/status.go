@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/api/workermodel"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -18,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -43,7 +44,7 @@ func (api *API) Status() sdk.MonitoringStatus {
 	m.Lines = append(m.Lines, getStatusLine(api.SharedStorage.Status()))
 	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
 	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
-	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB())))
+	m.Lines = append(m.Lines, getStatusLine(workermodel.Status(api.mustDB())))
 	m.Lines = append(m.Lines, getStatusLine(migrate.Status(api.mustDB())))
 
 	return m

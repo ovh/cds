@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -54,30 +53,6 @@ func (api *API) registerWorkerHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		// Try to register worker
-		wk, err := worker.RegisterWorker(tx, token.Worker, hatch, registrationForm)
-		if err != nil {
-			err = sdk.NewError(sdk.ErrUnauthorized, err)
-			return sdk.WrapError(err, "[%s] Registering failed", token.Worker.WorkerName)
-		}
-
-		wk.Uptodate = registrationForm.Version == sdk.VERSION
-
-		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
-
-		//If the worker is registered for a model and it gave us BinaryCapabilities...
-		if len(registrationForm.BinaryCapabilities) > 0 && token.Worker.Model.ID != 0 {
-			go func() {
-				if err := workermodel.UpdateCapabilities(api.mustDB(), api.Cache, token.Worker, registrationForm); err != nil {
-					log.Error("updateWorkerModelCapabilities> %v", err)
-				}
-			}()
-			if err := workermodel.UpdateRegistration(tx, api.Cache, token.Worker.Model.ID); err != nil {
-				log.Warning("registerWorker> Unable to update registration: %s", err)
-			}
-		}
-
-		// All is fine, we now have to generate a JWToken for the worker
 		var groups []sdk.Group
 
 		if token.Worker.JobID != 0 {
@@ -87,6 +62,17 @@ func (api *API) registerWorkerHandler() service.Handler {
 			}
 			groups = job.ExecGroups
 		}
+
+		// Try to register worker
+		wk, err := worker.RegisterWorker(tx, api.Cache, token.Worker, hatch, registrationForm, groups)
+		if err != nil {
+			err = sdk.NewError(sdk.ErrUnauthorized, err)
+			return sdk.WrapError(err, "[%s] Registering failed", token.Worker.WorkerName)
+		}
+
+		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
+
+		// All is fine, we now have to generate a JWToken for the worker
 
 		// TODO:
 		// we probably should remove shareinfra from the groups

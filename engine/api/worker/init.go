@@ -26,13 +26,13 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store)
 			}
 		case <-tickHeart.C:
 			go func() {
-				if err := deleteDeadWorkers(c, db, store); err != nil {
+				if err := DeleteDeadWorkers(db); err != nil {
 					log.Warning("worker.deleteDeadWorkers> Error on deleteDeadWorkers : %v", err)
 				}
 			}()
 
 			go func() {
-				if err := disableDeadWorkers(c, db, store); err != nil {
+				if err := DisableDeadWorkers(db); err != nil {
 					log.Warning("workflow.disableDeadWorkers> Error on disableDeadWorkers : %v", err)
 				}
 			}()

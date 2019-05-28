@@ -1,19 +1,16 @@
 package worker
 
 import (
-	"context"
-
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 const workerHeartbeatTimeout = 300.0
 
-// disableDeadWorkers put status disabled to all dead workers with status Registering, Waiting or Building
-func disableDeadWorkers(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
+// DisableDeadWorkers put status disabled to all dead workers with status Registering, Waiting or Building
+func DisableDeadWorkers(db *gorp.DbMap) error {
 	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusWorkerRegistering, sdk.StatusBuilding, sdk.StatusWaiting})
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load dead workers")
@@ -28,8 +25,8 @@ func disableDeadWorkers(ctx context.Context, db *gorp.DbMap, store cache.Store) 
 	return nil
 }
 
-// deleteDeadWorkers delete all workers which is disabled
-func deleteDeadWorkers(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
+// DeleteDeadWorkers delete all workers which is disabled
+func DeleteDeadWorkers(db *gorp.DbMap) error {
 	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusDisabled})
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load dead workers")
@@ -41,7 +38,7 @@ func deleteDeadWorkers(ctx context.Context, db *gorp.DbMap, store cache.Store) e
 			log.Error("deleteDeadWorkers> Cannot create transaction")
 		}
 
-		if errD := DeleteWorker(tx, workers[i].ID); errD != nil {
+		if errD := Delete(tx, workers[i].ID); errD != nil {
 			log.Warning("deleteDeadWorkers> Cannot delete worker %v: %v", workers[i].ID, errD)
 			_ = tx.Rollback()
 			continue

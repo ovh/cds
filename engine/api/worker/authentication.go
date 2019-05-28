@@ -4,6 +4,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk/jws"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -18,22 +19,22 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 	// against the hatchery public key
 	unsafeToken, _, err := new(jwt.Parser).ParseUnverified(s, &hatchery.WorkerJWTClaims{})
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
 	claims, ok := unsafeToken.Claims.(*hatchery.WorkerJWTClaims)
-	if ok && unsafeToken.Valid {
+	if ok {
 		log.Debug("Token isValid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
-		return nil, sdk.WithStack(sdk.ErrUnauthorized)
+		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
 	h, err := services.FindByNameAndType(db, claims.Worker.HatcheryName, services.TypeHatchery)
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
-	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(h.PublicKey)
+	publicKey, err := jws.NewPublicKeyFromPEM(h.PublicKey)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -46,13 +47,15 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 			return publicKey, nil
 		})
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		log.Debug("invalid token: %s", s)
+		return nil, sdk.NewErrorWithStack(err, sdk.ErrForbidden)
 	}
 
 	claims, ok = token.Claims.(*hatchery.WorkerJWTClaims)
 	if ok && token.Valid {
 		log.Debug("Token isValid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
+		log.Debug("invalid token: %s", s)
 		return nil, sdk.ErrUnauthorized
 	}
 

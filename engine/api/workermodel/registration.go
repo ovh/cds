@@ -157,15 +157,8 @@ func UnbookForRegister(store cache.Store, id int64) {
 	store.Delete(k)
 }
 
-func UpdateCapabilities(db *gorp.DbMap, store cache.Store, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
-	//Start a new tx for this goroutine
-	ntx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer ntx.Rollback()
-
-	existingCapas, err := LoadCapabilities(ntx, spawnArgs.Model.ID)
+func UpdateCapabilities(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
+	existingCapas, err := LoadCapabilities(db, spawnArgs.Model.ID)
 	if err != nil {
 		log.Warning("RegisterWorker> Unable to load worker model capabilities: %s", err)
 		return sdk.WithStack(err)
@@ -188,7 +181,7 @@ func UpdateCapabilities(db *gorp.DbMap, store cache.Store, spawnArgs hatchery.Sp
 		log.Debug("Updating model %d binary capabilities with %d capabilities", spawnArgs.Model.ID, len(newCapas))
 		for _, b := range newCapas {
 			query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
-			if _, err := ntx.Exec(query, spawnArgs.Model.ID, b, b, string(sdk.BinaryRequirement)); err != nil {
+			if _, err := db.Exec(query, spawnArgs.Model.ID, b, b, string(sdk.BinaryRequirement)); err != nil {
 				//Ignore errors because we let the database to check constraints...
 				log.Debug("registerWorker> Cannot insert into worker_capability: %v", err)
 				return sdk.WithStack(err)
@@ -226,11 +219,6 @@ func UpdateCapabilities(db *gorp.DbMap, store cache.Store, spawnArgs hatchery.Sp
 			log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", spawnArgs.Model.ID, err)
 			return sdk.WithStack(err)
 		}
-	}
-
-	if err := ntx.Commit(); err != nil {
-		log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
-		return sdk.WithStack(err)
 	}
 
 	return nil

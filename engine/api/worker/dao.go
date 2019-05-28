@@ -1,25 +1,14 @@
 package worker
 
 import (
-	"math"
 	"strings"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
+
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
-
-// DeleteWorker remove worker from database
-func DeleteWorker(db gorp.SqlExecutor, id string) error {
-	query := `DELETE FROM worker WHERE id = $1`
-	if _, err := db.Exec(query, id); err != nil {
-		return sdk.WrapError(err, "DeleteWorker")
-	}
-
-	return nil
-}
 
 func Insert(db gorp.SqlExecutor, w *sdk.Worker) error {
 	return gorpmapping.Insert(db, w)
@@ -27,6 +16,26 @@ func Insert(db gorp.SqlExecutor, w *sdk.Worker) error {
 
 func Update(db gorp.SqlExecutor, w *sdk.Worker) error {
 	return gorpmapping.Update(db, w)
+}
+
+// Delete remove worker from database, it also removes the associated access_token
+func Delete(db gorp.SqlExecutor, id string) error {
+	accessTokenID, err := db.SelectNullStr("SELECT access_token_id FROM worker WHERE id = $1", id)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	query := `DELETE FROM worker WHERE id = $1`
+	if _, err := db.Exec(query, id); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if accessTokenID.Valid {
+		if err := accesstoken.Delete(db, accessTokenID.String); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func LoadByAccessTokenID(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
@@ -79,7 +88,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]s
 				FROM worker
 				WHERE status = ANY(string_to_array($1, ',')::text[])
 				AND now() - last_beat > $2 * INTERVAL '1' SECOND
-				ORDER BY name last_beat ASC`).Args(strings.Join(status, ","), int64(math.Floor(timeout)))
+				ORDER BY last_beat ASC`).Args(strings.Join(status, ","), timeout)
 	if err := gorpmapping.GetAll(db, query, &workers); err != nil {
 		return nil, err
 	}
@@ -89,7 +98,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]s
 // SetStatus sets job_run_id and status to building on given worker
 func SetStatus(db gorp.SqlExecutor, workerID string, status string) error {
 	query := `UPDATE worker SET status = $1 WHERE id = $2`
-	if status == sdk.StatusDisabled {
+	if status == sdk.StatusDisabled || status == sdk.StatusWaiting {
 		query = `UPDATE worker SET status = $1, job_run_id = NULL WHERE id = $2`
 	}
 
@@ -100,7 +109,7 @@ func SetStatus(db gorp.SqlExecutor, workerID string, status string) error {
 }
 
 // SetToBuilding sets job_run_id and status to building on given worker
-func SetToBuilding(db gorp.SqlExecutor, store cache.Store, workerID string, actionBuildID int64, jobType string) error {
+func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jobType string) error {
 	query := `UPDATE worker SET status = $1, job_run_id = $2, job_type = $3 WHERE id = $4`
 
 	res, errE := db.Exec(query, sdk.StatusDisabled, actionBuildID, jobType, workerID)
@@ -109,32 +118,5 @@ func SetToBuilding(db gorp.SqlExecutor, store cache.Store, workerID string, acti
 	}
 
 	_, err := res.RowsAffected()
-	// delete the worker from the cache
-	store.Delete(cache.Key("worker", workerID))
 	return err
-}
-
-// UpdateWorkerStatus changes worker status to Disabled
-func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status string) error {
-	query := `UPDATE worker SET status = $1, job_run_id = NULL WHERE id = $2`
-
-	res, err := db.Exec(query, status, workerID)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected > 1 {
-		log.Error("UpdateWorkerStatus: Multiple (%d) rows affected ! (id=%s)", rowsAffected, workerID)
-	}
-
-	if rowsAffected == 0 {
-		return ErrNoWorker
-	}
-
-	return nil
 }

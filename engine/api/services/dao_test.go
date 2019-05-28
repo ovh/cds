@@ -63,7 +63,7 @@ func TestDAO(t *testing.T) {
 	assert.Equal(t, srv.Name, srv2.Name)
 	assert.Equal(t, string(srv.PublicKey), string(srv2.PublicKey))
 
-	jwt, err := LoadClearJWT(db, srv2.ID)
+	jwt, err := services.LoadClearJWT(db, srv2.ID)
 	test.NoError(t, err)
 	assert.Equal(t, signedToken, jwt)
 

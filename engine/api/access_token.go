@@ -219,11 +219,11 @@ func (api *API) deleteAccessTokenHandler() service.Handler {
 		}
 
 		// Only the creator of the token can delete it
-		if t.AuthentifiedUserID != getAPIConsumer(ctx).OnBehalfOf.ID {
+		if t.AuthentifiedUserID != getAPIConsumer(ctx).OnBehalfOf.ID && !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		if err := accesstoken.Delete(api.mustDB(), &t); err != nil {
+		if err := accesstoken.Delete(api.mustDB(), id); err != nil {
 			return sdk.WithStack(err)
 		}
 

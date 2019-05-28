@@ -33,7 +33,7 @@ func TestInsert(t *testing.T) {
 
 	assert.Len(t, reloadedToken.Groups, 1)
 
-	test.NoError(t, accesstoken.Delete(db, &token))
+	test.NoError(t, accesstoken.Delete(db, token.ID))
 
 }
 
@@ -63,7 +63,7 @@ func TestUpdate(t *testing.T) {
 	t.Logf("reloaded token is s%+v", reloadedToken)
 
 	assert.Len(t, reloadedToken.Groups, 2)
-	test.NoError(t, accesstoken.Delete(db, &reloadedToken))
+	test.NoError(t, accesstoken.Delete(db, reloadedToken.ID))
 }
 
 func TestFind(t *testing.T) {
@@ -99,6 +99,6 @@ func TestFind(t *testing.T) {
 	test.NoError(t, err)
 	assert.Len(t, tokens, 1)
 
-	test.NoError(t, accesstoken.Delete(db, &token))
+	test.NoError(t, accesstoken.Delete(db, token.ID))
 
 }
