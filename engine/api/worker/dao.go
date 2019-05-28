@@ -109,10 +109,10 @@ func SetStatus(db gorp.SqlExecutor, workerID string, status string) error {
 }
 
 // SetToBuilding sets job_run_id and status to building on given worker
-func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jobType string) error {
-	query := `UPDATE worker SET status = $1, job_run_id = $2, job_type = $3 WHERE id = $4`
+func SetToBuilding(db gorp.SqlExecutor, workerID string, jobRunID int64) error {
+	query := `UPDATE worker SET status = $1, job_run_id = $2 WHERE id = $3`
 
-	res, errE := db.Exec(query, sdk.StatusDisabled, actionBuildID, jobType, workerID)
+	res, errE := db.Exec(query, sdk.StatusDisabled, jobRunID, workerID)
 	if errE != nil {
 		return sdk.WithStack(errE)
 	}

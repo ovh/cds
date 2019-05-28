@@ -59,48 +59,59 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.SpawnArguments, hatchery *sdk.Service, registrationForm sdk.WorkerRegistrationForm, execsgroups []sdk.Group) (*sdk.Worker, error) {
+func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.SpawnArguments, hatchery *sdk.Service, registrationForm sdk.WorkerRegistrationForm, execsgroups []sdk.Group) (*sdk.Worker, string, error) {
 	if spawnArgs.WorkerName == "" {
-		return nil, sdk.WithStack(sdk.ErrWrongRequest)
+		return nil, "", sdk.WithStack(sdk.ErrWrongRequest)
 	}
 	// Load Model
 	model, err := workermodel.LoadByID(db, spawnArgs.Model.ID)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	// Load the access token of the hatchery
-	accesstoken, err := accesstoken.FindByID(db, hatchery.TokenID)
+	atoken, err := accesstoken.FindByID(db, hatchery.TokenID)
 	if err != nil {
-		return nil, err
-	}
-
-	// Checks that the worker model have a group included in the groups of the accesstoken
-	if sdk.IsInInt64Array(model.GroupID, sdk.GroupsToIDs(accesstoken.Groups)) {
-		return nil, sdk.WithStack(sdk.ErrForbidden)
+		return nil, "", err
 	}
 
 	// If worker model is public (sharedInfraGroup) it can be ran by every one
 	// If worker is public it can run every model
 	// Private worker for a group cannot run a private model for another group
-	if !sdk.IsInInt64Array(group.SharedInfraGroup.ID, sdk.GroupsToIDs(accesstoken.Groups)) &&
-		!sdk.IsInInt64Array(model.GroupID, sdk.GroupsToIDs(accesstoken.Groups)) &&
+	if !sdk.IsInInt64Array(group.SharedInfraGroup.ID, sdk.GroupsToIDs(atoken.Groups)) &&
+		!sdk.IsInInt64Array(model.GroupID, sdk.GroupsToIDs(atoken.Groups)) &&
 		model.GroupID != group.SharedInfraGroup.ID {
-		return nil, sdk.WithStack(sdk.ErrForbidden)
+		return nil, "", sdk.WithStack(sdk.ErrForbidden)
 	}
 
 	//Instanciate a new worker
 	w := &sdk.Worker{
-		ID:       sdk.UUID(),
-		Name:     spawnArgs.WorkerName,
-		ModelID:  spawnArgs.Model.ID,
-		Status:   sdk.StatusWaiting,
-		LastBeat: time.Now(),
+		ID:         sdk.UUID(),
+		Name:       spawnArgs.WorkerName,
+		ModelID:    spawnArgs.Model.ID,
+		Status:     sdk.StatusWaiting,
+		HatcheryID: hatchery.ID,
+		LastBeat:   time.Now(),
 	}
 	w.Uptodate = registrationForm.Version == sdk.VERSION
 
+	// TODO:
+	// we probably should remove shareinfra from the groups
+	// and make the intersection with hatchery accesstoken group
+
+	jwtoken, jwt, err := accesstoken.New(hatchery.Maintainer, execsgroups, []string{sdk.AccessTokenScopeRunExecution}, spawnArgs.HatcheryName, spawnArgs.WorkerName, time.Now().Add(24*time.Hour))
+	if err != nil {
+		return nil, "", err
+	}
+
+	if err := accesstoken.Insert(db, &jwtoken); err != nil {
+		return nil, "", err
+	}
+
+	w.AccessTokenID = &jwtoken.ID
+
 	if err := Insert(db, w); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	//If the worker is registered for a model and it gave us BinaryCapabilities...
@@ -113,5 +124,5 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 		}
 	}
 
-	return w, nil
+	return w, jwt, nil
 }

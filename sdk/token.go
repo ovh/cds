@@ -101,6 +101,7 @@ type Token struct {
 type AccessTokenJWTClaims struct {
 	ID     string
 	Groups []int64
+	Scopes []string
 	jwt.StandardClaims
 }
 

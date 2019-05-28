@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
-
-	"github.com/ovh/cds/engine/api/accesstoken"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -64,7 +61,7 @@ func (api *API) registerWorkerHandler() service.Handler {
 		}
 
 		// Try to register worker
-		wk, err := worker.RegisterWorker(tx, api.Cache, token.Worker, hatch, registrationForm, groups)
+		wk, jwt, err := worker.RegisterWorker(tx, api.Cache, token.Worker, hatch, registrationForm, groups)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "[%s] Registering failed", token.Worker.WorkerName)
@@ -72,29 +69,13 @@ func (api *API) registerWorkerHandler() service.Handler {
 
 		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
 
-		// All is fine, we now have to generate a JWToken for the worker
-
-		// TODO:
-		// we probably should remove shareinfra from the groups
-		// and make the intersection with hatchery accesstoken group
-
-		jwtoken, jwt, err := accesstoken.New(hatch.Maintainer, groups, Scope(sdk.AccessTokenScopeRunExecution), token.Worker.HatcheryName, token.Worker.WorkerName, time.Now().Add(24*time.Hour))
-		if err != nil {
-			return err
-		}
-
-		if err := accesstoken.Insert(tx, &jwtoken); err != nil {
-			return err
-		}
-
-		wk.AccessTokenID = jwtoken.ID
-		if err := worker.Update(tx, wk); err != nil {
-			return err
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		// Set the JWT token as a header
+		log.Debug("worker.registerWorkerHandler> X-CDS-JWT:%s", jwt[:12])
+		w.Header().Add("X-CDS-JWT", jwt)
 
 		// Return worker info to worker itself
 		return service.WriteJSON(w, wk, http.StatusOK)
@@ -171,7 +152,7 @@ func (api *API) refreshWorkerHandler() service.Handler {
 			return err
 		}
 
-		if err := worker.RefreshWorker(api.mustDB(), wk); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
+		if err := worker.RefreshWorker(api.mustDB(), wk.ID); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "cannot refresh last beat of %s", wk.Name)
 		}
 		return nil

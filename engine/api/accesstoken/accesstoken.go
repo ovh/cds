@@ -60,6 +60,7 @@ func Regen(token *sdk.AccessToken) (string, error) {
 	claims := sdk.AccessTokenJWTClaims{
 		ID:     token.ID,
 		Groups: sdk.GroupsToIDs(token.Groups),
+		Scopes: token.Scopes,
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    LocalIssuer,
 			Subject:   token.AuthentifiedUser.Username,

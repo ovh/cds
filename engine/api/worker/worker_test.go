@@ -1,9 +1,11 @@
 package worker_test
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
@@ -115,4 +117,45 @@ func TestDeadWorkers(t *testing.T) {
 	defer end()
 	test.NoError(t, worker.DisableDeadWorkers(db))
 	test.NoError(t, worker.DeleteDeadWorkers(db))
+}
+
+func TestRegister(t *testing.T) {
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	g := assets.InsertGroup(t, db)
+	h, _ := assets.InsertHatchery(t, db, *g)
+	m := assets.InsertWorkerModel(t, db, sdk.RandomString(5), g.ID)
+
+	w, s, err := worker.RegisterWorker(db, store, hatchery.SpawnArguments{
+		HatcheryName: h.Name,
+		Model:        *m,
+		RegisterOnly: true,
+		WorkerName:   sdk.RandomString(10),
+	}, h, sdk.WorkerRegistrationForm{
+		Arch:               runtime.GOARCH,
+		OS:                 runtime.GOOS,
+		BinaryCapabilities: []string{"bash"},
+	}, []sdk.Group{*g})
+
+	test.NoError(t, err)
+	assert.NotNil(t, w)
+	t.Logf("jwt: %s", s)
+
+	unsafeToken, _, err := new(jwt.Parser).ParseUnverified(s, &sdk.AccessTokenJWTClaims{})
+	test.NoError(t, err)
+
+	claims, ok := unsafeToken.Claims.(*sdk.AccessTokenJWTClaims)
+	if ok {
+		t.Logf("Token isValid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
+	}
+	assert.True(t, ok)
+
+	wk, err := worker.LoadByAccessTokenID(db, claims.ID)
+	test.NoError(t, err)
+
+	assert.Equal(t, w.ID, wk.ID)
+	assert.Equal(t, w.ModelID, wk.ModelID)
+	assert.Equal(t, w.HatcheryID, wk.HatcheryID)
+
 }
