@@ -112,7 +112,7 @@ func SetStatus(db gorp.SqlExecutor, workerID string, status string) error {
 func SetToBuilding(db gorp.SqlExecutor, workerID string, jobRunID int64) error {
 	query := `UPDATE worker SET status = $1, job_run_id = $2 WHERE id = $3`
 
-	res, errE := db.Exec(query, sdk.jobID.Valid && jobType.Valid, jobRunID, workerID)
+	res, errE := db.Exec(query, sdk.StatusBuilding, jobRunID, workerID)
 	if errE != nil {
 		return sdk.WithStack(errE)
 	}
