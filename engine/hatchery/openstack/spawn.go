@@ -61,7 +61,8 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		log.Debug("spawnWorker> call images.List on openstack took %fs, nbImages:%d", time.Since(start).Seconds(), len(imgs))
 		for _, img := range imgs {
 			workerModelName, _ := img.Metadata["worker_model_name"]
-			if workerModelName == spawnArgs.Model.Name {
+			workerModelLastModified, _ := img.Metadata["worker_model_last_modified"]
+			if workerModelName == spawnArgs.Model.Name && workerModelLastModified == spawnArgs.Model.UserLastModified.Unix() {
 				withExistingImage = true
 				var jobInfo string
 				if spawnArgs.JobID != 0 {
