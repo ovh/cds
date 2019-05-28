@@ -10,12 +10,12 @@ import (
 
 func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 	u := getAPIConsumer(ctx)
-	return g.IsAdmin(g, u)
+	return g.IsMember(u) && g.IsAdmin(u.OnBehalfOf)
 }
 
 func isGroupMember(ctx context.Context, g *sdk.Group) bool {
 	u := getAPIConsumer(ctx)
-	return g.IsMember(g, u)
+	return g.IsMember(u)
 }
 
 func isMaintainer(ctx context.Context) bool {

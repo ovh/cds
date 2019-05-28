@@ -39,7 +39,7 @@ func GroupsToIDs(gs []Group) []int64 {
 	return ids
 }
 
-func (g Group) IsMember(group *Group, u GroupMember) bool {
+func (group Group) IsMember(u GroupMember) bool {
 	for _, g := range u.GetGroups() {
 		if g.ID == group.ID {
 			return true
@@ -48,8 +48,8 @@ func (g Group) IsMember(group *Group, u GroupMember) bool {
 	return false
 }
 
-// TODO Fix this because it relies on username with is not a good thing
-func (g Group) IsAdmin(group *Group, u IdentifiableGroupMember) bool {
+// TODO Fix this because it relies on username which is not a good thing
+func (group Group) IsAdmin(u AuthentifiedUser) bool {
 	for _, g := range u.GetGroups() {
 		if g.ID == group.ID {
 			for _, adm := range g.Admins {

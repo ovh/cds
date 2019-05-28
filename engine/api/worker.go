@@ -236,15 +236,12 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 	if st == sdk.StatusDisabled && jobID.Valid && jobType.Valid {
 		// Worker is awol while building !
 		// We need to restart this action
-		switch jobType.String {
-		case sdk.JobTypeWorkflowNode:
-			wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
-			if errL == nil && wNodeJob.Retry < 3 {
-				if err := workflow.RestartWorkflowNodeJob(nil, db, *wNodeJob); err != nil {
-					log.Warning("DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
-				} else {
-					log.Info("DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
-				}
+		wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
+		if errL == nil && wNodeJob.Retry < 3 {
+			if err := workflow.RestartWorkflowNodeJob(nil, db, *wNodeJob); err != nil {
+				log.Warning("DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
+			} else {
+				log.Info("DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
 			}
 		}
 
