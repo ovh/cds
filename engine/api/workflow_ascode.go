@@ -35,7 +35,7 @@ func (api *API) postResyncPRWorkflowAsCodeHandler() service.Handler {
 		workflowName := vars["permWorkflowName"]
 
 		u := getAPIConsumer(ctx)
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, u,
+		proj, errP := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -44,7 +44,7 @@ func (api *API) postResyncPRWorkflowAsCodeHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "unable to load project")
 		}
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, u, workflow.LoadOptions{
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, workflow.LoadOptions{
 			DeepPipeline:          false,
 			WithAsCodeUpdateEvent: true,
 		})
@@ -68,7 +68,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 
 		u := getAPIConsumer(ctx)
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, u,
+		proj, errP := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
@@ -77,7 +77,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "unable to load project")
 		}
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, u, workflow.LoadOptions{
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, workflow.LoadOptions{
 			DeepPipeline:          true,
 			WithAsCodeUpdateEvent: true,
 		})
@@ -119,18 +119,18 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			}
 			wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks, h)
 
-			oldW, errOld := workflow.LoadByID(api.mustDB(), api.Cache, proj, wf.ID, u, workflow.LoadOptions{})
+			oldW, errOld := workflow.LoadByID(ctx, api.mustDB(), api.Cache, proj, wf.ID, workflow.LoadOptions{})
 			if errOld != nil {
 				return errOld
 			}
 
-			if err := workflow.Update(ctx, api.mustDB(), api.Cache, wf, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
+			if err := workflow.Update(ctx, api.mustDB(), api.Cache, wf, proj, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
 				return err
 			}
 		}
 
 		// Export workflow + push + create pull request
-		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, project.EncryptWithBuiltinKey, u)
+		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, u, project.EncryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(errW, "unable to migrate workflow as code")
 		}

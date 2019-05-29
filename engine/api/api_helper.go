@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/sdk/log"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 )
@@ -104,4 +108,38 @@ func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	}
 
 	return db
+}
+
+func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
+	db := a.mustDBWithCtx(ctx)
+	t := JWT(ctx)
+	if t == nil {
+		return nil, false
+	}
+	w, err := worker.LoadByAccessTokenID(db, t.ID)
+	if err != nil {
+		log.Error("unable to get worker from token %s: %v", t.ID, err)
+		return nil, false
+	}
+	if w == nil {
+		return nil, false
+	}
+	return w, true
+}
+
+func (a *API) isHatchery(ctx context.Context) (*sdk.Service, bool) {
+	db := a.mustDBWithCtx(ctx)
+	t := JWT(ctx)
+	if t == nil {
+		return nil, false
+	}
+	s, err := services.FindByTokenID(db, t.ID)
+	if err != nil {
+		log.Error("unable to get hatchery from token %s: %v", t.ID, err)
+		return nil, false
+	}
+	if s.Type != services.TypeHatchery {
+		return nil, false
+	}
+	return s, true
 }

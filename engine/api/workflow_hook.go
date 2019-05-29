@@ -46,12 +46,12 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx), project.LoadOptions.WithIntegrations)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
 
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, getAPIConsumer(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}
@@ -237,7 +237,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		_, next := observability.Span(ctx, "project.Load")
-		proj, errP := project.Load(tx, api.Cache, key, getAPIConsumer(ctx),
+		proj, errP := project.Load(tx, api.Cache, key,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
 			project.LoadOptions.WithIntegrations,

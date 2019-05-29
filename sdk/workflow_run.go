@@ -367,7 +367,7 @@ type WorkflowNodeJobRun struct {
 	ModelType                 string             `json:"model_type,omitempty"`
 	BookedBy                  Service            `json:"bookedby"`
 	SpawnInfos                []SpawnInfo        `json:"spawninfos"`
-	ExecGroups                []Group            `json:"exec_groups"`
+	ExecGroups                Groups             `json:"exec_groups"`
 	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`
 	Header                    WorkflowRunHeaders `json:"header,omitempty"`
 	ContainsService           bool               `json:"contains_service,omitempty"`

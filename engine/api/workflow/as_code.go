@@ -123,7 +123,7 @@ func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient,
 }
 
 // SyncAsCodeEvent checks if workflow as to become ascode
-func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u *sdk.AuthentifiedUser) error {
+func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable) error {
 	if len(wf.AsCodeEvent) == 0 {
 		return nil
 	}
@@ -172,7 +172,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 }
 
 // UpdateWorkflowAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u *sdk.AuthentifiedUser) {
+func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u sdk.Identifiable) {
 	counter := 0
 	defer func() {
 		store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
@@ -232,7 +232,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				PullRequestID:  int64(pr.ID),
 				WorkflowID:     wf.ID,
 				PullRequestURL: pr.URL,
-				Username:       u.Username,
+				Username:       u.GetUsername(),
 				CreationDate:   time.Now(),
 			}
 

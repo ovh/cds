@@ -12,6 +12,19 @@ type Group struct {
 	Tokens []Token `json:"tokens,omitempty" yaml:"tokens,omitempty"`
 }
 
+type Groups []Group
+
+func (groups Groups) HasOneOf(g ...Group) bool {
+	groupIDs := GroupsToIDs(groups)
+	hasOneOfIDs := GroupsToIDs(g)
+	for _, id := range hasOneOfIDs {
+		if IsInInt64Array(id, groupIDs) {
+			return true
+		}
+	}
+	return false
+}
+
 // GroupPermission represent a group and his role in the project
 type GroupPermission struct {
 	Group      Group `json:"group"`

@@ -145,6 +145,7 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token string, sec
 		secret: secret,
 		srvs:   srvs,
 		cache:  gocache.New(5*time.Second, 60*time.Second),
+		dbFunc: c.dbFunc,
 	}, nil
 }
 

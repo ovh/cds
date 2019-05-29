@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/services"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
@@ -15,11 +13,8 @@ import (
 func (api *API) bookWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// this handler should only answer to an hatchery
-		s, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
-		if err != nil {
-			return err
-		}
-		if s.Type != services.TypeHatchery {
+		s, ok := api.isHatchery(ctx)
+		if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -83,11 +78,8 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// this handler should only answer to an hatchery
-		s, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
-		if err != nil {
-			return err
-		}
-		if s.Type != services.TypeHatchery {
+		_, ok := api.isHatchery(ctx)
+		if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

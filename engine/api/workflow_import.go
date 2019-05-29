@@ -28,7 +28,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		key := vars[permProjectKey]
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -72,11 +72,11 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		}
 
 		// Browse all node to find IDs
-		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, getAPIConsumer(ctx)); err != nil {
+		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj); err != nil {
 			return sdk.WrapError(err, "Workflow is not valid")
 		}
 
-		if err := workflow.RenameNode(api.mustDB(), wf); err != nil {
+		if err := workflow.RenameNode(ctx, api.mustDB(), wf); err != nil {
 			return sdk.WrapError(err, "Unable to rename node")
 		}
 
@@ -92,7 +92,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -145,7 +145,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 		var wf *sdk.Workflow
 		if workflowExists {
-			wf, err = workflow.Load(ctx, tx, api.Cache, proj, ew.Name, u, workflow.LoadOptions{WithIcon: true})
+			wf, err = workflow.Load(ctx, tx, api.Cache, proj, ew.Name, workflow.LoadOptions{WithIcon: true})
 			if err != nil {
 				return sdk.WrapError(err, "Unable to load existing workflow")
 			}
@@ -184,7 +184,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		wfName := vars["permWorkflowName"]
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getAPIConsumer(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -198,7 +198,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 
 		u := getAPIConsumer(ctx)
 
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, u, workflow.LoadOptions{WithIcon: true})
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load workflow")
 		}
@@ -248,7 +248,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, u, workflow.LoadOptions{})
+		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, workflow.LoadOptions{})
 		if errL == nil {
 			event.PublishWorkflowUpdate(key, *wrkflw, *oldW, u)
 		}
@@ -295,7 +295,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		//Load project
-		proj, errp := project.Load(db, api.Cache, key, u,
+		proj, errp := project.Load(db, api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,

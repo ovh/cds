@@ -45,6 +45,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
 			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", JWT(ctx).ID, srv.Type)
 		}
+		// TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
 		srv.Uptodate = srv.Version == sdk.VERSION
 		for i := range srv.MonitoringStatus.Lines {
 			s := &srv.MonitoringStatus.Lines[i]

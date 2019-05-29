@@ -243,7 +243,6 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 		}
 	}
 
-	// Authentify the request with the hash
 	// load the clear JWT
 	jwt, err := LoadClearJWT(db, srv.ID)
 	if err != nil {

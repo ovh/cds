@@ -80,7 +80,7 @@ type AccessToken struct {
 	Created            time.Time        `json:"created" cli:"created" db:"created"`
 	Status             string           `json:"status" cli:"status" db:"status"`
 	Origin             string           `json:"-" cli:"-" db:"origin"`
-	Groups             []Group          `json:"groups" cli:"groups" db:"-"`
+	Groups             Groups           `json:"groups" cli:"groups" db:"-"`
 	Scopes             StringSlice      `json:"scopes" cli:"scopes" db:"scopes"`
 }
 
