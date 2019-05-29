@@ -149,10 +149,10 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		server, err := r.Extract()
 		if err != nil {
 			if strings.Contains(err.Error(), "is already in use on instance") && try < maxTries { // Fixed IP address X.X.X.X is already in use on instance
-				log.Warning("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%s body:%s - Try %d/%d", name, flavorID, imageID, meta, networks, err, r.Body, try, maxTries)
+				log.Warning("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s - Try %d/%d", name, flavorID, imageID, meta, networks, err, r.Body, try, maxTries)
 				continue
 			}
-			return "", fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%s body:%s", name, flavorID, imageID, meta, networks, err, r.Body)
+			return "", fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s", name, flavorID, imageID, meta, networks, err, r.Body)
 		}
 		log.Debug("SpawnWorker> Created Server ID: %s", server.ID)
 		break
