@@ -10,7 +10,7 @@ import (
 // LoadOptionFunc for workflow template.
 type LoadOptionFunc func(gorp.SqlExecutor, ...*sdk.WorkflowTemplate) error
 
-// LoadOptions provides all options on workflow template loads functions
+// LoadOptions provides all options to load workflow template.
 var LoadOptions = struct {
 	Default    LoadOptionFunc
 	WithAudits LoadOptionFunc

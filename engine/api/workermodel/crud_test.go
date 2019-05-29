@@ -1,19 +1,7 @@
 package workermodel_test
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/workermodel"
-	"github.com/ovh/cds/sdk"
-)
-
-func TestCreateModel(t *testing.T) {
+// create handler tests
+/*func TestCreateModel(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -54,7 +42,7 @@ func TestCreateModel(t *testing.T) {
 			Error: true,
 		},
 		{
-			Name:  "user should group admin",
+			Name:  "user should be group admin",
 			User:  u1,
 			Data:  sdk.Model{GroupID: g1.ID},
 			Error: true,
@@ -169,9 +157,9 @@ func TestCreateModel(t *testing.T) {
 			}
 		})
 	}
-}
+}*/
 
-func TestUpdateModel(t *testing.T) {
+/*func TestUpdateModel(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -303,4 +291,4 @@ func TestCopyModelTypeData(t *testing.T) {
 	data.Type = sdk.Docker
 	assert.NoError(t, workermodel.CopyModelTypeData(&sdk.User{}, &old, &data))
 	assert.Equal(t, old.ModelDocker, data.ModelDocker)
-}
+}*/

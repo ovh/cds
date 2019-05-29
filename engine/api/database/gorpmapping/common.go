@@ -142,3 +142,25 @@ func Get(db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
 }
 
 type IDs pq.Int64Array
+
+// And returns a new AND expression from given ones.
+func And(es ...string) string {
+	if len(es) == 0 {
+		return "false"
+	}
+	return "(" + strings.Join(es, " AND ") + ")"
+}
+
+// ArgsMap represents the map of named sql args.
+type ArgsMap map[string]interface{}
+
+// Merge returns a merged map from current and another.
+func (a ArgsMap) Merge(other ArgsMap) ArgsMap {
+	if a == nil {
+		a = make(ArgsMap)
+	}
+	for k, v := range other {
+		a[k] = v
+	}
+	return a
+}

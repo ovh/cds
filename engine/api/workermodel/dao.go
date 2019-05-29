@@ -3,7 +3,6 @@ package workermodel
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -13,6 +12,117 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
+
+func getAll(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+	pms := []*sdk.Model{}
+
+	if err := gorpmapping.GetAll(db, q, &pms); err != nil {
+		return nil, sdk.WrapError(err, "cannot get worker models")
+	}
+	if len(pms) > 0 {
+		for i := range opts {
+			if err := opts[i](db, pms...); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	ms := make([]sdk.Model, len(pms))
+	for i := range ms {
+		ms[i] = *pms[i]
+	}
+
+	return ms, nil
+}
+
+func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
+	var m sdk.Model
+
+	found, err := gorpmapping.Get(db, q, &m)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get worker model")
+	}
+	if !found {
+		return nil, nil
+	}
+
+	for i := range opts {
+		if err := opts[i](db, &m); err != nil {
+			return nil, err
+		}
+	}
+
+	return &m, nil
+}
+
+// LoadAll retrieves worker models from database.
+func LoadAll(db gorp.SqlExecutor, filter *LoadFilter, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+	var query gorpmapping.Query
+
+	if filter == nil {
+		query = gorpmapping.NewQuery("SELECT * FROM worker_model ORDER BY name")
+	} else {
+		query = gorpmapping.NewQuery(`
+      SELECT worker_model.*
+      FROM worker_model
+      LEFT JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+      WHERE ` + filter.SQL() + `
+      ORDER BY worker_model.name
+    `).Args(filter.Args())
+	}
+
+	return getAll(db, query, opts...)
+}
+
+// LoadAllByGroupIDs returns worker models list for given group ids.
+func LoadAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64, filter *LoadFilter, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+	var query gorpmapping.Query
+
+	if filter == nil {
+		query = gorpmapping.NewQuery(`
+      SELECT *
+      FROM worker_model
+      WHERE group_id = ANY(string_to_array($1, ',')::int[])
+      ORDER BY name
+    `).Args(gorpmapping.IDsToQueryString(groupIDs))
+	} else {
+		query = gorpmapping.NewQuery(`
+      SELECT worker_model.*
+      FROM worker_model
+      LEFT JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+      WHERE worker_model.group_id = ANY(string_to_array(:groupIDs, ',')::int[])
+      AND ` + filter.SQL() + `
+      ORDER BY worker_model.name
+    `).Args(filter.Args().Merge(gorpmapping.ArgsMap{
+			"groupIDs": gorpmapping.IDsToQueryString(groupIDs),
+		}))
+	}
+
+	return getAll(db, query, opts...)
+}
+
+// LoadAllNotSharedInfra retrieves models not shared infra from database.
+func LoadAllNotSharedInfra(db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM worker_model
+    WHERE group_id != $1
+    ORDER BY name
+  `).Args(group.SharedInfraGroup.ID)
+	return getAll(db, query, opts...)
+}
+
+// LoadAllByNameAndGroupIDs retrieves all worker model with given name for group ids in database.
+func LoadAllByNameAndGroupIDs(db gorp.SqlExecutor, name string, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM worker_model
+    WHERE name = $1
+    AND group_id = ANY(string_to_array($2, ',')::int[])
+    ORDER BY name
+  `).Args(name, gorpmapping.IDsToQueryString(groupIDs))
+	return getAll(db, query, opts...)
+}
 
 const modelColumns = `
 	DISTINCT worker_model.id,
@@ -37,44 +147,15 @@ const modelColumns = `
 	worker_model.is_deprecated,
 	"group".name as groupname`
 
-// LoadAll retrieves worker models from database.
-func LoadAll(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
-    FROM worker_model
-    JOIN "group" ON worker_model.group_id = "group".id
-    ORDER BY worker_model.name
-  `, modelColumns)
-	return loadAll(db, false, query)
-}
-
-// LoadAllNotSharedInfra retrieves models not shared infra from database.
-func LoadAllNotSharedInfra(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
-    FROM worker_model JOIN "group" ON worker_model.group_id = "group".id
-    WHERE worker_model.group_id != $1
-    ORDER BY worker_model.name
-  `, modelColumns)
-	return loadAll(db, false, query, group.SharedInfraGroup.ID)
-}
-
-// LoadAllByNameAndGroupIDs retrieves all worker model with given name for group ids in database.
-func LoadAllByNameAndGroupIDs(db gorp.SqlExecutor, name string, groupIDs []int64) ([]sdk.Model, error) {
-	query := `
-    SELECT worker_model.*, "group".name as groupname
-    FROM worker_model
-    JOIN "group" ON worker_model.group_id = "group".id
-    WHERE worker_model.name = $1
-    AND worker_model.group_id = ANY(string_to_array($2, ',')::int[])
-  `
-	return loadAll(db, false, query, name, gorpmapping.IDsToQueryString(groupIDs))
-}
-
 // LoadByID retrieves a specific worker model in database.
-func LoadByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, modelColumns)
-	return load(db, false, query, ID)
+func LoadByID(db gorp.SqlExecutor, id int64) (*sdk.Model, error) {
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" on worker_model.group_id = "group".id
+    WHERE worker_model.id = $1
+  `, modelColumns)
+	return load(db, false, query, id)
 }
 
 // LoadByNameAndGroupIDWithClearPassword retrieves a specific worker model in database by name and group id.
@@ -108,25 +189,23 @@ func LoadAllActiveAndNotDeprecatedForGroupIDs(db gorp.SqlExecutor, groupIDs []in
     WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
     AND worker_model.is_deprecated = false
     AND worker_model.disabled = false
+    ORDER BY worker_model.name
   `
 	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs))
 }
 
-// LoadAllByGroupIDs returns worker models list for given group ids.
-func LoadAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64, opts *StateLoadOption) ([]sdk.Model, error) {
+// LoadAllByBinaryAndGroupIDs returns worker models list with given binary capability for group ids.
+func LoadAllByBinaryAndGroupIDs(db gorp.SqlExecutor, binary string, groupIDs []int64) ([]sdk.Model, error) {
 	query := fmt.Sprintf(`
     SELECT %s
     FROM worker_model
     JOIN "group" ON worker_model.group_id = "group".id
-    WHERE group_id = ANY(string_to_array($1, ',')::int[])
+    JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+    WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
+    AND worker_capability.type = 'binary'
+    AND worker_capability.argument = $2
   `, modelColumns)
-
-	additionalFilters := getAdditionalSQLFilters(opts)
-	if len(additionalFilters) > 0 {
-		query += fmt.Sprintf(" AND %s", strings.Join(additionalFilters, " AND "))
-	}
-
-	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs))
+	return loadAll(db, false, query, gorpmapping.IDsToQueryString(groupIDs), binary)
 }
 
 // LoadAllUsableWithClearPasswordByGroupIDs returns usable worker models for given group ids.
@@ -179,21 +258,6 @@ func LoadAllByBinary(db gorp.SqlExecutor, binary string) ([]sdk.Model, error) {
   `, modelColumns)
 	return loadAll(db, false, query, binary)
 }
-
-// LoadAllByBinaryAndGroupIDs returns worker models list with given binary capability for group ids.
-func LoadAllByBinaryAndGroupIDs(db gorp.SqlExecutor, binary string, groupIDs []int64) ([]sdk.Model, error) {
-	query := fmt.Sprintf(`
-    SELECT %s
-    FROM worker_model
-    JOIN "group" ON worker_model.group_id = "group".id
-    JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-    WHERE worker_model.group_id = ANY(string_to_array($1, ',')::int[])
-    AND worker_capability.type = 'binary'
-    AND worker_capability.argument = $2
-  `, modelColumns)
-	return loadAll(db, false, query, groupIDs, binary)
-}
-
 func scanAll(db gorp.SqlExecutor, rows []dbResultWMS, withPassword bool) ([]sdk.Model, error) {
 	models := []sdk.Model{}
 	for _, row := range rows {
@@ -281,7 +345,12 @@ func Delete(db gorp.SqlExecutor, ID int64) error {
 
 // LoadCapabilities retrieves capabilities of given worker model.
 func LoadCapabilities(db gorp.SqlExecutor, workerID int64) (sdk.RequirementList, error) {
-	query := `SELECT name, type, argument FROM worker_capability WHERE worker_model_id = $1 ORDER BY name`
+	query := `
+    SELECT name, type, argument
+    FROM worker_capability
+    WHERE worker_model_id = $1
+    ORDER BY name
+  `
 
 	rows, err := db.Query(query, workerID)
 	if err != nil {

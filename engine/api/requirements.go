@@ -34,10 +34,11 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 		case sdk.ModelRequirement:
 			var models []sdk.Model
 			var err error
-			if !isMaintainer(ctx) && !isAdmin(ctx) {
-				models, err = workermodel.LoadAllByGroupIDs(api.mustDB(), sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), nil)
+			if isMaintainer(ctx) || isAdmin(ctx) {
+				models, err = workermodel.LoadAll(api.mustDB(), nil)
 			} else {
-				models, err = workermodel.LoadAll(api.mustDB())
+				models, err = workermodel.LoadAllByGroupIDs(api.mustDB(),
+					sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), nil)
 			}
 			if err != nil {
 				return sdk.WrapError(err, "cannot load worker models")

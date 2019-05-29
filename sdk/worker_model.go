@@ -195,3 +195,12 @@ type ModelCmds struct {
 	Cmd     string            `json:"cmd,omitempty"`
 	PostCmd string            `json:"post_cmd,omitempty"`
 }
+
+// ModelsToGroupIDs returns group ids of given worker models.
+func ModelsToGroupIDs(ms []*Model) []int64 {
+	ids := make([]int64, len(ms))
+	for i := range ms {
+		ids[i] = ms[i].GroupID
+	}
+	return ids
+}

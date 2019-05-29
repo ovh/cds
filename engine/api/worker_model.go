@@ -210,33 +210,29 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "cannot parse form")
 		}
 
-		var opt *workermodel.StateLoadOption
+		var filter workermodel.LoadFilter
+
+		binary := r.FormValue("binary")
+		if binary != "" {
+			filter.Binary = binary
+		}
+
 		stateString := r.FormValue("state")
 		if stateString != "" {
-			o := workermodel.StateLoadOption(stateString)
+			o := workermodel.StateFilter(stateString)
 			if err := o.IsValid(); err != nil {
 				return err
 			}
-			opt = &o
+			filter.State = o
 		}
-
-		binary := r.FormValue("binary")
 
 		models := []sdk.Model{}
 		var err error
 		if isMaintainer(ctx) || isAdmin(ctx) {
-			if binary != "" {
-				models, err = workermodel.LoadAllByBinary(api.mustDB(), binary)
-			} else {
-				models, err = workermodel.LoadAll(api.mustDB())
-			}
+			models, err = workermodel.LoadAll(api.mustDB(), &filter, workermodel.LoadOptions.Default)
 		} else {
 			groupIDs := append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID)
-			if binary != "" {
-				models, err = workermodel.LoadAllByBinaryAndGroupIDs(api.mustDB(), binary, groupIDs)
-			} else {
-				models, err = workermodel.LoadAllByGroupIDs(api.mustDB(), groupIDs, opt)
-			}
+			models, err = workermodel.LoadAllByGroupIDs(api.mustDB(), groupIDs, &filter, workermodel.LoadOptions.Default)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models")

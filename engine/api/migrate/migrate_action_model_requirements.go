@@ -19,7 +19,7 @@ func ActionModelRequirements(store cache.Store, DBFunc func() *gorp.DbMap) error
 	log.Info("migrate>ActionModelRequirements> Start migration")
 
 	// get all existing model from database
-	wms, err := workermodel.LoadAllNotSharedInfra(db)
+	wms, err := workermodel.LoadAllNotSharedInfra(db, workermodel.LoadOptions.Default)
 	if err != nil {
 		return err
 	}
