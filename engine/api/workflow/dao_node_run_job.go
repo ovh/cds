@@ -188,7 +188,7 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 }
 
 func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query gorpmapping.Query, limit *int) ([]sdk.WorkflowNodeJobRun, error) {
-	ctx, end := observability.Span(ctx, "workflow.loadNodeJobRunQueue")
+	_, end := observability.Span(ctx, "workflow.loadNodeJobRunQueue")
 	defer end()
 
 	if limit != nil && *limit > 0 {
