@@ -69,7 +69,7 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -669,10 +669,10 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{DeepPipeline: true})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -838,9 +838,9 @@ metadata:
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	p, errP := project.Load(db, api.Cache, proj.Key, u)
+	p, errP := project.Load(db, api.Cache, proj.Key)
 	assert.NoError(t, errP)
-	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, p, "test_1", u, workflow.LoadOptions{})
+	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, p, "test_1", workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	t.Logf("%+v", wUpdated.WorkflowData)

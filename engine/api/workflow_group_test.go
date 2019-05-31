@@ -49,10 +49,13 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
 
 	t.Logf("%+v\n", proj)
 
@@ -114,10 +117,13 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
 
 	t.Logf("%+v\n", proj)
 
@@ -173,10 +179,13 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
@@ -268,10 +277,13 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
@@ -373,9 +385,12 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, u, workflow.LoadOptions{OnlyRootNode: true})
+	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{OnlyRootNode: true})
 	test.NoError(t, errL)
 
 	assert.Equal(t, 2, len(wfLoaded.Groups))
@@ -464,9 +479,9 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	test.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID))
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, u, workflow.LoadOptions{DeepPipeline: true})
+	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 
@@ -485,7 +500,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, u, workflow.LoadOptions{})
+	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 	assert.Equal(t, int64(300), wfLoaded.HistoryLength)
@@ -498,7 +513,13 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := sdk.WorkflowRunPostHandlerOption{FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID}, Manual: &sdk.WorkflowNodeRunManual{User: *u}}
+	opts := sdk.WorkflowRunPostHandlerOption{
+		FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID},
+		Manual:      &sdk.WorkflowNodeRunManual{
+			// TODO
+			//User: *u,
+		},
+	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &opts)
 	//Do the request
 	w = httptest.NewRecorder()
@@ -613,9 +634,9 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	test.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID))
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, u, workflow.LoadOptions{DeepPipeline: true})
+	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 
@@ -640,7 +661,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, u, workflow.LoadOptions{})
+	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 	assert.Equal(t, int64(300), wfLoaded.HistoryLength)
@@ -653,7 +674,13 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := sdk.WorkflowRunPostHandlerOption{FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID}, Manual: &sdk.WorkflowNodeRunManual{User: *u}}
+	opts := sdk.WorkflowRunPostHandlerOption{
+		FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID},
+		Manual:      &sdk.WorkflowNodeRunManual{
+			// TODO
+			//User: *u,
+		},
+	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &opts)
 	//Do the request
 	w = httptest.NewRecorder()

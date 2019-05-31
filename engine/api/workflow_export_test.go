@@ -97,12 +97,15 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.Background(), db, &w))
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -218,13 +221,16 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -321,12 +327,15 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+    project.LoadOptions.WithGroups,
+  )
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(),api.mustDB(), api.Cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request

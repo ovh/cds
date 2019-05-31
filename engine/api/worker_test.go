@@ -1,23 +1,7 @@
 package api
 
-import (
-	"net/http/httptest"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/token"
-	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/api/workermodel"
-	"github.com/ovh/cds/sdk"
-)
-
-func Test_workerCheckingHandler(t *testing.T) {
+// TODO
+/*func Test_workerCheckingHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -186,4 +170,4 @@ func Test_workerWaitingHandler(t *testing.T) {
 		assert.Equal(t, sdk.StatusWaiting, w.Status)
 	}
 
-}
+}*/

@@ -1,44 +1,7 @@
 package api
 
-import (
-	"bytes"
-	"context"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"os"
-	"path"
-	"testing"
-	"time"
-
-	"github.com/go-gorp/gorp"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/ovh/venom"
-	"github.com/sguiheux/go-coverage"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/token"
-	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-)
-
-type testRunWorkflowCtx struct {
+// TODO
+/*type testRunWorkflowCtx struct {
 	user        *sdk.AuthentifiedUser
 	password    string
 	project     *sdk.Project
@@ -1270,4 +1233,4 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errL)
 
 	assert.Equal(t, coverateReportDefaultBranch.Report.CoveredBranches, covDB.Trend.DefaultBranch.CoveredBranches)
-}
+}*/

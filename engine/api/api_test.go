@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/localauthentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 )
 
@@ -32,7 +31,8 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	}
 	api.AuthenticationDrivers = make(map[string]authentication.Driver)
 	api.AuthenticationDrivers["local"] = localauthentication.New()
-	auth.Store, _ = sessionstore.Get(context.Background(), cache, 60)
+	// TODO
+	//auth.Store, _ = sessionstore.Get(context.Background(), cache, 60)
 	api.InitRouter()
 	f := func() {
 		cancel()
@@ -56,7 +56,8 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 	}
 	api.AuthenticationDrivers = make(map[string]authentication.Driver)
 	api.AuthenticationDrivers["local"] = localauthentication.New()
-	auth.Store, _ = sessionstore.Get(context.Background(), cache, 60)
+	// TODO
+	//auth.Store, _ = sessionstore.Get(context.Background(), cache, 60)
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)

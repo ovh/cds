@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -25,7 +26,7 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, err := workermodel.LoadAll(api.mustDB())
+	models, err := workermodel.LoadAll(api.mustDB(), nil)
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
@@ -50,7 +51,7 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, errlw := workermodel.LoadAll(api.mustDB())
+	models, errlw := workermodel.LoadAll(api.mustDB(), nil)
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
@@ -110,7 +111,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, errlw := workermodel.LoadAll(api.mustDB())
+	models, errlw := workermodel.LoadAll(api.mustDB(), nil)
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
@@ -250,7 +251,12 @@ func Test_WorkerModelUsage(t *testing.T) {
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
-	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, api.Cache, proj.ID,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+	)
 
 	wf := sdk.Workflow{
 		Name:       "workflow1",
@@ -266,7 +272,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
+	test.NoError(t, workflow.Insert(context.Background(), db, api.Cache, &wf, proj))
 
 	//Prepare request
 	vars := map[string]string{

@@ -2,14 +2,13 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"github.com/ovh/cds/engine/api/project"
 
 	"github.com/stretchr/testify/assert"
 
@@ -32,17 +31,9 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	mockServiceVCS := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerVCS", Type: services.TypeVCS}
-	_ = services.Delete(db, mockServiceVCS)
-	test.NoError(t, services.Insert(db, mockServiceVCS))
-
-	mockServiceRepositories := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerRepo", Type: services.TypeRepositories}
-	_ = services.Delete(db, mockServiceRepositories)
-	test.NoError(t, services.Insert(db, mockServiceRepositories))
-
-	mockServiceHook := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerHook", Type: services.TypeHooks}
-	_ = services.Delete(db, mockServiceHook)
-	test.NoError(t, services.Insert(db, mockServiceHook))
+	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
+	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -170,12 +161,17 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, workflow.RenameNode(db, &w))
+	assert.NoError(t, workflow.RenameNode(context.Background(), db, &w))
 
 	var errP error
-	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithApplicationWithDeploymentStrategies, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithIntegrations)
+	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithIntegrations,
+	)
 	assert.NoError(t, errP)
-	if !assert.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u)) {
+	if !assert.NoError(t, workflow.Insert(context.Background(), db, api.Cache, &w, proj)) {
 		return
 	}
 

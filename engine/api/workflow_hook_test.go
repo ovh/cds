@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -37,9 +38,14 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	loadUserPermissions(db, cache, u)
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications,
-		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	// TODO
+	//loadUserPermissions(db, cache, u)
+	proj, _ = project.LoadByID(db, cache, proj.ID,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+	)
 
 	w := sdk.Workflow{
 		Name:       sdk.RandomString(10),
@@ -56,7 +62,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	//Prepare request
 	vars := map[string]string{}
@@ -105,7 +111,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	}
 	test.NoError(t, application.Insert(db, cache, proj, &app))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, admin, project.LoadOptions.WithApplications,
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
@@ -124,7 +130,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, admin))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	//Prepare request
 	vars := map[string]string{}

@@ -95,7 +95,12 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
-	proj, _ = project.LoadByID(api.mustDB(), api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(api.mustDB(), api.Cache, proj.ID,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+	)
 
 	wf := sdk.Workflow{
 		Name:       "workflow1",
@@ -111,7 +116,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &wf, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &wf, proj))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
@@ -152,7 +157,12 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, api.Cache, proj.ID,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+	)
 
 	wf := sdk.Workflow{
 		Name:       "workflow1",
@@ -168,7 +178,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &wf, proj))
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?withUsage=true", nil)
 	//Do the request
@@ -582,7 +592,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 
-	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj, u))
+	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj))
 	eWf, err := exportentities.NewWorkflow(*wf)
 	test.NoError(t, err)
 	wfBts, err := yaml.Marshal(eWf)
@@ -707,7 +717,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	assert.Equal(t, proj.ID, lbl1.ProjectID)
 	assert.Equal(t, wf.ID, lbl1.WorkflowID)
 
-	wfUpdated, errW := workflow.Load(context.TODO(), db, api.Cache, proj, wf.Name, u, workflow.LoadOptions{WithLabels: true})
+	wfUpdated, errW := workflow.Load(context.TODO(), db, api.Cache, proj, wf.Name, workflow.LoadOptions{WithLabels: true})
 	test.NoError(t, errW)
 
 	assert.NotNil(t, wfUpdated.Labels)
@@ -729,7 +739,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfUpdated, errW = workflow.Load(context.TODO(), db, api.Cache, proj, wf.Name, u, workflow.LoadOptions{WithLabels: true})
+	wfUpdated, errW = workflow.Load(context.TODO(), db, api.Cache, proj, wf.Name, workflow.LoadOptions{WithLabels: true})
 	test.NoError(t, errW)
 	assert.NotNil(t, wfUpdated.Labels)
 	assert.Equal(t, 0, len(wfUpdated.Labels))
@@ -821,7 +831,11 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 
 	assert.NoError(t, application.Insert(db, cache, proj, &app))
 
-	prj, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
+	prj, err := project.Load(db, cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithWorkflows,
+	)
 	assert.NoError(t, err)
 
 	for i := 0; i < 300; i++ {
@@ -840,7 +854,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 			},
 		}
 
-		assert.NoError(t, workflow.Insert(db, cache, &wf, prj, u))
+		assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &wf, prj))
 	}
 
 	res := testing.Benchmark(func(b *testing.B) {
@@ -885,7 +899,11 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 
 	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
-	prj, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
+	prj, err := project.Load(db, api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithWorkflows,
+	)
 	assert.NoError(t, err)
 
 	for i := 0; i < 300; i++ {
@@ -905,7 +923,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 			},
 		}
 
-		assert.NoError(t, workflow.Insert(db, api.Cache, &wf, prj, u))
+		assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &wf, prj))
 	}
 
 	//Prepare request

@@ -110,7 +110,7 @@ func (api *API) postMarkAsReadBroadcastHandler() service.Handler {
 
 		if !br.Read {
 			if err := broadcast.MarkAsRead(api.mustDB(), broadcastID, token.AuthentifiedUser.OldUserStruct.ID); err != nil {
-				return sdk.WrapError(err, "Cannot mark as read broadcast id %d and user id %d", broadcastID, broadcastID, token.AuthentifiedUser.OldUserStruct.ID)
+				return sdk.WrapError(err, "Cannot mark as read broadcast id %d and user id %d", broadcastID, broadcastID)
 			}
 		}
 
