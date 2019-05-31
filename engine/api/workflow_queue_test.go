@@ -36,7 +36,7 @@ import (
 )
 
 type testRunWorkflowCtx struct {
-	user        *sdk.User
+	user        *sdk.AuthentifiedUser
 	password    string
 	project     *sdk.Project
 	workflow    *sdk.Workflow
@@ -51,8 +51,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true)
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -98,11 +98,11 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	log.Debug("workflow %d groups: %+v", w1.ID, w1.Groups)
@@ -189,11 +189,11 @@ func testCountGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRu
 	}
 }
 
-func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, u *sdk.User, password string, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, jwt string, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, password, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -305,11 +305,11 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(api.mustDB())
 	t.Log("checkin as a user")
 
 	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsRegularUser(t, api, router, u, pass, &ctx)
+	testGetWorkflowJobAsRegularUser(t, api, router, jwt, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	t.Log("checkin as a worker")
@@ -937,16 +937,16 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		},
 	}
 
-	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	p, err := project.Load(db, api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
-	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
 	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
 	wrDB.Workflow = w
 
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
+		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 	}, u, nil)
 	assert.NoError(t, errmr)
 
@@ -966,8 +966,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		run:      wrDB,
 	}
 	testRegisterWorker(t, api, router, &ctx)
-	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, api.Cache, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID))
+	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
 
 	request := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: []sdk.Vulnerability{
@@ -1079,11 +1079,11 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		},
 	}
 
-	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	p, err := project.Load(db, api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
-	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
-	mockVCSservice := &sdk.Service{Name: "TestInsertNewCodeCoverageReport", Type: services.TypeVCS}
+	mockVCSservice, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
 	assert.NoError(t, services.Delete(db, mockVCSservice))
 	test.NoError(t, services.Insert(db, mockVCSservice))
 
@@ -1162,7 +1162,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrDB.Workflow = w
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "master",
 			},
@@ -1177,7 +1177,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrCB.Workflow = w
 	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrCB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "my-branch",
 			},
@@ -1233,7 +1233,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrToTest.Workflow = w
 	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "my-branch",
 			},
@@ -1268,8 +1268,8 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		run:      wrr,
 	}
 	testRegisterWorker(t, api, router, &ctx)
-	ctx.worker.ActionBuildID = wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, api.Cache, ctx.worker.ID, wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID))
+	ctx.worker.JobRunID = &wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
 
 	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
 	test.NotEmpty(t, uri)
