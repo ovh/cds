@@ -1,6 +1,7 @@
 package pipeline_test
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -144,7 +145,6 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 func TestLoadByWorkflowID(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
@@ -178,11 +178,11 @@ func TestLoadByWorkflowID(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	actuals, err := pipeline.LoadByWorkflowID(db, w.ID)
 	assert.NoError(t, err)
@@ -198,10 +198,6 @@ func TestLoadByWorkerModel(t *testing.T) {
 	g1 := group.SharedInfraGroup
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-	uAdmin, _ := assets.InsertAdminUser(db)
-	uLambda1, _ := assets.InsertLambdaUser(db)
-	uLambda2, _ := assets.InsertLambdaUser(db, g2)
-
 	model1 := sdk.Model{Name: sdk.RandomString(10), Group: g1, GroupID: g1.ID}
 	model2 := sdk.Model{Name: sdk.RandomString(10), Group: g2, GroupID: g2.ID}
 
@@ -212,7 +208,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	// first pipeline with requirement shared.infra/model
 	pip1 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, uAdmin))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 	job1 := sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -228,7 +224,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	// second pipeline with requirement model
 	pip2 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, uAdmin))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 	job2 := sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -244,7 +240,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 
 	// third pipeline with requirement group/model
 	pip3 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, uAdmin))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 	job3 := sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -258,7 +254,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertJob(db, &job3, 0, &pip3))
 
-	pips, err := pipeline.LoadByWorkerModel(db, uAdmin, &model1)
+	pips, err := pipeline.LoadByWorkerModel(db, &model1)
 	assert.NoError(t, err)
 	if !assert.Equal(t, 2, len(pips)) {
 		t.FailNow()
@@ -267,7 +263,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	assert.Equal(t, pip1.Name, pips[0].Name)
 	assert.Equal(t, pip2.Name, pips[1].Name)
 
-	pips, err = pipeline.LoadByWorkerModel(db, uAdmin, &model2)
+	pips, err = pipeline.LoadByWorkerModel(db, &model2)
 	assert.NoError(t, err)
 
 	if !assert.Equal(t, 1, len(pips)) {
@@ -275,11 +271,11 @@ func TestLoadByWorkerModel(t *testing.T) {
 	}
 	assert.Equal(t, pip3.Name, pips[0].Name)
 
-	pips, err = pipeline.LoadByWorkerModel(db, uLambda1, &model1)
+	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(db, &model1, sdk.GroupsToIDs([]sdk.Group{}))
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pips))
 
-	pips, err = pipeline.LoadByWorkerModel(db, uLambda2, &model1)
+	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(db, &model1, sdk.GroupsToIDs([]sdk.Group{*g2}))
 	assert.NoError(t, err)
 	if !assert.Equal(t, 2, len(pips)) {
 		t.FailNow()
@@ -288,7 +284,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	assert.Equal(t, pip1.Name, pips[0].Name)
 	assert.Equal(t, pip2.Name, pips[1].Name)
 
-	pips, err = pipeline.LoadByWorkerModel(db, uLambda2, &model2)
+	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(db, &model2, sdk.GroupsToIDs([]sdk.Group{*g2}))
 	assert.NoError(t, err)
 
 	if !assert.Equal(t, 1, len(pips)) {

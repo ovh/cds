@@ -154,10 +154,7 @@ func LoadByWorkerModelAndGroupIDs(db gorp.SqlExecutor, model *sdk.Model, groupID
         AND project.id IN (
           SELECT project_group.project_id
             FROM project_group
-          WHERE
-            project_group.group_id = ANY(string_to_array($3, ',')::int[])
-            OR
-            $4 = ANY(string_to_array($3, ',')::int[])
+          WHERE project_group.group_id = ANY(string_to_array($3, ',')::int[])
         )
     `).Args(model.Name+"%", modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
 	} else {
@@ -175,8 +172,6 @@ func LoadByWorkerModelAndGroupIDs(db gorp.SqlExecutor, model *sdk.Model, groupID
             FROM project_group
           WHERE
             project_group.group_id = ANY(string_to_array($2, ',')::int[])
-            OR
-            $3 = ANY(string_to_array($2, ',')::int[])
         )
     `).Args(modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
 	}
