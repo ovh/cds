@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"

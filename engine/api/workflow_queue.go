@@ -733,11 +733,6 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
-		groupsID := []int64{}
-		for _, g := range deprecatedGetUser(ctx).Groups {
-			groupsID = append(groupsID, g.ID)
-		}
-
 		modelType, ratioService, err := getModelTypeRatioService(ctx, r)
 		if err != nil {
 			return err
@@ -780,11 +775,6 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		modelType, ratioService, errM := getModelTypeRatioService(ctx, r)
 		if errM != nil {
 			return errM
-		}
-
-		groupsID := make([]int64, len(deprecatedGetUser(ctx).Groups))
-		for i, g := range deprecatedGetUser(ctx).Groups {
-			groupsID[i] = g.ID
 		}
 
 		permissions := permission.PermissionReadExecute
