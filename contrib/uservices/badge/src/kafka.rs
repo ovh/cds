@@ -93,7 +93,7 @@ impl Actor for KafkaConsumerActor {
                                 project_key: event.project_key.clone(),
                                 workflow_name: event.workflow_name.clone(),
                                 branch,
-                                status: event.status.clone(),
+                                status: event.status.clone().into(),
                                 ..Default::default()
                             };
                             if let Err(err) = self.db.send(CreateRun { run }).flatten().wait() {

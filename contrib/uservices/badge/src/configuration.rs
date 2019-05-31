@@ -1,71 +1,87 @@
+
 use config::{Config, ConfigError, Environment, File};
 use sdk_cds::service::APIConfiguration;
-
+use std::str::FromStr;
 #[derive(Default, Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct Configuration {
-    pub badge: BadgeConfiguration,
+  pub badge: BadgeConfiguration,
 }
 
-#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct BadgeConfiguration {
-    pub url: String,
-    pub name: String,
-    pub mode: String,
-    pub api: APIConfiguration,
-    pub database: DatabaseConfiguration,
-    pub kafka: KafkaConfiguration,
-    pub http: HTTPConfiguration,
+  #[serde(with = "url_serde")]
+  pub url: url::Url,
+  pub name: String,
+  pub mode: String,
+  pub api: APIConfiguration,
+  pub database: DatabaseConfiguration,
+  pub kafka: KafkaConfiguration,
+  pub http: HTTPConfiguration,
+}
+
+impl std::default::Default for BadgeConfiguration {
+  fn default() -> Self {
+    BadgeConfiguration {
+      url: url::Url::from_str("http://localhost:8086").unwrap(),
+      name: String::default(),
+      mode: String::from("kafka"),
+      api: APIConfiguration::default(),
+      database: DatabaseConfiguration::default(),
+      kafka: KafkaConfiguration::default(),
+      http: HTTPConfiguration::default(),
+    }
+  }
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct DatabaseConfiguration {
-    pub user: String,
-    pub password: String,
-    pub name: String,
-    pub host: String,
-    pub port: i32,
-    pub sslmode: String,
-    pub maxconn: i32,
-    pub timeout: i32,
+  pub user: String,
+  pub password: String,
+  pub name: String,
+  pub host: String,
+  pub port: i32,
+  pub sslmode: String,
+  pub maxconn: i32,
+  pub timeout: i32,
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct KafkaConfiguration {
-    pub group: String,
-    pub user: String,
-    pub password: String,
-    pub broker: String,
-    pub topic: String,
+  pub group: String,
+  pub user: String,
+  pub password: String,
+  pub broker: String,
+  pub topic: String,
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
 pub struct HTTPConfiguration {
-    #[serde(default = "default_addr")]
-    pub addr: String,
-    #[serde(default)]
-    pub port: i32,
+  #[serde(default = "default_addr")]
+  pub addr: String,
+  #[serde(default)]
+  pub port: i32,
 }
 
 fn default_addr() -> String {
-    "0.0.0.0".to_string()
+  "0.0.0.0".to_string()
 }
 
 pub fn get_configuration(filename: &str) -> Result<BadgeConfiguration, ConfigError> {
-    let mut settings = Config::default();
-    settings
-        .merge(File::with_name(filename))?
-        .merge(Environment::with_prefix("CDS"))?;
+  let mut settings = Config::default();
+  settings
+    .merge(File::with_name(filename))?
+    .merge(Environment::with_prefix("CDS"))?;
 
-    let conf: Configuration = settings.try_into()?;
-    Ok(conf.badge)
+  let conf: Configuration = settings.try_into()?;
+  Ok(conf.badge)
 }
 
 pub fn get_example_config_file() -> &'static str {
-    r#"#############################
+  r#"#############################
 # CDS Badge Service Settings
 #############################
 [badge]

@@ -65,9 +65,6 @@ impl ServiceTrait<BadgeConfiguration> for Service {
         if config.api.http.url == "" {
             return Err(CdsError::from("api_url must not be empty".to_string()));
         }
-        if config.url == "" {
-            return Err(CdsError::from("url must not be empty".to_string()));
-        }
         if config.name == "" {
             return Err(CdsError::from("name must not be empty".to_string()));
         }

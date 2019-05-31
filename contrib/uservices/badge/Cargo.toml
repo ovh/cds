@@ -33,3 +33,5 @@ sdk-cds = "0.3.0"
 rdkafka = { version = "0.21.0", features = ["ssl", "sasl"] }
 rdkafka-sys = "1.0.0"
 clap = "2.33.0"
+url = "1.7.2"
+url_serde = "0.2.0"

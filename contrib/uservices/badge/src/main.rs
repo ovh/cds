@@ -2,8 +2,9 @@
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
-#[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate url_serde;
 extern crate badge as badge_gen;
 extern crate bytes;
 extern crate chrono;
@@ -15,6 +16,7 @@ extern crate rdkafka;
 extern crate rdkafka_sys;
 extern crate serde;
 extern crate serde_json;
+extern crate url;
 
 // Logger
 #[macro_use]
@@ -153,7 +155,6 @@ fn main() {
                 hash = cds_service.service.hash.clone();
                 let _ = Arbiter::start(|_| cds_service);
             }
-
             web::http_server(
                 WebState {
                     db: addr.clone(),

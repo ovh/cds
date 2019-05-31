@@ -4,6 +4,7 @@ use actix_web::{AsyncResponder, FutureResponse, HttpRequest, HttpResponse};
 use badge_gen::{Badge, BadgeOptions};
 use futures::Future;
 
+use crate::models::StatusEnum;
 use crate::run::QueryRun;
 use crate::web::WebState;
 
@@ -30,10 +31,12 @@ pub fn badge_handler(req: &HttpRequest<WebState>) -> FutureResponse<HttpResponse
         .from_err()
         .and_then(|res| {
             let run = res?;
-            let color = match run.status.as_str() {
-                "Success" => GREEN.to_string(),
-                "Building" | "Waiting" | "Checking" => String::from(BLUE),
-                "Fail" | "Stopped" => RED.to_string(),
+            let color = match StatusEnum::from(run.status.clone()) {
+                StatusEnum::Success => GREEN.to_string(),
+                StatusEnum::Building | StatusEnum::Waiting | StatusEnum::Checking => {
+                    String::from(BLUE)
+                }
+                StatusEnum::Fail | StatusEnum::Stopped => RED.to_string(),
                 _ => "grey".to_string(),
             };
 
