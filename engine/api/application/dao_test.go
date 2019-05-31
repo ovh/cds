@@ -1,6 +1,7 @@
 package application_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -158,7 +159,6 @@ func TestLoadAllAsUser(t *testing.T) {
 func TestLoadByWorkflowID(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
@@ -192,11 +192,11 @@ func TestLoadByWorkflowID(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	actuals, err := application.LoadByWorkflowID(db, w.ID)
 	assert.NoError(t, err)
