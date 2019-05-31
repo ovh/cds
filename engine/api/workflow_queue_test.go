@@ -110,6 +110,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
+	log.Debug("workflow %d groups: %+v", w1.ID, w1.Groups)
+
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -192,11 +194,11 @@ func testCountGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRu
 	}
 }
 
-func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, u *sdk.User, password string, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, u, password, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -303,7 +305,16 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
+
+	u, pass := assets.InsertAdminUser(db)
+	t.Log("checkin as a user")
+
 	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJobAsRegularUser(t, api, router, u, pass, &ctx)
+	assert.NotNil(t, ctx.job)
+
+	t.Log("checkin as a worker")
+
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
