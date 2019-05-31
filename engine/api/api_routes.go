@@ -178,6 +178,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/rollback/{auditID}", r.POST(api.postPipelineRollbackHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/audits", r.GET(api.getPipelineAuditHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage", r.POST(api.addStageHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/condition", r.GET(api.getStageConditionsHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/move", r.POST(api.moveStageHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}", r.GET(api.getStageHandler), r.PUT(api.updateStageHandler), r.DELETE(api.deleteStageHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}/job", r.POST(api.addJobToStageHandler))

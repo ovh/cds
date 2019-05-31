@@ -4,7 +4,14 @@ import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WNode, WNodeContext, Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from 'app/model/workflow.model';
+import {
+    WNode,
+    WNodeContext,
+    Workflow,
+    WorkflowNodeCondition,
+    WorkflowNodeConditions,
+    WorkflowTriggerConditionCache
+} from 'app/model/workflow.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -27,6 +34,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     @Input() project: Project;
     @Input() workflow: Workflow;
+    @Input() pipelineId: number;
     editableNode: WNode;
     @Input('node') set node(data: WNode) {
         if (data) {
@@ -70,6 +78,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     loading = false;
     previousValue: string;
     themeSubscription: Subscription;
+    triggerConditions: WorkflowTriggerConditionCache;
 
     constructor(
         private store: Store,
@@ -113,22 +122,12 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 finalize(() => this.loadingConditions = false)
             )
             .subscribe(wtc => {
+                this.triggerConditions = wtc;
                 this.operators = Object.keys(wtc.operators).map(k => {
                     return { key: k, value: wtc.operators[k] };
                 });
                 this.conditionNames = wtc.names;
             });
-    }
-
-    removeCondition(index: number): void {
-        this.editableNode.context.conditions.plain.splice(index, 1);
-        this.pushChange('remove');
-    }
-
-    addEmptyCondition(): void {
-        let emptyCond = new WorkflowNodeCondition();
-        emptyCond.operator = 'eq';
-        this.editableNode.context.conditions.plain.push(emptyCond);
     }
 
     updateWorkflow(): void {

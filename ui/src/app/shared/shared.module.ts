@@ -6,9 +6,10 @@ import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { MomentModule } from 'angular2-moment';
-import {WorkflowHookMenuEditComponent} from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
-import {WorkflowWizardNodeConditionComponent} from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
-import {WorkflowWizardOutgoingHookComponent} from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
+import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
+import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
+import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
+import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula';
@@ -85,11 +86,11 @@ import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-fo
 import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 import { WorkflowTemplateParamFormComponent } from './workflow-template/param-form/workflow-template.param-form.component';
-import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
+import { WorkflowWNodeMenuEditComponent } from './workflow/menu/edit-node/menu.edit.node.component';
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-add/hook.modal.component';
 import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.trigger.component';
-import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
+import { WorkflowNodeEditModalComponent } from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
@@ -100,9 +101,9 @@ import { ActionStepSummaryComponent } from './workflow/sidebar/run-node/stage/jo
 import { JobStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/job.summary.component';
 import { StageStepSummaryComponent } from './workflow/sidebar/run-node/stage/stage.summary.component';
 import { WorkflowSidebarRunNodeComponent } from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
-import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wizard.context.component';
+import { WorkflowWizardNodeContextComponent } from './workflow/wizard/context/wizard.context.component';
 import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
-import {WorkflowWizardNodeInputComponent} from './workflow/wizard/input/wizard.input.component';
+import { WorkflowWizardNodeInputComponent } from './workflow/wizard/input/wizard.input.component';
 import { WorkflowNodeAddWizardComponent } from './workflow/wizard/node-add/node.wizard.component';
 import { WorkflowWNodeForkComponent } from './workflow/wnode/fork/node.fork.component';
 import { WorkflowNodeHookComponent } from './workflow/wnode/hook/hook.component';
@@ -195,6 +196,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWizardNodeContextComponent,
         WorkflowWizardNodeInputComponent,
         WorkflowWizardNodeConditionComponent,
+        ConditionsComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,
@@ -257,6 +259,7 @@ import { ZoneComponent } from './zone/zone.component';
         TokenListComponent,
         NgSemanticModule,
         NgxAutoScroll,
+        ConditionsComponent,
         ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,

@@ -9,7 +9,8 @@
                             [popupText]="'workflow_preview_mode' | translate" popupPlacement="top center">
                         </i>
                     </div>
-                    <div *ngIf="previewMode" class="ui green button" (click)="savePreview()" [class.disabled]="originalPipeline.from_repository">
+                    <div *ngIf="previewMode" class="ui green button" (click)="savePreview()"
+                        [class.disabled]="originalPipeline.from_repository">
                         <i class="save icon"></i> {{'btn_save' | translate}}
                     </div>
                 </div>
@@ -36,7 +37,8 @@
                                     </div>
                                 </li>
                                 <li class="new job">
-                                    <div class="new job ui segment pointing" (click)="addJob(stage)" *ngIf="!pipeline.from_repository">
+                                    <div class="new job ui segment pointing" (click)="addJob(stage)"
+                                        *ngIf="!pipeline.from_repository">
                                         {{ 'step_add_job' | translate }}
                                     </div>
                                 </li>
@@ -79,8 +81,8 @@
     <modal-actions>
         <button class="ui grey button" [disabled]="loadingStage"
             (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button class="ui green button" [disabled]="loadingStage || pipeline.from_repository" [class.loading]="loadingStage"
-            (click)="stageEvent('update')" *ngIf="selectedStage?.hasChanged">{{ 'btn_save' | translate }}
+        <button class="ui green button" [disabled]="loadingStage || pipeline.from_repository"
+            [class.loading]="loadingStage" (click)="stageEvent('update')">{{ 'btn_save' | translate }}
         </button>
         <app-delete-button (event)="stageEvent('delete')" [disabled]="pipeline.from_repository"
             *ngIf="!selectedStage?.hasChanged && pipeline.permission === permissionValue.READ_WRITE_EXECUTE">
