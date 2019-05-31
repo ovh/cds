@@ -54,6 +54,35 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 	ctx = context.WithValue(ctx, contextAPIConsumer, &APIConsumer)
 
+	// Checks scopes
+	expectedScopes := getHandlerScope(ctx)
+	actualScopes := token.Scopes
+
+	var scopeOK bool
+	for _, s := range actualScopes {
+		if s == sdk.AccessTokenScopeALL || sdk.IsInArray(s, expectedScopes) {
+			scopeOK = true
+			break
+		}
+	}
+	if !scopeOK {
+		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
+	}
+
+	// Checks permissions
+	if !rc.NeedAuth {
+		return ctx, nil
+	}
+	if rc.NeedAdmin {
+		if !isAdmin(ctx) || !sdk.IsInArray(sdk.AccessTokenScopeAdmin, actualScopes) {
+			return ctx, sdk.WithStack(sdk.ErrForbidden)
+		}
+	}
+
+	if err := api.checkPermission(ctx, mux.Vars(req), rc.PermissionLevel); err != nil {
+		return ctx, err
+	}
+
 	return ctx, nil
 }
 
@@ -139,36 +168,5 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 		}
 	}
 
-	ctx = context.WithValue(ctx, contextJWT, &token)
-
-	// Checks scopes
-	expectedScopes := getHandlerScope(ctx)
-	actualScopes := token.Scopes
-
-	var scopeOK bool
-	for _, s := range actualScopes {
-		if s == sdk.AccessTokenScopeALL || sdk.IsInArray(s, expectedScopes) {
-			scopeOK = true
-			break
-		}
-	}
-	if !scopeOK {
-		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
-	}
-
-	// Checks permissions
-	if !rc.NeedAuth {
-		return ctx, nil
-	}
-	if rc.NeedAdmin {
-		if !isAdmin(ctx) || !sdk.IsInArray(sdk.AccessTokenScopeAdmin, actualScopes) {
-			return ctx, sdk.WithStack(sdk.ErrForbidden)
-		}
-	}
-
-	if err := api.checkPermission(ctx, mux.Vars(req), rc.PermissionLevel); err != nil {
-		return ctx, err
-	}
-
-	return ctx, nil
+	return context.WithValue(ctx, contextJWT, &token), nil
 }

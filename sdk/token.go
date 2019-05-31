@@ -32,7 +32,7 @@ func (g *APIConsumer) IsGranted() bool {
 }
 
 func (g *APIConsumer) GetGroups() []Group {
-	if g.IsGranted() {
+	if !g.IsGranted() {
 		return nil
 	}
 	return g.Groups

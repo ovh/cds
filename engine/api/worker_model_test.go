@@ -276,7 +276,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     gr.Name,
+		"permGroupName": gr.Name,
 		"permModelName": model.Name,
 	}
 	uri := router.GetRoute("GET", api.getWorkerModelUsageHandler, vars)
@@ -418,9 +418,9 @@ func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -437,7 +437,7 @@ func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri, "Route route found")
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -459,9 +459,9 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
@@ -479,7 +479,7 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -501,7 +501,7 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
@@ -520,7 +520,7 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -545,9 +545,9 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	pattern := sdk.ModelPattern{
@@ -577,7 +577,7 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -603,9 +603,9 @@ func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	g := &sdk.Group{Name: sdk.RandomString(10)}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
@@ -627,7 +627,7 @@ func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model))
+	router.Mux.ServeHTTP(w, assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model))
 
 	assert.Equal(t, 200, w.Code, "Status code should equal 200")
 
@@ -651,7 +651,7 @@ func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	test.NoError(t, workermodel.InsertPattern(api.mustDB(), &pattern))
 
 	vars := map[string]string{
-		"groupName":     g.Name,
+		"permGroupName": g.Name,
 		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
@@ -660,7 +660,7 @@ func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	// API will set provisioning to 0 for a non-restricted model
 	wm.Restricted = false
 	wm.PatternName = "test"
-	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, wm)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, wm)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -693,13 +693,10 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
-		t.Fatal(err)
-	}
+	assert.NotZero(t, jwt)
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -716,7 +713,7 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -738,13 +735,10 @@ func Test_putWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
-		t.Fatal(err)
-	}
+	assert.NotZero(t, jwt)
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -762,7 +756,7 @@ func Test_putWorkerModel(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -788,13 +782,13 @@ func Test_putWorkerModel(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     g.Name,
+		"permGroupName": g.Name,
 		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, model2)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -816,13 +810,10 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
-		t.Fatal(err)
-	}
+	assert.NotZero(t, jwt)
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -850,7 +841,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -891,13 +882,13 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     g.Name,
+		"permGroupName": g.Name,
 		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, model2)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -928,9 +919,9 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
 		t.Fatal(err)
@@ -952,7 +943,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -966,13 +957,13 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     g.Name,
+		"permGroupName": g.Name,
 		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("DELETE", api.deleteWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "DELETE", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -989,9 +980,9 @@ func Test_getWorkerModel(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -1013,7 +1004,7 @@ func Test_getWorkerModel(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -1027,7 +1018,7 @@ func Test_getWorkerModel(t *testing.T) {
 	uri = router.GetRoute("GET", api.getWorkerModelsHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?name=Test1", nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri+"?name=Test1", nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -1044,9 +1035,9 @@ func Test_getWorkerModels(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -1068,7 +1059,7 @@ func Test_getWorkerModels(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -1082,7 +1073,7 @@ func Test_getWorkerModels(t *testing.T) {
 	uri = router.GetRoute("GET", api.getWorkerModelsHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -1114,16 +1105,16 @@ func Test_renameWorkerModel(t *testing.T) {
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	// create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	// prepare post model request
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	initialName := sdk.RandomString(10)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Model{
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.Model{
 		Name:    initialName,
 		GroupID: g1.ID,
 		Type:    sdk.Docker,
@@ -1151,7 +1142,7 @@ func Test_renameWorkerModel(t *testing.T) {
 
 	actionName := sdk.RandomString(10)
 	modelPath := fmt.Sprintf("%s/%s --privileged", result.Group.Name, result.Name)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Action{
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.Action{
 		Name:    actionName,
 		GroupID: &g1.ID,
 		Requirements: []sdk.Requirement{{
@@ -1176,7 +1167,7 @@ func Test_renameWorkerModel(t *testing.T) {
 
 	// prepare put model request
 	uri = router.GetRoute("PUT", api.putWorkerModelHandler, map[string]string{
-		"groupName":     result.Group.Name,
+		"permGroupName": result.Group.Name,
 		"permModelName": result.Name,
 	})
 	test.NotEmpty(t, uri)
@@ -1184,7 +1175,7 @@ func Test_renameWorkerModel(t *testing.T) {
 	newName := sdk.RandomString(10)
 	result.Name = newName
 	result.GroupID = g2.ID
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, result)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, result)
 
 	// send put model request
 	w = httptest.NewRecorder()
@@ -1198,12 +1189,12 @@ func Test_renameWorkerModel(t *testing.T) {
 
 	// prepare get action request
 	uri = router.GetRoute("GET", api.getActionHandler, map[string]string{
-		"groupName":      action.Group.Name,
+		"permGroupName":  action.Group.Name,
 		"permActionName": action.Name,
 	})
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// send get action request
 	w = httptest.NewRecorder()

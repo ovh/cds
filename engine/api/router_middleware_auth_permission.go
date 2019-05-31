@@ -5,10 +5,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 )
@@ -58,16 +60,70 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s, missing project key value", workflowName)
 }
 
-func (api *API) checkGroupPermissions(ctx context.Context, groupName string, perm int, routeVars map[string]string) error {
-	return sdk.WrapError(sdk.ErrForbidden, "not authorized for group %s", groupName)
+func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVars map[string]string) error {
+	if groupName == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group name")
+	}
+
+	// check that group exists
+	g, err := group.LoadGroup(api.mustDB(), groupName)
+	if err != nil {
+		return sdk.WrapError(err, "cannot get group for name %s", groupName)
+	}
+
+	if permissionValue > permission.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
+		if !isGroupAdmin(ctx, g) && !isMaintainer(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+	} else {
+		if !isGroupMember(ctx, g) && !isMaintainer(ctx) { // Only group member of CDS administrator can get a group or its dependencies
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+	}
+
+	return nil
 }
 
-func (api *API) checkWorkerModelPermissions(ctx context.Context, key string, perm int, routeVars map[string]string) error {
-	return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker model %s", key)
+func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName string, perm int, routeVars map[string]string) error {
+	if modelName == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker model name")
+	}
+
+	g, err := group.LoadGroup(api.mustDB(), routeVars["groupName"])
+	if err != nil {
+		return err
+	}
+
+	wm, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+	if err != nil {
+		return err
+	}
+	if wm == nil {
+		return sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	return nil
 }
 
-func (api *API) checkActionPermissions(ctx context.Context, permActionName string, perm int, routeVars map[string]string) error {
-	return sdk.WrapError(sdk.ErrForbidden, "not authorized for action %s", permActionName)
+func (api *API) checkActionPermissions(ctx context.Context, actionName string, perm int, routeVars map[string]string) error {
+	if actionName == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid action name")
+	}
+
+	g, err := group.LoadGroup(api.mustDB(), routeVars["groupName"])
+	if err != nil {
+		return err
+	}
+
+	a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+	if err != nil {
+		return err
+	}
+	if a == nil {
+		return sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	return nil
 }
 
 func (api *API) checkActionBuiltinPermissions(ctx context.Context, permActionBuiltinName string, perm int, routeVars map[string]string) error {
@@ -75,27 +131,13 @@ func (api *API) checkActionBuiltinPermissions(ctx context.Context, permActionBui
 }
 
 func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug string, permissionValue int, routeVars map[string]string) error {
-	// try to get template for given path that match user's groups with/without admin grants
-	groupName := routeVars["groupName"]
-
-	if groupName == "" || templateSlug == "" {
-		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group or workflow template slug")
+	if templateSlug == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow template slug")
 	}
 
-	// check that group exists
-	g, err := group.LoadGroup(api.mustDB(), groupName)
+	g, err := group.LoadGroup(api.mustDB(), routeVars["groupName"])
 	if err != nil {
 		return err
-	}
-
-	if permissionValue > permission.PermissionRead { // Only group administror or CDS administrator can update a template
-		if !isGroupAdmin(ctx, g) && !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-	} else {
-		if !isGroupMember(ctx, g) && !isMaintainer(ctx) { // Only group member of CDS administrator can get a template
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
 	}
 
 	wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
