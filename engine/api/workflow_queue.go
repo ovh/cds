@@ -695,7 +695,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 
 		var count sdk.WorkflowNodeJobRunCount
 		if !isMaintainer(ctx) && !isAdmin(ctx) {
-			count, err = workflow.CountNodeJobRunQueueByGroups(ctx, api.mustDB(), api.Cache, filter, deprecatedGetUser(ctx).Groups)
+			count, err = workflow.CountNodeJobRunQueueByGroups(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).Groups)
 		} else {
 			count, err = workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
@@ -718,7 +718,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given status"))
 		}
 		if len(status) == 0 {
-			status = []string{sdk.StatusWaiting.String()}
+			status = []string{sdk.StatusWaiting}
 		}
 
 		modelType, ratioService, errM := getModelTypeRatioService(ctx, r)
@@ -743,7 +743,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		}
 		var jobs []sdk.WorkflowNodeJobRun
 		if !isMaintainer(ctx) && !isAdmin(ctx) {
-			jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, api.mustDB(), api.Cache, filter, deprecatedGetUser(ctx).Groups)
+			jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).Groups)
 		} else {
 			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
