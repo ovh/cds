@@ -90,18 +90,30 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 
 // InsertAdminUser have to be used only for tests
 func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
-	var u = &sdk.AuthentifiedUser{
+	data := sdk.AuthentifiedUser{
 		Username:     sdk.RandomString(10),
 		Fullname:     sdk.RandomString(10),
 		Ring:         sdk.UserRingAdmin,
 		DateCreation: time.Now(),
 	}
 
-	user.Insert(db, u)
+	user.Insert(db, &data)
 
-	u, _ = user.LoadUserByID(db, u.ID)
-	t, _ := user.NewPersistentSession_DEPRECATED(db, u.OldUserStruct)
-	return u, string(t)
+	u, err := user.LoadUserByID(db, data.ID)
+	if err != nil {
+		log.Error("user cannot be load for id %s: %v", data.ID, err)
+	}
+
+	expiration := time.Now().Add(5 * time.Minute)
+	token, jwt, err := accesstoken.New(*u, nil, []string{sdk.AccessTokenScopeALL}, "test", sdk.RandomString(5), expiration)
+	if err != nil {
+		log.Error("cannot create access token: %v", err)
+	}
+	if err := accesstoken.Insert(db, &token); err != nil {
+		log.Error("cannot insert access token: %v", err)
+	}
+
+	return u, jwt
 }
 
 // InsertLambdaUser have to be used only for tests
@@ -116,7 +128,6 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 	user.Insert(db, u)
 
 	u, _ = user.LoadUserByID(db, u.ID)
-	t, _ := user.NewPersistentSession_DEPRECATED(db, u.OldUserStruct)
 
 	for _, g := range groups {
 		group.InsertGroup(db, g)
@@ -128,7 +139,16 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 
 	log.Debug("lambda user: %s", string(btes))
 
-	return u, string(t)
+	expiration := time.Now().Add(5 * time.Minute)
+	token, jwt, err := accesstoken.New(*u, u.OldUserStruct.Groups, []string{sdk.AccessTokenScopeALL}, "test", sdk.RandomString(5), expiration)
+	if err != nil {
+		log.Error("cannot create access token: %v", err)
+	}
+	if err := accesstoken.Insert(db, &token); err != nil {
+		log.Error("cannot insert access token: %v", err)
+	}
+
+	return u, jwt
 }
 
 // AuthentifyRequestFromWorker have to be used only for tests

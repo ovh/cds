@@ -50,23 +50,23 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	//Loading all models
+	// loading all models
 	models, errlw := workermodel.LoadAll(api.mustDB(), nil)
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
 
-	//Delete all of them
+	// delete all of them
 	for _, m := range models {
 		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
 
-	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	// create admin user
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -87,13 +87,13 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 		},
 	}
 
-	//Prepare request
+	// prepare request
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
-	//Do the request
+	// do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 
@@ -124,9 +124,9 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	}
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -161,7 +161,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -182,7 +182,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, jwt := assets.InsertAdminUser(db)
 	assert.NotZero(t, u)
 
 	grName := sdk.RandomString(10)
@@ -281,7 +281,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 	}
 	uri := router.GetRoute("GET", api.getWorkerModelUsageHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, vars)
 	//Do the request
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
@@ -302,9 +302,9 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -325,7 +325,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -342,7 +342,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -363,7 +363,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -383,7 +383,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -396,7 +396,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	//SendBadRequest
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, "blabla")
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, "blabla")
 
 	//Do the request
 	w = httptest.NewRecorder()

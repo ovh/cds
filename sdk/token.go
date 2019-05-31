@@ -39,14 +39,14 @@ func (g *APIConsumer) GetGroups() []Group {
 }
 
 func (g *APIConsumer) Admin() bool {
-	if g.IsGranted() {
+	if !g.IsGranted() {
 		return false
 	}
 	return g.OnBehalfOf.Admin()
 }
 
 func (g *APIConsumer) Maintainer() bool {
-	if g.IsGranted() {
+	if !g.IsGranted() {
 		return false
 	}
 	return g.OnBehalfOf.Maintainer()

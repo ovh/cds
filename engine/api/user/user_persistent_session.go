@@ -1,33 +1,10 @@
 package user
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 )
-
-// NewPersistentSession_DEPRECATED creates a new persistent session token in database
-func NewPersistentSession_DEPRECATED(db gorp.SqlExecutor, u *sdk.User) (sessionstore.SessionKey, error) {
-	t, errSession := sessionstore.NewSessionKey()
-	if errSession != nil {
-		return "", errSession
-	}
-	newToken := sdk.UserToken{
-		Token:              string(t),
-		Comment:            fmt.Sprintf("New persistent session for %s", u.Username),
-		CreationDate:       time.Now(),
-		LastConnectionDate: time.Now(),
-		UserID:             u.ID,
-	}
-
-	if err := InsertPersistentSessionToken(db, newToken); err != nil {
-		return "", err
-	}
-	return t, nil
-}
 
 // LoadPersistentSessionToken load a token from the database
 func LoadPersistentSessionToken(db gorp.SqlExecutor, k sessionstore.SessionKey) (*sdk.UserToken, error) {
