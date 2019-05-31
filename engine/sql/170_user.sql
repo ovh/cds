@@ -100,12 +100,11 @@ SELECT create_foreign_key('FK_WORKER_SERVICES', 'worker', 'services', 'hatchery_
 -- TODO DELETE CASCASDE access_token when worker is removed
 
 -- +migrate Down
-
-DROP TABLE "access_token_group";
-DROP TABLE "access_token";
 DROP TABLE "authentified_user_migration";
 DROP TABLE "user_local_authentication";
 DROP TABLE "user_contact";
 DROP TABLE "authentified_user";
 DROP TABLE "worker";
+DROP TABLE "access_token_group";
+DROP TABLE "access_token";
 ALTER TABLE old_worker RENAME TO worker;

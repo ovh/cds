@@ -125,9 +125,14 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		DateCreation: time.Now(),
 	}
 
-	user.Insert(db, u)
+	if err := user.Insert(db, u); err != nil {
+		log.Fatalf(" user.Insert: %v", err)
+	}
 
-	u, _ = user.LoadUserByID(db, u.ID)
+	u, err := user.LoadUserByID(db, u.ID)
+	if err != nil {
+		log.Fatalf(" user.LoadUserByID: %v", err)
+	}
 
 	for _, g := range groups {
 		group.InsertGroup(db, g)

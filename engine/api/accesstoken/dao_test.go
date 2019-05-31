@@ -70,7 +70,7 @@ func TestFind(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	usr1, _ := assets.InsertLambdaUser(db)
+	usr1, _ := assets.InsertLambdaUser(db) // This creates an access token
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	exp := time.Now().Add(5 * time.Minute)
@@ -87,12 +87,12 @@ func TestFind(t *testing.T) {
 	// FindAllByUser
 	tokens, err := accesstoken.FindAllByUser(db, usr1.ID)
 	test.NoError(t, err)
-	assert.Len(t, tokens, 1)
+	assert.Len(t, tokens, 2)
 
 	usr2, _ := assets.InsertLambdaUser(db)
 	tokens, err = accesstoken.FindAllByUser(db, usr2.ID)
 	test.NoError(t, err)
-	assert.Len(t, tokens, 0)
+	assert.Len(t, tokens, 1)
 
 	// FindAllByGroup
 	tokens, err = accesstoken.FindAllByGroup(db, grp1.ID)
