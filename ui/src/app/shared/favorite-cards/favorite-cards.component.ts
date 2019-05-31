@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { UpdateFavoriteProject } from 'app/store/project.action';
-import { UpdateFavoriteWorkflow } from 'app/store/workflows.action';
+import { UpdateFavoriteWorkflow } from 'app/store/workflow.action';
 import { finalize } from 'rxjs/operators';
 import { Bookmark } from '../../model/bookmark.model';
 import { NavbarProjectData } from '../../model/navbar.model';

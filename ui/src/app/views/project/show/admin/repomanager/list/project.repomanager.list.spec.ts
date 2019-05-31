@@ -26,6 +26,8 @@ import { SharedModule } from '../../../../../../shared/shared.module';
 import { ToastService } from '../../../../../../shared/toast/ToastService';
 import { ProjectModule } from '../../../../project.module';
 import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
@@ -50,6 +52,8 @@ describe('CDS: Project RepoManager List Component', () => {
                 TranslateService,
                 TranslateParser,
                 NavbarService,
+                WorkflowService,
+                WorkflowRunService,
                 { provide: ToastService, useClass: MockToast }
             ],
             imports: [

@@ -84,7 +84,7 @@ func (a Action) IsValidDefault() error {
 	return a.IsValid()
 }
 
-// IsValid returns action validity.
+// IsValid returns error if the action is not valid.
 func (a Action) IsValid() error {
 	if a.Name == "" {
 		return NewErrorFrom(ErrWrongRequest, "invalid name for action")

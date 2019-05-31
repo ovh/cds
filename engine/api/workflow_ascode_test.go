@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ovh/cds/engine/api/project"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
@@ -160,7 +160,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 				Hooks: []sdk.NodeHook{
 					{
 						HookModelName: sdk.RepositoryWebHookModelName,
-						UUID:          "123",
+						UUID:          sdk.RandomString(10),
 						Config:        sdk.RepositoryWebHookModel.DefaultConfig,
 						HookModelID:   repoModel.ID,
 					},
@@ -174,7 +174,9 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	var errP error
 	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithApplicationWithDeploymentStrategies, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithIntegrations)
 	assert.NoError(t, errP)
-	assert.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
+	if !assert.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u)) {
+		return
+	}
 
 	t.Logf("%+v", w)
 

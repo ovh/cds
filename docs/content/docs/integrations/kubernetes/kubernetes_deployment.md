@@ -8,7 +8,7 @@ card:
 
 The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 
-This integration enables the [DeployApplication]({{<relref "/docs/actions/deployapplication.md">}}) action
+This integration enables the [DeployApplication]({{<relref "/docs/actions/builtin-deployapplication.md">}}) action
 
 ## Create Integration Model
 
@@ -53,7 +53,7 @@ cdsctl admin integration-model import kubernetes-model-configuration.yml
 
 ## Import Kubernetes Plugin
 
-The goal of this integration is to use the [DeployApplication]({{<relref "/docs/actions/deployapplication.md">}}) action in a Job.
+The goal of this integration is to use the [DeployApplication]({{<relref "/docs/actions/builtin-deployapplication.md">}}) action in a Job.
 This action use a dedicated plugin for each integration, you need to import the plugin-kubernetes.
 
 You will find on CDS Release the plugin-kubernetes with associated yml file.
@@ -229,5 +229,5 @@ path of the files in your CDS Job.
 
 ![Add To Application](../images/link_kubernetes_to_application.png)
 
-Then, as a standard user, you can use the [DeployApplication]({{<relref "/docs/actions/deployapplication.md">}}) action in a Job.
-Before using this action, you probably want to use [CheckoutApplication]({{<relref "/docs/actions/checkoutapplication.md">}}) to git clone the kubernetes or helm files from your git repository.
+Then, as a standard user, you can use the [DeployApplication]({{<relref "/docs/actions/builtin-deployapplication.md">}}) action in a Job.
+Before using this action, you probably want to use [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md">}}) to git clone the kubernetes or helm files from your git repository.

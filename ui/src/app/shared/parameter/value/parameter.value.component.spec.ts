@@ -1,14 +1,12 @@
-/* tslint:disable:no-unused-variable */
-
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {SharedService} from '../../shared.service';
-import {ParameterValueComponent} from './parameter.value.component';
-import {SharedModule} from '../../shared.module';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ThemeStore } from 'app/service/theme/theme.store';
+import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
+import { SharedModule } from '../../shared.module';
+import { SharedService } from '../../shared.service';
+import { ParameterValueComponent } from './parameter.value.component';
 
 describe('CDS: Parameter Value Component', () => {
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -16,15 +14,16 @@ describe('CDS: Parameter Value Component', () => {
             providers: [
                 SharedService,
                 RepoManagerService,
+                ThemeStore,
             ],
-            imports : [
+            imports: [
                 SharedModule,
                 HttpClientTestingModule
             ]
         });
     });
 
-    it('should create an input text', fakeAsync( () => {
+    it('should create an input text', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ParameterValueComponent);
         let component = fixture.debugElement.componentInstance;
@@ -39,7 +38,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('input[type=text]')).toBeTruthy('INput type text must be displayed');
     }));
 
-    it('should create an input number', fakeAsync( () => {
+    it('should create an input number', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ParameterValueComponent);
         let component = fixture.debugElement.componentInstance;
@@ -54,7 +53,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('input[type=number]')).toBeTruthy('Input type number must be displayed');
     }));
 
-    it('should create a checkbox', fakeAsync( () => {
+    it('should create a checkbox', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ParameterValueComponent);
         let component = fixture.debugElement.componentInstance;
@@ -87,7 +86,7 @@ describe('CDS: Parameter Value Component', () => {
     }));
     */
 
-    it('should create a select for pipeline', fakeAsync( () => {
+    it('should create a select for pipeline', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ParameterValueComponent);
         let component = fixture.debugElement.componentInstance;
@@ -102,7 +101,7 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('select')).toBeTruthy('select must be displayed');
     }));
 
-    it('should create a select for environments', fakeAsync( () => {
+    it('should create a select for environments', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ParameterValueComponent);
         let component = fixture.debugElement.componentInstance;
@@ -116,6 +115,5 @@ describe('CDS: Parameter Value Component', () => {
         let compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('select')).toBeTruthy('select must be displayed');
     }));
-
 });
 

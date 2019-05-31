@@ -66,9 +66,9 @@ export class WorkerModelAddComponent implements OnInit {
     getWorkerModelComponents() {
         this.loading = true;
         forkJoin([
-            this._workerModelService.getWorkerModelPatterns(),
-            this._workerModelService.getWorkerModelTypes(),
-            this._workerModelService.getWorkerModelCommunications()
+            this._workerModelService.getPatterns(),
+            this._workerModelService.getTypes(),
+            this._workerModelService.getCommunications()
         ])
             .pipe(finalize(() => this.loading = false))
             .subscribe(results => {
@@ -80,21 +80,21 @@ export class WorkerModelAddComponent implements OnInit {
 
     saveWorkerModel(workerModel: WorkerModel): void {
         this.loading = true;
-        this._workerModelService.createWorkerModel(workerModel)
+        this._workerModelService.add(workerModel)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('worker_model_saved'));
-                this._router.navigate(['settings', 'worker-model', wm.name]);
+                this._router.navigate(['settings', 'worker-model', wm.group.name, wm.name]);
             });
     }
 
     saveWorkerModelAsCode(workerModel: string): void {
         this.loading = true;
-        this._workerModelService.importWorkerModel(workerModel, false)
+        this._workerModelService.import(workerModel, false)
             .pipe(finalize(() => this.loading = false))
             .subscribe((wm) => {
                 this.workerModel = wm;
-                this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
+                this._router.navigate(['settings', 'worker-model', this.workerModel.group.name, this.workerModel.name]);
             });
     }
 }

@@ -20,6 +20,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+var anAdminID int64
+
 type pipelineUsingAction struct {
 	ActionID         int
 	ActionType       string

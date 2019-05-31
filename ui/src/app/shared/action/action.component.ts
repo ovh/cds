@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
+import { WorkerModelService } from 'app/service/services.module';
 import { cloneDeep } from 'lodash';
 import { DragulaService } from 'ng2-dragula';
 import { Action } from '../../model/action.model';
@@ -33,7 +35,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     @Input() edit = false;
     @Input() suggest: Array<string>;
 
-    @Input('action')
+    @Input()
     set action(data: Action) {
         this.editableAction = cloneDeep(data);
         this.editableAction.showAddStep = false;
@@ -52,12 +54,14 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     collapsed = true;
     configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
+    workerModels: Array<WorkerModel>;
 
     constructor(
         private sharedService: SharedService,
         private _actionService: ActionService,
         private dragulaService: DragulaService,
-        private _router: Router
+        private _router: Router,
+        private _workerModelService: WorkerModelService
     ) {
         dragulaService.createGroup('bag-nonfinal', {
             moves: function (el, source, handle) {
@@ -85,6 +89,9 @@ export class ActionComponent implements OnDestroy, OnInit {
     ngOnInit() {
         this._actionService.getAllForProject(this.project.key).subscribe(as => {
             this.publicActions = as;
+        });
+        this._workerModelService.getAllForProject(this.project.key).subscribe(wms => {
+            this.workerModels = wms;
         });
     }
 

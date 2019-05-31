@@ -1,6 +1,6 @@
 ---
 title: "cds-nexus-upload"
-card: 
+card:
   name: user-action
 ---
 

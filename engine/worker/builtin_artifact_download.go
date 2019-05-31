@@ -84,7 +84,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 				defer wg.Done()
 
 				destFile := path.Join(destPath, a.Name)
-				f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+				f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 				if err != nil {
 					res.Status = sdk.StatusFail.String()
 					res.Reason = err.Error()

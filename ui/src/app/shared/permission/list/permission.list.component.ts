@@ -19,6 +19,7 @@ export class PermissionListComponent extends Table<GroupPermission> {
     @Input() mode = 'submit';
 
     @Output() event = new EventEmitter<PermissionEvent>();
+    @Output() permissionChange = new EventEmitter<boolean>();
 
     private permissionsList;
 
@@ -44,6 +45,10 @@ export class PermissionListComponent extends Table<GroupPermission> {
                 return perm.name;
             }
         }
+    }
+
+    pushChange(): void {
+        this.permissionChange.emit(true);
     }
 
     formatPermission() {

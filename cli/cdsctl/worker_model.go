@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -50,9 +51,13 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 	stateFlag := v.GetString("state")
 
 	if binaryFlag != "" {
-		workerModels, err = client.WorkerModelsByBinary(binaryFlag)
+		workerModels, err = client.WorkerModels(&cdsclient.WorkerModelFilter{
+			Binary: binaryFlag,
+		})
 	} else {
-		workerModels, err = client.WorkerModelsByState(stateFlag)
+		workerModels, err = client.WorkerModels(&cdsclient.WorkerModelFilter{
+			State: stateFlag,
+		})
 	}
 
 	if err != nil {
@@ -123,45 +128,59 @@ func workerModelImportRun(c cli.Values) error {
 }
 
 var workerModelShowCmd = cli.Command{
-	Name:  "show",
-	Short: "Show a Worker Model",
+	Name:    "show",
+	Short:   "Show a Worker Model",
+	Example: `cdsctl worker model show myGroup/myModel`,
 	Args: []cli.Arg{
-		{Name: "name"},
+		{Name: "worker-model-path"},
 	},
 }
 
 func workerModelShowRun(v cli.Values) (interface{}, error) {
-	wm, err := client.WorkerModel(v.GetString("name"))
+	groupName, modelName, err := cli.ParsePath(v.GetString("worker-model-path"))
 	if err != nil {
 		return nil, err
 	}
+
+	wm, err := client.WorkerModel(groupName, modelName)
+	if err != nil {
+		return nil, err
+	}
+
 	return wm, nil
 }
 
 var workerModelDeleteCmd = cli.Command{
 	Name:    "delete",
 	Short:   "Delete a CDS worker model",
-	Example: `cdsctl worker model delete myModelA myModelB`,
-	VariadicArgs: cli.Arg{
-		Name: "name",
+	Example: `cdsctl worker model delete shared.infra/myModel`,
+	Args: []cli.Arg{
+		{Name: "worker-model-path"},
 	},
 }
 
 func workerModelDeleteRun(v cli.Values) error {
-	if err := client.WorkerModelDelete(v.GetString("name")); err != nil {
+	groupName, modelName, err := cli.ParsePath(v.GetString("worker-model-path"))
+	if err != nil {
+		return err
+	}
+
+	if err := client.WorkerModelDelete(groupName, modelName); err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNoWorkerModel) && v.GetBool("force") {
 			return nil
 		}
 		return err
 	}
+
 	return nil
 }
 
 var workerModelExportCmd = cli.Command{
-	Name:  "export",
-	Short: "Export a worker model",
+	Name:    "export",
+	Short:   "Export a worker model",
+	Example: `cdsctl worker model export myGroup/myModel`,
 	Args: []cli.Arg{
-		{Name: "name"},
+		{Name: "worker-model-path"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -173,15 +192,16 @@ var workerModelExportCmd = cli.Command{
 }
 
 func workerModelExportRun(c cli.Values) error {
-	wmName := c.GetString("name")
-	wm, err := client.WorkerModel(wmName)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load worker model %s", wmName)
-	}
-	btes, err := client.WorkerModelExport(wm.ID, c.GetString("format"))
+	groupName, modelName, err := cli.ParsePath(c.GetString("worker-model-path"))
 	if err != nil {
 		return err
 	}
+
+	btes, err := client.WorkerModelExport(groupName, modelName, c.GetString("format"))
+	if err != nil {
+		return err
+	}
+
 	fmt.Println(string(btes))
 	return nil
 }

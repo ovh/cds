@@ -36,6 +36,7 @@ export class WorkerModelEditComponent implements OnInit {
     paramsSub: Subscription;
     tabs: Array<Tab>;
     selectedTab: Tab;
+    groupName: string;
     workerModelName: string;
 
     constructor(
@@ -78,8 +79,9 @@ export class WorkerModelEditComponent implements OnInit {
         this.getWorkerModelComponents();
 
         this.paramsSub = this._route.params.subscribe(params => {
+            this.groupName = params['groupName'];
             this.workerModelName = params['workerModelName'];
-            this.getWorkerModel(this.workerModelName);
+            this.getWorkerModel(this.groupName, this.workerModelName);
         });
     }
 
@@ -95,9 +97,9 @@ export class WorkerModelEditComponent implements OnInit {
     getWorkerModelComponents() {
         this.loading = true;
         forkJoin([
-            this._workerModelService.getWorkerModelPatterns(),
-            this._workerModelService.getWorkerModelTypes(),
-            this._workerModelService.getWorkerModelCommunications()
+            this._workerModelService.getPatterns(),
+            this._workerModelService.getTypes(),
+            this._workerModelService.getCommunications()
         ])
             .pipe(finalize(() => this.loading = false))
             .subscribe(results => {
@@ -107,92 +109,53 @@ export class WorkerModelEditComponent implements OnInit {
             });
     }
 
-    getWorkerModel(workerModelName: string): void {
+    getWorkerModel(groupName: string, modelName: string): void {
         this.loading = true;
-        this._workerModelService.getWorkerModelByName(workerModelName)
+        this._workerModelService.get(groupName, modelName)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wm => {
-                this.getWorkerModelPermission(wm);
+                this.workerModel = wm;
                 this.updatePath();
             });
     }
 
-    // FIXME calculate editable value, should be done by the api
-    getWorkerModelPermission(workerModel: WorkerModel): void {
-        if (this.currentUser.admin) {
-            workerModel.editable = true;
-            this.workerModel = workerModel;
-            this.updatePath();
-            return;
-        }
-
-        if (!this.currentUser.admin && workerModel.group.name === 'shared.infra') {
-            workerModel.editable = false;
-            this.workerModel = workerModel;
-            this.updatePath();
-            return;
-        }
-
-        // here, check if user is admin of worker model group
-        this._groupService.getGroupByName(workerModel.group.name).subscribe(g => {
-            if (g.admins) {
-                for (let i = 0; i < g.admins.length; i++) {
-                    if (g.admins[i].username === this.currentUser.username) {
-                        workerModel.editable = true;
-                        break;
-                    };
-                }
-            }
-            this.workerModel = workerModel;
-            this.updatePath();
-        });
-    }
-
     deleteWorkerModel(): void {
         this.loading = true;
-        this._workerModelService.deleteWorkerModel(this.workerModel)
+        this._workerModelService.delete(this.groupName, this.workerModelName)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('worker_model_deleted'));
-                this._router.navigate(['../'], { relativeTo: this._route });
+                this._router.navigate(['settings', 'worker-model']);
             });
     }
 
     saveWorkerModel(workerModel: WorkerModel) {
         this.loading = true;
-        this._workerModelService.updateWorkerModel(workerModel)
+        this._workerModelService.update(this.workerModel, workerModel)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wm => {
-                this.getWorkerModelPermission(wm);
+                this.workerModel = wm;
+                this.updatePath();
                 this._toast.success('', this._translate.instant('worker_model_saved'));
-                this._router.navigate(['settings', 'worker-model', wm.name]);
+                this._router.navigate(['settings', 'worker-model', wm.group.name, wm.name]);
             });
     }
 
     saveWorkerModelAsCode(workerModel: string): void {
         this.loading = true;
-        this._workerModelService.importWorkerModel(workerModel, true)
+        this._workerModelService.import(workerModel, true)
             .pipe(finalize(() => this.loading = false))
             .subscribe((wm) => {
-                this.getWorkerModelPermission(wm);
+                this.workerModel = wm;
+                this.updatePath();
                 this._toast.success('', this._translate.instant('worker_model_saved'));
-                this._router.navigate(['settings', 'worker-model', wm.name]);
+                this._router.navigate(['settings', 'worker-model', wm.group.name, wm.name]);
             });
     }
 
     loadUsage() {
-        // FIXME model endpoint should take path not id
-        if (!this.workerModel || !this.workerModel.id) {
-            this._router.navigate([], {
-                relativeTo: this._route,
-                queryParams: { tab: this.tabs[0].key },
-                queryParamsHandling: 'merge'
-            });
-            return;
-        }
-
         this.loadingUsage = true;
-        this._workerModelService.getUsage(this.workerModel.id)
+        this._workerModelService.getUsage(this.groupName, this.workerModelName)
             .pipe(finalize(() => this.loadingUsage = false))
             .subscribe((usages) => {
                 this.usages = usages;
@@ -210,7 +173,7 @@ export class WorkerModelEditComponent implements OnInit {
         if (this.workerModel && this.workerModel.id) {
             this.path.push(<PathItem>{
                 text: this.workerModel.name,
-                routerLink: ['/', 'settings', 'worker-model', this.workerModel.name]
+                routerLink: ['/', 'settings', 'worker-model', this.workerModel.group.name, this.workerModel.name]
             });
         }
     }

@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -54,7 +55,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		//Load worker model
 		workerModel := getWorker(ctx).Name
 		if getWorker(ctx).ModelID != 0 {
-			wm, errModel := worker.LoadWorkerModelByID(api.mustDB(), getWorker(ctx).ModelID)
+			wm, errModel := workermodel.LoadByID(api.mustDB(), getWorker(ctx).ModelID)
 			if errModel != nil {
 				return sdk.ErrNoWorkerModel
 			}
@@ -139,7 +140,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	//Change worker status
-	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
+	if err := worker.SetToBuilding(tx, store, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
 		return nil, sdk.WrapError(err, "Cannot update worker %s status", getWorker(ctx).Name)
 	}
 
@@ -732,30 +733,23 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
-		groupsID := []int64{}
-		usr := deprecatedGetUser(ctx)
-		for _, g := range usr.Groups {
-			groupsID = append(groupsID, g.ID)
-		}
-		if isServiceOrWorker(r) {
-			usr = nil
+		modelType, ratioService, err := getModelTypeRatioService(ctx, r)
+		if err != nil {
+			return err
 		}
 
-		modelType, ratioService, errM := getModelTypeRatioService(ctx, r)
-		if errM != nil {
-			return errM
-		}
+		filter := workflow.NewQueueFilter()
+		filter.ModelType = []string{modelType}
+		filter.RatioService = ratioService
+		filter.Since = &since
+		filter.Until = &until
 
-		filter := workflow.QueueFilter{
-			ModelType:    modelType,
-			RatioService: ratioService,
-			GroupsID:     groupsID,
-			User:         usr,
-			Since:        &since,
-			Until:        &until,
+		var count sdk.WorkflowNodeJobRunCount
+		if !deprecatedGetUser(ctx).Admin {
+			count, err = workflow.CountNodeJobRunQueueByGroups(ctx, api.mustDB(), api.Cache, filter, deprecatedGetUser(ctx).Groups)
+		} else {
+			count, err = workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
-
-		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to count queue")
 		}
@@ -774,37 +768,36 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		if !sdk.StatusValidate(status...) {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given status"))
 		}
+		if len(status) == 0 {
+			status = []string{sdk.StatusWaiting.String()}
+		}
 
 		modelType, ratioService, errM := getModelTypeRatioService(ctx, r)
 		if errM != nil {
 			return errM
 		}
 
-		groupsID := make([]int64, len(deprecatedGetUser(ctx).Groups))
-		usr := deprecatedGetUser(ctx)
-		for i, g := range usr.Groups {
-			groupsID[i] = g.ID
-		}
-
 		permissions := permission.PermissionReadExecute
 		if !isServiceOrWorker(r) {
 			permissions = permission.PermissionRead
-		} else {
-			usr = nil
 		}
 
-		filter := workflow.QueueFilter{
-			ModelType:    modelType,
-			RatioService: ratioService,
-			GroupsID:     groupsID,
-			User:         usr,
-			Rights:       permissions,
-			Since:        &since,
-			Until:        &until,
-			Limit:        &limit,
-			Statuses:     status,
+		filter := workflow.NewQueueFilter()
+		filter.RatioService = ratioService
+		filter.Since = &since
+		filter.Until = &until
+		filter.Rights = permissions
+		filter.Statuses = status
+		filter.Limit = &limit
+		if modelType != "" {
+			filter.ModelType = []string{modelType}
 		}
-		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
+		var jobs []sdk.WorkflowNodeJobRun
+		if !deprecatedGetUser(ctx).Admin {
+			jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, api.mustDB(), api.Cache, filter, deprecatedGetUser(ctx).Groups)
+		} else {
+			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
+		}
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load queue")
 		}

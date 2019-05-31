@@ -43,7 +43,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 	res, err := dockerClient.ImageCreate(ctx, img, opts)
 	if err != nil {
 		log.Warning("hatchery> swarm> pullImage> Unable to pull image %s on %s: %s", img, dockerClient.name, err)
-		return err
+		return sdk.WithStack(err)
 	}
 
 	p := make([]byte, 4)

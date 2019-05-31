@@ -11,10 +11,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
