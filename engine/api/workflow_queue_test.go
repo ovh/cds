@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
@@ -50,10 +49,10 @@ type testRunWorkflowCtx struct {
 	hatchery    *sdk.Service
 }
 
-func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) testRunWorkflowCtx {
+func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
 	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
@@ -65,7 +64,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
-	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+	script := assets.GetBuiltinOrPluginActionByName(t, api.mustDB(), sdk.ScriptAction)
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -109,6 +108,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
+
+	log.Debug("workflow %d groups: %+v", w1.ID, w1.Groups)
 
 	//Prepare request
 	vars := map[string]string{
@@ -192,18 +193,18 @@ func testCountGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRu
 	}
 }
 
-func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, u *sdk.User, password string, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, u, password, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	jobs := []sdk.WorkflowNodeJobRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
-	assert.True(t, len(jobs) > 1)
+	assert.True(t, len(jobs) >= 1)
 
 	if t.Failed() {
 		t.FailNow()
@@ -301,9 +302,18 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 }
 
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	t.Log("checkin as a user")
+
+	ctx := testRunWorkflow(t, api, router)
+	testGetWorkflowJobAsRegularUser(t, api, router, u, pass, &ctx)
+	assert.NotNil(t, ctx.job)
+
+	t.Log("checkin as a worker")
+
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -354,9 +364,9 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -396,9 +406,9 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 }
 func Test_postBookWorkflowJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -424,9 +434,9 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -492,9 +502,9 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -605,9 +615,9 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
@@ -657,9 +667,9 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 
 	assert.NotNil(t, ctx.job)
@@ -781,9 +791,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
-	ctx := testRunWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
