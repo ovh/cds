@@ -19,7 +19,6 @@ func TestActionModelRequirements_WithExistingRequirements(t *testing.T) {
 	defer end()
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	u, _ := assets.InsertAdminUser(db)
 
 	p := sdk.ModelPattern{
 		Name: sdk.RandomString(10),
@@ -27,7 +26,7 @@ func TestActionModelRequirements_WithExistingRequirements(t *testing.T) {
 	}
 	test.NoError(t, workermodel.InsertPattern(db, &p))
 
-	m, err := workermodel.Create(db, u, sdk.Model{
+	m, err := workermodel.Create(db, sdk.Model{
 		Type:        sdk.Docker,
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,
@@ -91,7 +90,6 @@ func TestActionModelRequirements_WithLockedExistingRequirements(t *testing.T) {
 	defer end()
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	u, _ := assets.InsertAdminUser(db)
 
 	p := sdk.ModelPattern{
 		Name: sdk.RandomString(10),
@@ -99,7 +97,7 @@ func TestActionModelRequirements_WithLockedExistingRequirements(t *testing.T) {
 	}
 	test.NoError(t, workermodel.InsertPattern(db, &p))
 
-	m, err := workermodel.Create(db, u, sdk.Model{
+	m, err := workermodel.Create(db, sdk.Model{
 		Type:        sdk.Docker,
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,
