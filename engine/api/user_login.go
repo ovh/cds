@@ -23,11 +23,11 @@ func (api *API) loginUserHandler() service.Handler {
 			return err
 		}
 
-		var logFromCLI bool
-		if r.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-			log.Info("LoginUser> login from CLI")
-			logFromCLI = true
-		}
+		//var logFromCLI bool
+		//if r.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
+		//	log.Info("LoginUser> login from CLI")
+		//	logFromCLI = true
+		//}
 
 		var authUser *sdk.AuthentifiedUser
 		for authName, authDriver := range api.AuthenticationDrivers {

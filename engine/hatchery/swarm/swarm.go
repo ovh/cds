@@ -2,6 +2,7 @@ package swarm
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"crypto/tls"
 	"fmt"
 	"html/template"
@@ -175,7 +176,7 @@ func (h *HatcherySwarm) Init() error {
 // SpawnWorker start a new docker container
 // User can add option on prerequisite, as --port and --privileged
 // but only hatchery NOT 'shared.infra' can launch containers with options
-func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	ctx, end := observability.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
@@ -228,7 +229,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	next()
 
 	if !foundDockerClient {
-		return "", fmt.Errorf("unable to found suitable docker engine")
+		return fmt.Errorf("unable to found suitable docker engine")
 	}
 
 	//Memory for the worker
@@ -248,7 +249,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
 					log.Warning("hatchery> swarm> SpawnWorker>Unable to parse memory requirement %d :%v", memory, err)
-					return "", err
+					return err
 				}
 			} else if r.Type == sdk.ServiceRequirement {
 				//Create a network if not already created
@@ -258,7 +259,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
 						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
 						next()
-						return "", err
+						return err
 					}
 				}
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
@@ -318,7 +319,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
 					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
-					return "", err
+					return err
 				}
 				services = append(services, serviceName)
 			}
@@ -341,7 +342,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	// TODO: Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one
 	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
 	if errDockerOpts != nil {
-		return name, errDockerOpts
+		return errDockerOpts
 	}
 
 	udataParam := sdk.WorkerArgs{
@@ -364,11 +365,11 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
-		return "", errt
+		return errt
 	}
 	var buffer bytes.Buffer
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
-		return "", errTmpl
+		return errTmpl
 	}
 	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
 	cmds = append(cmds, buffer.String())
@@ -401,7 +402,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
 	if errEnv != nil {
-		return "", errEnv
+		return errEnv
 	}
 
 	for envName, envValue := range envTemplated {
@@ -431,10 +432,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//start the worker
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
 		log.Warning("hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
-		return "", err
+		return err
 	}
 
-	return name, nil
+	return nil
 }
 
 // ModelType returns type of hatchery
@@ -605,6 +606,11 @@ func (h *HatcherySwarm) Service() *sdk.Service {
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcherySwarm) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
+}
+
+// PrivateKey TODO.
+func (h *HatcherySwarm) PrivateKey() *rsa.PrivateKey {
+	return nil
 }
 
 func (h *HatcherySwarm) routines(ctx context.Context) {

@@ -433,9 +433,11 @@ type WorkflowNodeRunHookEvent struct {
 
 //WorkflowNodeRunManual is an instanc of event received on a hook
 type WorkflowNodeRunManual struct {
-	Payload            interface{}      `json:"payload" db:"-"`
-	PipelineParameters []Parameter      `json:"pipeline_parameter" db:"-"`
-	User               AuthentifiedUser `json:"user" db:"-"`
+	Payload            interface{} `json:"payload" db:"-"`
+	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
+	Username           string      `json:"username" db:"-"`
+	Fullname           string      `json:"fullname" db:"-"`
+	Email              string      `json:"email" db:"-"`
 }
 
 //GetName returns the name the artifact

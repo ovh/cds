@@ -586,7 +586,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 }
 
 // CreateRun creates a new workflow run and insert it
-func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthentifiedUser) (*sdk.WorkflowRun, error) {
+func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, ident sdk.Identifiable) (*sdk.WorkflowRun, error) {
 	number, err := NextRunNumber(db, wf.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get next run number")
@@ -611,7 +611,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		wr.Tag(tagTriggeredBy, u.Username)
+		wr.Tag(tagTriggeredBy, ident.GetUsername())
 	}
 
 	tags := wf.Metadata["default_tags"]

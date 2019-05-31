@@ -56,6 +56,10 @@ func (g *APIConsumer) GetUsername() string {
 	return g.Fullname
 }
 
+func (g *APIConsumer) GetFullname() string {
+	return g.Fullname
+}
+
 func (g *APIConsumer) Email() string {
 	return g.OnBehalfOf.Email()
 }

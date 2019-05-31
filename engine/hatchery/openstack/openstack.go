@@ -2,6 +2,7 @@ package openstack
 
 import (
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"strconv"
 	"strings"
@@ -166,6 +167,11 @@ func (*HatcheryOpenstack) ModelType() string {
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
+}
+
+// PrivateKey TODO.
+func (h *HatcheryOpenstack) PrivateKey() *rsa.PrivateKey {
+	return nil
 }
 
 // CanSpawn return wether or not hatchery can spawn model

@@ -14,8 +14,8 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = api.DefaultHeaders
 
-	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", r.GET(s.getStatusHandler))
-	r.Handle("/events", r.GET(s.getEventsHandler), r.POST(s.postEventHandler))
-	r.Handle("/metrics", r.GET(s.getMetricsHandler), r.POST(s.postMetricsHandler))
+	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", nil, r.GET(s.getStatusHandler))
+	r.Handle("/events", nil, r.GET(s.getEventsHandler), r.POST(s.postEventHandler))
+	r.Handle("/metrics", nil, r.GET(s.getMetricsHandler), r.POST(s.postMetricsHandler))
 }

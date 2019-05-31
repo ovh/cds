@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -118,10 +117,10 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		rmName := data["repositories_manager"]
 		username := data["username"]
 
-		u, err := user.LoadUserByUsername(api.mustDB(), username)
-		if err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
-		}
+		//u, err := user.LoadUserByUsername(api.mustDB(), username)
+		//if err != nil {
+		//	return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		//}
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errP != nil {

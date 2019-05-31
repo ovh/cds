@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -139,6 +140,11 @@ func (h *HatcheryVSphere) NeedRegistration(m *sdk.Model) bool {
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcheryVSphere) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
+}
+
+// PrivateKey TODO.
+func (h *HatcheryVSphere) PrivateKey() *rsa.PrivateKey {
+	return nil
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but

@@ -31,7 +31,7 @@ type annotation struct {
 }
 
 // SpawnWorker creates a new vm instance
-func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	var vm *object.VirtualMachine
 	var errV error
 	name := "worker-" + spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
@@ -49,7 +49,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	if vm == nil || errV != nil {
 		spawnArgs.Model.NeedRegistration = errV != nil // if we haven't registered
 		if vm, errV = h.finder.VirtualMachine(ctx, spawnArgs.Model.Name); errV != nil {
-			return "", sdk.WrapError(errV, "SpawnWorker> Cannot find virtual machine with this model")
+			return sdk.WrapError(errV, "cannot find virtual machine with this model")
 		}
 	}
 
@@ -65,22 +65,22 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot)
 	if errCfg != nil {
-		return "", sdk.WrapError(errCfg, "SpawnWorker> cannot create VM configuration")
+		return sdk.WrapError(errCfg, "cannot create VM configuration")
 	}
 
 	log.Info("Create vm to exec worker %s", name)
 	defer log.Info("Terminate to create vm for worker %s", name)
 	task, errC := vm.Clone(ctx, folder, name, *cloneSpec)
 	if errC != nil {
-		return "", sdk.WrapError(errC, "SpawnWorker> cannot clone VM")
+		return sdk.WrapError(errC, "cannot clone VM")
 	}
 
 	info, errW := task.WaitForResult(ctx, nil)
 	if errW != nil || info.State == types.TaskInfoStateError {
-		return "", sdk.WrapError(errW, "SpawnWorker> state in error")
+		return sdk.WrapError(errW, "state in error")
 	}
 
-	return "", h.launchScriptWorker(name, spawnArgs.JobID, spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
+	return h.launchScriptWorker(name, spawnArgs.JobID, spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
 }
 
 // createVMModel create a model for a specific worker model

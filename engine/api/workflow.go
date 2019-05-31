@@ -208,22 +208,22 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 		db := api.mustDB()
-		u := getAPIConsumer(ctx)
+		//u := getAPIConsumer(ctx)
 
 		var label sdk.Label
 		if err := service.UnmarshalBody(r, &label); err != nil {
-			return sdk.WrapError(err, "Cannot read body")
+			return sdk.WrapError(err, "cannot read body")
 		}
 
 		proj, errP := project.Load(db, api.Cache, key)
 		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowLabelHandler> cannot load project %s", key)
+			return sdk.WrapError(errP, "cannot load project %s", key)
 		}
 		label.ProjectID = proj.ID
 
 		tx, errTx := db.Begin()
 		if errTx != nil {
-			return sdk.WrapError(errTx, "postWorkflowLabelHandler> Cannot create new transaction")
+			return sdk.WrapError(errTx, "cannot create new transaction")
 		}
 		defer tx.Rollback() //nolint
 
@@ -278,7 +278,7 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 		}
 
 		db := api.mustDB()
-		u := getAPIConsumer(ctx)
+		//u := getAPIConsumer(ctx)
 
 		proj, errP := project.Load(db, api.Cache, key)
 		if errP != nil {

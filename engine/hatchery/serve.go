@@ -180,12 +180,12 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.SetHeaderFunc = api.DefaultHeaders
 	r.Middlewares = append(r.Middlewares, c.AuthMiddleware)
 
-	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", r.GET(getStatusHandler(h), api.Auth(false)))
-	r.Handle("/mon/workers", r.GET(getWorkersPoolHandler(h), api.Auth(false)))
-	r.Handle("/mon/metrics", r.GET(observability.StatsHandler, api.Auth(false)))
-	r.Handle("/mon/errors", r.GET(c.getPanicDumpListHandler, api.Auth(false)))
-	r.Handle("/mon/errors/{id}", r.GET(c.getPanicDumpHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), api.Auth(false)))
+	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(observability.StatsHandler, api.Auth(false)))
+	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, api.Auth(false)))
+	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, api.Auth(false)))
 
 	r.Mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	r.Mux.HandleFunc("/debug/pprof/profile", pprof.Profile)

@@ -176,7 +176,7 @@ func (s *dbmigservice) initRouter(ctx context.Context) {
 	r := s.Router
 	r.SetHeaderFunc = api.DefaultHeaders
 
-	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle("/", r.GET(s.getMigrationHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle("/", nil, r.GET(s.getMigrationHandler, api.Auth(false)))
 }

@@ -83,7 +83,8 @@ func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	return report, nil
 }
 
-func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthentifiedUser, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
+func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun,
+	opts *sdk.WorkflowRunPostHandlerOption, ident sdk.Identifiable, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
 	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
 	defer end()
 
@@ -91,7 +92,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 	tx, errb := db.Begin()
 	if errb != nil {
-		return nil, sdk.WrapError(errb, "Cannot start transaction")
+		return nil, sdk.WrapError(errb, "cannot start transaction")
 	}
 	defer tx.Rollback() // nolint
 
@@ -111,13 +112,14 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			return nil, err
 		}
 		report.Merge(r1, nil) // nolint
-
 	} else {
 		// Manual RUN
 		if opts.Manual == nil {
 			opts.Manual = &sdk.WorkflowNodeRunManual{}
 		}
-		opts.Manual.User = *u
+		opts.Manual.Username = ident.GetUsername()
+		opts.Manual.Email = ident.Email()
+		opts.Manual.Username = ident.GetFullname()
 
 		if len(opts.FromNodeIDs) > 0 && len(wr.WorkflowNodeRuns) > 0 {
 			// MANUAL RUN FROM NODE
@@ -138,7 +140,6 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return report, errmr
 			}
 			report.Merge(r1, nil) // nolint
-
 		} else {
 			// TODO: check permission fo workflow node on handler layer
 			// MANUAL RUN FROM ROOT NODE
@@ -151,13 +152,12 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return nil, errmr
 			}
 			report.Merge(r1, nil) // nolint
-
 		}
 	}
 
 	//Commit and return success
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to commit transaction")
+		return nil, sdk.WrapError(err, "unable to commit transaction")
 	}
 	return report, nil
 }
@@ -169,7 +169,7 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	defer end()
 
 	if err := IsValid(ctx, store, db, &wr.Workflow, p); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+		return nil, sdk.WrapError(err, "unable to valid workflow")
 	}
 
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {

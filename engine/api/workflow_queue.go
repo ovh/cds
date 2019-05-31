@@ -691,10 +691,10 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 		filter := workflow.QueueFilter{
 			ModelType:    modelType,
 			RatioService: ratioService,
-			GroupsID:     groupsID,
-			User:         usr,
-			Since:        &since,
-			Until:        &until,
+			//GroupsID:     groupsID,
+			//User:         usr,
+			Since: &since,
+			Until: &until,
 		}
 
 		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
@@ -722,29 +722,26 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return errM
 		}
 
-		groupsID := make([]int64, len(deprecatedGetUser(ctx).Groups))
-		usr := deprecatedGetUser(ctx)
-		for i, g := range usr.Groups {
-			groupsID[i] = g.ID
-		}
+		c := getAPIConsumer(ctx)
+		groupIDs := sdk.GroupsToIDs(c.GetGroups())
 
 		permissions := permission.PermissionReadExecute
-		if !isServiceOrWorker(r) {
-			permissions = permission.PermissionRead
-		} else {
-			usr = nil
-		}
+		//if !isServiceOrWorker(r) {
+		//	permissions = permission.PermissionRead
+		//} else {
+		//	usr = nil
+		//}
 
 		filter := workflow.QueueFilter{
 			ModelType:    modelType,
 			RatioService: ratioService,
-			GroupsID:     groupsID,
-			User:         usr,
-			Rights:       permissions,
-			Since:        &since,
-			Until:        &until,
-			Limit:        &limit,
-			Statuses:     status,
+			GroupsID:     groupIDs,
+			//User:         usr,
+			Rights:   permissions,
+			Since:    &since,
+			Until:    &until,
+			Limit:    &limit,
+			Statuses: status,
 		}
 		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		if err != nil {
@@ -820,7 +817,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 			return sdk.WrapError(errLoad, "Unable to load coverage report")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getAPIConsumer(ctx))
+		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d", id)
 		}
@@ -828,7 +825,6 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, p); err != nil {
 				return sdk.WrapError(err, "Cannot compute new coverage report")
 			}
-
 		} else {
 			// update
 			existingReport.Report = report
@@ -913,7 +909,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 		// If we are on default branch, push metrics
 		if nr.VCSServer != "" && nr.VCSBranch != "" {
-			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getAPIConsumer(ctx))
+			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id)
 			if errP != nil {
 				log.Error("postWorkflowJobTestsResultsHandler> Cannot load project by nodeJobRunID %d: %v", id, errP)
 				return nil

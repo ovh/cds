@@ -12,16 +12,16 @@ import (
 
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getAPIConsumer(ctx)
-		currentItem, errS := FormInt(r, "currentItem")
-		if errS != nil {
-			return sdk.WrapError(errS, "getTimelineHandler> Invalid format for current item")
-		}
+		//u := getAPIConsumer(ctx)
+		//currentItem, errS := FormInt(r, "currentItem")
+		//if errS != nil {
+		//	return sdk.WrapError(errS, "invalid format for current item")
+		//}
 
 		// Get workflow to mute
 		timelineFilter, errT := user.LoadTimelineFilter(api.mustDB(), JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
 		if errT != nil {
-			return sdk.WrapError(errT, "getTimelineHandler> Unable to load timeline filter")
+			return sdk.WrapError(errT, "unable to load timeline filter")
 		}
 
 		// Add all workflows to mute in a map

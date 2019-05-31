@@ -20,7 +20,7 @@ import (
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	//generate a pretty cool name
 	name := spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
 	if spawnArgs.RegisterOnly {
@@ -34,24 +34,24 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 
 	if h.hatch == nil {
-		return "", fmt.Errorf("hatchery disconnected from engine")
+		return fmt.Errorf("hatchery disconnected from engine")
 	}
 
 	if len(h.getServers()) == h.Configuration().Provision.MaxWorker {
 		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
-		return "", nil
+		return nil
 	}
 
 	// Get image ID
 	imageID, erri := h.imageID(spawnArgs.Model.ModelVirtualMachine.Image)
 	if erri != nil {
-		return "", erri
+		return erri
 	}
 
 	// Get flavor ID
 	flavorID, errf := h.flavorID(spawnArgs.Model.ModelVirtualMachine.Flavor)
 	if errf != nil {
-		return "", errf
+		return errf
 	}
 
 	var withExistingImage bool
@@ -63,11 +63,12 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 			workerModelName, _ := img.Metadata["worker_model_name"]
 			if workerModelName == spawnArgs.Model.Name {
 				withExistingImage = true
-				var jobInfo string
-				if spawnArgs.JobID != 0 {
-					jobInfo = fmt.Sprintf(" job:%d", spawnArgs.JobID)
-				}
-				log.Debug("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArgs.LogInfo)
+				// TODO
+				//var jobInfo string
+				//if spawnArgs.JobID != 0 {
+				//	jobInfo = fmt.Sprintf(" job:%d", spawnArgs.JobID)
+				//}
+				//log.Debug("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArg.LogInfo)
 				imageID = img.ID
 				break
 			}
@@ -82,7 +83,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 
 	tmpl, errt := template.New("udata").Parse(udata)
 	if errt != nil {
-		return "", errt
+		return errt
 	}
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
@@ -104,7 +105,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
-		return "", err
+		return err
 	}
 
 	// Encode again
@@ -128,7 +129,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		var errai error
 		ip, errai = h.findAvailableIP(name)
 		if errai != nil {
-			return "", errai
+			return errai
 		}
 		log.Debug("Found %s as available IP", ip)
 	}
@@ -145,8 +146,8 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 
 	server, err := r.Extract()
 	if err != nil {
-		return "", fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%s body:%s", name, flavorID, imageID, meta, networks, err, r.Body)
+		return fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%s body:%s", name, flavorID, imageID, meta, networks, err, r.Body)
 	}
 	log.Debug("SpawnWorker> Created Server ID: %s", server.ID)
-	return name, nil
+	return nil
 }

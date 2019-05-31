@@ -37,6 +37,7 @@ func AuthentifiedUsersToIDs(users []*AuthentifiedUser) []string {
 
 type Identifiable interface {
 	GetUsername() string
+	GetFullname() string
 	Email() string
 }
 
@@ -85,6 +86,10 @@ func (u AuthentifiedUser) GetGroups() []Group {
 }
 
 func (u AuthentifiedUser) GetUsername() string {
+	return u.Username
+}
+
+func (u AuthentifiedUser) GetFullname() string {
 	return u.Username
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/rsa"
 	"encoding/hex"
 	"fmt"
 	"html/template"
@@ -93,11 +94,12 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("please enter a name in your local hatchery configuration")
 	}
 
-	if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
-		return fmt.Errorf("Basedir doesn't exist")
-	} else if err != nil {
-		return fmt.Errorf("Invalid basedir: %v", err)
-	}
+	// TODO
+	//if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
+	//	return fmt.Errorf("Basedir doesn't exist")
+	//} else if err != nil {
+	//	return fmt.Errorf("Invalid basedir: %v", err)
+	//}
 	return nil
 }
 
@@ -218,13 +220,13 @@ func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
-	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d", wName,
-			spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.JobID)
-	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s)", wName,
-			spawnArgs.Model.ModelVirtualMachine.Image)
-	}
+	//if spawnArgs.JobID > 0 {
+	//	log.Debug("spawnWorker> spawning worker %s (%s) for job %d", wName,
+	//		spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.JobID)
+	//} else {
+	//	log.Debug("spawnWorker> spawning worker %s (%s)", wName,
+	//		spawnArgs.Model.ModelVirtualMachine.Image)
+	//}
 
 	// Generate a random string 16 chars length
 	bs := make([]byte, 16)
@@ -239,11 +241,12 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	udataParam := sdk.WorkerArgs{
-		API:               h.Configuration().API.HTTP.URL,
-		Token:             h.Configuration().API.Token,
-		BaseDir:           basedir,
-		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              wName,
+		API:          h.Configuration().API.HTTP.URL,
+		Token:        h.Configuration().API.Token,
+		BaseDir:      basedir,
+		HTTPInsecure: h.Config.API.HTTP.Insecure,
+		// TODO
+		//Name:              wName,
 		Model:             spawnArgs.Model.ID,
 		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
@@ -298,10 +301,11 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return err
 	}
 
-	log.Debug("worker %s has been spawned by %s", wName, h.Name)
+	//log.Debug("worker %s has been spawned by %s", wName, h.Name)
 
 	h.Lock()
-	h.workers[wName] = workerCmd{cmd: cmd, created: time.Now()}
+	// TODO
+	//h.workers[wName] = workerCmd{cmd: cmd, created: time.Now()}
 	h.Unlock()
 	// Wait in a goroutine so that when process exits, Wait() update cmd.ProcessState
 	go func() {
@@ -310,7 +314,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		}
 	}()
 
-	return wName, nil
+	return nil
 }
 
 // WorkersStarted returns the number of instances started but
@@ -329,9 +333,17 @@ func (h *HatcheryLocal) WorkersStarted() []string {
 
 // WorkerModelsEnabled returns worker model enabled
 func (h *HatcheryLocal) WorkerModelsEnabled() ([]sdk.Model, error) {
-	h.ModelLocal.GroupID = *h.Service().GroupID
-	h.ModelLocal.Group = h.Service().Group
-	return []sdk.Model{h.ModelLocal}, nil
+	//h.ModelLocal.GroupID = *h.Service().GroupID
+	//h.ModelLocal.Group = h.Service().Group
+	//return []sdk.Model{h.ModelLocal}, nil
+
+	// TODO
+	return nil, nil
+}
+
+// PrivateKey TODO.
+func (h *HatcheryLocal) PrivateKey() *rsa.PrivateKey {
+	return nil
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but

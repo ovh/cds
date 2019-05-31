@@ -204,9 +204,10 @@ func (d *dockerOpts) computeDockerOptsOnModelRequirement(req sdk.Requirement) er
 		if idx == 0 || strings.TrimSpace(opt) == "" {
 			continue // it's image name
 		}
-		if isSharedInfra {
-			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
-		}
+		// TODO
+		//if isSharedInfra {
+		//	return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
+		//}
 		if strings.HasPrefix(opt, "--port=") {
 			if err := d.computeDockerOptsPorts(opt); err != nil {
 				return err
@@ -228,9 +229,10 @@ func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(req sdk.Requirement) e
 	// args are separated by a space
 	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
 	for idx, opt := range strings.Split(req.Value, " ") {
-		if isSharedInfra {
-			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
-		}
+		// TODO
+		//if isSharedInfra {
+		//	return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
+		//}
 
 		if idx == 0 {
 			// it's --mount flag

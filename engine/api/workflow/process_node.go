@@ -49,7 +49,9 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	return report, nil
 }
 
-func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun,
+	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 	exist, errN := nodeRunExist(db, wr.ID, n.ID, wr.Number, subNumber)
 	if errN != nil {
@@ -97,7 +99,9 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return nil, false, nil
 }
 
-func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun,
+	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 
 	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
@@ -548,15 +552,15 @@ func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, paren
 		params = append(params, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Email(),
+			Value: manual.Email,
 		}, sdk.Parameter{
 			Name:  "cds.triggered_by.fullname",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Fullname,
+			Value: manual.Fullname,
 		}, sdk.Parameter{
 			Name:  "cds.triggered_by.username",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Username,
+			Value: manual.Username,
 		}, sdk.Parameter{
 			Name:  "cds.manual",
 			Type:  sdk.StringParameter,

@@ -41,29 +41,31 @@ type PushOption struct {
 }
 
 // CreateFromRepository a workflow from a repository
-func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.AuthentifiedUser, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
+func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
+	opts sdk.WorkflowRunPostHandlerOption, ident sdk.IdentifiableGroupMember, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
 	ope, err := createOperationRequest(*w, opts)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to create operation request")
+		return nil, sdk.WrapError(err, "unable to create operation request")
 	}
 
-	// update user permission if  we come from hook
-	if opts.Hook != nil {
+	// update user permission if we come from hook
+	// TODO groups should be in identifiable before calling this func
+	/*if opts.Hook != nil {
 		u.OldUserStruct.Groups = make([]sdk.Group, len(p.ProjectGroups))
 		for i, gp := range p.ProjectGroups {
 			u.OldUserStruct.Groups[i] = gp.Group
 		}
-	}
+	}*/
 
 	if err := PostRepositoryOperation(ctx, db, *p, &ope, nil); err != nil {
-		return nil, sdk.WrapError(err, "Unable to post repository operation")
+		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
 	if err := pollRepositoryOperation(ctx, db, store, &ope); err != nil {
-		return nil, sdk.WrapError(err, "Cannot analyse repository")
+		return nil, sdk.WrapError(err, "cannot analyse repository")
 	}
 
 	var uuid string
@@ -78,17 +80,18 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 			}
 		}
 	}
-	return extractWorkflow(ctx, db, store, p, w, ope, u, decryptFunc, uuid)
+	return extractWorkflow(ctx, db, store, p, w, ope, ident, decryptFunc, uuid)
 }
 
-func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.AuthentifiedUser, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
+func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
+	ope sdk.Operation, ident sdk.IdentifiableGroupMember, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to read cds files")
+		return nil, sdk.WrapError(err, "unable to read cds files")
 	}
 	ope.RepositoryStrategy.SSHKeyContent = ""
 	opt := &PushOption{
@@ -102,9 +105,9 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		OldWorkflow:        w,
 	}
 
-	allMsg, workflowPushed, errP := Push(ctx, db, store, p, tr, opt, u, decryptFunc)
+	allMsg, workflowPushed, errP := Push(ctx, db, store, p, tr, opt, ident, decryptFunc)
 	if errP != nil {
-		return nil, sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")
+		return nil, sdk.WrapError(errP, "unable to get workflow from file")
 	}
 	*w = *workflowPushed
 

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -18,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -37,9 +35,10 @@ func (api *API) getProjectsHandler() service.Handler {
 
 		//A provider can make a call for a specific user
 		if getProvider(ctx) != nil && requestedUserName != "" {
-			var err error
+			//var err error
 			//Load the specific user
-			u, err := user.LoadUserByUsername(api.mustDB(), requestedUserName)
+			// TODO
+			/*u, err := user.LoadUserByUsername(api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
@@ -47,7 +46,7 @@ func (api *API) getProjectsHandler() service.Handler {
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}
 
-			/* if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
+			 if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 				return sdk.WrapError(err, "unable to load user '%s' permissions", requestedUserName)
 			} */
 		}

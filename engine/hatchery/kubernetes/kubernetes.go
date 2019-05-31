@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"html/template"
 	"os"
@@ -227,6 +228,11 @@ func (h *HatcheryKubernetes) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
 }
 
+// PrivateKey TODO.
+func (h *HatcheryKubernetes) PrivateKey() *rsa.PrivateKey {
+	return nil
+}
+
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
@@ -425,7 +431,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
 
-	pod, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).Create(&podSchema)
+	_, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).Create(&podSchema)
 
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", name)
 

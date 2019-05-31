@@ -3,6 +3,7 @@ package marathon
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"html/template"
 	"math"
@@ -165,6 +166,11 @@ func (h *HatcheryMarathon) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
 }
 
+// PrivateKey TODO.
+func (h *HatcheryMarathon) PrivateKey() *rsa.PrivateKey {
+	return nil
+}
+
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
 func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
@@ -207,7 +213,7 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	ctx, end := observability.Span(ctx, "hatcheryMarathon.SpawnWorker")
 	defer end()
 
@@ -249,11 +255,11 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
-		return "", errt
+		return errt
 	}
 	var buffer bytes.Buffer
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
-		return "", errTmpl
+		return errTmpl
 	}
 
 	cmd := buffer.String()
@@ -271,7 +277,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
 					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
-					return "", err
+					return err
 				}
 			}
 		}
@@ -305,7 +311,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
 	if errEnv != nil {
-		return "", errEnv
+		return errEnv
 	}
 
 	for envName, envValue := range envTemplated {
@@ -333,7 +339,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	_, next := observability.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
 		next()
-		return "", err
+		return err
 	}
 	next()
 
@@ -364,12 +370,12 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	next()
 	if err != nil {
 		ticker.Stop()
-		return "", fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
+		return fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
 	}
 
 	if len(deployments) == 0 {
 		ticker.Stop()
-		return "", nil
+		return nil
 	}
 
 	_, next = observability.Span(ctx, "waitDeployment")
@@ -419,10 +425,10 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	done = true
 
 	if success {
-		return workerName, nil
+		return nil
 	}
 
-	return "", fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
+	return fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
 }
 
 func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {

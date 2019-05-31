@@ -695,7 +695,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		u := getAPIConsumer(ctx)
+		//u := getAPIConsumer(ctx)
 
 		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache)
 		if err != nil {
@@ -786,12 +786,12 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 
 		var ps []sdk.Project
 		if isAdmin(ctx) {
-			ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache)
+			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache)
 			if err != nil {
 				return err
 			}
 		} else {
-			ps, err := project.LoadAllByGroups(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx))
+			ps, err = project.LoadAllByGroups(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx))
 			if err != nil {
 				return err
 			}
