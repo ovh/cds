@@ -919,7 +919,6 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 				// Push metrics
 				metrics.PushUnitTests(p.Key, nr.ApplicationID, nr.WorkflowID, nr.Number, *nr.Tests)
 			}
-
 		}
 		return nil
 	}
@@ -932,7 +931,7 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 			return sdk.WrapError(errr, "postWorkflowJobTagsHandler> Invalid id")
 		}
 
-		var tags = []sdk.WorkflowRunTag{}
+		var tags []sdk.WorkflowRunTag
 		if err := service.UnmarshalBody(r, &tags); err != nil {
 			return sdk.WrapError(err, "Unable to unmarshal body")
 		}

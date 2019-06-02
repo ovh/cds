@@ -26,11 +26,19 @@ func (es *ES) GetEvents(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	boolQuery := elastic.NewBoolQuery()
 	for _, p := range filters.Filter.Projects {
 		for _, w := range p.WorkflowNames {
-			boolQuery.Should(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
+			boolQuery.Should(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s AND type_event:%s", p.Key, w, filters.TypeEvent)))
 		}
 
 	}
-	result, errR := es.client.Search().Index(es.EventIndex).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
+	result, errR := es.client.
+		Search().
+		Index(es.EventIndex).
+		Type("_doc").
+		Query(boolQuery).
+		Sort("timestamp", false).
+		From(filters.CurrentItem).
+		Size(15).
+		Do(context.Background())
 	if errR != nil {
 		if strings.Contains(errR.Error(), indexNotFoundException) {
 			log.Warning("elasticsearch> getEventsHandler> %v", errR.Error())
@@ -52,7 +60,7 @@ func (es *ES) PostEvents(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return sdk.WrapError(err, "Unable to read body")
 	}
 
-	_, errI := es.client.Index().Index(es.EventIndex).Type(e.EventType).BodyJson(e).Do(context.Background())
+	_, errI := es.client.Index().Index(es.EventIndex).Type("_doc").BodyJson(e).Do(context.Background())
 	if errI != nil {
 		return sdk.WrapError(errI, "Unable to insert event")
 	}
@@ -79,13 +87,18 @@ func (es *ES) GetMetrics(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 	results, errR := es.client.Search().
 		Index(es.MetricsIndex).
-		Type(fmt.Sprintf("%T", sdk.Metric{})).
+		Type("_doc").
 		Query(elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(stringQuery))).
 		Sort("run", false).
 		Size(10).
 		Do(context.Background())
+
 	if errR != nil {
 		if strings.Contains(errR.Error(), indexNotFoundException) {
+			log.Warning("elasticsearch> getMetricsHandler> %v", errR.Error())
+			return service.WriteJSON(w, nil, http.StatusOK)
+		}
+		if strings.Contains(errR.Error(), searchPhaseException) {
 			log.Warning("elasticsearch> getMetricsHandler> %v", errR.Error())
 			return service.WriteJSON(w, nil, http.StatusOK)
 		}
@@ -116,7 +129,7 @@ func (es *ES) PostMetrics(ctx context.Context, w http.ResponseWriter, r *http.Re
 		es.mergeMetric(&metric, existingMetric.Value)
 	}
 
-	_, errI := es.client.Index().Index(es.MetricsIndex).Id(id).Type(fmt.Sprintf("%T", sdk.Metric{})).BodyJson(metric).Do(context.Background())
+	_, errI := es.client.Index().Index(es.MetricsIndex).Id(id).Type("_doc").BodyJson(metric).Do(context.Background())
 	if errI != nil {
 		return sdk.WrapError(errI, "Unable to insert event")
 	}

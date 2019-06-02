@@ -18,7 +18,7 @@ func (es *ES) GetStatus(name string) sdk.MonitoringStatusLine {
 	} else {
 		info, code, err := es.client.Ping(es.Endpoint).Do(context.Background())
 		log.Debug("Metrics> ElasticSearch> Ping code: %v", code)
-		line := sdk.MonitoringStatusLine{Component: componentName}
+		line := sdk.MonitoringStatusLine{Component: componentName, Type: componentName}
 
 		if err != nil {
 			line.Status = sdk.MonitoringStatusWarn

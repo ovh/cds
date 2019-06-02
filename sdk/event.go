@@ -37,6 +37,7 @@ type Event struct {
 // EventFilter represents filters when getting events
 type EventFilter struct {
 	CurrentItem int            `json:"current_item"`
+	TypeEvent   string         `json:"type_event"`
 	Filter      TimelineFilter `json:"filter"`
 }
 

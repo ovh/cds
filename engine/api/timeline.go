@@ -53,6 +53,7 @@ func (api *API) getTimelineHandler() service.Handler {
 
 		request := sdk.EventFilter{
 			CurrentItem: currentItem,
+			TypeEvent:   "sdk.EventRunWorkflowJob",
 			Filter: sdk.TimelineFilter{
 				Projects: make([]sdk.ProjectFilter, 0, len(permToRequest)),
 			},
