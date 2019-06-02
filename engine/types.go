@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -11,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/metricsservice"
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/vcs"
@@ -30,11 +30,11 @@ type Configuration struct {
 	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
 	Debug           *DebugConfiguration           `toml:"debug" comment:"#####################\n Debug with gops \n####################" json:"debug"`
 	API             *api.Configuration            `toml:"api" comment:"#####################\n API Configuration \n####################" json:"api"`
-	Hatchery        *HatcheryConfiguration        `toml:"hatchery" json:"hatchery"`
+	Hatchery        *HatcheryConfiguration        `toml:"hatchery" comment:"######################\n CDS Hatchery Settings \n######################" json:"hatchery"`
+	Metrics         *metricsservice.Configuration `toml:"metrics" comment:"######################\n CDS Metrics Settings \n######################" json:"metrics"`
 	Hooks           *hooks.Configuration          `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################" json:"hooks"`
 	VCS             *vcs.Configuration            `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################" json:"vcs"`
 	Repositories    *repositories.Configuration   `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################" json:"repositories"`
-	ElasticSearch   *elasticsearch.Configuration  `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n This is use for CDS timeline and is optional\n######################" json:"elasticsearch"`
 	DatabaseMigrate *migrateservice.Configuration `toml:"databaseMigrate" comment:"######################\n CDS DB Migrate Service Settings \n######################" json:"databaseMigrate"`
 	Tracing         *observability.Configuration  `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################" json:"tracing"`
 }

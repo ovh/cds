@@ -163,9 +163,9 @@ type Configuration struct {
 		DBMigrate struct {
 			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status" json:"minInstance"`
 		} `toml:"dbmigrate" json:"dbmigrate"`
-		ElasticSearch struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status" json:"minIntance"`
-		} `toml:"elasticsearch" json:"elasticsearch"`
+		Metrics struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of metrics service is running, an alert on Global/metrics will be created on /mon/status" json:"minIntance"`
+		} `toml:"metrics" json:"metrics"`
 		Hatchery struct {
 			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status" json:"minInstance"`
 		} `toml:"hatchery" json:"hatchery"`
@@ -851,9 +851,9 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
 		}, a.PanicDump())
-	sdk.GoRoutine(ctx, "PushInElasticSearch",
+	sdk.GoRoutine(ctx, "PushToMetrics",
 		func(ctx context.Context) {
-			event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
+			event.PushToMetrics(ctx, a.mustDB(), a.Cache)
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "Metrics.pushInElasticSearch",
 		func(ctx context.Context) {

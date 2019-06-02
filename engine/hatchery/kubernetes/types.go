@@ -55,8 +55,8 @@ type HatcheryConfiguration struct {
 // HatcheryKubernetes implements HatcheryMode interface for local usage
 type HatcheryKubernetes struct {
 	hatcheryCommon.Common
-	Config HatcheryConfiguration
 	sync.Mutex
+	Config    HatcheryConfiguration
 	hatch     *sdk.Hatchery
 	workers   map[string]workerCmd
 	client    cdsclient.Interface

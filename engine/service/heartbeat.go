@@ -21,11 +21,11 @@ func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 			Status:    sdk.MonitoringStatusOK,
 		}, {
 			Component: "Uptime",
-			Value:     fmt.Sprintf("%s", time.Since(c.StartupTime)),
+			Value:     fmt.Sprintf("%v", time.Since(c.StartupTime)),
 			Status:    sdk.MonitoringStatusOK,
 		}, {
-			Component: "Time",
-			Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
+			Component: "Server Time",
+			Value:     t.Format(time.Stamp),
 			Status:    sdk.MonitoringStatusOK,
 		}},
 	}

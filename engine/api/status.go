@@ -110,16 +110,16 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 
 	var version string
 	versionOk := true
-	linesGlobal := []sdk.MonitoringStatusLine{}
+	var linesGlobal []sdk.MonitoringStatusLine
 
 	resume := map[string]computeGlobalNumbers{
-		services.TypeAPI:           {minInstance: api.Config.Status.API.MinInstance},
-		services.TypeRepositories:  {minInstance: api.Config.Status.Repositories.MinInstance},
-		services.TypeVCS:           {minInstance: api.Config.Status.VCS.MinInstance},
-		services.TypeHooks:         {minInstance: api.Config.Status.Hooks.MinInstance},
-		services.TypeHatchery:      {minInstance: api.Config.Status.Hatchery.MinInstance},
-		services.TypeDBMigrate:     {minInstance: api.Config.Status.DBMigrate.MinInstance},
-		services.TypeElasticsearch: {minInstance: api.Config.Status.ElasticSearch.MinInstance},
+		services.TypeAPI:          {minInstance: api.Config.Status.API.MinInstance},
+		services.TypeRepositories: {minInstance: api.Config.Status.Repositories.MinInstance},
+		services.TypeVCS:          {minInstance: api.Config.Status.VCS.MinInstance},
+		services.TypeHooks:        {minInstance: api.Config.Status.Hooks.MinInstance},
+		services.TypeHatchery:     {minInstance: api.Config.Status.Hatchery.MinInstance},
+		services.TypeDBMigrate:    {minInstance: api.Config.Status.DBMigrate.MinInstance},
+		services.TypeMetrics:      {minInstance: api.Config.Status.Metrics.MinInstance},
 	}
 	var nbg computeGlobalNumbers
 	for _, s := range srvs {

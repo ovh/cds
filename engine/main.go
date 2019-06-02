@@ -18,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -26,6 +25,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/metricsservice"
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/service"
@@ -436,9 +436,9 @@ See $ engine config command for more details.
 			service service.Service
 			cfg     interface{}
 		}
-		services := []serviceConf{}
+		var services []serviceConf
+		var names []string
 
-		names := []string{}
 		for _, a := range args {
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
@@ -475,9 +475,9 @@ See $ engine config command for more details.
 			case "repositories":
 				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: *conf.Repositories})
 				names = append(names, conf.Repositories.Name)
-			case "elasticsearch":
-				services = append(services, serviceConf{arg: a, service: elasticsearch.New(), cfg: *conf.ElasticSearch})
-				names = append(names, conf.ElasticSearch.Name)
+			case "metrics":
+				services = append(services, serviceConf{arg: a, service: metricsservice.New(), cfg: *conf.Metrics})
+				names = append(names, conf.Metrics.Name)
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)
 				os.Exit(1)

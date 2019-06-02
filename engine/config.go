@@ -6,14 +6,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ovh/cds/engine/metricsservice"
+
 	"github.com/fsamin/go-dump"
-	defaults "github.com/mcuadros/go-defaults"
+	"github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/secret"
-	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -74,17 +75,25 @@ func configSetDefaults() {
 		var gerrit vcs.GerritServerConfiguration
 		defaults.SetDefaults(&gerrit)
 		conf.VCS.Servers = map[string]vcs.ServerConfiguration{
-			"Github":    vcs.ServerConfiguration{URL: "https://github.com", Github: &github},
-			"Bitbucket": vcs.ServerConfiguration{URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
-			"Gitlab":    vcs.ServerConfiguration{URL: "https://gitlab.com", Gitlab: &gitlab},
-			"Gerrit":    vcs.ServerConfiguration{URL: "http://localhost:8080", Gerrit: &gerrit},
+			"Github":    {URL: "https://github.com", Github: &github},
+			"Bitbucket": {URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
+			"Gitlab":    {URL: "https://gitlab.com", Gitlab: &gitlab},
+			"Gerrit":    {URL: "http://localhost:8080", Gerrit: &gerrit},
 		}
 	}
 	if conf.Repositories != nil {
 		defaults.SetDefaults(conf.Repositories)
 	}
-	if conf.ElasticSearch != nil {
-		defaults.SetDefaults(conf.ElasticSearch)
+	if conf.Metrics != nil {
+		defaults.SetDefaults(conf.Metrics)
+	}
+	if conf.Metrics != nil && conf.Metrics.Providers == nil {
+		var elastic metricsservice.ElasticSearchConfiguration
+		defaults.SetDefaults(&elastic)
+
+		conf.Metrics.Providers = map[string]metricsservice.ProviderConfiguration{
+			"ElasticSearch": {Endpoint: "http://elasticsearch.local", ElasticSearch: &elastic},
+		}
 	}
 }
 
@@ -144,9 +153,9 @@ func configBootstrap(args []string) {
 			if conf.Repositories == nil {
 				conf.Repositories = &repositories.Configuration{}
 			}
-		case "elasticsearch":
-			if conf.ElasticSearch == nil {
-				conf.ElasticSearch = &elasticsearch.Configuration{}
+		case "metrics":
+			if conf.Metrics == nil {
+				conf.Metrics = &metricsservice.Configuration{}
 			}
 		default:
 			fmt.Printf("Error: service '%s' unknown\n", a)
@@ -169,7 +178,7 @@ func configBootstrap(args []string) {
 		conf.Hooks = &hooks.Configuration{}
 		conf.VCS = &vcs.Configuration{}
 		conf.Repositories = &repositories.Configuration{}
-		conf.ElasticSearch = &elasticsearch.Configuration{}
+		conf.Metrics = &metricsservice.Configuration{}
 	}
 }
 
