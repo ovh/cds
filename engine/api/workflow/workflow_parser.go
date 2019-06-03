@@ -65,9 +65,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 
 	//Parse workflow
-	_, next := observability.Span(ctx, "workflow.Parse")
 	w, errW := Parse(proj, ew, u)
-	next()
 	if errW != nil {
 		return nil, nil, errW
 	}
@@ -142,9 +140,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		}
 	}(&msgList)
 
-	_, next = observability.Span(ctx, "workflow.Import")
 	globalError := Import(ctx, db, store, proj, oldW, w, u, opts.Force, msgChan)
-	next()
 	close(msgChan)
 	done.Wait()
 
