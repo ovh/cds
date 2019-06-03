@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -264,6 +265,10 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		db := api.mustDB()
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
+
+		observability.Current(ctx,
+			observability.Tag(observability.TagProjectKey, key),
+		)
 
 		if r.Body == nil {
 			return sdk.ErrWrongRequest
