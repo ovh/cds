@@ -80,7 +80,7 @@ func versionRun(v cli.Values) error {
 	var buf []byte
 
 	switch format {
-	case "json":
+	case "json", "raw":
 		buf, err = json.Marshal(m)
 	case "yaml":
 		buf, err = yaml.Marshal(m)
