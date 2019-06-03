@@ -3,6 +3,7 @@ package gorpmapping
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -37,6 +38,11 @@ type Query struct {
 // Args store query arguments.
 func (q Query) Args(as ...interface{}) Query {
 	q.arguments = as
+	return q
+}
+
+func (q Query) Limit(i int) Query {
+	q.query += ` LIMIT ` + strconv.Itoa(i)
 	return q
 }
 
