@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"testing"
 
@@ -35,8 +36,14 @@ func TestImport(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
-	mockService, _ := assets.InsertService(t, db, "service_test", services.TypeHooks)
-	test.NoError(t, services.Insert(db, mockService))
+	srvs, _ := services.All(db)
+	for _, srv := range srvs {
+		if err := services.Delete(db, &srv); err != nil {
+			log.Fatalf("unable to delete service %s", srv.Name)
+		}
+	}
+
+	assets.InsertService(t, db, "service_test"+sdk.RandomString(5), services.TypeHooks)
 
 	//Mock HTTPClient from services package
 	services.HTTPClient = &mockHTTPClient{}
