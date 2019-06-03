@@ -120,12 +120,12 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if wk.Status == sdk.StatusBuilding {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
 			}
-			jwt, err := services.LoadClearJWT(api.mustDB(), wk.HatcheryID)
+			hatcherySrv, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
 			if err != nil {
-				return err
+				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
-			if jwt != JWTRaw(ctx) {
-				return sdk.WithStack(sdk.ErrForbidden)
+			if wk.HatcheryID != hatcherySrv.ID {
+				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from hatchery (expected: %d/actual: %d)", wk.HatcheryID, hatcherySrv.ID)
 			}
 		}
 
