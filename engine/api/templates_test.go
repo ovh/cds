@@ -59,7 +59,7 @@ jobs:
 
 	// prepare the request
 	uri := api.Router.GetRoute("POST", api.postTemplateApplyHandler, map[string]string{
-		"groupName":        g.Name,
+		"permGroupName":    g.Name,
 		"permTemplateSlug": template.Slug,
 	})
 	test.NotEmpty(t, uri)
@@ -126,7 +126,7 @@ jobs:
 
 	// prepare the request
 	uri := api.Router.GetRoute("POST", api.postTemplateBulkHandler, map[string]string{
-		"groupName":        g.Name,
+		"permGroupName":    g.Name,
 		"permTemplateSlug": template.Slug,
 	})
 	test.NotEmpty(t, uri)

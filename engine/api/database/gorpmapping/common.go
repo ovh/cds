@@ -152,7 +152,7 @@ type IDs pq.Int64Array
 // And returns a new AND expression from given ones.
 func And(es ...string) string {
 	if len(es) == 0 {
-		return "false"
+		return "true"
 	}
 	return "(" + strings.Join(es, " AND ") + ")"
 }

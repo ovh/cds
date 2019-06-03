@@ -20,7 +20,7 @@ func PublishProjectEvent(payload interface{}, key string, u sdk.Identifiable) {
 		ProjectKey: key,
 	}
 	if u != nil {
-		event.UserMail = u.Email()
+		event.UserMail = u.GetEmail()
 		event.Username = u.GetUsername()
 	}
 	publishEvent(event)

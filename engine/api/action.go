@@ -185,7 +185,7 @@ func (api *API) getActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -220,7 +220,7 @@ func (api *API) putActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -309,7 +309,7 @@ func (api *API) deleteActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -355,7 +355,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -427,7 +427,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		auditID, err := requestVarInt(r, "auditID")
@@ -554,7 +554,7 @@ func (api *API) getActionUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -583,7 +583,7 @@ func (api *API) getActionExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)

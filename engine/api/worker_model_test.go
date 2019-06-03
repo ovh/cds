@@ -923,9 +923,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID); err != nil {
-		t.Fatal(err)
-	}
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.OldUserStruct.ID))
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -954,6 +952,8 @@ func Test_deleteWorkerModel(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 
 	json.Unmarshal(w.Body.Bytes(), &model)
+
+	fmt.Println(jwt)
 
 	//Prepare request
 	vars := map[string]string{
@@ -1089,6 +1089,7 @@ func Test_getWorkerModels(t *testing.T) {
 	assert.Equal(t, 1, len(results))
 	assert.Equal(t, "Test1", results[0].Name)
 	assert.Equal(t, u.Fullname, results[0].CreatedBy.Fullname)
+	assert.Equal(t, "buildpack-deps:jessie", results[0].ModelDocker.Image)
 }
 
 // This test create a worker model then an action that will use it.

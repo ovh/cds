@@ -48,7 +48,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	// Put the granted user in the context
 	var APIConsumer = sdk.APIConsumer{
-		Fullname:   token.Name,
+		Name:       token.Name,
 		OnBehalfOf: token.AuthentifiedUser,
 		Groups:     token.Groups,
 	}

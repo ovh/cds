@@ -47,7 +47,7 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := workermodel.Create(tx, data)
+		model, err := workermodel.Create(tx, data, getAPIConsumer(ctx))
 		if err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -145,7 +145,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -182,7 +182,7 @@ func (api *API) getWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
@@ -246,7 +246,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)

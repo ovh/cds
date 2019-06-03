@@ -145,21 +145,6 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	return nil
 }
 
-// IsGroupAdmin return true if the user is an administrator
-func IsGroupAdmin(db gorp.SqlExecutor, groupName string, userID int64) (bool, error) {
-	var admin bool
-	query := `SELECT "group_user".group_admin FROM "user"
-	 		  JOIN "group_user" ON "group_user".user_id = "user".id
-				JOIN "group" ON "group".id = "group_user".group_id
-	 		  WHERE "group".name = $1 AND "user".id = $2`
-
-	if err := db.QueryRow(query, groupName, userID).Scan(&admin); err != nil {
-		return admin, err
-	}
-
-	return admin, nil
-}
-
 // LoadGroups load all groups from database
 func LoadGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 	groups := []sdk.Group{}

@@ -21,7 +21,7 @@ func publishPipelineEvent(payload interface{}, key string, pipName string, u sdk
 		PipelineName: pipName,
 	}
 	if u != nil {
-		event.UserMail = u.Email()
+		event.UserMail = u.GetEmail()
 		event.Username = u.GetUsername()
 	}
 	publishEvent(event)
