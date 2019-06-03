@@ -3,7 +3,6 @@ package bitbucketcloud
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"

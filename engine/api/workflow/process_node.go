@@ -233,7 +233,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	var errVcs error
 	if needVCSInfo {
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		vcsInf, errVcs = getVCSInfos(ctx, db, store, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
+		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 		if errVcs != nil {
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,

@@ -89,6 +89,9 @@ type VCSAuthorizedClient interface {
 
 	// Permissions
 	GrantWritePermission(ctx context.Context, repo string) error
+
+	// Access Token
+	GetAccessToken(ctx context.Context) string
 }
 
 // GetDefaultBranch return the default branch

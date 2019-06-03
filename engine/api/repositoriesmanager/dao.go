@@ -44,6 +44,29 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 	return nil
 }
 
+//UpdateForProject update the link of project with a repository manager
+func UpdateForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServers []sdk.ProjectVCSServer) error {
+	b1, err := yaml.Marshal(vcsServers)
+	if err != nil {
+		return err
+	}
+
+	log.Debug("repositoriesmanager.InsertForProject> %s %s", proj.Key, string(b1))
+
+	encryptedVCSServerStr, err := secret.Encrypt(b1)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.Key, encryptedVCSServerStr); err != nil {
+		return err
+	}
+
+	proj.VCSServers = vcsServers
+
+	return nil
+}
+
 //DeleteForProject unlink a project with a repository manager
 func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {
 	servers, err := LoadAllForProject(db, proj.Key)

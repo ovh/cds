@@ -742,7 +742,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 
 	if nodeRun.HookExecutionID != "" {
 		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
-		if _, err := services.DoJSONRequest(ctx, srvs, "POST", path, nil, nil); err != nil {
+		if _, _, err := services.DoJSONRequest(ctx, srvs, "POST", path, nil, nil); err != nil {
 			return fmt.Errorf("unable to stop task execution: %v", err)
 		}
 	}
@@ -907,7 +907,7 @@ func (i vcsInfos) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
 }
 
-func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
+func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]
@@ -942,7 +942,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	}
 
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectKey, vcsServer)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "cannot get client")
 	}

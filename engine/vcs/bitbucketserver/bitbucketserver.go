@@ -1,6 +1,7 @@
 package bitbucketserver
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -64,4 +65,8 @@ func getRepo(fullname string) (string, string, error) {
 	project := t[0]
 	slug := t[1]
 	return project, slug, nil
+}
+
+func (c *bitbucketClient) GetAccessToken(_ context.Context) string {
+	return c.accessToken
 }

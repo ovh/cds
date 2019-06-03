@@ -91,23 +91,6 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 
 	c, ok := instancesAuthorizedClient[accessToken]
 	if createdTime.Add(2 * time.Hour).Before(time.Now()) {
-		if !ok {
-			c = &bitbucketcloudClient{
-				ClientID:            consumer.ClientID,
-				OAuthToken:          accessToken,
-				RefreshToken:        refreshToken,
-				Cache:               consumer.Cache,
-				apiURL:              consumer.apiURL,
-				uiURL:               consumer.uiURL,
-				DisableStatus:       consumer.disableStatus,
-				DisableStatusDetail: consumer.disableStatusDetail,
-				proxyURL:            consumer.proxyURL,
-				username:            consumer.username,
-				token:               consumer.token,
-			}
-			instancesAuthorizedClient[accessToken] = c
-		}
-	} else {
 		if ok {
 			delete(instancesAuthorizedClient, accessToken)
 		}
@@ -129,6 +112,24 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 			token:               consumer.token,
 		}
 		instancesAuthorizedClient[newAccessToken] = c
+	} else {
+		if !ok {
+			c = &bitbucketcloudClient{
+				ClientID:            consumer.ClientID,
+				OAuthToken:          accessToken,
+				RefreshToken:        refreshToken,
+				Cache:               consumer.Cache,
+				apiURL:              consumer.apiURL,
+				uiURL:               consumer.uiURL,
+				DisableStatus:       consumer.disableStatus,
+				DisableStatusDetail: consumer.disableStatusDetail,
+				proxyURL:            consumer.proxyURL,
+				username:            consumer.username,
+				token:               consumer.token,
+			}
+			instancesAuthorizedClient[accessToken] = c
+		}
+
 	}
 
 	return c, nil

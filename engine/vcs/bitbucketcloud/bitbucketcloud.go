@@ -1,6 +1,8 @@
 package bitbucketcloud
 
 import (
+	"context"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -50,4 +52,8 @@ func New(ClientID, ClientSecret, apiURL, uiURL, proxyURL, username, token string
 		username:            username,
 		token:               token,
 	}
+}
+
+func (c *bitbucketcloudClient) GetAccessToken(_ context.Context) string {
+	return c.OAuthToken
 }

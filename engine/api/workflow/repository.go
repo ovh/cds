@@ -334,7 +334,7 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 
 	if multipartData == nil {
-		if _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
+		if _, _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
 			return sdk.WrapError(err, "Unable to perform operation")
 		}
 		return nil
@@ -352,7 +352,7 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.O
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}
 
-	if _, err := services.DoJSONRequest(ctx, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
+	if _, _, err := services.DoJSONRequest(ctx, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
 		return sdk.WrapError(err, "Unable to get operation")
 	}
 	return nil

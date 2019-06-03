@@ -156,7 +156,6 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 	if err != nil {
 		return 0, nil, nil, err
 	}
-	fmt.Println("callURL", callURL.String())
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
@@ -182,7 +181,6 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 
 	resBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println("err", err)
 		return res.StatusCode, nil, nil, err
 	}
 

@@ -1,6 +1,8 @@
 package github
 
 import (
+	"context"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -66,4 +68,8 @@ func New(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyUR
 		username:            username,
 		token:               token,
 	}
+}
+
+func (c *githubClient) GetAccessToken(_ context.Context) string {
+	return c.OAuthToken
 }
