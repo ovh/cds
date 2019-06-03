@@ -251,7 +251,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				cmd.Help()
 				OSExit(0)
 			}
-			i, err := f(vals)
+			resultFunc, err := f(vals)
 			if err != nil {
 				ExitOnError(err)
 			}
@@ -263,9 +263,17 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			if fields != "" {
 				fs = strings.Split(fields, ",")
 			}
-			i = listItem(i, nil, quiet, fs, verbose, map[string]string{})
 			switch format {
+			case "raw":
+				b, err := json.Marshal(resultFunc)
+				ExitOnError(err)
+				if ShellMode {
+					fmt.Fprint(cmd.OutOrStdout(), string(b))
+				} else {
+					fmt.Println(string(b))
+				}
 			case "json":
+				i := listItem(resultFunc, nil, quiet, fs, verbose, map[string]string{})
 				b, err := json.Marshal(i)
 				ExitOnError(err)
 				if ShellMode {
@@ -275,6 +283,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				}
 
 			case "yaml":
+				i := listItem(resultFunc, nil, quiet, fs, verbose, map[string]string{})
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
 				if ShellMode {
@@ -282,12 +291,12 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				} else {
 					fmt.Println(string(b))
 				}
-
 			default:
 				if quiet {
-					fmt.Println(i.(map[string]string)["key"])
+					fmt.Println(resultFunc.(map[string]string)["key"])
 					return
 				}
+				i := listItem(resultFunc, nil, quiet, fs, verbose, map[string]string{})
 				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
 				m, err := dump.ToStringMap(i)
 				ExitOnError(err)
@@ -339,43 +348,45 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 
 			allResult := []map[string]string{}
 
-			for _, i := range s {
-				var fs []string
-				if fields != "" {
-					fs = strings.Split(fields, ",")
-				}
-				item := listItem(i, filters, quiet, fs, verbose, map[string]string{})
-				if len(item) == 0 {
-					continue
-				}
-
-				if quiet {
-					fmt.Fprintln(cmd.OutOrStdout(), item["key"])
-					continue
-				}
-
-				allResult = append(allResult, item)
-
-				if format == "" || format == "table" {
-					itemData := make([]string, len(item))
-					var i int
-
-					itemKeys := []string{}
-					for k := range item {
-						itemKeys = append(itemKeys, k)
+			if format != "raw" {
+				for _, i := range s {
+					var fs []string
+					if fields != "" {
+						fs = strings.Split(fields, ",")
+					}
+					item := listItem(i, filters, quiet, fs, verbose, map[string]string{})
+					if len(item) == 0 {
+						continue
 					}
 
-					sort.Strings(itemKeys)
+					if quiet {
+						fmt.Fprintln(cmd.OutOrStdout(), item["key"])
+						continue
+					}
 
-					for _, k := range itemKeys {
-						if !tableHeaderReady {
-							tableHeader = append(tableHeader, strings.ToTitle(k))
+					allResult = append(allResult, item)
+
+					if format == "" || format == "table" {
+						itemData := make([]string, len(item))
+						var i int
+
+						itemKeys := []string{}
+						for k := range item {
+							itemKeys = append(itemKeys, k)
 						}
-						itemData[i] = item[k]
-						i++
+
+						sort.Strings(itemKeys)
+
+						for _, k := range itemKeys {
+							if !tableHeaderReady {
+								tableHeader = append(tableHeader, strings.ToTitle(k))
+							}
+							itemData[i] = item[k]
+							i++
+						}
+						tableHeaderReady = true
+						tableData = append(tableData, itemData)
 					}
-					tableHeaderReady = true
-					tableData = append(tableData, itemData)
 				}
 			}
 
@@ -384,6 +395,10 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			}
 
 			switch format {
+			case "raw":
+				b, err := json.Marshal(s)
+				ExitOnError(err)
+				fmt.Println(string(b))
 			case "json":
 				b, err := json.Marshal(allResult)
 				ExitOnError(err)

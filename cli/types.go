@@ -180,7 +180,7 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 			{
 				Name:    "format",
 				Default: "table",
-				Usage:   "Output format: table|json|yaml",
+				Usage:   "Output format: table|json|yaml|raw",
 				Type:    FlagString,
 			},
 			{
