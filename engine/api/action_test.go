@@ -36,7 +36,7 @@ func Test_getActionExportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":      grp.Name,
+		"permGroupName":      grp.Name,
 		"permActionName": "myAction",
 	}
 	uri := api.Router.GetRoute("GET", api.getActionExportHandler, vars)
@@ -153,7 +153,7 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 
 	// prepare action rollback request
 	uri := api.Router.GetRoute("POST", api.postActionAuditRollbackHandler, map[string]string{
-		"groupName":      grp.Name,
+		"permGroupName":      grp.Name,
 		"permActionName": a.Name,
 		"auditID":        fmt.Sprintf("%d", aa.ID),
 	})

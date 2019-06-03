@@ -77,7 +77,7 @@ func Publish(payload interface{}, u sdk.Identifiable) {
 	}
 	if u != nil {
 		event.Username = u.GetUsername()
-		event.UserMail = u.Email()
+		event.UserMail = u.GetEmail()
 	}
 	publishEvent(event)
 }

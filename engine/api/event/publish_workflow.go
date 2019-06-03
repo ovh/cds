@@ -22,7 +22,7 @@ func publishWorkflowEvent(payload interface{}, key, workflowName string, u sdk.I
 	}
 	if u != nil {
 		event.Username = u.GetUsername()
-		event.UserMail = u.Email()
+		event.UserMail = u.GetEmail()
 	}
 	publishEvent(event)
 }

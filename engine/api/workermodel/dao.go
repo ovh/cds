@@ -27,6 +27,18 @@ func getAll(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([
 		}
 	}
 
+	// TODO refactor data model to remove post select
+	for i := range pms {
+		wm := WorkerModel(*pms[i])
+		if err := wm.PostSelect(db); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		if wm.ModelDocker.Password != "" {
+			wm.ModelDocker.Password = sdk.PasswordPlaceholder
+		}
+		*pms[i] = sdk.Model(wm)
+	}
+
 	ms := make([]sdk.Model, len(pms))
 	for i := range ms {
 		ms[i] = *pms[i]

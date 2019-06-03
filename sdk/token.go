@@ -22,7 +22,7 @@ type AccessTokenRequest struct {
 
 // APIConsumer is a user granted from a JWT token. It can be a service, a worker, a hatchery or a user
 type APIConsumer struct {
-	Fullname   string
+	Name       string
 	Groups     []Group
 	OnBehalfOf AuthentifiedUser
 }
@@ -52,16 +52,20 @@ func (g *APIConsumer) Maintainer() bool {
 	return g.OnBehalfOf.Maintainer()
 }
 
+func (g *APIConsumer) GetConsumerName() string {
+	return g.Name
+}
+
 func (g *APIConsumer) GetUsername() string {
-	return g.Fullname
+	return g.OnBehalfOf.Username
 }
 
 func (g *APIConsumer) GetFullname() string {
-	return g.Fullname
+	return g.OnBehalfOf.Fullname
 }
 
-func (g *APIConsumer) Email() string {
-	return g.OnBehalfOf.Email()
+func (g *APIConsumer) GetEmail() string {
+	return g.OnBehalfOf.GetEmail()
 }
 
 func (g *APIConsumer) GetDEPRECATEDUserStruct() *User {

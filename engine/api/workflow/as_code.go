@@ -82,7 +82,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		},
 		User: sdk.User{
 			Username: u.GetUsername(),
-			Email:    u.Email(),
+			Email:    u.GetEmail(),
 		},
 	}
 

@@ -83,6 +83,8 @@ func TestFind(t *testing.T) {
 	reloadedToken, err := accesstoken.FindByID(db, token.ID)
 	test.NoError(t, err)
 	assert.Len(t, reloadedToken.Groups, 1)
+	test.Equal(t, usr1.ID, reloadedToken.AuthentifiedUser.ID)
+	assert.Len(t, reloadedToken.AuthentifiedUser.GetGroups(), 1)
 
 	// FindAllByUser
 	tokens, err := accesstoken.FindAllByUser(db, usr1.ID)

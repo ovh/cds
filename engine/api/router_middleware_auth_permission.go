@@ -89,7 +89,7 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName strin
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker model name")
 	}
 
-	g, err := group.LoadGroup(api.mustDB(), routeVars["groupName"])
+	g, err := group.LoadGroup(api.mustDB(), routeVars["permGroupName"])
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (api *API) checkActionPermissions(ctx context.Context, actionName string, p
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid action name")
 	}
 
-	g, err := group.LoadGroup(api.mustDB(), routeVars["groupName"])
+	g, err := group.LoadGroup(api.mustDB(), routeVars["permGroupName"])
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow template slug")
 	}
 
-	g, err := group.LoadGroup(api.mustDB(), routeVars["groupName"])
+	g, err := group.LoadGroup(api.mustDB(), routeVars["permGroupName"])
 	if err != nil {
 		return err
 	}

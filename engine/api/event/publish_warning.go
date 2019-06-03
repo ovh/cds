@@ -25,7 +25,7 @@ func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, wo
 	}
 	if u != nil {
 		event.Username = u.GetUsername()
-		event.UserMail = u.Email()
+		event.UserMail = u.GetEmail()
 	}
 	publishEvent(event)
 }

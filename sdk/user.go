@@ -36,9 +36,10 @@ func AuthentifiedUsersToIDs(users []*AuthentifiedUser) []string {
 }
 
 type Identifiable interface {
+	GetConsumerName() string
 	GetUsername() string
 	GetFullname() string
-	Email() string
+	GetEmail() string
 }
 
 type GroupMember interface {
@@ -90,7 +91,11 @@ func (u AuthentifiedUser) GetUsername() string {
 }
 
 func (u AuthentifiedUser) GetFullname() string {
-	return u.Username
+	return u.Fullname
+}
+
+func (u AuthentifiedUser) GetConsumerName() string {
+	return u.Fullname
 }
 
 func (u AuthentifiedUser) Admin() bool {
@@ -101,7 +106,7 @@ func (u AuthentifiedUser) Maintainer() bool {
 	return u.Ring == UserRingMaintainer
 }
 
-func (u AuthentifiedUser) Email() string {
+func (u AuthentifiedUser) GetEmail() string {
 	if u.Contacts == nil {
 		return ""
 	}

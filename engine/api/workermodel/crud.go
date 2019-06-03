@@ -13,7 +13,7 @@ import (
 )
 
 // Create returns a new worker model for given data.
-func Create(db gorp.SqlExecutor, data sdk.Model) (*sdk.Model, error) {
+func Create(db gorp.SqlExecutor, data sdk.Model, ident sdk.Identifiable) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
@@ -53,6 +53,13 @@ func Create(db gorp.SqlExecutor, data sdk.Model) (*sdk.Model, error) {
 	// init new model from given data
 	var model sdk.Model
 	model.Update(data)
+
+	// TODO refactor using audit
+	model.CreatedBy = sdk.User{
+		Email:    ident.GetEmail(),
+		Username: ident.GetUsername(),
+		Fullname: ident.GetFullname(),
+	}
 
 	if err := Insert(db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot add worker model")

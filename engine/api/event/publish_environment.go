@@ -22,7 +22,7 @@ func publishEnvironmentEvent(payload interface{}, key, envName string, u sdk.Ide
 	}
 	if u != nil {
 		event.Username = u.GetUsername()
-		event.UserMail = u.Email()
+		event.UserMail = u.GetEmail()
 	}
 	publishEvent(event)
 }
