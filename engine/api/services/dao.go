@@ -113,10 +113,6 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service{
 		Service: *s,
 	}
-	if err := gorpmapping.Encrypt(sdb.ClearJWT, &sdb.EncryptedJWT, []byte(sdb.Name)); err != nil {
-		return err
-	}
-	sdb.ClearJWT = ""
 	if err := gorpmapping.InsertAndSign(db, &sdb); err != nil {
 		return err
 	}
@@ -129,10 +125,6 @@ func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service{
 		Service: *s,
 	}
-	if err := gorpmapping.Encrypt(sdb.ClearJWT, &sdb.EncryptedJWT, []byte(sdb.Name)); err != nil {
-		return err
-	}
-	sdb.ClearJWT = ""
 	if err := gorpmapping.UpdatetAndSign(db, &sdb); err != nil {
 		return err
 	}
@@ -162,17 +154,4 @@ func FindDeadServices(db gorp.SqlExecutor, t time.Duration) ([]sdk.Service, erro
 		return nil, sdk.WrapError(err, "Unable to find dead services")
 	}
 	return services, nil
-}
-
-func LoadClearJWT(db gorp.SqlExecutor, id int64) (string, error) {
-	query := gorpmapping.NewQuery("select encrypted_jwt from services where id = $1").Args(id)
-	var encryptedJWT []byte
-	if _, err := gorpmapping.Get(db, query, &encryptedJWT); err != nil {
-		return "", err
-	}
-	var clearJWT string
-	if err := gorpmapping.Decrypt(encryptedJWT, &clearJWT); err != nil {
-		return "", err
-	}
-	return clearJWT, nil
 }

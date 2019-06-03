@@ -468,7 +468,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	usr1, _ := InsertLambdaUser(db)
 
 	exp := time.Now().Add(5 * time.Minute)
-	token, signedToken, err := accesstoken.New(*usr1, []sdk.Group{grp}, []string{sdk.AccessTokenScopeHatchery}, "cds_test", "cds test", exp)
+	token, _, err := accesstoken.New(*usr1, []sdk.Group{grp}, []string{sdk.AccessTokenScopeHatchery}, "cds_test", "cds test", exp)
 	test.NoError(t, err)
 
 	test.NoError(t, accesstoken.Insert(db, &token))
@@ -486,7 +486,6 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 			Maintainer: *usr1,
 			TokenID:    token.ID,
 		},
-		ClearJWT: signedToken,
 	}
 
 	test.NoError(t, services.Insert(db, &srv))
@@ -498,7 +497,7 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 	usr1, _ := InsertAdminUser(db)
 
 	exp := time.Now().Add(5 * time.Minute)
-	token, signedToken, err := accesstoken.New(*usr1, nil, []string{sdk.AccessTokenScopeALL}, "cds_test", name, exp)
+	token, _, err := accesstoken.New(*usr1, nil, []string{sdk.AccessTokenScopeALL}, "cds_test", name, exp)
 	test.NoError(t, err)
 
 	test.NoError(t, accesstoken.Insert(db, &token))
@@ -516,7 +515,6 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 			Maintainer: *usr1,
 			TokenID:    token.ID,
 		},
-		ClearJWT: signedToken,
 	}
 
 	test.NoError(t, services.Insert(db, &srv))

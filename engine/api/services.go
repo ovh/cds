@@ -2,9 +2,14 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/ovh/cds/sdk/jws"
+
+	"github.com/ovh/cds/engine/api/accesstoken"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -33,6 +38,11 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		pubKey, err := jws.ExportPublicKey(accesstoken.GetSigningKey())
+		if err != nil {
+			return sdk.WrapError(err, "Unable to export public signing key")
+		}
+
 		srv := &sdk.Service{}
 		if err := service.UnmarshalBody(r, srv); err != nil {
 			return sdk.WithStack(err)
@@ -89,6 +99,9 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+
+		encodedPubKey := base64.StdEncoding.EncodeToString(pubKey)
+		w.Header().Set("X-Api-Pub-Signing-Key", encodedPubKey)
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}

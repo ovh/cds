@@ -29,7 +29,6 @@ type Service struct {
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
-	ClearJWT         string           `json:"clear_jwt" db:"-"`
 }
 
 type ServiceConfig map[string]interface{}

@@ -156,3 +156,10 @@ func VerifyToken(jwtToken string) (*jwt.Token, error) {
 
 	return token, nil
 }
+
+func GetSigningKey() *rsa.PrivateKey {
+	if signingKey == nil {
+		panic("signing rsa private key is not set")
+	}
+	return signingKey
+}

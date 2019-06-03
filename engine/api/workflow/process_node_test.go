@@ -51,9 +51,14 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter", services.TypeVCS)
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_VCS", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
+	}()
+
+	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_HOOKS", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockHooksService) // nolint
 	}()
 
 	//This is a mock for the vcs service
@@ -223,6 +228,11 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
+	}()
+
+	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_HOOKS", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockHooksService) // nolint
 	}()
 
 	//This is a mock for the vcs service

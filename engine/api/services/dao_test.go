@@ -2,9 +2,7 @@ package services_test
 
 import (
 	"testing"
-	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/services"
@@ -18,6 +16,13 @@ func TestDAO(t *testing.T) {
 	db, _, end := test.SetupPG(t)
 	defer end()
 
+	allSrv, err := services.All(db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	var grp = sdk.Group{
 		Name: "services-TestDAO-group",
 	}
@@ -29,22 +34,6 @@ func TestDAO(t *testing.T) {
 	publicKey, err := jws.ExportPublicKey(privateKey)
 	test.NoError(t, err)
 
-	id := sdk.UUID()
-	claims := sdk.AccessTokenJWTClaims{
-		ID:     id,
-		Groups: sdk.GroupsToIDs([]sdk.Group{grp}),
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    "services-TestDAO-token",
-			Subject:   "services-TestDAO-token",
-			Id:        id,
-			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-		},
-	}
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
-	signedToken, err := jwtToken.SignedString(privateKey)
-	test.NoError(t, err)
-
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name:       sdk.RandomString(10),
@@ -52,7 +41,6 @@ func TestDAO(t *testing.T) {
 			PublicKey:  publicKey,
 			Maintainer: *u,
 		},
-		ClearJWT: signedToken,
 	}
 
 	test.NoError(t, services.Insert(db, &srv))
@@ -62,10 +50,6 @@ func TestDAO(t *testing.T) {
 
 	assert.Equal(t, srv.Name, srv2.Name)
 	assert.Equal(t, string(srv.PublicKey), string(srv2.PublicKey))
-
-	jwt, err := services.LoadClearJWT(db, srv2.ID)
-	test.NoError(t, err)
-	assert.Equal(t, signedToken, jwt)
 
 	all, err := services.FindByType(db, srv.Type)
 	test.NoError(t, err)

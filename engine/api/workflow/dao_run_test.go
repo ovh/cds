@@ -233,7 +233,7 @@ vcs_ssh_key: proj-blabla
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
@@ -328,7 +328,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
@@ -502,7 +502,7 @@ vcs_ssh_key: proj-blabla
 	wr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "master",
 				"git.author": "test",
@@ -517,7 +517,7 @@ vcs_ssh_key: proj-blabla
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
@@ -697,7 +697,7 @@ vcs_ssh_key: proj-blabla
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
@@ -792,7 +792,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": branches[i],
 					"git.author": "test",
@@ -885,7 +885,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": branches[i],
 					"git.author": "test",

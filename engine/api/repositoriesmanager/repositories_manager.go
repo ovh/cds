@@ -61,7 +61,7 @@ type vcsClient struct {
 	secret string
 	srvs   []sdk.Service
 	cache  *gocache.Cache
-	dbFunc func() *gorp.DbMap
+	db     gorp.SqlExecutor
 }
 
 func (c *vcsClient) Cache() *gocache.Cache {
@@ -145,7 +145,7 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token string, sec
 		secret: secret,
 		srvs:   srvs,
 		cache:  gocache.New(5*time.Second, 60*time.Second),
-		dbFunc: c.dbFunc,
+		db:     c.dbFunc(),
 	}, nil
 }
 
@@ -198,13 +198,14 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		token:  repo.Data["token"],
 		secret: repo.Data["secret"],
 		srvs:   srvs,
+		db:     db,
 	}
 	local.Set(repo, vcs)
 	return vcs, nil
 }
 
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
-	code, err := services.DoJSONRequest(ctx, c.dbFunc(), c.srvs, method, path, in, out, func(req *http.Request) {
+	code, err := services.DoJSONRequest(ctx, c.db, c.srvs, method, path, in, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
@@ -228,7 +229,7 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 }
 
 func (c *vcsClient) postMultipart(ctx context.Context, path string, fileContent []byte, out interface{}) (int, error) {
-	return services.PostMultipart(ctx, c.dbFunc(), c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
+	return services.PostMultipart(ctx, c.db, c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})

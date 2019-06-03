@@ -13,6 +13,10 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
+
+	"gopkg.in/spacemonkeygo/httpsig.v0"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -27,6 +31,9 @@ type MultiPartData struct {
 
 // HTTPClient will be set to a default httpclient if not set
 var HTTPClient sdk.HTTPClient
+
+// HTTPSigner is used to sign requests based on the RFC draft specification https://tools.ietf.org/html/draft-cavage-http-signatures-06
+var HTTPSigner *httpsig.Signer
 
 // DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
 func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
@@ -212,6 +219,10 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 		}
 	}
 
+	if HTTPSigner == nil {
+		HTTPSigner = httpsig.NewRSASHA256Signer(accesstoken.LocalIssuer, accesstoken.GetSigningKey(), []string{"(request-target)", "host", "date"})
+	}
+
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {
 		return nil, 0, err
@@ -243,16 +254,12 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 		}
 	}
 
-	// load the clear JWT
-	jwt, err := LoadClearJWT(db, srv.ID)
-	if err != nil {
-		return nil, 0, err
-	}
-	if jwt != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", jwt))
+	// Sign the http request with API private RSA Key
+	if err := HTTPSigner.Sign(req); err != nil {
+		return nil, 0, sdk.WrapError(err, "services.DoRequest> Request signature failed")
 	}
 
-	log.Debug("services.DoRequest> request %v", req.URL)
+	log.Debug("services.DoRequest> request %v (%s)", req.URL, req.Header.Get("Authorization"))
 
 	//Do the request
 	resp, errDo := HTTPClient.Do(req)
