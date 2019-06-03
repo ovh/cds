@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ovh/cds/engine/api/observability"
+
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
@@ -96,12 +98,16 @@ func Delete(db gorp.SqlExecutor, i interface{}) error {
 
 // GetAll values from database.
 func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) error {
+	_, end := observability.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), observability.Tag("query", q.String()))
+	defer end()
 	_, err := db.Select(i, q.query, q.arguments...)
 	return sdk.WithStack(err)
 }
 
 // Get a value from database.
 func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
+	_, end := observability.Span(ctx, fmt.Sprintf("database.Get(%T)", i), observability.Tag("query", q.String()))
+	defer end()
 	if err := db.SelectOne(i, q.query, q.arguments...); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
