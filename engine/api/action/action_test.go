@@ -1,6 +1,7 @@
 package action_test
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -86,10 +87,10 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, 3, len(acts[0].Parameters))
 
 	// LoadByID
-	result, err := action.LoadByID(db, 0)
+	result, err := action.LoadByID(context.TODO(), db, 0)
 	assert.Nil(t, err)
 	assert.Nil(t, result)
-	result, err = action.LoadByID(db, acts[0].ID, action.LoadOptions.Default)
+	result, err = action.LoadByID(context.TODO(), db, acts[0].ID, action.LoadOptions.Default)
 	assert.Nil(t, err)
 	fmt.Println(result)
 	assert.Equal(t, acts[0].Name, result.Name)
@@ -100,21 +101,21 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, "echo \"test\"", result.Actions[0].Parameters[0].Value)
 
 	// LoadAllByTypes
-	results, err := action.LoadAllByTypes(db, []string{sdk.PluginAction, sdk.BuiltinAction})
+	results, err := action.LoadAllByTypes(context.TODO(), db, []string{sdk.PluginAction, sdk.BuiltinAction})
 	assert.Nil(t, err)
 	lengthExistingBuiltinAndPlugin := len(results)
 
 	// LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs
-	results, err = action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(db, []int64{grp1.ID})
+	results, err = action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(context.TODO(), db, []int64{grp1.ID})
 	assert.Nil(t, err)
 	assert.Equal(t, lengthExistingBuiltinAndPlugin+1, len(results))
 
 	// LoadAllTypeBuiltInOrPLoadAllTypeDefaultByGroupIDsluginOrDefaultForGroupIDs
-	results, err = action.LoadAllTypeDefaultByGroupIDs(db, []int64{grp2.ID}, action.LoadOptions.Default)
+	results, err = action.LoadAllTypeDefaultByGroupIDs(context.TODO(), db, []int64{grp2.ID}, action.LoadOptions.Default)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(results))
 	assert.Equal(t, acts[1].ID, results[0].ID)
-	results, err = action.LoadAllTypeDefaultByGroupIDs(db, []int64{grp1.ID, grp2.ID})
+	results, err = action.LoadAllTypeDefaultByGroupIDs(context.TODO(), db, []int64{grp1.ID, grp2.ID})
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(results))
 	sort.Slice(results, func(i, j int) bool { return results[i].ID < results[j].ID })
@@ -122,7 +123,7 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, acts[1].ID, results[1].ID)
 
 	// LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs
-	results, err = action.LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db, []int64{scriptAction.ID, acts[0].ID, acts[1].ID}, []int64{grp1.ID, grp2.ID})
+	results, err = action.LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(context.TODO(), db, []int64{scriptAction.ID, acts[0].ID, acts[1].ID}, []int64{grp1.ID, grp2.ID})
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(results))
 	sort.Slice(results, func(i, j int) bool { return results[i].ID < results[j].ID })
@@ -131,19 +132,19 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, acts[1].ID, results[2].ID)
 
 	// LoadByTypesAndName
-	result, err = action.LoadByTypesAndName(db, []string{sdk.DefaultAction}, "Action 0")
+	result, err = action.LoadByTypesAndName(context.TODO(), db, []string{sdk.DefaultAction}, "Action 0")
 	assert.Nil(t, err)
 	assert.Nil(t, result)
-	result, err = action.LoadByTypesAndName(db, []string{sdk.DefaultAction}, acts[0].Name)
+	result, err = action.LoadByTypesAndName(context.TODO(), db, []string{sdk.DefaultAction}, acts[0].Name)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, acts[0].ID, result.ID)
 
 	// LoadTypeDefaultByNameAndGroupID
-	result, err = action.LoadTypeDefaultByNameAndGroupID(db, acts[1].Name, grp1.ID)
+	result, err = action.LoadTypeDefaultByNameAndGroupID(context.TODO(), db, acts[1].Name, grp1.ID)
 	assert.Nil(t, err)
 	assert.Nil(t, result)
-	result, err = action.LoadTypeDefaultByNameAndGroupID(db, acts[1].Name, grp2.ID)
+	result, err = action.LoadTypeDefaultByNameAndGroupID(context.TODO(), db, acts[1].Name, grp2.ID)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, acts[1].ID, result.ID)
@@ -177,13 +178,13 @@ func Test_RetrieveForGroupAndName(t *testing.T) {
 	}
 
 	// retrieve builtin action
-	result, err := action.RetrieveForGroupAndName(db, nil, "Script")
+	result, err := action.RetrieveForGroupAndName(context.TODO(), db, nil, "Script")
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, scriptAction.ID, result.ID)
 
 	// retrieve default action
-	result, err = action.RetrieveForGroupAndName(db, grp1, act.Name)
+	result, err = action.RetrieveForGroupAndName(context.TODO(), db, grp1, act.Name)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, act.ID, result.ID)
@@ -227,12 +228,12 @@ func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
 	}()
 
 	// test valid use case
-	assert.Nil(t, action.CheckChildrenForGroupIDsWithLoop(db, &two, []int64{grp1.ID}))
+	assert.Nil(t, action.CheckChildrenForGroupIDsWithLoop(context.TODO(), db, &two, []int64{grp1.ID}))
 
 	// test invalid recusive
 	one.Actions = append(one.Actions, sdk.Action{
 		ID: two.ID,
 	})
-	assert.Nil(t, action.CheckChildrenForGroupIDs(db, &one, []int64{grp1.ID}))
-	assert.NotNil(t, action.CheckChildrenForGroupIDsWithLoop(db, &one, []int64{grp1.ID}))
+	assert.Nil(t, action.CheckChildrenForGroupIDs(context.TODO(), db, &one, []int64{grp1.ID}))
+	assert.NotNil(t, action.CheckChildrenForGroupIDsWithLoop(context.TODO(), db, &one, []int64{grp1.ID}))
 }

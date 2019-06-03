@@ -1,6 +1,8 @@
 package workflowtemplate
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -8,10 +10,10 @@ import (
 )
 
 // AggregateOnWorkflowTemplate set group for each workflow template.
-func AggregateOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
+func AggregateOnWorkflowTemplate(ctx context.Context, db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
 	gs := []sdk.Group{}
 
-	if err := gorpmapping.GetAll(db,
+	if err := gorpmapping.GetAll(ctx, db,
 		gorpmapping.NewQuery(`SELECT * FROM "group" WHERE id = ANY(string_to_array($1, ',')::int[])`).
 			Args(gorpmapping.IDsToQueryString(sdk.WorkflowTemplatesToGroupIDs(wts))),
 		&gs,

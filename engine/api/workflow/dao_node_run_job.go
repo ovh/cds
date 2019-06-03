@@ -78,6 +78,8 @@ func CountNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, stor
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
 func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter) ([]sdk.WorkflowNodeJobRun, error) {
+	ctx, end := observability.Span(ctx, "workflow.LoadNodeJobRunQueue")
+	defer end()
 	containsService := []bool{true, false}
 	if filter.RatioService != nil {
 		if *filter.RatioService == 100 {
@@ -109,6 +111,8 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 
 // LoadNodeJobRunQueueByGroups load all workflow_node_run_job accessible
 func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groups []sdk.Group) ([]sdk.WorkflowNodeJobRun, error) {
+	ctx, end := observability.Span(ctx, "workflow.LoadNodeJobRunQueueByGroups")
+	defer end()
 	containsService := []bool{true, false}
 	if filter.RatioService != nil {
 		if *filter.RatioService == 100 {
@@ -187,7 +191,7 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 }
 
 func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query gorpmapping.Query, limit *int) ([]sdk.WorkflowNodeJobRun, error) {
-	_, end := observability.Span(ctx, "workflow.loadNodeJobRunQueue")
+	ctx, end := observability.Span(ctx, "workflow.loadNodeJobRunQueue")
 	defer end()
 
 	if limit != nil && *limit > 0 {
@@ -195,7 +199,8 @@ func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	}
 
 	var sqlJobs []JobRun
-	if err := gorpmapping.GetAll(db, query, &sqlJobs); err != nil {
+
+	if err := gorpmapping.GetAll(ctx, db, query, &sqlJobs); err != nil {
 		return nil, sdk.WrapError(err, "Unable to load job runs (Select)")
 	}
 

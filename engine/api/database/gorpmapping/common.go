@@ -1,6 +1,7 @@
 package gorpmapping
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -44,6 +45,10 @@ func (q Query) Args(as ...interface{}) Query {
 func (q Query) Limit(i int) Query {
 	q.query += ` LIMIT ` + strconv.Itoa(i)
 	return q
+}
+
+func (q Query) String() string {
+	return fmt.Sprintf("query: %s - args: %v", q.query, q.arguments)
 }
 
 // IDsToQueryString returns a comma separated list of given ids.
@@ -90,13 +95,13 @@ func Delete(db gorp.SqlExecutor, i interface{}) error {
 }
 
 // GetAll values from database.
-func GetAll(db gorp.SqlExecutor, q Query, i interface{}) error {
+func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) error {
 	_, err := db.Select(i, q.query, q.arguments...)
 	return sdk.WithStack(err)
 }
 
 // Get a value from database.
-func Get(db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
+func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
 	if err := db.SelectOne(i, q.query, q.arguments...); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
