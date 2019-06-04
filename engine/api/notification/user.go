@@ -92,18 +92,13 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 						jn.Recipients = append(jn.Recipients, email)
 					} else if author, okA := params["cds.author"]; okA && author != "" {
 						// Load the user
-						au, err := user.LoadUserByUsername(ctx, db, author)
-						if err != nil {
-							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
-							continue
-						}
-						u, err := user.GetDeprecatedUser(db, au)
+						au, err := user.LoadByUsername(ctx, db, author, user.LoadOptions.WithDeprecatedUser)
 						if err != nil {
 							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
 						}
 						//TODO: fix email
-						jn.Recipients = append(jn.Recipients, u.Email)
+						jn.Recipients = append(jn.Recipients, au.OldUserStruct.Email)
 					}
 				}
 				//Finally deduplicate everyone

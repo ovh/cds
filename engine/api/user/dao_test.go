@@ -25,7 +25,7 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 	assert.NoError(t, user.Insert(db, &u))
 	assert.NoError(t, user.Update(db, &u))
 
-	u1, err := user.LoadUserByID(context.TODO(), db, u.ID)
+	u1, err := user.LoadUserByID(context.TODO(), db, u.ID, LoadOptions.WithDeprecatedUser, LoadOptions.WithContacts)
 	assert.NoError(t, err)
 	assert.NotNil(t, u1)
 
@@ -34,7 +34,7 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Now the loading should failed
-	u2, err := user.LoadUserByID(context.TODO(), db, u.ID)
+	u2, err := user.LoadUserByID(context.TODO(), db, u.ID, LoadOptions.WithDeprecatedUser, LoadOptions.WithContacts)
 	assert.Error(t, err)
 	assert.Nil(t, u2)
 

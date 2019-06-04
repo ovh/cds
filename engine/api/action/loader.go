@@ -12,7 +12,7 @@ import (
 // LoadOptionFunc for action.
 type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Action) error
 
-// LoadOptions provides all options on project loads functions
+// LoadOptions provides all options on action loads functions.
 var LoadOptions = struct {
 	Default          LoadOptionFunc
 	WithRequirements LoadOptionFunc

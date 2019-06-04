@@ -80,16 +80,35 @@ func (g *APIConsumer) GetDEPRECATEDUserStruct() *User {
 
 // AccessToken is either a Personnal Access Token or a Group Access Token
 type AccessToken struct {
-	ID                 string           `json:"id" cli:"id,key" db:"id"`
-	Name               string           `json:"name" cli:"name" db:"name"`
-	AuthentifiedUserID string           `json:"user_id,omitempty" db:"user_id"`
-	AuthentifiedUser   AuthentifiedUser `json:"user" db:"-"`
-	ExpireAt           time.Time        `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
-	Created            time.Time        `json:"created" cli:"created" db:"created"`
-	Status             string           `json:"status" cli:"status" db:"status"`
-	Origin             string           `json:"-" cli:"-" db:"origin"`
-	Groups             Groups           `json:"groups" cli:"groups" db:"-"`
-	Scopes             StringSlice      `json:"scopes" cli:"scopes" db:"scopes"`
+	ID                 string      `json:"id" cli:"id,key" db:"id"`
+	Name               string      `json:"name" cli:"name" db:"name"`
+	AuthentifiedUserID string      `json:"user_id,omitempty" db:"user_id"`
+	ExpireAt           time.Time   `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
+	Created            time.Time   `json:"created" cli:"created" db:"created"`
+	Status             string      `json:"status" cli:"status" db:"status"`
+	Origin             string      `json:"-" cli:"-" db:"origin"`
+	Groups             Groups      `json:"groups" cli:"groups" db:"-"`
+	Scopes             StringSlice `json:"scopes" cli:"scopes" db:"scopes"`
+	// aggregates
+	AuthentifiedUser *AuthentifiedUser `json:"user" db:"-"`
+}
+
+// AccessTokensToIDs returns ids of given access tokens.
+func AccessTokensToIDs(ats []*AccessToken) []string {
+	ids := make([]string, len(ats))
+	for i := range ats {
+		ids[i] = ats[i].ID
+	}
+	return ids
+}
+
+// AccessTokensToIDs returns ids of given access tokens.
+func AccessTokensToAuthentifiedUserIDs(ats []*AccessToken) []string {
+	ids := make([]string, len(ats))
+	for i := range ats {
+		ids[i] = ats[i].AuthentifiedUserID
+	}
+	return ids
 }
 
 // Token describes tokens used by worker to access the API

@@ -21,25 +21,20 @@ func (api *API) getUserGroupsHandler() service.Handler {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		usr, err := user.LoadUserByUsername(ctx, api.mustDB(), username)
+		usr, err := user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithDeprecatedUser)
 		if err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
-		}
-
-		u, err := user.GetDeprecatedUser(api.mustDB(), usr)
-		if err != nil {
-			return err
 		}
 
 		var groups, groupsAdmin []sdk.Group
 
 		var err1, err2 error
-		groups, err1 = group.LoadGroupByUser(api.mustDB(), u.ID)
+		groups, err1 = group.LoadGroupByUser(api.mustDB(), usr.OldUserStruct.ID)
 		if err1 != nil {
 			return sdk.WrapError(err1, "getUserGroupsHandler: Cannot load group by user")
 		}
 
-		groupsAdmin, err2 = group.LoadGroupByAdmin(api.mustDB(), u.ID)
+		groupsAdmin, err2 = group.LoadGroupByAdmin(api.mustDB(), usr.OldUserStruct.ID)
 		if err2 != nil {
 			return sdk.WrapError(err2, "getUserGroupsHandler: Cannot load group by admin")
 		}

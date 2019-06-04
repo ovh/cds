@@ -117,7 +117,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		rmName := data["repositories_manager"]
 		username := data["username"]
 
-		//u, err := user.LoadUserByUsername(api.mustDB(), username)
+		//u, err := user.LoadByUsername(api.mustDB(), username)
 		//if err != nil {
 		//	return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		//}

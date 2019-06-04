@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -70,7 +71,10 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	}
 
 	// Load the access token of the hatchery
-	atoken, err := accesstoken.FindByID(db, hatchery.TokenID)
+	atoken, err := accesstoken.LoadByID(context.Background(), db, hatchery.TokenID,
+		accesstoken.LoadOptions.WithAuthentifiedUser,
+		accesstoken.LoadOptions.WithGroups,
+	)
 	if err != nil {
 		return nil, "", err
 	}

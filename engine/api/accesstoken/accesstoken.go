@@ -1,6 +1,7 @@
 package accesstoken
 
 import (
+	"context"
 	"crypto/rsa"
 	"time"
 
@@ -43,7 +44,7 @@ func New(u sdk.AuthentifiedUser, groups []sdk.Group, scopes []string, origin, na
 	token.Origin = origin
 	token.Status = sdk.AccessTokenStatusEnabled
 	token.Groups = groups
-	token.AuthentifiedUser = u
+	token.AuthentifiedUser = &u
 	token.AuthentifiedUserID = u.ID
 	token.Scopes = sdk.StringSlice(scopes)
 
@@ -83,21 +84,23 @@ func Sign(jwtToken *jwt.Token) (string, error) {
 }
 
 // IsValid checks a jwt token against all access_token
-func IsValid(db gorp.SqlExecutor, jwtToken string) (sdk.AccessToken, bool, error) {
-	var accessToken sdk.AccessToken
-
+func IsValid(db gorp.SqlExecutor, jwtToken string) (*sdk.AccessToken, bool, error) {
 	token, err := VerifyToken(jwtToken)
 	if err != nil {
-		return accessToken, false, sdk.WrapError(err, "invalid token")
+		return nil, false, sdk.WrapError(err, "invalid token")
 	}
 
 	claims := token.Claims.(*sdk.AccessTokenJWTClaims)
 	id := claims.StandardClaims.Id
 
 	// Load the access token from the id read in the claim
-	accessToken, err = FindByID(db, id)
+	accessToken, err := LoadByID(context.Background(), db, id, LoadOptions.WithGroups)
 	if err != nil {
-		return accessToken, false, sdk.WrapError(sdk.ErrUnauthorized, "unable find access token %s: %v", id, err)
+		return nil, false, sdk.WrapError(sdk.ErrUnauthorized, "unable find access token %s: %v", id, err)
+	}
+	if accessToken == nil {
+		log.Debug("accesstoken.IsValid> no token found for id: %s", id)
+		return nil, false, nil
 	}
 
 	// Check groups from the claims againts the groups in the database
@@ -105,7 +108,7 @@ func IsValid(db gorp.SqlExecutor, jwtToken string) (sdk.AccessToken, bool, error
 	for _, groupID := range claims.Groups {
 		if !sdk.IsInInt64Array(groupID, ids) {
 			log.Debug("accesstoken.IsValid> token %s is invalid (group mismatch): %v", id, err)
-			return accessToken, false, nil
+			return nil, false, nil
 		}
 	}
 

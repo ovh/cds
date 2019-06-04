@@ -33,30 +33,6 @@ func IsAllowedDomain(allowedDomains string, email string) bool {
 	return true
 }
 
-// deprecatedLoadUserWithoutAuthByID load user information without secret
-func deprecatedLoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, error) {
-	query := `SELECT username, admin, data, origin FROM "user" WHERE id = $1`
-
-	var jsonUser []byte
-	var username, origin string
-	var admin bool
-
-	if err := db.QueryRow(query, userID).Scan(&username, &admin, &jsonUser, &origin); err != nil {
-		return nil, err
-	}
-
-	// Load user
-	u := &sdk.User{}
-	if err := json.Unmarshal(jsonUser, u); err != nil {
-		return nil, err
-	}
-
-	u.Admin = admin
-	u.ID = userID
-	u.Origin = origin
-	return u, nil
-}
-
 // CountUser Count user table
 func CountUser(db gorp.SqlExecutor) (int64, error) {
 	return db.SelectInt("SELECT count(id) FROM authentified_user")

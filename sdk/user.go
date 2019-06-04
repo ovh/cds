@@ -5,6 +5,8 @@ import (
 	json "encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // User represent a CDS user.
@@ -21,12 +23,29 @@ type User struct {
 	GroupAdmin bool       `json:"-" yaml:"-" cli:"group_admin"`
 }
 
+// Value returns driver.Value from user.
+func (u User) Value() (driver.Value, error) {
+	j, err := json.Marshal(u)
+	return j, WrapError(err, "cannot marshal User")
+}
+
+// Scan user.
+func (u *User) Scan(src interface{}) error {
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(errors.New("type assertion .(string) failed"))
+	}
+	return WrapError(json.Unmarshal([]byte(source), u), "cannot unmarshal User")
+}
+
+// User rings.
 const (
 	UserRingAdmin      = "ADMIN"
 	UserRingMaintainer = "MAINTAINER"
 	UserRingUser       = "USER"
 )
 
+// AuthentifiedUsersToIDs returns ids for given authentified user list.
 func AuthentifiedUsersToIDs(users []*AuthentifiedUser) []string {
 	ids := make([]string, len(users))
 	for i := range users {

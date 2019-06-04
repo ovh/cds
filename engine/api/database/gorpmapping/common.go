@@ -64,6 +64,11 @@ func IDsToQueryString(ids []int64) string {
 	return strings.Join(res, ",")
 }
 
+// IDStringsToQueryString returns a comma separated list of given string ids.
+func IDStringsToQueryString(ids []string) string {
+	return strings.Join(ids, ",")
+}
+
 // Insert value in given db.
 func Insert(db gorp.SqlExecutor, i interface{}) error {
 	err := db.Insert(i)
@@ -80,7 +85,7 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 
 // Update value in given db.
 func Update(db gorp.SqlExecutor, i interface{}) error {
-	_, err := db.Update(i)
+	n, err := db.Update(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
 		case ViolateUniqueKeyPGCode:
@@ -89,7 +94,13 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 			err = sdk.NewError(sdk.ErrInvalidData, e)
 		}
 	}
-	return sdk.WithStack(err)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if n < 1 {
+		return sdk.WithStack(sdk.ErrNotFound)
+	}
+	return nil
 }
 
 // Delete value in given db.

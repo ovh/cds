@@ -21,7 +21,7 @@ func (api *API) deleteUserHandler() service.Handler {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		usr, err := user.LoadUserByUsername(ctx, api.mustDB(), username)
+		usr, err := user.LoadByUsername(ctx, api.mustDB(), username)
 		if err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		}
@@ -32,7 +32,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := user.Delete(tx, usr.ID); err != nil {
+		if err := user.DeleteByID(tx, usr.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete user")
 		}
 
@@ -68,7 +68,7 @@ func (api *API) updateUserHandler() service.Handler {
 		//	return service.WriteJSON(w, nil, http.StatusForbidden)
 		//}
 		//
-		//usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		//usr, err := user.LoadByUsername(api.mustDB(), username)
 		//if err != nil {
 		//	return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		//}

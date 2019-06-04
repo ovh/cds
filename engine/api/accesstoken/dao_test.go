@@ -1,6 +1,7 @@
 package accesstoken_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -26,7 +27,7 @@ func TestInsert(t *testing.T) {
 
 	test.NoError(t, accesstoken.Insert(db, &token))
 
-	reloadedToken, err := accesstoken.FindByID(db, token.ID)
+	reloadedToken, err := accesstoken.LoadByID(context.TODO(), db, token.ID, accesstoken.LoadOptions.WithGroups)
 	test.NoError(t, err)
 
 	t.Logf("reloaded token is s%+v", reloadedToken)
@@ -34,7 +35,6 @@ func TestInsert(t *testing.T) {
 	assert.Len(t, reloadedToken.Groups, 1)
 
 	test.NoError(t, accesstoken.Delete(db, token.ID))
-
 }
 
 func TestUpdate(t *testing.T) {
@@ -57,7 +57,7 @@ func TestUpdate(t *testing.T) {
 
 	test.NoError(t, accesstoken.Update(db, &token))
 
-	reloadedToken, err := accesstoken.FindByID(db, token.ID)
+	reloadedToken, err := accesstoken.LoadByID(context.TODO(), db, token.ID, accesstoken.LoadOptions.WithGroups)
 	test.NoError(t, err)
 
 	t.Logf("reloaded token is s%+v", reloadedToken)
@@ -70,8 +70,8 @@ func TestFind(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	usr1, _ := assets.InsertLambdaUser(db) // This creates an access token
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	usr1, _ := assets.InsertLambdaUser(db, grp1) // This creates an access token
 
 	exp := time.Now().Add(5 * time.Minute)
 	token, _, err := accesstoken.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
@@ -80,27 +80,35 @@ func TestFind(t *testing.T) {
 	test.NoError(t, accesstoken.Insert(db, &token))
 
 	// TestFindByID
-	reloadedToken, err := accesstoken.FindByID(db, token.ID)
+	reloadedToken, err := accesstoken.LoadByID(context.TODO(), db, token.ID, accesstoken.LoadOptions.WithAuthentifiedUser, accesstoken.LoadOptions.WithGroups)
 	test.NoError(t, err)
 	assert.Len(t, reloadedToken.Groups, 1)
 	test.Equal(t, usr1.ID, reloadedToken.AuthentifiedUser.ID)
 	assert.Len(t, reloadedToken.AuthentifiedUser.GetGroups(), 1)
 
-	// FindAllByUser
-	tokens, err := accesstoken.FindAllByUser(db, usr1.ID)
+	// LoadAllByUserID
+	tokens, err := accesstoken.LoadAllByUserID(context.TODO(), db, usr1.ID,
+		accesstoken.LoadOptions.WithAuthentifiedUser,
+		accesstoken.LoadOptions.WithGroups,
+	)
 	test.NoError(t, err)
 	assert.Len(t, tokens, 2)
 
 	usr2, _ := assets.InsertLambdaUser(db)
-	tokens, err = accesstoken.FindAllByUser(db, usr2.ID)
+	tokens, err = accesstoken.LoadAllByUserID(context.TODO(), db, usr2.ID,
+		accesstoken.LoadOptions.WithAuthentifiedUser,
+		accesstoken.LoadOptions.WithGroups,
+	)
 	test.NoError(t, err)
 	assert.Len(t, tokens, 1)
 
-	// FindAllByGroup
-	tokens, err = accesstoken.FindAllByGroup(db, grp1.ID)
+	// LoadAllByGroupID
+	tokens, err = accesstoken.LoadAllByGroupID(context.TODO(), db, grp1.ID,
+		accesstoken.LoadOptions.WithAuthentifiedUser,
+		accesstoken.LoadOptions.WithGroups,
+	)
 	test.NoError(t, err)
-	assert.Len(t, tokens, 1)
+	assert.Len(t, tokens, 2)
 
 	test.NoError(t, accesstoken.Delete(db, token.ID))
-
 }

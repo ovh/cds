@@ -38,7 +38,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			//var err error
 			//Load the specific user
 			// TODO
-			/*u, err := user.LoadUserByUsername(api.mustDB(), requestedUserName)
+			/*u, err := user.LoadByUsername(api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound

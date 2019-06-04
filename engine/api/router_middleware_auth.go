@@ -49,7 +49,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	// Put the granted user in the context
 	var APIConsumer = sdk.APIConsumer{
 		Name:       token.Name,
-		OnBehalfOf: token.AuthentifiedUser,
+		OnBehalfOf: *token.AuthentifiedUser,
 		Groups:     token.Groups,
 	}
 	ctx = context.WithValue(ctx, contextAPIConsumer, &APIConsumer)
@@ -163,7 +163,7 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 
 	// Checks XSRF token only from token coming from UI
 	if token.Origin == accesstoken.OriginUI {
-		if !accesstoken.CheckXSRFToken(api.Cache, token, xsrfToken) {
+		if !accesstoken.CheckXSRFToken(api.Cache, *token, xsrfToken) {
 			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 		}
 	}

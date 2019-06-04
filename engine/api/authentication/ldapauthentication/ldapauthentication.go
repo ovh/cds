@@ -71,7 +71,7 @@ func (l *ldapAuthentication) CheckAuthentication(ctx context.Context, db gorp.Sq
 		return nil, fmt.Errorf("LDAP Search error %s: multiple values", search)
 	}
 
-	u, err := user.LoadUserByUsername(ctx, db, username)
+	u, err := user.LoadByUsername(ctx, db, username)
 	if err != nil {
 		return nil, err
 	}

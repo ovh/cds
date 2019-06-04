@@ -16,7 +16,7 @@ func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, maintainer 
 	token.Name = w.WorkerName
 	token.Origin = hatcheryName
 	token.Status = sdk.AccessTokenStatusEnabled
-	token.AuthentifiedUser = maintainer
+	token.AuthentifiedUser = &maintainer
 	token.AuthentifiedUserID = maintainer.ID
 	token.Scopes = []string{sdk.AccessTokenScopeWorker}
 	claims := WorkerJWTClaims{

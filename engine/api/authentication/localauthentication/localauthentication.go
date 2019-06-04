@@ -42,7 +42,7 @@ func (l *localAuthentication) CheckAuthentication(ctx context.Context, db gorp.S
 		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
-	u, err := user.LoadUserByUsername(ctx, db, username)
+	u, err := user.LoadByUsername(ctx, db, username)
 	if err != nil {
 		return nil, err
 	}

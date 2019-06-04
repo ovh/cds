@@ -37,7 +37,7 @@ func Update(db gorp.SqlExecutor, u *sdk.UserLocalAuthentication) error {
 }
 
 func Authentify(ctx context.Context, db gorp.SqlExecutor, username, password string) (bool, error) {
-	u, err := user.LoadUserByUsername(ctx, db, username)
+	u, err := user.LoadByUsername(ctx, db, username)
 	if err != nil {
 		return false, err
 	}

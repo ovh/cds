@@ -100,7 +100,7 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 
 	user.Insert(db, &data)
 
-	u, err := user.LoadUserByID(context.Background(), db, data.ID)
+	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
 	if err != nil {
 		log.Error("user cannot be load for id %s: %v", data.ID, err)
 	}
@@ -130,7 +130,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		log.Fatalf(" user.Insert: %v", err)
 	}
 
-	u, err := user.LoadUserByID(context.Background(), db, u.ID)
+	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
 	if err != nil {
 		log.Fatalf(" user.LoadUserByID: %v", err)
 	}

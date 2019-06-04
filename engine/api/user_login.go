@@ -59,12 +59,11 @@ func (api *API) loginUserHandler() service.Handler {
 			api.Cache.SetWithTTL("api:loginUserHandler:RequestToken:"+loginUserRequest.RequestToken, token, 30*60)
 		}
 
-		oldUser, err := user.GetDeprecatedUser(api.mustDB(), authUser)
-		if err != nil {
-			return sdk.WithStack(err)
+		if err := user.LoadOptions.WithDeprecatedUser(ctx, api.mustDB(), authUser); err != nil {
+			return err
 		}
 
-		if err := group.CheckUserInDefaultGroup(api.mustDB(), oldUser.ID); err != nil {
+		if err := group.CheckUserInDefaultGroup(api.mustDB(), authUser.OldUserStruct.ID); err != nil {
 			log.Warning("Auth> Error while check user in default group:%s\n", err)
 		}
 
