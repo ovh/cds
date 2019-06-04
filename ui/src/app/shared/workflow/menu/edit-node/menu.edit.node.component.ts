@@ -100,7 +100,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
                 return true;
             }
 
-            if (this.workflowrun) {
+            if (this.workflowrun && this.workflowrun.workflow && this.workflowrun.workflow.workflow_data) {
                 let nbNodeFound = 0;
                 let parentNodes = Workflow.getParentNodeIds(this.workflowrun, this.node.id);
                 for (let parentNodeId of parentNodes) {
