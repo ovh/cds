@@ -27,7 +27,7 @@ type statusData struct {
 //SetStatus Users with push access can create commit statuses for a given ref:
 func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if client.DisableStatus {
-		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
+		log.Warning("bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
 		return nil
 	}
 
@@ -37,7 +37,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processEventWorkflowNodeRun(event, client.uiURL, client.DisableStatusDetail)
 	default:
-		log.Error("github.SetStatus> Unknown event %v", event)
+		log.Error("bitbucketcloud.SetStatus> Unknown event %v", event)
 		return nil
 	}
 	if err != nil {
@@ -45,7 +45,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	}
 
 	if data.status == "" {
-		log.Debug("github.SetStatus> Do not process event for current status: %v", event)
+		log.Debug("bitbucketcloud.SetStatus> Do not process event for current status: %v", event)
 		return nil
 	}
 
@@ -84,7 +84,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
-	log.Debug("SetStatus> Status %d %s created at %v", resp.UUID, resp.Links.Self.Href, resp.CreatedOn)
+	log.Debug("bitbucketcloud.SetStatus> Status %d %s created at %v", resp.UUID, resp.Links.Self.Href, resp.CreatedOn)
 
 	return nil
 }
@@ -100,7 +100,7 @@ func (client *bitbucketcloudClient) ListStatuses(ctx context.Context, repo strin
 	}
 	var ss []Status
 	if err := json.Unmarshal(body, &ss); err != nil {
-		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
+		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse bitbucket cloud commit: %s", ref)
 	}
 
 	vcsStatuses := make([]sdk.VCSCommitStatus, 0, len(ss))

@@ -9,7 +9,7 @@ import (
 )
 
 func (client *bitbucketcloudClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
-	var repos = []Repository{}
+	var repos []Repository
 	path := fmt.Sprintf("/repositories/%s/forks", repo)
 	params := url.Values{}
 	params.Set("pagelen", "100")

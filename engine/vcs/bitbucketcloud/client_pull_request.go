@@ -6,111 +6,66 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"strings"
+	"net/url"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname string, id int) (sdk.VCSPullRequest, error) {
-	var pr PullRequest
-	cachePullRequestKey := cache.Key("vcs", "bitbucketcloud", "pullrequests", client.OAuthToken, fmt.Sprintf("/repos/%s/pulls/%d", fullname, id))
-
-	for {
-		url := fmt.Sprintf("/repos/%s/pulls/%d", fullname, id)
-
-		status, body, _, err := client.get(url)
-		if err != nil {
-			client.Cache.Delete(cachePullRequestKey)
-			return sdk.VCSPullRequest{}, err
-		}
-		if status >= 400 {
-			client.Cache.Delete(cachePullRequestKey)
-			return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-		}
-
-		//bitbucketcloud may return 304 status because we are using conditional request with ETag based headers
-		if status == http.StatusNotModified {
-			//If repos aren't updated, lets get them from cache
-			if !client.Cache.Get(cachePullRequestKey, &pr) {
-				log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cachePullRequestKey, client.OAuthToken, ""))
-				continue
-			}
-
-		} else {
-			if err := json.Unmarshal(body, &pr); err != nil {
-				log.Warning("bitbucketcloudClient.PullRequest> Unable to parse bitbucketcloud pullrequest: %s", err)
-				return sdk.VCSPullRequest{}, sdk.WithStack(err)
-			}
-		}
-
-		if pr.Number != id {
-			log.Warning("bitbucketcloudClient.PullRequest> Cannot find pullrequest %d", id)
-			client.Cache.Delete(cachePullRequestKey)
-			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %d", id))
-		}
-
-		//Put the body on cache for one hour and one minute
-		client.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60)
-		break
+	url := fmt.Sprintf("/repositories/%s/pullrequests/%s", fullname, id)
+	status, body, _, err := client.get(url)
+	if err != nil {
+		log.Warning("bitbucketcloudClient.Pullrequest> Error %s", err)
+		return sdk.VCSPullRequest{}, err
+	}
+	if status >= 400 {
+		return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
+	}
+	var pullrequest PullRequest
+	if err := json.Unmarshal(body, &pullrequest); err != nil {
+		log.Warning("bitbucketcloudClient.PullRequest> Unable to parse bitbucket cloud commit: %s", err)
+		return sdk.VCSPullRequest{}, err
 	}
 
-	return pr.ToVCSPullRequest(), nil
+	return pullrequest.ToVCSPullRequest(), nil
 }
 
 // PullRequests fetch all the pull request for a repository
 func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
-	var pullRequests = []PullRequest{}
-	var nextPage = "/repos/" + fullname + "/pulls"
-	cacheKey := cache.Key("vcs", "bitbucketcloud", "pullrequests", client.OAuthToken, "/repos/"+fullname+"/pulls")
-
+	var pullrequests []PullRequest
+	path := fmt.Sprintf("/repositories/%s/pullrequests", fullname)
+	params := url.Values{}
+	params.Set("pagelen", "100")
+	nextPage := 1
 	for {
-		if nextPage != "" {
-			status, body, headers, err := client.get(nextPage)
-			if err != nil {
-				log.Warning("bitbucketcloudClient.PullRequests> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			nextPullRequests := []PullRequest{}
+		if nextPage != 1 {
+			params.Set("page", fmt.Sprintf("%d", nextPage))
+		}
 
-			//bitbucketcloud may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				if !client.Cache.Get(cacheKey, &pullRequests) {
-					log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, client.OAuthToken, ""))
-					continue
-				}
-				break
-			} else {
-				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
-					log.Warning("bitbucketcloudClient.Branches> Unable to parse bitbucketcloud branches: %s", err)
-					return nil, err
-				}
-			}
+		var response PullRequests
+		if err := client.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+			return nil, sdk.WrapError(err, "Unable to get pull requests")
+		}
+		if cap(pullrequests) == 0 {
+			pullrequests = make([]PullRequest, 0, response.Size)
+		}
 
-			pullRequests = append(pullRequests, nextPullRequests...)
+		pullrequests = append(pullrequests, response.Values...)
 
-			nextPage = getNextPage(headers)
-		} else {
+		if response.Next == "" {
 			break
+		} else {
+			nextPage++
 		}
 	}
 
-	//Put the body on cache for one hour and one minute
-	client.Cache.SetWithTTL(cache.Key("vcs", "bitbucketcloud", "pullrequests", client.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
-
-	prResults := []sdk.VCSPullRequest{}
-	for _, pullr := range pullRequests {
-		pr := pullr.ToVCSPullRequest()
-		prResults = append(prResults, pr)
+	responsePullRequest := make([]sdk.VCSPullRequest, 0, len(pullrequests))
+	for _, pr := range pullrequests {
+		responsePullRequest = append(responsePullRequest, pr.ToVCSPullRequest())
 	}
 
-	return prResults, nil
+	return responsePullRequest, nil
 }
 
 // PullRequestComment push a new comment on a pull request
@@ -175,52 +130,52 @@ func (client *bitbucketcloudClient) PullRequestCreate(ctx context.Context, repo 
 
 func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 	return sdk.VCSPullRequest{
-		ID:   pullr.Number,
+		ID: pullr.ID,
 		Base: sdk.VCSPushEvent{
-		// 	Repo: pullr.Base.Repo.FullName,
-		// 	Branch: sdk.VCSBranch{
-		// 		ID:           pullr.Base.Ref,
-		// 		DisplayID:    pullr.Base.Ref,
-		// 		LatestCommit: pullr.Base.Sha,
-		// 	},
-		// 	CloneURL: pullr.Base.Repo.CloneURL,
-		// 	Commit: sdk.VCSCommit{
-		// 		Author: sdk.VCSAuthor{
-		// 			Avatar:      pullr.Base.User.AvatarURL,
-		// 			DisplayName: pullr.Base.User.Login,
-		// 			Name:        pullr.Base.User.Name,
-		// 		},
-		// 		Hash:      pullr.Base.Sha,
-		// 		Message:   pullr.Base.Label,
-		// 		Timestamp: pullr.UpdatedAt.Unix(),
-		// 	},
-		// },
-		// Head: sdk.VCSPushEvent{
-		// 	Repo: pullr.Head.Repo.FullName,
-		// 	Branch: sdk.VCSBranch{
-		// 		ID:           pullr.Head.Ref,
-		// 		DisplayID:    pullr.Head.Ref,
-		// 		LatestCommit: pullr.Head.Sha,
-		// 	},
-		// 	CloneURL: pullr.Head.Repo.CloneURL,
-		// 	Commit: sdk.VCSCommit{
-		// 		Author: sdk.VCSAuthor{
-		// 			Avatar:      pullr.Head.User.AvatarURL,
-		// 			DisplayName: pullr.Head.User.Login,
-		// 			Name:        pullr.Head.User.Name,
-		// 		},
-		// 		Hash:      pullr.Head.Sha,
-		// 		Message:   pullr.Head.Label,
-		// 		Timestamp: pullr.UpdatedAt.Unix(),
-		// 	},
+			Repo: pullr.Destination.Repository.FullName,
+			Branch: sdk.VCSBranch{
+				ID:           pullr.Destination.Branch.Name,
+				DisplayID:    pullr.Destination.Branch.Name,
+				LatestCommit: pullr.Destination.Commit.Hash,
+			},
+			// CloneURL: pullr.Base.Repo.CloneURL,
+			Commit: sdk.VCSCommit{
+				// Author: sdk.VCSAuthor{
+				// 	Avatar:      pullr.Destination.,
+				// 	DisplayName: pullr.Base.User.Login,
+				// 	Name:        pullr.Base.User.Name,
+				// },
+				Hash: pullr.Destination.Commit.Hash,
+				// Message:   pullr.Destination.Commit.,
+				// Timestamp: pullr.Destination.Repository,
+			},
 		},
-		URL: pullr.HTMLURL,
-		// User: sdk.VCSAuthor{
-		// 	Avatar:      pullr.User.AvatarURL,
-		// 	DisplayName: pullr.User.Login,
-		// 	Name:        pullr.User.Name,
-		// },
-		Closed: pullr.State == "closed",
-		Merged: pullr.Merged,
+		Head: sdk.VCSPushEvent{
+			Repo: pullr.Source.Repository.FullName,
+			Branch: sdk.VCSBranch{
+				ID:           pullr.Source.Branch.Name,
+				DisplayID:    pullr.Source.Branch.Name,
+				LatestCommit: pullr.Source.Commit.Hash,
+			},
+			// CloneURL: pullr.Base.Repo.CloneURL,
+			Commit: sdk.VCSCommit{
+				// Author: sdk.VCSAuthor{
+				// 	Avatar:      pullr.Source.,
+				// 	DisplayName: pullr.Base.User.Login,
+				// 	Name:        pullr.Base.User.Name,
+				// },
+				Hash: pullr.Source.Commit.Hash,
+				// Message:   pullr.Destination.Commit.,
+				// Timestamp: pullr.Destination.Repository,
+			},
+		},
+		URL: pullr.Links.HTML.Href,
+		User: sdk.VCSAuthor{
+			Avatar:      pullr.Author.Links.Avatar.Href,
+			DisplayName: pullr.Author.DisplayName,
+			Name:        pullr.Author.Username,
+		},
+		Closed: pullr.State == "SUPERSEDED",
+		Merged: pullr.State == "MERGED",
 	}
 }

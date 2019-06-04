@@ -12,6 +12,11 @@ import (
 
 // Branches returns list of branches for a repo
 func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+	repo, err := client.repoByFullname(fullname)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get repo by fullname")
+	}
+
 	var branches []Branch
 	path := fmt.Sprintf("/repositories/%s/refs/branches", fullname)
 	params := url.Values{}
@@ -46,6 +51,7 @@ func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname strin
 			DisplayID:    b.Name,
 			ID:           b.Name,
 			LatestCommit: b.Target.Hash,
+			Default:      b.Name == repo.Mainbranch.Name,
 		}
 		for _, p := range b.Target.Parents {
 			branch.Parents = append(branch.Parents, p.Hash)

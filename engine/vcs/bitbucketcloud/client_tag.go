@@ -2,73 +2,58 @@ package bitbucketcloud
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
+	"fmt"
+	"net/url"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Tags returns list of tags for a repo
 func (client *bitbucketcloudClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, error) {
-	var tags []Ref
-	var attempt int
-	nextPage := "/repos/" + fullname + "/git/refs/tags"
-
+	var tags []Tag
+	path := fmt.Sprintf("/2.0/repositories/%s/refs/tags", fullname)
+	params := url.Values{}
+	params.Set("pagelen", "100")
+	nextPage := 1
 	for {
-		if nextPage != "" {
-			attempt++
-			status, body, headers, err := client.get(nextPage)
-			if err != nil {
-				log.Warning("githubClient.Tags> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				if status == http.StatusNotFound {
-					log.Debug("githubClient.Tags> status 404 return nil because no tags found")
-					return nil, nil
-				}
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			nextTags := []Ref{}
+		if nextPage != 1 {
+			params.Set("page", fmt.Sprintf("%d", nextPage))
+		}
 
-			//Github may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				client.Cache.Get(cache.Key("vcs", "bitbucketcloud", "tags", client.OAuthToken, "/repos/"+fullname+"/tags"), &tags)
-				if len(tags) != 0 || attempt > 5 {
-					//We found tags, let's exit the loop
-					break
-				}
-				continue
-			} else {
-				if err := json.Unmarshal(body, &nextTags); err != nil {
-					log.Warning("githubClient.Tags> Unable to parse github tags: %s", err)
-					return nil, err
-				}
-			}
+		var response Tags
+		if err := client.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+			return nil, sdk.WrapError(err, "Unable to get repos")
+		}
+		if cap(tags) == 0 {
+			tags = make([]Tag, 0, response.Size)
+		}
 
-			tags = append(tags, nextTags...)
-			nextPage = getNextPage(headers)
-		} else {
+		tags = append(tags, response.Values...)
+
+		if response.Next == "" {
 			break
+		} else {
+			nextPage++
 		}
 	}
 
-	//Put the body on cache for one hour and one minute
-	client.Cache.SetWithTTL(cache.Key("vcs", "bitbucketcloud", "tags", client.OAuthToken, "/repos/"+fullname+"/tags"), tags, 61*60)
-
-	tagsResult := make([]sdk.VCSTag, len(tags))
-	j := 0
-	for i := len(tags) - 1; i >= 0; i-- {
-		tagsResult[j] = sdk.VCSTag{
-			Tag: strings.Replace(tags[i].Ref, "refs/tags/", "", 1),
-			Sha: tags[i].Object.Sha,
+	responseTags := make([]sdk.VCSTag, 0, len(tags))
+	for _, tag := range tags {
+		email := strings.Trim(rawEmailCommitRegexp.FindString(tag.Target.Author.Raw), "<>")
+		t := sdk.VCSTag{
+			Hash:    tag.Target.Hash,
+			Message: tag.Message,
+			Sha:     tag.Target.Hash,
+			Tagger: sdk.VCSAuthor{
+				Avatar:      tag.Target.Author.User.Links.Avatar.Href,
+				DisplayName: tag.Target.Author.User.DisplayName,
+				Email:       email,
+				Name:        tag.Target.Author.User.Nickname,
+			},
 		}
-		j++
+		responseTags = append(responseTags, t)
 	}
 
-	return tagsResult, nil
+	return responseTags, nil
 }

@@ -115,6 +115,36 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				"pr:comment:edited",
 				"pr:comment:deleted",
 			}
+		case cfg.BitbucketCloud != nil:
+			res.WebhooksSupported = true
+			res.WebhooksDisabled = cfg.BitbucketCloud.DisableWebHooks
+			res.WebhooksIcon = sdk.BitbucketIcon
+			// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
+			res.Events = []string{
+				"pullrequest:unapproved",
+				"issue:comment_created",
+				"pullrequest:approved",
+				"repo:created",
+				"repo:deleted",
+				"repo:imported",
+				"pullrequest:comment_updated",
+				"issue:updated",
+				"project:updated",
+				"pullrequest:comment_created",
+				"repo:commit_status_updated",
+				"pullrequest:updated",
+				"issue:created",
+				"repo:fork",
+				"pullrequest:comment_deleted",
+				"repo:commit_status_created",
+				"repo:updated",
+				"pullrequest:rejected",
+				"pullrequest:fulfilled",
+				"repo:push",
+				"pullrequest:created",
+				"repo:transfer",
+				"repo:commit_comment_created",
+			}
 		case cfg.Github != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks

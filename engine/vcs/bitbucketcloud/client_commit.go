@@ -97,7 +97,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 	}
 	var c Commit
 	if err := json.Unmarshal(body, &c); err != nil {
-		log.Warning("bitbucketcloudClient.Commit> Unable to parse github commit: %s", err)
+		log.Warning("bitbucketcloudClient.Commit> Unable to parse bitbucket cloud commit: %s", err)
 		return sdk.VCSCommit{}, err
 	}
 

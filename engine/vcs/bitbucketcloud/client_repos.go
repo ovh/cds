@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -106,62 +105,5 @@ func (client *bitbucketcloudClient) repoByFullname(fullname string) (Repository,
 }
 
 func (client *bitbucketcloudClient) GrantWritePermission(ctx context.Context, fullname string) error {
-	owner := strings.SplitN(fullname, "/", 2)[0]
-	if client.username == "" || owner == client.username {
-		log.Debug("bitbucketcloudClient.GrantWritePermission> nothing to do")
-		return nil
-	}
-
-	// url := "/repos/" + fullname + "/collaborators/" + client.username + "?permission=push"
-	// resp, err := client.put(url, "application/json", nil, nil)
-	// if err != nil {
-	// 	log.Warning("bitbucketcloudClient.GrantWritePermission> Error (%s) %s", url, err)
-	// 	return err
-	// }
-
-	// // Response when person is already a collaborator
-	// if resp.StatusCode == 204 {
-	// 	log.Info("bitbucketcloudClient.GrantWritePermission> %s is already a collaborator", client.username)
-	// 	return nil
-	// }
-
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer resp.Body.Close() // nolint
-
-	// log.Debug("bitbucketcloudClient.GrantWritePermission> invitation response: %v", string(body))
-
-	// // Response when a new invitation is created
-	// if resp.StatusCode == 201 {
-	// 	invit := RepositoryInvitation{}
-	// 	if err := json.Unmarshal(body, &invit); err != nil {
-	// 		log.Warning("bitbucketcloudClient.GrantWritePermission> unable to unmarshal invitation %s", err)
-	// 		return err
-	// 	}
-
-	// 	// Accept the invitation
-	// 	url := fmt.Sprintf("/user/repository_invitations/%d", invit.ID)
-	// 	resp, err := client.patch(url, &postOptions{asUser: true})
-	// 	if err != nil {
-	// 		log.Warning("bitbucketcloudClient.GrantWritePermission> Error (%s) %s", url, err)
-	// 		return err
-	// 	}
-	// 	body, err := ioutil.ReadAll(resp.Body)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	_ = resp.Body.Close()
-	// 	log.Debug("bitbucketcloudClient.GrantWritePermission> accept invitation response: %v", string(body))
-
-	// 	// All is fine
-	// 	if resp.StatusCode == 204 {
-	// 		return nil
-	// 	}
-
-	// 	return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	// }
-
 	return sdk.ErrNotImplemented
 }
