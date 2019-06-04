@@ -127,7 +127,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			}
 		}(&msgList)
 
-		if err := pipeline.ImportUpdate(tx, proj, audit.Pipeline, msgChan, u); err != nil {
+		if err := pipeline.ImportUpdate(ctx, tx, proj, audit.Pipeline, msgChan, u); err != nil {
 			return sdk.WrapError(err, "cannot import pipeline")
 		}
 
@@ -311,7 +311,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot delete pipeline audit")
 		}
 
-		if err := pipeline.DeletePipeline(tx, p.ID, deprecatedGetUser(ctx).ID); err != nil {
+		if err := pipeline.DeletePipeline(ctx, tx, p.ID, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline %s", pipelineName)
 		}
 

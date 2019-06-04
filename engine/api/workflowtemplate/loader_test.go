@@ -1,6 +1,7 @@
 package workflowtemplate
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -26,7 +27,7 @@ func TestAggregateOnWorkflowTemplate(t *testing.T) {
 		{GroupID: 2},
 	}
 
-	assert.Nil(t, AggregateOnWorkflowTemplate(db, wts...))
+	assert.Nil(t, AggregateOnWorkflowTemplate(context.TODO(), db, wts...))
 
 	assert.NotNil(t, wts[0].Group)
 	assert.Equal(t, "grp-1", wts[0].Group.Name)

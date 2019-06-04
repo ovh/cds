@@ -1,8 +1,10 @@
-package exportentities
+package exportentities_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/ovh/cds/sdk/exportentities"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -89,9 +91,9 @@ notifications:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var w Workflow
+			var w exportentities.Workflow
 			test.NoError(t, yaml.Unmarshal([]byte(tt.args.yaml), &w))
-			if got := checkWorkflowNotificationsValidity(w); got != tt.want {
+			if got := exportentities.CheckWorkflowNotificationsValidity(w); got != tt.want {
 				t.Errorf("checkWorkflowNotificationsValidity() = %#v, want %v", got, tt.want)
 			}
 		})
@@ -100,7 +102,7 @@ notifications:
 
 func Test_processNotificationValues(t *testing.T) {
 	type args struct {
-		notif NotificationEntry
+		notif exportentities.NotificationEntry
 	}
 	tests := []struct {
 		name    string
@@ -112,7 +114,7 @@ func Test_processNotificationValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := processNotificationValues(tt.args.notif)
+			got, err := exportentities.ProcessNotificationValues(tt.args.notif)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processNotificationValues() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -261,8 +263,8 @@ notifications:
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			var yamlWorkflow Workflow
-			err := Unmarshal([]byte(tst.yaml), FormatYAML, &yamlWorkflow)
+			var yamlWorkflow exportentities.Workflow
+			err := exportentities.Unmarshal([]byte(tst.yaml), exportentities.FormatYAML, &yamlWorkflow)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("Unmarshal raised an error", err)
@@ -303,7 +305,7 @@ notifications:
 					}
 				}
 			})
-			exportedWorkflow, err := NewWorkflow(*w)
+			exportedWorkflow, err := exportentities.NewWorkflow(*w)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("NewWorkflow raised an error", err)

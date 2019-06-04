@@ -101,7 +101,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := workermodel.Update(tx, u, old, data)
+		model, err := workermodel.Update(ctx, tx, u, old, data)
 		if err != nil {
 			return err
 		}
@@ -239,7 +239,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
 
-		pips, err := pipeline.LoadByWorkerModel(api.mustDB(), deprecatedGetUser(ctx), m)
+		pips, err := pipeline.LoadByWorkerModel(ctx, api.mustDB(), deprecatedGetUser(ctx), m)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipelines linked to worker model")
 		}

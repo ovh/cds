@@ -79,7 +79,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		for i := range project.ProjectGroups {
 			groupIDs = append(groupIDs, project.ProjectGroups[i].Group.ID)
 		}
-		if err := action.CheckChildrenForGroupIDs(tx, &job.Action, groupIDs); err != nil {
+		if err := action.CheckChildrenForGroupIDs(ctx, tx, &job.Action, groupIDs); err != nil {
 			return err
 		}
 
@@ -197,7 +197,7 @@ func (api *API) updateJobHandler() service.Handler {
 		for i := range project.ProjectGroups {
 			groupIDs = append(groupIDs, project.ProjectGroups[i].Group.ID)
 		}
-		if err := action.CheckChildrenForGroupIDs(tx, &job.Action, groupIDs); err != nil {
+		if err := action.CheckChildrenForGroupIDs(ctx, tx, &job.Action, groupIDs); err != nil {
 			return err
 		}
 
@@ -210,7 +210,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(errlb, "cannot load all binary requirements")
 		}
 
-		if err := pipeline.UpdateJob(tx, &job, deprecatedGetUser(ctx).ID); err != nil {
+		if err := pipeline.UpdateJob(ctx, tx, &job, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "cannot update pipeline job in database")
 		}
 
