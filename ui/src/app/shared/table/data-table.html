@@ -58,7 +58,10 @@
                     <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
                         {{c.selector.value}}
                     </a>
-                    <a *ngSwitchCase="'link'" class="ui pointing" (click)="c.selector.callback()">
+                    <a *ngSwitchCase="'link-click'" class="ui pointing" (click)="c.selector.callback()">
+                        {{c.selector.value}}
+                    </a>
+                    <a *ngSwitchCase="'link'" class="ui pointing" [href]="c.selector.link" target="_blank">
                         {{c.selector.value}}
                     </a>
                     <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
