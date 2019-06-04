@@ -31,6 +31,9 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		hookToUpdate = wf.GetHooks()
 	}
 
+	observability.Current(ctx, observability.Tag("hook_update_count", len(hookToUpdate)))
+	observability.Current(ctx, observability.Tag("hook_delete_count", len(hookToDelete)))
+
 	if len(hookToUpdate) > 0 {
 		//Push the hook to hooks µService
 		//Load service "hooks"
