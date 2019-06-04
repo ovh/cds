@@ -764,6 +764,8 @@ gopkg.in/ini.v1
 gopkg.in/ldap.v2
 # gopkg.in/olivere/elastic.v6 v6.2.17
 gopkg.in/olivere/elastic.v6
+# gopkg.in/spacemonkeygo/httpsig.v0 v0.0.0-20170228231032-6732593ec966
+gopkg.in/spacemonkeygo/httpsig.v0
 # gopkg.in/square/go-jose.v2 v2.3.0
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher

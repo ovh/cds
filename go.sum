@@ -651,6 +651,8 @@ gopkg.in/olivere/elastic.v6 v6.2.17 h1:ewcJ35+DJUA/OeZYP6I+oWoYWvcBlonuFJ8JU1/W4
 gopkg.in/olivere/elastic.v6 v6.2.17/go.mod h1:2cTT8Z+/LcArSWpCgvZqBgt3VOqXiy7v00w12Lz8bd4=
 gopkg.in/ory-am/dockertest.v2 v2.2.3 h1:vSYvP7tvyfAm9merq0gHmcI4yk5nkPpfXmoBCnSP3/4=
 gopkg.in/ory-am/dockertest.v2 v2.2.3/go.mod h1:kDHEsan1UcKFYH1c28sDmqnmeqIpB4Nj682gSNhYDYM=
+gopkg.in/spacemonkeygo/httpsig.v0 v0.0.0-20170228231032-6732593ec966 h1:8kepDsMTleFJGPFjqiqahyFDI8s8zmx1CbCC3qUOh5c=
+gopkg.in/spacemonkeygo/httpsig.v0 v0.0.0-20170228231032-6732593ec966/go.mod h1:KUilIqVZdvg7tsZSnGqOnw8jL2WVzcC0RHV/Av0km2U=
 gopkg.in/square/go-jose.v2 v2.3.0 h1:nLzhkFyl5bkblqYBoiWJUt5JkWOzmiaBtCxdJAqJd3U=
 gopkg.in/square/go-jose.v2 v2.3.0/go.mod h1:M9dMgbHiYLoDGQrXy7OpJDJWiKiU//h+vD76mk0e1AI=
 gopkg.in/stomp.v1 v1.0.1 h1:GWvGt7N0StJw051gsidLPrmDmEAwH8MOzqpioMCGtLE=
