@@ -1595,12 +1595,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	if wf.Root.Context.Application != nil {
-		if err := application.Update(tx, store, wf.Root.Context.Application); err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
-		}
-	}
-
 	allMsg = append(allMsg, msgList...)
 
 	if !isDefaultBranch {
