@@ -29,7 +29,7 @@ func (api *API) postWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		if !isAdmin(ctx) {
+		if !isMaintainer(ctx) {
 			// provision is allowed only for CDS Admin or by user with a restricted model
 			if !data.Restricted {
 				data.Provision = 0

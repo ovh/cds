@@ -169,7 +169,7 @@ func TestLoadAll(t *testing.T) {
 
 	models, err = workermodel.LoadAll(context.TODO(), db, &workermodel.LoadFilter{})
 	test.NoError(t, err)
-	test.Equal(t, 0, len(models))
+	test.Equal(t, 3, len(models))
 
 	models, err = workermodel.LoadAll(context.TODO(), db, &workermodel.LoadFilter{
 		State: workermodel.StateActive,
