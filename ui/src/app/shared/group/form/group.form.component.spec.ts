@@ -1,13 +1,10 @@
-/* tslint:disable:no-unused-variable */
-
-import {TestBed, fakeAsync, tick} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {SharedModule} from '../../shared.module';
-import {GroupFormComponent} from './group.form.component';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { SharedModule } from 'app/shared/shared.module';
+import { GroupFormComponent } from './group.form.component';
 
 describe('CDS: Group form component', () => {
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -17,7 +14,7 @@ describe('CDS: Group form component', () => {
                 TranslateLoader,
                 TranslateParser,
             ],
-            imports : [
+            imports: [
                 SharedModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([])
@@ -26,7 +23,7 @@ describe('CDS: Group form component', () => {
 
     });
 
-    it('should load component and disable button', fakeAsync( () => {
+    it('should load component and disable button', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(GroupFormComponent);
         let component = fixture.debugElement.componentInstance;
@@ -38,7 +35,7 @@ describe('CDS: Group form component', () => {
         expect(fixture.debugElement.nativeElement.querySelector('.ui.green.button.disabled')).toBeTruthy();
     }));
 
-    it('should load component and enable button', fakeAsync( () => {
+    it('should load component and enable button', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(GroupFormComponent);
         let component = fixture.debugElement.componentInstance;
@@ -50,7 +47,5 @@ describe('CDS: Group form component', () => {
         tick(250);
         expect(fixture.debugElement.nativeElement.querySelector('.ui.green.button.disabled')).toBeFalsy();
     }));
-
-
 });
 

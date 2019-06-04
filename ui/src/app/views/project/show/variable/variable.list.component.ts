@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddVariableInProject, DeleteVariableInProject, FetchVariablesInProject, UpdateVariableInProject } from 'app/store/project.action';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';

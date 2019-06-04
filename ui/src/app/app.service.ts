@@ -1,9 +1,9 @@
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { cloneDeep } from 'lodash';
-import {filter, first} from 'rxjs/operators';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { filter, first } from 'rxjs/operators';
 import { Broadcast, BroadcastEvent } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
@@ -301,22 +301,24 @@ export class AppService {
                     // if same run number , then update store
                     this._store.dispatch(
                         new GetWorkflowRun({
-                                projectKey: event.project_key,
-                                workflowName: event.workflow_name,
-                                num: event.workflow_run_num
+                            projectKey: event.project_key,
+                            workflowName: event.workflow_name,
+                            num: event.workflow_run_num
                         }));
                 } else {
                     this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)
                         .pipe(first())
-                        .subscribe(wr => this._store.dispatch(new UpdateWorkflowRunList({workflowRun: wr})));
+                        .subscribe(wr => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wr })));
                 }
                 break;
             case EventType.RUN_WORKFLOW_NODE:
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
                     this._store.dispatch(new GetWorkflowRun(
-                        {projectKey: event.project_key, workflowName: event.workflow_name,
-                            num: event.workflow_run_num}));
+                        {
+                            projectKey: event.project_key, workflowName: event.workflow_name,
+                            num: event.workflow_run_num
+                        }));
                 }
                 break;
         }

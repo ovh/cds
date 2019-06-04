@@ -1,78 +1,25 @@
 <div class="artifact" *ngIf="artifacts || staticFiles">
-  <table class="ui fixed celled table" *ngIf="staticFiles && staticFiles.length > 0">
-      <thead>
-      <tr>
-          <th class="six wide">{{ 'static_file_name' | translate }}</th>
-          <th class="six wide">{{ 'common_created' | translate }}</th>
-          <th class="four wide center">{{ 'common_link' | translate }}</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let sFile of staticFiles">
-          <td>
-            {{sFile.name}}
-          </td>
-          <td>
-              {{sFile.created | date:'short'}}
-          </td>
-          <td class="center">
-              <a [href]="sFile.public_url" target="_blank"><i class="external alternate icon"></i></a>
-          </td>
-      </tr>
-      </tbody>
-  </table>
-    <div class="ui form" *ngIf="artifacts">
-        <div class="field">
-            <div class="fields">
-            <div class="sixteen wide field">
-                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
-            </div>
-            </div>
-        </div>
-    </div>
-    <table class="ui fixed celled table" *ngIf="artifacts && getDataForCurrentPage().length > 0">
+    <table class="ui fixed celled table" *ngIf="staticFiles && staticFiles.length > 0">
         <thead>
-        <tr>
-            <th class="five wide">{{ 'artifact_name' | translate }}</th>
-            <th class="five wide">{{ 'artifact_tag' | translate }}</th>
-            <th class="six wide">{{ 'artifact_sha512' | translate }}</th>
-        </tr>
+            <tr>
+                <th class="six wide">{{ 'static_file_name' | translate }}</th>
+                <th class="six wide">{{ 'common_created' | translate }}</th>
+                <th class="four wide center">{{ 'common_link' | translate }}</th>
+            </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let a of getDataForCurrentPage()">
-            <td>
-                <a href="{{getUrl(a)}}">{{a.name + ' (' + getHumainFileSize(a.size) + ')'}}</a>
-            </td>
-            <td>
-                {{a.tag}}
-            </td>
-            <td>
-                <div class="ui fluid action input">
-                    <input type="text" value="{{a.sha512sum}}">
-                    <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate" ngxClipboard [cbContent]="a.sha512sum">
-                        <i class="copy icon"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
+            <tr *ngFor="let sFile of staticFiles">
+                <td>
+                    {{sFile.name}}
+                </td>
+                <td>
+                    {{sFile.created | date:'short'}}
+                </td>
+                <td class="center">
+                    <a [href]="sFile.public_url" target="_blank"><i class="external alternate icon"></i></a>
+                </td>
+            </tr>
         </tbody>
-        <tfoot *ngIf="getNbOfPages() > 1">
-        <tr>
-            <th colspan="4">
-                <div class="ui right floated pagination menu" >
-                    <a class="icon item" (click)="downPage()">
-                        <i class="left chevron icon"></i>
-                    </a>
-                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                    <a class="icon item" (click)="upPage()">
-                        <i class="right chevron icon"></i>
-                    </a>
-                </div>
-            </th>
-        </tr>
-        </tfoot>
     </table>
-    <div class="ui info message" *ngIf="!artifacts || getDataForCurrentPage().length === 0">
-        {{ 'artifact_none' | translate }}
-    </div>
+    <app-data-table [withFilter]="filter" [withPagination]="10" [columns]="columns" [data]="artifacts"></app-data-table>
 </div>

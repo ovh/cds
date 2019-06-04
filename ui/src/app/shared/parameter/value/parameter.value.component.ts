@@ -7,7 +7,7 @@ import { RepoManagerService } from 'app/service/repomanager/project.repomanager.
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 

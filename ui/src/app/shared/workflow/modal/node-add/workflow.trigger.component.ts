@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {WNode, WNodeTrigger, Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from 'app/model/workflow.model';
-import {WorkflowNodeAddWizardComponent} from 'app/shared/workflow/wizard/node-add/node.wizard.component';
-import {WorkflowWizardOutgoingHookComponent} from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
-import { cloneDeep } from 'lodash';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, WNodeTrigger, Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from 'app/model/workflow.model';
+import { WorkflowNodeAddWizardComponent } from 'app/shared/workflow/wizard/node-add/node.wizard.component';
+import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 
@@ -35,7 +35,7 @@ export class WorkflowTriggerComponent {
     selectedType: string;
     isParent: boolean;
 
-    constructor(private _modalService: SuiModalService) {}
+    constructor(private _modalService: SuiModalService) { }
 
     show(t: string, isP: boolean): void {
         this.selectedType = t;
@@ -65,7 +65,7 @@ export class WorkflowTriggerComponent {
     saveTrigger(): void {
         this.destNode.context.conditions = new WorkflowNodeConditions();
         this.destNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
-        let c = new  WorkflowNodeCondition();
+        let c = new WorkflowNodeCondition();
         c.variable = 'cds.status';
         c.value = PipelineStatus.SUCCESS;
         c.operator = 'eq';
@@ -97,12 +97,12 @@ export class WorkflowTriggerComponent {
     }
 
     nextStep() {
-      this.nodeWizard.goToNextSection().subscribe((section) => {
-        if (section === 'done') {
-          this.saveTrigger();
-        } else {
-          this.currentSection = section;
-        }
-      });
+        this.nodeWizard.goToNextSection().subscribe((section) => {
+            if (section === 'done') {
+                this.saveTrigger();
+            } else {
+                this.currentSection = section;
+            }
+        });
     }
 }

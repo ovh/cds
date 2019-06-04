@@ -11,7 +11,7 @@ import { StepEvent } from 'app/shared/action/step/step.event';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
 import { SharedService } from 'app/shared/shared.service';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
 
 @Component({
