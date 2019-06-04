@@ -1,19 +1,19 @@
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {Action, createSelector, State, StateContext} from '@ngxs/store';
-import {GroupPermission} from 'app/model/group.model';
-import {PermissionValue} from 'app/model/permission.model';
-import {Label} from 'app/model/project.model';
-import {WNode, WNodeHook, WNodeTrigger, Workflow} from 'app/model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
-import {NavbarService} from 'app/service/navbar/navbar.service';
-import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
-import {WorkflowSidebarMode} from 'app/service/workflow/workflow.sidebar.store';
-import {cloneDeep} from 'lodash';
-import {finalize, first, tap} from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { GroupPermission } from 'app/model/group.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { Label } from 'app/model/project.model';
+import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { finalize, first, tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
-import {UpdateModal, UpdateWorkflowRunList} from './workflow.action';
+import { UpdateModal, UpdateWorkflowRunList } from './workflow.action';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
@@ -66,7 +66,7 @@ export class WorkflowState {
     }
 
     constructor(private _http: HttpClient, private _navbarService: NavbarService,
-                private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService) {
+        private _workflowService: WorkflowService, private _workflowRunService: WorkflowRunService) {
     }
 
     @Action(actionWorkflow.OpenEditModal)
@@ -138,13 +138,13 @@ export class WorkflowState {
         let request = this._http.post<Array<string>>(
             `/project/${action.payload.projectKey}/import/workflows`,
             action.payload.workflowCode,
-            {headers, params}
+            { headers, params }
         );
         if (action.payload.wfName) {
             request = this._http.put<Array<string>>(
                 `/project/${action.payload.projectKey}/import/workflows/${action.payload.wfName}`,
                 action.payload.workflowCode,
-                {headers, params}
+                { headers, params }
             );
         }
 
@@ -181,7 +181,7 @@ export class WorkflowState {
                     previousWorkflowName: action.payload.workflowName,
                     changes: wf
                 }));
-                ctx.dispatch(new UpdateModal({workflow: wf}));
+                ctx.dispatch(new UpdateModal({ workflow: wf }));
             } else {
                 let wfUpdated: Workflow = {
                     ...state.workflow,
@@ -200,7 +200,7 @@ export class WorkflowState {
                     ...state,
                     workflow: wf,
                 });
-                ctx.dispatch(new UpdateModal({workflow: wf}));
+                ctx.dispatch(new UpdateModal({ workflow: wf }));
             }
         }));
     }
@@ -221,7 +221,7 @@ export class WorkflowState {
                 canEdit: false
             });
 
-            ctx.dispatch(new ActionProject.DeleteWorkflowInProject({workflowName: action.payload.workflowName}));
+            ctx.dispatch(new ActionProject.DeleteWorkflowInProject({ workflowName: action.payload.workflowName }));
         }));
     }
 
@@ -276,7 +276,7 @@ export class WorkflowState {
     @Action(actionWorkflow.AddGroupInAllWorkflows)
     propagateProjectPermission(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddGroupInAllWorkflows) {
         const state = ctx.getState();
-        let group: GroupPermission = {...action.payload.group, hasChanged: false, updating: false};
+        let group: GroupPermission = { ...action.payload.group, hasChanged: false, updating: false };
         let wf = Object.assign({}, state.workflow, <Workflow>{
             groups: [group].concat(state.workflow.groups)
         });
@@ -296,7 +296,7 @@ export class WorkflowState {
             const state = ctx.getState();
             ctx.setState({
                 ...state,
-                workflow: Object.assign({}, state.workflow, <Workflow>{groups: wf.groups}),
+                workflow: Object.assign({}, state.workflow, <Workflow>{ groups: wf.groups }),
             });
         }));
     }
@@ -310,7 +310,7 @@ export class WorkflowState {
             const state = ctx.getState();
             ctx.setState({
                 ...state,
-                workflow: Object.assign({}, state.workflow, <Workflow>{groups: wf.groups}),
+                workflow: Object.assign({}, state.workflow, <Workflow>{ groups: wf.groups }),
             });
         }));
     }
@@ -323,7 +323,7 @@ export class WorkflowState {
             const state = ctx.getState();
             ctx.setState({
                 ...state,
-                workflow: Object.assign({}, state.workflow, <Workflow>{groups: wf.groups}),
+                workflow: Object.assign({}, state.workflow, <Workflow>{ groups: wf.groups }),
             });
         }));
     }
@@ -508,7 +508,7 @@ export class WorkflowState {
             projectKey: action.payload.projectKey,
             workflowName: action.payload.workflowName,
             changes: workflow
-        })).pipe(tap( () => {
+        })).pipe(tap(() => {
             const stateD = ctx.getState();
             ctx.setState({
                 ...stateD,
@@ -607,13 +607,13 @@ export class WorkflowState {
 
         return this._http.get<string>(
             `/project/${action.payload.projectKey}/export/workflows/${action.payload.workflowName}`,
-            {params, responseType: <any>'text'}
+            { params, responseType: <any>'text' }
         ).pipe(tap((asCode: string) => {
             const state = ctx.getState();
 
             ctx.setState({
                 ...state,
-                workflow: Object.assign({}, state.workflow, <Workflow>{asCode}),
+                workflow: Object.assign({}, state.workflow, <Workflow>{ asCode }),
             });
         }));
     }
@@ -628,12 +628,12 @@ export class WorkflowState {
         return this._http.post<Workflow>(
             `/project/${action.payload.projectKey}/preview/workflows`,
             action.payload.wfCode,
-            {params, headers}
+            { params, headers }
         ).pipe(tap((wf: Workflow) => {
             const state = ctx.getState();
             ctx.setState({
                 ...state,
-                workflow: Object.assign({}, state.workflow, {preview: wf})
+                workflow: Object.assign({}, state.workflow, { preview: wf })
             });
         }));
     }
@@ -643,7 +643,7 @@ export class WorkflowState {
         const state = ctx.getState();
         ctx.setState({
             ...state,
-            workflow: Object.assign({}, state.workflow, {externalChange: true}),
+            workflow: Object.assign({}, state.workflow, { externalChange: true }),
         });
     }
 
@@ -741,24 +741,24 @@ export class WorkflowState {
                         loadingWorkflowRun: false
                     });
                 }),
-            tap((wr: WorkflowRun) => {
-                const stateRun = ctx.getState();
-                let wnr = stateRun.workflowNodeRun;
-                if (wnr && wr.nodes && wr.nodes[wnr.workflow_node_id]) {
-                    let wnrUpdated = wr.nodes[wnr.workflow_node_id].find(wnnr => wnnr.id === wnr.id);
-                    if (wnrUpdated) {
-                        wnr = wnrUpdated;
+                tap((wr: WorkflowRun) => {
+                    const stateRun = ctx.getState();
+                    let wnr = stateRun.workflowNodeRun;
+                    if (wnr && wr.nodes && wr.nodes[wnr.workflow_node_id]) {
+                        let wnrUpdated = wr.nodes[wnr.workflow_node_id].find(wnnr => wnnr.id === wnr.id);
+                        if (wnrUpdated) {
+                            wnr = wnrUpdated;
+                        }
                     }
-                }
-                ctx.setState({
-                    ...stateRun,
-                    projectKey: action.payload.projectKey,
-                    workflowRun: wr,
-                    workflowNodeRun: wnr
-                });
-                ctx.dispatch(new UpdateWorkflowRunList({workflowRun: wr}));
-                return wr;
-            }));
+                    ctx.setState({
+                        ...stateRun,
+                        projectKey: action.payload.projectKey,
+                        workflowRun: wr,
+                        workflowNodeRun: wnr
+                    });
+                    ctx.dispatch(new UpdateWorkflowRunList({ workflowRun: wr }));
+                    return wr;
+                }));
 
     }
 
