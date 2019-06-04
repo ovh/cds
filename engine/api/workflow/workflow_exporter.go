@@ -81,7 +81,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		if err != nil {
 			return wp, err
 		}
-		if err := workflowtemplate.AggregateOnWorkflowTemplate(db, wf.Template); err != nil {
+		if err := workflowtemplate.AggregateOnWorkflowTemplate(ctx, db, wf.Template); err != nil {
 			return wp, err
 		}
 	}

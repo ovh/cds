@@ -1,9 +1,13 @@
 package gorpmapping
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
+
+	"github.com/ovh/cds/engine/api/observability"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -38,6 +42,15 @@ type Query struct {
 func (q Query) Args(as ...interface{}) Query {
 	q.arguments = as
 	return q
+}
+
+func (q Query) Limit(i int) Query {
+	q.query += ` LIMIT ` + strconv.Itoa(i)
+	return q
+}
+
+func (q Query) String() string {
+	return fmt.Sprintf("query: %s - args: %v", q.query, q.arguments)
 }
 
 // IDsToQueryString returns a comma separated list of given ids.
@@ -84,13 +97,17 @@ func Delete(db gorp.SqlExecutor, i interface{}) error {
 }
 
 // GetAll values from database.
-func GetAll(db gorp.SqlExecutor, q Query, i interface{}) error {
+func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) error {
+	_, end := observability.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), observability.Tag("query", q.String()))
+	defer end()
 	_, err := db.Select(i, q.query, q.arguments...)
 	return sdk.WithStack(err)
 }
 
 // Get a value from database.
-func Get(db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
+func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
+	_, end := observability.Span(ctx, fmt.Sprintf("database.Get(%T)", i), observability.Tag("query", q.String()))
+	defer end()
 	if err := db.SelectOne(i, q.query, q.arguments...); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil

@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -14,7 +15,7 @@ import (
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
+func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
@@ -60,11 +61,11 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			//Insert stage's Jobs
 			for x := range s.Jobs {
 				jobAction := &s.Jobs[x]
-				if errs := CheckJob(db, jobAction); errs != nil {
+				if errs := CheckJob(ctx, db, jobAction); errs != nil {
 					log.Debug("CheckJob > %s", errs)
 					return errs
 				}
-				if err := action.CheckChildrenForGroupIDs(db, &jobAction.Action, groupIDs); err != nil {
+				if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
 					return err
 				}
 				jobAction.PipelineStageID = s.ID
@@ -88,11 +89,11 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			for x := range s.Jobs {
 				jobAction := &s.Jobs[x]
 				//Check the job
-				if errs := CheckJob(db, jobAction); errs != nil {
+				if errs := CheckJob(ctx, db, jobAction); errs != nil {
 					log.Debug(">> CheckJob > %s", errs)
 					return errs
 				}
-				if err := action.CheckChildrenForGroupIDs(db, &jobAction.Action, groupIDs); err != nil {
+				if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
 					return err
 				}
 			}
@@ -152,7 +153,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, j.Action.Name, os.Name)
 				}
 			}
-			if err := DeleteStageByID(db, &os, u.ID); err != nil {
+			if err := DeleteStageByID(ctx, db, &os, u.ID); err != nil {
 				return sdk.WrapError(err, "unable to delete stage %d", os.ID)
 			}
 			if msgChan != nil {
@@ -189,7 +190,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 }
 
 //Import insert the pipeline in the project
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -200,7 +201,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 		return sdk.WrapError(errExist, "Import> Unable to check if pipeline %s %s exists", proj.Name, pip.Name)
 	}
 	if !ok {
-		if err := importNew(db, store, proj, pip, u); err != nil {
+		if err := importNew(ctx, db, store, proj, pip, u); err != nil {
 			log.Error("pipeline.Import> %s", err)
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
@@ -226,7 +227,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 	return nil
 }
 
-func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
+func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
 	// check that action used by job can be used by pipeline's project
 	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
@@ -260,11 +261,11 @@ func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *s
 			jobAction := &s.Jobs[i]
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
-			if errs := CheckJob(db, jobAction); errs != nil {
+			if errs := CheckJob(ctx, db, jobAction); errs != nil {
 				log.Warning("pipeline.importNew.CheckJob > %s", errs)
 				return errs
 			}
-			if err := action.CheckChildrenForGroupIDs(db, &jobAction.Action, groupIDs); err != nil {
+			if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
 				return err
 			}
 

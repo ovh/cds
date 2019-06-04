@@ -1,6 +1,8 @@
 package actionplugin
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -32,7 +34,7 @@ func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.
 }
 
 //UpdateGRPCPlugin creates action in database
-func UpdateGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter, userID int64) (*sdk.Action, error) {
+func UpdateGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter, userID int64) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,
 		Type:        sdk.PluginAction,
@@ -48,7 +50,7 @@ func UpdateGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Para
 		Enabled:    true,
 	}
 
-	oldA, err := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, a.Name, action.LoadOptions.Default)
+	oldA, err := action.LoadByTypesAndName(ctx, db, []string{sdk.PluginAction}, a.Name, action.LoadOptions.Default)
 	if err != nil {
 		return nil, err
 	}

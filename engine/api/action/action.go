@@ -1,6 +1,8 @@
 package action
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -97,14 +99,14 @@ func Update(db gorp.SqlExecutor, a *sdk.Action) error {
 }
 
 // RetrieveForGroupAndName try to find an action for given group and name.
-func RetrieveForGroupAndName(db gorp.SqlExecutor, g *sdk.Group, name string) (*sdk.Action, error) {
+func RetrieveForGroupAndName(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group, name string) (*sdk.Action, error) {
 	if g != nil {
 		grp, err := group.LoadGroupByName(db, g.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		a, err := LoadTypeDefaultByNameAndGroupID(db, name, grp.ID,
+		a, err := LoadTypeDefaultByNameAndGroupID(ctx, db, name, grp.ID,
 			LoadOptions.WithRequirements,
 			LoadOptions.WithParameters,
 			LoadOptions.WithGroup,
@@ -119,7 +121,7 @@ func RetrieveForGroupAndName(db gorp.SqlExecutor, g *sdk.Group, name string) (*s
 		return a, nil
 	}
 
-	a, err := LoadTypeDefaultByNameAndGroupID(db, name, group.SharedInfraGroup.ID,
+	a, err := LoadTypeDefaultByNameAndGroupID(ctx, db, name, group.SharedInfraGroup.ID,
 		LoadOptions.WithRequirements,
 		LoadOptions.WithParameters,
 		LoadOptions.WithGroup,
@@ -131,7 +133,7 @@ func RetrieveForGroupAndName(db gorp.SqlExecutor, g *sdk.Group, name string) (*s
 		return a, nil
 	}
 
-	a, err = LoadByTypesAndName(db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
+	a, err = LoadByTypesAndName(ctx, db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
 		LoadOptions.WithRequirements,
 		LoadOptions.WithParameters,
 		LoadOptions.WithGroup,
