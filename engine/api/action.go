@@ -204,10 +204,6 @@ func (api *API) getActionHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoAction)
 		}
 
-		if err := action.LoadOptions.Default(ctx, api.mustDB(), a); err != nil {
-			return err
-		}
-
 		if isGroupAdmin(ctx, g) || isAdmin(ctx) {
 			a.Editable = true
 		}
@@ -542,6 +538,10 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		}
 
 		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
+
+		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
+			return err
+		}
 
 		// aggregate extra data for ui
 		newAction.Editable = true

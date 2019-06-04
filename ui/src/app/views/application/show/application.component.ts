@@ -5,7 +5,7 @@ import { Store } from '@ngxs/store';
 import * as applicationsActions from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';

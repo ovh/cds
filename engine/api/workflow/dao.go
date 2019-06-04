@@ -855,6 +855,8 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 
 // Update updates a workflow
 func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, uptOption UpdateOptions) error {
+	ctx, end := observability.Span(ctx, "workflow.Update")
+	defer end()
 	if err := IsValid(ctx, store, db, w, p); err != nil {
 		return err
 	}

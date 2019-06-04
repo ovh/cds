@@ -11,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -257,6 +258,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
 		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
+	observability.Current(ctx, observability.Tag("VCS_ID", vcsHook.ID))
 	h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,
 		Configurable: false,

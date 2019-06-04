@@ -58,7 +58,10 @@
                     <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
                         {{c.selector.value}}
                     </a>
-                    <a *ngSwitchCase="'link'" class="ui pointing" (click)="c.selector.callback()">
+                    <a *ngSwitchCase="'link-click'" class="ui pointing" (click)="c.selector.callback()">
+                        {{c.selector.value}}
+                    </a>
+                    <a *ngSwitchCase="'link'" class="ui pointing" [href]="c.selector.link" target="_blank">
                         {{c.selector.value}}
                     </a>
                     <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
@@ -70,6 +73,19 @@
                     </app-confirm-button>
                     <span class="ui label {{c.selector.class}}" *ngSwitchCase="'label'">{{c.selector.value |
                         translate}}</span>
+                    <ng-container *ngSwitchCase="'router-link-with-icons'">
+                        <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
+                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate">
+                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
+                        </span>
+                    </ng-container>
+                    <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
+                        <input type="text" value="{{c.selector}}">
+                        <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                            ngxClipboard [cbContent]="c.selector">
+                            <i class="copy icon"></i>
+                        </button>
+                    </div>
                     <ng-container *ngSwitchDefault>
                         <ng-container *ngIf="c.selector && c.translate">
                             {{c.selector | translate}}

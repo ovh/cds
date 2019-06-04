@@ -333,12 +333,13 @@ func (h *HatcheryLocal) WorkersStarted() []string {
 
 // WorkerModelsEnabled returns worker model enabled
 func (h *HatcheryLocal) WorkerModelsEnabled() ([]sdk.Model, error) {
-	//h.ModelLocal.GroupID = *h.Service().GroupID
-	//h.ModelLocal.Group = h.Service().Group
-	//return []sdk.Model{h.ModelLocal}, nil
-
 	// TODO
-	return nil, nil
+	//h.ModelLocal.GroupID = *h.Service().GroupID
+	//h.ModelLocal.Group = &sdk.Group{
+	//	ID:   h.ModelLocal.GroupID,
+	//	Name: h.ServiceName(),
+	//}
+	return []sdk.Model{h.ModelLocal}, nil
 }
 
 // PrivateKey TODO.

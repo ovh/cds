@@ -1,6 +1,7 @@
 package workflowtemplate
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -77,7 +78,7 @@ func TestAggregateTemplateInstanceOnWorkflow(t *testing.T) {
 
 	ws := []*sdk.Workflow{{ID: 4}, {ID: 5}, {ID: 6}}
 
-	assert.Nil(t, AggregateTemplateInstanceOnWorkflow(db, ws...))
+	assert.Nil(t, AggregateTemplateInstanceOnWorkflow(context.TODO(), db, ws...))
 
 	if !assert.NotNil(t, ws[0].TemplateInstance) {
 		t.FailNow()

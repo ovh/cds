@@ -225,7 +225,7 @@ func GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(db gorp.SqlExecu
 }
 
 // GetInstancesByWorkflowIDs returns all workflow template instances by workflow ids.
-func GetInstancesByWorkflowIDs(db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.WorkflowTemplateInstance, error) {
+func GetInstancesByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.WorkflowTemplateInstance, error) {
 	wtis := []sdk.WorkflowTemplateInstance{}
 
 	if _, err := db.Select(&wtis,

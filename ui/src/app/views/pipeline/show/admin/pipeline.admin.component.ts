@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { DeletePipeline, UpdatePipeline } from 'app/store/pipelines.action';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { ToastService } from '../../../../shared/toast/ToastService';

@@ -16,12 +16,10 @@ module.exports = function (config) {
         files: [
             {pattern: './src/test.ts', watched: false},
             {pattern: './src/assets/**/*.png', watched: false, included: false, served: true},
-            {pattern: './node_modules/lodash/lodash.js', watch: false, included: true, served: true},
             {pattern: './node_modules/jquery/dist/jquery.js', watch: false, included: true, served: true},
             {pattern: './node_modules/semantic-ui/dist/semantic.js', watch: false, included: true, served: true},
             {pattern: './node_modules/codemirror/lib/codemirror.js', watch: false, included: true, served: true},
             {pattern: './node_modules/dragula/dist/dragula.js', watch: false, included: true, served: true}
-
         ],
         client: {
             clearContext: false // leave Jasmine Spec Runner output visible in browser

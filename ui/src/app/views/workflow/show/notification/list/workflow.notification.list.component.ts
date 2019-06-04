@@ -1,13 +1,13 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import { NotificationService } from 'app/service/notification/notification.service';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddNotificationWorkflow, DeleteNotificationWorkflow, UpdateNotificationWorkflow } from 'app/store/workflow.action';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
-import { Project } from '../../../../../model/project.model';
-import { Workflow, WorkflowNotification } from '../../../../../model/workflow.model';
-import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-notification-list',
@@ -41,8 +41,7 @@ export class WorkflowNotificationListComponent {
         private _notificationService: NotificationService,
         private _translate: TranslateService,
         private _toast: ToastService
-    ) {
-    }
+    ) { }
 
     createNotification(n: WorkflowNotification): void {
         this.loading = true;
