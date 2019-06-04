@@ -118,7 +118,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := workermodel.Update(tx, old, data)
+		model, err := workermodel.Update(ctx, tx, old, data)
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -53,9 +54,9 @@ func TestActionModelRequirements_WithExistingRequirements(t *testing.T) {
 	}
 	test.NoError(t, action.Insert(db, &a))
 
-	test.NoError(t, ActionModelRequirements(nil, func() *gorp.DbMap { return db }))
+	test.NoError(t, ActionModelRequirements(context.TODO(), nil, func() *gorp.DbMap { return db }))
 
-	aUpdated, err := action.LoadByID(db, a.ID, action.LoadOptions.WithRequirements)
+	aUpdated, err := action.LoadByID(context.TODO(), db, a.ID, action.LoadOptions.WithRequirements)
 	test.NoError(t, err)
 
 	test.Equal(t, 2, len(aUpdated.Requirements))
@@ -82,7 +83,7 @@ func TestActionModelRequirements_WithoutExistingRequirements(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, migrateActionRequirementForModel(db, m))
+	test.NoError(t, migrateActionRequirementForModel(context.TODO(), db, m))
 }
 
 func TestActionModelRequirements_WithLockedExistingRequirements(t *testing.T) {
@@ -122,11 +123,11 @@ func TestActionModelRequirements_WithLockedExistingRequirements(t *testing.T) {
 	tx, err := db.Begin()
 	test.NoError(t, err)
 	defer func() { _ = tx.Rollback() }()
-	rs, err := action.GetRequirementsTypeModelAndValueStartByWithLock(tx, m.Name)
+	rs, err := action.GetRequirementsTypeModelAndValueStartByWithLock(context.TODO(), tx, m.Name)
 	test.NoError(t, err)
 	test.Equal(t, 1, len(rs))
 
-	rs, err = action.GetRequirementsTypeModelAndValueStartByWithLock(db, m.Name)
+	rs, err = action.GetRequirementsTypeModelAndValueStartByWithLock(context.TODO(), db, m.Name)
 	test.NoError(t, err)
 	test.Equal(t, 0, len(rs))
 }

@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -13,8 +14,8 @@ import (
 )
 
 // DeletePipelineActionByStage Delete all action from a stage
-func DeletePipelineActionByStage(db gorp.SqlExecutor, stageID int64) error {
-	pas, err := getPipelineActionsByStageID(db, stageID)
+func DeletePipelineActionByStage(ctx context.Context, db gorp.SqlExecutor, stageID int64) error {
+	pas, err := getPipelineActionsByStageID(ctx, db, stageID)
 	if err != nil {
 		return err
 	}
@@ -71,8 +72,8 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 }
 
 // UpdateJob  updates the job by actionData.PipelineActionID and actionData.ID
-func UpdateJob(db gorp.SqlExecutor, job *sdk.Job) error {
-	clearJoinedAction, err := action.LoadByID(db, job.Action.ID, action.LoadOptions.Default)
+func UpdateJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
+	clearJoinedAction, err := action.LoadByID(ctx, db, job.Action.ID, action.LoadOptions.Default)
 	if err != nil {
 		return err
 	}
@@ -104,7 +105,7 @@ func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 }
 
 //CheckJob validate a job
-func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
+func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 	t := time.Now()
 	log.Debug("CheckJob> Begin")
 	defer log.Debug("CheckJob> End (%d ns)", time.Since(t).Nanoseconds())
@@ -114,7 +115,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		step := &job.Action.Actions[i]
 		log.Debug("CheckJob> Checking step %s", step.Name)
 
-		a, err := action.RetrieveForGroupAndName(db, step.Group, step.Name)
+		a, err := action.RetrieveForGroupAndName(ctx, db, step.Group, step.Name)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNoAction) {
 				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))

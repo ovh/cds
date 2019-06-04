@@ -1,6 +1,8 @@
 package migrate
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -8,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func CleanArtifactBuiltinActions(store cache.Store, DBFunc func() *gorp.DbMap) error {
+func CleanArtifactBuiltinActions(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap) error {
 	db := DBFunc()
 
 	log.Info("migrate>CleanArtifactBuiltinActions> Start migration")
@@ -25,7 +27,7 @@ func CleanArtifactBuiltinActions(store cache.Store, DBFunc func() *gorp.DbMap) e
 
 	log.Info("migrate>CleanArtifactBuiltinActions> %d pipelines to migrate", len(all))
 	for i := range all {
-		if err := migratePipelineCleanArtifactBuiltinActions(db, store, all[i].ProjectKey, all[i].PipelineName); err != nil {
+		if err := migratePipelineCleanArtifactBuiltinActions(ctx, db, store, all[i].ProjectKey, all[i].PipelineName); err != nil {
 			log.Error("cannot migrate pipeline %s/%s: %v", all[i].ProjectKey, all[i].PipelineName, err)
 			continue
 		}
@@ -35,7 +37,7 @@ func CleanArtifactBuiltinActions(store cache.Store, DBFunc func() *gorp.DbMap) e
 	return nil
 }
 
-func migratePipelineCleanArtifactBuiltinActions(db *gorp.DbMap, store cache.Store, projetKey, pipelineName string) error {
+func migratePipelineCleanArtifactBuiltinActions(ctx context.Context, db *gorp.DbMap, store cache.Store, projetKey, pipelineName string) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -74,7 +76,7 @@ func migratePipelineCleanArtifactBuiltinActions(db *gorp.DbMap, store cache.Stor
 					step.Parameters = append(step.Parameters[:id], step.Parameters[id+1:]...)
 				}
 			}
-			if err := pipeline.UpdateJob(tx, &j); err != nil {
+			if err := pipeline.UpdateJob(ctx, tx, &j); err != nil {
 				return sdk.WithStack(err)
 			}
 		}

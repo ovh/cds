@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"io"
 
 	"github.com/go-gorp/gorp"
@@ -12,7 +13,7 @@ import (
 )
 
 // AddBinary add binary to the plugin, uploading it to objectsore and updates databases
-func AddBinary(db gorp.SqlExecutor, storage objectstore.Driver, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
+func AddBinary(ctx context.Context, db gorp.SqlExecutor, storage objectstore.Driver, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
 	objectPath, err := storage.Store(b, r)
 	if err != nil {
 		return err
@@ -22,7 +23,7 @@ func AddBinary(db gorp.SqlExecutor, storage objectstore.Driver, p *sdk.GRPCPlugi
 	p.Binaries = append(p.Binaries, *b)
 
 	if p.Type == sdk.GRPCPluginAction {
-		act, errA := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
+		act, errA := action.LoadByTypesAndName(ctx, db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
 		if errA != nil {
 			return sdk.WrapError(errA, "cannot load public action for plugin type action")
 		}
@@ -49,7 +50,7 @@ func AddBinary(db gorp.SqlExecutor, storage objectstore.Driver, p *sdk.GRPCPlugi
 }
 
 // UpdateBinary updates binary for the plugin, uploading it to objectsore and updates databases
-func UpdateBinary(db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
+func UpdateBinary(ctx context.Context, db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, r io.ReadCloser) error {
 	var oldBinary *sdk.GRPCPluginBinary
 	var index int
 	for i := range p.Binaries {
@@ -77,7 +78,7 @@ func UpdateBinary(db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.
 	p.Binaries[index] = *b
 
 	if p.Type == sdk.GRPCPluginAction {
-		act, errA := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
+		act, errA := action.LoadByTypesAndName(ctx, db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
 		if errA != nil {
 			return sdk.WrapError(errA, "cannot load public action for plugin type action")
 		}

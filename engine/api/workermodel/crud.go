@@ -1,6 +1,7 @@
 package workermodel
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -69,7 +70,7 @@ func Create(db gorp.SqlExecutor, data sdk.Model, ident sdk.Identifiable) (*sdk.M
 }
 
 // Update from given data.
-func Update(db gorp.SqlExecutor, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
+func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.Model) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
@@ -129,7 +130,7 @@ func Update(db gorp.SqlExecutor, old *sdk.Model, data sdk.Model) (*sdk.Model, er
 	// if the model has been renamed, we will have to update requirements
 	if oldPath != newPath {
 		// select requirements to update
-		rs, err := action.GetRequirementsTypeModelAndValueStartBy(db, oldPath)
+		rs, err := action.GetRequirementsTypeModelAndValueStartBy(ctx, db, oldPath)
 		if err != nil {
 			return nil, err
 		}

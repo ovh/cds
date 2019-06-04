@@ -232,7 +232,7 @@ func (api *API) InitRouter() {
 	// Pull workflows
 	r.Handle("/project/{key}/pull/workflows/{permWorkflowName}", Scope(sdk.AccessTokenScopeProject), r.GET(api.getWorkflowPullHandler))
 	// Push workflows
-	r.Handle("/project/{permProjectKey}/push/workflows", Scope(sdk.AccessTokenScopeProject), r.POST(api.postWorkflowPushHandler))
+	r.Handle("/project/{permProjectKey}/push/workflows", Scope(sdk.AccessTokenScopeProject), r.POST(api.postWorkflowPushHandler, EnableTracing()))
 
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", Scope(sdk.AccessTokenScopeProject), r.GET(api.getWorkflowAllRunsHandler, EnableTracing()))

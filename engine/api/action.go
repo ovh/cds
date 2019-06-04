@@ -26,7 +26,7 @@ func (api *API) getActionsHandler() service.Handler {
 		var as []sdk.Action
 		var err error
 		if isMaintainer(ctx) || isAdmin(ctx) {
-			as, err = action.LoadAllByTypes(api.mustDB(),
+			as, err = action.LoadAllByTypes(ctx, api.mustDB(),
 				[]string{sdk.DefaultAction},
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
@@ -34,7 +34,7 @@ func (api *API) getActionsHandler() service.Handler {
 				action.LoadOptions.WithAudits,
 			)
 		} else {
-			as, err = action.LoadAllTypeDefaultByGroupIDs(api.mustDB(),
+			as, err = action.LoadAllTypeDefaultByGroupIDs(ctx, api.mustDB(),
 				append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID),
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
@@ -65,7 +65,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 			groupIDs[i] = proj.ProjectGroups[i].Group.ID
 		}
 
-		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(api.mustDB(),
+		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(ctx, api.mustDB(),
 			append(groupIDs, group.SharedInfraGroup.ID),
 			action.LoadOptions.WithRequirements,
 			action.LoadOptions.WithParameters,
@@ -97,7 +97,7 @@ func (api *API) getActionsForGroupHandler() service.Handler {
 			return sdk.ErrForbidden
 		}
 
-		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(api.mustDB(),
+		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(ctx, api.mustDB(),
 			[]int64{g.ID, group.SharedInfraGroup.ID},
 			action.LoadOptions.WithRequirements,
 			action.LoadOptions.WithParameters,
@@ -138,7 +138,7 @@ func (api *API) postActionHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// check that no action already exists for same group/name
-		current, err := action.LoadTypeDefaultByNameAndGroupID(tx, data.Name, grp.ID)
+		current, err := action.LoadTypeDefaultByNameAndGroupID(ctx, tx, data.Name, grp.ID)
 		if err != nil {
 			return err
 		}
@@ -150,7 +150,7 @@ func (api *API) postActionHandler() service.Handler {
 		data.Type = sdk.DefaultAction
 
 		// check that given children exists and can be used
-		if err := action.CheckChildrenForGroupIDs(tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
+		if err := action.CheckChildrenForGroupIDs(ctx, tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
 			return err
 		}
 
@@ -163,7 +163,7 @@ func (api *API) postActionHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(ctx, api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -193,7 +193,7 @@ func (api *API) getActionHandler() service.Handler {
 			return err
 		}
 
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID,
+		a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID,
 			action.LoadOptions.Default,
 			action.LoadOptions.WithAudits,
 		)
@@ -204,7 +204,7 @@ func (api *API) getActionHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoAction)
 		}
 
-		if err := action.LoadOptions.Default(api.mustDB(), a); err != nil {
+		if err := action.LoadOptions.Default(ctx, api.mustDB(), a); err != nil {
 			return err
 		}
 
@@ -228,7 +228,7 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -261,7 +261,7 @@ func (api *API) putActionHandler() service.Handler {
 			}
 
 			// check that no action already exists for same group/name
-			current, err := action.LoadTypeDefaultByNameAndGroupID(tx, data.Name, grp.ID)
+			current, err := action.LoadTypeDefaultByNameAndGroupID(ctx, tx, data.Name, grp.ID)
 			if err != nil {
 				return err
 			}
@@ -275,7 +275,7 @@ func (api *API) putActionHandler() service.Handler {
 		data.Type = sdk.DefaultAction
 
 		// check that given children exists and can be used, and no loop exists
-		if err := action.CheckChildrenForGroupIDsWithLoop(tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
+		if err := action.CheckChildrenForGroupIDsWithLoop(ctx, tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
 			return err
 		}
 
@@ -287,7 +287,7 @@ func (api *API) putActionHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(ctx, api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -317,7 +317,7 @@ func (api *API) deleteActionHandler() service.Handler {
 			return err
 		}
 
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID)
 		if err != nil {
 			return err
 		}
@@ -363,7 +363,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 			return err
 		}
 
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID)
 		if err != nil {
 			return err
 		}
@@ -440,7 +440,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		old, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, grp.ID, action.LoadOptions.Default)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, grp.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -448,7 +448,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoAction)
 		}
 
-		aa, err := action.GetAuditByActionIDAndID(api.mustDB(), old.ID, auditID)
+		aa, err := action.GetAuditByActionIDAndID(ctx, api.mustDB(), old.ID, auditID)
 		if err != nil {
 			return err
 		}
@@ -489,7 +489,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			}
 
 			// check that no action already exists for same group/name
-			current, err := action.LoadTypeDefaultByNameAndGroupID(tx, ea.Name, newGrp.ID)
+			current, err := action.LoadTypeDefaultByNameAndGroupID(ctx, tx, ea.Name, newGrp.ID)
 			if err != nil {
 				return err
 			}
@@ -509,7 +509,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		// if no group name given for child, first search an action for shared.infra for backward compatibility
 		// else search a builtin or plugin action
 		for i := range data.Actions {
-			a, err := action.RetrieveForGroupAndName(tx, data.Actions[i].Group, data.Actions[i].Name)
+			a, err := action.RetrieveForGroupAndName(ctx, tx, data.Actions[i].Group, data.Actions[i].Name)
 			if err != nil {
 				return err
 			}
@@ -524,7 +524,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		data.ID = old.ID
 
 		// check that given children exists and can be used, and no loop exists
-		if err := action.CheckChildrenForGroupIDsWithLoop(tx, &data, []int64{group.SharedInfraGroup.ID, newGrp.ID}); err != nil {
+		if err := action.CheckChildrenForGroupIDsWithLoop(ctx, tx, &data, []int64{group.SharedInfraGroup.ID, newGrp.ID}); err != nil {
 			return err
 		}
 
@@ -536,7 +536,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(ctx, api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -562,7 +562,7 @@ func (api *API) getActionUsageHandler() service.Handler {
 			return err
 		}
 
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID)
 		if err != nil {
 			return err
 		}
@@ -591,7 +591,7 @@ func (api *API) getActionExportHandler() service.Handler {
 			return err
 		}
 
-		a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
+		a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -678,7 +678,7 @@ func (api *API) importActionHandler() service.Handler {
 		// if no group name given for child, first search an action for shared.infra for backward compatibility
 		// else search a builtin or plugin action
 		for i := range data.Actions {
-			a, err := action.RetrieveForGroupAndName(tx, data.Actions[i].Group, data.Actions[i].Name)
+			a, err := action.RetrieveForGroupAndName(ctx, tx, data.Actions[i].Group, data.Actions[i].Name)
 			if err != nil {
 				return err
 			}
@@ -691,7 +691,7 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		// check if action exists in database
-		old, err := action.LoadTypeDefaultByNameAndGroupID(tx, data.Name, grp.ID, action.LoadOptions.Default)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(ctx, tx, data.Name, grp.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -702,7 +702,7 @@ func (api *API) importActionHandler() service.Handler {
 			data.ID = old.ID
 
 			// check that given children exists and can be used, and no loop exists
-			if err := action.CheckChildrenForGroupIDsWithLoop(tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
+			if err := action.CheckChildrenForGroupIDsWithLoop(ctx, tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
 				return err
 			}
 
@@ -711,7 +711,7 @@ func (api *API) importActionHandler() service.Handler {
 			}
 		} else {
 			// check that given children exists and can be used
-			if err := action.CheckChildrenForGroupIDs(tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
+			if err := action.CheckChildrenForGroupIDs(ctx, tx, &data, []int64{group.SharedInfraGroup.ID, grp.ID}); err != nil {
 				return err
 			}
 
@@ -725,7 +725,7 @@ func (api *API) importActionHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		newAction, err := action.LoadByID(api.mustDB(), data.ID, action.LoadOptions.Default)
+		newAction, err := action.LoadByID(ctx, api.mustDB(), data.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -764,7 +764,7 @@ func (api *API) getActionsRequirements() service.Handler {
 
 func (api *API) getActionsBuiltinHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		as, err := action.LoadAllByTypes(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction},
+		as, err := action.LoadAllByTypes(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction},
 			action.LoadOptions.WithRequirements,
 			action.LoadOptions.WithParameters,
 			action.LoadOptions.WithGroup,
@@ -783,7 +783,7 @@ func (api *API) getActionBuiltinHandler() service.Handler {
 
 		actionName := vars["permActionBuiltinName"]
 
-		a, err := action.LoadByTypesAndName(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
+		a, err := action.LoadByTypesAndName(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
 			action.LoadOptions.WithRequirements,
 			action.LoadOptions.WithParameters,
 			action.LoadOptions.WithGroup,
@@ -805,7 +805,7 @@ func (api *API) getActionBuiltinUsageHandler() service.Handler {
 
 		actionName := vars["permActionBuiltinName"]
 
-		a, err := action.LoadByTypesAndName(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
+		a, err := action.LoadByTypesAndName(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
 			action.LoadOptions.WithRequirements,
 			action.LoadOptions.WithParameters,
 			action.LoadOptions.WithGroup,

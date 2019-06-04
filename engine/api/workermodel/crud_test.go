@@ -256,7 +256,7 @@ package workermodel_test
 				}
 			}
 
-			res, err := workermodel.Update(db, test.User, test.Old, test.Data)
+			res, err := workermodel.Update(context.TODO(), db, test.User, test.Old, test.Data)
 			if test.Error {
 				assert.Error(t, err)
 			} else {

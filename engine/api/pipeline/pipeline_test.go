@@ -254,7 +254,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertJob(db, &job3, 0, &pip3))
 
-	pips, err := pipeline.LoadByWorkerModel(db, &model1)
+	pips, err := pipeline.LoadByWorkerModel(context.TODO(), db, &model1)
 	assert.NoError(t, err)
 	if !assert.Equal(t, 2, len(pips)) {
 		t.FailNow()
@@ -263,7 +263,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	assert.Equal(t, pip1.Name, pips[0].Name)
 	assert.Equal(t, pip2.Name, pips[1].Name)
 
-	pips, err = pipeline.LoadByWorkerModel(db, &model2)
+	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, &model2)
 	assert.NoError(t, err)
 
 	if !assert.Equal(t, 1, len(pips)) {
@@ -271,11 +271,11 @@ func TestLoadByWorkerModel(t *testing.T) {
 	}
 	assert.Equal(t, pip3.Name, pips[0].Name)
 
-	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(db, &model1, sdk.GroupsToIDs([]sdk.Group{}))
+	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(context.TODO(), db, &model1, sdk.GroupsToIDs([]sdk.Group{}))
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pips))
 
-	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(db, &model1, sdk.GroupsToIDs([]sdk.Group{*g2}))
+	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(context.TODO(), db, &model1, sdk.GroupsToIDs([]sdk.Group{*g2}))
 	assert.NoError(t, err)
 	if !assert.Equal(t, 2, len(pips)) {
 		t.FailNow()
@@ -284,7 +284,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	assert.Equal(t, pip1.Name, pips[0].Name)
 	assert.Equal(t, pip2.Name, pips[1].Name)
 
-	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(db, &model2, sdk.GroupsToIDs([]sdk.Group{*g2}))
+	pips, err = pipeline.LoadByWorkerModelAndGroupIDs(context.TODO(), db, &model2, sdk.GroupsToIDs([]sdk.Group{*g2}))
 	assert.NoError(t, err)
 
 	if !assert.Equal(t, 1, len(pips)) {

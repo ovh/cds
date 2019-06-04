@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -13,7 +14,7 @@ import (
 )
 
 // ActionModelRequirements adds group name for worker model not shared.infra on existing action's and job's requirements.
-func ActionModelRequirements(store cache.Store, DBFunc func() *gorp.DbMap) error {
+func ActionModelRequirements(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap) error {
 	db := DBFunc()
 
 	log.Info("migrate>ActionModelRequirements> Start migration")
@@ -29,7 +30,7 @@ func ActionModelRequirements(store cache.Store, DBFunc func() *gorp.DbMap) error
 	// for each worker model try to migrate existing requirements
 	for i := range wms {
 		log.Info("migrate>ActionModelRequirements> Migrate requirements for model %s/%s (%d/%d)", wms[i].Group.Name, wms[i].Name, i+1, len(wms))
-		if err := migrateActionRequirementForModel(db, wms[i]); err != nil {
+		if err := migrateActionRequirementForModel(ctx, db, wms[i]); err != nil {
 			return err
 		}
 	}
@@ -38,7 +39,7 @@ func ActionModelRequirements(store cache.Store, DBFunc func() *gorp.DbMap) error
 	return nil
 }
 
-func migrateActionRequirementForModel(db *gorp.DbMap, wm sdk.Model) error {
+func migrateActionRequirementForModel(ctx context.Context, db *gorp.DbMap, wm sdk.Model) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -46,7 +47,7 @@ func migrateActionRequirementForModel(db *gorp.DbMap, wm sdk.Model) error {
 	defer tx.Rollback() // nolint
 
 	// select and lock requirements to migrate for given model
-	rs, err := action.GetRequirementsTypeModelAndValueStartByWithLock(tx, wm.Name)
+	rs, err := action.GetRequirementsTypeModelAndValueStartByWithLock(ctx, tx, wm.Name)
 	if err != nil {
 		return err
 	}

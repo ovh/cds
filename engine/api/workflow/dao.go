@@ -1318,7 +1318,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
+		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
 			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 
