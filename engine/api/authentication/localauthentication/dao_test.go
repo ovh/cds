@@ -1,6 +1,7 @@
 package localauthentication_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -30,11 +31,11 @@ func TestLocalAutenticationDAO(t *testing.T) {
 
 	assert.NoError(t, localauthentication.Insert(db, &localAuth))
 
-	ok, err := localauthentication.Authentify(db, u.Username, localAuth.ClearPassword)
+	ok, err := localauthentication.Authentify(context.TODO(), db, u.Username, localAuth.ClearPassword)
 	assert.NoError(t, err)
 	assert.True(t, ok)
 
-	ok, err = localauthentication.Authentify(db, u.Username, "wrong password")
+	ok, err = localauthentication.Authentify(context.TODO(), db, u.Username, "wrong password")
 	assert.NoError(t, err)
 	assert.False(t, ok)
 

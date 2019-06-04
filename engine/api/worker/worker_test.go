@@ -1,6 +1,7 @@
 package worker_test
 
 import (
+	"context"
 	"runtime"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ func TestDAO(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	workers, err := worker.LoadAll(db)
+	workers, err := worker.LoadAll(context.TODO(), db)
 	test.NoError(t, err)
 	for _, w := range workers {
 		worker.Delete(db, w.ID)
@@ -42,7 +43,7 @@ func TestDAO(t *testing.T) {
 		t.Fatalf("Cannot insert worker %+v: %v", w, err)
 	}
 
-	wks, err := worker.LoadByHatcheryID(db, h.ID)
+	wks, err := worker.LoadByHatcheryID(context.TODO(), db, h.ID)
 	test.NoError(t, err)
 	assert.Len(t, wks, 1)
 
@@ -50,7 +51,7 @@ func TestDAO(t *testing.T) {
 		assert.Equal(t, "foofoo", wks[0].ID)
 	}
 
-	wk, err := worker.LoadByID(db, "foofoo")
+	wk, err := worker.LoadByID(context.TODO(), db, "foofoo")
 	test.NoError(t, err)
 	assert.NotNil(t, wk)
 	if wk != nil {
@@ -103,7 +104,7 @@ func TestAuthentication(t *testing.T) {
 	_, err = worker.VerifyToken(db, "this is not a jwt token")
 	assert.Error(t, err)
 
-	wk, err := worker.LoadByAccessTokenID(db, token.ID)
+	wk, err := worker.LoadByAccessTokenID(context.TODO(), db, token.ID)
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 	assert.Equal(t, w.Name, wk.Name)
@@ -115,8 +116,8 @@ func TestAuthentication(t *testing.T) {
 func TestDeadWorkers(t *testing.T) {
 	db, _, end := test.SetupPG(t)
 	defer end()
-	test.NoError(t, worker.DisableDeadWorkers(db))
-	test.NoError(t, worker.DeleteDeadWorkers(db))
+	test.NoError(t, worker.DisableDeadWorkers(context.TODO(), db))
+	test.NoError(t, worker.DeleteDeadWorkers(context.TODO(), db))
 }
 
 func TestRegister(t *testing.T) {
@@ -151,7 +152,7 @@ func TestRegister(t *testing.T) {
 	}
 	assert.True(t, ok)
 
-	wk, err := worker.LoadByAccessTokenID(db, claims.ID)
+	wk, err := worker.LoadByAccessTokenID(context.TODO(), db, claims.ID)
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, wk.ID)

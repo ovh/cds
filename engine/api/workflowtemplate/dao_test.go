@@ -1,6 +1,7 @@
 package workflowtemplate_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -65,31 +66,31 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, int64(11), tmpls[0].Version)
 
 	// LoadByID
-	result, err := workflowtemplate.LoadByID(db, 0)
+	result, err := workflowtemplate.LoadByID(context.TODO(), db, 0)
 	assert.Nil(t, err)
 	assert.Nil(t, result)
-	result, err = workflowtemplate.LoadByID(db, tmpls[0].ID)
+	result, err = workflowtemplate.LoadByID(context.TODO(), db, tmpls[0].ID)
 	assert.Nil(t, err)
 	assert.Equal(t, result.Name, tmpls[0].Name)
 
 	// LoadBySlugAndGroupID
-	result, err = workflowtemplate.LoadBySlugAndGroupID(db, tmpls[0].Slug, grp1.ID)
+	result, err = workflowtemplate.LoadBySlugAndGroupID(context.TODO(), db, tmpls[0].Slug, grp1.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, result.Name, tmpls[0].Name)
 
 	// LoadAllByGroupIDs
-	results, err := workflowtemplate.LoadAllByGroupIDs(db, nil)
+	results, err := workflowtemplate.LoadAllByGroupIDs(context.TODO(), db, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(results))
-	results, err = workflowtemplate.LoadAllByGroupIDs(db, []int64{grp1.ID, grp2.ID})
+	results, err = workflowtemplate.LoadAllByGroupIDs(context.TODO(), db, []int64{grp1.ID, grp2.ID})
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(results))
 
 	// LoadAllByIDs
-	results, err = workflowtemplate.LoadAllByIDs(db, nil)
+	results, err = workflowtemplate.LoadAllByIDs(context.TODO(), db, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(results))
-	results, err = workflowtemplate.LoadAllByIDs(db, []int64{tmpls[0].ID, tmpls[1].ID})
+	results, err = workflowtemplate.LoadAllByIDs(context.TODO(), db, []int64{tmpls[0].ID, tmpls[1].ID})
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(results))
 

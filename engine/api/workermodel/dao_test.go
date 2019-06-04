@@ -1,6 +1,7 @@
 package workermodel_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 )
 
 func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
-	models, err := workermodel.LoadAll(db, nil)
+	models, err := workermodel.LoadAll(context.TODO(), db, nil)
 	test.NoError(t, err)
 
 	for _, m := range models {
@@ -116,19 +117,19 @@ func TestLoadWorkerModelsByNameAndGroupIDs(t *testing.T) {
 	insertWorkerModel(t, db, "SameName", g2.ID)
 	insertWorkerModel(t, db, "DiffName", g2.ID)
 
-	wms, err := workermodel.LoadAllByNameAndGroupIDs(db, "SameName", []int64{g1.ID})
+	wms, err := workermodel.LoadAllByNameAndGroupIDs(context.TODO(), db, "SameName", []int64{g1.ID})
 	test.NoError(t, err)
 	test.Equal(t, 1, len(wms))
 
-	wms, err = workermodel.LoadAllByNameAndGroupIDs(db, "SameName", []int64{g1.ID, g2.ID})
+	wms, err = workermodel.LoadAllByNameAndGroupIDs(context.TODO(), db, "SameName", []int64{g1.ID, g2.ID})
 	test.NoError(t, err)
 	test.Equal(t, 2, len(wms))
 
-	wms, err = workermodel.LoadAllByNameAndGroupIDs(db, "DiffName", []int64{g1.ID, g2.ID})
+	wms, err = workermodel.LoadAllByNameAndGroupIDs(context.TODO(), db, "DiffName", []int64{g1.ID, g2.ID})
 	test.NoError(t, err)
 	test.Equal(t, 1, len(wms))
 
-	wms, err = workermodel.LoadAllByNameAndGroupIDs(db, "Unknown", []int64{g1.ID, g2.ID})
+	wms, err = workermodel.LoadAllByNameAndGroupIDs(context.TODO(), db, "Unknown", []int64{g1.ID, g2.ID})
 	test.NoError(t, err)
 	test.Equal(t, 0, len(wms))
 }
@@ -159,31 +160,31 @@ func TestLoadAll(t *testing.T) {
 	}
 	test.NoError(t, workermodel.Insert(db, &m3))
 
-	models, err := workermodel.LoadAll(db, nil)
+	models, err := workermodel.LoadAll(context.TODO(), db, nil)
 	test.NoError(t, err)
 	test.Equal(t, 3, len(models))
 	test.Equal(t, m1.ID, models[0].ID)
 	test.Equal(t, m2.ID, models[1].ID)
 	test.Equal(t, m3.ID, models[2].ID)
 
-	models, err = workermodel.LoadAll(db, &workermodel.LoadFilter{})
+	models, err = workermodel.LoadAll(context.TODO(), db, &workermodel.LoadFilter{})
 	test.NoError(t, err)
 	test.Equal(t, 0, len(models))
 
-	models, err = workermodel.LoadAll(db, &workermodel.LoadFilter{
+	models, err = workermodel.LoadAll(context.TODO(), db, &workermodel.LoadFilter{
 		State: workermodel.StateActive,
 	})
 	test.NoError(t, err)
 	test.Equal(t, 1, len(models))
 	test.Equal(t, m1.ID, models[0].ID)
 
-	models, err = workermodel.LoadAll(db, &workermodel.LoadFilter{
+	models, err = workermodel.LoadAll(context.TODO(), db, &workermodel.LoadFilter{
 		Binary: "unknown",
 	})
 	test.NoError(t, err)
 	test.Equal(t, 0, len(models))
 
-	models, err = workermodel.LoadAll(db, &workermodel.LoadFilter{
+	models, err = workermodel.LoadAll(context.TODO(), db, &workermodel.LoadFilter{
 		Binary: "capa_1",
 	})
 	test.NoError(t, err)
@@ -191,7 +192,7 @@ func TestLoadAll(t *testing.T) {
 	test.Equal(t, m1.ID, models[0].ID)
 	test.Equal(t, m3.ID, models[1].ID)
 
-	models, err = workermodel.LoadAll(db, &workermodel.LoadFilter{
+	models, err = workermodel.LoadAll(context.TODO(), db, &workermodel.LoadFilter{
 		State:  workermodel.StateActive,
 		Binary: "capa_1",
 	})
@@ -232,12 +233,12 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 	}
 	test.NoError(t, workermodel.Insert(db, &m4))
 
-	wms, err := workermodel.LoadAllByGroupIDs(db, []int64{g1.ID}, nil)
+	wms, err := workermodel.LoadAllByGroupIDs(context.TODO(), db, []int64{g1.ID}, nil)
 	test.NoError(t, err)
 	test.Equal(t, 1, len(wms))
 	test.Equal(t, m1.ID, wms[0].ID)
 
-	wms, err = workermodel.LoadAllByGroupIDs(db, []int64{g1.ID, g2.ID}, nil)
+	wms, err = workermodel.LoadAllByGroupIDs(context.TODO(), db, []int64{g1.ID, g2.ID}, nil)
 	test.NoError(t, err)
 	test.Equal(t, 4, len(wms))
 	test.Equal(t, m1.ID, wms[0].ID)
@@ -245,7 +246,7 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 	test.Equal(t, m3.ID, wms[2].ID)
 	test.Equal(t, m4.ID, wms[3].ID)
 
-	wms, err = workermodel.LoadAllByGroupIDs(db, []int64{g1.ID, g2.ID}, &workermodel.LoadFilter{
+	wms, err = workermodel.LoadAllByGroupIDs(context.TODO(), db, []int64{g1.ID, g2.ID}, &workermodel.LoadFilter{
 		Binary: "capa_2",
 	})
 	test.NoError(t, err)
@@ -253,7 +254,7 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 	test.Equal(t, m2.ID, wms[0].ID)
 	test.Equal(t, m4.ID, wms[1].ID)
 
-	wms, err = workermodel.LoadAllByGroupIDs(db, []int64{g1.ID, g2.ID}, &workermodel.LoadFilter{
+	wms, err = workermodel.LoadAllByGroupIDs(context.TODO(), db, []int64{g1.ID, g2.ID}, &workermodel.LoadFilter{
 		State: workermodel.StateDisabled,
 	})
 	test.NoError(t, err)
@@ -261,7 +262,7 @@ func TestLoadAllByGroupIDs(t *testing.T) {
 	test.Equal(t, m3.ID, wms[0].ID)
 	test.Equal(t, m4.ID, wms[1].ID)
 
-	wms, err = workermodel.LoadAllByGroupIDs(db, []int64{g1.ID, g2.ID}, &workermodel.LoadFilter{
+	wms, err = workermodel.LoadAllByGroupIDs(context.TODO(), db, []int64{g1.ID, g2.ID}, &workermodel.LoadFilter{
 		Binary: "capa_2",
 		State:  workermodel.StateDisabled,
 	})

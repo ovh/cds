@@ -1,6 +1,7 @@
 package user_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 	assert.NoError(t, user.Insert(db, &u))
 	assert.NoError(t, user.Update(db, &u))
 
-	u1, err := user.LoadUserByID(db, u.ID)
+	u1, err := user.LoadUserByID(context.TODO(), db, u.ID)
 	assert.NoError(t, err)
 	assert.NotNil(t, u1)
 
@@ -33,7 +34,7 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Now the loading should failed
-	u2, err := user.LoadUserByID(db, u.ID)
+	u2, err := user.LoadUserByID(context.TODO(), db, u.ID)
 	assert.Error(t, err)
 	assert.Nil(t, u2)
 
@@ -59,7 +60,7 @@ func TestLoadContacts(t *testing.T) {
 	}
 	assert.NoError(t, user.InsertContact(db, &c))
 
-	u1, err := user.LoadUserByID(db, u.ID, user.LoadOptions.WithContacts)
+	u1, err := user.LoadUserByID(context.TODO(), db, u.ID, user.LoadOptions.WithContacts)
 	assert.NoError(t, err)
 	assert.NotNil(t, u1)
 
@@ -87,7 +88,7 @@ func TestLoadDeprecatedUser(t *testing.T) {
 	}
 	assert.NoError(t, user.InsertContact(db, &c))
 
-	u1, err := user.LoadUserByID(db, u.ID, user.LoadOptions.WithOldUserStruct)
+	u1, err := user.LoadUserByID(context.TODO(), db, u.ID, user.LoadOptions.WithOldUserStruct)
 	assert.NoError(t, err)
 	assert.NotNil(t, u1.OldUserStruct)
 
@@ -115,7 +116,7 @@ func TestLoadAll(t *testing.T) {
 		assert.NoError(t, user.InsertContact(db, &c))
 	}
 
-	users, err := user.LoadAll(db, user.LoadOptions.WithContacts)
+	users, err := user.LoadAll(context.TODO(), db, user.LoadOptions.WithContacts)
 	assert.NoError(t, err)
 
 	assert.True(t, len(users) >= 10)

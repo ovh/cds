@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -58,9 +59,9 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 		},
 	}
 
-	projUpdate, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	projUpdate, err := project.Load(db, cache, proj.Key, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)
-	test.NoError(t, workflow.Insert(db, cache, &w, projUpdate, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, projUpdate))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, gp.Group.ID, 7))
 	test.NoError(t, group.AddWorkflowGroup(db, &w, gp))
 

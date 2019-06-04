@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -358,9 +359,9 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		},
 	}
 
-	projUpdate, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	projUpdate, err := project.Load(db, cache, proj.Key, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)
-	test.NoError(t, workflow.Insert(db, cache, &w, projUpdate, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, projUpdate))
 
 	// Create Delete var
 	ePayloadDelete := sdk.EventProjectVariableDelete{

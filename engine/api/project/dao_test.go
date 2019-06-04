@@ -1,6 +1,7 @@
 package project_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -154,7 +155,7 @@ func TestLoadAll(t *testing.T) {
 	test.NoError(t, err)
 	assert.True(t, ok)
 
-	perms, err := project.FindPermissionByGroupID(db, g.ID)
+	perms, err := project.FindPermissionByGroupID(context.TODO(), db, g.ID)
 	test.NoError(t, err)
 
 	assert.Len(t, perms, 1)
