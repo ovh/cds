@@ -21,21 +21,6 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
 
-	// Resync old model
-	if err := resyncNode(wr.Workflow.Root, *wf); err != nil {
-		return err
-	}
-
-	for i := range wr.Workflow.Joins {
-		join := &wr.Workflow.Joins[i]
-		for j := range join.Triggers {
-			t := &join.Triggers[j]
-			if err := resyncNode(&t.WorkflowDestNode, *wf); err != nil {
-				return err
-			}
-		}
-	}
-
 	// Resync new model
 	oldNode := wr.Workflow.WorkflowData.Array()
 	for i := range oldNode {
@@ -57,27 +42,6 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 	wr.Workflow.OutGoingHookModels = wf.OutGoingHookModels
 
 	return UpdateWorkflowRun(nil, db, wr)
-}
-
-func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
-	newNode := newWorkflow.GetNode(node.ID)
-	if newNode == nil {
-		newNode = newWorkflow.GetNodeByName(node.Name)
-	}
-	if newNode == nil {
-		return sdk.ErrWorkflowNodeNotFound
-	}
-
-	node.Name = newNode.Name
-	node.Context = newNode.Context
-
-	for i := range node.Triggers {
-		t := &node.Triggers[i]
-		if err := resyncNode(&t.WorkflowDestNode, newWorkflow); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
