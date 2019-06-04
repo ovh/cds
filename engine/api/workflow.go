@@ -90,11 +90,11 @@ func (api *API) getWorkflowHandler() service.Handler {
 		}
 
 		if withTemplate {
-			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(api.mustDB(), w1); err != nil {
+			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(ctx, api.mustDB(), w1); err != nil {
 				return err
 			}
 			if w1.TemplateInstance != nil {
-				if err := workflowtemplate.LoadInstanceOptions.WithTemplate(api.mustDB(), w1.TemplateInstance); err != nil {
+				if err := workflowtemplate.LoadInstanceOptions.WithTemplate(ctx, api.mustDB(), w1.TemplateInstance); err != nil {
 					return err
 				}
 				if w1.TemplateInstance.Template != nil {

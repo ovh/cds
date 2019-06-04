@@ -60,7 +60,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 
 		// set the workflow id on template instance if exist
-		if err := setTemplateData(db, proj, w, u, wTemplate); err != nil {
+		if err := setTemplateData(ctx, db, proj, w, u, wTemplate); err != nil {
 			return err
 		}
 
@@ -104,7 +104,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	// set the workflow id on template instance if exist
-	if err := setTemplateData(db, proj, w, u, wTemplate); err != nil {
+	if err := setTemplateData(ctx, db, proj, w, u, wTemplate); err != nil {
 		return err
 	}
 
@@ -114,7 +114,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	return nil
 }
 
-func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sdk.User, wt *sdk.WorkflowTemplate) error {
+func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sdk.User, wt *sdk.WorkflowTemplate) error {
 	// set the workflow id on template instance if exist
 	if wt == nil {
 		return nil
@@ -129,7 +129,7 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		return err
 	}
 
-	wt, err = workflowtemplate.LoadBySlugAndGroupID(db, wt.Slug, grp.ID)
+	wt, err = workflowtemplate.LoadBySlugAndGroupID(ctx, db, wt.Slug, grp.ID)
 	if err != nil {
 		return err
 	}

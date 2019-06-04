@@ -3,6 +3,7 @@ package workflowtemplate
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -81,7 +82,7 @@ func ReadFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
 }
 
 // Push creates or updates a workflow template from a tar.
-func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
+func Push(ctx context.Context, db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
 	wt, err := ReadFromTar(tr)
 	if err != nil {
 		return nil, nil, err
@@ -109,7 +110,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	}
 
 	// check if a template already exists for group with same slug
-	old, err := LoadBySlugAndGroupID(db, wt.Slug, grp.ID, LoadOptions.Default)
+	old, err := LoadBySlugAndGroupID(ctx, db, wt.Slug, grp.ID, LoadOptions.Default)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,7 +119,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 			return nil, nil, err
 		}
 
-		newTemplate, err := LoadByID(db, wt.ID, LoadOptions.Default)
+		newTemplate, err := LoadByID(ctx, db, wt.ID, LoadOptions.Default)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -140,7 +141,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 		return nil, nil, err
 	}
 
-	newTemplate, err := LoadByID(db, clone.ID, LoadOptions.Default)
+	newTemplate, err := LoadByID(ctx, db, clone.ID, LoadOptions.Default)
 	if err != nil {
 		return nil, nil, err
 	}

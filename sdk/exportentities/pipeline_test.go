@@ -1,8 +1,10 @@
-package exportentities
+package exportentities_test
 
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/ovh/cds/sdk/exportentities"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
@@ -14,7 +16,7 @@ import (
 type pipelineTestCase struct {
 	name     string
 	arg      sdk.Pipeline
-	expected PipelineV1
+	expected exportentities.PipelineV1
 }
 
 var (
@@ -147,7 +149,7 @@ var (
 				},
 			},
 		},
-		expected: PipelineV1{
+		expected: exportentities.PipelineV1{
 			Name:        "MyPipeline",
 			Description: "my description",
 		},
@@ -231,7 +233,7 @@ var (
 				},
 			},
 		},
-		expected: PipelineV1{
+		expected: exportentities.PipelineV1{
 			Name: "MyPipeline",
 		},
 	}
@@ -394,7 +396,7 @@ var (
 				},
 			},
 		},
-		expected: PipelineV1{
+		expected: exportentities.PipelineV1{
 			Name: "MyPipeline",
 		},
 	}
@@ -404,12 +406,12 @@ var (
 
 func TestExportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipelineV1(tc.arg)
-		b, err := Marshal(p, FormatYAML)
+		p := exportentities.NewPipelineV1(tc.arg)
+		b, err := exportentities.Marshal(p, exportentities.FormatYAML)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := PipelineV1{}
+		p1 := exportentities.PipelineV1{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
@@ -418,12 +420,12 @@ func TestExportPipeline_YAML(t *testing.T) {
 
 func TestExportPipeline_JSON(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipelineV1(tc.arg)
-		b, err := Marshal(p, FormatJSON)
+		p := exportentities.NewPipelineV1(tc.arg)
+		b, err := exportentities.Marshal(p, exportentities.FormatJSON)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := PipelineV1{}
+		p1 := exportentities.PipelineV1{}
 		test.NoError(t, json.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
@@ -433,12 +435,12 @@ func TestExportPipeline_JSON(t *testing.T) {
 func TestExportAndImportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		t.Log(tc.name)
-		p := NewPipelineV1(tc.arg)
+		p := exportentities.NewPipelineV1(tc.arg)
 
-		b, err := Marshal(p, FormatYAML)
+		b, err := exportentities.Marshal(p, exportentities.FormatYAML)
 		test.NoError(t, err)
 
-		importedP := PipelineV1{}
+		importedP := exportentities.PipelineV1{}
 
 		test.NoError(t, yaml.Unmarshal(b, &importedP))
 		transformedP, err := importedP.Pipeline()
@@ -514,7 +516,7 @@ jobs:
       exit 0;
 `
 
-	payload := &PipelineV1{}
+	payload := &exportentities.PipelineV1{}
 	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
 
 	p, err := payload.Pipeline()
@@ -548,7 +550,7 @@ jobs:
         path: website/*
 `
 
-	payload := &PipelineV1{}
+	payload := &exportentities.PipelineV1{}
 	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
 
 	p, err := payload.Pipeline()
@@ -571,7 +573,7 @@ jobs:
   - checkout: '.'
 `
 
-	payload := &PipelineV1{}
+	payload := &exportentities.PipelineV1{}
 	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
 
 	p, err := payload.Pipeline()
@@ -584,12 +586,12 @@ jobs:
 
 func TestExportPipelineV1_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipelineV1(tc.arg)
-		b, err := Marshal(p, FormatYAML)
+		p := exportentities.NewPipelineV1(tc.arg)
+		b, err := exportentities.Marshal(p, exportentities.FormatYAML)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := PipelineV1{}
+		p1 := exportentities.PipelineV1{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
@@ -598,12 +600,12 @@ func TestExportPipelineV1_YAML(t *testing.T) {
 
 func TestExportPipelineV1_JSON(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipelineV1(tc.arg)
-		b, err := Marshal(p, FormatJSON)
+		p := exportentities.NewPipelineV1(tc.arg)
+		b, err := exportentities.Marshal(p, exportentities.FormatJSON)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := PipelineV1{}
+		p1 := exportentities.PipelineV1{}
 		test.NoError(t, json.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
@@ -613,12 +615,12 @@ func TestExportPipelineV1_JSON(t *testing.T) {
 func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		t.Log(tc.name)
-		p := NewPipelineV1(tc.arg)
+		p := exportentities.NewPipelineV1(tc.arg)
 
-		b, err := Marshal(p, FormatYAML)
+		b, err := exportentities.Marshal(p, exportentities.FormatYAML)
 		test.NoError(t, err)
 
-		importedP := PipelineV1{}
+		importedP := exportentities.PipelineV1{}
 
 		test.NoError(t, yaml.Unmarshal(b, &importedP))
 		transformedP, err := importedP.Pipeline()

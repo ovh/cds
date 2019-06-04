@@ -266,7 +266,7 @@ func (api *API) checkActionPermissions(ctx context.Context, actionName string, p
 		}
 	}
 
-	a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+	a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID)
 	if err != nil {
 		return err
 	}
@@ -303,7 +303,7 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 		}
 	}
 
-	wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+	wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 	if err != nil {
 		return err
 	}
@@ -320,7 +320,7 @@ func (api *API) checkActionBuiltinPermissions(ctx context.Context, actionName st
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given action name")
 	}
 
-	a, err := action.LoadByTypesAndName(api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName)
+	a, err := action.LoadByTypesAndName(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName)
 	if err != nil {
 		return err
 	}

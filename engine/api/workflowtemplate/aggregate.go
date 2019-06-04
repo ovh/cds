@@ -1,6 +1,8 @@
 package workflowtemplate
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -36,12 +38,12 @@ func AggregateAuditsOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk
 }
 
 // AggregateTemplateInstanceOnWorkflow set template instance data for each workflow.
-func AggregateTemplateInstanceOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error {
+func AggregateTemplateInstanceOnWorkflow(ctx context.Context, db gorp.SqlExecutor, ws ...*sdk.Workflow) error {
 	if len(ws) == 0 {
 		return nil
 	}
 
-	wtis, err := GetInstancesByWorkflowIDs(db, sdk.WorkflowToIDs(ws))
+	wtis, err := GetInstancesByWorkflowIDs(ctx, db, sdk.WorkflowToIDs(ws))
 	if err != nil {
 		return err
 	}

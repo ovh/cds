@@ -34,12 +34,12 @@ func (api *API) getTemplatesHandler() service.Handler {
 		var ts []sdk.WorkflowTemplate
 		var err error
 		if u.Admin {
-			ts, err = workflowtemplate.LoadAll(api.mustDB(),
+			ts, err = workflowtemplate.LoadAll(ctx, api.mustDB(),
 				workflowtemplate.LoadOptions.Default,
 				workflowtemplate.LoadOptions.WithAudits,
 			)
 		} else {
-			ts, err = workflowtemplate.LoadAllByGroupIDs(api.mustDB(),
+			ts, err = workflowtemplate.LoadAllByGroupIDs(ctx, api.mustDB(),
 				append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID),
 				workflowtemplate.LoadOptions.Default,
 				workflowtemplate.LoadOptions.WithAudits,
@@ -120,14 +120,14 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		newTemplate, err := workflowtemplate.LoadByID(api.mustDB(), data.ID, workflowtemplate.LoadOptions.Default)
+		newTemplate, err := workflowtemplate.LoadByID(ctx, api.mustDB(), data.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
 		event.PublishWorkflowTemplateAdd(*newTemplate, u)
 
-		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), newTemplate); err != nil {
+		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
 			return err
 		}
 
@@ -150,7 +150,7 @@ func (api *API) getTemplateHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID,
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID,
 			workflowtemplate.LoadOptions.Default,
 			workflowtemplate.LoadOptions.WithAudits,
 		)
@@ -182,7 +182,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		old, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		old, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -249,14 +249,14 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		newTemplate, err := workflowtemplate.LoadByID(api.mustDB(), clone.ID, workflowtemplate.LoadOptions.Default)
+		newTemplate, err := workflowtemplate.LoadByID(ctx, api.mustDB(), clone.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
 		event.PublishWorkflowTemplateUpdate(*old, *newTemplate, data.ChangeMessage, deprecatedGetUser(ctx))
 
-		if err := workflowtemplate.LoadOptions.WithAudits(api.mustDB(), newTemplate); err != nil {
+		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
 			return err
 		}
 
@@ -279,7 +279,7 @@ func (api *API) deleteTemplateHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
 		}
@@ -418,7 +418,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -506,7 +506,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -658,7 +658,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
 		}
@@ -695,7 +695,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
 		}
@@ -758,7 +758,7 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		}
 
 		// return the template instance if workflow is a generated one
-		wti, err := workflowtemplate.LoadInstanceByWorkflowID(api.mustDB(), wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
+		wti, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, api.mustDB(), wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
 		if err != nil {
 			return err
 		}
@@ -784,7 +784,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
 		}
@@ -832,7 +832,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -863,7 +863,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 
 		tr := tar.NewReader(bytes.NewReader(btes))
 
-		msgs, wt, err := workflowtemplate.Push(api.mustDB(), deprecatedGetUser(ctx), tr)
+		msgs, wt, err := workflowtemplate.Push(ctx, api.mustDB(), deprecatedGetUser(ctx), tr)
 		if err != nil {
 			return sdk.WrapError(err, "cannot push template")
 		}
@@ -887,7 +887,7 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
 		}
@@ -925,7 +925,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 			return err
 		}
 
-		wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
 		}

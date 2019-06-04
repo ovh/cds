@@ -128,8 +128,9 @@ func workerModelImportRun(c cli.Values) error {
 }
 
 var workerModelShowCmd = cli.Command{
-	Name:  "show",
-	Short: "Show a Worker Model",
+	Name:    "show",
+	Short:   "Show a Worker Model",
+	Example: `cdsctl worker model show myGroup/myModel`,
 	Args: []cli.Arg{
 		{Name: "worker-model-path"},
 	},
@@ -175,8 +176,9 @@ func workerModelDeleteRun(v cli.Values) error {
 }
 
 var workerModelExportCmd = cli.Command{
-	Name:  "export",
-	Short: "Export a worker model",
+	Name:    "export",
+	Short:   "Export a worker model",
+	Example: `cdsctl worker model export myGroup/myModel`,
 	Args: []cli.Arg{
 		{Name: "worker-model-path"},
 	},

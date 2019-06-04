@@ -1,6 +1,7 @@
 package workflowtemplate
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -28,7 +29,7 @@ func TestLoadGroup(t *testing.T) {
 		{GroupID: 2},
 	}
 
-	assert.Nil(t, loadGroup(db, wts...))
+	assert.Nil(t, loadGroup(context.TODO(), db, wts...))
 
 	assert.NotNil(t, wts[0].Group)
 	assert.Equal(t, "grp-1", wts[0].Group.Name)
@@ -61,7 +62,7 @@ func TestLoadInstanceTemplate(t *testing.T) {
 		{WorkflowTemplateID: 2},
 	}
 
-	assert.Nil(t, loadInstanceTemplate(db, wtis...))
+	assert.Nil(t, loadInstanceTemplate(context.TODO(), db, wtis...))
 
 	if !assert.NotNil(t, wtis[0].Template) {
 		t.FailNow()

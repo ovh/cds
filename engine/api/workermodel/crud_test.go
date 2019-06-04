@@ -1,6 +1,7 @@
 package workermodel_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -268,7 +269,7 @@ func TestUpdateModel(t *testing.T) {
 				}
 			}
 
-			res, err := workermodel.Update(db, test.User, test.Old, test.Data)
+			res, err := workermodel.Update(context.TODO(), db, test.User, test.Old, test.Data)
 			if test.Error {
 				assert.Error(t, err)
 			} else {

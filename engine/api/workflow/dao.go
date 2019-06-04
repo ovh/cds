@@ -1535,7 +1535,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
+		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
 			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 
@@ -1592,12 +1592,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		if wf.Root.Context.Application.VCSServer == "" || wf.Root.Context.Application.RepositoryFullname == "" {
 			return nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
-		}
-	}
-
-	if wf.Root.Context.Application != nil {
-		if err := application.Update(tx, store, wf.Root.Context.Application); err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 		}
 	}
 

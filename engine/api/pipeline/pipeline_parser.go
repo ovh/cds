@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"sync"
 
 	"github.com/go-gorp/gorp"
@@ -19,7 +20,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.pipeline and insert or update the pipeline in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, epip exportentities.Pipeliner, u *sdk.User, opts ImportOptions) (*sdk.Pipeline, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, epip exportentities.Pipeliner, u *sdk.User, opts ImportOptions) (*sdk.Pipeline, []sdk.Message, error) {
 	//Transform payload to a sdk.Pipeline
 	pip, errP := epip.Pipeline()
 	if errP != nil {
@@ -54,9 +55,9 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	if exist && !opts.Force {
 		return pip, nil, sdk.ErrPipelineAlreadyExists
 	} else if exist {
-		globalError = ImportUpdate(db, proj, pip, msgChan, u)
+		globalError = ImportUpdate(ctx, db, proj, pip, msgChan, u)
 	} else {
-		globalError = Import(db, cache, proj, pip, msgChan, u)
+		globalError = Import(ctx, db, cache, proj, pip, msgChan, u)
 	}
 
 	close(msgChan)
