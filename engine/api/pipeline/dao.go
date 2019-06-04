@@ -1,18 +1,20 @@
 package pipeline
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
-func getPipelineActionsByStageID(db gorp.SqlExecutor, stageID int64) ([]pipelineAction, error) {
+func getPipelineActionsByStageID(ctx context.Context, db gorp.SqlExecutor, stageID int64) ([]pipelineAction, error) {
 	var pas []pipelineAction
 
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM pipeline_action WHERE pipeline_stage_id = $1",
 	).Args(stageID)
-	if err := gorpmapping.GetAll(db, query, &pas); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &pas); err != nil {
 		return nil, sdk.WrapError(err, "cannot get pipeline action links for stage id %d", stageID)
 	}
 

@@ -2024,7 +2024,7 @@ func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 			},
 		},
 	}
-	assert.NoError(t, pipeline.Import(db, cache, proj, pip, nil, u))
+	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
 	var errPip error
 	pip, errPip = pipeline.LoadPipeline(db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
@@ -2092,7 +2092,7 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 			},
 		},
 	}
-	assert.NoError(t, pipeline.Import(db, cache, proj, pip, nil, u))
+	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
 	var errPip error
 	pip, errPip = pipeline.LoadPipeline(db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)

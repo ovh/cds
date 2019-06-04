@@ -105,7 +105,7 @@ func craftNotifications(w sdk.Workflow, exportedWorkflow *Workflow) error {
 	return nil
 }
 
-func checkWorkflowNotificationsValidity(w Workflow) error {
+func CheckWorkflowNotificationsValidity(w Workflow) error {
 	mError := new(sdk.MultiError)
 	if len(w.Workflow) != 0 {
 		if len(w.Notifications) != 0 {
@@ -132,7 +132,7 @@ func checkWorkflowNotificationsValidity(w Workflow) error {
 	return mError
 }
 
-func processNotificationValues(notif NotificationEntry) (sdk.WorkflowNotification, error) {
+func ProcessNotificationValues(notif NotificationEntry) (sdk.WorkflowNotification, error) {
 	n := sdk.WorkflowNotification{
 		Type: notif.Type,
 	}
@@ -190,7 +190,7 @@ func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
 			nodes := strings.Split(nodeNames, ",")
 			// nodes are considered as references of nodes
 			for _, notif := range notifs {
-				n, err := processNotificationValues(notif)
+				n, err := ProcessNotificationValues(notif)
 				if err != nil {
 					return sdk.WrapError(err, "unable to process notification")
 				}
@@ -201,7 +201,7 @@ func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
 	} else {
 		//single pipeline
 		for _, notif := range w.Notifications {
-			n, err := processNotificationValues(notif)
+			n, err := ProcessNotificationValues(notif)
 			if err != nil {
 				return sdk.WrapError(err, "unable to process notification")
 			}

@@ -97,7 +97,7 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 }
 
 // LoadByWorkerModel loads pipelines from database for a given worker model name
-func LoadByWorkerModel(db gorp.SqlExecutor, u *sdk.User, model *sdk.Model) ([]sdk.Pipeline, error) {
+func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, u *sdk.User, model *sdk.Model) ([]sdk.Pipeline, error) {
 	var query gorpmapping.Query
 
 	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID
@@ -170,7 +170,7 @@ func LoadByWorkerModel(db gorp.SqlExecutor, u *sdk.User, model *sdk.Model) ([]sd
 	}
 
 	var pips []sdk.Pipeline
-	if err := gorpmapping.GetAll(db, query, &pips); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &pips); err != nil {
 		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern)
 	}
 
@@ -211,8 +211,8 @@ func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.P
 }
 
 // DeletePipeline remove given pipeline and all history from database
-func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
-	if err := DeleteAllStage(db, pipelineID, userID); err != nil {
+func DeletePipeline(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, userID int64) error {
+	if err := DeleteAllStage(ctx, db, pipelineID, userID); err != nil {
 		return err
 	}
 

@@ -63,6 +63,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
+
 	//Parse workflow
 	w, errW := Parse(proj, ew, u)
 	if errW != nil {

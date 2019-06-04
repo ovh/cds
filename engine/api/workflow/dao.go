@@ -1332,7 +1332,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
+		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
 			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 
@@ -1391,14 +1391,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if app.VCSServer == "" || app.RepositoryFullname == "" {
 			return nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
 		}
-	}
-
-	if wf.WorkflowData.Node.Context.ApplicationID != 0 {
-		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-		if err := application.Update(tx, store, &app); err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
-		}
-		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app
 	}
 
 	allMsg = append(allMsg, msgList...)

@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -9,15 +10,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getAll(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Action, error) {
 	pas := []*sdk.Action{}
 
-	if err := gorpmapping.GetAll(db, q, &pas); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &pas); err != nil {
 		return nil, sdk.WrapError(err, "cannot get actions")
 	}
 	if len(pas) > 0 {
 		for i := range opts {
-			if err := opts[i](db, pas...); err != nil {
+			if err := opts[i](ctx, db, pas...); err != nil {
 				return nil, err
 			}
 		}
@@ -31,10 +32,10 @@ func getAll(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([
 	return as, nil
 }
 
-func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Action, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Action, error) {
 	var a sdk.Action
 
-	found, err := gorpmapping.Get(db, q, &a)
+	found, err := gorpmapping.Get(ctx, db, q, &a)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get action")
 	}
@@ -43,7 +44,7 @@ func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk
 	}
 
 	for i := range opts {
-		if err := opts[i](db, &a); err != nil {
+		if err := opts[i](ctx, db, &a); err != nil {
 			return nil, err
 		}
 	}
@@ -52,26 +53,26 @@ func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk
 }
 
 // LoadAllByTypes actions from database.
-func LoadAllByTypes(db gorp.SqlExecutor, types []string, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+func LoadAllByTypes(ctx context.Context, db gorp.SqlExecutor, types []string, opts ...LoadOptionFunc) ([]sdk.Action, error) {
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action WHERE type = ANY(string_to_array($1, ',')::text[]) ORDER BY name",
 	).Args(strings.Join(types, ","))
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllTypeDefaultByGroupIDs actions from database.
-func LoadAllTypeDefaultByGroupIDs(db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+func LoadAllTypeDefaultByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM action
     WHERE type = $1 AND group_id = ANY(string_to_array($2, ',')::int[])
     ORDER BY name
   `).Args(sdk.DefaultAction, gorpmapping.IDsToQueryString(groupIDs))
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs actions from database.
-func LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+func LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM action
@@ -84,12 +85,12 @@ func LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(db gorp.SqlExecutor, groupID
 		sdk.BuiltinAction, sdk.PluginAction, sdk.DefaultAction,
 		gorpmapping.IDsToQueryString(groupIDs),
 	)
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs returns all actions for given ids. Action should be
 // of type builtin, plugin or default. Default action should be in given group ids list.
-func LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db gorp.SqlExecutor, ids, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
+func LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(ctx context.Context, db gorp.SqlExecutor, ids, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Action, error) {
 	// children should be builtin, plugin or default with group matching
 	query := gorpmapping.NewQuery(`
     SELECT *
@@ -108,29 +109,29 @@ func LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db gorp.SqlExecutor,
 		sdk.DefaultAction,
 		gorpmapping.IDsToQueryString(groupIDs),
 	)
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadTypeDefaultByNameAndGroupID returns an action from database with given name and group id.
-func LoadTypeDefaultByNameAndGroupID(db gorp.SqlExecutor, name string, groupID int64, opts ...LoadOptionFunc) (*sdk.Action, error) {
+func LoadTypeDefaultByNameAndGroupID(ctx context.Context, db gorp.SqlExecutor, name string, groupID int64, opts ...LoadOptionFunc) (*sdk.Action, error) {
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action WHERE type = $1 AND lower(name) = lower($2) AND group_id = $3",
 	).Args(sdk.DefaultAction, name, groupID)
-	return get(db, query, opts...)
+	return get(ctx, db, query, opts...)
 }
 
 // LoadByTypesAndName returns an action from database with given name and type in list.
-func LoadByTypesAndName(db gorp.SqlExecutor, types []string, name string, opts ...LoadOptionFunc) (*sdk.Action, error) {
+func LoadByTypesAndName(ctx context.Context, db gorp.SqlExecutor, types []string, name string, opts ...LoadOptionFunc) (*sdk.Action, error) {
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action WHERE type = ANY(string_to_array($1, ',')::text[]) AND lower(name) = lower($2)",
 	).Args(strings.Join(types, ","), name)
-	return get(db, query, opts...)
+	return get(ctx, db, query, opts...)
 }
 
 // LoadByID retrieves in database the action with given id.
-func LoadByID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Action, error) {
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Action, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM action WHERE action.id = $1").Args(id)
-	return get(db, query, opts...)
+	return get(ctx, db, query, opts...)
 }
 
 // insert action in database.
@@ -194,7 +195,7 @@ func GetRequirementsDistinctBinary(db gorp.SqlExecutor) (sdk.RequirementList, er
 
 // GetRequirementsTypeModelAndValueStartByWithLock returns action requirements from database for given criteria.
 // This func is used for migration purpose and needs to lock selected rows.
-func GetRequirementsTypeModelAndValueStartByWithLock(db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
+func GetRequirementsTypeModelAndValueStartByWithLock(ctx context.Context, db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
 	rs := []sdk.Requirement{}
 
 	query := gorpmapping.NewQuery(`
@@ -204,7 +205,7 @@ func GetRequirementsTypeModelAndValueStartByWithLock(db gorp.SqlExecutor, value 
     FOR UPDATE SKIP LOCKED
   `).Args(value + "%")
 
-	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &rs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get requirements")
 	}
 
@@ -212,7 +213,7 @@ func GetRequirementsTypeModelAndValueStartByWithLock(db gorp.SqlExecutor, value 
 }
 
 // GetRequirementsTypeModelAndValueStartBy returns action requirements from database for given criteria.
-func GetRequirementsTypeModelAndValueStartBy(db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
+func GetRequirementsTypeModelAndValueStartBy(ctx context.Context, db gorp.SqlExecutor, value string) ([]sdk.Requirement, error) {
 	rs := []sdk.Requirement{}
 
 	query := gorpmapping.NewQuery(`
@@ -221,7 +222,7 @@ func GetRequirementsTypeModelAndValueStartBy(db gorp.SqlExecutor, value string) 
     WHERE type = 'model' AND value LIKE $1
   `).Args(value + "%")
 
-	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &rs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get requirements")
 	}
 
@@ -253,15 +254,15 @@ func deleteParametersByActionID(db gorp.SqlExecutor, actionID int64) error {
 	return sdk.WithStack(err)
 }
 
-func getEdges(db gorp.SqlExecutor, q gorpmapping.Query, fs ...loadOptionEdgeFunc) ([]actionEdge, error) {
+func getEdges(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, fs ...loadOptionEdgeFunc) ([]actionEdge, error) {
 	paes := []*actionEdge{}
 
-	if err := gorpmapping.GetAll(db, q, &paes); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &paes); err != nil {
 		return nil, sdk.WrapError(err, "cannot get action edges")
 	}
 	if len(paes) > 0 {
 		for i := range fs {
-			if err := fs[i](db, paes...); err != nil {
+			if err := fs[i](ctx, db, paes...); err != nil {
 				return nil, err
 			}
 		}
@@ -276,11 +277,11 @@ func getEdges(db gorp.SqlExecutor, q gorpmapping.Query, fs ...loadOptionEdgeFunc
 }
 
 // loadEdgesByParentIDs retrieves in database all action edges for given parent ids.
-func loadEdgesByParentIDs(db gorp.SqlExecutor, parentIDs []int64) ([]actionEdge, error) {
+func loadEdgesByParentIDs(ctx context.Context, db gorp.SqlExecutor, parentIDs []int64) ([]actionEdge, error) {
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action_edge WHERE parent_id = ANY(string_to_array($1, ',')::int[]) ORDER BY exec_order ASC",
 	).Args(gorpmapping.IDsToQueryString(parentIDs))
-	return getEdges(db, query,
+	return getEdges(ctx, db, query,
 		loadEdgeParameters,
 		loadEdgeChildren,
 	)
@@ -322,12 +323,12 @@ func GetAuditsByActionID(db gorp.SqlExecutor, actionID int64) ([]sdk.AuditAction
 }
 
 // GetAuditByActionIDAndID returns audit for given action id and audit id.
-func GetAuditByActionIDAndID(db gorp.SqlExecutor, actionID, auditID int64) (*sdk.AuditAction, error) {
+func GetAuditByActionIDAndID(ctx context.Context, db gorp.SqlExecutor, actionID, auditID int64) (*sdk.AuditAction, error) {
 	var aa sdk.AuditAction
 
 	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 AND id = $2`).
 		Args(actionID, auditID)
-	found, err := gorpmapping.Get(db, query, &aa)
+	found, err := gorpmapping.Get(ctx, db, query, &aa)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get action audit %d for action %d", auditID, actionID)
 	}
@@ -339,11 +340,11 @@ func GetAuditByActionIDAndID(db gorp.SqlExecutor, actionID, auditID int64) (*sdk
 }
 
 // GetAuditLatestByActionID returns action latest audit by action id.
-func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
+func GetAuditLatestByActionID(ctx context.Context, db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
 	var aa sdk.AuditAction
 
 	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created DESC LIMIT 1`).Args(actionID)
-	found, err := gorpmapping.Get(db, query, &aa)
+	found, err := gorpmapping.Get(ctx, db, query, &aa)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get latest audit for action %d", actionID)
 	}
@@ -355,11 +356,11 @@ func GetAuditLatestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAc
 }
 
 // GetAuditOldestByActionID returns action oldtest audit by action id.
-func GetAuditOldestByActionID(db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
+func GetAuditOldestByActionID(ctx context.Context, db gorp.SqlExecutor, actionID int64) (*sdk.AuditAction, error) {
 	var aa sdk.AuditAction
 
 	query := gorpmapping.NewQuery(`SELECT * FROM action_audit WHERE action_id = $1 ORDER BY created ASC LIMIT 1`).Args(actionID)
-	found, err := gorpmapping.Get(db, query, &aa)
+	found, err := gorpmapping.Get(ctx, db, query, &aa)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get oldtest audit for action %d", actionID)
 	}

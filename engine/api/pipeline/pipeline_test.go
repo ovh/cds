@@ -1,6 +1,7 @@
 package pipeline_test
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -258,7 +259,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertJob(db, &job3, 0, &pip3))
 
-	pips, err := pipeline.LoadByWorkerModel(db, uAdmin, &model1)
+	pips, err := pipeline.LoadByWorkerModel(context.TODO(), db, uAdmin, &model1)
 	assert.NoError(t, err)
 	if !assert.Equal(t, 2, len(pips)) {
 		t.FailNow()
@@ -267,7 +268,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	assert.Equal(t, pip1.Name, pips[0].Name)
 	assert.Equal(t, pip2.Name, pips[1].Name)
 
-	pips, err = pipeline.LoadByWorkerModel(db, uAdmin, &model2)
+	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, uAdmin, &model2)
 	assert.NoError(t, err)
 
 	if !assert.Equal(t, 1, len(pips)) {
@@ -275,11 +276,11 @@ func TestLoadByWorkerModel(t *testing.T) {
 	}
 	assert.Equal(t, pip3.Name, pips[0].Name)
 
-	pips, err = pipeline.LoadByWorkerModel(db, uLambda1, &model1)
+	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, uLambda1, &model1)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pips))
 
-	pips, err = pipeline.LoadByWorkerModel(db, uLambda2, &model1)
+	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, uLambda2, &model1)
 	assert.NoError(t, err)
 	if !assert.Equal(t, 2, len(pips)) {
 		t.FailNow()
@@ -288,7 +289,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	assert.Equal(t, pip1.Name, pips[0].Name)
 	assert.Equal(t, pip2.Name, pips[1].Name)
 
-	pips, err = pipeline.LoadByWorkerModel(db, uLambda2, &model2)
+	pips, err = pipeline.LoadByWorkerModel(context.TODO(), db, uLambda2, &model2)
 	assert.NoError(t, err)
 
 	if !assert.Equal(t, 1, len(pips)) {

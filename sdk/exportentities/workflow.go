@@ -411,7 +411,7 @@ func (w Workflow) Entries() map[string]NodeEntry {
 	}
 }
 
-func (w Workflow) checkValidity() error {
+func (w Workflow) CheckValidity() error {
 	mError := new(sdk.MultiError)
 
 	if len(w.Workflow) != 0 {
@@ -452,7 +452,7 @@ func (w Workflow) checkValidity() error {
 	}
 
 	//Checks map notifications validity
-	mError.Append(checkWorkflowNotificationsValidity(w))
+	mError.Append(CheckWorkflowNotificationsValidity(w))
 
 	if mError.IsEmpty() {
 		return nil
@@ -460,7 +460,7 @@ func (w Workflow) checkValidity() error {
 	return mError
 }
 
-func (w Workflow) checkDependencies() error {
+func (w Workflow) CheckDependencies() error {
 	mError := new(sdk.MultiError)
 	for s, e := range w.Entries() {
 		if err := e.checkDependencies(s, w); err != nil {
@@ -503,10 +503,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.Environments = make(map[int64]sdk.Environment)
 	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
 
-	if err := w.checkValidity(); err != nil {
+	if err := w.CheckValidity(); err != nil {
 		return nil, sdk.WrapError(err, "Unable to check validity")
 	}
-	if err := w.checkDependencies(); err != nil {
+	if err := w.CheckDependencies(); err != nil {
 		return nil, sdk.WrapError(err, "Unable to check dependencies")
 	}
 	wf.PurgeTags = w.PurgeTags

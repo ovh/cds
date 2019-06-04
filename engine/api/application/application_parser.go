@@ -122,6 +122,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		SSHKey:         eapp.VCSSSHKey,
 		PGPKey:         eapp.VCSPGPKey,
 	}
+
 	if app.RepositoryStrategy.ConnectionType == "" {
 		app.RepositoryStrategy.ConnectionType = "https"
 	}

@@ -98,7 +98,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 					return err
 				}
 				if w1.TemplateInstance.Template != nil {
-					if err := workflowtemplate.AggregateOnWorkflowTemplate(api.mustDB(), w1.TemplateInstance.Template); err != nil {
+					if err := workflowtemplate.AggregateOnWorkflowTemplate(ctx, api.mustDB(), w1.TemplateInstance.Template); err != nil {
 						return err
 					}
 					w1.FromTemplate = fmt.Sprintf("%s/%s", w1.TemplateInstance.Template.Group.Name, w1.TemplateInstance.Template.Slug)
