@@ -17,7 +17,6 @@ type Filter struct {
 // TemplateClient exposes templates functions
 type TemplateClient interface {
 	TemplateGet(groupName, templateSlug string) (*sdk.WorkflowTemplate, error)
-	TemplateGetByID(id int64) (*sdk.WorkflowTemplate, error)
 	TemplateGetAll() ([]sdk.WorkflowTemplate, error)
 	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
 	TemplateBulk(groupName, templateSlug string, req sdk.WorkflowTemplateBulk) (*sdk.WorkflowTemplateBulk, error)

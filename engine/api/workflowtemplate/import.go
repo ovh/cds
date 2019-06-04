@@ -3,6 +3,7 @@ package workflowtemplate
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -81,7 +82,7 @@ func ReadFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
 }
 
 // Push creates or updates a workflow template from a tar.
-func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
+func Push(ctx context.Context, db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
 	wt, err := ReadFromTar(tr)
 	if err != nil {
 		return nil, nil, err
@@ -109,7 +110,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	}
 
 	// check if a template already exists for group with same slug
-	old, err := GetBySlugAndGroupIDs(db, wt.Slug, []int64{grp.ID})
+	old, err := LoadBySlugAndGroupID(ctx, db, wt.Slug, grp.ID, LoadOptions.Default)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,24 +118,35 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 		if err := Insert(db, &wt); err != nil {
 			return nil, nil, err
 		}
-		event.PublishWorkflowTemplateAdd(wt, u)
 
-		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, grp.Name, wt.Slug)}, &wt, nil
+		newTemplate, err := LoadByID(ctx, db, wt.ID, LoadOptions.Default)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		event.PublishWorkflowTemplateAdd(*newTemplate, u)
+
+		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, newTemplate.Group.Name, newTemplate.Slug)}, newTemplate, nil
 	}
 
-	new := sdk.WorkflowTemplate(*old)
-	new.Update(wt)
+	clone := sdk.WorkflowTemplate(*old)
+	clone.Update(wt)
 
 	// execute template with no instance only to check if parsing is ok
-	if _, err := Execute(&new, nil); err != nil {
+	if _, err := Execute(&clone, nil); err != nil {
 		return nil, nil, err
 	}
 
-	if err := Update(db, &new); err != nil {
+	if err := Update(db, &clone); err != nil {
 		return nil, nil, err
 	}
 
-	event.PublishWorkflowTemplateUpdate(*old, new, "", u)
+	newTemplate, err := LoadByID(ctx, db, clone.ID, LoadOptions.Default)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, grp.Name, new.Slug)}, &new, nil
+	event.PublishWorkflowTemplateUpdate(*old, *newTemplate, "", u)
+
+	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, newTemplate.Group.Name, newTemplate.Slug)}, newTemplate, nil
 }
