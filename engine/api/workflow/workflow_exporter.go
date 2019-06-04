@@ -72,7 +72,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		return wp, sdk.WrapError(errload, "cannot load workflow %s", name)
 	}
 
-	i, err := workflowtemplate.LoadInstanceByWorkflowID(db, wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
+	i, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, db, wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
 	if err != nil {
 		return wp, err
 	}

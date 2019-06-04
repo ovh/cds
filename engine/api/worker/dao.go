@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"strings"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
@@ -38,10 +39,10 @@ func Delete(db gorp.SqlExecutor, id string) error {
 	return nil
 }
 
-func LoadByAccessTokenID(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
+func LoadByAccessTokenID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE access_token_id = $1").Args(id)
 	var w sdk.Worker
-	found, err := gorpmapping.Get(db, query, &w)
+	found, err := gorpmapping.Get(ctx, db, query, &w)
 	if err != nil {
 		return nil, err
 	}
@@ -51,10 +52,10 @@ func LoadByAccessTokenID(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	return &w, nil
 }
 
-func LoadByID(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE id = $1").Args(id)
 	var w sdk.Worker
-	found, err := gorpmapping.Get(db, query, &w)
+	found, err := gorpmapping.Get(ctx, db, query, &w)
 	if err != nil {
 		return nil, err
 	}
@@ -64,32 +65,32 @@ func LoadByID(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	return &w, nil
 }
 
-func LoadAll(db gorp.SqlExecutor) ([]sdk.Worker, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	var workers []sdk.Worker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker ORDER BY name ASC`)
-	if err := gorpmapping.GetAll(db, query, &workers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &workers); err != nil {
 		return nil, err
 	}
 	return workers, nil
 }
 
-func LoadByHatcheryID(db gorp.SqlExecutor, hatcheryID int64) ([]sdk.Worker, error) {
+func LoadByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID int64) ([]sdk.Worker, error) {
 	var workers []sdk.Worker
 	query := gorpmapping.NewQuery(`SELECT * FROM worker WHERE hatchery_id = $1 ORDER BY name ASC`).Args(hatcheryID)
-	if err := gorpmapping.GetAll(db, query, &workers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &workers); err != nil {
 		return nil, err
 	}
 	return workers, nil
 }
 
-func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.Worker, error) {
+func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.Worker, error) {
 	var workers []sdk.Worker
 	query := gorpmapping.NewQuery(`SELECT *
 				FROM worker
 				WHERE status = ANY(string_to_array($1, ',')::text[])
 				AND now() - last_beat > $2 * INTERVAL '1' SECOND
 				ORDER BY last_beat ASC`).Args(strings.Join(status, ","), timeout)
-	if err := gorpmapping.GetAll(db, query, &workers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &workers); err != nil {
 		return nil, err
 	}
 	return workers, nil

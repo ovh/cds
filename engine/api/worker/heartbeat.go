@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -10,8 +12,8 @@ import (
 const workerHeartbeatTimeout = 300.0
 
 // DisableDeadWorkers put status disabled to all dead workers with status Registering, Waiting or Building
-func DisableDeadWorkers(db *gorp.DbMap) error {
-	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusWorkerRegistering, sdk.StatusBuilding, sdk.StatusWaiting})
+func DisableDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
+	workers, err := LoadDeadWorkers(ctx, db, workerHeartbeatTimeout, []string{sdk.StatusWorkerRegistering, sdk.StatusBuilding, sdk.StatusWaiting})
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load dead workers")
 	}
@@ -26,8 +28,8 @@ func DisableDeadWorkers(db *gorp.DbMap) error {
 }
 
 // DeleteDeadWorkers delete all workers which is disabled
-func DeleteDeadWorkers(db *gorp.DbMap) error {
-	workers, err := LoadDeadWorkers(db, workerHeartbeatTimeout, []string{sdk.StatusDisabled})
+func DeleteDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
+	workers, err := LoadDeadWorkers(ctx, db, workerHeartbeatTimeout, []string{sdk.StatusDisabled})
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load dead workers")
 	}

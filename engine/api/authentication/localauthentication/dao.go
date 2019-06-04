@@ -1,6 +1,8 @@
 package localauthentication
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -34,8 +36,8 @@ func Update(db gorp.SqlExecutor, u *sdk.UserLocalAuthentication) error {
 	return sdk.WithStack(err)
 }
 
-func Authentify(db gorp.SqlExecutor, username, password string) (bool, error) {
-	u, err := user.LoadUserByUsername(db, username)
+func Authentify(ctx context.Context, db gorp.SqlExecutor, username, password string) (bool, error) {
+	u, err := user.LoadUserByUsername(ctx, db, username)
 	if err != nil {
 		return false, err
 	}

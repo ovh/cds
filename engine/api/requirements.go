@@ -35,9 +35,9 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 			var models []sdk.Model
 			var err error
 			if isMaintainer(ctx) || isAdmin(ctx) {
-				models, err = workermodel.LoadAll(api.mustDB(), nil)
+				models, err = workermodel.LoadAll(ctx, api.mustDB(), nil)
 			} else {
-				models, err = workermodel.LoadAllByGroupIDs(api.mustDB(),
+				models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(),
 					sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), nil)
 			}
 			if err != nil {

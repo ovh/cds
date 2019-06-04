@@ -352,7 +352,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		}
 		workflowRuns := report.WorkflowRuns()
 
-		go workflow.SendEvent(api.mustDB(), proj.Key, report)
+		go workflow.SendEvent(context.Background(), api.mustDB(), proj.Key, report)
 
 		go func(ID int64) {
 			wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
@@ -663,7 +663,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to stop workflow run")
 		}
 
-		go workflow.SendEvent(api.mustDB(), p.Key, report)
+		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, nodeRun, http.StatusOK)
 	}
@@ -866,7 +866,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	var asCodeInfosMsg []sdk.Message
 	report := new(workflow.ProcessorReport)
 	defer func() {
-		go workflow.SendEvent(db, p.Key, report)
+		go workflow.SendEvent(context.Background(), db, p.Key, report)
 	}()
 
 	// IF NEW WORKFLOW RUN

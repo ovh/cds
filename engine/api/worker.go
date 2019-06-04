@@ -91,12 +91,12 @@ func (api *API) getWorkersHandler() service.Handler {
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
-			workers, err = worker.LoadByHatcheryID(api.mustDB(), h.ID)
+			workers, err = worker.LoadByHatcheryID(ctx, api.mustDB(), h.ID)
 			if err != nil {
 				return err
 			}
 		} else {
-			workers, err = worker.LoadAll(api.mustDB())
+			workers, err = worker.LoadAll(ctx, api.mustDB())
 			if err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		wk, err := worker.LoadByID(api.mustDB(), id)
+		wk, err := worker.LoadByID(ctx, api.mustDB(), id)
 		if err != nil {
 			return err
 		}
@@ -147,7 +147,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 func (api *API) refreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -161,7 +161,7 @@ func (api *API) refreshWorkerHandler() service.Handler {
 
 func (api *API) unregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -174,7 +174,7 @@ func (api *API) unregisterWorkerHandler() service.Handler {
 
 func (api *API) workerCheckingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -192,7 +192,7 @@ func (api *API) workerCheckingHandler() service.Handler {
 
 func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
 		if err != nil {
 			return err
 		}

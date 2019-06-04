@@ -1,6 +1,7 @@
 package workermodel
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -13,15 +14,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getAll(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	pms := []*sdk.Model{}
 
-	if err := gorpmapping.GetAll(db, q, &pms); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &pms); err != nil {
 		return nil, sdk.WrapError(err, "cannot get worker models")
 	}
 	if len(pms) > 0 {
 		for i := range opts {
-			if err := opts[i](db, pms...); err != nil {
+			if err := opts[i](ctx, db, pms...); err != nil {
 				return nil, err
 			}
 		}
@@ -47,10 +48,10 @@ func getAll(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([
 	return ms, nil
 }
 
-func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
 	var m sdk.Model
 
-	found, err := gorpmapping.Get(db, q, &m)
+	found, err := gorpmapping.Get(ctx, db, q, &m)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get worker model")
 	}
@@ -59,7 +60,7 @@ func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk
 	}
 
 	for i := range opts {
-		if err := opts[i](db, &m); err != nil {
+		if err := opts[i](ctx, db, &m); err != nil {
 			return nil, err
 		}
 	}
@@ -68,7 +69,7 @@ func get(db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk
 }
 
 // LoadAll retrieves worker models from database.
-func LoadAll(db gorp.SqlExecutor, filter *LoadFilter, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, filter *LoadFilter, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	var query gorpmapping.Query
 
 	if filter == nil {
@@ -83,11 +84,11 @@ func LoadAll(db gorp.SqlExecutor, filter *LoadFilter, opts ...LoadOptionFunc) ([
     `).Args(filter.Args())
 	}
 
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllByGroupIDs returns worker models list for given group ids.
-func LoadAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64, filter *LoadFilter, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64, filter *LoadFilter, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	var query gorpmapping.Query
 
 	if filter == nil {
@@ -110,22 +111,22 @@ func LoadAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64, filter *LoadFilter
 		}))
 	}
 
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllNotSharedInfra retrieves models not shared infra from database.
-func LoadAllNotSharedInfra(db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+func LoadAllNotSharedInfra(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM worker_model
     WHERE group_id != $1
     ORDER BY name
   `).Args(group.SharedInfraGroup.ID)
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllByNameAndGroupIDs retrieves all worker model with given name for group ids in database.
-func LoadAllByNameAndGroupIDs(db gorp.SqlExecutor, name string, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Model, error) {
+func LoadAllByNameAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, name string, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM worker_model
@@ -133,7 +134,7 @@ func LoadAllByNameAndGroupIDs(db gorp.SqlExecutor, name string, groupIDs []int64
     AND group_id = ANY(string_to_array($2, ',')::int[])
     ORDER BY name
   `).Args(name, gorpmapping.IDsToQueryString(groupIDs))
-	return getAll(db, query, opts...)
+	return getAll(ctx, db, query, opts...)
 }
 
 const modelColumns = `

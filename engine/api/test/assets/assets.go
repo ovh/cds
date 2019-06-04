@@ -100,7 +100,7 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 
 	user.Insert(db, &data)
 
-	u, err := user.LoadUserByID(db, data.ID)
+	u, err := user.LoadUserByID(context.Background(), db, data.ID)
 	if err != nil {
 		log.Error("user cannot be load for id %s: %v", data.ID, err)
 	}
@@ -130,7 +130,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		log.Fatalf(" user.Insert: %v", err)
 	}
 
-	u, err := user.LoadUserByID(db, u.ID)
+	u, err := user.LoadUserByID(context.Background(), db, u.ID)
 	if err != nil {
 		log.Fatalf(" user.LoadUserByID: %v", err)
 	}
@@ -422,7 +422,7 @@ func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 
 	g1, _ := group.LoadGroup(db, g.Name)
 	if g1 != nil {
-		models, _ := workermodel.LoadAllByGroupIDs(db, []int64{g.ID}, nil)
+		models, _ := workermodel.LoadAllByGroupIDs(context.Background(), db, []int64{g.ID}, nil)
 		for _, m := range models {
 			workermodel.Delete(db, m.ID)
 		}

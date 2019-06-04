@@ -377,7 +377,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		_, next = observability.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(db, *job, run, sdk.GroupsToIDs(groups), integrationPluginBinaries)
+		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, run, sdk.GroupsToIDs(groups), integrationPluginBinaries)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)

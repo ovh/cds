@@ -21,7 +21,7 @@ func (api *API) deleteUserHandler() service.Handler {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		usr, err := user.LoadUserByUsername(ctx, api.mustDB(), username)
 		if err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		}
@@ -101,7 +101,7 @@ func (api *API) updateUserHandler() service.Handler {
 // GetUsers fetches all users from databases
 func (api *API) getUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		users, err := user.LoadAll(api.mustDB(), user.LoadOptions.WithContacts)
+		users, err := user.LoadAll(ctx, api.mustDB(), user.LoadOptions.WithContacts)
 		if err != nil {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}

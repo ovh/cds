@@ -117,7 +117,7 @@ func (api *API) updateGroupHandler() service.Handler {
 		}
 
 		for _, a := range updatedGroup.Admins {
-			u, err := user.LoadUserByUsername(tx, a.Username)
+			u, err := user.LoadUserByUsername(ctx, tx, a.Username)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot load user(admins) %s", a.Username)
 			}
@@ -133,7 +133,7 @@ func (api *API) updateGroupHandler() service.Handler {
 		}
 
 		for _, a := range updatedGroup.Users {
-			u, err := user.LoadUserByUsername(tx, a.Username)
+			u, err := user.LoadUserByUsername(ctx, tx, a.Username)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot load user(members) %s", a.Username)
 			}
@@ -237,7 +237,7 @@ func (api *API) removeUserFromGroupHandler() service.Handler {
 			return sdk.WrapError(errl, "Cannot load %s", name)
 		}
 
-		u, err := user.LoadUserByUsername(db, username)
+		u, err := user.LoadUserByUsername(ctx, db, username)
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ func (api *API) addUserInGroupHandler() service.Handler {
 		defer tx.Rollback()
 
 		for _, username := range users {
-			u, err := user.LoadUserByUsername(db, username)
+			u, err := user.LoadUserByUsername(ctx, db, username)
 			if err != nil {
 				return err
 			}
@@ -323,7 +323,7 @@ func (api *API) setUserGroupAdminHandler() service.Handler {
 
 		db := api.mustDB()
 
-		u, err := user.LoadUserByUsername(db, username)
+		u, err := user.LoadUserByUsername(ctx, db, username)
 		if err != nil {
 			return err
 		}
@@ -355,7 +355,7 @@ func (api *API) removeUserGroupAdminHandler() service.Handler {
 
 		db := api.mustDB()
 
-		u, err := user.LoadUserByUsername(db, username)
+		u, err := user.LoadUserByUsername(ctx, db, username)
 		if err != nil {
 			return err
 		}

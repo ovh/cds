@@ -18,7 +18,7 @@ import (
 )
 
 // SendEvent Send event on workflow run
-func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
+func SendEvent(ctx context.Context, db gorp.SqlExecutor, key string, report *ProcessorReport) {
 	if report == nil {
 		return
 	}
@@ -45,7 +45,7 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 			}
 		}
 
-		event.PublishWorkflowNodeRun(db, wnr, wr.Workflow, &previousNodeRun)
+		event.PublishWorkflowNodeRun(ctx, db, wnr, wr.Workflow, &previousNodeRun)
 	}
 
 	for _, jobrun := range report.jobs {

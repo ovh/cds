@@ -81,7 +81,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
-		go workflow.SendEvent(api.mustDB(), p.Key, report)
+		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -431,7 +431,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, report)
 		next()
 
-		go workflow.SendEvent(api.mustDB(), proj.Key, report)
+		go workflow.SendEvent(context.Background(), api.mustDB(), proj.Key, report)
 
 		return nil
 	}
@@ -674,7 +674,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
-		event.PublishWorkflowNodeRun(api.mustDB(), nodeRun, work, nil)
+		event.PublishWorkflowNodeRun(context.Background(), api.mustDB(), nodeRun, work, nil)
 		return nil
 	}
 }

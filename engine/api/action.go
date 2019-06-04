@@ -170,7 +170,7 @@ func (api *API) postActionHandler() service.Handler {
 
 		event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
 
-		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
+		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
 		}
 
@@ -294,7 +294,7 @@ func (api *API) putActionHandler() service.Handler {
 
 		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
 
-		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
+		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
 		}
 
@@ -736,7 +736,7 @@ func (api *API) importActionHandler() service.Handler {
 			event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
 		}
 
-		if err := action.LoadOptions.WithAudits(api.mustDB(), newAction); err != nil {
+		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
 		}
 

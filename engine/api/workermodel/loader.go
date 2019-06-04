@@ -1,6 +1,7 @@
 package workermodel
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -12,7 +13,7 @@ import (
 )
 
 // LoadOptionFunc for worker model.
-type LoadOptionFunc func(gorp.SqlExecutor, ...*sdk.Model) error
+type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Model) error
 
 // LoadOptions provides all options to load worker models.
 var LoadOptions = struct {
@@ -23,14 +24,14 @@ var LoadOptions = struct {
 	WithGroup: loadGroup,
 }
 
-func loadDefault(db gorp.SqlExecutor, ms ...*sdk.Model) error {
-	return loadGroup(db, ms...)
+func loadDefault(ctx context.Context, db gorp.SqlExecutor, ms ...*sdk.Model) error {
+	return loadGroup(ctx, db, ms...)
 }
 
-func loadGroup(db gorp.SqlExecutor, ms ...*sdk.Model) error {
+func loadGroup(ctx context.Context, db gorp.SqlExecutor, ms ...*sdk.Model) error {
 	gs := []sdk.Group{}
 
-	if err := gorpmapping.GetAll(db,
+	if err := gorpmapping.GetAll(ctx, db,
 		gorpmapping.NewQuery(`SELECT * FROM "group" WHERE id = ANY(string_to_array($1, ',')::int[])`).
 			Args(gorpmapping.IDsToQueryString(sdk.ModelsToGroupIDs(ms))),
 		&gs,

@@ -26,7 +26,7 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, err := workermodel.LoadAll(api.mustDB(), nil)
+	models, err := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
@@ -51,7 +51,7 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 	defer end()
 
 	// loading all models
-	models, errlw := workermodel.LoadAll(api.mustDB(), nil)
+	models, errlw := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
@@ -111,7 +111,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, errlw := workermodel.LoadAll(api.mustDB(), nil)
+	models, errlw := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}

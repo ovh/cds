@@ -229,10 +229,10 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		models := []sdk.Model{}
 		var err error
 		if isMaintainer(ctx) || isAdmin(ctx) {
-			models, err = workermodel.LoadAll(api.mustDB(), &filter, workermodel.LoadOptions.Default)
+			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)
 		} else {
 			groupIDs := append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID)
-			models, err = workermodel.LoadAllByGroupIDs(api.mustDB(), groupIDs, &filter, workermodel.LoadOptions.Default)
+			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), groupIDs, &filter, workermodel.LoadOptions.Default)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models")
@@ -261,9 +261,9 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 
 		pips := []sdk.Pipeline{}
 		if isMaintainer(ctx) || isAdmin(ctx) {
-			pips, err = pipeline.LoadByWorkerModel(api.mustDB(), m)
+			pips, err = pipeline.LoadByWorkerModel(ctx, api.mustDB(), m)
 		} else {
-			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(api.mustDB(), m,
+			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(ctx, api.mustDB(), m,
 				append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID))
 		}
 		if err != nil {

@@ -471,7 +471,7 @@ func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID int64, add bool
 	return sdk.WithStack(err)
 }
 
-func FindPermissionByGroupID(db gorp.SqlExecutor, groupID ...int64) (sdk.Permissions, error) {
+func FindPermissionByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID ...int64) (sdk.Permissions, error) {
 	var perms sdk.Permissions
 	groupIDs := gorpmapping.IDs(groupID)
 	var query = gorpmapping.NewQuery(`
@@ -480,7 +480,7 @@ func FindPermissionByGroupID(db gorp.SqlExecutor, groupID ...int64) (sdk.Permiss
 		AND project_group.group_id = ANY(string_to_array($1, ',')::int[])
 	`).Args(gorpmapping.IDsToQueryString(groupIDs))
 
-	if err := gorpmapping.GetAll(db, query, &perms); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &perms); err != nil {
 		return perms, err
 	}
 	return perms, nil

@@ -1,6 +1,8 @@
 package workflowtemplate
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/event"
@@ -8,9 +10,9 @@ import (
 )
 
 // Push creates or updates a workflow template from a tar.
-func Push(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u sdk.Identifiable) ([]sdk.Message, error) {
+func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u sdk.Identifiable) ([]sdk.Message, error) {
 	// check if a template already exists for group with same slug
-	old, err := LoadBySlugAndGroupID(db, wt.Slug, wt.GroupID, LoadOptions.Default)
+	old, err := LoadBySlugAndGroupID(ctx, db, wt.Slug, wt.GroupID, LoadOptions.Default)
 	if err != nil {
 		return nil, err
 	}
@@ -19,7 +21,7 @@ func Push(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u sdk.Identifiable) ([]
 			return nil, err
 		}
 
-		newTemplate, err := LoadByID(db, wt.ID, LoadOptions.Default)
+		newTemplate, err := LoadByID(ctx, db, wt.ID, LoadOptions.Default)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +43,7 @@ func Push(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u sdk.Identifiable) ([]
 		return nil, err
 	}
 
-	newTemplate, err := LoadByID(db, clone.ID, LoadOptions.Default)
+	newTemplate, err := LoadByID(ctx, db, clone.ID, LoadOptions.Default)
 	if err != nil {
 		return nil, err
 	}

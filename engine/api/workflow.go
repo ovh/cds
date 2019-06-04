@@ -93,7 +93,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 				return err
 			}
 			if w1.TemplateInstance != nil {
-				if err := workflowtemplate.LoadInstanceOptions.WithTemplate(api.mustDB(), w1.TemplateInstance); err != nil {
+				if err := workflowtemplate.LoadInstanceOptions.WithTemplate(ctx, api.mustDB(), w1.TemplateInstance); err != nil {
 					return err
 				}
 				if w1.TemplateInstance.Template != nil {

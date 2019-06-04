@@ -113,7 +113,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 				return err
 			}
 
-			newModel, err = workermodel.Update(api.mustDB(), old, data)
+			newModel, err = workermodel.Update(ctx, api.mustDB(), old, data)
 			if err != nil {
 				return err
 			}

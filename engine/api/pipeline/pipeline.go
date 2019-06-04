@@ -127,7 +127,7 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
 	}
 
 	var pips []sdk.Pipeline
-	if err := gorpmapping.GetAll(db, query, &pips); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &pips); err != nil {
 		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern)
 	}
 
@@ -135,7 +135,7 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
 }
 
 // LoadByWorkerModelAndGroupIDs loads pipelines from database for a given worker model and group ids.
-func LoadByWorkerModelAndGroupIDs(db gorp.SqlExecutor, model *sdk.Model, groupIDs []int64) ([]sdk.Pipeline, error) {
+func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model, groupIDs []int64) ([]sdk.Pipeline, error) {
 	var query gorpmapping.Query
 
 	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID

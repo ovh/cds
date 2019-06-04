@@ -43,7 +43,7 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 
 func (api *API) checkProjectPermissions(ctx context.Context, key string, expectedPermissions int, routeVars map[string]string) error {
 	groupIDs := sdk.GroupsToIDs(JWT(ctx).Groups)
-	perms, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, groupIDs...)
+	perms, err := loadPermissionsByGroupID(ctx, api.mustDB(), api.Cache, groupIDs...)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (api *API) checkActionPermissions(ctx context.Context, actionName string, p
 		return err
 	}
 
-	a, err := action.LoadTypeDefaultByNameAndGroupID(api.mustDB(), actionName, g.ID)
+	a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 		return err
 	}
 
-	wt, err := workflowtemplate.LoadBySlugAndGroupID(api.mustDB(), templateSlug, g.ID)
+	wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 	if err != nil {
 		return err
 	}
@@ -152,10 +152,10 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 }
 
 // loadGroupPermissions retrieves all group memberships
-func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID ...int64) (sdk.GroupPermissions, error) {
+func loadPermissionsByGroupID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, groupID ...int64) (sdk.GroupPermissions, error) {
 	var grpPerm sdk.GroupPermissions
 
-	projectPermissions, err := project.FindPermissionByGroupID(db, groupID...)
+	projectPermissions, err := project.FindPermissionByGroupID(ctx, db, groupID...)
 	if err != nil {
 		return grpPerm, err
 	}

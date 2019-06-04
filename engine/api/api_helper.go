@@ -116,7 +116,7 @@ func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
 	if t == nil {
 		return nil, false
 	}
-	w, err := worker.LoadByAccessTokenID(db, t.ID)
+	w, err := worker.LoadByAccessTokenID(ctx, db, t.ID)
 	if err != nil {
 		log.Error("unable to get worker from token %s: %v", t.ID, err)
 		return nil, false

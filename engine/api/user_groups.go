@@ -21,7 +21,7 @@ func (api *API) getUserGroupsHandler() service.Handler {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		usr, err := user.LoadUserByUsername(ctx, api.mustDB(), username)
 		if err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		}

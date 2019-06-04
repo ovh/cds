@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -15,7 +16,7 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
+func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
@@ -53,7 +54,7 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
 
-	wm, err := processNodeJobRunRequirementsGetModel(db, model, execsGroupIDs)
+	wm, err := processNodeJobRunRequirementsGetModel(ctx, db, model, execsGroupIDs)
 	if err != nil {
 		log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
 		errm.Append(err)
@@ -103,7 +104,7 @@ func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.P
 	return params
 }
 
-func processNodeJobRunRequirementsGetModel(db gorp.SqlExecutor, model string, execsGroupIDs []int64) (*sdk.Model, error) {
+func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecutor, model string, execsGroupIDs []int64) (*sdk.Model, error) {
 	if model == "" {
 		return nil, nil
 	}
@@ -141,7 +142,7 @@ func processNodeJobRunRequirementsGetModel(db gorp.SqlExecutor, model string, ex
 
 		// if there is no shared.infra model we will try to find one for exec groups, backward compatibility for existing workflow runs.
 		if wm == nil {
-			wms, err := workermodel.LoadAllByNameAndGroupIDs(db, modelName, execsGroupIDs)
+			wms, err := workermodel.LoadAllByNameAndGroupIDs(ctx, db, modelName, execsGroupIDs)
 			if err != nil {
 				return nil, err
 			}

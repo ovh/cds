@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -23,16 +24,16 @@ func GetDeprecatedUser(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) (*sdk.User,
 	return oldUser, nil
 }
 
-func LoadByOldUserID(db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
+func LoadByOldUserID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
 	oldUserID, err := db.SelectStr("select authentified_user_id from authentified_user_migration where user_id = $1", id)
 	if err != nil {
 		return nil, sdk.WrapError(sdk.ErrInvalidUser, "unable to load authentified_user_id from authentified_user_migration where user_id = %d: %v", id, err)
 	}
-	return LoadUserByID(db, oldUserID, opts...)
+	return LoadUserByID(ctx, db, oldUserID, opts...)
 }
 
-func LoadUserByID(db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
-	u, err := unsafeLoadUserByID(db, id)
+func LoadUserByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
+	u, err := unsafeLoadUserByID(ctx, db, id)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func LoadUserByID(db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.
 		}
 	}
 	for i := range opts {
-		if err := opts[i](db, &au); err != nil {
+		if err := opts[i](ctx, db, &au); err != nil {
 			return nil, err
 		}
 	}
@@ -59,10 +60,10 @@ func LoadUserByID(db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.
 	return &au, nil
 }
 
-func unsafeLoadUserByID(db gorp.SqlExecutor, id string) (authentifiedUser, error) {
+func unsafeLoadUserByID(ctx context.Context, db gorp.SqlExecutor, id string) (authentifiedUser, error) {
 	var u authentifiedUser
 	query := gorpmapping.NewQuery("select * from authentified_user where id = $1").Args(id)
-	if has, err := gorpmapping.Get(db, query, &u); err != nil {
+	if has, err := gorpmapping.Get(ctx, db, query, &u); err != nil {
 		return u, sdk.WrapError(err, "unable to load user by id %s", id)
 	} else if !has {
 		return u, sdk.WrapError(sdk.ErrInvalidUser, "unable to load user by id %s", id)
@@ -70,8 +71,8 @@ func unsafeLoadUserByID(db gorp.SqlExecutor, id string) (authentifiedUser, error
 	return u, nil
 }
 
-func LoadUserByEmail(db gorp.SqlExecutor, email string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
-	u, err := unsafeLoadUserByEmail(db, email)
+func LoadUserByEmail(ctx context.Context, db gorp.SqlExecutor, email string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
+	u, err := unsafeLoadUserByEmail(ctx, db, email)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func LoadUserByEmail(db gorp.SqlExecutor, email string, opts ...LoadOptionFunc) 
 	var au = sdk.AuthentifiedUser(u)
 
 	for i := range opts {
-		if err := opts[i](db, &au); err != nil {
+		if err := opts[i](ctx, db, &au); err != nil {
 			return nil, err
 		}
 	}
@@ -94,7 +95,7 @@ func LoadUserByEmail(db gorp.SqlExecutor, email string, opts ...LoadOptionFunc) 
 	return &au, nil
 }
 
-func unsafeLoadUserByEmail(db gorp.SqlExecutor, email string) (authentifiedUser, error) {
+func unsafeLoadUserByEmail(ctx context.Context, db gorp.SqlExecutor, email string) (authentifiedUser, error) {
 	var u authentifiedUser
 	query := "select * from authentified_user where email = $1"
 	if err := db.SelectOne(&u, query, email); err != nil {
@@ -103,7 +104,7 @@ func unsafeLoadUserByEmail(db gorp.SqlExecutor, email string) (authentifiedUser,
 	return u, nil
 }
 
-func LoadUserByUsername(db gorp.SqlExecutor, username string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
+func LoadUserByUsername(ctx context.Context, db gorp.SqlExecutor, username string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
 	u, err := unsafeLoadUserByUsername(db, username)
 	if err != nil {
 		return nil, err
@@ -119,7 +120,7 @@ func LoadUserByUsername(db gorp.SqlExecutor, username string, opts ...LoadOption
 	var au = sdk.AuthentifiedUser(u)
 
 	for i := range opts {
-		if err := opts[i](db, &au); err != nil {
+		if err := opts[i](ctx, db, &au); err != nil {
 			return nil, err
 		}
 	}
@@ -136,7 +137,7 @@ func unsafeLoadUserByUsername(db gorp.SqlExecutor, username string) (authentifie
 	return u, nil
 }
 
-type LoadOptionFunc func(gorp.SqlExecutor, ...*sdk.AuthentifiedUser) error
+type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.AuthentifiedUser) error
 
 var LoadOptions = struct {
 	WithContacts      LoadOptionFunc
@@ -146,10 +147,10 @@ var LoadOptions = struct {
 	WithOldUserStruct: LoadDeprecatedUser, // TODO: will be removed
 }
 
-func LoadAll(db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.AuthentifiedUser, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.AuthentifiedUser, error) {
 	var dbUsers []authentifiedUser
 	query := gorpmapping.NewQuery("select * from authentified_user")
-	if err := gorpmapping.GetAll(db, query, &dbUsers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &dbUsers); err != nil {
 		return nil, err
 	}
 
@@ -168,7 +169,7 @@ func LoadAll(db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.AuthentifiedUse
 
 		au := sdk.AuthentifiedUser(*u)
 		for i := range opts {
-			if err := opts[i](db, &au); err != nil {
+			if err := opts[i](ctx, db, &au); err != nil {
 				return nil, err
 			}
 		}
@@ -219,7 +220,7 @@ func Update(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) error {
 }
 
 func Delete(db gorp.SqlExecutor, id string) error {
-	dbUser, err := unsafeLoadUserByID(db, id)
+	dbUser, err := unsafeLoadUserByID(context.Background(), db, id)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -255,14 +256,14 @@ func DeleteContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 	return nil
 }
 
-func LoadContacts(db gorp.SqlExecutor, u ...*sdk.AuthentifiedUser) error {
+func LoadContacts(ctx context.Context, db gorp.SqlExecutor, u ...*sdk.AuthentifiedUser) error {
 	usersID := sdk.AuthentifiedUsersToIDs(u)
 	query := gorpmapping.NewQuery(
 		"select * from user_contact where user_id = ANY(string_to_array($1, ',')::text[]) order by id asc",
 	).Args(strings.Join(usersID, ","))
 
 	var dbContacts []userContact
-	if err := gorpmapping.GetAll(db, query, &dbContacts); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &dbContacts); err != nil {
 		return err
 	}
 
@@ -291,7 +292,7 @@ func LoadContacts(db gorp.SqlExecutor, u ...*sdk.AuthentifiedUser) error {
 	return nil
 }
 
-func LoadDeprecatedUser(db gorp.SqlExecutor, u ...*sdk.AuthentifiedUser) error {
+func LoadDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, u ...*sdk.AuthentifiedUser) error {
 
 	for _, u := range u {
 		oldUserID, err := db.SelectInt("select user_id from authentified_user_migration where authentified_user_id = $1", u.ID)

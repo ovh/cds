@@ -42,7 +42,7 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) er
 		return err
 	}
 
-	return loadGroup(db, as...)
+	return loadGroup(ctx, db, as...)
 }
 
 func loadRequirements(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {

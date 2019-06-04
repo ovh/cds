@@ -112,7 +112,7 @@ func (api *API) resetUserHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		usr, err := user.LoadUserByUsername(api.mustDB(), username, user.LoadOptions.WithContacts)
+		usr, err := user.LoadUserByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithContacts)
 		if err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ func (api *API) confirmUserHandler() service.Handler {
 		}
 
 		// Load user
-		usr, err := user.LoadUserByUsername(api.mustDB(), username)
+		usr, err := user.LoadUserByUsername(ctx, api.mustDB(), username)
 		if err != nil {
 			return err
 		}

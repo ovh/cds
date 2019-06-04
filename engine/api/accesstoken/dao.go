@@ -1,6 +1,7 @@
 package accesstoken
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
@@ -117,7 +118,7 @@ func Delete(db gorp.SqlExecutor, id string) error {
 // PostGet load all the groups for an access token
 func (a *accessToken) PostGet(db gorp.SqlExecutor) error {
 	// Load the user
-	au, err := user.LoadUserByID(db, a.AuthentifiedUserID)
+	au, err := user.LoadUserByID(context.Background(), db, a.AuthentifiedUserID)
 	if err != nil {
 		return err
 	}

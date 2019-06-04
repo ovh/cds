@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -48,9 +49,9 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
-func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun) {
+func PublishWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun) {
 	// get and send all user notifications
-	for _, event := range notification.GetUserWorkflowEvents(db, w, previousWR, nr) {
+	for _, event := range notification.GetUserWorkflowEvents(ctx, db, w, previousWR, nr) {
 		Publish(event, nil)
 	}
 

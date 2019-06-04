@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -22,7 +23,7 @@ func Init(uiurl string) {
 }
 
 // GetUserWorkflowEvents return events to send for the given workflow run
-func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
+func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
 	events := []sdk.EventNotif{}
 
 	//Compute notification
@@ -91,7 +92,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 						jn.Recipients = append(jn.Recipients, email)
 					} else if author, okA := params["cds.author"]; okA && author != "" {
 						// Load the user
-						au, err := user.LoadUserByUsername(db, author)
+						au, err := user.LoadUserByUsername(ctx, db, author)
 						if err != nil {
 							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
