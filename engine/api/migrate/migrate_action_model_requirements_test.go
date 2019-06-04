@@ -32,7 +32,7 @@ func TestActionModelRequirements_WithExistingRequirements(t *testing.T) {
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,
 		PatternName: p.Name,
-	})
+	}, sdk.AuthentifiedUser{})
 	test.NoError(t, err)
 
 	a := sdk.Action{
@@ -103,7 +103,7 @@ func TestActionModelRequirements_WithLockedExistingRequirements(t *testing.T) {
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,
 		PatternName: p.Name,
-	})
+	}, sdk.AuthentifiedUser{})
 	test.NoError(t, err)
 
 	a := sdk.Action{

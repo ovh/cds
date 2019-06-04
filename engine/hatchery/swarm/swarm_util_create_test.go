@@ -122,7 +122,7 @@ func Test_computeDockerOpts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &HatcherySwarm{}
-			got, err := h.computeDockerOpts(tt.args.isSharedInfra, tt.args.requirements)
+			got, err := h.computeDockerOpts(tt.args.requirements)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("computeDockerOpts() error = %v, wantErr %v", err, tt.wantErr)
 				return

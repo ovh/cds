@@ -25,7 +25,7 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 	assert.NoError(t, user.Insert(db, &u))
 	assert.NoError(t, user.Update(db, &u))
 
-	u1, err := user.LoadUserByID(context.TODO(), db, u.ID, LoadOptions.WithDeprecatedUser, LoadOptions.WithContacts)
+	u1, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
 	assert.NoError(t, err)
 	assert.NotNil(t, u1)
 
@@ -34,11 +34,11 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Now the loading should failed
-	u2, err := user.LoadUserByID(context.TODO(), db, u.ID, LoadOptions.WithDeprecatedUser, LoadOptions.WithContacts)
+	u2, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
 	assert.Error(t, err)
 	assert.Nil(t, u2)
 
-	assert.NoError(t, user.Delete(db, u.ID))
+	assert.NoError(t, user.DeleteByID(db, u.ID))
 }
 
 func TestLoadContacts(t *testing.T) {
@@ -60,13 +60,13 @@ func TestLoadContacts(t *testing.T) {
 	}
 	assert.NoError(t, user.InsertContact(db, &c))
 
-	u1, err := user.LoadUserByID(context.TODO(), db, u.ID, user.LoadOptions.WithContacts)
+	u1, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithContacts)
 	assert.NoError(t, err)
 	assert.NotNil(t, u1)
 
 	assert.Len(t, u1.Contacts, 1)
 
-	assert.NoError(t, user.Delete(db, u1.ID))
+	assert.NoError(t, user.DeleteByID(db, u1.ID))
 }
 
 func TestLoadDeprecatedUser(t *testing.T) {
@@ -88,11 +88,11 @@ func TestLoadDeprecatedUser(t *testing.T) {
 	}
 	assert.NoError(t, user.InsertContact(db, &c))
 
-	u1, err := user.LoadUserByID(context.TODO(), db, u.ID, user.LoadOptions.WithOldUserStruct)
+	u1, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
 	assert.NoError(t, err)
 	assert.NotNil(t, u1.OldUserStruct)
 
-	assert.NoError(t, user.Delete(db, u1.ID))
+	assert.NoError(t, user.DeleteByID(db, u1.ID))
 }
 
 func TestLoadAll(t *testing.T) {
