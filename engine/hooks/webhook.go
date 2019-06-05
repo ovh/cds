@@ -201,6 +201,9 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 			}
 			payload := make(map[string]interface{})
 			payload["git.author"] = event.Actor.DisplayName
+			if len(pushChange.New.Target.Message) > 0 {
+				payload["git.message"] = pushChange.New.Target.Message
+			}
 
 			if pushChange.New.Type == "branch" {
 				payload["git.branch"] = strings.TrimPrefix(pushChange.New.Name, "refs/heads/")
