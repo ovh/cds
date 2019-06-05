@@ -138,16 +138,8 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 				DisplayID:    pullr.Destination.Branch.Name,
 				LatestCommit: pullr.Destination.Commit.Hash,
 			},
-			// CloneURL: pullr.Base.Repo.CloneURL,
 			Commit: sdk.VCSCommit{
-				// Author: sdk.VCSAuthor{
-				// 	Avatar:      pullr.Destination.,
-				// 	DisplayName: pullr.Base.User.Login,
-				// 	Name:        pullr.Base.User.Name,
-				// },
 				Hash: pullr.Destination.Commit.Hash,
-				// Message:   pullr.Destination.Commit.,
-				// Timestamp: pullr.Destination.Repository,
 			},
 		},
 		Head: sdk.VCSPushEvent{
@@ -157,16 +149,8 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 				DisplayID:    pullr.Source.Branch.Name,
 				LatestCommit: pullr.Source.Commit.Hash,
 			},
-			// CloneURL: pullr.Base.Repo.CloneURL,
 			Commit: sdk.VCSCommit{
-				// Author: sdk.VCSAuthor{
-				// 	Avatar:      pullr.Source.,
-				// 	DisplayName: pullr.Base.User.Login,
-				// 	Name:        pullr.Base.User.Name,
-				// },
 				Hash: pullr.Source.Commit.Hash,
-				// Message:   pullr.Destination.Commit.,
-				// Timestamp: pullr.Destination.Repository,
 			},
 		},
 		URL: pullr.Links.HTML.Href,
