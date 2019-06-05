@@ -14,7 +14,7 @@ import (
 )
 
 func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
-	url := fmt.Sprintf("/2.0/repositories/%s/hooks", repo)
+	url := fmt.Sprintf("/repositories/%s/hooks", repo)
 	if client.proxyURL != "" {
 		lastIndexSlash := strings.LastIndex(hook.URL, "/")
 		if client.proxyURL[len(client.proxyURL)-1] == '/' {

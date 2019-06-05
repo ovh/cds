@@ -1,7 +1,7 @@
 package hooks
 
-// BitbucketPushEvent represents payload send by github on a push event
-type BitbucketPushEvent struct {
+// BitbucketServerPushEvent represents payload send by bitbucket server on a push event
+type BitbucketServerPushEvent struct {
 	EventKey string `json:"eventKey"`
 	Date     string `json:"date"`
 	Actor    struct {
