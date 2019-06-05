@@ -22,7 +22,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
@@ -69,7 +69,7 @@ jobs:
 		ProjectKey:   proj.Key,
 		WorkflowName: sdk.RandomString(10),
 	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?import=true", wtr)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri+"?import=true", wtr)
 
 	// execute the request
 	rec := httptest.NewRecorder()
@@ -89,7 +89,7 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(api.mustDB())
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
@@ -145,7 +145,7 @@ jobs:
 			},
 		}},
 	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, wtb)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, wtb)
 
 	// execute the request
 	rec := httptest.NewRecorder()

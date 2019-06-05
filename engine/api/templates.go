@@ -492,7 +492,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)

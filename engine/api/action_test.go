@@ -23,7 +23,7 @@ func Test_getActionExportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(db)
 
 	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
@@ -36,12 +36,12 @@ func Test_getActionExportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permGroupName":      grp.Name,
+		"permGroupName":  grp.Name,
 		"permActionName": "myAction",
 	}
 	uri := api.Router.GetRoute("GET", api.getActionExportHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -56,7 +56,7 @@ func Test_postActionImportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(db)
 
 	uri := api.Router.GetRoute("POST", api.importActionHandler, nil)
 	test.NotEmpty(t, uri)
@@ -81,7 +81,7 @@ func Test_postActionImportHandler(t *testing.T) {
 			},
 		},
 	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 
 	body, _ := yaml.Marshal(a)
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
@@ -102,7 +102,7 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(db)
 
 	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
@@ -153,12 +153,12 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 
 	// prepare action rollback request
 	uri := api.Router.GetRoute("POST", api.postActionAuditRollbackHandler, map[string]string{
-		"permGroupName":      grp.Name,
+		"permGroupName":  grp.Name,
 		"permActionName": a.Name,
 		"auditID":        fmt.Sprintf("%d", aa.ID),
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 
 	// send action rollback request
 	rec := httptest.NewRecorder()
