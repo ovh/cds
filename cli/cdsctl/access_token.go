@@ -107,13 +107,14 @@ func accesstokenListRun(v cli.Values) (cli.ListResult, error) {
 			groupNames = append(groupNames, g.Name)
 		}
 		return displayToken{
-			ID:          t.ID,
-			Description: t.Description,
-			UserName:    t.User.Fullname,
-			ExpireAt:    t.ExpireAt.Format(time.RFC850),
-			Created:     t.Created.Format(time.RFC850),
-			Status:      t.Status,
-			Scope:       strings.Join(groupNames, ","),
+			ID: t.ID,
+			// TODO
+			//Description: t.Description,
+			//UserName:    t.User.Fullname,
+			ExpireAt: t.ExpireAt.Format(time.RFC850),
+			Created:  t.Created.Format(time.RFC850),
+			Status:   t.Status,
+			Scope:    strings.Join(groupNames, ","),
 		}
 	}
 
@@ -226,10 +227,12 @@ func accesstokenNewRun(v cli.Values) error {
 func displayToken(t sdk.AccessToken, jwt string) {
 	fmt.Println("Token successfully generated")
 	fmt.Println(cli.Cyan("ID"), "\t\t", t.ID)
-	fmt.Println(cli.Cyan("Description"), "\t", t.Description)
+	// TODO
+	//fmt.Println(cli.Cyan("Description"), "\t", t.Description)
 	fmt.Println(cli.Cyan("Creation"), "\t", t.Created.Format(time.RFC850))
 	fmt.Println(cli.Red("Expiration"), "\t", cli.Red(t.ExpireAt.Format(time.RFC850)))
-	fmt.Println(cli.Cyan("User"), "\t\t", t.User.Fullname)
+	// TODO
+	//fmt.Println(cli.Cyan("User"), "\t\t", t.User.Fullname)
 	var groupNames []string
 	for _, g := range t.Groups {
 		groupNames = append(groupNames, g.Name)

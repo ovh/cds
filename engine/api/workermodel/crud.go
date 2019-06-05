@@ -14,16 +14,19 @@ import (
 )
 
 // Create returns a new worker model for given data.
-func Create(db gorp.SqlExecutor, data sdk.Model, ident sdk.Identifiable) (*sdk.Model, error) {
+func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.Identifiable) (*sdk.Model, error) {
 	// the default group cannot own worker model
 	if group.IsDefaultGroupID(data.GroupID) {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
 	}
 
 	// check that the group exists and user is admin for group id
-	grp, err := group.LoadGroupByID(db, data.GroupID)
+	grp, err := group.LoadByID(ctx, db, data.GroupID)
 	if err != nil {
 		return nil, err
+	}
+	if grp == nil {
+		return nil, sdk.WithStack(sdk.ErrGroupNotFound)
 	}
 
 	// check if worker model already exists
@@ -76,9 +79,12 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
 	}
 
-	grp, err := group.LoadGroupByID(db, data.GroupID)
+	grp, err := group.LoadByID(ctx, db, data.GroupID)
 	if err != nil {
 		return nil, err
+	}
+	if grp == nil {
+		return nil, sdk.WithStack(sdk.ErrGroupNotFound)
 	}
 
 	if old.GroupID != data.GroupID || old.Name != data.Name {

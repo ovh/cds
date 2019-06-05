@@ -4,7 +4,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk"
 )
 
 var groupUserCmd = cli.Command{
@@ -35,15 +34,8 @@ func groupUserListRun(v cli.Values) (cli.ListResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	users := make([]sdk.User, 0, len(gr.Admins)+len(gr.Users))
 
-	for _, admin := range gr.Admins {
-		admin.GroupAdmin = true
-		users = append(users, admin)
-	}
-	users = append(users, gr.Users...)
-
-	return cli.AsListResult(users), nil
+	return cli.AsListResult(gr.Members), nil
 }
 
 var groupUserAdd = cli.Command{

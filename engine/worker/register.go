@@ -10,7 +10,8 @@ import (
 
 // Workers need to register to main api so they can run actions
 func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
-	log.Info("Registering %s on %s", form.Name, w.apiEndpoint)
+	// TODO
+	//log.Info("Registering %s on %s", form.Name, w.apiEndpoint)
 	sdk.InitEndpoint(w.apiEndpoint)
 	sdk.Authorization("")
 
@@ -32,10 +33,11 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	}
 
 	w.id = worker.ID
-	w.groupID = worker.GroupID
-	if worker.Model != nil {
-		w.model = *worker.Model
-	}
+	// TODO
+	//w.groupID = worker.GroupID
+	//if worker.Model != nil {
+	//	w.model = *worker.Model
+	//}
 	sdk.Authorization(worker.ID)
 	w.initGRPCConn()
 

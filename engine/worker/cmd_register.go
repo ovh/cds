@@ -24,11 +24,12 @@ func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		initFlags(cmd, w)
 		form := sdk.WorkerRegistrationForm{
-			RegistrationOnly: true,
-			Name:             w.status.Name,
-			Token:            w.token,
-			HatcheryName:     w.hatchery.name,
-			ModelID:          w.model.ID,
+			// TODO
+			//RegistrationOnly: true,
+			//Name:         w.status.Name,
+			//Token:        w.token,
+			//HatcheryName: w.hatchery.name,
+			//ModelID:      w.model.ID,
 		}
 
 		if err := w.register(form); err != nil {

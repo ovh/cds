@@ -97,7 +97,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 				return err
 			}
 
-			newModel, err = workermodel.Create(api.mustDB(), data, getAPIConsumer(ctx))
+			newModel, err = workermodel.Create(ctx, api.mustDB(), data, getAPIConsumer(ctx))
 			if err != nil {
 				return err
 			}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -95,6 +94,8 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
+
+	t.Log(string(btes))
 }
 
 func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
@@ -336,6 +337,8 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
+
+	t.Log(string(btes))
 }
 
 func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
@@ -823,6 +826,8 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
+
+	t.Log(string(btes))
 }
 
 func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
@@ -1459,6 +1464,8 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
+
+	t.Log(string(btes))
 
 	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, &w))
 }

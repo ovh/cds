@@ -100,7 +100,7 @@ type Termui struct {
 	baseURL          string
 	selected         int
 	queueTabSelected int
-	statusSelected   []sdk.Status
+	statusSelected   []string
 	currentJobURL    string
 	msg              string
 
@@ -410,11 +410,11 @@ func (ui *Termui) decrementQueueFilter() {
 func (ui *Termui) updateSelectStatus() {
 	switch ui.queueTabSelected {
 	case 0:
-		ui.statusSelected = []sdk.Status{sdk.StatusWaiting}
+		ui.statusSelected = []string{sdk.StatusWaiting}
 	case 1:
-		ui.statusSelected = []sdk.Status{sdk.StatusBuilding}
+		ui.statusSelected = []string{sdk.StatusBuilding}
 	case 2:
-		ui.statusSelected = []sdk.Status{sdk.StatusBuilding, sdk.StatusWaiting}
+		ui.statusSelected = []string{sdk.StatusBuilding, sdk.StatusWaiting}
 	}
 }
 
@@ -479,20 +479,21 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 
 	for _, w := range workers {
 		var name string
-		if w.HatcheryName == "" {
-			name = "Without hatchery"
-		} else {
-			name = w.HatcheryName
-		}
+		// TODO
+		//if w.HatcheryName == "" {
+		//	name = "Without hatchery"
+		//} else {
+		//	name = w.HatcheryName
+		//}
 		if _, ok := hatcheries[name]; !ok {
 			hatcheries[name] = make(map[string]int64)
 			hatcheryNames = append(hatcheryNames, name)
 		}
-		hatcheries[name][w.Status.String()] = hatcheries[name][w.Status.String()] + 1
-		if _, ok := status[w.Status.String()]; !ok {
-			statusTitle = append(statusTitle, w.Status.String())
+		hatcheries[name][w.Status] = hatcheries[name][w.Status] + 1
+		if _, ok := status[w.Status]; !ok {
+			statusTitle = append(statusTitle, w.Status)
 		}
-		status[w.Status.String()] = status[w.Status.String()] + 1
+		status[w.Status] = status[w.Status] + 1
 	}
 
 	sort.Slice(statusTitle, func(i, j int) bool {
@@ -535,12 +536,12 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 }
 
 func (ui *Termui) updateQueue(baseURL string) {
-	mapLines := map[sdk.Status][]string{}
+	mapLines := map[string][]string{}
 	var lineCount int
 	var maxWaiting, maxBuilding time.Duration
 	for _, job := range ui.workflowNodeJobRun {
 		duration := time.Since(job.Queued)
-		s := sdk.Status(job.Status)
+		s := job.Status
 
 		if (maxWaiting == 0 || maxWaiting < duration) && job.Status == sdk.StatusWaiting {
 			maxWaiting = duration
@@ -573,7 +574,7 @@ func (ui *Termui) updateQueue(baseURL string) {
 	ui.queue.SetItems(items...)
 
 	ui.queue.BorderLabel = fmt.Sprintf(" Queue(%s):%d ",
-		strings.Join(sdk.StatusToStrings(ui.statusSelected), ","), len(items))
+		strings.Join(ui.statusSelected, ","), len(items))
 
 	for _, s := range ui.statusSelected {
 		switch s {
@@ -644,8 +645,8 @@ func statusShort(status string) (string, string) {
 		return "w", "fg-cyan"
 	case sdk.StatusDisabled:
 		return "b", "fg-blue"
-	case sdk.StatusDisabled:
-		return "d", "fg-white"
+	//case sdk.StatusDisabled:
+	//	return "d", "fg-white"
 	case sdk.StatusChecking:
 		return "c", "fg-yellow"
 	}
@@ -656,8 +657,8 @@ func statusWeight(status string) int {
 	switch status {
 	case sdk.StatusDisabled:
 		return 4
-	case sdk.StatusDisabled:
-		return 3
+	//case sdk.StatusDisabled:
+	//	return 3
 	case sdk.StatusWaiting:
 		return 2
 	case sdk.StatusChecking:

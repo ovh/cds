@@ -2,7 +2,6 @@ package group
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -58,64 +57,6 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 		return 0, false, sdk.WrapError(err, "AddGroup: Cannot insert group")
 	}
 	return group.ID, true, nil
-}
-
-// LoadGroupByID retrieves group informations from database
-func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
-	query := `SELECT "group".name FROM "group" WHERE "group".id = $1`
-	var name string
-	if err := db.QueryRow(query, id).Scan(&name); err != nil {
-		if err == sql.ErrNoRows {
-			err = sdk.ErrGroupNotFound
-		}
-		return nil, sdk.WithStack(err)
-	}
-	return &sdk.Group{
-		ID:   id,
-		Name: name,
-	}, nil
-}
-
-// LoadUserGroup retrieves all group users from database
-func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	query := `
-    SELECT "user".id, "user".username, "user".data, "group_user".group_admin
-    FROM "user"
-	 	JOIN group_user ON group_user.user_id = "user".id
-    WHERE group_user.group_id = $1
-    ORDER BY "user".username ASC
-  `
-
-	rows, err := db.Query(query, group.ID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var username string
-		var jsonUser []byte
-		var admin bool
-		if err := rows.Scan(&id, &username, &jsonUser, &admin); err != nil {
-			return err
-		}
-
-		u := &sdk.User{}
-		if err := json.Unmarshal(jsonUser, u); err != nil {
-			return sdk.WrapError(err, "Error while converting jsonUser")
-		}
-		u.ID = id
-		u.Username = username
-		if admin {
-			// TODO
-			//group.Admins = append(group.Admins, *u)
-		} else {
-			// TODO
-			//group.Users = append(group.Users, *u)
-		}
-	}
-	return nil
 }
 
 // LoadGroups load all groups from database

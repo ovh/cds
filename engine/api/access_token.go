@@ -162,43 +162,19 @@ func (api *API) getAccessTokenByGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, err := requestVarInt(r, "id")
 		if err != nil {
-			return sdk.WithStack(err)
-		}
-
-		// Check that the current user is member of the group
-		g, err := group.LoadGroupByID(api.mustDB(), id)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		if err := group.LoadUserGroup(api.mustDB(), g); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		au := getAPIConsumer(ctx).OnBehalfOf
-		if err := user.LoadOptions.WithDeprecatedUser(ctx, api.mustDB(), &au); err != nil {
 			return err
 		}
 
-		var isGroupMember bool
-		// TODO
-		/*for _, u := range g.Users {
-			if u.ID == au.OldUserStruct.ID {
-				isGroupMember = true
-				break
-			}
-		}*/
-
-		if !isGroupMember {
-			// TODO
-			/*for _, u := range g.Admins {
-				if u.ID == au.OldUserStruct.ID {
-					isGroupMember = true
-					break
-				}
-			}*/
+		// Check that the current user is member of the group
+		g, err := group.LoadByID(ctx, api.mustDB(), id, group.LoadOptions.WithMembers)
+		if err != nil {
+			return err
+		}
+		if g == nil {
+			return sdk.WithStack(sdk.ErrGroupNotFound)
 		}
 
-		if !isGroupMember {
+		if !isGroupAdmin(ctx, g) && !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

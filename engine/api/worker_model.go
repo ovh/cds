@@ -47,7 +47,7 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := workermodel.Create(tx, data, getAPIConsumer(ctx))
+		model, err := workermodel.Create(ctx, tx, data, getAPIConsumer(ctx))
 		if err != nil {
 			return err
 		}
@@ -300,19 +300,23 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 
 func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO move this code in a permGroupID middleware
 		groupID, err := requestVarInt(r, "groupID")
 		if err != nil {
 			return err
 		}
 
 		// check that the group exists and user is part of the group
-		g, err := group.LoadGroupByID(api.mustDB(), groupID)
+		g, err := group.LoadByID(ctx, api.mustDB(), groupID)
 		if err != nil {
 			return err
 		}
+		if g == nil {
+			return sdk.WithStack(sdk.ErrGroupNotFound)
+		}
 
-		if isGroupMember(ctx, g) || isAdmin(ctx) {
-			return err
+		if !isGroupMember(ctx, g) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		wms, err := workermodel.LoadAllActiveAndNotDeprecatedForGroupIDs(api.mustDB(), []int64{g.ID, group.SharedInfraGroup.ID})

@@ -139,12 +139,15 @@ func (node *dbNodeData) PostInsert(db gorp.SqlExecutor) error {
 		case grp.Group.ID == 0:
 			grDB, err = group.LoadByName(context.Background(), db, grp.Group.Name)
 		case grp.Group.Name == "":
-			grDB, err = group.LoadGroupByID(db, grp.Group.ID)
+			grDB, err = group.LoadByID(context.Background(), db, grp.Group.ID)
 		default:
 			grDB = &grp.Group
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load group %s for node %d : %s", grp.Group.Name, node.ID, node.Name)
+		}
+		if grDB == nil {
+			return sdk.WithStack(sdk.ErrGroupNotFound)
 		}
 		node.Groups[i].Group = *grDB
 	}

@@ -95,9 +95,12 @@ func (api *API) postTemplateHandler() service.Handler {
 			}
 		} else {
 			// check that the group exists and user is admin for group id
-			grp, err = group.LoadGroupByID(api.mustDB(), data.GroupID)
+			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID)
 			if err != nil {
 				return err
+			}
+			if grp == nil {
+				return sdk.WithStack(sdk.ErrGroupNotFound)
 			}
 		}
 
@@ -225,9 +228,12 @@ func (api *API) putTemplateHandler() service.Handler {
 			}
 		} else {
 			// check that the group exists and user is admin for group id
-			grp, err = group.LoadGroupByID(api.mustDB(), data.GroupID)
+			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID)
 			if err != nil {
 				return err
+			}
+			if grp == nil {
+				return sdk.WithStack(sdk.ErrGroupNotFound)
 			}
 		}
 

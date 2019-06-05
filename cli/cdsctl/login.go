@@ -129,40 +129,42 @@ func loginJWTRun(v cli.Values) error {
 
 	// Now use the new JWT token to make the call
 	conf = cdsclient.Config{
-		Host:        apiURL,
-		Verbose:     os.Getenv("CDS_VERBOSE") == "true",
-		User:        accessToken.User.Username,
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		// TODO
+		//User:        accessToken.User.Username,
 		AccessToken: jwt,
 	}
 	client = cdsclient.New(conf)
 
-	u, err := client.UserGet(accessToken.User.Username)
-	if err != nil {
-		return fmt.Errorf("unable to get user %s: %v", accessToken.User.Username, err)
-	}
+	//u, err := client.UserGet("" /* TODO accessToken.User.Username*/)
+	//if err != nil {
+	//	return fmt.Errorf("unable to get user %s: %v", "" /* TODO accessToken.User.Username*/, err)
+	//}
 
-	ids := sdk.GroupsToIDs(u.Groups)
+	//ids := sdk.GroupsToIDs(u.Groups)
 
 	// Create a new token with a long expiration delay
-	newAccessToken, jwt, err := client.AccessTokenCreate(sdk.AccessTokenRequest{
-		Description:           "cdsctl-login-" + time.Now().Format(time.RFC3339),
-		Origin:                "cdsctl",
-		ExpirationDelaySecond: 604800, // one week
-		GroupsIDs:             ids,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to create access token: %v", err)
-	}
+	// TODO
+	//newAccessToken, jwt, err := client.AccessTokenCreate(sdk.AccessTokenRequest{
+	//	Description:           "cdsctl-login-" + time.Now().Format(time.RFC3339),
+	//	Origin:                "cdsctl",
+	//	ExpirationDelaySecond: 604800, // one week
+	//	GroupsIDs:             ids,
+	//})
+	//if err != nil {
+	//	return fmt.Errorf("unable to create access token: %v", err)
+	//}
 
 	// Delete the first token
 	if err := client.AccessTokenDelete(accessToken.ID); err != nil {
-		return fmt.Errorf("unable to delete login access token %s: %v", accessToken.Description, err)
+		return fmt.Errorf("unable to delete login access token %s: %v", "" /* TODO accessToken.Description*/, err)
 	}
 
 	fmt.Println("cdsctl: Login successful")
-	fmt.Println("cdsctl: Logged in as", newAccessToken.User.Username)
+	fmt.Println("cdsctl: Logged in as", "" /* TODO newAccessToken.User.Username*/)
 
-	return doAfterLogin(apiURL, newAccessToken.User.Username, jwt, v.GetBool("env"), v.GetBool("insecure"))
+	return doAfterLogin(apiURL, "" /* TODO newAccessToken.User.Username*/, jwt, v.GetBool("env"), v.GetBool("insecure"))
 }
 
 func loginRun(v cli.Values) error {

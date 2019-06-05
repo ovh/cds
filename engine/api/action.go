@@ -81,20 +81,24 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 
 func (api *API) getActionsForGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO move this in a permGroupID middleware
 		groupID, err := requestVarInt(r, "groupID")
 		if err != nil {
 			return err
 		}
 
 		// check that the group exists
-		g, err := group.LoadGroupByID(api.mustDB(), groupID)
+		g, err := group.LoadByID(ctx, api.mustDB(), groupID)
 		if err != nil {
 			return err
+		}
+		if g == nil {
+			return sdk.WithStack(sdk.ErrGroupNotFound)
 		}
 
 		// and user is part of the group
 		if !isGroupMember(ctx, g) && !isMaintainer(ctx) && !isAdmin(ctx) {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(ctx, api.mustDB(),
@@ -122,9 +126,12 @@ func (api *API) postActionHandler() service.Handler {
 		}
 
 		// check that the group exists and user is admin for group id
-		grp, err := group.LoadGroupByID(api.mustDB(), *data.GroupID)
+		grp, err := group.LoadByID(ctx, api.mustDB(), *data.GroupID)
 		if err != nil {
 			return err
+		}
+		if grp == nil {
+			return sdk.WithStack(sdk.ErrGroupNotFound)
 		}
 
 		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
@@ -246,9 +253,12 @@ func (api *API) putActionHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		grp, err := group.LoadGroupByID(tx, *data.GroupID)
+		grp, err := group.LoadByID(ctx, tx, *data.GroupID)
 		if err != nil {
 			return err
+		}
+		if grp == nil {
+			return sdk.WithStack(sdk.ErrGroupNotFound)
 		}
 
 		if *old.GroupID != *data.GroupID || old.Name != data.Name {

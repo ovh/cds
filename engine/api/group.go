@@ -16,17 +16,12 @@ import (
 
 func (api *API) getGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
 
-		g, errl := group.LoadByName(ctx, api.mustDB(), name)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load group from db")
-		}
-
-		if err := group.LoadUserGroup(api.mustDB(), g); err != nil {
-			return sdk.WrapError(err, "Cannot load user group from db")
+		g, err := group.LoadByName(ctx, api.mustDB(), name, group.LoadOptions.WithMembers)
+		if err != nil {
+			return err
 		}
 
 		if isGroupAdmin(ctx, g) {

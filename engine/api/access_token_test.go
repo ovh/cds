@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -19,12 +17,10 @@ func TestAPI_TokenHandlers(t *testing.T) {
 	defer end()
 
 	grp := sdk.Group{Name: sdk.RandomString(10)}
-	user, password := assets.InsertLambdaUser(db, &grp)
+	user, jwt := assets.InsertLambdaUser(db, &grp)
 	test.NoError(t, group.SetUserGroupAdmin(db, grp.ID, user.OldUserStruct.ID))
 
 	// Test a call with a JWT Token
-	jwt, err := assets.NewJWTToken(t, db, *user, grp)
-	test.NoError(t, err)
 	uri := router.GetRoute("POST", api.postNewAccessTokenHandler, nil)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri,
 		sdk.AccessTokenRequest{
@@ -37,7 +33,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 	)
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	test.Equal(t, 201, w.Code)
 
 	// Test a call with a JWT Token and an XSFR Token
 	jwtxsrf, xsrf, err := assets.NewJWTTokenWithXSRF(t, db, api.Cache, *user, grp)
@@ -54,7 +50,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 	)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	test.Equal(t, 201, w.Code)
 
 	jwtToken := w.Header().Get("X-CDS-JWT")
 	t.Logf("jwt token is %v...", jwtToken[:12])
@@ -66,7 +62,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 		"id": accessToken.ID,
 	}
 	uri = router.GetRoute("PUT", api.putRegenAccessTokenHandler, vars)
-	req = assets.NewAuthentifiedRequest(t, user, password, "PUT", uri,
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri,
 		sdk.AccessTokenRequest{
 			Origin:                "test",
 			Description:           "test",
@@ -77,7 +73,7 @@ func TestAPI_TokenHandlers(t *testing.T) {
 	)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	test.Equal(t, 200, w.Code)
 
 	jwtToken = w.Header().Get("X-CDS-JWT")
 	t.Logf("jwt token is %v...", jwtToken[:12])
@@ -88,10 +84,10 @@ func TestAPI_TokenHandlers(t *testing.T) {
 		"id": strconv.FormatInt(grp.ID, 10),
 	}
 	uri = router.GetRoute("GET", api.getAccessTokenByGroupHandler, vars)
-	req = assets.NewAuthentifiedRequest(t, user, password, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	test.Equal(t, 200, w.Code)
 	t.Logf("getAccessTokenByGroupHandler result is : %s", w.Body.String())
 
 	// Test_getAccessTokenByUserHandler
@@ -99,10 +95,9 @@ func TestAPI_TokenHandlers(t *testing.T) {
 		"id": user.ID,
 	}
 	uri = router.GetRoute("GET", api.getAccessTokenByUserHandler, vars)
-	req = assets.NewAuthentifiedRequest(t, user, password, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	test.Equal(t, 200, w.Code)
 	t.Logf("getAccessTokenByUserHandler result is : %s", w.Body.String())
-
 }

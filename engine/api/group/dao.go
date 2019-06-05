@@ -71,6 +71,16 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...L
 	return get(ctx, db, query, opts...)
 }
 
+// LoadByID retrieves group from database by id.
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOptionFunc) (*sdk.Group, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM "group"
+    WHERE "group".id = $1
+  `).Args(id)
+	return get(ctx, db, query, opts...)
+}
+
 // GetLinksGroupUserForGroupIDs returns data from group_user table for given group ids.
 func GetLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]LinkGroupUser, error) {
 	ls := []LinkGroupUser{}

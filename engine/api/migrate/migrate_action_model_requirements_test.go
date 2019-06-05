@@ -27,7 +27,7 @@ func TestActionModelRequirements_WithExistingRequirements(t *testing.T) {
 	}
 	test.NoError(t, workermodel.InsertPattern(db, &p))
 
-	m, err := workermodel.Create(db, sdk.Model{
+	m, err := workermodel.Create(context.TODO(), db, sdk.Model{
 		Type:        sdk.Docker,
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,
@@ -98,7 +98,7 @@ func TestActionModelRequirements_WithLockedExistingRequirements(t *testing.T) {
 	}
 	test.NoError(t, workermodel.InsertPattern(db, &p))
 
-	m, err := workermodel.Create(db, sdk.Model{
+	m, err := workermodel.Create(context.TODO(), db, sdk.Model{
 		Type:        sdk.Docker,
 		Name:        sdk.RandomString(10),
 		GroupID:     g.ID,

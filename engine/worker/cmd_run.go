@@ -343,10 +343,11 @@ func (w *currentWorker) doRegister() error {
 		log.Info("Registering on CDS engine%s Version:%s", info, sdk.VERSION)
 
 		form := sdk.WorkerRegistrationForm{
-			Name:         w.status.Name,
-			Token:        w.token,
-			HatcheryName: w.hatchery.name,
-			ModelID:      w.model.ID,
+			// TODO
+			//Name:         w.status.Name,
+			//Token:        w.token,
+			//HatcheryName: w.hatchery.name,
+			//ModelID:      w.model.ID,
 		}
 		if err := w.register(form); err != nil {
 			log.Error("Cannot register: %s", err)
