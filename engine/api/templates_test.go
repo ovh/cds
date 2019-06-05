@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(api.mustDB())
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
 	name := sdk.RandomString(10)
@@ -89,7 +90,7 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(api.mustDB())
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
 	name := sdk.RandomString(10)

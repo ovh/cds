@@ -68,7 +68,7 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -128,7 +128,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -306,7 +306,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -953,8 +953,6 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	json.Unmarshal(w.Body.Bytes(), &model)
 
-	fmt.Println(jwt)
-
 	//Prepare request
 	vars := map[string]string{
 		"permGroupName": g.Name,
@@ -984,7 +982,7 @@ func Test_getWorkerModel(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -1039,7 +1037,7 @@ func Test_getWorkerModels(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}

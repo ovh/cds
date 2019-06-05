@@ -158,7 +158,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		Name: "Test_getWorkflowExportHandlerWithPermissions-Group2",
 	}
 	group.InsertGroup(api.mustDB(), group2)
-	group2, _ = group.LoadGroup(api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
+	group2, _ = group.LoadByName(context.TODO(), api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -331,10 +331,10 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key,
 		project.LoadOptions.WithPipelines,
-    project.LoadOptions.WithGroups,
-  )
+		project.LoadOptions.WithGroups,
+	)
 
-	test.NoError(t, workflow.Insert(context.TODO(),api.mustDB(), api.Cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 

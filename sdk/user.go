@@ -11,16 +11,17 @@ import (
 
 // User represent a CDS user.
 type User struct {
-	ID         int64      `json:"id" yaml:"-" cli:"-"`
-	Username   string     `json:"username" yaml:"username" cli:"username,key"`
-	Fullname   string     `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
-	Email      string     `json:"email" yaml:"email,omitempty" cli:"email"`
-	Admin      bool       `json:"admin" yaml:"admin,omitempty" cli:"-"`
-	Auth       Auth       `json:"-" yaml:"-" cli:"-"`
-	Groups     []Group    `json:"groups,omitempty" yaml:"-" cli:"-"`
-	Origin     string     `json:"origin" yaml:"origin,omitempty"`
-	Favorites  []Favorite `json:"favorites" yaml:"favorites"`
-	GroupAdmin bool       `json:"-" yaml:"-" cli:"group_admin"`
+	ID        int64      `json:"id" yaml:"-" cli:"-"`
+	Username  string     `json:"username" yaml:"username" cli:"username,key"`
+	Fullname  string     `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
+	Email     string     `json:"email" yaml:"email,omitempty" cli:"email"`
+	Auth      Auth       `json:"-" yaml:"-" cli:"-"`
+	Groups    []Group    `json:"groups,omitempty" yaml:"-" cli:"-"`
+	Origin    string     `json:"origin" yaml:"origin,omitempty"`
+	Favorites []Favorite `json:"favorites" yaml:"favorites"`
+	// aggregated
+	Admin      bool `json:"admin,omitempty" yaml:"admin,omitempty" cli:"admin"`
+	GroupAdmin bool `json:"group_admin,omitempty" yaml:"group_admin,omitempty" cli:"group_admin"`
 }
 
 // Value returns driver.Value from user.

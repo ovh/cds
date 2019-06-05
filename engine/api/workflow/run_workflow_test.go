@@ -305,7 +305,7 @@ func TestManualRun3(t *testing.T) {
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadByName(ctx, db, "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}

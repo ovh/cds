@@ -404,7 +404,7 @@ func (api *API) addProjectHandler() service.Handler {
 
 		if !groupAttached {
 			// check if new auto group does not already exists
-			if _, errl := group.LoadGroup(api.mustDB(), p.Name); errl != nil {
+			if _, errl := group.LoadByName(ctx, api.mustDB(), p.Name); errl != nil {
 				if sdk.ErrorIs(errl, sdk.ErrGroupNotFound) {
 					// group name does not exists, add it on project
 					permG := sdk.GroupPermission{

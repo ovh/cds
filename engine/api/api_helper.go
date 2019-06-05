@@ -14,7 +14,10 @@ import (
 
 func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 	u := getAPIConsumer(ctx)
-	return g.IsMember(u) && g.IsAdmin(u.OnBehalfOf)
+	member := g.IsMember(u)
+	admin := g.IsAdmin(u.OnBehalfOf)
+	log.Debug("api.isGroupAdmin> member: %t admin: %t", member, admin)
+	return member && admin
 }
 
 func isGroupMember(ctx context.Context, g *sdk.Group) bool {
@@ -24,7 +27,10 @@ func isGroupMember(ctx context.Context, g *sdk.Group) bool {
 
 func isMaintainer(ctx context.Context) bool {
 	u := getAPIConsumer(ctx)
-	return u.Maintainer() || u.Admin()
+	maintainer := u.Maintainer()
+	admin := u.Admin()
+	log.Debug("api.isMaintainer> maintainer: %t admin: %t", maintainer, admin)
+	return maintainer || admin
 }
 
 func isAdmin(ctx context.Context) bool {
@@ -35,6 +41,7 @@ func isAdmin(ctx context.Context) bool {
 func getAPIConsumer(c context.Context) *sdk.APIConsumer {
 	i := c.Value(contextAPIConsumer)
 	if i == nil {
+		log.Debug("api.getAPIConsumer> no api consumer found in context")
 		return nil
 	}
 	u, ok := i.(*sdk.APIConsumer)
@@ -59,10 +66,12 @@ func getHandlerScope(c context.Context) HandlerScope {
 func JWT(c context.Context) *sdk.AccessToken {
 	i := c.Value(contextJWT)
 	if i == nil {
+		log.Debug("api.JWT> no jwt token found in context")
 		return nil
 	}
 	u, ok := i.(*sdk.AccessToken)
 	if !ok {
+		log.Debug("api.JWT> jwt token type in context is invalid")
 		return nil
 	}
 	return u
@@ -71,6 +80,7 @@ func JWT(c context.Context) *sdk.AccessToken {
 func JWTRaw(c context.Context) string {
 	i := c.Value(contextJWTRaw)
 	if i == nil {
+		log.Debug("api.JWTRaw> no jwt raw token found in context")
 		return ""
 	}
 	u, ok := i.(string)

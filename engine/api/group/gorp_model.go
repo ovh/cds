@@ -15,7 +15,7 @@ type LinkGroupUser struct {
 
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(sdk.Action{}, "group", true, "id"),
+		gorpmapping.New(sdk.Group{}, "group", true, "id"),
 		gorpmapping.New(LinkGroupUser{}, "group_user", true, "id"),
 	)
 }

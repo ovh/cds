@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 )

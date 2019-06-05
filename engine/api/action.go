@@ -188,7 +188,7 @@ func (api *API) getActionHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -219,7 +219,7 @@ func (api *API) putActionHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -308,7 +308,7 @@ func (api *API) deleteActionHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -354,7 +354,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -431,7 +431,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		grp, err := group.LoadGroup(api.mustDB(), groupName)
+		grp, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -473,7 +473,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		} else if ea.Group == grp.Name {
 			newGrp = grp
 		} else {
-			newGrp, err = group.LoadGroupByName(tx, ea.Group)
+			newGrp, err = group.LoadByName(ctx, tx, ea.Group)
 			if err != nil {
 				return err
 			}
@@ -557,7 +557,7 @@ func (api *API) getActionUsageHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -586,7 +586,7 @@ func (api *API) getActionExportHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -657,7 +657,7 @@ func (api *API) importActionHandler() service.Handler {
 		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
 			grp = group.SharedInfraGroup
 		} else {
-			grp, err = group.LoadGroupByName(tx, ea.Group)
+			grp, err = group.LoadByName(ctx, tx, ea.Group)
 			if err != nil {
 				return err
 			}

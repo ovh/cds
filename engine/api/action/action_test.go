@@ -2,7 +2,6 @@ package action_test
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"testing"
 
@@ -92,7 +91,6 @@ func TestCRUD(t *testing.T) {
 	assert.Nil(t, result)
 	result, err = action.LoadByID(context.TODO(), db, acts[0].ID, action.LoadOptions.Default)
 	assert.Nil(t, err)
-	fmt.Println(result)
 	assert.Equal(t, acts[0].Name, result.Name)
 	assert.Equal(t, 3, len(result.Parameters))
 	assert.Equal(t, 1, len(result.Requirements))

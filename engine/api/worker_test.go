@@ -18,7 +18,7 @@ package api
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(ctx, api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -103,7 +103,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(ctx, api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}

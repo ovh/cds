@@ -60,23 +60,6 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	return group.ID, true, nil
 }
 
-// LoadGroup retrieves group informations from database
-func LoadGroup(db gorp.SqlExecutor, name string) (*sdk.Group, error) {
-	query := `SELECT "group".id FROM "group" WHERE "group".name = $1`
-	var groupID int64
-	err := db.QueryRow(query, name).Scan(&groupID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			err = sdk.ErrGroupNotFound
-		}
-		return nil, sdk.WithStack(err)
-	}
-	return &sdk.Group{
-		ID:   groupID,
-		Name: name,
-	}, nil
-}
-
 // LoadGroupByID retrieves group informations from database
 func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
 	query := `SELECT "group".name FROM "group" WHERE "group".id = $1`
@@ -93,27 +76,15 @@ func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
 	}, nil
 }
 
-// LoadGroupByName retrieves group informations from database given his name
-func LoadGroupByName(db gorp.SqlExecutor, name string) (*sdk.Group, error) {
-	query := `SELECT "group".id FROM "group" WHERE "group".name = $1`
-	var id int64
-	if err := db.QueryRow(query, name).Scan(&id); err != nil {
-		if err == sql.ErrNoRows {
-			err = sdk.ErrGroupNotFound
-		}
-		return nil, sdk.WithStack(err)
-	}
-	return &sdk.Group{
-		ID:   id,
-		Name: name,
-	}, nil
-}
-
 // LoadUserGroup retrieves all group users from database
 func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	query := `SELECT "user".id, "user".username, "user".data, "group_user".group_admin FROM "user"
-	 		  JOIN group_user ON group_user.user_id = "user".id
-	 		  WHERE group_user.group_id = $1 ORDER BY "user".username ASC`
+	query := `
+    SELECT "user".id, "user".username, "user".data, "group_user".group_admin
+    FROM "user"
+	 	JOIN group_user ON group_user.user_id = "user".id
+    WHERE group_user.group_id = $1
+    ORDER BY "user".username ASC
+  `
 
 	rows, err := db.Query(query, group.ID)
 	if err != nil {
@@ -137,9 +108,11 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 		u.ID = id
 		u.Username = username
 		if admin {
-			group.Admins = append(group.Admins, *u)
+			// TODO
+			//group.Admins = append(group.Admins, *u)
 		} else {
-			group.Users = append(group.Users, *u)
+			// TODO
+			//group.Users = append(group.Users, *u)
 		}
 	}
 	return nil

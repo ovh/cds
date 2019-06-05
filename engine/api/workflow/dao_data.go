@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -135,7 +137,7 @@ func (node *dbNodeData) PostInsert(db gorp.SqlExecutor) error {
 
 		switch {
 		case grp.Group.ID == 0:
-			grDB, err = group.LoadGroup(db, grp.Group.Name)
+			grDB, err = group.LoadByName(context.Background(), db, grp.Group.Name)
 		case grp.Group.Name == "":
 			grDB, err = group.LoadGroupByID(db, grp.Group.ID)
 		default:

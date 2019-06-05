@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // PermCheckFunc defines func call to check permission
@@ -66,10 +67,12 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 	}
 
 	// check that group exists
-	g, err := group.LoadGroup(api.mustDB(), groupName)
+	g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 	if err != nil {
 		return sdk.WrapError(err, "cannot get group for name %s", groupName)
 	}
+
+	log.Debug("groups> %v", g.Members)
 
 	if permissionValue > permission.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
 		if !isGroupAdmin(ctx, g) && !isMaintainer(ctx) {
@@ -89,7 +92,7 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName strin
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker model name")
 	}
 
-	g, err := group.LoadGroup(api.mustDB(), routeVars["permGroupName"])
+	g, err := group.LoadByName(ctx, api.mustDB(), routeVars["permGroupName"])
 	if err != nil {
 		return err
 	}
@@ -110,7 +113,7 @@ func (api *API) checkActionPermissions(ctx context.Context, actionName string, p
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid action name")
 	}
 
-	g, err := group.LoadGroup(api.mustDB(), routeVars["permGroupName"])
+	g, err := group.LoadByName(ctx, api.mustDB(), routeVars["permGroupName"])
 	if err != nil {
 		return err
 	}
@@ -135,7 +138,7 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow template slug")
 	}
 
-	g, err := group.LoadGroup(api.mustDB(), routeVars["permGroupName"])
+	g, err := group.LoadByName(ctx, api.mustDB(), routeVars["permGroupName"])
 	if err != nil {
 		return err
 	}

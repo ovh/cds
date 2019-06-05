@@ -72,7 +72,7 @@ func TestLoadAllByRepo(t *testing.T) {
 		Name: "test_TestLoadAll_group",
 	}
 
-	eg, _ := group.LoadGroup(db, g.Name)
+	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
 	} else if err := group.InsertGroup(db, &g); err != nil {
@@ -122,7 +122,7 @@ func TestLoadAll(t *testing.T) {
 		Name: "test_TestLoadAll_group",
 	}
 
-	eg, _ := group.LoadGroup(db, g.Name)
+	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
 	} else if err := group.InsertGroup(db, &g); err != nil {

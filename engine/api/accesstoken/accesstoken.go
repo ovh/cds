@@ -94,7 +94,7 @@ func IsValid(db gorp.SqlExecutor, jwtToken string) (*sdk.AccessToken, bool, erro
 	id := claims.StandardClaims.Id
 
 	// Load the access token from the id read in the claim
-	accessToken, err := LoadByID(context.Background(), db, id, LoadOptions.WithGroups)
+	accessToken, err := LoadByID(context.Background(), db, id, LoadOptions.WithGroups, LoadOptions.WithAuthentifiedUser)
 	if err != nil {
 		return nil, false, sdk.WrapError(sdk.ErrUnauthorized, "unable find access token %s: %v", id, err)
 	}
@@ -152,9 +152,9 @@ func VerifyToken(jwtToken string) (*jwt.Token, error) {
 	}
 
 	if claims, ok := token.Claims.(*sdk.AccessTokenJWTClaims); ok && token.Valid {
-		log.Debug("Token isValid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
+		log.Debug("accesstoken.VerifyToken> token is valid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
-		return nil, sdk.ErrUnauthorized
+		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
 	return token, nil

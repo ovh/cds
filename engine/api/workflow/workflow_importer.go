@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -103,7 +104,7 @@ func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w
 	}
 
 	// check that group exists
-	grp, err := group.LoadGroup(db, wt.Group.Name)
+	grp, err := group.LoadByName(ctx, db, wt.Group.Name)
 	if err != nil {
 		return err
 	}
@@ -145,7 +146,7 @@ func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w
 func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	if len(w.Groups) > 0 {
 		for i := range w.Groups {
-			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			g, err := group.LoadByName(context.Background(), db, w.Groups[i].Group.Name)
 			if err != nil {
 				return sdk.WrapError(err, "Unable to load group %s", w.Groups[i].Group.Name)
 			}

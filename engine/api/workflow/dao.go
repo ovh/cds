@@ -624,7 +624,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 			if w.Groups[i].Group.ID != 0 {
 				continue
 			}
-			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			g, err := group.LoadByName(ctx, db, w.Groups[i].Group.Name)
 			if err != nil {
 				return sdk.WrapError(err, "Unable to load group %s", w.Groups[i].Group.Name)
 			}

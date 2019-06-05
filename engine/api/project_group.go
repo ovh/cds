@@ -38,7 +38,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot load %s", key)
 		}
 
-		g, err := group.LoadGroup(tx, groupName)
+		g, err := group.LoadByName(ctx, tx, groupName)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot find %s", groupName)
 		}
@@ -96,7 +96,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load project %s", key)
 		}
 
-		g, errlg := group.LoadGroup(tx, groupProject.Group.Name)
+		g, errlg := group.LoadByName(ctx, tx, groupProject.Group.Name)
 		if errlg != nil {
 			return sdk.WrapError(errlg, "updateGroupRoleHandler: Cannot find %s", groupProject.Group.Name)
 		}
@@ -187,7 +187,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(errl, "AddGroupInProject: Cannot load %s", key)
 		}
 
-		g, errlg := group.LoadGroup(api.mustDB(), groupProject.Group.Name)
+		g, errlg := group.LoadByName(ctx, api.mustDB(), groupProject.Group.Name)
 		if errlg != nil {
 			return sdk.WrapError(errlg, "AddGroupInProject: Cannot find %s", groupProject.Group.Name)
 		}
@@ -304,7 +304,7 @@ func (api *API) importGroupsInProjectHandler() service.Handler {
 		}
 
 		for _, gr := range groupsToAdd {
-			gro, errG := group.LoadGroup(tx, gr.Group.Name)
+			gro, errG := group.LoadByName(ctx, tx, gr.Group.Name)
 			if errG != nil {
 				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInProjectHandler> Group %v doesn't exist", gr.Group.Name)
 			}

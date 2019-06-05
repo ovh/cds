@@ -4,6 +4,8 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -28,7 +30,9 @@ type APIConsumer struct {
 }
 
 func (g *APIConsumer) IsGranted() bool {
-	return g != nil
+	granted := g != nil
+	log.Debug("APIConsumer.IsGranted> granted: %t", granted)
+	return granted
 }
 
 func (g *APIConsumer) GetGroups() []Group {
@@ -42,7 +46,9 @@ func (g *APIConsumer) Admin() bool {
 	if !g.IsGranted() {
 		return false
 	}
-	return g.OnBehalfOf.Admin()
+	admin := g.OnBehalfOf.Admin()
+	log.Debug("APIConsumer.Admin> consumer on behalf of user %s is admin: %t", g.OnBehalfOf.GetFullname(), admin)
+	return admin
 }
 
 func (g *APIConsumer) Maintainer() bool {

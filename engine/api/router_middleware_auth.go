@@ -153,6 +153,8 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 		return ctx, err
 	}
 
+	log.Debug("authJWTMiddleware> authentified user: %v", *token.AuthentifiedUser)
+
 	// Observability tags
 	observability.Current(ctx, observability.Tag(observability.TagToken, token.ID))
 
@@ -168,5 +170,5 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 		}
 	}
 
-	return context.WithValue(ctx, contextJWT, &token), nil
+	return context.WithValue(ctx, contextJWT, token), nil
 }

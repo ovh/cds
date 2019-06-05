@@ -62,7 +62,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 
 		// check that the user is admin on the given template's group
-		grp, err := group.LoadGroup(api.mustDB(), data.Group.Name)
+		grp, err := group.LoadByName(ctx, api.mustDB(), data.Group.Name)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}

@@ -69,7 +69,7 @@ func loadGroups(ctx context.Context, db gorp.SqlExecutor, ats ...*sdk.AccessToke
 
 func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, ats ...*sdk.AccessToken) error {
 	// Load all users for given access tokens
-	users, err := user.LoadAllByIDs(ctx, db, sdk.AccessTokensToAuthentifiedUserIDs(ats), user.LoadOptions.WithDeprecatedUserWithGroups)
+	users, err := user.LoadAllByIDs(ctx, db, sdk.AccessTokensToAuthentifiedUserIDs(ats), user.LoadOptions.WithDeprecatedUser)
 	if err != nil {
 		return err
 	}

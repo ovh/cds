@@ -110,7 +110,6 @@ func TestAuthentication(t *testing.T) {
 	assert.Equal(t, w.Name, wk.Name)
 	assert.Equal(t, w.ID, wk.ID)
 	assert.Equal(t, w.AccessTokenID, wk.AccessTokenID)
-
 }
 
 func TestDeadWorkers(t *testing.T) {
@@ -158,5 +157,4 @@ func TestRegister(t *testing.T) {
 	assert.Equal(t, w.ID, wk.ID)
 	assert.Equal(t, w.ModelID, wk.ModelID)
 	assert.Equal(t, w.HatcheryID, wk.HatcheryID)
-
 }

@@ -30,7 +30,7 @@ func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 		Name: "test-group-model",
 	}
 
-	g1, _ := group.LoadGroup(db, g.Name)
+	g1, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if g1 != nil {
 		group.DeleteGroupAndDependencies(db, g1)
 	}
@@ -92,7 +92,7 @@ func TestLoadByNameAndGroupID(t *testing.T) {
 	defer end()
 	deleteAllWorkerModel(t, db)
 
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadByName(context.TODO(), db, "shared.infra")
 	test.NoError(t, err)
 
 	src := insertWorkerModel(t, db, sdk.RandomString(10), g.ID)

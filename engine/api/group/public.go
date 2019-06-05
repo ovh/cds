@@ -1,6 +1,7 @@
 package group
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -50,7 +51,7 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 func InitializeDefaultGroupName(db *gorp.DbMap, defaultGrpName string) error {
 	//Load the famous sharedInfraGroup
 	var errlsg error
-	SharedInfraGroup, errlsg = LoadGroup(db, sdk.SharedInfraGroupName)
+	SharedInfraGroup, errlsg = LoadByName(context.Background(), db, sdk.SharedInfraGroupName)
 	if errlsg != nil {
 		return sdk.WrapError(errlsg, "group.InitializeDefaultGroupName> Cannot load shared infra group")
 	}
@@ -58,7 +59,7 @@ func InitializeDefaultGroupName(db *gorp.DbMap, defaultGrpName string) error {
 	permission.SharedInfraGroupID = SharedInfraGroup.ID
 
 	if defaultGrpName != "" {
-		defaultGroup, errldg := LoadGroup(db, defaultGrpName)
+		defaultGroup, errldg := LoadByName(context.Background(), db, defaultGrpName)
 		if errldg != nil {
 			return sdk.WrapError(errldg, "group.InitializeDefaultGroupName> Cannot load %s group", defaultGrpName)
 		}

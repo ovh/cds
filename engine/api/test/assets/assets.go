@@ -72,7 +72,7 @@ func InsertTestGroup(t *testing.T, db *gorp.DbMap, name string) *sdk.Group {
 		Name: name,
 	}
 
-	eg, _ := group.LoadGroup(db, g.Name)
+	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
 	} else if err := group.InsertGroup(db, &g); err != nil {
@@ -420,7 +420,7 @@ func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 		Name: sdk.RandomString(10),
 	}
 
-	g1, _ := group.LoadGroup(db, g.Name)
+	g1, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if g1 != nil {
 		models, _ := workermodel.LoadAllByGroupIDs(context.Background(), db, []int64{g.ID}, nil)
 		for _, m := range models {

@@ -101,7 +101,7 @@ func Update(db gorp.SqlExecutor, a *sdk.Action) error {
 // RetrieveForGroupAndName try to find an action for given group and name.
 func RetrieveForGroupAndName(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group, name string) (*sdk.Action, error) {
 	if g != nil {
-		grp, err := group.LoadGroupByName(db, g.Name)
+		grp, err := group.LoadByName(ctx, db, g.Name)
 		if err != nil {
 			return nil, err
 		}

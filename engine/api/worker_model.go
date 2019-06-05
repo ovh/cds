@@ -78,7 +78,7 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -148,7 +148,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (api *API) getWorkerModelHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -249,7 +249,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}

@@ -20,7 +20,7 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}

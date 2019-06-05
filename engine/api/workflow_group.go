@@ -161,7 +161,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		}
 
 		if gp.Group.ID == 0 {
-			g, errG := group.LoadGroup(api.mustDB(), gp.Group.Name)
+			g, errG := group.LoadByName(ctx, api.mustDB(), gp.Group.Name)
 			if errG != nil {
 				return sdk.WrapError(errG, "postWorkflowGroupHandler")
 			}

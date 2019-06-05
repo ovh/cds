@@ -115,7 +115,7 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 	modelPath := strings.SplitN(modelName, "/", 2)
 	if len(modelPath) == 2 {
 		// if model contains group name (myGroup/myModel), try to find the model for the
-		g, err := group.LoadGroupByName(db, modelPath[0])
+		g, err := group.LoadByName(ctx, db, modelPath[0])
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrGroupNotFound) {
 				return nil, sdk.NewErrorFrom(sdk.ErrNoWorkerModel, "could not find a worker model that match %s", modelName)

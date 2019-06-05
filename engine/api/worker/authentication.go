@@ -24,7 +24,7 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 
 	claims, ok := unsafeToken.Claims.(*hatchery.WorkerJWTClaims)
 	if ok {
-		log.Debug("Token isValid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
+		log.Debug("worker.VerifyToken> unsafe token is valid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
@@ -47,15 +47,15 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 			return publicKey, nil
 		})
 	if err != nil {
-		log.Debug("invalid token: %s", s)
+		log.Debug("worker.VerifyToken> invalid token parse: %s", s)
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrForbidden)
 	}
 
 	claims, ok = token.Claims.(*hatchery.WorkerJWTClaims)
 	if ok && token.Valid {
-		log.Debug("Token isValid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
+		log.Debug("worker.VerifyToken> token is valid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
-		log.Debug("invalid token: %s", s)
+		log.Debug("worker.VerifyToken> invalid token: %s", s)
 		return nil, sdk.ErrUnauthorized
 	}
 

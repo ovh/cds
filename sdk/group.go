@@ -5,11 +5,11 @@ const SharedInfraGroupName = "shared.infra"
 
 // Group represent a group of user.
 type Group struct {
-	ID     int64   `json:"id" yaml:"-"`
-	Name   string  `json:"name" yaml:"name" cli:"name,key"`
-	Admins []User  `json:"admins,omitempty" yaml:"admins,omitempty"`
-	Users  []User  `json:"users,omitempty" yaml:"users,omitempty"`
-	Tokens []Token `json:"tokens,omitempty" yaml:"tokens,omitempty"`
+	ID   int64  `json:"id" yaml:"-" db:"id"`
+	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	// aggregates
+	Tokens  []Token `json:"tokens,omitempty" yaml:"tokens,omitempty" db:"-"`
+	Members []User  `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
 }
 
 type Groups []Group
@@ -52,24 +52,31 @@ func GroupsToIDs(gs []Group) []int64 {
 	return ids
 }
 
-func (group Group) IsMember(u GroupMember) bool {
-	for _, g := range u.GetGroups() {
-		if g.ID == group.ID {
+// GroupPointersToIDs returns ids of given groups.
+func GroupPointersToIDs(gs []*Group) []int64 {
+	ids := make([]int64, len(gs))
+	for i := range gs {
+		ids[i] = gs[i].ID
+	}
+	return ids
+}
+
+// IsMember checks if given group memeber is part of current group.
+func (g Group) IsMember(u GroupMember) bool {
+	for _, group := range u.GetGroups() {
+		if group.ID == g.ID {
 			return true
 		}
 	}
 	return false
 }
 
-func (group Group) IsAdmin(u AuthentifiedUser) bool {
-	for _, g := range u.GetGroups() {
-		if g.ID == group.ID {
-			for _, adm := range g.Admins {
-				if adm.ID == u.OldUserStruct.ID {
-					return true
-				}
-			}
-			return false
+// IsAdmin checks if given authentified user is admin for current group,
+// group should have members aggregated and authentified user old user struct should be set.
+func (g Group) IsAdmin(u AuthentifiedUser) bool {
+	for _, member := range g.Members {
+		if member.ID == u.OldUserStruct.ID {
+			return member.GroupAdmin
 		}
 	}
 	return false

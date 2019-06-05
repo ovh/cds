@@ -180,20 +180,22 @@ func (api *API) getAccessTokenByGroupHandler() service.Handler {
 		}
 
 		var isGroupMember bool
-		for _, u := range g.Users {
+		// TODO
+		/*for _, u := range g.Users {
 			if u.ID == au.OldUserStruct.ID {
 				isGroupMember = true
 				break
 			}
-		}
+		}*/
 
 		if !isGroupMember {
-			for _, u := range g.Admins {
+			// TODO
+			/*for _, u := range g.Admins {
 				if u.ID == au.OldUserStruct.ID {
 					isGroupMember = true
 					break
 				}
-			}
+			}*/
 		}
 
 		if !isGroupMember {

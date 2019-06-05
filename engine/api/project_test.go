@@ -2,12 +2,15 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -17,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestVariableInProject(t *testing.T) {
@@ -125,7 +127,7 @@ func Test_addProjectHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
 	assert.Equal(t, proj.Key, projCreated.Key)
 
-	gr, err := group.LoadGroup(db, proj.Name)
+	gr, err := group.LoadByName(context.TODO(), db, proj.Name)
 	assert.NotNil(t, gr)
 	assert.NoError(t, err)
 }
@@ -162,7 +164,7 @@ func Test_addProjectHandlerWithGroup(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
 	assert.Equal(t, proj.Key, projCreated.Key)
 
-	gr, err := group.LoadGroup(db, proj.Name)
+	gr, err := group.LoadByName(context.TODO(), db, proj.Name)
 	assert.Nil(t, gr)
 	assert.Error(t, err)
 }
