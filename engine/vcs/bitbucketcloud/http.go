@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
@@ -59,34 +58,12 @@ func (consumer *bitbucketcloudConsumer) postForm(url string, data url.Values, he
 	return res.StatusCode, resBody, nil
 }
 
-func getNextPage(headers http.Header) string {
-	linkHeader := headers.Get("Link")
-	if linkHeader != "" {
-		links := strings.Split(linkHeader, ",")
-		for _, link := range links {
-			if strings.Contains(link, "rel=\"next\"") {
-				r, _ := regexp.Compile("<(.*)>.*")
-				s := r.FindStringSubmatch(link)
-				if len(s) == 2 {
-					return s[1]
-				}
-				break
-			}
-		}
-	}
-	return ""
-}
-
 type postOptions struct {
 	skipDefaultBaseURL bool
 	asUser             bool
 }
 
 func (client *bitbucketcloudClient) post(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
-	if opts == nil {
-		opts = new(postOptions)
-	}
-
 	req, err := http.NewRequest(http.MethodPost, rootURL+path, body)
 	if err != nil {
 		return nil, err
@@ -102,10 +79,6 @@ func (client *bitbucketcloudClient) post(path string, bodyType string, body io.R
 }
 
 func (client *bitbucketcloudClient) patch(path string, opts *postOptions) (*http.Response, error) {
-	if opts == nil {
-		opts = new(postOptions)
-	}
-
 	req, err := http.NewRequest(http.MethodPatch, rootURL+path, nil)
 	if err != nil {
 		return nil, err
@@ -120,10 +93,6 @@ func (client *bitbucketcloudClient) patch(path string, opts *postOptions) (*http
 }
 
 func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
-	if opts == nil {
-		opts = new(postOptions)
-	}
-
 	req, err := http.NewRequest(http.MethodPut, rootURL+path, body)
 	if err != nil {
 		return nil, err

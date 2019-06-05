@@ -20,8 +20,6 @@ type bitbucketcloudClient struct {
 	apiURL              string
 	uiURL               string
 	proxyURL            string
-	username            string
-	token               string
 }
 
 //bitbucketcloudConsumer implements vcs.Server and it's used to instanciate a githubClient
@@ -34,8 +32,6 @@ type bitbucketcloudConsumer struct {
 	proxyURL            string
 	disableStatus       bool
 	disableStatusDetail bool
-	// username            string
-	// token               string
 }
 
 //New creates a new GithubConsumer

@@ -5,7 +5,7 @@ card:
   name: repository-manager
 ---
 
-The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 
 This integration allows you to link a Git Repository hosted by your Bitbucket Server
 to a CDS Application.

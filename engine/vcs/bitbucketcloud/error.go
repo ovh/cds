@@ -36,6 +36,6 @@ var (
 //errorAPI creates a new error
 func errorAPI(body []byte) error {
 	var res Error
-	json.Unmarshal(body, &res)
+	_ = json.Unmarshal(body, &res)
 	return res
 }
