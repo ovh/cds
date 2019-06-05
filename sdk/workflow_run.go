@@ -365,7 +365,7 @@ type WorkflowNodeJobRun struct {
 	Done                      time.Time          `json:"done,omitempty"`
 	Model                     string             `json:"model,omitempty"`
 	ModelType                 string             `json:"model_type,omitempty"`
-	BookedBy                  Service            `json:"bookedby"`
+	BookedBy                  Service            `json:"bookedby,omitempty"`
 	SpawnInfos                []SpawnInfo        `json:"spawninfos"`
 	ExecGroups                []Group            `json:"exec_groups"`
 	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`

@@ -1489,6 +1489,23 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
+	// TODO HOOK Config is compute on old struct - TO DELETE WITH OLD STRUCT
+	if oldWf != nil {
+	hookLoop:
+		for _, oldH := range oldWf.Root.Hooks {
+			for i := range oldWf.WorkflowData.Node.Hooks {
+				h := &oldWf.WorkflowData.Node.Hooks[i]
+				if oldH.UUID == h.UUID {
+					h.Config = make(map[string]sdk.WorkflowNodeHookConfigValue, len(oldH.Config))
+					for k, v := range oldH.Config {
+						h.Config[k] = v
+					}
+					continue hookLoop
+				}
+			}
+		}
+	}
+
 	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
 	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
 		return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)

@@ -4,6 +4,7 @@ import { Job, StepStatus } from 'app/model/job.model';
 import { PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -38,6 +39,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     queryParamsSub: Subscription;
     pipelineStatusEnum = PipelineStatus;
     selectedRunJob: WorkflowNodeJobRun;
+    selectedRunJobParameters = {};
     mapJobStatus: Map<number, { status: string, warnings: number }> = new Map<number, { status: string, warnings: number }>();
     mapStepStatus: Map<string, StepStatus> = new Map<string, StepStatus>();
 
@@ -52,7 +54,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     constructor(
         private _durationService: DurationService,
         private _route: ActivatedRoute,
-        private _router: Router
+        private _router: Router,
+        private _workflowRunService: WorkflowRunService
     ) { }
 
     ngOnInit() {
@@ -85,11 +88,37 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         this.selectedJob(j);
     }
 
+    checkJobParameters(): void {
+        if (!this.nodeRun || !this.selectedRunJob) {
+            return;
+        }
+        if (this.selectedRunJobParameters[this.selectedRunJob.id]) {
+            return;
+        }
+
+        if (this.selectedRunJob.parameters) {
+            this.selectedRunJobParameters[this.selectedRunJob.id] = this.selectedRunJob.parameters;
+        }
+        this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, this.nodeRun.num, this.nodeRun.id)
+            .subscribe(nr => {
+                if (nr.stages) {
+                    nr.stages.forEach(s => {
+                       if (s.run_jobs) {
+                           s.run_jobs.forEach(rj => {
+                               this.selectedRunJobParameters[rj.id] = rj.parameters;
+                           })
+                       }
+                    });
+                }
+            })
+    }
+
     selectedStage(stageId: number) {
         let stage = this.nodeRun.stages.find((st) => st.id === stageId);
 
         if (stage && Array.isArray(stage.run_jobs) && stage.run_jobs.length) {
             this.selectedRunJob = stage.run_jobs[0];
+            this.checkJobParameters();
         }
     }
 
@@ -99,6 +128,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 let runJob = s.run_jobs.find(rj => rj.job.pipeline_action_id === j.pipeline_action_id);
                 if (runJob) {
                     this.selectedRunJob = runJob;
+                    this.checkJobParameters();
                 }
             }
         });
@@ -139,6 +169,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                         // Select temp job
                         if (!this.selectedRunJob && sIndex === 0 && rjIndex === 0) {
                             this.selectedRunJob = rj;
+                            this.checkJobParameters();
                         }
 
                         // Update spawninfo
