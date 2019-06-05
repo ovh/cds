@@ -107,7 +107,7 @@ func (client *bitbucketcloudClient) GetHook(ctx context.Context, fullname, webho
 	return hook, sdk.WithStack(sdk.ErrNotFound)
 }
 func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
-	url := fmt.Sprintf("/2.0/repositories/%s/hooks", repo)
+	url := fmt.Sprintf("/repositories/%s/hooks", repo)
 	if client.proxyURL != "" {
 		lastIndexSlash := strings.LastIndex(hook.URL, "/")
 		if client.proxyURL[len(client.proxyURL)-1] == '/' {
@@ -144,5 +144,5 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo, id str
 }
 
 func (client *bitbucketcloudClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
-	return client.delete(fmt.Sprintf("/2.0/repositories/%s/hooks/%s", repo, hook.ID))
+	return client.delete(fmt.Sprintf("/repositories/%s/hooks/%s", repo, hook.ID))
 }

@@ -255,7 +255,6 @@ func (s *Service) getVCSServersPollingHandler() service.Handler {
 			res.PollingDisabled = cfg.Bitbucket.DisablePolling
 		case cfg.BitbucketCloud != nil:
 			res.PollingSupported = false
-			res.PollingDisabled = cfg.BitbucketCloud.DisablePolling
 		case cfg.Github != nil:
 			res.PollingSupported = true
 			res.PollingDisabled = cfg.Github.DisablePolling

@@ -34,12 +34,12 @@ type bitbucketcloudConsumer struct {
 	proxyURL            string
 	disableStatus       bool
 	disableStatusDetail bool
-	username            string
-	token               string
+	// username            string
+	// token               string
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
+func New(ClientID, ClientSecret, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	return &bitbucketcloudConsumer{
 		ClientID:            ClientID,
 		ClientSecret:        ClientSecret,
@@ -49,8 +49,6 @@ func New(ClientID, ClientSecret, apiURL, uiURL, proxyURL, username, token string
 		proxyURL:            proxyURL,
 		disableStatus:       disableStatus,
 		disableStatusDetail: disableStatusDetail,
-		username:            username,
-		token:               token,
 	}
 }
 

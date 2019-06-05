@@ -83,6 +83,10 @@ type postOptions struct {
 }
 
 func (client *bitbucketcloudClient) post(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+	if opts == nil {
+		opts = new(postOptions)
+	}
+
 	req, err := http.NewRequest(http.MethodPost, rootURL+path, body)
 	if err != nil {
 		return nil, err
@@ -90,11 +94,7 @@ func (client *bitbucketcloudClient) post(path string, bodyType string, body io.R
 
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && client.token != "" {
-		req.SetBasicAuth(client.username, client.token)
-	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 
 	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
@@ -112,11 +112,7 @@ func (client *bitbucketcloudClient) patch(path string, opts *postOptions) (*http
 	}
 
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && client.token != "" {
-		req.SetBasicAuth(client.username, client.token)
-	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 
 	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
@@ -135,11 +131,7 @@ func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Re
 
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && client.token != "" {
-		req.SetBasicAuth(client.username, client.token)
-	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 
 	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
@@ -233,15 +225,6 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 		req.Body = ioutil.NopCloser(buf)
 		req.ContentLength = int64(buf.Len())
 	}
-
-	// // sign the request
-	// if opts != nil && opts.asUser && client.token != "" {
-	// 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-	// } else {
-	// 	if err := client.consumer.Sign(req, token); err != nil {
-	// 		return err
-	// 	}
-	// }
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 
 	// ensure the appropriate content-type is set for POST,

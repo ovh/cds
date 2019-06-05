@@ -108,8 +108,6 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 			DisableStatus:       consumer.disableStatus,
 			DisableStatusDetail: consumer.disableStatusDetail,
 			proxyURL:            consumer.proxyURL,
-			username:            consumer.username,
-			token:               consumer.token,
 		}
 		instancesAuthorizedClient[newAccessToken] = c
 	} else {
@@ -124,8 +122,6 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 				DisableStatus:       consumer.disableStatus,
 				DisableStatusDetail: consumer.disableStatusDetail,
 				proxyURL:            consumer.proxyURL,
-				username:            consumer.username,
-				token:               consumer.token,
 			}
 			instancesAuthorizedClient[accessToken] = c
 		}

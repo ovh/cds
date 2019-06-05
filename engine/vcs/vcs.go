@@ -111,8 +111,6 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			serverCfg.URL,
 			s.Cfg.UI.HTTP.URL,
 			serverCfg.BitbucketCloud.ProxyWebhook,
-			serverCfg.BitbucketCloud.Username,
-			serverCfg.BitbucketCloud.Token,
 			s.Cache,
 			serverCfg.BitbucketCloud.Status.Disable,
 			!serverCfg.BitbucketCloud.Status.ShowDetail,

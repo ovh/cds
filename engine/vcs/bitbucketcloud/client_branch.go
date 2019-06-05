@@ -30,7 +30,7 @@ func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname strin
 
 		var response Branches
 		if err := client.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
-			return nil, sdk.WrapError(err, "Unable to get repos")
+			return nil, sdk.WrapError(err, "Unable to get branches")
 		}
 		if cap(branches) == 0 {
 			branches = make([]Branch, 0, response.Size)

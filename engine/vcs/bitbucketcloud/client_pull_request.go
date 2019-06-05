@@ -36,7 +36,7 @@ func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname s
 	var pullrequests []PullRequest
 	path := fmt.Sprintf("/repositories/%s/pullrequests", fullname)
 	params := url.Values{}
-	params.Set("pagelen", "100")
+	params.Set("pagelen", "50")
 	nextPage := 1
 	for {
 		if nextPage != 1 {

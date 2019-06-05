@@ -47,9 +47,9 @@ func (client *bitbucketcloudClient) allCommitBetween(ctx context.Context, repo, 
 	var commits []Commit
 	params := url.Values{}
 	params.Add("exclude", sinceCommit)
-	path := fmt.Sprintf("/repositories/%s/commits/%s", repo, branch)
+	path := fmt.Sprintf("/repositories/%s/commits/%s", repo, untilCommit)
 	nextPage := 1
-	addCommit := untilCommit == ""
+
 	for {
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
@@ -62,16 +62,7 @@ func (client *bitbucketcloudClient) allCommitBetween(ctx context.Context, repo, 
 		if cap(commits) == 0 {
 			commits = make([]Commit, 0, response.Size)
 		}
-
-		// Add only between commits
-		for _, commit := range response.Values {
-			if addCommit {
-				commits = append(commits, commit)
-			}
-			if untilCommit != "" && commit.Hash == untilCommit {
-				addCommit = true
-			}
-		}
+		commits = append(commits, response.Values...)
 
 		if response.Next == "" {
 			break
@@ -120,6 +111,12 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 
 func (client *bitbucketcloudClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
 	var commits []Commit
+	if base == "" {
+		base = "HEAD"
+	}
+	if head == "" {
+		head = "HEAD"
+	}
 	params := url.Values{}
 	params.Add("exclude", base)
 	path := fmt.Sprintf("/repositories/%s/commits/%s", repo, head)

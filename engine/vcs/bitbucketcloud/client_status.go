@@ -54,6 +54,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 		URL:         data.urlPipeline,
 		State:       data.status,
 		Name:        data.context,
+		Key:         data.context,
 	}
 
 	path := fmt.Sprintf("/repositories/%s/commit/%s/statuses/build", data.repoFullName, data.hash)
@@ -67,16 +68,14 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
 	}
-
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read body")
 	}
-
-	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "Unable to create status on bitbucket cloud. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
+	if res.StatusCode != 201 && res.StatusCode != 200 {
+		return fmt.Errorf("Unable to create status on bitbucket cloud. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
 	}
 
 	var resp Status
@@ -98,13 +97,13 @@ func (client *bitbucketcloudClient) ListStatuses(ctx context.Context, repo strin
 	if status >= 400 {
 		return []sdk.VCSCommitStatus{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
-	var ss []Status
+	var ss Statuses
 	if err := json.Unmarshal(body, &ss); err != nil {
 		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse bitbucket cloud commit: %s", ref)
 	}
 
-	vcsStatuses := make([]sdk.VCSCommitStatus, 0, len(ss))
-	for _, s := range ss {
+	vcsStatuses := make([]sdk.VCSCommitStatus, 0, ss.Size)
+	for _, s := range ss.Values {
 		if !strings.HasPrefix(s.Name, "CDS/") {
 			continue
 		}
@@ -171,7 +170,7 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 
 	//CDS can avoid sending bitbucket targer url in status, if it's disable
 	if disabledStatusDetail {
-		data.urlPipeline = ""
+		data.urlPipeline = "https://ovh.github.io/cds/" // because it's mandatory
 	}
 
 	data.context = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)

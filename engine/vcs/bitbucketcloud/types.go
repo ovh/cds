@@ -2,7 +2,6 @@ package bitbucketcloud
 
 import (
 	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -13,36 +12,6 @@ var (
 	_                    sdk.VCSServer           = &bitbucketcloudConsumer{}
 	rawEmailCommitRegexp                         = regexp.MustCompile(`<(.*)>`)
 )
-
-// Timestamp represents a time that can be unmarshalled from a JSON string
-// formatted as either an RFC3339 or Unix timestamp. This is necessary for some
-// fields since the GitHub API is inconsistent in how it represents times. All
-// exported methods of time.Time can be called on Timestamp.
-type Timestamp struct {
-	time.Time
-}
-
-func (t Timestamp) String() string {
-	return t.Time.String()
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-// Time is expected in RFC3339 or Unix format.
-func (t *Timestamp) UnmarshalJSON(data []byte) (err error) {
-	str := string(data)
-	i, err := strconv.ParseInt(str, 10, 64)
-	if err == nil {
-		(*t).Time = time.Unix(i, 0)
-	} else {
-		(*t).Time, err = time.Parse(`"`+time.RFC3339+`"`, str)
-	}
-	return
-}
-
-// Equal reports whether t and u are equal based on time.Equal
-func (t Timestamp) Equal(u Timestamp) bool {
-	return t.Time.Equal(u.Time)
-}
 
 // WebhookCreate represent struct to create a webhook
 type WebhookCreate struct {
@@ -87,12 +56,6 @@ type Webhooks struct {
 	Values   []Webhook `json:"values"`
 	Next     string    `json:"next"`
 	Previous string    `json:"previous,omitempty"`
-}
-
-// WebHookConfig represent the configuration of a webhook
-type WebHookConfig struct {
-	URL         string `json:"url"`
-	ContentType string `json:"content_type"`
 }
 
 // User represents a public bitbucketcloud user.
@@ -214,71 +177,6 @@ type PullRequests struct {
 	Previous string        `json:"previous,omitempty"`
 }
 
-// DiffCommits represent response from github api for a diff between commits
-type DiffCommits struct {
-	URL          string `json:"url"`
-	HTMLURL      string `json:"html_url"`
-	PermalinkURL string `json:"permalink_url"`
-	DiffURL      string `json:"diff_url"`
-	PatchURL     string `json:"patch_url"`
-	BaseCommit   struct {
-		URL         string `json:"url"`
-		Sha         string `json:"sha"`
-		NodeID      string `json:"node_id"`
-		HTMLURL     string `json:"html_url"`
-		CommentsURL string `json:"comments_url"`
-		Commit      Commit `json:"commit"`
-		Author      User   `json:"author"`
-		Committer   User   `json:"committer"`
-		Parents     []struct {
-			URL string `json:"url"`
-			Sha string `json:"sha"`
-		} `json:"parents"`
-	} `json:"base_commit"`
-	MergeBaseCommit struct {
-		URL         string `json:"url"`
-		Sha         string `json:"sha"`
-		NodeID      string `json:"node_id"`
-		HTMLURL     string `json:"html_url"`
-		CommentsURL string `json:"comments_url"`
-		Commit      Commit `json:"commit"`
-		Author      User   `json:"author"`
-		Committer   User   `json:"committer"`
-		Parents     []struct {
-			URL string `json:"url"`
-			Sha string `json:"sha"`
-		} `json:"parents"`
-	} `json:"merge_base_commit"`
-	Status       string   `json:"status"`
-	AheadBy      int      `json:"ahead_by"`
-	BehindBy     int      `json:"behind_by"`
-	TotalCommits int      `json:"total_commits"`
-	Commits      []Commit `json:"commits"`
-	Files        []struct {
-		Sha         string `json:"sha"`
-		Filename    string `json:"filename"`
-		Status      string `json:"status"`
-		Additions   int    `json:"additions"`
-		Deletions   int    `json:"deletions"`
-		Changes     int    `json:"changes"`
-		BlobURL     string `json:"blob_url"`
-		RawURL      string `json:"raw_url"`
-		ContentsURL string `json:"contents_url"`
-		Patch       string `json:"patch"`
-	} `json:"files"`
-}
-
-type Ref struct {
-	Ref    string `json:"ref"`
-	NodeID string `json:"node_id"`
-	URL    string `json:"url"`
-	Object struct {
-		Type string `json:"type"`
-		Sha  string `json:"sha"`
-		URL  string `json:"url"`
-	} `json:"object"`
-}
-
 type AccessToken struct {
 	AccessToken  string `json:"access_token"`
 	Scopes       string `json:"scopes"`
@@ -355,6 +253,15 @@ type Status struct {
 		Self   Link `json:"self"`
 		Commit Link `json:"commit"`
 	} `json:"links"`
+}
+
+type Statuses struct {
+	Pagelen  int      `json:"pagelen"`
+	Page     int      `json:"page"`
+	Size     int64    `json:"size"`
+	Values   []Status `json:"values"`
+	Next     string   `json:"next"`
+	Previous string   `json:"previous,omitempty"`
 }
 
 type Branches struct {

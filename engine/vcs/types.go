@@ -129,16 +129,16 @@ func (s BitbucketServerConfiguration) check() error {
 // BitbucketCloudConfiguration represents the bitbucket configuration
 type BitbucketCloudConfiguration struct {
 	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Bitbucket cloud. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucketcloud/ \n#######\n Bitbucket cloud OAuth Application Client ID"`
-	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Bitbucket cloud OAuth Application Client Secret"`
+	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Bitbucket Cloud OAuth Application Client Secret"`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
-	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
-	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
-	Username        string `toml:"username" comment:"optional. Github username, used to add comment on Pull Request on failed build." json:"username"`
-	Token           string `toml:"token" comment:"optional, Github Token associated to username, used to add comment on Pull Request" json:"-"`
+	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	// DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	ProxyWebhook string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	// Username        string `toml:"username" comment:"optional. Github username, used to add comment on Pull Request on failed build." json:"username"`
+	// Token           string `toml:"token" comment:"optional, Bitbucket Cloud Token associated to username, used to add comment on Pull Request" json:"-"`
 }
 
 func (s BitbucketCloudConfiguration) check() error {
