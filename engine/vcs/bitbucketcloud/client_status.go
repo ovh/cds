@@ -83,7 +83,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
-	log.Debug("bitbucketcloud.SetStatus> Status %d %s created at %v", resp.UUID, resp.Links.Self.Href, resp.CreatedOn)
+	log.Debug("bitbucketcloud.SetStatus> Status %s %s created at %v", resp.UUID, resp.Links.Self.Href, resp.CreatedOn)
 
 	return nil
 }

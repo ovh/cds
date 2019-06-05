@@ -97,7 +97,7 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	consumer := New(consumerKey, []byte(privateKey), url, "", "", "", username, password, cache, true)
-	cli, err := consumer.GetAuthorizedClient(context.Background(), token, secret)
+	cli, err := consumer.GetAuthorizedClient(context.Background(), token, secret, 0)
 	test.NoError(t, err)
 	return cli
 }

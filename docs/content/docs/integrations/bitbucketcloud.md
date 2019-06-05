@@ -35,11 +35,11 @@ Set value to `privateKey`. You can modify `consumerKey` if you want.
 
       [vcs.servers.bitbucketcloud.bitbucketcloud]
 
-        # github OAuth Application Client ID
-        clientId = "LY9PmYpcLNPRw6QyPZ"
+        # Bitbucket Cloud OAuth Key
+        clientId = "XXXX"
 
-        # github OAuth Application Client Secret
-        clientSecret = "4xPrgC3TAqEWnBRf7qZGS6Ec9Pf4cHwV"
+        # Bitbucket Cloud OAuth Secret
+        clientSecret = "XXXX"
 
         # Does webhooks are supported by VCS Server
         disableWebHooks = false

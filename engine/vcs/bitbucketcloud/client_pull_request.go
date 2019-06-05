@@ -13,7 +13,7 @@ import (
 )
 
 func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname string, id int) (sdk.VCSPullRequest, error) {
-	url := fmt.Sprintf("/repositories/%s/pullrequests/%s", fullname, id)
+	url := fmt.Sprintf("/repositories/%s/pullrequests/%d", fullname, id)
 	status, body, _, err := client.get(url)
 	if err != nil {
 		log.Warning("bitbucketcloudClient.Pullrequest> Error %s", err)

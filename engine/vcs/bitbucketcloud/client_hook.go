@@ -51,7 +51,7 @@ func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string,
 	if err := json.Unmarshal(body, &webhook); err != nil {
 		return sdk.WrapError(err, "Cannot unmarshal response")
 	}
-	hook.ID = fmt.Sprintf("%d", webhook.UUID)
+	hook.ID = webhook.UUID
 	return nil
 }
 
