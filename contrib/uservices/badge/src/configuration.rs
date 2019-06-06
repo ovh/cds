@@ -74,7 +74,7 @@ pub fn get_configuration(filename: &str) -> Result<BadgeConfiguration, ConfigErr
   let mut settings = Config::default();
   settings
     .merge(File::with_name(filename))?
-    .merge(Environment::with_prefix("CDS"))?;
+    .merge(Environment::with_prefix("CDS").separator("_"))?;
 
   let conf: Configuration = settings.try_into()?;
   Ok(conf.badge)
