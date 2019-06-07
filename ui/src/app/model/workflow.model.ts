@@ -48,6 +48,7 @@ export class Workflow {
     labels: Label[];
     workflow_data: WorkflowData;
     as_code_events: Array<AsCodeEvents>;
+    generate_badge: boolean;
 
     preview: Workflow;
     asCode: string;
