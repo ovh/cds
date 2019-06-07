@@ -50,6 +50,7 @@ mod run;
 mod schema;
 mod service;
 mod web;
+mod status;
 
 use actix::prelude::*;
 use actix::{Arbiter, SyncArbiter, System};
