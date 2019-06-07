@@ -1,11 +1,11 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {PermissionValue} from '../../../../../../model/permission.model';
-import {Pipeline} from '../../../../../../model/pipeline.model';
-import {Prerequisite} from '../../../../../../model/prerequisite.model';
-import {Project} from '../../../../../../model/project.model';
-import {Stage} from '../../../../../../model/stage.model';
-import {PrerequisiteEvent} from '../../../../../../shared/prerequisites/prerequisite.event.model';
+import { Component, Input, OnInit } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { PermissionValue } from '../../../../../../model/permission.model';
+import { Pipeline } from '../../../../../../model/pipeline.model';
+import { Prerequisite } from '../../../../../../model/prerequisite.model';
+import { Project } from '../../../../../../model/project.model';
+import { Stage } from '../../../../../../model/stage.model';
+import { PrerequisiteEvent } from '../../../../../../shared/prerequisites/prerequisite.event.model';
 
 @Component({
     selector: 'app-pipeline-stage-form',

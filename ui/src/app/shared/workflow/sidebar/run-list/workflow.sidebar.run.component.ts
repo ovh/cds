@@ -2,7 +2,7 @@ import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/cor
 import { Router } from '@angular/router';
 import {Store} from '@ngxs/store';
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import {cloneDeep} from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { PipelineStatus } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';

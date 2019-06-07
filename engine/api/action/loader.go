@@ -42,10 +42,6 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) er
 		return err
 	}
 
-	if err := loadAudits(ctx, db, as...); err != nil {
-		return err
-	}
-
 	return loadGroup(ctx, db, as...)
 }
 

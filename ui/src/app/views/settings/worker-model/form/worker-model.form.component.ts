@@ -6,7 +6,7 @@ import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
-import { omit } from 'lodash';
+import omit from 'lodash-es/omit';
 import { finalize } from 'rxjs/operators/finalize';
 import { Subscription } from 'rxjs/Subscription';
 

@@ -1,6 +1,7 @@
 package workflowtemplate_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -64,43 +65,32 @@ func TestCRUD(t *testing.T) {
 	assert.Nil(t, workflowtemplate.Update(db, &tmpls[0]), "No err should be returned when updating a template")
 	assert.Equal(t, int64(11), tmpls[0].Version)
 
-	// GetByID
-	result, err := workflowtemplate.GetByID(db, 0)
+	// LoadByID
+	result, err := workflowtemplate.LoadByID(context.TODO(), db, 0)
 	assert.Nil(t, err)
 	assert.Nil(t, result)
-	result, err = workflowtemplate.GetByID(db, tmpls[0].ID)
+	result, err = workflowtemplate.LoadByID(context.TODO(), db, tmpls[0].ID)
 	assert.Nil(t, err)
 	assert.Equal(t, result.Name, tmpls[0].Name)
 
-	// GetByIDAndGroupIDs
-	result, err = workflowtemplate.GetByIDAndGroupIDs(db, tmpls[0].ID, nil)
-	assert.Nil(t, err)
-	assert.Nil(t, result)
-	result, err = workflowtemplate.GetByIDAndGroupIDs(db, tmpls[0].ID, []int64{grp1.ID, grp2.ID})
+	// LoadBySlugAndGroupID
+	result, err = workflowtemplate.LoadBySlugAndGroupID(context.TODO(), db, tmpls[0].Slug, grp1.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, result.Name, tmpls[0].Name)
 
-	// GetBySlugAndGroupIDs
-	result, err = workflowtemplate.GetBySlugAndGroupIDs(db, tmpls[0].Slug, nil)
-	assert.Nil(t, err)
-	assert.Nil(t, result)
-	result, err = workflowtemplate.GetBySlugAndGroupIDs(db, tmpls[0].Slug, []int64{grp1.ID, grp2.ID})
-	assert.Nil(t, err)
-	assert.Equal(t, result.Name, tmpls[0].Name)
-
-	// GetAllByGroupIDs
-	results, err := workflowtemplate.GetAllByGroupIDs(db, nil)
+	// LoadAllByGroupIDs
+	results, err := workflowtemplate.LoadAllByGroupIDs(context.TODO(), db, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(results))
-	results, err = workflowtemplate.GetAllByGroupIDs(db, []int64{grp1.ID, grp2.ID})
+	results, err = workflowtemplate.LoadAllByGroupIDs(context.TODO(), db, []int64{grp1.ID, grp2.ID})
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(results))
 
-	// GetAllByIDs
-	results, err = workflowtemplate.GetAllByIDs(db, nil)
+	// LoadAllByIDs
+	results, err = workflowtemplate.LoadAllByIDs(context.TODO(), db, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(results))
-	results, err = workflowtemplate.GetAllByIDs(db, []int64{tmpls[0].ID, tmpls[1].ID})
+	results, err = workflowtemplate.LoadAllByIDs(context.TODO(), db, []int64{tmpls[0].ID, tmpls[1].ID})
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(results))
 

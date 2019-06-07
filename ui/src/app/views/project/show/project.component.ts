@@ -5,7 +5,7 @@ import { Store } from '@ngxs/store';
 import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import * as immutable from 'immutable';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../model/permission.model';

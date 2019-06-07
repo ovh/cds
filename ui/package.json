@@ -8,6 +8,7 @@
     "npm": ">= 3.0.0"
   },
   "scripts": {
+    "ng": "ng",
     "start": "ng serve -c development",
     "test": "ng lint && ng test --watch false --code-coverage",
     "test:model": "ng lint && ng test -c model --watch false --code-coverage",
@@ -19,6 +20,8 @@
     "e2e": "protractor",
     "doc": "./node_modules/.bin/compodoc -p tsconfig.json -s",
     "build:prod": "ng build --prod",
+    "build:stats": "ng build --prod --stats-json",
+    "build:analyse": "webpack-bundle-analyzer dist/stats.json",
     "precommit": "lint-staged",
     "sentry:release": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} new ${CDS_VERSION}",
     "sentry:sourcemaps": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} files ${CDS_VERSION} upload-sourcemaps --url-prefix=${SENTRY_CDS_PREFIX_URL}"
@@ -52,7 +55,6 @@
     "@ngxs/store": "3.3.4",
     "@swimlane/ngx-charts": "10.0.0",
     "@types/dagre-d3": "0.4.38",
-    "angular2-moment": "1.9.0",
     "angular2-prettyjson": "3.0.1",
     "angular2-toaster": "7.0.0",
     "animate.css": "3.7.0",
@@ -70,7 +72,7 @@
     "font-awesome": "4.7.0",
     "immutable": "4.0.0-rc.12",
     "js-beautify": "1.8.9",
-    "lodash": "4.17.11",
+    "lodash-es": "4.17.11",
     "moment": "2.24.0",
     "ng-event-source": "1.0.14",
     "ng-semantic": "https://github.com/sguiheux/ngSemantic/tarball/sgu-master",
@@ -82,6 +84,7 @@
     "ngx-clipboard": "11.1.9",
     "ngx-infinite-scroll": "7.0.1",
     "ngx-markdown": "7.1.2",
+    "ngx-moment": "3.4.0",
     "prismjs": "1.15.0",
     "raven-js": "3.27.0",
     "rxjs": "6.3.3",
@@ -94,6 +97,8 @@
     "zone.js": "0.8.29"
   },
   "devDependencies": {
+    "@angular-builders/custom-webpack": "7.4.3",
+    "@angular-builders/dev-server": "7.3.1",
     "@angular-devkit/build-angular": "0.12.3",
     "@angular/cli": "7.2.3",
     "@angular/compiler-cli": "7.2.2",
@@ -103,7 +108,7 @@
     "@types/dagre": "0.7.40",
     "@types/jasmine": "3.3.8",
     "@types/jasminewd2": "2.0.6",
-    "@types/lodash": "4.14.120",
+    "@types/lodash-es": "4.17.3",
     "@types/node": "10.12.18",
     "codelyzer": "4.5.0",
     "copy-webpack-plugin": "4.6.0",
@@ -123,6 +128,7 @@
     "tslint": "5.12.1",
     "typescript": "3.2.4",
     "webdriver-manager": "12.1.1",
+    "webpack-bundle-analyzer": "3.3.2",
     "wrench-sui": "0.0.3"
   }
 }

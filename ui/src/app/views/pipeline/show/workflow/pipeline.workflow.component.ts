@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as pipelineActions from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
 import { DragulaService } from 'ng2-dragula';
 import { Subscription } from 'rxjs';

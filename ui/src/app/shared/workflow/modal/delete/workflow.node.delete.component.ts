@@ -1,8 +1,8 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {WNode, Workflow} from '../../../../model/workflow.model';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { WNode, Workflow } from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-delete',
@@ -22,7 +22,7 @@ export class WorkflowDeleteNodeComponent {
 
     deleteAll = 'only';
 
-    constructor(private _modalService: SuiModalService) {}
+    constructor(private _modalService: SuiModalService) { }
 
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.deleteModalTemplate);

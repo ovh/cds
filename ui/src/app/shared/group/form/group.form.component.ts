@@ -7,9 +7,7 @@ import {Group} from '../../../model/group.model';
     styleUrls: ['./group.form.scss']
 })
 export class GroupFormComponent {
-
     @Input() group: Group;
-
     // form ( with submit button ), noform ( no button, use group input )
     @Input() mode = 'form';
 

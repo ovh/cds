@@ -11,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -29,6 +30,10 @@ func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) m
 }
 
 func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]*sdk.NodeHook) error {
+	if len(hookToDelete) == 0 {
+		return nil
+	}
+
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
 		if h.HookModelName == sdk.RepositoryWebHookModelName {
@@ -56,19 +61,17 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 	}
 
-	if len(hookToDelete) > 0 {
-		//Push the hook to hooks µService
-		//Load service "hooks"
-		srvs, err := services.FindByType(db, services.TypeHooks)
-		if err != nil {
-			return err
-		}
-		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
-		if errHooks != nil || code >= 400 {
-			// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
-			// so, it's just a warn log
-			log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
-		}
+	//Push the hook to hooks µService
+	//Load service "hooks"
+	srvs, err := services.FindByType(db, services.TypeHooks)
+	if err != nil {
+		return err
+	}
+	code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+	if errHooks != nil || code >= 400 {
+		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
+		// so, it's just a warn log
+		log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }
@@ -232,6 +235,8 @@ func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, h *sdk.NodeHook) error {
+	ctx, end := observability.Span(ctx, "workflow.createVCSConfiguration", observability.Tag("UUID", h.UUID))
+	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
 	projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
 	if projectVCSServer == nil {
@@ -257,6 +262,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
 		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
+	observability.Current(ctx, observability.Tag("VCS_ID", vcsHook.ID))
 	h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,
 		Configurable: false,

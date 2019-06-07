@@ -1,32 +1,31 @@
-import { Component, Input } from '@angular/core';
-import { Broadcast } from '../../../../model/broadcast.model';
-import { BroadcastStore } from '../../../../service/broadcast/broadcast.store';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Table } from '../../../../shared/table/table';
+import { Component } from '@angular/core';
+import { Broadcast } from 'app/model/broadcast.model';
+import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 
 @Component({
     selector: 'app-broadcast-list',
-    templateUrl: './broadcast.list.html',
-    styleUrls: ['./broadcast.list.scss']
+    templateUrl: './broadcast.list.html'
 })
-export class BroadcastListComponent extends Table<Broadcast> {
-    filter: string;
+export class BroadcastListComponent {
     broadcasts: Array<Broadcast>;
-
-    @Input('maxPerPage')
-    set maxPerPage(data: number) {
-        this.nbElementsByPage = data;
-    };
-
+    columns: Array<Column<Broadcast>>;
     path: Array<PathItem>;
+    filter: Filter<Broadcast>;
 
-    constructor(private _broadcastStore: BroadcastStore) {
-        super();
-
-        this._broadcastStore.getBroadcasts().subscribe(broadcasts => {
-            this.broadcasts = broadcasts.valueSeq().toArray()
-                .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
-        });
+    constructor(
+        private _broadcastStore: BroadcastStore
+    ) {
+        this.filter = f => {
+            const lowerFilter = f.toLowerCase();
+            return d => {
+                return d.id.toString().indexOf(lowerFilter) !== -1 ||
+                    d.title.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    d.level.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    d.project_key.toLowerCase().indexOf(lowerFilter) !== -1;
+            }
+        };
 
         this.path = [<PathItem>{
             translate: 'common_admin'
@@ -34,13 +33,63 @@ export class BroadcastListComponent extends Table<Broadcast> {
             translate: 'broadcast_list_title',
             routerLink: ['/', 'admin', 'broadcast']
         }];
-    }
 
-    getData(): Array<Broadcast> {
-        if (!this.filter) {
-            return this.broadcasts;
-        }
-        let lowerFilter = this.filter.toLowerCase();
-        return this.broadcasts.filter(v => v.title.toLowerCase().indexOf(lowerFilter) !== -1);
+        this.columns = [
+            <Column<Broadcast>>{
+                type: ColumnType.ROUTER_LINK,
+                name: 'broadcast_id',
+                class: 'one',
+                selector: (b: Broadcast) => {
+                    return {
+                        link: `/admin/broadcast/${b.id}`,
+                        value: b.id
+                    };
+                }
+            },
+            <Column<Broadcast>>{
+                type: ColumnType.DATE,
+                name: 'broadcast_created',
+                class: 'three',
+                selector: (b: Broadcast) => b.created
+            },
+            <Column<Broadcast>>{
+                type: ColumnType.ROUTER_LINK_WITH_ICONS,
+                name: 'broadcast_title',
+                class: 'eight',
+                selector: (b: Broadcast) => {
+                    let icons = [];
+
+                    if (b.archived) {
+                        icons.push({
+                            label: 'broadcast_archived',
+                            class: ['archive', 'icon'],
+                            title: 'broadcast_archived'
+                        });
+                    }
+
+                    return {
+                        link: `/admin/broadcast/${b.id}`,
+                        value: b.title,
+                        icons: icons
+                    };
+                }
+            },
+            <Column<Broadcast>>{
+                name: 'broadcast_level',
+                class: 'two',
+                selector: (b: Broadcast) => b.level
+            },
+            <Column<Broadcast>>{
+                name: 'broadcast_project',
+                class: 'two',
+                selector: (b: Broadcast) => b.project_key
+            }
+        ];
+
+        this._broadcastStore.getBroadcasts()
+            .subscribe(broadcasts => {
+                this.broadcasts = broadcasts.valueSeq().toArray()
+                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
+            });
     }
 }

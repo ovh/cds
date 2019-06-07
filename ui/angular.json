@@ -9,8 +9,11 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-builders/custom-webpack:browser",
           "options": {
+            "customWebpackConfig": {
+              "path": "./extra-webpack.config.js"
+            },
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -33,11 +36,8 @@
               "src/styles.scss"
             ],
             "scripts": [
-              "node_modules/jquery/dist/jquery.js",
-              "node_modules/semantic-ui/dist/semantic.js",
-              "node_modules/lodash/lodash.min.js",
-              "node_modules/moment/min/moment.min.js",
-              "node_modules/moment/locale/fr.js",
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/semantic-ui/dist/semantic.min.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",
               "node_modules/codemirror/addon/mode/simple.js",
@@ -58,17 +58,17 @@
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/sanitize-html/dist/sanitize-html.min.js",
               "node_modules/duration-js/duration.js",
-              "node_modules/graphlib/dist/graphlib.js",
-              "node_modules/dagre/dist/dagre.js",
               "node_modules/prismjs/prism.js"
             ]
           },
           "configurations": {
             "test": {
-              "fileReplacements": [{
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.test.ts"
-              }]
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.test.ts"
+                }
+              ]
             },
             "development": {},
             "production": {
@@ -81,15 +81,17 @@
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
-              "fileReplacements": [{
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.prod.ts"
-              }]
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
             }
           }
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular-builders/dev-server:generic",
           "options": {
             "browserTarget": "ui-ng2:build"
           },
@@ -119,11 +121,8 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "src/tsconfig.spec.json",
             "scripts": [
-              "node_modules/jquery/dist/jquery.js",
-              "node_modules/semantic-ui/dist/semantic.js",
-              "node_modules/lodash/lodash.min.js",
-              "node_modules/moment/min/moment.min.js",
-              "node_modules/moment/locale/fr.js",
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/semantic-ui/dist/semantic.min.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",
               "node_modules/codemirror/addon/mode/simple.js",
@@ -143,9 +142,7 @@
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/sanitize-html/dist/sanitize-html.min.js",
-              "node_modules/duration-js/duration.js",
-              "node_modules/graphlib/dist/graphlib.js",
-              "node_modules/dagre/dist/dagre.js"
+              "node_modules/duration-js/duration.js"
             ],
             "styles": [
               "node_modules/dragula/dist/dragula.css",
@@ -168,9 +165,6 @@
             },
             "service": {
               "main": "src/test_service.ts"
-            },
-            "shared": {
-              "main": "src/test_shared.ts"
             },
             "shared": {
               "main": "src/test_shared.ts"

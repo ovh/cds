@@ -5,7 +5,7 @@ import { Store } from '@ngxs/store';
 import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';

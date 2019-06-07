@@ -8,13 +8,16 @@ const DESC: direction = 'desc';
 export enum ColumnType {
     TEXT = 'text',
     ICON = 'icon',
+    LINK_CLICK = 'link-click',
     LINK = 'link',
     ROUTER_LINK = 'router-link',
+    ROUTER_LINK_WITH_ICONS = 'router-link-with-icons',
     MARKDOWN = 'markdown',
     DATE = 'date',
     BUTTON = 'button',
     CONFIRM_BUTTON = 'confirm-button',
     LABEL = 'label',
+    TEXT_COPY = 'text-copy'
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;

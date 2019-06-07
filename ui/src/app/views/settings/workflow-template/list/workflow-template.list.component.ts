@@ -1,14 +1,13 @@
 import { Component } from '@angular/core';
+import { WorkflowTemplate } from 'app/model/workflow-template.model';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { finalize } from 'rxjs/internal/operators/finalize';
-import { WorkflowTemplate } from '../../../../model/workflow-template.model';
-import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Column, ColumnType, Filter } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-workflow-template-list',
-    templateUrl: './workflow-template.list.html',
-    styleUrls: ['./workflow-template.list.scss']
+    templateUrl: './workflow-template.list.html'
 })
 export class WorkflowTemplateListComponent {
     loading: boolean;
@@ -28,13 +27,20 @@ export class WorkflowTemplateListComponent {
             }
         };
 
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'workflow_templates',
+            routerLink: ['/', 'settings', 'workflow-template']
+        }];
+
         this.columns = [
             <Column<WorkflowTemplate>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
                 selector: (wt: WorkflowTemplate) => {
                     return {
-                        link: '/settings/workflow-template/' + wt.group.name + '/' + wt.slug,
+                        link: `/settings/workflow-template/${wt.group.name}/${wt.slug}`,
                         value: wt.name
                     };
                 }
@@ -49,14 +55,8 @@ export class WorkflowTemplateListComponent {
                 selector: (wt: WorkflowTemplate) => wt.description
             }
         ];
-        this.getTemplates();
 
-        this.path = [<PathItem>{
-            translate: 'common_settings'
-        }, <PathItem>{
-            translate: 'workflow_templates',
-            routerLink: ['/', 'settings', 'workflow-template']
-        }];
+        this.getTemplates();
     }
 
     getTemplates() {

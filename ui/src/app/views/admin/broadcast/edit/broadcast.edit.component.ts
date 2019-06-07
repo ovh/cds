@@ -5,15 +5,15 @@ import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
 import { User } from 'app/model/user.model';
 import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { BroadcastService } from 'app/service/broadcast/broadcast.service';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { SharedService } from 'app/shared/shared.service';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { BroadcastLevelService } from '../../../../shared/broadcast/broadcast.level.service';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { SharedService } from '../../../../shared/shared.service';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-broadcast-edit',
@@ -28,7 +28,7 @@ export class BroadcastEditComponent {
     broadcastSub: Subscription;
     currentUser: User;
     canEdit = false;
-    private broadcastLevelsList;
+    broadcastLevelsList: any;
     levels = Array<string>();
     projects: Array<NavbarProjectData> = [];
     navbarSub: Subscription;
@@ -41,10 +41,11 @@ export class BroadcastEditComponent {
         private _broadcastStore: BroadcastStore,
         private _toast: ToastService, private _translate: TranslateService,
         private _route: ActivatedRoute, private _router: Router,
-        private _authentificationStore: AuthentificationStore, _broadcastLevelService: BroadcastLevelService
+        private _authentificationStore: AuthentificationStore,
+        private _broadcastService: BroadcastService,
     ) {
         this.currentUser = this._authentificationStore.getUser();
-        this.broadcastLevelsList = _broadcastLevelService.getBroadcastLevels()
+        this.broadcastLevelsList = this._broadcastService.getBroadcastLevels()
         this.broadcastLevelsList.forEach(element => {
             this.levels.push(element.value);
         });

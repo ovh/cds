@@ -90,17 +90,14 @@ func (api *API) getWorkflowHandler() service.Handler {
 		}
 
 		if withTemplate {
-			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(api.mustDB(), w1); err != nil {
+			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(ctx, api.mustDB(), w1); err != nil {
 				return err
 			}
 			if w1.TemplateInstance != nil {
-				if err := workflowtemplate.AggregateTemplateOnInstance(api.mustDB(), w1.TemplateInstance); err != nil {
+				if err := workflowtemplate.LoadInstanceOptions.WithTemplate(ctx, api.mustDB(), w1.TemplateInstance); err != nil {
 					return err
 				}
 				if w1.TemplateInstance.Template != nil {
-					if err := workflowtemplate.AggregateOnWorkflowTemplate(ctx, api.mustDB(), w1.TemplateInstance.Template); err != nil {
-						return err
-					}
 					w1.FromTemplate = fmt.Sprintf("%s/%s", w1.TemplateInstance.Template.Group.Name, w1.TemplateInstance.Template.Slug)
 					w1.TemplateUpToDate = w1.TemplateInstance.Template.Version == w1.TemplateInstance.WorkflowTemplateVersion
 				}

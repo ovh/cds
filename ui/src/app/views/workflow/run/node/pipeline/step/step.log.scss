@@ -1,6 +1,6 @@
 @import "../../../../../../../common";
 
-$squareSize: 32px;
+$squareSize: 30px;
 $yellowLogs: #FFFF91;
 .mb25 {
   margin-bottom: 25px;
@@ -16,12 +16,7 @@ $yellowLogs: #FFFF91;
   .status {
     width: $squareSize;
     height: $squareSize;
-    padding-top: 4px;
-    padding-left: 8px;
     color: white;
-  }
-  .status.icon {
-      padding-top: 6px;
   }
 
   .title {
@@ -108,6 +103,7 @@ $yellowLogs: #FFFF91;
         }
       }
       td {
+        border: none !important;
         padding-top: 1px;
         padding-bottom: 1px;
         hr {

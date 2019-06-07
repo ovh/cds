@@ -5,10 +5,9 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { MomentModule } from 'angular2-moment';
-import {WorkflowHookMenuEditComponent} from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
-import {WorkflowWizardNodeConditionComponent} from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
-import {WorkflowWizardOutgoingHookComponent} from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
+import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
+import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
+import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula';
@@ -17,12 +16,12 @@ import { NgxAutoScroll, NgxAutoScrollModule } from 'ngx-auto-scroll';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
+import { MomentModule } from 'ngx-moment';
 import { ActionComponent } from './action/action.component';
 import { ActionStepFormComponent } from './action/step/form/step.form.component';
 import { ActionStepComponent } from './action/step/step.component';
 import { AuditListComponent } from './audit/list/audit.list.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
-import { BroadcastLevelService } from './broadcast/broadcast.level.service';
 import { ConfirmButtonComponent } from './button/confirm/confirm.button';
 import { DeleteButtonComponent } from './button/delete/delete.button';
 import { UploadButtonComponent } from './button/upload/upload.button.component';
@@ -85,11 +84,11 @@ import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-fo
 import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 import { WorkflowTemplateParamFormComponent } from './workflow-template/param-form/workflow-template.param-form.component';
-import {WorkflowWNodeMenuEditComponent} from './workflow/menu/edit-node/menu.edit.node.component';
+import { WorkflowWNodeMenuEditComponent } from './workflow/menu/edit-node/menu.edit.node.component';
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-add/hook.modal.component';
 import { WorkflowTriggerComponent } from './workflow/modal/node-add/workflow.trigger.component';
-import {WorkflowNodeEditModalComponent} from './workflow/modal/node-edit/node.edit.modal.component';
+import { WorkflowNodeEditModalComponent } from './workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeRunParamComponent } from './workflow/node/run/node.run.param.component';
@@ -100,9 +99,9 @@ import { ActionStepSummaryComponent } from './workflow/sidebar/run-node/stage/jo
 import { JobStepSummaryComponent } from './workflow/sidebar/run-node/stage/job/job.summary.component';
 import { StageStepSummaryComponent } from './workflow/sidebar/run-node/stage/stage.summary.component';
 import { WorkflowSidebarRunNodeComponent } from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
-import {WorkflowWizardNodeContextComponent} from './workflow/wizard/context/wizard.context.component';
+import { WorkflowWizardNodeContextComponent } from './workflow/wizard/context/wizard.context.component';
 import { WorkflowNodeHookFormComponent } from './workflow/wizard/hook/hook.form.component';
-import {WorkflowWizardNodeInputComponent} from './workflow/wizard/input/wizard.input.component';
+import { WorkflowWizardNodeInputComponent } from './workflow/wizard/input/wizard.input.component';
 import { WorkflowNodeAddWizardComponent } from './workflow/wizard/node-add/node.wizard.component';
 import { WorkflowWNodeForkComponent } from './workflow/wnode/fork/node.fork.component';
 import { WorkflowNodeHookComponent } from './workflow/wnode/hook/hook.component';
@@ -114,9 +113,24 @@ import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
 
 @NgModule({
-    imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,
-        CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule,
-        SuiModule, NgxAutoScrollModule, InfiniteScrollModule, NgxChartsModule],
+    imports: [
+        CommonModule,
+        ClipboardModule,
+        NgSemanticModule,
+        FormsModule,
+        TranslateModule,
+        DragulaModule.forRoot(),
+        MomentModule,
+        CodemirrorModule,
+        ReactiveFormsModule,
+        MarkdownModule.forRoot(),
+        NguiAutoCompleteModule,
+        RouterModule,
+        SuiModule,
+        NgxAutoScrollModule,
+        InfiniteScrollModule,
+        NgxChartsModule
+    ],
     declarations: [
         ActionComponent,
         ActionStepComponent,
@@ -220,7 +234,6 @@ import { ZoneComponent } from './zone/zone.component';
     providers: [
         DurationService,
         PermissionService,
-        BroadcastLevelService,
         SharedService,
         ToastService
     ],
