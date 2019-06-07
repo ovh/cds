@@ -53,9 +53,10 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
-		Name:       "test_1",
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
+		Name:          "test_1",
+		ProjectID:     proj.ID,
+		ProjectKey:    proj.Key,
+		GenerateBadge: true,
 		WorkflowData: &sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
@@ -80,6 +81,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.Name, w1.Name)
 	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
 	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
+	assert.Equal(t, w.GenerateBadge, w1.GenerateBadge)
 	assertEqualNode(t, w.Root, w1.Root)
 
 	assert.False(t, w1.Root.Context.Mutex)
@@ -197,6 +199,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w.Root.Context.ApplicationID, w1.Root.Context.ApplicationID)
 	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
 	assert.Equal(t, w.Root.Context.Mutex, w1.Root.Context.Mutex)
+	assert.Equal(t, w.GenerateBadge, w1.GenerateBadge)
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {

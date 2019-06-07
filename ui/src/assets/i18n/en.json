@@ -1094,6 +1094,7 @@
   "workflow_last_execution": "Last execution date",
   "workflow_first_execution": "First execution date",
   "workflow_runnumber_title": "Current run number",
+  "workflow_badge_title": "Generate a svg badge",
   "workflow_no_notifications": "No notifications",
   "workflow_notification_type": "Notification type",
   "workflow_notification_pipeline": "Pipelines",

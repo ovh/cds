@@ -31,6 +31,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		PipelineHooks          []exportentities.HookEntry
 		Permissions            map[string]int
 		HistoryLength          int64
+		GenerateBadge          bool
 	}
 	tests := []struct {
 		name    string
@@ -65,6 +66,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 						DependsOn:    []string{"root"},
 					},
 				},
+				GenerateBadge: true,
 			},
 			wantErr: false,
 		},
@@ -109,6 +111,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
 				PipelineHooks:          tt.fields.PipelineHooks,
 				Permissions:            tt.fields.Permissions,
+				GenerateBadge:          &tt.fields.GenerateBadge,
 			}
 			if err := w.CheckDependencies(); (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.checkDependencies() error = %v, wantErr %v", err, tt.wantErr)
@@ -218,6 +221,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		PipelineHooks          []exportentities.HookEntry
 		Permissions            map[string]int
 		HistoryLength          int64
+		GenerateBadge          bool
 	}
 	tsts := []struct {
 		name    string
@@ -240,11 +244,13 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						},
 					},
 				},
+				GenerateBadge: true,
 			},
 			wantErr: false,
 			want: sdk.Workflow{
 				HistoryLength: sdk.DefaultHistoryLength,
 				Description:   "this is my description",
+				GenerateBadge: true,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -694,6 +700,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				PipelineHooks:          tt.fields.PipelineHooks,
 				Permissions:            tt.fields.Permissions,
 				HistoryLength:          &tt.fields.HistoryLength,
+				GenerateBadge:          &tt.fields.GenerateBadge,
 			}
 			got, err := w.GetWorkflow()
 			if (err != nil) != tt.wantErr {
@@ -817,6 +824,7 @@ workflow:
     pipeline: DDOS-me
 metadata:
   default_tags: git.branch,git.author
+generate_badge: true
 `,
 		}, {
 			name: "tests with outgoing hooks with a join",

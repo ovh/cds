@@ -78,8 +78,7 @@ impl Actor for KafkaConsumerActor {
                         continue;
                     }
                     match serde_json::from_slice::<Event>(payload.unwrap()) {
-                        Ok(ref event) if event.type_event == "sdk.EventRunWorkflow" => {
-                            // TODO: add a boolean to check if we want to generate badge
+                        Ok(ref event) if event.type_event == "sdk.EventRunWorkflow" && event.generate_badge => {
                             let mut branch = None;
                             if let Some(ref tags) = &event.tag {
                                 branch = tags

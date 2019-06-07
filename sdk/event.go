@@ -32,6 +32,7 @@ type Event struct {
 	WorkflowRunNumSub int64                  `json:"workflow_run_num_sub,omitempty"`
 	Status            string                 `json:"status,omitempty"`
 	Tags              []WorkflowRunTag       `json:"tag,omitempty"`
+	GenerateBadge     bool                   `json:"generate_badge"`
 }
 
 // EventFilter represents filters when getting events
@@ -123,6 +124,7 @@ type EventRunWorkflow struct {
 	LastModified     int64            `json:"last_modified"`
 	LastModifiedNano int64            `json:"last_modified_nano"`
 	Tags             []WorkflowRunTag `json:"tags"`
+	GenerateBadge    bool             `json:"generate_badge"`
 }
 
 // EventJob contains event data for a job

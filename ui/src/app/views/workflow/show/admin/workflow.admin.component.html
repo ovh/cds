@@ -77,6 +77,11 @@
                         placeholder="{{ 'common_loading' | translate}}" [(ngModel)]="runnumber" [disabled]="loading"
                         required #formWorkflowRunNumUpdateNumber="ngModel">
                 </div>
+                <div class="field">
+                    <label>{{ 'workflow_badge_title' | translate }}</label>
+                    <sui-checkbox class="toggle" name="generate_badge" [(ngModel)]="workflow.generate_badge">
+                    </sui-checkbox>
+                </div>
                 <div class="submitbutton">
                     <ng-container *ngIf="workflow.from_repository && workflow.from_repository.length > 0">
                         <div class="ui right floated" suiPopup [popupText]="'workflow_as_code_no_edit' | translate"

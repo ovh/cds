@@ -119,6 +119,7 @@ pub struct Event {
   pub attempt: i64,
   pub project_key: String,
   pub workflow_name: String,
+  pub generate_badge: bool,
   pub workflow_run_num: i64,
   pub status: StatusEnum,
   pub tag: Option<Vec<Tag>>,

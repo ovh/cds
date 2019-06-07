@@ -278,6 +278,7 @@ pub struct Workflow {
     pub to_delete: bool,
     pub favorite: bool,
     pub workflow_data: WorkflowData,
+    pub generate_badge: bool,
     //   as_code_events: Vec<()>,
 }
 

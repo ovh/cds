@@ -47,6 +47,7 @@ type Workflow struct {
 	Notifications    []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"` // This is used when the workflow have only one pipeline
 	HistoryLength    *int64                         `json:"history_length,omitempty" yaml:"history_length,omitempty"`
 	MapNotifications map[string][]NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have more than one pipeline
+	GenerateBadge    *bool                          `json:"generate_badge,omitempty" yaml:"generate_badge,omitempty"`
 }
 
 // WorkflowPulled contains all the yaml base64 that are needed to generate a workflow tar file.
@@ -298,6 +299,11 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		}
 	}
 
+	if w.GenerateBadge {
+		truev := true
+		exportedWorkflow.GenerateBadge = &truev
+	}
+
 	if w.HistoryLength > 0 && w.HistoryLength != sdk.DefaultHistoryLength {
 		exportedWorkflow.HistoryLength = &w.HistoryLength
 	}
@@ -520,6 +526,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		wf.HistoryLength = *w.HistoryLength
 	} else {
 		wf.HistoryLength = sdk.DefaultHistoryLength
+	}
+
+	if w.GenerateBadge != nil {
+		wf.GenerateBadge = *w.GenerateBadge
 	}
 
 	rand.Seed(time.Now().Unix())

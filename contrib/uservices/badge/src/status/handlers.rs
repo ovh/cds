@@ -4,7 +4,7 @@ use sdk_cds::models::{MonitoringStatus, StatusLine};
 
 use crate::web::WebState;
 
-pub fn status_handler(req: &HttpRequest<WebState>) -> HttpResponse {
+pub fn status_handler(_req: &HttpRequest<WebState>) -> HttpResponse {
     let status = MonitoringStatus{
         now: Some(Utc::now()),
         lines: Some(

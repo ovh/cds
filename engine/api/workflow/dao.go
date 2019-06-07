@@ -297,6 +297,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		workflow.name,
 		workflow.description,
 		%s
+		workflow.generate_badge,
 		workflow.last_modified,
 		workflow.root_node_id,
 		workflow.metadata,
