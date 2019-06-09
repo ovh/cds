@@ -338,13 +338,13 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 
 			if OS != "" && arch != "" {
 				if err := workermodel.UpdateOSAndArch(db, modelID, OS, arch); err != nil {
-					log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", modelID, err)
+					log.Warning("registerWorker> Cannot update os and arch for worker model %d : %v", modelID, err)
 					return
 				}
 			}
 
 			if err := ntx.Commit(); err != nil {
-				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
+				log.Warning("RegisterWorker> Unable to commit transaction: %v", err)
 			}
 		}()
 	}
@@ -352,7 +352,7 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	// worker model for now (example: an alpine image on a fresh install cds)
 	if modelID != 0 {
 		if err := workermodel.UpdateRegistration(tx, modelID); err != nil {
-			log.Warning("registerWorker> Unable to update registration: %s", err)
+			log.Warning("registerWorker> Unable to update registration: %v", err)
 		}
 	}
 
