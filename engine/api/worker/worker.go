@@ -347,6 +347,10 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
 			}
 		}()
+	}
+	// update the registration even if there is no capability detected on
+	// worker model for now (example: an alpine image on a fresh install cds)
+	if modelID != 0 {
 		if err := workermodel.UpdateRegistration(tx, modelID); err != nil {
 			log.Warning("registerWorker> Unable to update registration: %s", err)
 		}
