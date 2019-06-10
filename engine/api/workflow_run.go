@@ -940,9 +940,6 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			}
 		}
 		wfRun.Workflow = *wf
-		// TODO will be deleted with old struct
-		wfRun.Workflow.Root = nil
-		wfRun.Workflow.Joins = nil
 	}
 
 	r1, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)

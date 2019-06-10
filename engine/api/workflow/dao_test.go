@@ -6,12 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fsamin/go-dump"
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -1469,4 +1474,340 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	fmt.Println(string(btes))
 
 	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, &w))
+}
+
+func TestInsertAndDeleteMultiHook(t *testing.T) {
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, _ := assets.InsertAdminUser(db)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
+	hookModels, err := workflow.LoadHookModels(db)
+	test.NoError(t, err)
+	var webHookID int64
+	var schedulerID int64
+	var repoWebHookID int64
+	for _, h := range hookModels {
+		if h.Name == sdk.WebHookModel.Name {
+			webHookID = h.ID
+		}
+		if h.Name == sdk.RepositoryWebHookModel.Name {
+			repoWebHookID = h.ID
+		}
+		if h.Name == sdk.SchedulerModel.Name {
+			schedulerID = h.ID
+		}
+	}
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	_, err = db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
+
+	mockVCSSservice := &sdk.Service{Name: "TestInsertAndDeleteMultiHookVCS", Type: services.TypeVCS}
+	test.NoError(t, services.Insert(db, mockVCSSservice))
+
+	mockHookServices := &sdk.Service{Name: "TestInsertAndDeleteMultiHookHook", Type: services.TypeHooks}
+	test.NoError(t, services.Insert(db, mockHookServices))
+
+	//This is a mock for the vcs service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+			switch r.URL.String() {
+			// NEED get REPO
+
+			case "/vcs/github/repos/sguiheux/demo":
+				repo := sdk.VCSRepo{
+					URL:          "https",
+					Name:         "demo",
+					ID:           "123",
+					Fullname:     "sguiheux/demo",
+					Slug:         "sguiheux",
+					HTTPCloneURL: "https://github.com/sguiheux/demo.git",
+					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
+				}
+				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				var hooks map[string]sdk.NodeHook
+				request, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(request, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if len(hooks) != 1 {
+					return writeError(w, fmt.Errorf("Must only have 1 hook"))
+				}
+				k := reflect.ValueOf(hooks).MapKeys()[0].String()
+				hooks[k].Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        fmt.Sprintf("http://6.6.6:8080/%s", hooks[k].UUID),
+					Type:         "string",
+					Configurable: false,
+				}
+
+				if err := enc.Encode(map[string]sdk.NodeHook{
+					hooks[k].UUID: hooks[k],
+				}); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/webhooks":
+
+				infos := repositoriesmanager.WebhooksInfos{
+					WebhooksDisabled:  false,
+					WebhooksSupported: true,
+					Icon:              "github",
+				}
+				if err := enc.Encode(infos); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/hooks":
+				pr := sdk.VCSHook{
+					ID: "666",
+				}
+				if err := enc.Encode(pr); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				if strings.HasPrefix(r.URL.String(), "/vcs/github/repos/sguiheux/demo/hooks?url=htt") && strings.HasSuffix(r.URL.String(), "&id=666") {
+					// Do NOTHING
+				} else {
+					t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
+				}
+
+			}
+
+			return w, nil
+		},
+	)
+
+	pip := &sdk.Pipeline{
+		Name: "build",
+		Stages: []sdk.Stage{
+			{
+				Name:       "stage1",
+				BuildOrder: 1,
+				Enabled:    true,
+				Jobs: []sdk.Job{
+					{
+						Enabled: true,
+						Action: sdk.Action{
+							Name:    "JOb1",
+							Enabled: true,
+							Actions: []sdk.Action{
+								{
+									Name:    "gitClone",
+									Type:    sdk.BuiltinAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "branch",
+											Value: "{{.git.branch}}",
+										},
+										{
+											Name:  "commit",
+											Value: "{{.git.hash}}",
+										},
+										{
+											Name:  "directory",
+											Value: "{{.cds.workspace}}",
+										},
+										{
+											Name:  "password",
+											Value: "",
+										},
+										{
+											Name:  "privateKey",
+											Value: "",
+										},
+										{
+											Name:  "url",
+											Value: "{{.git.url}}",
+										},
+										{
+											Name:  "user",
+											Value: "",
+										},
+										{
+											Name:  "depth",
+											Value: "12",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
+	var errPip error
+	pip, errPip = pipeline.LoadPipeline(db, proj.Key, pip.Name, true)
+	assert.NoError(t, errPip)
+
+	// Add application
+	appS := `version: v1.0
+name: blabla
+vcs_server: github
+repo: sguiheux/demo
+vcs_ssh_key: proj-blabla
+`
+	var eapp = new(exportentities.Application)
+	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
+	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	assert.NoError(t, globalError)
+
+	proj.Applications = append(proj.Applications, *app)
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	w := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    proj.Pipelines[0].ID,
+					ApplicationID: proj.Applications[0].ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						Config:      sdk.RepositoryWebHookModel.DefaultConfig,
+						HookModelID: repoWebHookID,
+					},
+				},
+			},
+		},
+		Applications: map[int64]sdk.Application{
+			proj.Applications[0].ID: proj.Applications[0],
+		},
+		Pipelines: map[int64]sdk.Pipeline{
+			proj.Pipelines[0].ID: proj.Pipelines[0],
+		},
+	}
+	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	// Add check on Hook
+	assert.Equal(t, "666", w.WorkflowData.Node.Hooks[0].Config["webHookID"].Value)
+	assert.Equal(t, "github", w.WorkflowData.Node.Hooks[0].Config["hookIcon"].Value)
+	assert.Equal(t, fmt.Sprintf("http://6.6.6:8080/%s", w.WorkflowData.Node.Hooks[0].UUID), w.WorkflowData.Node.Hooks[0].Config["webHookURL"].Value)
+	t.Logf("%+v", w.WorkflowData.Node.Hooks[0])
+
+	// Load workflow
+	oldW, err := workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	assert.NoError(t, err)
+
+	// Add WEB HOOK
+	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+		Config:      sdk.WebHookModel.DefaultConfig,
+		HookModelID: webHookID,
+	})
+
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+
+	// Add check on HOOKS
+	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))
+	for _, h := range w.WorkflowData.Node.Hooks {
+		if h.HookModelID == repoWebHookID {
+			assert.True(t, oldW.WorkflowData.Node.Hooks[0].Equals(h))
+		} else if h.HookModelID == webHookID {
+			assert.Equal(t, fmt.Sprintf("http://6.6.6:8080/%s", h.UUID), h.Config["webHookURL"].Value)
+		} else {
+			// Must not go here
+			t.Fail()
+		}
+
+	}
+
+	oldW, err = workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	assert.NoError(t, err)
+
+	// Add Scheduler
+	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+		Config:      sdk.SchedulerModel.DefaultConfig,
+		HookModelID: schedulerID,
+	})
+
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+
+	// Add check on HOOKS
+	assert.Equal(t, 3, len(w.WorkflowData.Node.Hooks))
+
+	oldHooks := oldW.WorkflowData.GetHooks()
+	for _, h := range w.WorkflowData.Node.Hooks {
+		if h.HookModelID == repoWebHookID {
+			assert.True(t, h.Equals(*oldHooks[h.UUID]))
+		} else if h.HookModelID == webHookID {
+			assert.True(t, h.Equals(*oldHooks[h.UUID]))
+		} else if h.HookModelID == schedulerID {
+			assert.Contains(t, h.Config["payload"].Value, "git.branch")
+			assert.Contains(t, h.Config["payload"].Value, "git.author")
+			assert.Contains(t, h.Config["payload"].Value, "git.hash")
+			assert.Contains(t, h.Config["payload"].Value, "git.hash.before")
+			assert.Contains(t, h.Config["payload"].Value, "git.message")
+			assert.Contains(t, h.Config["payload"].Value, "git.repository")
+			assert.Contains(t, h.Config["payload"].Value, "git.tag")
+		} else {
+			// Must not go here
+			t.Fail()
+		}
+	}
+
+	oldW, err = workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	assert.NoError(t, err)
+
+	// Delete repository webhook
+	var index = 0
+	for i, h := range w.WorkflowData.Node.Hooks {
+		if h.HookModelID == repoWebHookID {
+			index = i
+		}
+	}
+	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks[:index], w.WorkflowData.Node.Hooks[index+1:]...)
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+
+	// Add check on HOOKS
+	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))
+
+	oldHooks = oldW.WorkflowData.GetHooks()
+	for _, h := range w.WorkflowData.Node.Hooks {
+		if h.HookModelID == webHookID {
+			assert.True(t, h.Equals(*oldHooks[h.UUID]))
+		} else if h.HookModelID == schedulerID {
+			assert.True(t, h.Equals(*oldHooks[h.UUID]))
+		} else {
+			// Must not go here
+			t.Fail()
+		}
+	}
+
 }

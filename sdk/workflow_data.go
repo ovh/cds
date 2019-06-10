@@ -27,8 +27,9 @@ func (w *WorkflowData) GetHooks() map[string]*NodeHook {
 	}
 	res := map[string]*NodeHook{}
 	for _, n := range w.Array() {
-		for _, h := range n.Hooks {
-			res[h.UUID] = &h
+		for i := range n.Hooks {
+			h := &n.Hooks[i]
+			res[h.UUID] = h
 		}
 	}
 	return res
