@@ -5,7 +5,6 @@ testcases:
   - script: '[ -f ./tests/fixtures/ITSCWCS/check-secret.pip.yml ]'
   - script: '[ -f ./tests/fixtures/ITSCWCS/ITSCWCS.yml ]'
   - script: {{.cds.build.cdsctl}} project delete ITPROJTESTGROUP --force
-  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWCS"
   - script: "{{.cds.build.cdsctl}} group remove --force ITPROJTESTGROUP"
   - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST --force
   - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2 --force
