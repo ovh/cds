@@ -13,7 +13,7 @@ func callbackServer(ctx context.Context, t *testing.T, out chan http.Request) {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		out <- *r
-		_ = io.WriteString(w, "Yeah !\n")
+		_, _ = io.WriteString(w, "Yeah !\n")
 		fmt.Println("Handler")
 	})
 
