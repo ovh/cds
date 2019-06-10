@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddApplication, CloneApplication, FetchApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first, flatMap } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';
 import { Project } from '../../../model/project.model';

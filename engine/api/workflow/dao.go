@@ -931,6 +931,8 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 
 // Update updates a workflow
 func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
+	ctx, end := observability.Span(ctx, "workflow.Update")
+	defer end()
 	if err := IsValid(ctx, store, db, w, p, u); err != nil {
 		return err
 	}
@@ -1487,6 +1489,23 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
+	// TODO HOOK Config is compute on old struct - TO DELETE WITH OLD STRUCT
+	if oldWf != nil {
+	hookLoop:
+		for _, oldH := range oldWf.Root.Hooks {
+			for i := range oldWf.WorkflowData.Node.Hooks {
+				h := &oldWf.WorkflowData.Node.Hooks[i]
+				if oldH.UUID == h.UUID {
+					h.Config = make(map[string]sdk.WorkflowNodeHookConfigValue, len(oldH.Config))
+					for k, v := range oldH.Config {
+						h.Config[k] = v
+					}
+					continue hookLoop
+				}
+			}
+		}
+	}
+
 	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
 	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
 		return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
@@ -1535,7 +1554,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
+		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
 			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 
@@ -1592,12 +1611,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		if wf.Root.Context.Application.VCSServer == "" || wf.Root.Context.Application.RepositoryFullname == "" {
 			return nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
-		}
-	}
-
-	if wf.Root.Context.Application != nil {
-		if err := application.Update(tx, store, wf.Root.Context.Application); err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 		}
 	}
 

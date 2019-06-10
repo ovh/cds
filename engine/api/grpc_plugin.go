@@ -46,12 +46,12 @@ func (api *API) postGRPCluginHandler() service.Handler {
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
-			old, err := action.LoadByTypesAndName(db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
+			old, err := action.LoadByTypesAndName(ctx, db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
 			if old != nil {
-				if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, u.ID); err != nil {
+				if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters, u.ID); err != nil {
 					return sdk.WrapError(err, "error while updating action %s in database", p.Name)
 				}
 			} else {
@@ -131,7 +131,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
-			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {
+			if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {
 				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}
@@ -191,11 +191,11 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 
 		old := p.GetBinary(b.OS, b.Arch)
 		if old == nil {
-			if err := plugin.AddBinary(tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.AddBinary(ctx, tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		} else {
-			if err := plugin.UpdateBinary(tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.UpdateBinary(ctx, tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		}

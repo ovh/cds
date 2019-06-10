@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as AU from 'ansi_up';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../../../../environments/environment';
 import { Action } from '../../../../../../model/action.model';
@@ -33,13 +33,13 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     // Dynamic
     @Input('stepStatus')
-    set stepStatus (data: StepStatus) {
+    set stepStatus(data: StepStatus) {
         if (data && data.status && !this.currentStatus && this.showLog) {
             this.initWorker();
         }
         if (data) {
             this.currentStatus = data.status;
-            if (!this._force  && PipelineStatus.isActive(data.status)) {
+            if (!this._force && PipelineStatus.isActive(data.status)) {
                 this.showLog = true;
             }
         }
@@ -64,7 +64,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this._showLog = data;
     }
     get showLog() {
-      return this._showLog;
+        return this._showLog;
     }
 
     worker: CDSWebWorker;
@@ -76,8 +76,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     doneExec: Date;
     duration: string;
     selectedLine: number;
-    splittedLogs: {lineNumber: number, value: string}[] = [];
-    splittedLogsToDisplay: {lineNumber: number, value: string}[] = [];
+    splittedLogs: { lineNumber: number, value: string }[] = [];
+    splittedLogsToDisplay: { lineNumber: number, value: string }[] = [];
     limitFrom: number;
     limitTo: number;
     basicView = false;
@@ -100,32 +100,32 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _route: ActivatedRoute,
         private _hostElement: ElementRef
-      ) {
-          this.ansi_up.escape_for_html = !this.htmlViewSelected;
-      }
+    ) {
+        this.ansi_up.escape_for_html = !this.htmlViewSelected;
+    }
 
     ngOnInit(): void {
         let nodeRunDone = this.nodeRun.status !== this.pipelineBuildStatusEnum.BUILDING &&
-          this.nodeRun.status !== this.pipelineBuildStatusEnum.WAITING;
+            this.nodeRun.status !== this.pipelineBuildStatusEnum.WAITING;
         let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
 
-        this.zone = new NgZone({enableLongStackTrace: false});
+        this.zone = new NgZone({ enableLongStackTrace: false });
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING || this.currentStatus === this.pipelineBuildStatusEnum.WAITING ||
             (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
             (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
-          this.showLog = true;
+            this.showLog = true;
         }
 
         this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
-          let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
-            parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
+            let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
+                parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
 
-          if (activeStep) {
-            this.showLog = true;
-            this.selectedLine = parseInt(qps['line'], 10);
-          } else {
-            this.selectedLine = null;
-          }
+            if (activeStep) {
+                this.showLog = true;
+                this.selectedLine = parseInt(qps['line'], 10);
+            } else {
+                this.selectedLine = null;
+            }
         });
     }
 
@@ -137,9 +137,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     copyRawLog() {
-      this.logsElt.nativeElement.value = this.logs.val;
-      this.logsElt.nativeElement.select();
-      document.execCommand('copy');
+        this.logsElt.nativeElement.value = this.logs.val;
+        this.logsElt.nativeElement.select();
+        document.execCommand('copy');
     }
 
     initWorker(): void {
@@ -197,9 +197,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this.splittedLogs = this.getLogsSplitted()
             .map((log, i) => {
                 if (this.ansiViewSelected) {
-                    return {lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log)};
+                    return { lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log) };
                 }
-                return {lineNumber: i + 1, value: log};
+                return { lineNumber: i + 1, value: log };
             });
         this.splittedLogsToDisplay = cloneDeep(this.splittedLogs);
 
@@ -213,15 +213,15 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     focusToLine() {
-      if (this._route.snapshot.fragment) {
-        setTimeout(() => {
-          const element = this._hostElement.nativeElement.querySelector('#' + this._route.snapshot.fragment);
-          if (element) {
-            element.scrollIntoView(true);
-            this._force = true;
-          }
-        });
-      }
+        if (this._route.snapshot.fragment) {
+            setTimeout(() => {
+                const element = this._hostElement.nativeElement.querySelector('#' + this._route.snapshot.fragment);
+                if (element) {
+                    element.scrollIntoView(true);
+                    this._force = true;
+                }
+            });
+        }
     }
 
     computeDuration() {
@@ -261,7 +261,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     getLogsSplitted(): string[] {
-      return this.getLogs().split('\n');
+        return this.getLogs().split('\n');
     }
 
     showAllLogs() {
@@ -278,22 +278,22 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     generateLink(lineNumber: number) {
-      let qps = Object.assign({}, this._route.snapshot.queryParams, {
-        stageId: this.job.pipeline_stage_id,
-        actionId: this.job.pipeline_action_id,
-        stepOrder: this.stepOrder,
-        line: lineNumber
-      });
-      let fragment = 'L' + this.job.pipeline_stage_id + '-' + this.job.pipeline_action_id + '-' + this.stepOrder + '-' + lineNumber;
-      this._router.navigate([
-        'project',
-        this.project.key,
-        'workflow',
-        this.workflowName,
-        'run',
-        this.nodeRun.num,
-        'node',
-        this.nodeRun.id
-      ], {queryParams: qps, fragment});
+        let qps = Object.assign({}, this._route.snapshot.queryParams, {
+            stageId: this.job.pipeline_stage_id,
+            actionId: this.job.pipeline_action_id,
+            stepOrder: this.stepOrder,
+            line: lineNumber
+        });
+        let fragment = 'L' + this.job.pipeline_stage_id + '-' + this.job.pipeline_action_id + '-' + this.stepOrder + '-' + lineNumber;
+        this._router.navigate([
+            'project',
+            this.project.key,
+            'workflow',
+            this.workflowName,
+            'run',
+            this.nodeRun.num,
+            'node',
+            this.nodeRun.id
+        ], { queryParams: qps, fragment });
     }
 }

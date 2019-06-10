@@ -3,18 +3,18 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {WNode, Workflow} from 'app/model/workflow.model';
-import {WorkflowRun} from 'app/model/workflow.run.model';
-import {NotificationService} from 'app/service/notification/notification.service';
-import {WorkflowStore} from 'app/service/workflow/workflow.store';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {WorkflowNodeRunParamComponent} from 'app/shared/workflow/node/run/node.run.param.component';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { WorkflowRun } from 'app/model/workflow.run.model';
+import { NotificationService } from 'app/service/notification/notification.service';
+import { WorkflowStore } from 'app/service/workflow/workflow.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import {ChangeToRunView, GetWorkflowRun} from 'app/store/workflow.action';
-import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import { cloneDeep } from 'lodash';
+import { ChangeToRunView, GetWorkflowRun } from 'app/store/workflow.action';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -94,15 +94,16 @@ export class WorkflowRunComponent implements OnInit {
                         new GetWorkflowRun({
                             projectKey: this.project.key,
                             workflowName: this.workflowName,
-                            num: ps['number']}));
+                            num: ps['number']
+                        }));
                 }
             }
         });
 
-        this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+        this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.loadingRun = s.loadingWorkflowRun;
             if (s.workflowRun) {
-                this.workflow = s.workflowRun.workflow;
+                this.workflow = s.workflow;
                 this.workflowName = this.workflow.name;
 
                 let previousWR: WorkflowRun;

@@ -515,7 +515,11 @@ func workflowInitRun(c cli.Values) error {
 			appName = c.GetString("application")
 		}
 
-		pipName, existingPip, err := interactiveChoosePipeline(pkey, c.GetString("pipeline"))
+		pipDefaultName := c.GetString("pipeline")
+		if pipDefaultName == "" {
+			pipDefaultName = fmt.Sprintf("%s-build", appName)
+		}
+		pipName, existingPip, err := interactiveChoosePipeline(pkey, pipDefaultName)
 		if err != nil {
 			return err
 		}

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
 import { WorkerModelService } from 'app/service/services.module';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
 import { Action } from '../../model/action.model';
 import { AllKeys } from '../../model/keys.model';

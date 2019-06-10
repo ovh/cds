@@ -384,7 +384,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		// check that children actions used by job can be used by the project
-		if err := action.CheckChildrenForGroupIDsWithLoop(db, &job.Action, sdk.GroupsToIDs(groups)); err != nil {
+		if err := action.CheckChildrenForGroupIDsWithLoop(ctx, db, &job.Action, sdk.GroupsToIDs(groups)); err != nil {
 			spawnErrs.Append(err)
 		}
 

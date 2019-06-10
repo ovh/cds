@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -361,7 +362,7 @@ func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u
 
 // GetBuiltinOrPluginActionByName returns a builtin or plugin action for given name if exists.
 func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Action {
-	a, err := action.LoadByTypesAndName(db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
+	a, err := action.LoadByTypesAndName(context.TODO(), db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
 		action.LoadOptions.WithRequirements,
 		action.LoadOptions.WithParameters,
 		action.LoadOptions.WithGroup,

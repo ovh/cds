@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -19,6 +20,9 @@ import (
 
 // HookRegistration ensures hooks registration on Hook µService
 func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
+	ctx, end := observability.Span(ctx, "workflow.HookRegistration")
+	defer end()
+
 	var hookToUpdate map[string]sdk.WorkflowNodeHook
 	var hookToDelete map[string]sdk.WorkflowNodeHook
 	if oldW != nil {
@@ -26,6 +30,9 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	} else {
 		hookToUpdate = wf.GetHooks()
 	}
+
+	observability.Current(ctx, observability.Tag("hook_update_count", len(hookToUpdate)))
+	observability.Current(ctx, observability.Tag("hook_delete_count", len(hookToDelete)))
 
 	if len(hookToUpdate) > 0 {
 		//Push the hook to hooks µService
@@ -151,8 +158,12 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 // DeleteHookConfiguration delete hooks configuration (and their vcs configuration)
 func DeleteHookConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
+	ctx, end := observability.Span(ctx, "workflow.DeleteHookConfiguration")
+	defer end()
 	// Delete from vcs configuration if needed
+	count := 0
 	for _, h := range hookToDelete {
+		count++
 		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
@@ -170,6 +181,8 @@ func DeleteHookConfiguration(ctx context.Context, db gorp.SqlExecutor, store cac
 				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
 					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
 				}
+				observability.Current(ctx, observability.Tag(fmt.Sprintf("UUID_%d", count), h.UUID))
+				observability.Current(ctx, observability.Tag(fmt.Sprintf("VCS_ID_%d", count), vcsHook.ID))
 				h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 					Value:        vcsHook.ID,
 					Configurable: false,
@@ -194,6 +207,9 @@ func DeleteHookConfiguration(ctx context.Context, db gorp.SqlExecutor, store cac
 }
 
 func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, h *sdk.WorkflowNodeHook) error {
+	ctx, end := observability.Span(ctx, "workflow.createVCSConfiguration", observability.Tag("UUID", h.UUID))
+	defer end()
+
 	// Call VCS to know if repository allows webhook and get the configuration fields
 	projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
 	if projectVCSServer == nil {
@@ -219,6 +235,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
 		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
+	observability.Current(ctx, observability.Tag("VCS_ID", vcsHook.ID))
 	h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,
 		Configurable: false,

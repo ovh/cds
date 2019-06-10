@@ -1,7 +1,7 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {Key, KeyType} from '../../../model/keys.model';
-import {KeyEvent} from '../key.event';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { Key, KeyType } from '../../../model/keys.model';
+import { KeyEvent } from '../key.event';
 
 @Component({
     selector: 'app-keys-form',

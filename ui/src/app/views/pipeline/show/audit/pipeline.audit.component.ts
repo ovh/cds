@@ -4,7 +4,7 @@ import { Store } from '@ngxs/store';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { FetchPipelineAudits, RollbackPipeline } from 'app/store/pipelines.action';
 import { compare } from 'fast-json-patch';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 import { Action } from '../../../../model/action.model';
 import { Job } from '../../../../model/job.model';
