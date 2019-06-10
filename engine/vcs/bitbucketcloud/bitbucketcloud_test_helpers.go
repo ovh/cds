@@ -13,7 +13,7 @@ func callbackServer(ctx context.Context, t *testing.T, out chan http.Request) {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		out <- *r
-		io.WriteString(w, "Yeah !\n")
+		_ = io.WriteString(w, "Yeah !\n")
 		fmt.Println("Handler")
 	})
 
@@ -28,5 +28,5 @@ func callbackServer(ctx context.Context, t *testing.T, out chan http.Request) {
 
 	<-ctx.Done()
 	fmt.Println("Stopping server")
-	srv.Shutdown(ctx)
+	_ = srv.Shutdown(ctx)
 }
