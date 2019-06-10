@@ -117,13 +117,15 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/task/bulk":
-				if err := enc.Encode(map[string]sdk.NodeHook{
-					"123": {
-						Config:        sdk.WebHookModel.DefaultConfig,
-						HookModelName: sdk.WebHookModelName,
-						HookModelID:   webHookModel.ID,
-					},
-				}); err != nil {
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
 			default:
