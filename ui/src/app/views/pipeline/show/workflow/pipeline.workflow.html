@@ -85,12 +85,8 @@
     <modal-actions>
         <button class="ui grey button" [disabled]="loadingStage"
             (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button class="ui green button" [disabled]="loadingStage || pipeline.from_repository" <<<<<<< HEAD
+        <button class="ui green button" [disabled]="loadingStage || pipeline.from_repository"
             [class.loading]="loadingStage" (click)="stageEvent('update')">{{ 'btn_save' | translate }}
-            =======
-            [class.loading]="loadingStage" (click)="stageEvent('update')"
-            *ngIf="selectedStage?.hasChanged">{{ 'btn_save' | translate }}
-            >>>>>>> f9bdf41802945cebd07155187a88f817b416a402
         </button>
         <app-delete-button (event)="stageEvent('delete')" [disabled]="pipeline.from_repository"
             *ngIf="!selectedStage?.hasChanged && pipeline.permission === permissionValue.READ_WRITE_EXECUTE">

@@ -3,12 +3,16 @@ package pipeline
 import (
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
 // PipelineAudit is a gorp wrapper around sdk.PipelineAudit
 type PipelineAudit sdk.PipelineAudit
+
+// Pipeline is a gorp wrapper around sdk.Pipeline
+type Pipeline sdk.Pipeline
 
 type pipelineAction struct {
 	ID              int64     `db:"id"`
@@ -37,7 +41,18 @@ func pipelineActionsToActionIDs(pas []pipelineAction) []int64 {
 
 func init() {
 	gorpmapping.Register(
+		gorpmapping.New(Pipeline{}, "pipeline", true, "id"),
 		gorpmapping.New(PipelineAudit{}, "pipeline_audit", true, "id"),
 		gorpmapping.New(pipelineAction{}, "pipeline_action", true, "id"),
 	)
+}
+
+func (pip *Pipeline) PostGet(db gorp.SqlExecutor) error {
+	projectKey, err := db.SelectStr("SELECT project.projectkey FROM project WHERE id = $1", pip.ProjectID)
+	if err != nil {
+		return sdk.WrapError(err, "cannot fetch project key for project id %d", pip.ProjectID)
+	}
+	pip.ProjectKey = projectKey
+
+	return nil
 }

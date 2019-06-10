@@ -26,7 +26,6 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
             this.conditionNames = data.names;
             if (this.conditionNames) {
                 this.suggest = this.conditionNames.map((d) => d.replace(/-|\./g, '_'));
-                console.log('suggest:', this.suggest);
             }
         }
     }
