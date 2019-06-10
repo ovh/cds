@@ -476,7 +476,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	return nil
 }
 
-func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
+func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) {
 	switch t.Type {
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
@@ -484,8 +484,6 @@ func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 
 	//Delete the task
 	s.Dao.DeleteTask(t)
-
-	return nil
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
