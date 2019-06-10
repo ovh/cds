@@ -1,6 +1,8 @@
 package workermodel
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -10,7 +12,7 @@ import (
 )
 
 // ParseAndImport parse and import an exportentities.WorkerModel.
-func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
 	data := eWorkerModel.GetWorkerModel()
 
 	// group name should be set
@@ -49,7 +51,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *export
 			return nil, err
 		}
 
-		return Update(db, u, old, data)
+		return Update(ctx, db, u, old, data)
 	}
 
 	return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)

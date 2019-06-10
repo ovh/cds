@@ -1,6 +1,7 @@
 package pipeline_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/go-gorp/gorp"
@@ -54,7 +55,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 	proj, err := project.Load(db, store, tt.args.pip.ProjectKey, nil)
 	test.NoError(t, err)
 
-	if err := pipeline.ImportUpdate(db, proj, tt.args.pip, msgChan, tt.args.u); (err != nil) != tt.wantErr {
+	if err := pipeline.ImportUpdate(context.TODO(), db, proj, tt.args.pip, msgChan, tt.args.u); (err != nil) != tt.wantErr {
 		t.Errorf("%q. ImportUpdate() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 	}
 

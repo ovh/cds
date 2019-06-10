@@ -14,7 +14,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchPipeline } from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, flatMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 

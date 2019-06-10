@@ -1,15 +1,15 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {WNode, WNodeJoin, Workflow} from 'app/model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
-import {WorkflowCoreService} from 'app/service/workflow/workflow.core.service';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {ToastService} from 'app/shared/toast/ToastService';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, WNodeJoin, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { UpdateWorkflow } from 'app/store/workflow.action';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 
 @Component({

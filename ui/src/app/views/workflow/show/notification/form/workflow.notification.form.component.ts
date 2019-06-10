@@ -1,10 +1,10 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NotificationService } from 'app/service/notification/notification.service';
-import {cloneDeep} from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
-import {notificationOnFailure, notificationOnSuccess, notificationTypes} from '../../../../../model/notification.model';
-import {Project} from '../../../../../model/project.model';
-import {WNode, WNodeType, Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
+import { notificationOnFailure, notificationOnSuccess, notificationTypes } from '../../../../../model/notification.model';
+import { Project } from '../../../../../model/project.model';
+import { WNode, WNodeType, Workflow, WorkflowNotification } from '../../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-notifications-form',

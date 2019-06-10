@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { omit } from 'lodash';
+import omit from 'lodash-es/omit';
 import { finalize } from 'rxjs/operators';
 import { User } from '../../../../model/user.model';
 import { ModelPattern } from '../../../../model/worker-model.model';

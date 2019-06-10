@@ -2,19 +2,19 @@ import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {WNode, Workflow} from 'app/model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
-import {AuthentificationStore} from 'app/service/auth/authentification.store';
-import {RouterService} from 'app/service/router/router.service';
-import {WorkflowRunService} from 'app/service/workflow/run/workflow.run.service';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {DurationService} from 'app/shared/duration/duration.service';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { RouterService } from 'app/service/router/router.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import {GetWorkflowNodeRun, GetWorkflowRun} from 'app/store/workflow.action';
-import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import {cloneDeep} from 'lodash';
+import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, first } from 'rxjs/operators';
 
@@ -120,7 +120,7 @@ export class WorkflowNodeRunComponent {
             let nodeRunId = params['nodeId'];
 
             if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
-                this._store.dispatch(new GetWorkflowRun({projectKey: this.project.key, workflowName: this.workflowName, num: number }))
+                this._store.dispatch(new GetWorkflowRun({ projectKey: this.project.key, workflowName: this.workflowName, num: number }))
                     .subscribe(() => {
                         this._store.dispatch(
                             new GetWorkflowNodeRun({

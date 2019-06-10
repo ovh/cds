@@ -1,1 +1,21 @@
 @import '../../../common';
+
+.status-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .wrapper {
+    height: 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .icon {
+      margin: 0;
+      font-size: 20px; 
+    }
+  }
+}

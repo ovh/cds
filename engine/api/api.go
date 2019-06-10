@@ -784,16 +784,16 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanArtifactBuiltinActions(a.Cache, a.DBConnectionFactory.GetDBMap)
+		return migrate.CleanArtifactBuiltinActions(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 	migrate.Add(sdk.Migration{Name: "StageConditions", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.StageConditions(a.Cache, a.DBConnectionFactory.GetDBMap)
+		return migrate.StageConditions(a.Cache, a.DBConnectionFactory.GetDBMap())
 	}})
 	// migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 	// 	return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
 	// }})
 	migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.ActionModelRequirements(a.Cache, a.DBConnectionFactory.GetDBMap)
+		return migrate.ActionModelRequirements(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())

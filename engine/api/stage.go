@@ -277,7 +277,7 @@ func (api *API) deleteStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
-		if err := pipeline.DeleteStageByID(tx, s, deprecatedGetUser(ctx).ID); err != nil {
+		if err := pipeline.DeleteStageByID(ctx, tx, s, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot Delete stage")
 		}
 

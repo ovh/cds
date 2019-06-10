@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
 import { Warning } from '../../../../model/warning.model';

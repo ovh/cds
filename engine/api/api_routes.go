@@ -225,7 +225,7 @@ func (api *API) InitRouter() {
 	// Pull workflows
 	r.Handle("/project/{key}/pull/workflows/{permWorkflowName}", r.GET(api.getWorkflowPullHandler))
 	// Push workflows
-	r.Handle("/project/{permProjectKey}/push/workflows", r.POST(api.postWorkflowPushHandler))
+	r.Handle("/project/{permProjectKey}/push/workflows", r.POST(api.postWorkflowPushHandler, EnableTracing()))
 
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", r.GET(api.getWorkflowAllRunsHandler, EnableTracing()))
@@ -394,16 +394,15 @@ func (api *API) InitRouter() {
 	// Templates
 	r.Handle("/template", r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
 	r.Handle("/template/push", r.POST(api.postTemplatePushHandler))
-	r.Handle("/template/{id}", r.GET(api.getTemplateHandler))
-	r.Handle("/template/{groupName}/{templateSlug}", r.GET(api.getTemplateHandler), r.PUT(api.putTemplateHandler), r.DELETE(api.deleteTemplateHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/pull", r.POST(api.postTemplatePullHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/apply", r.POST(api.postTemplateApplyHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/bulk", r.POST(api.postTemplateBulkHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/bulk/{bulkID}", r.GET(api.getTemplateBulkHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", r.DELETE(api.deleteTemplateInstanceHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/audit", r.GET(api.getTemplateAuditsHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/usage", r.GET(api.getTemplateUsageHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}", r.GET(api.getTemplateHandler), r.PUT(api.putTemplateHandler), r.DELETE(api.deleteTemplateHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/pull", r.POST(api.postTemplatePullHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/apply", r.POST(api.postTemplateApplyHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/bulk", r.POST(api.postTemplateBulkHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/bulk/{bulkID}", r.GET(api.getTemplateBulkHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/instance/{instanceID}", r.DELETE(api.deleteTemplateInstanceHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/audit", r.GET(api.getTemplateAuditsHandler))
+	r.Handle("/template/{groupName}/{permTemplateSlug}/usage", r.GET(api.getTemplateUsageHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/templateInstance", r.GET(api.getTemplateInstanceHandler))
 
 	//Not Found handler

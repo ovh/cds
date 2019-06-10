@@ -1,24 +1,20 @@
-<ng-container [ngSwitch]="status">
-    <ng-container *ngSwitchCase="pipelineStatusEnum.BUILDING">
-        <ng-container *ngIf="loader">
-            <div class="ui small active inline blue loader">
+<div class="status-icon" [ngSwitch]="status">
+    <div class="wrapper">
+        <ng-container *ngSwitchCase="pipelineStatusEnum.BUILDING">
+            <div *ngIf="loader" class="ui small active inline blue loader">
                 <span class="">{{value}}</span>
             </div>
+            <i *ngIf="!loader" class="blue circle outline icon"></i>
         </ng-container>
-        <ng-container *ngIf="!loader">
-            <i class="blue circle outline icon"></i>
+        <i class="check green icon" *ngSwitchCase="pipelineStatusEnum.SUCCESS"></i>
+        <ng-container *ngSwitchCase="pipelineStatusEnum.FAIL">
+            <i class="remove red icon" *ngIf="!optional"></i>
+            <i class="warning sign icon orange" *ngIf="optional"></i>
         </ng-container>
-
-    </ng-container>
-    <i class="check green icon" *ngSwitchCase="pipelineStatusEnum.SUCCESS"></i>
-    <ng-container *ngSwitchCase="pipelineStatusEnum.FAIL">
-        <i class="remove red icon" *ngIf="!optional"></i>
-        <i class="warning sign icon orange" *ngIf="optional"></i>
-    </ng-container>
-    <i class="remove red icon" *ngSwitchCase="pipelineStatusEnum.STOPPED"></i>
-    <i class="ban grey icon" *ngSwitchCase="pipelineStatusEnum.DISABLED"></i>
-    <i class="ban grey icon" *ngSwitchCase="pipelineStatusEnum.SKIPPED"></i>
-    <i class="wait blue icon" *ngSwitchCase="pipelineStatusEnum.WAITING"></i>
-    <i class="stop grey icon" *ngSwitchCase="pipelineStatusEnum.NEVER_BUILT"></i>
-    <i class="stop grey icon" *ngSwitchDefault></i>
-</ng-container>
+        <i class="remove red icon" *ngSwitchCase="pipelineStatusEnum.STOPPED"></i>
+        <i class="ban grey icon" *ngSwitchCase="pipelineStatusEnum.DISABLED"></i>
+        <i class="ban grey icon" *ngSwitchCase="pipelineStatusEnum.SKIPPED"></i>
+        <i class="wait blue icon" *ngSwitchCase="pipelineStatusEnum.WAITING"></i>
+        <i class="stop grey icon" *ngSwitchDefault></i>
+    </div>
+</div>

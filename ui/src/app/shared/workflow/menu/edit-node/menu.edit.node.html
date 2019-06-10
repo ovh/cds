@@ -1,12 +1,12 @@
 <div class="menu-node">
-    <div class="ui list">
-        <ng-container *ngIf="workflow && workflowrun">
+    <div class="ui list" *ngIf="workflow">
+        <ng-container *ngIf="workflowrun">
             <a class="item" (click)="sendEvent('run')" [class.disabled]="!runnable">
                 {{'btn_run' | translate }}
             </a>
             <hr>
         </ng-container>
-        <ng-container *ngIf="!noderun">
+        <ng-container *ngIf="node && !noderun">
             <a class="item" (click)="sendEvent('pipeline')"
                 [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly">
                 <div class="content">
@@ -70,7 +70,7 @@
                 </div>
             </a>
         </ng-container>
-        <ng-container *ngIf="noderun">
+        <ng-container *ngIf="node && noderun">
             <ng-container *ngIf="node.type === 'pipeline'">
                 <a class="item" (click)="sendEvent('logs')">
                     {{'btn_logs' | translate }}

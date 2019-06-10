@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -27,7 +28,7 @@ func Test_loadGroup(t *testing.T) {
 		{GroupID: &id2},
 	}
 
-	assert.Nil(t, loadGroup(db, as...))
+	assert.Nil(t, loadGroup(context.TODO(), db, as...))
 
 	assert.NotNil(t, as[0].Group)
 	assert.Equal(t, "grp-1", as[0].Group.Name)

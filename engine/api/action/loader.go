@@ -1,6 +1,8 @@
 package action
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -8,7 +10,7 @@ import (
 )
 
 // LoadOptionFunc for action.
-type LoadOptionFunc func(gorp.SqlExecutor, ...*sdk.Action) error
+type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Action) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
@@ -27,34 +29,30 @@ var LoadOptions = struct {
 	WithGroup:        loadGroup,
 }
 
-func loadDefault(db gorp.SqlExecutor, as ...*sdk.Action) error {
-	if err := loadRequirements(db, as...); err != nil {
+func loadDefault(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
+	if err := loadRequirements(ctx, db, as...); err != nil {
 		return err
 	}
 
-	if err := loadParameters(db, as...); err != nil {
+	if err := loadParameters(ctx, db, as...); err != nil {
 		return err
 	}
 
-	if err := loadChildren(db, as...); err != nil {
+	if err := loadChildren(ctx, db, as...); err != nil {
 		return err
 	}
 
-	if err := loadAudits(db, as...); err != nil {
-		return err
-	}
-
-	return loadGroup(db, as...)
+	return loadGroup(ctx, db, as...)
 }
 
-func loadRequirements(db gorp.SqlExecutor, as ...*sdk.Action) error {
+func loadRequirements(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
 	actionIDs := sdk.ActionsToIDs(as)
 
 	var rs []sdk.Requirement
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action_requirement WHERE action_id = ANY(string_to_array($1, ',')::int[]) ORDER BY name",
 	).Args(gorpmapping.IDsToQueryString(actionIDs))
-	if err := gorpmapping.GetAll(db, query, &rs); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &rs); err != nil {
 		return sdk.WrapError(err, "cannot get requirements for action ids %v", actionIDs)
 	}
 
@@ -74,14 +72,14 @@ func loadRequirements(db gorp.SqlExecutor, as ...*sdk.Action) error {
 	return nil
 }
 
-func loadParameters(db gorp.SqlExecutor, as ...*sdk.Action) error {
+func loadParameters(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
 	actionIDs := sdk.ActionsToIDs(as)
 
 	var ps []actionParameter
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action_parameter WHERE action_id = ANY(string_to_array($1, ',')::int[]) ORDER BY name",
 	).Args(gorpmapping.IDsToQueryString(actionIDs))
-	if err := gorpmapping.GetAll(db, query, &ps); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &ps); err != nil {
 		return sdk.WrapError(err, "cannot get parameters for action ids %v", actionIDs)
 	}
 
@@ -101,14 +99,14 @@ func loadParameters(db gorp.SqlExecutor, as ...*sdk.Action) error {
 	return nil
 }
 
-func loadAudits(db gorp.SqlExecutor, as ...*sdk.Action) error {
+func loadAudits(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
 	for i := range as {
-		latestAudit, err := GetAuditLatestByActionID(db, as[i].ID)
+		latestAudit, err := GetAuditLatestByActionID(ctx, db, as[i].ID)
 		if err != nil {
 			return err
 		}
 
-		oldestAudit, err := GetAuditOldestByActionID(db, as[i].ID)
+		oldestAudit, err := GetAuditOldestByActionID(ctx, db, as[i].ID)
 		if err != nil {
 			return err
 		}
@@ -120,7 +118,7 @@ func loadAudits(db gorp.SqlExecutor, as ...*sdk.Action) error {
 	return nil
 }
 
-func loadChildren(db gorp.SqlExecutor, as ...*sdk.Action) error {
+func loadChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
 	// don't try to load children if action is builtin
 	actionsNotBuiltIn := sdk.ActionsFilterNotTypes(as, sdk.BuiltinAction)
 	if len(actionsNotBuiltIn) == 0 {
@@ -128,7 +126,7 @@ func loadChildren(db gorp.SqlExecutor, as ...*sdk.Action) error {
 	}
 
 	// get edges for all actions, then init a map of edges for all actions
-	edges, err := loadEdgesByParentIDs(db, sdk.ActionsToIDs(actionsNotBuiltIn))
+	edges, err := loadEdgesByParentIDs(ctx, db, sdk.ActionsToIDs(actionsNotBuiltIn))
 	if err != nil {
 		return err
 	}
@@ -183,10 +181,10 @@ func loadChildren(db gorp.SqlExecutor, as ...*sdk.Action) error {
 	return nil
 }
 
-func loadGroup(db gorp.SqlExecutor, as ...*sdk.Action) error {
+func loadGroup(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
 	gs := []sdk.Group{}
 
-	if err := gorpmapping.GetAll(db,
+	if err := gorpmapping.GetAll(ctx, db,
 		gorpmapping.NewQuery(`SELECT * FROM "group" WHERE id = ANY(string_to_array($1, ',')::int[])`).
 			Args(gorpmapping.IDsToQueryString(sdk.ActionsToGroupIDs(as))),
 		&gs,
@@ -210,16 +208,16 @@ func loadGroup(db gorp.SqlExecutor, as ...*sdk.Action) error {
 	return nil
 }
 
-type loadOptionEdgeFunc func(gorp.SqlExecutor, ...*actionEdge) error
+type loadOptionEdgeFunc func(context.Context, gorp.SqlExecutor, ...*actionEdge) error
 
-func loadEdgeParameters(db gorp.SqlExecutor, es ...*actionEdge) error {
+func loadEdgeParameters(ctx context.Context, db gorp.SqlExecutor, es ...*actionEdge) error {
 	edgeIDs := actionEdgesToIDs(es)
 
 	ps := []actionEdgeParameter{}
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action_edge_parameter WHERE action_edge_id = ANY(string_to_array($1, ',')::int[]) ORDER BY name",
 	).Args(gorpmapping.IDsToQueryString(edgeIDs))
-	if err := gorpmapping.GetAll(db, query, &ps); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &ps); err != nil {
 		return sdk.WrapError(err, "cannot get action edge parameters for edge ids %d", edgeIDs)
 	}
 
@@ -239,12 +237,12 @@ func loadEdgeParameters(db gorp.SqlExecutor, es ...*actionEdge) error {
 	return nil
 }
 
-func loadEdgeChildren(db gorp.SqlExecutor, es ...*actionEdge) error {
+func loadEdgeChildren(ctx context.Context, db gorp.SqlExecutor, es ...*actionEdge) error {
 	query := gorpmapping.NewQuery(
 		"SELECT * FROM action WHERE action.id = ANY(string_to_array($1, ',')::int[])",
 	).Args(gorpmapping.IDsToQueryString(actionEdgesToChildIDs(es)))
 
-	children, err := getAll(db, query,
+	children, err := getAll(ctx, db, query,
 		loadParameters,
 		loadRequirements,
 		loadGroup,

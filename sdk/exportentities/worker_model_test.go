@@ -1,7 +1,9 @@
-package exportentities
+package exportentities_test
 
 import (
 	"testing"
+
+	"github.com/ovh/cds/sdk/exportentities"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -11,7 +13,7 @@ import (
 )
 
 func TestNewWorkerModelAndGetWorkerModel(t *testing.T) {
-	wm := WorkerModel{
+	wm := exportentities.WorkerModel{
 		Name:        "myITModel",
 		Type:        "docker",
 		Description: "my worker model",
@@ -37,7 +39,7 @@ func TestNewWorkerModelAndGetWorkerModel(t *testing.T) {
 	sdkWmYaml, err := yaml.Marshal(sdkWm)
 	test.NoError(t, err)
 
-	exported := NewWorkerModel(sdkWm)
+	exported := exportentities.NewWorkerModel(sdkWm)
 	exportedYaml, err := yaml.Marshal(exported)
 	assert.Nil(t, err)
 	assert.Equal(t, string(wmYaml), string(exportedYaml))

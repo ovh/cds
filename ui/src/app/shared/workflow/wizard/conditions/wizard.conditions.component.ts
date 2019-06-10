@@ -19,7 +19,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { UpdateWorkflow } from 'app/store/workflow.action';
-import { cloneDeep, uniqBy } from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
+import uniqBy from 'lodash-es/uniqBy';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 

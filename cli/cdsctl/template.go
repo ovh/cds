@@ -303,12 +303,7 @@ func templateDetachRun(v cli.Values) error {
 		return err
 	}
 
-	wt, err := client.TemplateGetByID(wti.WorkflowTemplateID)
-	if err != nil {
-		return err
-	}
-
-	if err := client.TemplateDeleteInstance(wt.Group.Name, wt.Slug, wti.ID); err != nil {
+	if err := client.TemplateDeleteInstance(wti.Template.Group.Name, wti.Template.Slug, wti.ID); err != nil {
 		return err
 	}
 

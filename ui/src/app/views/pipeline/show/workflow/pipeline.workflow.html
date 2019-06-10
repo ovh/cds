@@ -33,13 +33,15 @@
                                     <div class="job ui segment pointing" [class.inactive]="!j.enabled"
                                         (click)="selectJob(j, stage)"
                                         [class.active]="j.pipeline_action_id === selectedJob?.pipeline_action_id">
-                                        {{j.action.name}}
+                                        <span class="ellipsis" title="{{j.action.name}}">{{j.action.name}}</span>
                                     </div>
                                 </li>
                                 <li class="new job">
                                     <div class="new job ui segment pointing" (click)="addJob(stage)"
                                         *ngIf="!pipeline.from_repository">
-                                        {{ 'step_add_job' | translate }}
+                                        <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
+                                            {{ 'step_add_job' | translate }}
+                                        </span>
                                     </div>
                                 </li>
                             </ul>
@@ -55,7 +57,9 @@
                                 <li class="job">
                                     <div id="AddStageAndJob" class="new job ui segment pointing"
                                         (click)="addStageAndJob()">
-                                        {{ 'step_add_job' | translate }}
+                                        <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
+                                            {{ 'step_add_job' | translate }}
+                                        </span>
                                     </div>
                                 </li>
                             </ul>
@@ -81,8 +85,12 @@
     <modal-actions>
         <button class="ui grey button" [disabled]="loadingStage"
             (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button class="ui green button" [disabled]="loadingStage || pipeline.from_repository"
+        <button class="ui green button" [disabled]="loadingStage || pipeline.from_repository" <<<<<<< HEAD
             [class.loading]="loadingStage" (click)="stageEvent('update')">{{ 'btn_save' | translate }}
+            =======
+            [class.loading]="loadingStage" (click)="stageEvent('update')"
+            *ngIf="selectedStage?.hasChanged">{{ 'btn_save' | translate }}
+            >>>>>>> f9bdf41802945cebd07155187a88f817b416a402
         </button>
         <app-delete-button (event)="stageEvent('delete')" [disabled]="pipeline.from_repository"
             *ngIf="!selectedStage?.hasChanged && pipeline.permission === permissionValue.READ_WRITE_EXECUTE">

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 		return errload
 	}
 	for _, pip := range pips {
-		if err := pipeline.DeletePipeline(api.mustDB(), pip.ID, 1); err != nil {
+		if err := pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1); err != nil {
 			t.Logf("DeletePipeline: %s", err)
 			return err
 		}
@@ -113,7 +114,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -183,7 +184,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -289,7 +290,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -425,7 +426,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -473,7 +474,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 
 	t.Logf("Delete Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.DeleteStageByID(api.mustDB(), stage, 1))
+	test.NoError(t, pipeline.DeleteStageByID(context.TODO(), api.mustDB(), stage, 1))
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
@@ -486,7 +487,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -578,7 +579,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project

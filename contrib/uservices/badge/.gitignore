@@ -1,0 +1,12 @@
+/target
+**/*.rs.bk
+
+
+## IntelliJ
+*.iml
+.idea
+
+test.db
+
+.env
+config.toml

@@ -61,7 +61,7 @@ export class HookTaskShowComponent {
                 }
             },
             <Column<TaskExecution>>{
-                type: ColumnType.LINK,
+                type: ColumnType.LINK_CLICK,
                 name: 'action',
                 selector: (d: TaskExecution) => {
                     return {

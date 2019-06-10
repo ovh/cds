@@ -12,7 +12,7 @@ import {ToastService} from 'app/shared/toast/ToastService';
 import {ProjectState, ProjectStateModel} from 'app/store/project.state';
 import {CloseEditModal, UpdateWorkflow} from 'app/store/workflow.action';
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import {cloneDeep} from 'lodash';
+import cloneDeep from 'lodash-es/cloneDeep';
 import {ModalSize, ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';

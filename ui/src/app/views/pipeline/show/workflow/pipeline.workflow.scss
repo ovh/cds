@@ -29,12 +29,7 @@ ul {
           .job.ui.segment {
             height: 51px;
             border: 2px solid transparent;
-
-            .truncate {
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            }
+            display: flex;
           }
 
           .job.ui.segment.inactive {
@@ -50,8 +45,16 @@ ul {
           }
 
           .new.job.ui.segment {
-            background-color:  transparent;
+            background-color: transparent;
             border: 1px dashed grey;
+            display: flex;
+          }
+
+          .ellipsis {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
 
@@ -59,13 +62,14 @@ ul {
           width: 50%;
           left: -50%;
         }
+
         li:first-child::after {
           width: 50%;
           right: -50%;
         }
 
         li::before {
-          content : '';
+          content: '';
           top: -42px;
           border-bottom: 4px solid $cds_color_teal;
           border-left: 4px solid $cds_color_teal;
@@ -74,11 +78,13 @@ ul {
           left: -40px;
           height: calc(100% + 14px);
         }
+
         li.new.job::before {
-          content : none;
+          content: none;
         }
+
         li::after {
-          content : '';
+          content: '';
           top: -42px;
           border-bottom: 4px solid $cds_color_teal;
           border-right: 4px solid $cds_color_teal;
@@ -87,8 +93,9 @@ ul {
           right: -40px;
           height: calc(100% + 14px);
         }
+
         li.new.job::after {
-          content : none;
+          content: none;
         }
       }
     }
@@ -113,12 +120,15 @@ ul {
   li.four.stage {
     width: 25%;
   }
+
   li.five.stage {
     width: 20%
   }
+
   li.six.stage {
     width: 16%;
   }
+
   li.seven.stage {
     width: 14%;
   }
@@ -141,6 +151,7 @@ ul {
         li:first-child::after {
           border-right: 0 none;
         }
+
         li:first-child::before {
           border-left: 0 none;
         }

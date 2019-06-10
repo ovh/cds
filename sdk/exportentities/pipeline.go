@@ -36,9 +36,8 @@ const (
 
 // Stage represents exported sdk.Stage
 type Stage struct {
-	Enabled *bool          `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Jobs    map[string]Job `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	// Conditions map[string]string `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Enabled    *bool                       `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Jobs       map[string]Job              `json:"jobs,omitempty" yaml:"jobs,omitempty"`
 	Conditions *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 }
 

@@ -16,9 +16,7 @@ type prerequisitesDB struct {
 	PipelineStageID int64 `json:"pipeline_stage_id"`
 }
 
-func StageConditions(store cache.Store, DBFunc func() *gorp.DbMap) error {
-	db := DBFunc()
-
+func StageConditions(store cache.Store, db gorp.SqlExecutor) error {
 	var prerequisites []prerequisitesDB
 	rows, err := db.Query("SELECT pipeline_stage_id, parameter, expected_value FROM pipeline_stage_prerequisite")
 	if err != nil {

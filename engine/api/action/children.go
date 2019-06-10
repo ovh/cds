@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -51,14 +52,14 @@ func insertActionChild(db gorp.SqlExecutor, child sdk.Action, actionID int64, ex
 }
 
 // CheckChildrenForGroupIDs returns an error if given children not found.
-func CheckChildrenForGroupIDs(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int64) error {
+func CheckChildrenForGroupIDs(ctx context.Context, db gorp.SqlExecutor, a *sdk.Action, groupIDs []int64) error {
 	if len(a.Actions) == 0 {
 		return nil
 	}
 
 	childrenIDs := a.ToUniqueChildrenIDs()
 
-	children, err := LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db, childrenIDs, groupIDs, LoadOptions.WithChildren)
+	children, err := LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(ctx, db, childrenIDs, groupIDs, LoadOptions.WithChildren)
 	if err != nil {
 		return err
 	}
@@ -69,11 +70,11 @@ func CheckChildrenForGroupIDs(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int
 }
 
 // CheckChildrenForGroupIDsWithLoop return an error if given children not found or tree loop detected.
-func CheckChildrenForGroupIDsWithLoop(db gorp.SqlExecutor, a *sdk.Action, groupIDs []int64) error {
-	return checkChildrenForGroupIDsWithLoopStep(db, a, a, groupIDs)
+func CheckChildrenForGroupIDsWithLoop(ctx context.Context, db gorp.SqlExecutor, a *sdk.Action, groupIDs []int64) error {
+	return checkChildrenForGroupIDsWithLoopStep(ctx, db, a, a, groupIDs)
 }
 
-func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sdk.Action, groupIDs []int64) error {
+func checkChildrenForGroupIDsWithLoopStep(ctx context.Context, db gorp.SqlExecutor, root, current *sdk.Action, groupIDs []int64) error {
 	if len(current.Actions) == 0 {
 		return nil
 	}
@@ -87,7 +88,7 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 		}
 	}
 
-	children, err := LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(db, childrenIDs, groupIDs, LoadOptions.WithChildren)
+	children, err := LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(ctx, db, childrenIDs, groupIDs, LoadOptions.WithChildren)
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func checkChildrenForGroupIDsWithLoopStep(db gorp.SqlExecutor, root, current *sd
 	}
 
 	for i := range children {
-		if err := checkChildrenForGroupIDsWithLoopStep(db, root, &children[i], groupIDs); err != nil {
+		if err := checkChildrenForGroupIDsWithLoopStep(ctx, db, root, &children[i], groupIDs); err != nil {
 			return err
 		}
 	}

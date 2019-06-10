@@ -331,8 +331,8 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 	report := new(ProcessorReport)
 
-	_, next := observability.Span(ctx, "sdk.WorkflowCheckConditions")
-	conditionsOK := checkNodeRunCondition(wr, stage.Conditions, run.BuildParameters)
+	_, next := observability.Span(ctx, "checkCondition")
+	conditionsOK := checkCondition(wr, stage.Conditions, run.BuildParameters)
 	next()
 	if !conditionsOK {
 		stage.Status = sdk.StatusSkipped
@@ -380,7 +380,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		// check that children actions used by job can be used by the project
-		if err := action.CheckChildrenForGroupIDsWithLoop(db, &job.Action, sdk.GroupsToIDs(groups)); err != nil {
+		if err := action.CheckChildrenForGroupIDsWithLoop(ctx, db, &job.Action, sdk.GroupsToIDs(groups)); err != nil {
 			spawnErrs.Append(err)
 		}
 
