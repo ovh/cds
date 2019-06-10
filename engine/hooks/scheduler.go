@@ -189,7 +189,7 @@ func (s *Service) deleteTaskExecutionsRoutine(c context.Context) error {
 				}
 
 				if taskToDelete {
-					s.Dao.DeleteTask(&t)
+					s.deleteTask(c, &t)
 				}
 
 			}

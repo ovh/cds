@@ -1261,32 +1261,37 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/task/bulk":
-				h := sdk.NodeHook{
-					HookModelID: webHookID,
-					Config: sdk.WorkflowNodeHookConfig{
-						"method": sdk.WorkflowNodeHookConfigValue{
-							Value:        "POST",
-							Configurable: true,
-						},
-						"username": sdk.WorkflowNodeHookConfigValue{
-							Value:        "test",
-							Configurable: false,
-						},
-						"password": sdk.WorkflowNodeHookConfigValue{
-							Value:        "password",
-							Configurable: false,
-						},
-						"payload": sdk.WorkflowNodeHookConfigValue{
-							Value:        "{}",
-							Configurable: true,
-						},
-						"URL": sdk.WorkflowNodeHookConfigValue{
-							Value:        "https://www.github.com",
-							Configurable: true,
-						},
-					},
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
 				}
-				if err := enc.Encode(map[string]sdk.NodeHook{"uuid": h}); err != nil {
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				k := reflect.ValueOf(hooks).MapKeys()[0].String()
+
+				hooks[k].Config["method"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        "POST",
+					Configurable: true,
+				}
+				hooks[k].Config["username"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        "test",
+					Configurable: false,
+				}
+				hooks[k].Config["password"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        "password",
+					Configurable: false,
+				}
+				hooks[k].Config["payload"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        "{}",
+					Configurable: true,
+				}
+				hooks[k].Config["URL"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        "https://www.github.com",
+					Configurable: true,
+				}
+				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
 			default:

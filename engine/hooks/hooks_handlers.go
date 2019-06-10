@@ -296,8 +296,7 @@ func (s *Service) deleteTaskHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
-		//Delete the task
-		s.Dao.DeleteTask(t)
+		s.deleteTask(ctx, t)
 
 		return nil
 	}
@@ -383,8 +382,7 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 			if err := s.stopTask(t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
-			//Delete the task
-			s.Dao.DeleteTask(t)
+			s.deleteTask(ctx, t)
 		}
 
 		return nil
@@ -478,13 +476,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	return nil
 }
 
-func (s *Service) deleteTask(ctx context.Context, h *sdk.NodeHook) error {
-	//Parse the hook as a task
-	t, err := s.hookToTask(h)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to parse hook")
-	}
-
+func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	switch t.Type {
 	case TypeGerrit:
 		s.stopGerritHookTask(t)

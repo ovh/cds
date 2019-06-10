@@ -89,7 +89,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			}
 		}
 		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
-			s.Dao.DeleteTask(t)
+			s.deleteTask(ctx, t)
 			log.Info("Hook> Task %s deleted on synchronization", t.UUID)
 		}
 	}
