@@ -29,7 +29,7 @@ func (consumer *bitbucketcloudConsumer) AuthorizeRedirect(ctx context.Context) (
 
 //AuthorizeToken returns the authorized token (and its refresh_token)
 //from the request token and the verifier got on authorize url
-func (consumer *bitbucketcloudConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
+func (consumer *bitbucketcloudConsumer) AuthorizeToken(ctx context.Context, _, code string) (string, string, error) {
 	log.Debug("AuthorizeToken> Bitbucketcloud send code %s", code)
 
 	params := url.Values{}
