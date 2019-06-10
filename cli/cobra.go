@@ -293,7 +293,8 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				}
 			default:
 				if quiet {
-					fmt.Println(resultFunc.(map[string]string)["key"])
+					k := listItem(resultFunc, nil, quiet, fs, verbose, map[string]string{})
+					fmt.Println(k["key"])
 					return
 				}
 				i := listItem(resultFunc, nil, quiet, fs, verbose, map[string]string{})
