@@ -51,7 +51,7 @@ func UpdateForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServers []sdk.P
 		return err
 	}
 
-	log.Debug("repositoriesmanager.InsertForProject> %s %s", proj.Key, string(b1))
+	log.Debug("repositoriesmanager.UpdateForProject> %s %s", proj.Key, string(b1))
 
 	encryptedVCSServerStr, err := secret.Encrypt(b1)
 	if err != nil {
