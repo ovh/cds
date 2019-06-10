@@ -7,6 +7,7 @@ use badge::handlers::badge_handler;
 use database::DbExecutor;
 use middlewares::auth::AuthMiddleware;
 use run::handlers::run_handler;
+use status::handlers::status_handler;
 
 #[derive(Clone)]
 pub struct WebState {
@@ -25,6 +26,9 @@ pub fn http_server(state: WebState, http_bind: String, http_port: String) {
                     .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
                     .allowed_header(http::header::CONTENT_TYPE)
                     .max_age(3600)
+                    .resource("/mon/status", |r| {
+                        r.method(http::Method::GET).f(status_handler)
+                    })
                     .resource("/{project}/{workflow}/badge.svg", |r| {
                         r.method(http::Method::GET).f(badge_handler)
                     })
