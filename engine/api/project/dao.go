@@ -475,5 +475,3 @@ func UpdateFavorite(db gorp.SqlExecutor, projectID int64, u *sdk.User, add bool)
 	_, err := db.Exec(query, u.ID, projectID)
 	return sdk.WithStack(err)
 }
-
-// func LoadVcsServers(db gorp.SqlExecutor, projectID int64, )

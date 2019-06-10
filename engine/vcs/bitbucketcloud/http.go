@@ -78,20 +78,6 @@ func (client *bitbucketcloudClient) post(path string, bodyType string, body io.R
 	return httpClient.Do(req)
 }
 
-func (client *bitbucketcloudClient) patch(path string, opts *postOptions) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodPatch, rootURL+path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-
-	log.Debug("Bitbucket Cloud API>> Request URL %s", req.URL.String())
-
-	return httpClient.Do(req)
-}
-
 func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPut, rootURL+path, body)
 	if err != nil {
@@ -189,7 +175,7 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 		Header:     http.Header{},
 	}
 
-	if values != nil && len(values) > 0 {
+	if len(values) > 0 {
 		buf := bytes.NewBuffer(values)
 		req.Body = ioutil.NopCloser(buf)
 		req.ContentLength = int64(buf.Len())
