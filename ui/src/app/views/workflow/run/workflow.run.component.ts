@@ -103,7 +103,7 @@ export class WorkflowRunComponent implements OnInit {
         this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.loadingRun = s.loadingWorkflowRun;
             if (s.workflowRun) {
-                this.workflow = s.workflowRun.workflow;
+                this.workflow = s.workflow;
                 this.workflowName = this.workflow.name;
 
                 let previousWR: WorkflowRun;
