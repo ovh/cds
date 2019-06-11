@@ -17,13 +17,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 var (
 	// Client is a CDS Client
-	Client                 sdk.HTTPClient
+	Client                 cdsclient.HTTPClient
 	defaultMaxProvisioning = 10
 	models                 []sdk.Model
 

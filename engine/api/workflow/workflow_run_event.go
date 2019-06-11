@@ -268,23 +268,23 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if vcsConf.Type == "gerrit" {
 		// Get gerrit variable
 		var project, changeID, branch, revision, url string
-		projectParam := sdk.ParameterFind(&nodeRun.BuildParameters, "git.repository")
+		projectParam := sdk.ParameterFind(nodeRun.BuildParameters, "git.repository")
 		if projectParam != nil {
 			project = projectParam.Value
 		}
-		changeIDParam := sdk.ParameterFind(&nodeRun.BuildParameters, "gerrit.change.id")
+		changeIDParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.id")
 		if changeIDParam != nil {
 			changeID = changeIDParam.Value
 		}
-		branchParam := sdk.ParameterFind(&nodeRun.BuildParameters, "gerrit.change.branch")
+		branchParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.branch")
 		if branchParam != nil {
 			branch = branchParam.Value
 		}
-		revisionParams := sdk.ParameterFind(&nodeRun.BuildParameters, "git.hash")
+		revisionParams := sdk.ParameterFind(nodeRun.BuildParameters, "git.hash")
 		if revisionParams != nil {
 			revision = revisionParams.Value
 		}
-		urlParams := sdk.ParameterFind(&nodeRun.BuildParameters, "cds.ui.pipeline.run")
+		urlParams := sdk.ParameterFind(nodeRun.BuildParameters, "cds.ui.pipeline.run")
 		if urlParams != nil {
 			url = urlParams.Value
 		}

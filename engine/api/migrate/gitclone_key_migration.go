@@ -221,7 +221,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 		log.Debug("migrateActionGitCloneJob>CheckJob> Checking step %s", step.Name)
 
 		if step.Name == sdk.GitCloneAction {
-			privateKey := sdk.ParameterFind(&step.Parameters, "privateKey")
+			privateKey := sdk.ParameterFind(step.Parameters, "privateKey")
 
 			if privateKey.Value == "" || strings.HasPrefix(privateKey.Value, "proj-") || strings.HasPrefix(privateKey.Value, "app-") || strings.HasPrefix(privateKey.Value, "env-") {
 				continue

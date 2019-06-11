@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 type mockHTTPClient struct {
@@ -29,7 +30,7 @@ func (m *mockHTTPClient) Do(r *http.Request) (*http.Response, error) {
 	return m.f(r)
 }
 
-func mock(f func(r *http.Request) (*http.Response, error)) sdk.HTTPClient {
+func mock(f func(r *http.Request) (*http.Response, error)) cdsclient.HTTPClient {
 	return &mockHTTPClient{f}
 }
 

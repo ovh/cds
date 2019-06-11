@@ -303,7 +303,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/coverage", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/test", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/tag", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/variable", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobVariableHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
+	//r.Handle("/queue/workflows/{permID}/variable", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobVariableHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/step", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 
 	r.Handle("/variable/type", ScopeNone(), r.GET(api.getVariableTypeHandler))

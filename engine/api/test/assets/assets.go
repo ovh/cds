@@ -29,6 +29,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -159,14 +160,14 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 
 // AuthentifyRequestFromWorker have to be used only for tests
 func AuthentifyRequestFromWorker(t *testing.T, req *http.Request, w *sdk.Worker) {
-	req.Header.Set("User-Agent", string(sdk.WorkerAgent))
-	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(w.ID)))
+	//req.Header.Set("User-Agent", string(sdk.WorkerAgent))
+	req.Header.Add(cdsclient.AuthHeader, base64.StdEncoding.EncodeToString([]byte(w.ID)))
 }
 
 // AuthentifyRequestFromService have to be used only for tests
 func AuthentifyRequestFromService(t *testing.T, req *http.Request, hash string) {
-	req.Header.Add("User-Agent", string(sdk.ServiceAgent))
-	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(hash)))
+	//req.Header.Add("User-Agent", string(sdk.ServiceAgent))
+	req.Header.Add(cdsclient.AuthHeader, base64.StdEncoding.EncodeToString([]byte(hash)))
 }
 
 // AuthentifyRequestFromProvider have to be used only for tests
@@ -283,8 +284,8 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, ur
 
 // AuthentifyRequest  have to be used only for tests
 func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.AuthentifiedUser, token string) {
-	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
-	req.Header.Add(sdk.SessionTokenHeader, token)
+	req.Header.Add(cdsclient.RequestedWithHeader, cdsclient.RequestedWithValue)
+	req.Header.Add(cdsclient.SessionTokenHeader, token)
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
 	req.Header.Add("Authorization", auth)
 }

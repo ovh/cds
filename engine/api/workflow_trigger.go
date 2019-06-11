@@ -85,7 +85,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
 		}
 
-		if sdk.ParameterFind(&params, "git.repository") == nil {
+		if sdk.ParameterFind(params, "git.repository") == nil {
 			data.ConditionNames = append(data.ConditionNames, "git.repository")
 			data.ConditionNames = append(data.ConditionNames, "git.branch")
 			data.ConditionNames = append(data.ConditionNames, "git.message")
@@ -93,7 +93,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			data.ConditionNames = append(data.ConditionNames, "git.hash")
 			data.ConditionNames = append(data.ConditionNames, "git.hash.short")
 		}
-		if sdk.ParameterFind(&params, "git.tag") == nil {
+		if sdk.ParameterFind(params, "git.tag") == nil {
 			data.ConditionNames = append(data.ConditionNames, "git.tag")
 		}
 

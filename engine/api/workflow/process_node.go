@@ -184,7 +184,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		currentRepo = app.RepositoryFullname
 	}
 
-	parentRepo := sdk.ParameterFind(&run.BuildParameters, tagGitRepository)
+	parentRepo := sdk.ParameterFind(run.BuildParameters, tagGitRepository)
 
 	// Compute git params for current job
 	// Get from parent when
@@ -207,7 +207,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		// Try to found a parent on the same repo
 		found := false
 		for _, parent := range wr.WorkflowNodeRuns {
-			repo := sdk.ParameterFind(&parent[0].BuildParameters, tagGitRepository)
+			repo := sdk.ParameterFind(parent[0].BuildParameters, tagGitRepository)
 			if repo != nil && repo.Value == currentRepo {
 				found = true
 				// copy git info from ancestors
@@ -222,7 +222,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 		// If we change repo and we dont find ancestor on the same repo, just keep the branch
 		if !found {
-			b := sdk.ParameterFind(&run.BuildParameters, tagGitBranch)
+			b := sdk.ParameterFind(run.BuildParameters, tagGitBranch)
 			if b != nil {
 				currentJobGitValues[tagGitBranch] = b.Value
 			}

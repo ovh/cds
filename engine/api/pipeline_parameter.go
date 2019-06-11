@@ -91,7 +91,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		oldParam := sdk.ParameterFind(&p.Parameter, paramName)
+		oldParam := sdk.ParameterFind(p.Parameter, paramName)
 
 		if oldParam == nil {
 			return sdk.WrapError(sdk.ErrParameterNotExists, "updateParameterInPipelineHandler> unable to find parameter %s", paramName)

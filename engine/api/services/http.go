@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
@@ -30,13 +31,13 @@ type MultiPartData struct {
 }
 
 // HTTPClient will be set to a default httpclient if not set
-var HTTPClient sdk.HTTPClient
+var HTTPClient cdsclient.HTTPClient
 
 // HTTPSigner is used to sign requests based on the RFC draft specification https://tools.ietf.org/html/draft-cavage-http-signatures-06
 var HTTPSigner *httpsig.Signer
 
 // DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
-func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -65,7 +66,7 @@ func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 		return 0, sdk.WrapError(err, "unable to close writer")
 	}
 
-	mods = append(mods, sdk.SetHeader("Content-Type", writer.FormDataContentType()))
+	mods = append(mods, cdsclient.SetHeader("Content-Type", writer.FormDataContentType()))
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -96,7 +97,7 @@ func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 }
 
 // DoJSONRequest performs an http request on a service
-func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -119,7 +120,7 @@ func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 }
 
 // DoJSONRequest performs an http request on service
-func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	var b = []byte{}
 	var err error
 
@@ -130,7 +131,7 @@ func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, m
 		}
 	}
 
-	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
+	mods = append(mods, cdsclient.SetHeader("Content-Type", "application/json"))
 	res, code, err := doRequest(ctx, db, srv, method, path, b, mods...)
 	if err != nil {
 		return code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
@@ -146,7 +147,7 @@ func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, m
 }
 
 // PostMultipart post a file content through multipart upload
-func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", filename)
@@ -158,7 +159,7 @@ func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 		return 0, err
 	}
 
-	mods = append(mods, sdk.SetHeader("Content-Type", "multipart/form-data"))
+	mods = append(mods, cdsclient.SetHeader("Content-Type", "multipart/form-data"))
 
 	var lastErr error
 	var lastCode int
@@ -189,7 +190,7 @@ func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 }
 
 // DoRequest performs an http request on a service
-func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -212,7 +213,7 @@ func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, met
 }
 
 // doRequest performs an http request on service
-func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
@@ -247,7 +248,7 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 	}
 
 	req.Header.Set("Connection", "close")
-	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
+	req.Header.Add(cdsclient.RequestedWithHeader, cdsclient.RequestedWithValue)
 	for i := range mods {
 		if mods[i] != nil {
 			mods[i](req)

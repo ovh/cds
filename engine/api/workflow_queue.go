@@ -22,7 +22,6 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -31,7 +30,7 @@ import (
 
 func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
+		/*id, err := requestVarInt(r, "id")
 		if err != nil {
 			return err
 		}
@@ -83,11 +82,13 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
 		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
 
-		return service.WriteJSON(w, pbji, http.StatusOK)
+		return service.WriteJSON(w, pbji, http.StatusOK)*/
+
+		return nil
 	}
 }
 
-func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, takeForm *sdk.WorkerTakeForm, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker) (*workflow.ProcessorReport, error) {
+/*func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, takeForm *sdk.WorkerTakeForm, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker) (*workflow.ProcessorReport, error) {
 	// Start a tx
 	tx, errBegin := dbFunc().Begin()
 	if errBegin != nil {
@@ -173,7 +174,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	return report, nil
-}
+}*/
 
 func (api *API) postBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
