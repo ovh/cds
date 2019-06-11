@@ -43,12 +43,12 @@ func (actPlugin *groupTmplActionPlugin) Run(ctx context.Context, q *actionplugin
 
 	// if no file was specified
 	if config == "" {
-		return fail("Missing config template")
+		return actionplugin.Fail("Missing config template")
 	}
 
 	// if no applications were specified
 	if applications == "" {
-		return fail("Missing applications variables file")
+		return actionplugin.Fail("Missing applications variables file")
 	}
 
 	// if output was not specified, either trim .tpl extension if any, or output to .out
@@ -64,32 +64,32 @@ func (actPlugin *groupTmplActionPlugin) Run(ctx context.Context, q *actionplugin
 	// get template config content
 	configContent, err := ioutil.ReadFile(config)
 	if err != nil {
-		return fail("Failed to read config template file: %s", err)
+		return actionplugin.Fail("Failed to read config template file: %s", err)
 	}
 
 	// parse the template file
 	configTemplate, err := template.New("file").Funcs(funcMap).Parse(string(configContent))
 	if err != nil {
-		return fail("Failed to parse config template: %v", err)
+		return actionplugin.Fail("Failed to parse config template: %v", err)
 	}
 
 	// open the output file
 	of, err := os.Create(output)
 	if err != nil {
-		return fail("Failed to create output file: %v", err)
+		return actionplugin.Fail("Failed to create output file: %v", err)
 	}
 	defer of.Close()
 
 	// fetching the apps variables
 	apps, err := NewApplications(applications)
 	if err != nil {
-		return fail("Failed to read applications variables file: %v", err)
+		return actionplugin.Fail("Failed to read applications variables file: %v", err)
 	}
 
 	// executing the template for each application in the applicationsFiles
 	appsConfigs, err := getConfigByApplication(apps, configTemplate)
 	if err != nil {
-		return fail("Failed to read applications variables file: %v", err)
+		return actionplugin.Fail("Failed to read applications variables file: %v", err)
 	}
 
 	// finally, execute the template
@@ -99,14 +99,14 @@ func (actPlugin *groupTmplActionPlugin) Run(ctx context.Context, q *actionplugin
 	}
 	buf := new(bytes.Buffer)
 	if err := outputBodyTemplate.Execute(buf, tmplParams); err != nil {
-		return fail("Failed to execute main template: %s", err)
+		return actionplugin.Fail("Failed to execute main template: %s", err)
 	}
 	indent := new(bytes.Buffer)
 	if err := json.Indent(indent, buf.Bytes(), "", "    "); err != nil {
-		return fail("Failed to indent generated content: %v", err)
+		return actionplugin.Fail("Failed to indent generated content: %v", err)
 	}
 	if _, err := indent.WriteTo(of); err != nil {
-		return fail("Failed to write generated file: %v", err)
+		return actionplugin.Fail("Failed to write generated file: %v", err)
 	}
 
 	fmt.Printf("Generated output file %s", output)
@@ -116,11 +116,6 @@ func (actPlugin *groupTmplActionPlugin) Run(ctx context.Context, q *actionplugin
 	}, nil
 }
 
-func (actPlugin *groupTmplActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
-}
-
 func main() {
 	actPlugin := groupTmplActionPlugin{}
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
@@ -128,15 +123,6 @@ func main() {
 	}
 	return
 
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail,
-	}, nil
 }
 
 func getConfigByApplication(apps *Applications, tmpl *template.Template) (map[string]string, error) {

@@ -981,6 +981,7 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 	}
 }
 
+/*
 func (api *API) postWorkflowJobVariableHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
@@ -1051,3 +1052,4 @@ func (api *API) postWorkflowJobVariableHandler() service.Handler {
 		return nil
 	}
 }
+*/

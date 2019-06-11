@@ -1,52 +1,36 @@
 package main
 
 import (
-	"time"
+	"context"
+
+	"github.com/ovh/cds/engine/worker/internal"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func cmdRegister(w *currentWorker) *cobra.Command {
+func cmdRegister() *cobra.Command {
 	var cmdRegister = &cobra.Command{
 		Use:    "register",
 		Long:   "worker register is a subcommand used by hatchery. This is not directly useful for end user",
 		Hidden: true, // user should not use this command directly
-		Run:    cmdRegisterRun(w),
+		Run:    cmdRegisterRun(),
 	}
 	initFlagsRun(cmdRegister)
 	return cmdRegister
 }
 
-func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func cmdRegisterRun() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		initFlags(cmd, w)
-		form := sdk.WorkerRegistrationForm{
-			// TODO
-			//RegistrationOnly: true,
-			//Name:         w.status.Name,
-			//Token:        w.token,
-			//HatcheryName: w.hatchery.name,
-			//ModelID:      w.model.ID,
-		}
+		var w = new(internal.CurrentWorker)
+		initFromFlags(cmd, w)
 
-		if err := w.register(form); err != nil {
-			log.Error("Unable to register worker %s: %v", w.status.Name, err)
+		if err := w.Register(context.Background()); err != nil {
+			log.Error("Unable to register worker %v", err)
 		}
-		if err := w.unregister(); err != nil {
-			log.Error("Unable to unregister worker %s: %v", w.status.Name, err)
-		}
-
-		if FlagBool(cmd, flagForceExit) {
-			log.Info("Exiting worker with force_exit true")
-			return
-		}
-
-		if w.hatchery.name != "" {
-			log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
-			time.Sleep(30 * time.Minute)
+		if err := w.Unregister(); err != nil {
+			log.Error("Unable to unregister worker %v", err)
 		}
 	}
 }

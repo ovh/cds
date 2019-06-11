@@ -28,7 +28,7 @@ type SSEvent struct {
 // close the stream. This is blocking, and so you will likely want to call this
 // in a new goroutine (via `go c.RequestSSEGet(..)`)
 func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSEvent, mods ...RequestModifier) error {
-	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", "GET")
+	labels := pprof.Labels("path", path, "method", "GET")
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
 
@@ -49,7 +49,6 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 	}
 
 	req.Header.Set("Accept", "text/event-stream")
-	req.Header.Set("User-Agent", c.config.userAgent)
 	req.Header.Set("Connection", "close")
 	req.Header.Add(RequestedWithHeader, RequestedWithValue)
 	if c.name != "" {
@@ -69,7 +68,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 		req.SetBasicAuth(c.config.User, c.config.Token)
 	}
 
-	resp, err := c.HTTPSSEClient.Do(req)
+	resp, err := c.httpSSEClient.Do(req)
 	if err != nil {
 		return err
 	}

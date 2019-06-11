@@ -15,8 +15,8 @@ type client struct {
 	isWorker      bool
 	isService     bool
 	isProvider    bool
-	HTTPClient    HTTPClient
-	HTTPSSEClient HTTPClient
+	httpClient    *http.Client
+	httpSSEClient *http.Client
 	config        Config
 	name          string
 	service       *sdk.Service
@@ -54,8 +54,8 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 func New(c Config) Interface {
 	cli := new(client)
 	cli.config = c
-	cli.HTTPClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
-	cli.HTTPSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
+	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
+	cli.httpSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
 }
@@ -69,15 +69,15 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 	}
 	cli := new(client)
 	cli.config = conf
-	cli.HTTPClient = NewHTTPClient(timeout, conf.InsecureSkipVerifyTLS)
-	cli.HTTPSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.httpClient = NewHTTPClient(timeout, conf.InsecureSkipVerifyTLS)
+	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.isService = true
 	cli.init()
 	return cli
 }
 
 // NewWorker returns client for a worker
-func NewWorker(endpoint string, name string, c HTTPClient) Interface {
+func NewWorker(endpoint string, name string, c *http.Client) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 10,
@@ -86,11 +86,11 @@ func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	cli.config = conf
 
 	if c == nil {
-		cli.HTTPClient = NewHTTPClient(time.Second*360, false)
+		cli.httpClient = NewHTTPClient(time.Second*360, false)
 	} else {
-		cli.HTTPClient = c
+		cli.httpClient = c
 	}
-	cli.HTTPSSEClient = NewHTTPClient(0, false)
+	cli.httpSSEClient = NewHTTPClient(0, false)
 
 	cli.isWorker = true
 	cli.name = name
@@ -123,8 +123,8 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 
 	cli := new(client)
 	cli.config = conf
-	cli.HTTPClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
-	cli.HTTPSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
+	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.isProvider = true
 	cli.name = cfg.Name
 	cli.init()
@@ -132,14 +132,6 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 }
 
 func (c *client) init() {
-	if c.isWorker {
-		c.config.userAgent = sdk.WorkerAgent
-	} else if c.isService {
-		c.config.userAgent = sdk.ServiceAgent
-	} else {
-		c.config.userAgent = sdk.SDKAgent
-	}
-
 	if os.Getenv("CDS_VERBOSE") == "true" {
 		c.config.Verbose = true
 	}
@@ -147,4 +139,11 @@ func (c *client) init() {
 
 func (c *client) APIURL() string {
 	return c.config.Host
+}
+
+func (c *client) HTTPClient() *http.Client {
+	return c.httpClient
+}
+func (c *client) HTTPSSEClient() *http.Client {
+	return c.httpSSEClient
 }

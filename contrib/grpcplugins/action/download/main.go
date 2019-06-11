@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -41,7 +40,7 @@ func (actPlugin *downloadActionPlugin) Run(ctx context.Context, q *actionplugin.
 	// Create the file
 	file, err := os.Create(filepath)
 	if err != nil {
-		return fail("Error to create the file %s : %s", filepath, err)
+		return actionplugin.Fail("Error to create the file %s : %s", filepath, err)
 	}
 	defer file.Close()
 
@@ -54,29 +53,24 @@ func (actPlugin *downloadActionPlugin) Run(ctx context.Context, q *actionplugin.
 	req.Header = parseHeaders(headers)
 
 	if err != nil {
-		return fail("Error to create request with URL %s : %s", url, err)
+		return actionplugin.Fail("Error to create request with URL %s : %s", url, err)
 	}
 
 	resp, err := httpClient.Do(req)
 
 	if err != nil {
-		return fail("Error to download the file on URL %s : %s", url, err)
+		return actionplugin.Fail("Error to download the file on URL %s : %s", url, err)
 	}
 	defer resp.Body.Close()
 
 	// Copy file in the right directory
 	if _, err := io.Copy(file, resp.Body); err != nil {
-		return fail("Error to copy the file on URL %s : %s", url, err)
+		return actionplugin.Fail("Error to copy the file on URL %s : %s", url, err)
 	}
 
 	return &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-func (actPlugin *downloadActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
 }
 
 func main() {
@@ -86,15 +80,6 @@ func main() {
 	}
 	return
 
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail,
-	}, nil
 }
 
 func parseHeaders(hParams string) http.Header {

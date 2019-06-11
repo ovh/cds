@@ -106,10 +106,10 @@ func AddParameter(array *[]Parameter, name string, parameterType string, value s
 }
 
 // ParameterFind return a parameter given its name if it exists in array
-func ParameterFind(vars *[]Parameter, s string) *Parameter {
-	for i, v := range *vars {
+func ParameterFind(vars []Parameter, s string) *Parameter {
+	for i, v := range vars {
 		if v.Name == s {
-			return &(*vars)[i]
+			return &(vars)[i]
 		}
 	}
 	return nil
@@ -117,7 +117,7 @@ func ParameterFind(vars *[]Parameter, s string) *Parameter {
 
 // ParameterAddOrSetValue add a new parameter or update a value
 func ParameterAddOrSetValue(vars *[]Parameter, name string, parameterType string, value string) {
-	p := ParameterFind(vars, name)
+	p := ParameterFind(*vars, name)
 	if p == nil {
 		AddParameter(vars, name, parameterType, value)
 	} else {
@@ -127,7 +127,7 @@ func ParameterAddOrSetValue(vars *[]Parameter, name string, parameterType string
 
 // ParameterValue return a parameter value given its name if it exists in array, else it returns empty string
 func ParameterValue(vars []Parameter, s string) string {
-	p := ParameterFind(&vars, s)
+	p := ParameterFind(vars, s)
 	if p == nil {
 		return ""
 	}

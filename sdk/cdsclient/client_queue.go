@@ -51,7 +51,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -197,21 +197,10 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 	return countWJobs, err
 }
 
-func (c *client) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error) {
-	in := sdk.WorkerTakeForm{
-		Time:    time.Now(),
-		Version: sdk.VERSION,
-		OS:      sdk.GOOS,
-		Arch:    sdk.GOARCH,
-	}
-	if isBooked {
-		in.BookedJobID = job.ID
-	}
-
+func (c *client) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error) {
 	path := fmt.Sprintf("/queue/workflows/%d/take", job.ID)
 	var info sdk.WorkflowNodeJobRunData
-
-	if _, err := c.PostJSON(ctx, path, &in, &info); err != nil {
+	if _, err := c.PostJSON(ctx, path, nil, &info); err != nil {
 		return nil, err
 	}
 	return &info, nil

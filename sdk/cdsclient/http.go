@@ -163,7 +163,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 
 // Stream makes an authenticated http request and return io.ReadCloser
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
-	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", method)
+	labels := pprof.Labels("path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
 	var savederror error
@@ -212,7 +212,6 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			req.Header.Set("Content-Type", "application/json")
 		}
 
-		req.Header.Set("User-Agent", c.config.userAgent)
 		req.Header.Set("Connection", "close")
 		req.Header.Add(RequestedWithHeader, RequestedWithValue)
 		if c.name != "" {
@@ -255,9 +254,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		var errDo error
 		var resp *http.Response
 		if noTimeout {
-			resp, errDo = c.HTTPSSEClient.Do(req)
+			resp, errDo = c.httpSSEClient.Do(req)
 		} else {
-			resp, errDo = c.HTTPClient.Do(req)
+			resp, errDo = c.httpClient.Do(req)
 		}
 
 		if errDo == nil && c.config.Verbose {
@@ -324,7 +323,6 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("User-Agent", c.config.userAgent)
 	req.Header.Set("Connection", "close")
 	req.Header.Add(RequestedWithHeader, RequestedWithValue)
 	if c.isProvider {
@@ -348,7 +346,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		}
 	}
 
-	resp, err := c.HTTPSSEClient.Do(req)
+	resp, err := c.httpSSEClient.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -4,10 +4,13 @@
 
 package sdk
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
+import (
+	fmt "fmt"
+	math "math"
+
+	proto "github.com/golang/protobuf/proto"
+	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -20,13 +23,14 @@ var _ = math.Inf
 // 	protoc-go-inject-tag -input=./log.pb.go
 // 	=> github.com/favadi/protoc-go-inject-tag
 type Result struct {
-	Id         int64                      `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
-	BuildID    int64                      `protobuf:"varint,2,opt,name=buildID" json:"buildID,omitempty"`
-	Status     string                     `protobuf:"bytes,3,opt,name=status" json:"status,omitempty"`
-	Version    int64                      `protobuf:"varint,4,opt,name=version" json:"version,omitempty"`
-	Reason     string                     `protobuf:"bytes,5,opt,name=reason" json:"reason,omitempty"`
-	RemoteTime *google_protobuf.Timestamp `protobuf:"bytes,6,opt,name=remoteTime" json:"remoteTime,omitempty"`
-	Duration   string                     `protobuf:"bytes,7,opt,name=duration" json:"duration,omitempty"`
+	Id           int64                      `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	BuildID      int64                      `protobuf:"varint,2,opt,name=buildID" json:"buildID,omitempty"`
+	Status       string                     `protobuf:"bytes,3,opt,name=status" json:"status,omitempty"`
+	Version      int64                      `protobuf:"varint,4,opt,name=version" json:"version,omitempty"`
+	Reason       string                     `protobuf:"bytes,5,opt,name=reason" json:"reason,omitempty"`
+	RemoteTime   *google_protobuf.Timestamp `protobuf:"bytes,6,opt,name=remoteTime" json:"remoteTime,omitempty"`
+	Duration     string                     `protobuf:"bytes,7,opt,name=duration" json:"duration,omitempty"`
+	NewVariables []Variable                 `json:"new_variables,omitempty"`
 }
 
 func (m *Result) Reset()                    { *m = Result{} }

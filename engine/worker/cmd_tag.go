@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,10 +12,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
-func cmdTag(w *currentWorker) *cobra.Command {
+func cmdTag() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "tag",
 		Short: "worker tag key=value key=value",
@@ -37,16 +37,16 @@ You can select the tags displayed on the sidebar Workflow → Advanced → "Tags
 
 ![Tag](/images/worker.commands.tag.png)
 		`,
-		Run: tagCmd(w),
+		Run: tagCmd(),
 	}
 	return c
 }
 
-func tagCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func tagCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -90,23 +90,5 @@ func tagCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			cdsError := sdk.DecodeError(body)
 			sdk.Exit("tag failed: %v\n", cdsError)
 		}
-	}
-}
-
-func (wk *currentWorker) tagHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm() // Parses the request body
-	tags := []sdk.WorkflowRunTag{}
-	for k := range r.Form {
-		tags = append(tags, sdk.WorkflowRunTag{
-			Tag:   k,
-			Value: r.Form.Get(k),
-		})
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := wk.client.QueueJobTag(ctx, wk.currentJob.wJob.ID, tags); err != nil {
-		writeError(w, r, err)
-		return
 	}
 }

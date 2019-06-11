@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -35,15 +34,15 @@ func (actPlugin *npmAuditParserActionPlugin) Manifest(ctx context.Context, _ *em
 func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	file := q.GetOptions()["file"]
 	if file == "" {
-		return fail("File parameter must not be empty")
+		return actionplugin.Fail("File parameter must not be empty")
 	}
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		return fail("Unable to read file %s: %v", file, err)
+		return actionplugin.Fail("Unable to read file %s: %v", file, err)
 	}
 	var npmAudit NpmAudit
 	if err := json.Unmarshal(b, &npmAudit); err != nil {
-		return fail("Unable to read npm report: %v", err)
+		return actionplugin.Fail("Unable to read npm report: %v", err)
 	}
 
 	var report sdk.VulnerabilityWorkerReport
@@ -89,17 +88,12 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 	report.Type = "js"
 	report.Summary = summary
 	if err := grpcplugins.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
-		return fail("Unable to send report: %s", err)
+		return actionplugin.Fail("Unable to send report: %s", err)
 	}
 
 	return &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-func (actPlugin *npmAuditParserActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
 }
 
 func main() {
@@ -108,13 +102,4 @@ func main() {
 		panic(err)
 	}
 	return
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail,
-	}, nil
 }

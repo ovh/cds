@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/sdk/grpcplugin"
 
 	"google.golang.org/grpc"
@@ -51,4 +52,18 @@ func Client(ctx context.Context, socket string) (ActionPluginClient, error) {
 
 	c := NewActionPluginClient(conn)
 	return c, nil
+}
+
+func (c *Common) WorkerHTTPPort(ctx context.Context, q *WorkerHTTPPortQuery) (*empty.Empty, error) {
+	c.HTTPPort = q.Port
+	return &empty.Empty{}, nil
+}
+
+func Fail(format string, args ...interface{}) (*ActionResult, error) {
+	msg := fmt.Sprintf(format, args...)
+	fmt.Println(msg)
+	return &ActionResult{
+		Details: msg,
+		Status:  "Fail",
+	}, nil
 }

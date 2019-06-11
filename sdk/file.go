@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/afero"
 )
 
 // IsTar returns true if the content is a tar
@@ -24,19 +26,19 @@ func IsGz(buf []byte) bool {
 
 // UntarGz takes a destination path and a reader; a tar.gz reader loops over the tarfile
 // creating the file structure at 'dst' along the way, and writing any files
-func UntarGz(dst string, r io.Reader) error {
+func UntarGz(fs afero.Fs, dst string, r io.Reader) error {
 	gzr, err := gzip.NewReader(r)
 	if err != nil {
 		return err
 	}
 	defer gzr.Close()
 
-	return Untar(dst, gzr)
+	return Untar(fs, dst, gzr)
 }
 
 // Untar takes a destination path and a reader; a tar reader loops over the tarfile
 // creating the file structure at 'dst' along the way, and writing any files
-func Untar(dst string, r io.Reader) error {
+func Untar(fs afero.Fs, dst string, r io.Reader) error {
 	tr := tar.NewReader(r)
 
 	for {
@@ -56,14 +58,14 @@ func Untar(dst string, r io.Reader) error {
 		// check the file type
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
+			if _, err := fs.Stat(target); err != nil {
+				if err := fs.MkdirAll(target, 0755); err != nil {
 					return err
 				}
 			}
 
 		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			f, err := fs.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}

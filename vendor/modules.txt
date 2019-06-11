@@ -312,6 +312,8 @@ github.com/gorilla/mux
 # github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc
 github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
+# github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542
+github.com/h2non/parth
 # github.com/hashicorp/errwrap v0.0.0-20141028054710-7554cd9344ce
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-cleanhttp v0.0.0-20160407174126-ad28ea4487f0
@@ -690,10 +692,10 @@ golang.org/x/sys/cpu
 golang.org/x/sys/windows/registry
 # golang.org/x/text v0.3.2
 golang.org/x/text/language
-golang.org/x/text/internal/language
-golang.org/x/text/internal/language/compact
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
@@ -756,6 +758,8 @@ gopkg.in/bsm/sarama-cluster.v2
 gopkg.in/go-playground/validator.v8
 # gopkg.in/gorp.v1 v1.7.1
 gopkg.in/gorp.v1
+# gopkg.in/h2non/gock.v1 v1.0.14
+gopkg.in/h2non/gock.v1
 # gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
 # gopkg.in/ini.v1 v1.28.0

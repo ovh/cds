@@ -10,11 +10,22 @@ import (
 )
 
 func (c *client) WorkerList(ctx context.Context) ([]sdk.Worker, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	p := []sdk.Worker{}
 	if _, err := c.GetJSON(ctx, "/worker", &p); err != nil {
 		return nil, err
 	}
 	return p, nil
+}
+
+func (c *client) WorkerUnregister(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if _, err := c.PostJSON(ctx, "/worker/unregister", nil, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *client) WorkerDisable(ctx context.Context, id string) error {

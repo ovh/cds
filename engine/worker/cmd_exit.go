@@ -10,24 +10,25 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
-func cmdExit(w *currentWorker) *cobra.Command {
+func cmdExit() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "exit",
 		Short: "worker exit",
 		Long:  "worker exit command lets job finish current step and disabled all further steps",
-		Run:   exitCmd(w),
+		Run:   exitCmd(),
 	}
 	return c
 }
 
-func exitCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func exitCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -59,10 +60,4 @@ func exitCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("exit failed: %v\n", cdsError)
 		}
 	}
-}
-
-func (wk *currentWorker) exitHandler(w http.ResponseWriter, r *http.Request) {
-	wk.manualExit = true
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 }

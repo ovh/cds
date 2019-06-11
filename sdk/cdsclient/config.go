@@ -7,7 +7,6 @@ type Config struct {
 	Token                 string
 	AccessToken           string
 	Hash                  string
-	userAgent             string
 	Verbose               bool
 	Retry                 int
 	InsecureSkipVerifyTLS bool

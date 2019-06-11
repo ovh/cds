@@ -27,15 +27,6 @@ type WorkerRegistrationForm struct {
 	Arch               string
 }
 
-// WorkerTakeForm contains booked JobID if exists
-type WorkerTakeForm struct {
-	BookedJobID int64
-	Time        time.Time
-	OS          string
-	Arch        string
-	Version     string
-}
-
 // SpawnErrorForm represents the arguments needed to add error registration on worker model
 type SpawnErrorForm struct {
 	Error string

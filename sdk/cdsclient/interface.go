@@ -232,8 +232,8 @@ type ProjectVariablesClient interface {
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
-	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error)
+	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int) error
+	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
 	QueueJobBook(ctx context.Context, id int64) error
 	QueueJobRelease(id int64) error
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
@@ -266,6 +266,7 @@ type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh(ctx context.Context) error
+	WorkerUnregister(ctx context.Context) error
 	WorkerDisable(ctx context.Context, id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(groupName, name string) (sdk.Model, error)
@@ -374,6 +375,8 @@ type Raw interface {
 	GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
+	HTTPClient() *http.Client
+	HTTPSSEClient() *http.Client
 }
 
 // GRPCPluginsClient exposes plugins API

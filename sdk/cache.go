@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/afero"
 )
 
 // Cache define a file needed to be save for cache
@@ -44,7 +46,7 @@ type TarOptions struct {
 }
 
 // CreateTarFromPaths returns a tar formatted reader of a tar made of several path
-func CreateTarFromPaths(cwd string, paths []string, opts *TarOptions) (io.Reader, int, error) {
+func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOptions) (io.Reader, int, error) {
 	// Create a buffer to write our archive to.
 	buf := new(bytes.Buffer)
 
@@ -53,11 +55,11 @@ func CreateTarFromPaths(cwd string, paths []string, opts *TarOptions) (io.Reader
 
 	for _, path := range paths {
 		// ensure the src actually exists before trying to tar it
-		if _, err := os.Stat(path); err != nil {
+		if _, err := fs.Stat(path); err != nil {
 			return nil, 0, fmt.Errorf("Unable to tar files - %v", err.Error())
 		}
 		// walk path
-		errWalk := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
+		errWalk := afero.Walk(fs, path, func(file string, fi os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}

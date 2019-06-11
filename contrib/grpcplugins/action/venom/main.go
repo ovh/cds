@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/context/default"
-	"github.com/ovh/venom/context/redis"
+	defaultctx "github.com/ovh/venom/context/default"
+	redisctx "github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
@@ -133,7 +133,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		varFileMap := make(map[string]string)
 		bytes, err := ioutil.ReadFile(varsFromFile)
 		if err != nil {
-			return fail("VENOM - Error while reading file: %v\n", err)
+			return actionplugin.Fail("VENOM - Error while reading file: %v\n", err)
 		}
 		switch filepath.Ext(varsFromFile) {
 		case ".json":
@@ -141,11 +141,11 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		case ".yaml":
 			err = yaml.Unmarshal(bytes, &varFileMap)
 		default:
-			return fail("VENOM - unsupported varFile format")
+			return actionplugin.Fail("VENOM - unsupported varFile format")
 		}
 
 		if err != nil {
-			return fail("VENOM - Error on unmarshal file: %v\n", err)
+			return actionplugin.Fail("VENOM - Error on unmarshal file: %v\n", err)
 		}
 
 		for key, value := range varFileMap {
@@ -169,7 +169,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	for _, fp := range filepathVal {
 		filepathVal, err = walkGlobFile(fp)
 		if err != nil {
-			return fail("VENOM - Error on walk files: %v\n", err)
+			return actionplugin.Fail("VENOM - Error on walk files: %v\n", err)
 		}
 	}
 
@@ -180,29 +180,24 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	for _, fp := range filepathExcluded {
 		filepathExcluded, err = walkGlobFile(fp)
 		if err != nil {
-			return fail("VENOM - Error on walk excluded files: %v\n", err)
+			return actionplugin.Fail("VENOM - Error on walk excluded files: %v\n", err)
 		}
 	}
 
 	tests, err := v.Process(filepathVal, filepathExcluded)
 	if err != nil {
-		return fail("VENOM - Fail on venom: %v\n", err)
+		return actionplugin.Fail("VENOM - Fail on venom: %v\n", err)
 	}
 
 	elapsed := time.Since(start)
 	fmt.Printf("VENOM - Output test results under: %s\n", output)
 	if err := v.OutputResult(*tests, elapsed); err != nil {
-		return fail("VENOM - Error while uploading test results: %v\n", err)
+		return actionplugin.Fail("VENOM - Error while uploading test results: %v\n", err)
 	}
 
 	return &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-func (actPlugin *venomActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
 }
 
 func main() {
@@ -211,15 +206,6 @@ func main() {
 		panic(err)
 	}
 	return
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail,
-	}, nil
 }
 
 func walkGlobFile(path string) ([]string, error) {

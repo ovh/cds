@@ -223,7 +223,7 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20170213163019-15adfb6b24e2 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect
-	github.com/spf13/afero v0.0.0-20160919210114-52e4a6cfac46 // indirect
+	github.com/spf13/afero v0.0.0-20160919210114-52e4a6cfac46
 	github.com/spf13/cast v0.0.0-20160926084249-2580bc98dc0e // indirect
 	github.com/spf13/cobra v0.0.0-20171231101556-b95ab734e27d
 	github.com/spf13/jwalterweatherman v0.0.0-20160311093646-33c24e77fb80 // indirect
@@ -274,6 +274,7 @@ require (
 	gopkg.in/go-playground/validator.v8 v8.18.1 // indirect
 	gopkg.in/gorethink/gorethink.v4 v4.1.0 // indirect
 	gopkg.in/gorp.v1 v1.7.1
+	gopkg.in/h2non/gock.v1 v1.0.14
 	gopkg.in/ini.v1 v1.28.0 // indirect
 	gopkg.in/ldap.v2 v2.3.0
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
