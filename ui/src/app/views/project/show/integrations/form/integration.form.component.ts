@@ -18,7 +18,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class ProjectIntegrationFormComponent implements OnInit {
-    @ViewChild('codeMirror') codemirror: any;
+    @ViewChild('codeMirror', {static: true}) codemirror: any;
 
     @Input() project: Project;
 

@@ -41,9 +41,9 @@ export class WorkflowWNodeComponent implements OnInit {
     @Input() workflow: Workflow;
     @Input() project: Project;
 
-    @ViewChild('menu')
+    @ViewChild('menu', {static: true})
     menu: WorkflowWNodeMenuEditComponent;
-    @ViewChild('workflowRunNode')
+    @ViewChild('workflowRunNode', {static: true})
     workflowRunNode: WorkflowNodeRunParamComponent;
 
     // Selected workflow run
@@ -60,13 +60,13 @@ export class WorkflowWNodeComponent implements OnInit {
     zone = new NgZone({});
 
     // Modal
-    @ViewChild('workflowDeleteNode')
+    @ViewChild('workflowDeleteNode', {static: true})
     workflowDeleteNode: WorkflowDeleteNodeComponent;
-    @ViewChild('workflowTrigger')
+    @ViewChild('workflowTrigger', {static: true})
     workflowTrigger: WorkflowTriggerComponent;
-    @ViewChild('workflowAddHook')
+    @ViewChild('workflowAddHook', {static: true})
     workflowAddHook: WorkflowHookModalComponent;
-    @ViewChild('nodeEditModal')
+    @ViewChild('nodeEditModal', {static: true})
     nodeEditModal: WorkflowNodeEditModalComponent;
 
     constructor(

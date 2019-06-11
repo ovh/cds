@@ -23,8 +23,8 @@ export class ApplicationDeploymentComponent {
 
     _project: Project;
 
-    @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
-    @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
+    @ViewChild('removeWarning', {static: true}) removeWarningModal: WarningModalComponent;
+    @ViewChild('linkWarning', {static: true}) linkWarningModal: WarningModalComponent;
 
     @Input() application: Application;
     @Input('project')

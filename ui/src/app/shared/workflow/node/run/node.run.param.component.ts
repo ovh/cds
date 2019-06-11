@@ -26,11 +26,11 @@ declare var CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunParamComponent implements OnInit {
-    @ViewChild('runWithParamModal')
+    @ViewChild('runWithParamModal', {static: false})
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
-    @ViewChild('textareaCodeMirror') codemirror: any;
+    @ViewChild('textareaCodeMirror', {static: true}) codemirror: any;
 
     @Input() workflowRun: WorkflowRun;
     _nodeRun: WorkflowNodeRun;

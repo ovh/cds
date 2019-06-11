@@ -14,8 +14,8 @@ import { Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookDetailsComponent implements OnInit {
-  @ViewChild('code') codemirror: any;
-  @ViewChild('nodeHookDetailsModal') nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
+  @ViewChild('code', {static: true}) codemirror: any;
+  @ViewChild('nodeHookDetailsModal', {static: false}) nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
 
   modal: ActiveModal<boolean, boolean, void>;
   modalConfig: TemplateModalConfig<boolean, boolean, void>;

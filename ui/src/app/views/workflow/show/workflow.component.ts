@@ -37,11 +37,11 @@ export class WorkflowShowComponent implements OnInit {
     qpsSubs: Subscription;
     direction: string;
 
-    @ViewChild('workflowGraph')
+    @ViewChild('workflowGraph', {static: true})
     workflowGraph: WorkflowGraphComponent;
-    @ViewChild('workflowStartParam')
+    @ViewChild('workflowStartParam', {static: true})
     runWithParamComponent: WorkflowNodeRunParamComponent;
-    @ViewChild('permWarning')
+    @ViewChild('permWarning', {static: true})
     permWarningModal: WarningModalComponent;
 
     selectedHookRef: string;

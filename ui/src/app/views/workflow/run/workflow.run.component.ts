@@ -25,7 +25,7 @@ import { filter } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowRunComponent implements OnInit {
-    @ViewChild('workflowRunParam')
+    @ViewChild('workflowRunParam', {static: true})
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
     workflow: Workflow;

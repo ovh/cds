@@ -30,7 +30,7 @@ import { environment } from '../../../../environments/environment';
 })
 @AutoUnsubscribe()
 export class WorkflowAddComponent implements OnInit {
-    @ViewChild('codeMirror') codemirror: any;
+    @ViewChild('codeMirror', {static: true}) codemirror: any;
 
     workflow: Workflow;
     project: Project;

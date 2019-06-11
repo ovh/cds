@@ -66,7 +66,7 @@ export class ProjectWorkflowListComponent implements OnInit {
   }
 
   // Modal
-  @ViewChild('projectLabels')
+  @ViewChild('projectLabels', {static: true})
   projectLabels: LabelsEditComponent;
 
   _project: Project;

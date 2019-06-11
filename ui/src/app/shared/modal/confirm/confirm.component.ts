@@ -13,7 +13,7 @@ export class ConfirmModalComponent {
     @Output() event = new EventEmitter<boolean>();
 
     // Ng semantic modal
-    @ViewChild('myConfirmModal')
+    @ViewChild('myConfirmModal', {static: false})
     public myConfirmModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
