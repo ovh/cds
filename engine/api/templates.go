@@ -39,7 +39,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 			)
 		} else {
 			ts, err = workflowtemplate.LoadAllByGroupIDs(ctx, api.mustDB(),
-				append(sdk.GroupsToIDs(JWT(ctx).Groups), group.SharedInfraGroup.ID),
+				append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID),
 				workflowtemplate.LoadOptions.Default,
 				workflowtemplate.LoadOptions.WithAudits,
 			)
@@ -534,10 +534,10 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			}
 		}
 
-		u := getAPIConsumer(ctx)
+		consumer := getAPIConsumer(ctx)
 
 		// non admin user should have read/write access to all given project
-		if !u.Admin() {
+		if !consumer.Admin() {
 			for i := range req.Operations {
 				if err := api.checkProjectPermissions(ctx, req.Operations[i].Request.ProjectKey, permission.PermissionReadWriteExecute, nil); err != nil {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
@@ -547,7 +547,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 		// store the bulk request
 		bulk := sdk.WorkflowTemplateBulk{
-			UserID:             JWT(ctx).AuthentifiedUser.OldUserStruct.ID,
+			UserID:             consumer.AuthentifiedUser.OldUserStruct.ID,
 			WorkflowTemplateID: wt.ID,
 			Operations:         make([]sdk.WorkflowTemplateBulkOperation, len(req.Operations)),
 		}
@@ -598,7 +598,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					// apply and import workflow
-					res, err := api.applyTemplate(ctx, u, p, wt, bulk.Operations[i].Request)
+					res, err := api.applyTemplate(ctx, consumer, p, wt, bulk.Operations[i].Request)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error("%v", errD)
@@ -618,7 +618,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					tr := tar.NewReader(buf)
 
-					_, _, err = workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, u, project.DecryptWithBuiltinKey)
+					_, _, err = workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, consumer, project.DecryptWithBuiltinKey)
 					if err != nil {
 						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
 							log.Error("%v", errD)
@@ -670,7 +670,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if b == nil || (b.UserID != JWT(ctx).AuthentifiedUser.OldUserStruct.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
+		if b == nil || (b.UserID != getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template bulk found for id %d", id)
 		}
 		sort.Slice(b.Operations, func(i, j int) bool {

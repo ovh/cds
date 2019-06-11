@@ -4,18 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
-	u := getAPIConsumer(ctx)
-	member := g.IsMember(u)
-	admin := g.IsAdmin(u.OnBehalfOf)
+	consumer := getAPIConsumer(ctx)
+	member := g.IsMember(consumer)
+	admin := g.IsAdmin(*consumer.AuthentifiedUser)
 	log.Debug("api.isGroupAdmin> member: %t admin: %t", member, admin)
 	return member && admin
 }
@@ -26,9 +24,9 @@ func isGroupMember(ctx context.Context, g *sdk.Group) bool {
 }
 
 func isMaintainer(ctx context.Context) bool {
-	u := getAPIConsumer(ctx)
-	maintainer := u.Maintainer()
-	admin := u.Admin()
+	consumer := getAPIConsumer(ctx)
+	maintainer := consumer.Maintainer()
+	admin := consumer.Admin()
 	log.Debug("api.isMaintainer> maintainer: %t admin: %t", maintainer, admin)
 	return maintainer || admin
 }
@@ -38,17 +36,17 @@ func isAdmin(ctx context.Context) bool {
 	return u.Admin()
 }
 
-func getAPIConsumer(c context.Context) *sdk.APIConsumer {
+func getAPIConsumer(c context.Context) *sdk.AuthConsumer {
 	i := c.Value(contextAPIConsumer)
 	if i == nil {
-		log.Debug("api.getAPIConsumer> no api consumer found in context")
+		log.Debug("api.getAPIConsumer> no auth consumer found in context")
 		return nil
 	}
-	u, ok := i.(*sdk.APIConsumer)
+	consumer, ok := i.(*sdk.AuthConsumer)
 	if !ok {
 		return nil
 	}
-	return u
+	return consumer
 }
 
 func getHandlerScope(c context.Context) HandlerScope {
@@ -63,7 +61,7 @@ func getHandlerScope(c context.Context) HandlerScope {
 	return u
 }
 
-func JWT(c context.Context) *sdk.AccessToken {
+/*func JWT(c context.Context) *sdk.AccessToken {
 	i := c.Value(contextJWT)
 	if i == nil {
 		log.Debug("api.JWT> no jwt token found in context")
@@ -75,7 +73,7 @@ func JWT(c context.Context) *sdk.AccessToken {
 		return nil
 	}
 	return u
-}
+}*/
 
 func JWTRaw(c context.Context) string {
 	i := c.Value(contextJWTRaw)
@@ -121,35 +119,39 @@ func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 }
 
 func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
-	db := a.mustDBWithCtx(ctx)
-	t := JWT(ctx)
-	if t == nil {
-		return nil, false
-	}
-	w, err := worker.LoadByAccessTokenID(ctx, db, t.ID)
-	if err != nil {
-		log.Error("unable to get worker from token %s: %v", t.ID, err)
-		return nil, false
-	}
-	if w == nil {
-		return nil, false
-	}
-	return w, true
+	/*db := a.mustDBWithCtx(ctx)
+		t := JWT(ctx)
+		if t == nil {
+			return nil, false
+		}
+		w, err := worker.LoadByAccessTokenID(ctx, db, t.ID)
+		if err != nil {
+			log.Error("unable to get worker from token %s: %v", t.ID, err)
+			return nil, false
+		}
+		if w == nil {
+			return nil, false
+		}
+	  return w, true*/
+
+	return nil, false
 }
 
 func (a *API) isHatchery(ctx context.Context) (*sdk.Service, bool) {
-	db := a.mustDBWithCtx(ctx)
-	t := JWT(ctx)
-	if t == nil {
-		return nil, false
-	}
-	s, err := services.FindByTokenID(db, t.ID)
-	if err != nil {
-		log.Error("unable to get hatchery from token %s: %v", t.ID, err)
-		return nil, false
-	}
-	if s.Type != services.TypeHatchery {
-		return nil, false
-	}
-	return s, true
+	/*db := a.mustDBWithCtx(ctx)
+		t := JWT(ctx)
+		if t == nil {
+			return nil, false
+		}
+		s, err := services.FindByTokenID(db, t.ID)
+		if err != nil {
+			log.Error("unable to get hatchery from token %s: %v", t.ID, err)
+			return nil, false
+		}
+		if s.Type != services.TypeHatchery {
+			return nil, false
+		}
+	  return s, true*/
+
+	return nil, false
 }

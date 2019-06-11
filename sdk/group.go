@@ -14,11 +14,10 @@ type Group struct {
 
 type Groups []Group
 
-func (groups Groups) HasOneOf(g ...Group) bool {
-	groupIDs := GroupsToIDs(groups)
-	hasOneOfIDs := GroupsToIDs(g)
-	for _, id := range hasOneOfIDs {
-		if IsInInt64Array(id, groupIDs) {
+func (groups Groups) HasOneOf(groupIDs ...int64) bool {
+	ids := GroupsToIDs(groups)
+	for _, id := range groupIDs {
+		if IsInInt64Array(id, ids) {
 			return true
 		}
 	}
@@ -63,8 +62,8 @@ func GroupPointersToIDs(gs []*Group) []int64 {
 
 // IsMember checks if given group memeber is part of current group.
 func (g Group) IsMember(u GroupMember) bool {
-	for _, group := range u.GetGroups() {
-		if group.ID == g.ID {
+	for _, id := range u.GetGroupIDs() {
+		if id == g.ID {
 			return true
 		}
 	}

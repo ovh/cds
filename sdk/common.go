@@ -180,23 +180,6 @@ func IsURL(path string) bool {
 	return rxURL.MatchString(path)
 }
 
-type StringSlice []string
-
-// Scan action.
-func (a *StringSlice) Scan(src interface{}) error {
-	source, ok := src.([]byte)
-	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
-	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal StringSlice")
-}
-
-// Value returns driver.Value from action.
-func (a StringSlice) Value() (driver.Value, error) {
-	j, err := json.Marshal(a)
-	return j, WrapError(err, "cannot marshal StringSlice")
-}
-
 // DirectoryExists checks if the directory exists
 func DirectoryExists(path string) (bool, error) {
 	s, err := os.Stat(path)
@@ -207,4 +190,40 @@ func DirectoryExists(path string) (bool, error) {
 		return false, nil
 	}
 	return s.IsDir(), err
+}
+
+// StringSlice type used for database json storage.
+type StringSlice []string
+
+// Scan string slice.
+func (s *StringSlice) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, s), "cannot unmarshal StringSlice")
+}
+
+// Value returns driver.Value from string slice.
+func (s StringSlice) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal StringSlice")
+}
+
+// Int64Slice type used for database json storage.
+type Int64Slice []int64
+
+// Scan int64 slice.
+func (s *Int64Slice) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, s), "cannot unmarshal Int64Slice")
+}
+
+// Value returns driver.Value from int64 slice.
+func (s Int64Slice) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal Int64Slice")
 }

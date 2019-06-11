@@ -80,7 +80,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"repositories_manager": rmName,
 			"url":                  url,
 			"request_token":        token,
-			"username":             JWT(ctx).AuthentifiedUser.Username,
+			"username":             getAPIConsumer(ctx).AuthentifiedUser.Username,
 		}
 
 		if token != "" {
@@ -211,7 +211,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
 			Name:     rmName,
-			Username: JWT(ctx).AuthentifiedUser.Username,
+			Username: getAPIConsumer(ctx).AuthentifiedUser.Username,
 			Data: map[string]string{
 				"token":  username,
 				"secret": secret,
@@ -289,7 +289,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
 			Name:     rmName,
-			Username: JWT(ctx).AuthentifiedUser.Username,
+			Username: getAPIConsumer(ctx).AuthentifiedUser.Username,
 			Data: map[string]string{
 				"token":  token,
 				"secret": secret,

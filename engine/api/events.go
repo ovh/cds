@@ -25,7 +25,7 @@ import (
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
 	UUID    string
-	User    *sdk.APIConsumer
+	User    *sdk.AuthConsumer
 	isAlive *abool.AtomicBool
 	w       http.ResponseWriter
 	mutex   sync.Mutex

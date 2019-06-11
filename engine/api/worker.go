@@ -87,7 +87,7 @@ func (api *API) getWorkersHandler() service.Handler {
 		var workers []sdk.Worker
 		var err error
 		if !isAdmin(ctx) {
-			h, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
+			h, err := services.FindByTokenID(api.mustDB(), getAPIConsumer(ctx).ID)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
@@ -120,7 +120,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if wk.Status == sdk.StatusBuilding {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
 			}
-			hatcherySrv, err := services.FindByTokenID(api.mustDB(), JWT(ctx).ID)
+			hatcherySrv, err := services.FindByTokenID(api.mustDB(), getAPIConsumer(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
@@ -147,7 +147,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 func (api *API) refreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -161,7 +161,7 @@ func (api *API) refreshWorkerHandler() service.Handler {
 
 func (api *API) unregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -174,7 +174,7 @@ func (api *API) unregisterWorkerHandler() service.Handler {
 
 func (api *API) workerCheckingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -192,7 +192,7 @@ func (api *API) workerCheckingHandler() service.Handler {
 
 func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), JWT(ctx).ID)
+		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}

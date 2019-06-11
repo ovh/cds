@@ -8,22 +8,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, maintainer sdk.AuthentifiedUser, expiration time.Time, w SpawnArguments) (sdk.AccessToken, string, error) {
-	var token sdk.AccessToken
+func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, maintainer sdk.AuthentifiedUser, expiration time.Time, w SpawnArguments) (sdk.AuthSession, string, error) {
+	var token sdk.AuthSession
 	token.ID = sdk.UUID()
 	token.Created = time.Now()
 	token.ExpireAt = expiration
-	token.Name = w.WorkerName
-	token.Origin = hatcheryName
-	token.Status = sdk.AccessTokenStatusEnabled
-	token.AuthentifiedUser = &maintainer
-	token.AuthentifiedUserID = maintainer.ID
 	token.Scopes = []string{sdk.AccessTokenScopeWorker}
 	claims := WorkerJWTClaims{
 		Worker: w,
 		StandardClaims: jwt.StandardClaims{
-			Issuer:    token.Origin,
-			Subject:   token.Name,
+			Issuer:    hatcheryName,
+			Subject:   w.WorkerName,
 			Id:        token.ID,
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: token.ExpireAt.Unix(),

@@ -3,21 +3,13 @@ package api
 import (
 	"context"
 	"net/http"
-	"time"
 
-	"github.com/gorilla/mux"
-
-	"github.com/ovh/cds/engine/api/accesstoken"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Manage access token handlers
 
-func (api *API) createNewAccessToken(u sdk.AuthentifiedUser, accessTokenRequest sdk.AccessTokenRequest) (token sdk.AccessToken, jwttoken string, err error) {
+/*func (api *API) createNewAccessToken(u sdk.AuthentifiedUser, accessTokenRequest sdk.AccessTokenRequest) (token sdk.AccessToken, jwttoken string, err error) {
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return token, jwttoken, sdk.WithStack(err)
@@ -74,35 +66,36 @@ func (api *API) createNewAccessToken(u sdk.AuthentifiedUser, accessTokenRequest 
 	}
 
 	return token, jwttoken, nil
-}
+}*/
 
 // postNewAccessTokenHandler create a new specific accesstoken with a specific scope (list of groups)
 // the JWT token is send through a header X-CDS-JWT
 func (api *API) postNewAccessTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// the groupIDs are the scope of the requested token
-		var accessTokenRequest sdk.AccessTokenRequest
-		if err := service.UnmarshalBody(r, &accessTokenRequest); err != nil {
-			return sdk.WithStack(err)
-		}
+		/*// the groupIDs are the scope of the requested token
+				var accessTokenRequest sdk.AccessTokenRequest
+				if err := service.UnmarshalBody(r, &accessTokenRequest); err != nil {
+					return sdk.WithStack(err)
+				}
 
-		// if the scope is empty, raise an error
-		if len(accessTokenRequest.GroupsIDs) == 0 {
-			return sdk.WithStack(sdk.ErrWrongRequest)
-		}
+				// if the scope is empty, raise an error
+				if len(accessTokenRequest.GroupsIDs) == 0 {
+					return sdk.WithStack(sdk.ErrWrongRequest)
+				}
 
-		APIConsumer := getAPIConsumer(ctx)
+				APIConsumer := getAPIConsumer(ctx)
 
-		token, jwttoken, err := api.createNewAccessToken(APIConsumer.OnBehalfOf, accessTokenRequest)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
+				token, jwttoken, err := api.createNewAccessToken(APIConsumer.OnBehalfOf, accessTokenRequest)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
 
-		// Set the JWT token as a header
-		log.Debug("token.postNewAccessTokenHandler> X-CDS-JWT:%s", jwttoken[:12])
-		w.Header().Add("X-CDS-JWT", jwttoken)
+				// Set the JWT token as a header
+				log.Debug("token.postNewAccessTokenHandler> X-CDS-JWT:%s", jwttoken[:12])
+				w.Header().Add("X-CDS-JWT", jwttoken)
 
-		return service.WriteJSON(w, token, http.StatusCreated)
+		    return service.WriteJSON(w, token, http.StatusCreated)*/
+		return nil
 	}
 }
 
@@ -110,89 +103,96 @@ func (api *API) postNewAccessTokenHandler() service.Handler {
 // the JWT token is send through a header X-CDS-JWT
 func (api *API) putRegenAccessTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		id := vars["id"]
+		/*vars := mux.Vars(r)
+				id := vars["id"]
 
-		t, err := accesstoken.LoadByID(ctx, api.mustDB(), id,
-			accesstoken.LoadOptions.WithAuthentifiedUser,
-			accesstoken.LoadOptions.WithGroups,
-		)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
+				t, err := accesstoken.LoadByID(ctx, api.mustDB(), id,
+					accesstoken.LoadOptions.WithAuthentifiedUser,
+					accesstoken.LoadOptions.WithGroups,
+				)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
 
-		// Only the creator of the token can regen it
-		if t.AuthentifiedUserID != getAPIConsumer(ctx).OnBehalfOf.ID {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
+				// Only the creator of the token can regen it
+				if t.AuthentifiedUserID != getAPIConsumer(ctx).OnBehalfOf.ID {
+					return sdk.WithStack(sdk.ErrForbidden)
+				}
 
-		// Create the token
-		jwttoken, err := accesstoken.Regen(t)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
+				// Create the token
+				jwttoken, err := accesstoken.Regen(t)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
 
-		// Set the JWT token as a header
-		w.Header().Add("X-CDS-JWT", jwttoken)
+				// Set the JWT token as a header
+				w.Header().Add("X-CDS-JWT", jwttoken)
 
-		return service.WriteJSON(w, t, http.StatusOK)
+		    return service.WriteJSON(w, t, http.StatusOK)
+		*/
+
+		return nil
 	}
 }
 
 func (api *API) getAccessTokenByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVar(r, "id")
-		if err != nil {
-			return sdk.WithStack(err)
-		}
+		/*id, err := requestVar(r, "id")
+				if err != nil {
+					return sdk.WithStack(err)
+				}
 
-		tokens, err := accesstoken.LoadAllByUserID(ctx, api.mustDB(), id,
-			accesstoken.LoadOptions.WithGroups,
-			accesstoken.LoadOptions.WithAuthentifiedUser,
-		)
-		if err != nil {
-			return err
-		}
+				tokens, err := accesstoken.LoadAllByUserID(ctx, api.mustDB(), id,
+					accesstoken.LoadOptions.WithGroups,
+					accesstoken.LoadOptions.WithAuthentifiedUser,
+				)
+				if err != nil {
+					return err
+				}
 
-		return service.WriteJSON(w, tokens, http.StatusOK)
+		    return service.WriteJSON(w, tokens, http.StatusOK)*/
+
+		return nil
 	}
 }
 
 func (api *API) getAccessTokenByGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
-		if err != nil {
-			return err
-		}
+		/*	id, err := requestVarInt(r, "id")
+							if err != nil {
+								return err
+							}
 
-		// Check that the current user is member of the group
-		g, err := group.LoadByID(ctx, api.mustDB(), id, group.LoadOptions.WithMembers)
-		if err != nil {
-			return err
-		}
-		if g == nil {
-			return sdk.WithStack(sdk.ErrGroupNotFound)
-		}
+							// Check that the current user is member of the group
+							g, err := group.LoadByID(ctx, api.mustDB(), id, group.LoadOptions.WithMembers)
+							if err != nil {
+								return err
+							}
+							if g == nil {
+								return sdk.WithStack(sdk.ErrGroupNotFound)
+							}
 
-		if !isGroupAdmin(ctx, g) && !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
+							if !isGroupAdmin(ctx, g) && !isAdmin(ctx) {
+								return sdk.WithStack(sdk.ErrForbidden)
+							}
 
-		tokens, err := accesstoken.LoadAllByGroupID(ctx, api.mustDB(), id,
-			accesstoken.LoadOptions.WithGroups,
-			accesstoken.LoadOptions.WithAuthentifiedUser,
-		)
-		if err != nil {
-			return err
-		}
+							tokens, err := accesstoken.LoadAllByGroupID(ctx, api.mustDB(), id,
+								accesstoken.LoadOptions.WithGroups,
+								accesstoken.LoadOptions.WithAuthentifiedUser,
+							)
+							if err != nil {
+								return err
+			        }
 
-		return service.WriteJSON(w, tokens, http.StatusOK)
+			        return service.WriteJSON(w, tokens, http.StatusOK)
+		*/
+		return nil
 	}
 }
 
 func (api *API) deleteAccessTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
+		/*vars := mux.Vars(r)
 		id := vars["id"]
 
 		t, err := accesstoken.LoadByID(ctx, api.mustDB(), id,
@@ -210,7 +210,7 @@ func (api *API) deleteAccessTokenHandler() service.Handler {
 
 		if err := accesstoken.Delete(api.mustDB(), id); err != nil {
 			return sdk.WithStack(err)
-		}
+		}*/
 
 		return nil
 	}

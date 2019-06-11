@@ -43,8 +43,7 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 }
 
 func (api *API) checkProjectPermissions(ctx context.Context, key string, expectedPermissions int, routeVars map[string]string) error {
-	groupIDs := sdk.GroupsToIDs(JWT(ctx).Groups)
-	perms, err := loadPermissionsByGroupID(ctx, api.mustDB(), api.Cache, groupIDs...)
+	perms, err := loadPermissionsByGroupID(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GroupIDs...)
 	if err != nil {
 		return err
 	}

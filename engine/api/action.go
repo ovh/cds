@@ -35,7 +35,7 @@ func (api *API) getActionsHandler() service.Handler {
 			)
 		} else {
 			as, err = action.LoadAllTypeDefaultByGroupIDs(ctx, api.mustDB(),
-				append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID),
+				append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID),
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
@@ -848,9 +848,11 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return usage, err
 	}
 
+	consumer := getAPIConsumer(ctx)
+
 	if !isAdmin(ctx) && !isMaintainer(ctx) {
 		// filter usage in pipeline by user's projects
-		ps, err := project.LoadAllByGroups(ctx, db, store, getAPIConsumer(ctx))
+		ps, err := project.LoadAllByGroups(ctx, db, store, consumer)
 		if err != nil {
 			return usage, err
 		}
@@ -868,10 +870,9 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		usage.Pipelines = filteredPipelines
 
 		// filter usage in action by user's groups
-		groupIDs := sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups())
-		mGroupIDs := make(map[int64]struct{}, len(groupIDs))
-		for i := range groupIDs {
-			mGroupIDs[groupIDs[i]] = struct{}{}
+		mGroupIDs := make(map[int64]struct{}, len(consumer.GroupIDs))
+		for i := range consumer.GroupIDs {
+			mGroupIDs[consumer.GroupIDs[i]] = struct{}{}
 		}
 
 		filteredActions := make([]action.UsageAction, 0, len(usage.Actions))

@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS "authentified_user" (
   sig BYTEA
 );
 
-
 CREATE TABLE IF NOT EXISTS "authentified_user_migration" (
     authentified_user_id VARCHAR(36),
     user_id BIGINT,
@@ -28,7 +27,6 @@ CREATE TABLE IF NOT EXISTS "user_local_authentication" (
 
 SELECT create_foreign_key_idx_cascade('FK_LOCAL_AUTH_AUTHENTIFIED', 'user_local_authentication', 'authentified_user', 'user_id', 'id');
 
-
 CREATE TABLE IF NOT EXISTS "user_contact" (
   id BIGSERIAL PRIMARY KEY,
   user_id VARCHAR(36),
@@ -40,33 +38,38 @@ CREATE TABLE IF NOT EXISTS "user_contact" (
 
 SELECT create_foreign_key_idx_cascade('FK_USER_CONTACT_AUTHENTIFIED', 'user_contact', 'authentified_user', 'user_id', 'id');
 
-DROP TABLE IF EXISTS access_token_group;
-DROP TABLE IF EXISTS access_token;
+DROP TABLE IF EXISTS auth_consumer;
 
-CREATE TABLE access_token
+CREATE TABLE auth_consumer
 (
-    id VARCHAR(64) PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    parent_id VARCHAR(36),
     user_id VARCHAR(36),
-    created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
-    expired_at TIMESTAMP WITH TIME ZONE,
-    status VARCHAR(25),
-    origin  VARCHAR(25),
+    type VARCHAR(64),
+    data JSONB,
+    created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,    
+    group_ids JSONB,
     scopes JSONB
 );
 
-CREATE TABLE access_token_group
+SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER', 'auth_consumer', 'authentified_user', 'user_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_PARENT', 'auth_consumer', 'auth_consumer', 'parent_id', 'id');
+
+DROP TABLE IF EXISTS auth_session;
+
+CREATE TABLE auth_session
 (
-    access_token_id VARCHAR(255),
-    group_id BIGINT,
-    PRIMARY KEY (access_token_id, group_id)
+    id VARCHAR(36) PRIMARY KEY,
+    consumer_id VARCHAR(36),
+    expired_at TIMESTAMP WITH TIME ZONE,
+    created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
+    group_ids JSONB,
+    scopes JSONB
 );
 
-
-SELECT create_foreign_key_idx_cascade('FK_ACCESS_TOKEN_USER', 'access_token', 'authentified_user', 'user_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_ACCESS_TOKEN_GROUP_ACCESS_TOKEN', 'access_token_group', 'access_token', 'access_token_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_ACCESS_TOKEN_GROUP_GROUP', 'access_token_group', 'group', 'group_id', 'id');
-SELECT create_unique_index('access_token', 'IDX_ACCESS_TOKEN', 'user_id,name');
+SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
 
 ALTER TABLE services ADD COLUMN IF NOT EXISTS token_id VARCHAR(64);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
@@ -86,7 +89,7 @@ CREATE TABLE worker
     model_id BIGINT NOT NULL,
     job_run_id BIGINT,
     hatchery_id BIGINT NOT NULL,
-    access_token_id VARCHAR(64) REFERENCES access_token(id)
+    auth_consumer_id VARCHAR(64) REFERENCES auth_consumer(id)
 );
 
 SELECT create_foreign_key('FK_WORKER_MODEL', 'worker', 'worker_model', 'model_id', 'id');
@@ -102,8 +105,8 @@ SELECT create_foreign_key('FK_WORKER_SERVICES', 'worker', 'services', 'hatchery_
 DROP TABLE "authentified_user_migration";
 DROP TABLE "user_local_authentication";
 DROP TABLE "user_contact";
-DROP TABLE "authentified_user";
 DROP TABLE "worker";
 DROP TABLE "access_token_group";
 DROP TABLE "access_token";
+DROP TABLE "authentified_user";
 ALTER TABLE old_worker RENAME TO worker;

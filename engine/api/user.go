@@ -17,7 +17,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if JWT(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
+		if getAPIConsumer(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
@@ -50,11 +50,13 @@ func (api *API) getUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if JWT(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
+		consumer := getAPIConsumer(ctx)
+
+		if consumer.AuthentifiedUser.Username != username && !isAdmin(ctx) {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
-		return service.WriteJSON(w, JWT(ctx).AuthentifiedUser, http.StatusOK)
+		return service.WriteJSON(w, consumer.AuthentifiedUser, http.StatusOK)
 	}
 }
 
@@ -112,8 +114,8 @@ func (api *API) getUsersHandler() service.Handler {
 // getUserLoggedHandler check if the current user is connected
 func (api *API) getUserLoggedHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if JWT(ctx) == nil {
-			return sdk.ErrUnauthorized
+		if getAPIConsumer(ctx) == nil {
+			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

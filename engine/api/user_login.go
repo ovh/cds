@@ -6,12 +6,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/user"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -48,15 +45,15 @@ func (api *API) loginUserHandler() service.Handler {
 
 		// If there is a request token, store it (for 30 minutes)
 		if loginUserRequest.RequestToken != "" {
-			var accessTokenRequest sdk.AccessTokenRequest
-			if err := jws.UnsafeParse(loginUserRequest.RequestToken, &accessTokenRequest); err != nil {
-				return sdk.WithStack(err)
-			}
-			token, _, err := api.createNewAccessToken(*authUser, accessTokenRequest)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			api.Cache.SetWithTTL("api:loginUserHandler:RequestToken:"+loginUserRequest.RequestToken, token, 30*60)
+			//var accessTokenRequest sdk.AccessTokenRequest
+			//if err := jws.UnsafeParse(loginUserRequest.RequestToken, &accessTokenRequest); err != nil {
+			//	return sdk.WithStack(err)
+			//}
+			//token, _, err := api.createNewAccessToken(*authUser, accessTokenRequest)
+			//if err != nil {
+			//	return sdk.WithStack(err)
+			//}
+			//api.Cache.SetWithTTL("api:loginUserHandler:RequestToken:"+loginUserRequest.RequestToken, token, 30*60)
 		}
 
 		if err := user.LoadOptions.WithDeprecatedUser(ctx, api.mustDB(), authUser); err != nil {
@@ -75,34 +72,36 @@ func (api *API) loginUserHandler() service.Handler {
 func (api *API) loginUserCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// api.Cache.SetWithTTL("api:loginUserHandler:RequestToken:"+loginUserRequest.RequestToken, token, 30*60)
-		var request sdk.UserLoginCallbackRequest
-		if err := service.UnmarshalBody(r, &request); err != nil {
-			return sdk.WithStack(err)
-		}
+		/*var request sdk.UserLoginCallbackRequest
+				if err := service.UnmarshalBody(r, &request); err != nil {
+					return sdk.WithStack(err)
+				}
 
-		var accessToken sdk.AccessToken
-		if !api.Cache.Get("api:loginUserHandler:RequestToken:"+request.RequestToken, &accessToken) {
-			return sdk.ErrNotFound
-		}
+				var accessToken sdk.AccessToken
+				if !api.Cache.Get("api:loginUserHandler:RequestToken:"+request.RequestToken, &accessToken) {
+					return sdk.ErrNotFound
+				}
 
-		pk, err := jws.NewPublicKeyFromPEM(request.PublicKey)
-		if err != nil {
-			log.Debug("unable to read public key: %v", string(request.PublicKey))
-			return sdk.WithStack(err)
-		}
+				pk, err := jws.NewPublicKeyFromPEM(request.PublicKey)
+				if err != nil {
+					log.Debug("unable to read public key: %v", string(request.PublicKey))
+					return sdk.WithStack(err)
+				}
 
-		var x sdk.AccessTokenRequest
-		if err := jws.Verify(pk, request.RequestToken, &x); err != nil {
-			return sdk.WithStack(err)
-		}
+				var x sdk.AccessTokenRequest
+				if err := jws.Verify(pk, request.RequestToken, &x); err != nil {
+					return sdk.WithStack(err)
+				}
 
-		jwt, err := accesstoken.Regen(&accessToken)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
+				jwt, err := accesstoken.Regen(&accessToken)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
 
-		w.Header().Add("X-CDS-JWT", jwt)
+				w.Header().Add("X-CDS-JWT", jwt)
 
-		return service.WriteJSON(w, accessToken, http.StatusOK)
+		    return service.WriteJSON(w, accessToken, http.StatusOK)*/
+
+		return nil
 	}
 }

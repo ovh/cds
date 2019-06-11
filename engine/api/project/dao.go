@@ -35,7 +35,7 @@ func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupM
 				OR
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)`
-	args := []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID, repo}
+	args := []interface{}{gorpmapping.IDsToQueryString(u.GetGroupIDs()), group.SharedInfraGroup.ID, repo}
 	return loadAllByRepo(db, store, query, args, opts...)
 }
 
@@ -63,7 +63,7 @@ func LoadAllByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			$2 = ANY(string_to_array($1, ',')::int[])
 	)
 	ORDER by project.name, project.projectkey ASC`
-	args := []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID}
+	args := []interface{}{gorpmapping.IDsToQueryString(u.GetGroupIDs()), group.SharedInfraGroup.ID}
 	return loadprojects(db, store, opts, query, args...)
 }
 

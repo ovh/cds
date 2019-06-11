@@ -12,14 +12,14 @@ import (
 
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		//u := getAPIConsumer(ctx)
+		consumer := getAPIConsumer(ctx)
 		//currentItem, errS := FormInt(r, "currentItem")
 		//if errS != nil {
 		//	return sdk.WrapError(errS, "invalid format for current item")
 		//}
 
 		// Get workflow to mute
-		timelineFilter, errT := user.LoadTimelineFilter(api.mustDB(), JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
+		timelineFilter, errT := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.OldUserStruct.ID)
 		if errT != nil {
 			return sdk.WrapError(errT, "unable to load timeline filter")
 		}
@@ -31,39 +31,39 @@ func (api *API) getTimelineHandler() service.Handler {
 				muteFilter[pf.Key+"/"+wn] = true
 			}
 		}
-		/*
-			permToRequest := make(map[string][]string, len(JWT(ctx).AuthentifiedUser.OldUserStruct.Permissions.WorkflowsPerm))
-			for k := range u.OldUserStruct.Permissions.WorkflowsPerm {
-				if _, ok := muteFilter[k]; ok {
-					continue
-				}
 
-				keySplitted := strings.Split(k, "/")
-				pKey := keySplitted[0]
-				wName := keySplitted[1]
-
-				pFilter, ok := permToRequest[pKey]
-				if !ok {
-					pFilter = make([]string, 0, 1)
-				}
-				pFilter = append(pFilter, wName)
-				permToRequest[pKey] = pFilter
+		/*permToRequest := make(map[string][]string, len(consumer.AuthentifiedUser.OldUserStruct.Permissions.WorkflowsPerm))
+		for k := range consumer.AuthentifiedUser.OldUserStruct.Permissions.WorkflowsPerm {
+			if _, ok := muteFilter[k]; ok {
+				continue
 			}
 
-			request := sdk.EventFilter{
-				CurrentItem: currentItem,
-				Filter: sdk.TimelineFilter{
-					Projects: make([]sdk.ProjectFilter, 0, len(permToRequest)),
-				},
+			keySplitted := strings.Split(k, "/")
+			pKey := keySplitted[0]
+			wName := keySplitted[1]
+
+			pFilter, ok := permToRequest[pKey]
+			if !ok {
+				pFilter = make([]string, 0, 1)
 			}
-			for k, v := range permToRequest {
-				pFilter := sdk.ProjectFilter{
-					Key:           k,
-					WorkflowNames: v,
-				}
-				request.Filter.Projects = append(request.Filter.Projects, pFilter)
+			pFilter = append(pFilter, wName)
+			permToRequest[pKey] = pFilter
+		}
+
+		request := sdk.EventFilter{
+			CurrentItem: currentItem,
+			Filter: sdk.TimelineFilter{
+				Projects: make([]sdk.ProjectFilter, 0, len(permToRequest)),
+			},
+		}
+		for k, v := range permToRequest {
+			pFilter := sdk.ProjectFilter{
+				Key:           k,
+				WorkflowNames: v,
 			}
-		*/
+			request.Filter.Projects = append(request.Filter.Projects, pFilter)
+		}*/
+
 		events, err := event.GetEvents(api.mustDB(), api.Cache, sdk.EventFilter{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load events")

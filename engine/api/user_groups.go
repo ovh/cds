@@ -17,7 +17,7 @@ func (api *API) getUserGroupsHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if JWT(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
+		if getAPIConsumer(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 

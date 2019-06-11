@@ -1,19 +1,11 @@
 package api
 
 import (
-	"encoding/json"
-	"net/http/httptest"
-	"strconv"
 	"testing"
-
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/sdk"
 )
 
 func TestAPI_TokenHandlers(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	/*api, db, router, end := newTestAPI(t)
 	defer end()
 
 	grp := sdk.Group{Name: sdk.RandomString(10)}
@@ -99,5 +91,5 @@ func TestAPI_TokenHandlers(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	test.Equal(t, 200, w.Code)
-	t.Logf("getAccessTokenByUserHandler result is : %s", w.Body.String())
+	t.Logf("getAccessTokenByUserHandler result is : %s", w.Body.String())*/
 }

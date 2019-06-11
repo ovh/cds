@@ -48,12 +48,12 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		srv.TokenID = JWT(ctx).ID
+		srv.TokenID = getAPIConsumer(ctx).ID
 
 		//Service must be with a sharedinfra group token
 		// except for hatchery: users can start hatchery with their group
 		if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
-			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", JWT(ctx).ID, srv.Type)
+			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
 		}
 		// TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
 		srv.Uptodate = srv.Version == sdk.VERSION

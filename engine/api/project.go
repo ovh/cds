@@ -211,7 +211,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(JWT(ctx).AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -347,7 +347,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 		p, errP := project.Load(db, api.Cache, key,
 			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(JWT(ctx).AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
@@ -431,6 +431,8 @@ func (api *API) addProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot insert project")
 		}
 
+		consumer := getAPIConsumer(ctx)
+
 		// Add group
 		for i := range p.ProjectGroups {
 			groupPermission := &p.ProjectGroups[i]
@@ -453,14 +455,14 @@ func (api *API) addProjectHandler() service.Handler {
 
 			// Add user in group
 			if newGroup {
-				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID, true); err != nil {
-					return sdk.WrapError(err, "Cannot add user %s in group %s", JWT(ctx).AuthentifiedUser.Username, groupPermission.Group.Name)
+				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, consumer.AuthentifiedUser.OldUserStruct.ID, true); err != nil {
+					return sdk.WrapError(err, "Cannot add user %s in group %s", consumer.AuthentifiedUser.Username, groupPermission.Group.Name)
 				}
 			}
 		}
 
 		for _, v := range p.Variable {
-			if errVar := project.InsertVariable(tx, p, &v, getAPIConsumer(ctx)); errVar != nil {
+			if errVar := project.InsertVariable(tx, p, &v, consumer); errVar != nil {
 				return sdk.WrapError(errVar, "addProjectHandler> Cannot add variable %s in project %s", v.Name, p.Name)
 			}
 		}
@@ -515,7 +517,7 @@ func (api *API) addProjectHandler() service.Handler {
 
 		for i := range integrationModels {
 			pf := &integrationModels[i]
-			if err := propagatePublicIntegrationModelOnProject(tx, api.Cache, *pf, *p, getAPIConsumer(ctx)); err != nil {
+			if err := propagatePublicIntegrationModelOnProject(tx, api.Cache, *pf, *p, consumer); err != nil {
 				return sdk.WrapError(err, "propagatePublicIntegrationModelOnProject error")
 			}
 		}
@@ -525,10 +527,10 @@ func (api *API) addProjectHandler() service.Handler {
 		}
 		p.Permission = permission.PermissionReadWriteExecute
 
-		event.PublishAddProject(p, getAPIConsumer(ctx))
+		event.PublishAddProject(p, consumer)
 
 		proj, errL := project.Load(api.mustDB(), api.Cache, p.Key, project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites(JWT(ctx).AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.OldUserStruct.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission,
 			project.LoadOptions.WithIntegrations, project.LoadOptions.WithVariables)
 		if errL != nil {

@@ -1,118 +1,136 @@
 package sdk
 
 import (
+	"database/sql/driver"
+	json "encoding/json"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk/log"
 )
 
-const (
-	AccessTokenStatusEnabled  = "enabled"
-	AccessTokenStatusDisabled = "disabled"
-)
-
-// AccessTokenRequest a the type used by clients to ask a new access_token
-type AccessTokenRequest struct {
+// AuthConsumerRequest struct used by clients to create a new builtin auth consumer.
+type AuthConsumerRequest struct {
+	Name                  string   `json:"name"`
+	Description           string   `json:"description"`
 	GroupsIDs             []int64  `json:"groups"`
 	Scopes                []string `json:"scopes"`
-	Description           string   `json:"description"`
-	Origin                string   `json:"origin"`
 	ExpirationDelaySecond float64  `json:"expiration_delay_second"`
 }
 
-// APIConsumer is a user granted from a JWT token. It can be a service, a worker, a hatchery or a user
-type APIConsumer struct {
-	Name       string
-	Groups     []Group
-	OnBehalfOf AuthentifiedUser
-}
+// AuthConsumerType constant to identify what is the driver used to create a consumer.
+type AuthConsumerType string
 
-func (g *APIConsumer) IsGranted() bool {
-	granted := g != nil
-	log.Debug("APIConsumer.IsGranted> granted: %t", granted)
-	return granted
-}
+// Consumer types.
+const (
+	ConsumerBuiltin AuthConsumerType = "builtin"
+)
 
-func (g *APIConsumer) GetGroups() []Group {
-	if !g.IsGranted() {
-		return nil
+// AuthConsumerData contains specific information from the auth driver.
+type AuthConsumerData map[string]string
+
+// Scan consumer data.
+func (d *AuthConsumerData) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return g.Groups
+	return WrapError(json.Unmarshal(source, d), "cannot unmarshal AuthConsumerData")
 }
 
-func (g *APIConsumer) Admin() bool {
-	if !g.IsGranted() {
-		return false
-	}
-	admin := g.OnBehalfOf.Admin()
-	log.Debug("APIConsumer.Admin> consumer on behalf of user %s is admin: %t", g.OnBehalfOf.GetFullname(), admin)
-	return admin
+// Value returns driver.Value from consumer data.
+func (d AuthConsumerData) Value() (driver.Value, error) {
+	j, err := json.Marshal(d)
+	return j, WrapError(err, "cannot marshal AuthConsumerData")
 }
 
-func (g *APIConsumer) Maintainer() bool {
-	if !g.IsGranted() {
-		return false
-	}
-	return g.OnBehalfOf.Maintainer()
-}
-
-func (g *APIConsumer) GetConsumerName() string {
-	return g.Name
-}
-
-func (g *APIConsumer) GetUsername() string {
-	return g.OnBehalfOf.Username
-}
-
-func (g *APIConsumer) GetFullname() string {
-	return g.OnBehalfOf.Fullname
-}
-
-func (g *APIConsumer) GetEmail() string {
-	return g.OnBehalfOf.GetEmail()
-}
-
-func (g *APIConsumer) GetDEPRECATEDUserStruct() *User {
-	if g.IsGranted() {
-		return nil
-	}
-	if g.OnBehalfOf.OldUserStruct == nil {
-		return nil
-	}
-	return g.OnBehalfOf.OldUserStruct
-}
-
-// AccessToken is either a Personnal Access Token or a Group Access Token
-type AccessToken struct {
-	ID                 string      `json:"id" cli:"id,key" db:"id"`
-	Name               string      `json:"name" cli:"name" db:"name"`
-	AuthentifiedUserID string      `json:"user_id,omitempty" db:"user_id"`
-	ExpireAt           time.Time   `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
-	Created            time.Time   `json:"created" cli:"created" db:"created"`
-	Status             string      `json:"status" cli:"status" db:"status"`
-	Origin             string      `json:"-" cli:"-" db:"origin"`
-	Groups             Groups      `json:"groups" cli:"groups" db:"-"`
-	Scopes             StringSlice `json:"scopes" cli:"scopes" db:"scopes"`
+// AuthConsumer issues session linked to an authentified user.
+type AuthConsumer struct {
+	ID                 string           `json:"id" cli:"id,key" db:"id"`
+	Name               string           `json:"name" cli:"name" db:"name"`
+	Description        string           `json:"description" cli:"description" db:"description"`
+	ParentID           *string          `json:"parent_id" db:"parent_id"`
+	AuthentifiedUserID string           `json:"user_id,omitempty" db:"user_id"`
+	Type               AuthConsumerType `json:"type" cli:"type" db:"type"`
+	Data               AuthConsumerData `json:"data" db:"data"`
+	Created            time.Time        `json:"created" cli:"created" db:"created"`
+	GroupIDs           Int64Slice       `json:"group_ids" cli:"group_ids" db:"group_ids"`
+	Scopes             StringSlice      `json:"scopes" cli:"scopes" db:"scopes"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user" db:"-"`
 }
 
-// AccessTokensToIDs returns ids of given access tokens.
-func AccessTokensToIDs(ats []*AccessToken) []string {
-	ids := make([]string, len(ats))
-	for i := range ats {
-		ids[i] = ats[i].ID
+func (c AuthConsumer) GetGroupIDs() []int64 {
+	return c.GroupIDs
+}
+
+func (c AuthConsumer) Admin() bool {
+	admin := c.AuthentifiedUser.Admin()
+	log.Debug("AuthConsumer.Admin> consumer on behalf of user %s is admin: %t", c.AuthentifiedUser.GetFullname(), admin)
+	return admin
+}
+
+func (c AuthConsumer) Maintainer() bool {
+	return c.AuthentifiedUser.Maintainer()
+}
+
+func (c AuthConsumer) GetConsumerName() string {
+	return c.Name
+}
+
+func (c AuthConsumer) GetUsername() string {
+	return c.AuthentifiedUser.Username
+}
+
+func (c AuthConsumer) GetFullname() string {
+	return c.AuthentifiedUser.Fullname
+}
+
+func (c AuthConsumer) GetEmail() string {
+	return c.AuthentifiedUser.GetEmail()
+}
+
+func (c AuthConsumer) GetDEPRECATEDUserStruct() *User {
+	return c.AuthentifiedUser.OldUserStruct
+}
+
+// AuthSession struct.
+type AuthSession struct {
+	ID         string      `json:"id" cli:"id,key" db:"id"`
+	ConsumerID string      `json:"consumer_id" cli:"consumer_id" db:"consumer_id"`
+	ExpireAt   time.Time   `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
+	Created    time.Time   `json:"created" cli:"created" db:"created"`
+	GroupIDs   Int64Slice  `json:"group_ids" cli:"group_ids" db:"group_ids"`
+	Scopes     StringSlice `json:"scopes" cli:"scopes" db:"scopes"`
+	// aggregates
+	Consumer *AuthConsumer `json:"consumer" db:"-"`
+	Groups   []Group       `json:"groups" db:"-"`
+}
+
+// AuthSessionJWTClaims is the specific claims format for JWT session.
+type AuthSessionJWTClaims struct {
+	ID       string
+	GroupIDs []int64
+	Scopes   []string
+	jwt.StandardClaims
+}
+
+// AuthSessionsToIDs returns ids of given auth sessions.
+func AuthSessionsToIDs(ass []*AuthSession) []string {
+	ids := make([]string, len(ass))
+	for i := range ass {
+		ids[i] = ass[i].ID
 	}
 	return ids
 }
 
-// AccessTokensToIDs returns ids of given access tokens.
-func AccessTokensToAuthentifiedUserIDs(ats []*AccessToken) []string {
-	ids := make([]string, len(ats))
-	for i := range ats {
-		ids[i] = ats[i].AuthentifiedUserID
+// AuthConsumersToAuthentifiedUserIDs returns ids of given auth consumers.
+func AuthConsumersToAuthentifiedUserIDs(cs []*AuthConsumer) []string {
+	ids := make([]string, len(cs))
+	for i := range cs {
+		ids[i] = cs[i].AuthentifiedUserID
 	}
 	return ids
 }
@@ -128,14 +146,6 @@ type Token struct {
 	Creator     string     `json:"creator" cli:"creator"`
 	Expiration  Expiration `json:"expiration" cli:"expiration"`
 	Created     time.Time  `json:"created" cli:"created"`
-}
-
-// AccessTokenJWTClaims is the specific claims format for JWT Tokens
-type AccessTokenJWTClaims struct {
-	ID     string
-	Groups []int64
-	Scopes []string
-	jwt.StandardClaims
 }
 
 // Available access tokens scopes

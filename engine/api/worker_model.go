@@ -231,7 +231,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		if isMaintainer(ctx) || isAdmin(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)
 		} else {
-			groupIDs := append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID)
+			groupIDs := append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID)
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), groupIDs, &filter, workermodel.LoadOptions.Default)
 		}
 		if err != nil {
@@ -264,7 +264,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			pips, err = pipeline.LoadByWorkerModel(ctx, api.mustDB(), m)
 		} else {
 			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(ctx, api.mustDB(), m,
-				append(sdk.GroupsToIDs(getAPIConsumer(ctx).GetGroups()), group.SharedInfraGroup.ID))
+				append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID))
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipelines linked to worker model")

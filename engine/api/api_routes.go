@@ -42,11 +42,17 @@ func (api *API) InitRouter() {
 	}
 	api.eventsBroker.Init(context.Background(), api.PanicDump())
 
-	// Access token
-	r.Handle("/accesstoken", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))
-	r.Handle("/accesstoken/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
-	r.Handle("/accesstoken/user/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getAccessTokenByUserHandler))
-	r.Handle("/accesstoken/group/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getAccessTokenByGroupHandler))
+	// Auth
+	//r.Handle("/auth/logged", ScopeNone(), r.GET(api.getUserLoggedHandler))
+	//r.Handle("/auth/consumer/github/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
+	//r.Handle("/auth/consumer/sso/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
+	//r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.resetUserHandler))
+	//r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.resetUserHandler))
+	//r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.resetUserHandler))
+	//r.Handle("/auth/consumer/local/confirm/{token}", ScopeNone(), r.GET(api.confirmUserHandler, Auth(false)))
+	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))
+	//r.Handle("/auth/consumer/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
+	//r.Handle("/admin/user/{id}/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getAccessTokenByUserHandler))
 
 	// Action
 	r.Handle("/action", Scope(sdk.AccessTokenScopeAction), r.GET(api.getActionsHandler), r.POST(api.postActionHandler))
@@ -340,16 +346,12 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUsersHandler))
-	r.Handle("/user/logged", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserLoggedHandler, Auth(false)))
 	r.Handle("/user/me", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserLoggedHandler, Auth(false), DEPRECATED))
 	r.Handle("/user/favorite", Scope(sdk.AccessTokenScopeUser), r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/timeline", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
-	r.Handle("/user/signup", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/{username}", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserHandler), r.PUT(api.updateUserHandler), r.DELETE(api.deleteUserHandler))
 	r.Handle("/user/{username}/groups", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserGroupsHandler))
-	r.Handle("/user/{username}/confirm/{token}", Scope(sdk.AccessTokenScopeUser), r.GET(api.confirmUserHandler, Auth(false)))
-	r.Handle("/user/{username}/reset", Scope(sdk.AccessTokenScopeUser), r.POST(api.resetUserHandler, Auth(false)))
 
 	// Workers
 	r.Handle("/worker", Scope(sdk.AccessTokenScopeAdmin, sdk.AccessTokenScopeWorker, sdk.AccessTokenScopeHatchery), r.GET(api.getWorkersHandler), r.POST(api.registerWorkerHandler, Auth(false)))

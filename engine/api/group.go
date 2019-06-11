@@ -151,7 +151,7 @@ func (api *API) getGroupsHandler() service.Handler {
 		if isAdmin(ctx) {
 			groups, err = group.LoadGroups(api.mustDB())
 		} else {
-			groups, err = group.LoadGroupByUser(api.mustDB(), JWT(ctx).AuthentifiedUser.OldUserStruct.ID)
+			groups, err = group.LoadGroupByUser(api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load group from db")
@@ -192,12 +192,14 @@ func (api *API) addGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot add group")
 		}
 
+		consumer := getAPIConsumer(ctx)
+
 		// Add caller into group
-		if err := group.InsertUserInGroup(tx, g.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID, false); err != nil {
-			return sdk.WrapError(err, "Cannot add user %s in group %s", JWT(ctx).AuthentifiedUser.Username, g.Name)
+		if err := group.InsertUserInGroup(tx, g.ID, consumer.AuthentifiedUser.OldUserStruct.ID, false); err != nil {
+			return sdk.WrapError(err, "Cannot add user %s in group %s", consumer.AuthentifiedUser.Username, g.Name)
 		}
 		// and set it admin
-		if err := group.SetUserGroupAdmin(tx, g.ID, JWT(ctx).AuthentifiedUser.OldUserStruct.ID); err != nil {
+		if err := group.SetUserGroupAdmin(tx, g.ID, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
 			return sdk.WrapError(err, "Cannot set user group admin")
 		}
 

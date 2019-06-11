@@ -63,7 +63,7 @@ type Identifiable interface {
 }
 
 type GroupMember interface {
-	GetGroups() []Group
+	GetGroupIDs() []int64
 }
 
 type IdentifiableGroupMember interface {
@@ -99,11 +99,11 @@ func (w *AuthentifiedUser) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal AuthentifiedUser")
 }
 
-func (u AuthentifiedUser) GetGroups() []Group {
+func (u AuthentifiedUser) GetGroupIDs() []int64 {
 	if u.OldUserStruct == nil {
 		return nil
 	}
-	return u.OldUserStruct.Groups
+	return GroupsToIDs(u.OldUserStruct.Groups)
 }
 
 func (u AuthentifiedUser) GetUsername() string {

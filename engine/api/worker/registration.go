@@ -71,9 +71,8 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	}
 
 	// Load the access token of the hatchery
-	atoken, err := accesstoken.LoadByID(context.Background(), db, hatchery.TokenID,
-		accesstoken.LoadOptions.WithAuthentifiedUser,
-		accesstoken.LoadOptions.WithGroups,
+	atoken, err := accesstoken.LoadSessionByID(context.Background(), db, hatchery.TokenID,
+		accesstoken.LoadSessionOptions.WithGroups,
 	)
 	if err != nil {
 		return nil, "", err
@@ -103,16 +102,16 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	// we probably should remove shareinfra from the groups
 	// and make the intersection with hatchery accesstoken group
 
-	jwtoken, jwt, err := accesstoken.New(hatchery.Maintainer, execsgroups, []string{sdk.AccessTokenScopeRunExecution}, spawnArgs.HatcheryName, spawnArgs.WorkerName, time.Now().Add(24*time.Hour))
-	if err != nil {
+	//	jwtoken, jwt, err := accesstoken.New( /*hatchery.Maintainer*/ sdk.AuthConsumer{} /*execsgroups*/, nil, []string{sdk.AccessTokenScopeRunExecution}, spawnArgs.HatcheryName, spawnArgs.WorkerName, time.Now().Add(24*time.Hour))
+	/*if err != nil {
 		return nil, "", err
 	}
 
-	if err := accesstoken.Insert(db, &jwtoken); err != nil {
+	if err := accesstoken.InsertSession(db, &jwtoken); err != nil {
 		return nil, "", err
 	}
 
-	w.AccessTokenID = &jwtoken.ID
+	w.AccessTokenID = &jwtoken.ID*/
 
 	if err := Insert(db, w); err != nil {
 		return nil, "", err
@@ -128,5 +127,5 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 		}
 	}
 
-	return w, jwt, nil
+	return w, "", nil
 }

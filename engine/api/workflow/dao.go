@@ -507,7 +507,7 @@ func LoadByWorkflowTemplateIDByGroups(ctx context.Context, db gorp.SqlExecutor, 
 						$3 = ANY(string_to_array($2, ',')::int[])
 				)`
 
-	args := []interface{}{templateID, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.GetGroups())), group.SharedInfraGroup.ID}
+	args := []interface{}{templateID, gorpmapping.IDsToQueryString(u.GetGroupIDs()), group.SharedInfraGroup.ID}
 	return loadByWorkflowTemplateID(ctx, db, query, args)
 }
 

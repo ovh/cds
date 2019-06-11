@@ -10,8 +10,8 @@ import (
 
 func (api *API) getBookmarksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		token := JWT(ctx)
-		data, err := bookmark.LoadAll(api.mustDB(), token.AuthentifiedUser.OldUserStruct)
+		consumer := getAPIConsumer(ctx)
+		data, err := bookmark.LoadAll(api.mustDB(), consumer.AuthentifiedUser.OldUserStruct)
 		if err != nil {
 			return err
 		}

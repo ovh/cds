@@ -9,11 +9,11 @@ type contextKey int
 const (
 	contextUserAuthentified contextKey = iota
 	contextProvider
+	contextSession
 	contextAPIConsumer
 	contextJWT
 	contextJWTRaw
 	contextScope
-	contextWorkflowTemplate
 )
 
 // ContextValues retuns auth values of a context

@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
@@ -13,7 +15,17 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	jwtCookieName  = "jwt_token"
+	xsrfHeaderName = "X-XSRF-TOKEN"
+)
+
 func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	// If the route don't need auth return directly
+	if !rc.NeedAuth {
+		return ctx, nil
+	}
+
 	var err error
 	var shouldContinue bool
 
@@ -35,28 +47,42 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, nil
 	}
 
-	// JWT base authentification
-	ctx, err = api.authJWTMiddleware(ctx, w, req, rc)
+	// Check for a JWT in current request and add it to the context
+	ctx, err = api.jwtMiddleware(ctx, req, rc)
 	if err != nil {
-		return ctx, sdk.WithStack(err)
+		return ctx, err
 	}
 
-	token := JWT(ctx)
-	if token == nil {
-		return ctx, nil
+	jwt, ok := ctx.Value(contextJWT).(*jwt.Token)
+	if !ok {
+		return nil, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	sessionID := claims.StandardClaims.Id
+
+	// Check for session based on jwt from context
+	session, err := accesstoken.VerifySession(ctx, api.mustDB(), sessionID)
+	if err != nil {
+		return ctx, err
 	}
 
-	// Put the granted user in the context
-	var APIConsumer = sdk.APIConsumer{
-		Name:       token.Name,
-		OnBehalfOf: *token.AuthentifiedUser,
-		Groups:     token.Groups,
+	ctx = context.WithValue(ctx, contextSession, session)
+
+	// Load auth consumer for current session in database
+	consumer, err := accesstoken.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+		accesstoken.LoadConsumerOptions.WithAuthentifiedUser)
+	if err != nil {
+		return ctx, err
 	}
-	ctx = context.WithValue(ctx, contextAPIConsumer, &APIConsumer)
+	if consumer == nil {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
+	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
 	// Checks scopes
 	expectedScopes := getHandlerScope(ctx)
-	actualScopes := token.Scopes
+	actualScopes := consumer.Scopes
 
 	var scopeOK bool
 	for _, s := range actualScopes {
@@ -118,57 +144,51 @@ func (api *API) authStatusTokenMiddleware(ctx context.Context, w http.ResponseWr
 	return ctx, true, nil
 }
 
-func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+func (api *API) jwtMiddleware(ctx context.Context, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 	ctx, end := observability.Span(ctx, "router.authJWTMiddleware")
 	defer end()
 
-	var jwt string
-	var xsrfToken string
+	var jwtRaw string
+	var xsrfTokenNeeded bool
 
-	// Try to load the token from the cookie or from the authorisation bearer header
-	jwtCookie, _ := req.Cookie("jwt_token")
+	log.Debug("authJWTMiddleware> searching for a jwt token")
+
+	// Try to get the jwt from the cookie firstly then from the authorization bearer header, a XSRF token with cookie
+	jwtCookie, _ := req.Cookie(jwtCookieName)
 	if jwtCookie != nil {
-		jwt = jwtCookie.Value
-		// Checking X-XSRF-TOKEN header if the token is used from a cookie
-		xsrfToken = req.Header.Get("X-XSRF-TOKEN")
-	} else {
-		if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
-			jwt = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
-		}
+		jwtRaw = jwtCookie.Value
+		xsrfTokenNeeded = true
+	} else if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
+		jwtRaw = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
 	}
-
-	if jwt == "" {
-		if rc.NeedAuth {
-			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
-		}
-		return ctx, nil
-	}
-
-	log.Debug("authJWTMiddleware> checking jwt token %s...", jwt[:12])
-	ctx = context.WithValue(ctx, contextJWTRaw, jwt)
-
-	// Get the access token
-	token, valid, err := accesstoken.IsValid(api.mustDB(), jwt)
-	if err != nil {
-		return ctx, err
-	}
-
-	log.Debug("authJWTMiddleware> authentified user: %v", *token.AuthentifiedUser)
-
-	// Observability tags
-	observability.Current(ctx, observability.Tag(observability.TagToken, token.ID))
-
-	// Is the jwttoken was not valid: raised an error
-	if !valid {
+	if jwtRaw == "" {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
-	// Checks XSRF token only from token coming from UI
-	if token.Origin == accesstoken.OriginUI {
-		if !accesstoken.CheckXSRFToken(api.Cache, *token, xsrfToken) {
+	log.Debug("authJWTMiddleware> checking jwt token %s...", jwtRaw[:12])
+
+	jwt, err := accesstoken.VerifyJWT(jwtRaw)
+	if err != nil {
+		return ctx, err
+	}
+	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	sessionID := claims.StandardClaims.Id
+
+	// Checking X-XSRF-TOKEN header
+	if xsrfTokenNeeded {
+		log.Debug("authJWTMiddleware> searching for a xsrf token")
+
+		xsrfToken := req.Header.Get(xsrfHeaderName)
+
+		log.Debug("authJWTMiddleware> checking xsrf token %s...", xsrfToken[:12])
+
+		if !accesstoken.CheckXSRFToken(api.Cache, sessionID, xsrfToken) {
 			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 		}
 	}
 
-	return context.WithValue(ctx, contextJWT, token), nil
+	ctx = context.WithValue(ctx, contextJWTRaw, jwt)
+	ctx = context.WithValue(ctx, contextJWT, jwt)
+
+	return ctx, nil
 }

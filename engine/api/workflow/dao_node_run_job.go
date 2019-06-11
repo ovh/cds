@@ -59,9 +59,9 @@ func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.
 	return c, nil
 }
 
-func CountNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groups []sdk.Group) (sdk.WorkflowNodeJobRunCount, error) {
+func CountNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groupIDs []int64) (sdk.WorkflowNodeJobRunCount, error) {
 	var c sdk.WorkflowNodeJobRunCount
-	queue, err := LoadNodeJobRunQueueByGroups(ctx, db, store, filter, groups)
+	queue, err := LoadNodeJobRunQueueByGroupIDs(ctx, db, store, filter, groupIDs)
 	if err != nil {
 		return c, sdk.WrapError(err, "unable to load queue")
 	}
@@ -109,8 +109,8 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
 }
 
-// LoadNodeJobRunQueueByGroups load all workflow_node_run_job accessible
-func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groups []sdk.Group) ([]sdk.WorkflowNodeJobRun, error) {
+// LoadNodeJobRunQueueByGroupIDs load all workflow_node_run_job accessible
+func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groupIDs []int64) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := observability.Span(ctx, "workflow.LoadNodeJobRunQueueByGroups")
 	defer end()
 	containsService := []bool{true, false}
@@ -133,12 +133,12 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 	--  $8: shared infra group ID
 	--  $9: minimum level of permission
 	WITH workflow_id_with_permissions AS (
-		SELECT workflow_perm.workflow_id, 
+		SELECT workflow_perm.workflow_id,
 			CASE WHEN $8 = ANY(string_to_array($7, ',')::int[]) THEN 7
-				 ELSE max(workflow_perm.role) 
+				 ELSE max(workflow_perm.role)
 			END as "role"
 		FROM workflow_perm
-		JOIN project_group ON project_group.id = workflow_perm.project_group_id			
+		JOIN project_group ON project_group.id = workflow_perm.project_group_id
 		WHERE
 			project_group.group_id = ANY(string_to_array($7, ',')::int[])
 		OR
@@ -148,7 +148,7 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 		SELECT id, jsonb_array_elements_text(exec_groups)::jsonb->'id' AS exec_group_id
 		FROM workflow_node_run_job
 	), workflow_node_run_job_matching_exec_groups AS (
-		SELECT id 
+		SELECT id
 		FROM workflow_node_run_job_exec_groups
 		WHERE exec_group_id::text = ANY(string_to_array($7, ','))
 	)
@@ -158,12 +158,12 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 	JOIN workflow_run ON workflow_run.id = workflow_node_run.workflow_run_id
 	JOIN workflow ON workflow.id = workflow_run.workflow_id
 	WHERE workflow.id IN (
-		SELECT workflow_id 
+		SELECT workflow_id
 		FROM workflow_id_with_permissions
 		WHERE role >= $9
 	)
 	AND workflow_node_run_job.id IN (
-		SELECT id 
+		SELECT id
 		FROM workflow_node_run_job_matching_exec_groups
 	)
 	AND workflow_node_run_job.queued >= $1
@@ -171,21 +171,21 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 	AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
 	AND workflow_node_run_job.contains_service IN ($4, $5)
 	AND (
-		workflow_node_run_job.model_type is NULL 
-		OR 
+		workflow_node_run_job.model_type is NULL
+		OR
 		model_type = '' OR model_type = ANY(string_to_array($6, ','))
 	)
 	ORDER BY workflow_node_run_job.queued ASC
 	`).Args(
-		*filter.Since,                       // $1
-		*filter.Until,                       // $2
-		strings.Join(filter.Statuses, ","),  // $3
-		containsService[0],                  // $4
-		containsService[1],                  // $5
-		strings.Join(filter.ModelType, ","), // $6
-		gorpmapping.IDsToQueryString(sdk.GroupsToIDs(groups)), // $7
-		group.SharedInfraGroup.ID,                             // $8
-		filter.Rights,                                         // $9
+		*filter.Since,                          // $1
+		*filter.Until,                          // $2
+		strings.Join(filter.Statuses, ","),     // $3
+		containsService[0],                     // $4
+		containsService[1],                     // $5
+		strings.Join(filter.ModelType, ","),    // $6
+		gorpmapping.IDsToQueryString(groupIDs), // $7
+		group.SharedInfraGroup.ID,              // $8
+		filter.Rights,                          // $9
 	)
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
 }

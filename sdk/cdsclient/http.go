@@ -229,7 +229,8 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 				req.Header.Set(AuthHeader, basedHash)
 			}
 
-			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.AccessToken, &sdk.AccessTokenJWTClaims{}); err == nil {
+			// TODO
+			if _, _, err := new(jwt.Parser).ParseUnverified("" /*c.config.AccessToken,*/, &sdk.AuthSessionJWTClaims{}); err == nil {
 				if c.config.Verbose {
 					fmt.Println("JWT recognized")
 				}
