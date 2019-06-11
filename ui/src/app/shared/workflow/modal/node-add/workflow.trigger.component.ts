@@ -15,7 +15,7 @@ import { ActiveModal } from 'ng2-semantic-ui/dist';
 })
 export class WorkflowTriggerComponent {
 
-    @ViewChild('triggerModal', {static: false})
+    @ViewChild('triggerModal', {static: true})
     triggerModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     @ViewChild('nodeWizard', {static: true})

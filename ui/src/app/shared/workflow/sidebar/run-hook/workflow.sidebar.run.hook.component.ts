@@ -20,7 +20,7 @@ import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.d
 @AutoUnsubscribe()
 export class WorkflowSidebarRunHookComponent implements OnInit {
 
-    @ViewChild('workflowDetailsHook', {static: false})
+    @ViewChild('workflowDetailsHook', {static: true})
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     @Input() project: Project;

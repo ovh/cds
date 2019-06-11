@@ -25,7 +25,7 @@ export class WorkflowHookModalComponent {
     @Output() hookEvent = new EventEmitter<WNodeHook>();
     @Output() deleteHookEvent = new EventEmitter<WNodeHook>();
 
-    @ViewChild('hookModalComponent', {static: false})
+    @ViewChild('hookModalComponent', {static: true})
     public hookModalComponent: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;

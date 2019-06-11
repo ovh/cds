@@ -29,7 +29,7 @@ export class ProjectAddComponent {
 
     groupList: Group[];
 
-    @ViewChild('createGroupModal', {static: false})
+    @ViewChild('createGroupModal', {static: true})
     modalCreateGroup: SemanticModalComponent;
 
     constructor(

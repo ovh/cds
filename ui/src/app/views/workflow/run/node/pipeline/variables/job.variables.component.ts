@@ -9,7 +9,7 @@ import {Parameter} from '../../../../../../model/parameter.model';
 })
 export class WorkflowRunJobVariableComponent {
 
-    @ViewChild('jobVariablesModal', {static: false})
+    @ViewChild('jobVariablesModal', {static: true})
     jobVariablesModal: SemanticModalComponent;
 
     @Input('variables')

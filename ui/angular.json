@@ -36,6 +36,7 @@
               "src/styles.scss"
             ],
             "scripts": [
+              "node_modules/jquery/dist/jquery.js",
               "node_modules/fomantic-ui/dist/semantic.min.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",
@@ -120,7 +121,7 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "src/tsconfig.spec.json",
             "scripts": [
-              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/jquery/dist/jquery.js",
               "node_modules/semantic-ui/dist/semantic.min.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",

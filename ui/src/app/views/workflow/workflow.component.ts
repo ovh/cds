@@ -54,9 +54,9 @@ export class WorkflowComponent {
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
-    @ViewChild('saveAsCode', {static: false})
+    @ViewChild('saveAsCode', {static: true})
     saveAsCode: WorkflowSaveAsCodeComponent;
-    @ViewChild('popup', {static: false})
+    @ViewChild('popup', {static: true})
     popupFromlRepository: SuiPopup;
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
     @ViewChildren(SuiPopupTemplateController) popups2: QueryList<SuiPopupTemplateController<SuiPopup>>;

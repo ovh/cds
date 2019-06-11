@@ -51,7 +51,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
 
     @Output() displayServicesLogsChange = new EventEmitter<boolean>();
 
-    @ViewChild('jobVariable', {static: false})
+    @ViewChild('jobVariable', {static: true})
     jobVariable: WorkflowRunJobVariableComponent;
 
     _nodeJobRun: WorkflowNodeJobRun;

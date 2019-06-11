@@ -11,7 +11,7 @@ import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
-    @ViewChild('code', {static: false}) codemirror: any;
+    @ViewChild('code', {static: true}) codemirror: any;
 
     @Input() editable: boolean;
     @Input() removable: boolean;

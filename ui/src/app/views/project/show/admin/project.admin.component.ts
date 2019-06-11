@@ -36,7 +36,7 @@ export class ProjectAdminComponent implements OnInit {
     unusedWarning: Map<string, Warning>;
 
     @Input() project: Project;
-    @ViewChild('updateWarning', {static: false})
+    @ViewChild('updateWarning', {static: true})
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;

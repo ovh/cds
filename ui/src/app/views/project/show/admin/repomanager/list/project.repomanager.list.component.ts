@@ -21,7 +21,7 @@ export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
     @Input() project: Project;
     @Input() reposmanagers: RepositoriesManager[];
 
-    @ViewChild('deleteRepoWarning', {static: false})
+    @ViewChild('deleteRepoWarning', {static: true})
     private deleteRepoWarning: WarningModalComponent;
 
     public deleteLoading = false;

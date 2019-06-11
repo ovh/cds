@@ -14,7 +14,7 @@ export class WarningModalComponent {
     @Input() msg: string;
     @Output() event = new EventEmitter<any>();
 
-    @ViewChild('myModal', {static: false})
+    @ViewChild('myModal', {static: true})
     private modal: SemanticModalComponent;
 
     constructor() { }

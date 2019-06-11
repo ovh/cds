@@ -29,7 +29,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
     loading = false;
     hookDetails: WorkflowHookTask;
 
-    @ViewChild('workflowDetailsHook', {static: false})
+    @ViewChild('workflowDetailsHook', {static: true})
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     permissionEnum = PermissionValue;

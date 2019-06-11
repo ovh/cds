@@ -14,7 +14,7 @@ export class DeleteModalComponent {
     @Output() event = new EventEmitter<boolean>();
 
     // Ng semantic modal
-    @ViewChild('myDeleteModal', {static: false})
+    @ViewChild('myDeleteModal', {static: true})
     public myDeleteModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
