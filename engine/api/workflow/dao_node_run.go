@@ -733,17 +733,17 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 	queryPrevious := `
 		SELECT workflow_node_run.vcs_branch, workflow_node_run.vcs_tag, workflow_node_run.vcs_hash, workflow_node_run.vcs_repository, workflow_node_run.num
 		FROM workflow_node_run
-		JOIN workflow_node ON workflow_node.name = workflow_node_run.workflow_node_name AND workflow_node.name = $1 AND workflow_node.workflow_id = $2
-		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
+		JOIN w_node ON w_node.name = workflow_node_run.workflow_node_name AND w_node.name = $1 AND w_node.workflow_id = $2
+		JOIN w_node_context ON w_node_context.node_id = w_node.id
 		WHERE workflow_node_run.vcs_hash IS NOT NULL
 		AND workflow_node_run.num < $3
-    AND workflow_node_context.application_id = $4
+    AND w_node_context.application_id = $4
 	`
 
 	argPrevious := []interface{}{nodeName, wf.ID, current.BuildNumber, appID}
 	if envID > 0 {
 		argPrevious = append(argPrevious, envID)
-		queryPrevious += "AND workflow_node_context.environment_id = $5"
+		queryPrevious += "AND w_node_context.environment_id = $5"
 	}
 	queryPrevious += fmt.Sprintf(" ORDER BY workflow_node_run.num DESC LIMIT 1")
 

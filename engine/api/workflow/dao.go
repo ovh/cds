@@ -437,9 +437,9 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 		select distinct workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
-		join workflow_node on workflow_node.workflow_id = workflow.id
-		join workflow_node_context on workflow_node_context.workflow_node_id = workflow_node.id
-		join environment on workflow_node_context.environment_id = environment.id
+		join w_node on w_node.workflow_id = workflow.id
+		join w_node_context on w_node_context.node_id = w_node.id
+		join environment on w_node_context.environment_id = environment.id
 		where project.projectkey = $1 and environment.name = $2
 		and workflow.to_delete = false
 		order by workflow.name asc`
