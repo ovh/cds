@@ -516,7 +516,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				if wfDB.WorkflowData.Node.Context == nil {
 					wfDB.WorkflowData.Node.Context = &sdk.NodeContext{}
 				}
-				if wfDB.WorkflowData.Node.Context == nil || wfDB.WorkflowData.Node.Context.ApplicationID != app.ID {
+				if wfDB.WorkflowData.Node.Context.ApplicationID != app.ID {
 					continue
 				}
 
@@ -529,17 +529,17 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					continue
 				}
 
-				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, &wf)
+				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, wfDB)
 				if errPay != nil {
 					return sdk.WrapError(errPay, "attachRepositoriesManager> Cannot get defaultPayload")
 				}
-				wf.WorkflowData.Node.Context.DefaultPayload = defaultPayload
+				wfDB.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, &wf, proj, u, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
+				if err := workflow.Update(ctx, db, api.Cache, wfDB, proj, u, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
 					return sdk.WrapError(err, "Cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 
-				event.PublishWorkflowUpdate(proj.Key, wf, *wfOld, u)
+				event.PublishWorkflowUpdate(proj.Key, *wfDB, *wfOld, u)
 
 			}
 		}

@@ -377,8 +377,9 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 		select distinct workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
-		join workflow_node on workflow_node.workflow_id = workflow.id
-		join pipeline on pipeline.id = workflow_node.pipeline_id
+		join w_node on w_node.workflow_id = workflow.id
+    join w_node_context on w_node_context.node_id = w_node.id
+		join pipeline on pipeline.id = w_node_context.pipeline_id
 		where project.projectkey = $1 and pipeline.name = $2
 		and workflow.to_delete = false
 		order by workflow.name asc`
@@ -406,9 +407,9 @@ func LoadByApplicationName(db gorp.SqlExecutor, projectKey string, appName strin
 		select distinct workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
-		join workflow_node on workflow_node.workflow_id = workflow.id
-		join workflow_node_context on workflow_node_context.workflow_node_id = workflow_node.id
-		join application on workflow_node_context.application_id = application.id
+		join w_node on w_node.workflow_id = workflow.id
+		join w_node_context on w_node_context.node_id = w_node.id
+		join application on w_node_context.application_id = application.id
 		where project.projectkey = $1 and application.name = $2
 		and workflow.to_delete = false
 		order by workflow.name asc`

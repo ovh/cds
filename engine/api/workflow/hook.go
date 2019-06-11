@@ -77,92 +77,95 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	if oldWorkflow != nil {
 		oldHooks = oldWorkflow.WorkflowData.GetHooks()
 	}
-	if len(wf.WorkflowData.Node.Hooks) > 0 {
-		srvs, err := services.FindByType(db, services.TypeHooks)
-		if err != nil {
-			return sdk.WrapError(err, "unable to get services dao")
+	if len(wf.WorkflowData.Node.Hooks) <= 0 {
+		return nil
+	}
+
+	srvs, err := services.FindByType(db, services.TypeHooks)
+	if err != nil {
+		return sdk.WrapError(err, "unable to get services dao")
+	}
+
+	//Perform the request on one off the hooks service
+	if len(srvs) < 1 {
+		return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services dao")
+	}
+
+	hookToUpdate := make(map[string]sdk.NodeHook)
+	for i := range wf.WorkflowData.Node.Hooks {
+		h := &wf.WorkflowData.Node.Hooks[i]
+
+		if h.UUID == "" && h.Ref == "" {
+			// generate uuid
+			h.UUID = sdk.UUID()
+			if h.Ref == "" {
+				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
+			}
+		} else if oldHooks != nil {
+			// search previous hook configuration
+			previousHook, has := oldHooks[h.UUID]
+			// If previous hook is the same, we do nothing
+			if has && h.Equals(*previousHook) {
+				continue
+			}
 		}
 
-		//Perform the request on one off the hooks service
-		if len(srvs) < 1 {
-			return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services dao")
+		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
+			Value:        wf.ProjectKey,
+			Configurable: false,
+		}
+		h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
+			Value:        wf.Name,
+			Configurable: false,
+		}
+		h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
+			Value:        fmt.Sprint(wf.ID),
+			Configurable: false,
+		}
+		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
+			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
+			}
+			h.Config[sdk.HookConfigVCSServer] = sdk.WorkflowNodeHookConfigValue{
+				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer,
+				Configurable: false,
+			}
+			h.Config[sdk.HookConfigRepoFullName] = sdk.WorkflowNodeHookConfigValue{
+				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname,
+				Configurable: false,
+			}
 		}
 
-		hookToUpdate := make(map[string]sdk.NodeHook)
+		if err := updateSchedulerPayload(ctx, db, store, p, wf, h); err != nil {
+			return err
+		}
+		hookToUpdate[h.UUID] = *h
+	}
+
+	if len(hookToUpdate) > 0 {
+		// Create hook on µservice
+		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
+		if errHooks != nil || code >= 400 {
+			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
+		}
+
+		hooks := wf.WorkflowData.GetHooks()
+		for i := range hookToUpdate {
+			hooks[i].Config = hookToUpdate[i].Config
+		}
+
+		// Create vcs configuration ( always after hook creation to have webhook URL) + update hook in DB
 		for i := range wf.WorkflowData.Node.Hooks {
 			h := &wf.WorkflowData.Node.Hooks[i]
-
-			if h.UUID == "" && h.Ref == "" {
-				// generate uuid
-				h.UUID = sdk.UUID()
-				if h.Ref == "" {
-					h.Ref = fmt.Sprintf("%d", time.Now().Unix())
-				}
-			} else if oldHooks != nil {
-				// search previous hook configuration
-				previousHook, has := oldHooks[h.UUID]
-				// If previous hook is the same, we do nothing
-				if has && h.Equals(*previousHook) {
-					continue
-				}
-			}
-
-			h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
-				Value:        wf.ProjectKey,
-				Configurable: false,
-			}
-			h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
-				Value:        wf.Name,
-				Configurable: false,
-			}
-			h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
-				Value:        fmt.Sprint(wf.ID),
-				Configurable: false,
-			}
-			if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
-				if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
-				}
-				h.Config[sdk.HookConfigVCSServer] = sdk.WorkflowNodeHookConfigValue{
-					Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer,
-					Configurable: false,
-				}
-				h.Config[sdk.HookConfigRepoFullName] = sdk.WorkflowNodeHookConfigValue{
-					Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname,
-					Configurable: false,
-				}
-			}
-
-			if err := updateSchedulerPayload(ctx, db, store, p, wf, h); err != nil {
-				return err
-			}
-			hookToUpdate[h.UUID] = *h
-		}
-
-		if len(hookToUpdate) > 0 {
-			// Create hook on µservice
-			code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
-			if errHooks != nil || code >= 400 {
-				return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
-			}
-
-			hooks := wf.WorkflowData.GetHooks()
-			for i := range hookToUpdate {
-				hooks[i].Config = hookToUpdate[i].Config
-			}
-
-			// Create vcs configuration ( always after hook creation to have webhook URL) + update hook in DB
-			for i := range wf.WorkflowData.Node.Hooks {
-				h := &wf.WorkflowData.Node.Hooks[i]
-				v, ok := h.Config["webHookID"]
-				if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
-					if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
-						return sdk.WrapError(err, "Cannot update vcs configuration")
-					}
+			v, ok := h.Config["webHookID"]
+			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
+				if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
+					return sdk.WrapError(err, "Cannot update vcs configuration")
 				}
 			}
 		}
 	}
+
 	return nil
 }
 
