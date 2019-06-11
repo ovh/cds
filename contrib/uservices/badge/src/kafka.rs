@@ -1,6 +1,5 @@
-use actix::{Actor, Addr, Context, Running};
-use futures::Future;
-use futures::Stream;
+use actix::{Actor, Addr, Context, Running, SyncContext};
+use futures::{Future, Stream};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -10,18 +9,22 @@ use rdkafka::message::Message;
 use rdkafka_sys;
 use serde_json;
 
-use crate::database::DbExecutor;
-use crate::models::Event;
-use crate::models::Run;
-use crate::run::CreateRun;
 
+use crate::database::DbExecutor;
+use crate::models::{Event, Run};
+use crate::run::CreateRun;
+use crate::web::Pool;
+
+
+#[derive(Clone)]
 pub struct KafkaConsumerActor {
     pub brokers: Vec<String>,
     pub topic: String,
     pub user: String,
     pub password: String,
     pub group: String,
-    pub db: Addr<DbExecutor>,
+    pub db: Pool,
+    pub db_actor: Addr<DbExecutor>,
 }
 
 struct CustomContext;
@@ -48,6 +51,7 @@ impl Actor for KafkaConsumerActor {
     type Context = Context<Self>;
 
     fn started(&mut self, _ctx: &mut Self::Context) {
+        println!("Kafka consumer starting");
         let consumer = create_consumer(
             self.user.clone(),
             self.password.clone(),
@@ -96,7 +100,9 @@ impl Actor for KafkaConsumerActor {
                                 status: event.status.clone().into(),
                                 ..Default::default()
                             };
-                            if let Err(err) = self.db.send(CreateRun { run }).flatten().wait() {
+
+                            if let Err(err) = self.db_actor.send(CreateRun { run }).flatten().wait()
+                            {
                                 eprintln!("future run NOT created in db {:?}", err);
                             }
 

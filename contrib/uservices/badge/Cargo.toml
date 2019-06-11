@@ -13,7 +13,7 @@ serde_derive = "1.0"
 serde_json = "1.0.0"
 # Actor
 actix = "0.8.3"
-actix-web = { version = "1.0" }
+actix-web = "1.0.0"
 tokio = "0.1.11"
 # Log
 log = "0.4"
