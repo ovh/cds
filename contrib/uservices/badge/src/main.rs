@@ -44,7 +44,7 @@ mod configuration;
 mod database;
 mod error;
 mod kafka;
-mod middlewares;
+// mod middlewares;
 mod models;
 mod run;
 mod schema;
@@ -138,24 +138,7 @@ fn main() {
             let host = config.http.addr.clone();
             let port = config.http.port;
             let mut hash = String::new();
-            let mode = config.mode.clone();
 
-            if mode == "web" {
-                let mut cds_service = service::new(config.clone());
-                cds_service
-                    .check_configuration(config.clone())
-                    .expect("Cannot check configuration");
-                cds_service
-                    .apply_configuration(config.clone())
-                    .expect("Cannot apply configuration");
-
-                cds_service
-                    .register(service::status(), config)
-                    .expect("Cannot register service to CDS");
-
-                hash = cds_service.service.hash.clone();
-                let _ = Arbiter::start(|_| cds_service);
-            }
             web::http_server(
                 WebState {
                     db: addr.clone(),
@@ -165,7 +148,7 @@ fn main() {
                 port.to_string(),
             );
 
-            println!("Server is listening on {}:{} in mode {}", host, port, mode);
+            println!("Server is listening on {}:{}", host, port);
             system.run();
         }
         _ => app.write_help(&mut std::io::stdout()).unwrap(),

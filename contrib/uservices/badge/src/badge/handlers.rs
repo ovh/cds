@@ -1,6 +1,8 @@
 use actix_web::error;
+use actix_web::error::Error;
 use actix_web::http::HeaderMap;
-use actix_web::{AsyncResponder, FutureResponse, HttpRequest, HttpResponse};
+use actix_web::web::Data;
+use actix_web::{HttpRequest, HttpResponse};
 use badge_gen::{Badge, BadgeOptions};
 use futures::Future;
 
@@ -12,16 +14,18 @@ const GREEN: &str = "#21BA45";
 const RED: &str = "#FF4F60";
 const BLUE: &str = "#4fa3e3";
 
-pub fn badge_handler(req: &HttpRequest<WebState>) -> FutureResponse<HttpResponse> {
+pub fn badge_handler(req: HttpRequest) -> impl Future<Item=HttpResponse, Error=Error> {
+    let web_state: Option<&WebState> = req.app_data::<WebState>();
     let project_key = req.match_info().get("project").unwrap_or_default();
     let workflow_name = req.match_info().get("workflow").unwrap_or_default();
-    let query_params = req.query();
-    let branch = query_params
-        .get("branch")
-        .map(std::string::ToString::to_string)
-        .or_else(|| get_branch_from_referer(req.headers())); // fetch branch from referer
+    let branch = if req.match_info().query("branch").is_empty() {
+        get_branch_from_referer(req.headers())
+    } else {
+        Some(req.match_info().query("branch").to_string())
+    };
 
-    req.state()
+    web_state
+        .unwrap()
         .db
         .send(QueryRun {
             project_key: project_key.to_string(),
@@ -49,7 +53,6 @@ pub fn badge_handler(req: &HttpRequest<WebState>) -> FutureResponse<HttpResponse
 
             Ok(HttpResponse::Ok().content_type("image/svg+xml").body(badge))
         })
-        .responder()
 }
 
 fn get_branch_from_referer(headers: &HeaderMap) -> Option<String> {
