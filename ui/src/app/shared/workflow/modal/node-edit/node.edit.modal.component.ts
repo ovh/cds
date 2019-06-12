@@ -34,7 +34,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     groups: Array<GroupPermission>;
 
 
-    @ViewChild('nodeEditModal', {static: true})
+    @ViewChild('nodeEditModal', {static: false})
     public nodeEditModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
@@ -110,7 +110,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     show(): void {
         if (this.nodeEditModal) {
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeEditModal);
-            this.modalConfig.mustScroll = true;
+            this.modalConfig.mustScroll = false;
             this.modalConfig.size = ModalSize.Large;
             this.modalConfig.isClosable = true;
             this.modal = this._modalService.open(this.modalConfig);

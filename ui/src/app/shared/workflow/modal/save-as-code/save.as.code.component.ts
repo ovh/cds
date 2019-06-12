@@ -23,7 +23,7 @@ export class WorkflowSaveAsCodeComponent {
     ope: Operation;
     webworkerSub: Subscription;
 
-    @ViewChild('saveAsCodeModal', {static: true})
+    @ViewChild('saveAsCodeModal', {static: false})
     public saveAsCodeModal: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;

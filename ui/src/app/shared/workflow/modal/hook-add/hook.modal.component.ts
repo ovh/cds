@@ -25,12 +25,12 @@ export class WorkflowHookModalComponent {
     @Output() hookEvent = new EventEmitter<WNodeHook>();
     @Output() deleteHookEvent = new EventEmitter<WNodeHook>();
 
-    @ViewChild('hookModalComponent', {static: true})
+    @ViewChild('hookModalComponent', {static: false})
     public hookModalComponent: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
-    @ViewChild('hookFormComponent', {static: true})
+    @ViewChild('hookFormComponent', {static: false})
     hookFormComponent: WorkflowNodeHookFormComponent;
 
     permissionEnum = PermissionValue;

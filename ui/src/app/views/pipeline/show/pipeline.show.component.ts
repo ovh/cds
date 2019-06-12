@@ -58,7 +58,7 @@ export class PipelineShowComponent implements OnInit {
     pipName: string;
 
     queryParams: Params;
-    @ViewChild('paramWarning', {static: true})
+    @ViewChild('paramWarning', {static: false})
     parameterModalWarning: WarningModalComponent;
 
     keys: AllKeys;

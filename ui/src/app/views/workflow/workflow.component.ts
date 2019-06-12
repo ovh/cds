@@ -32,7 +32,7 @@ import { WorkflowSaveAsCodeComponent } from '../../shared/workflow/modal/save-as
 })
 @AutoUnsubscribe()
 export class WorkflowComponent {
-    @ViewChild('templateApplyModal', { static: true })
+    @ViewChild('templateApplyModal', { static: false })
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
     project: Project;
@@ -54,9 +54,9 @@ export class WorkflowComponent {
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
-    @ViewChild('saveAsCode', {static: true})
+    @ViewChild('saveAsCode', {static: false})
     saveAsCode: WorkflowSaveAsCodeComponent;
-    @ViewChild('popup', {static: true})
+    @ViewChild('popup', {static: false})
     popupFromlRepository: SuiPopup;
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
     @ViewChildren(SuiPopupTemplateController) popups2: QueryList<SuiPopupTemplateController<SuiPopup>>;

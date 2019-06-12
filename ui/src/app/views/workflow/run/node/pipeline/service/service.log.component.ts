@@ -36,7 +36,7 @@ export class WorkflowServiceLogComponent implements OnDestroy {
         return this._nodeJobRun;
     }
 
-    @ViewChild('logsContent', {static: true}) logsElt: ElementRef;
+    @ViewChild('logsContent', {static: false}) logsElt: ElementRef;
 
     logsSplitted: Array<string> = [];
 

@@ -16,7 +16,7 @@ import { Label, Project } from '../../../model/project.model';
 export class LabelsEditComponent {
     @Input() project: Project;
 
-    @ViewChild('labelsEditModal', {static: true})
+    @ViewChild('labelsEditModal', {static: false})
     public labelsEditModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;

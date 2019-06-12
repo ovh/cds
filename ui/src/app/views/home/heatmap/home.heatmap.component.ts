@@ -42,7 +42,7 @@ export class HomeHeatmapComponent implements OnInit {
 
     heatmapSearch: HeatmapSearchCriterion;
 
-    @ViewChild('toolbar', { read: ToolbarComponent, static: true }) toolbar: ToolbarComponent;
+    @ViewChild('toolbar', { read: ToolbarComponent, static: false }) toolbar: ToolbarComponent;
 
     static clone(objectToCopy) {
         return (JSON.parse(JSON.stringify(objectToCopy)));

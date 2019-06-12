@@ -16,7 +16,7 @@ import { Item } from '../../diff/list/diff.list.component';
     styleUrls: ['./workflow-template.apply-modal.scss']
 })
 export class WorkflowTemplateApplyModalComponent implements OnChanges {
-    @ViewChild('workflowTemplateApplyModal', {static: true}) workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('workflowTemplateApplyModal', {static: false}) workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     open: boolean;
 

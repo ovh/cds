@@ -15,12 +15,12 @@ import { ActiveModal } from 'ng2-semantic-ui/dist';
 })
 export class WorkflowTriggerComponent {
 
-    @ViewChild('triggerModal', {static: true})
+    @ViewChild('triggerModal', {static: false})
     triggerModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
-    @ViewChild('nodeWizard', {static: true})
+    @ViewChild('nodeWizard', {static: false})
     nodeWizard: WorkflowNodeAddWizardComponent;
-    @ViewChild('worklflowAddOutgoingHook', {static: true})
+    @ViewChild('worklflowAddOutgoingHook', {static: false})
     worklflowAddOutgoingHook: WorkflowWizardOutgoingHookComponent;
 
     @Output() triggerEvent = new EventEmitter<Workflow>();

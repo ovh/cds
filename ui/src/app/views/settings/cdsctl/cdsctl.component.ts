@@ -16,14 +16,14 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class CdsctlComponent implements OnInit {
-    @ViewChild('codemirror1', {static: true}) codemirror1: any;
-    @ViewChild('codemirror2', {static: true}) codemirror2: any;
-    @ViewChild('codemirror3', {static: true}) codemirror3: any;
-    @ViewChild('codemirror4', {static: true}) codemirror4: any;
-    @ViewChild('codemirror5', {static: true}) codemirror5: any;
-    @ViewChild('codemirror6', {static: true}) codemirror6: any;
-    @ViewChild('codemirror7', {static: true}) codemirror7: any;
-    @ViewChild('codemirror8', {static: true}) codemirror8: any;
+    @ViewChild('codemirror1', {static: false}) codemirror1: any;
+    @ViewChild('codemirror2', {static: false}) codemirror2: any;
+    @ViewChild('codemirror3', {static: false}) codemirror3: any;
+    @ViewChild('codemirror4', {static: false}) codemirror4: any;
+    @ViewChild('codemirror5', {static: false}) codemirror5: any;
+    @ViewChild('codemirror6', {static: false}) codemirror6: any;
+    @ViewChild('codemirror7', {static: false}) codemirror7: any;
+    @ViewChild('codemirror8', {static: false}) codemirror8: any;
 
     currentUser: User;
     apiURL: string;

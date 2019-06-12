@@ -53,7 +53,7 @@ export class ApplicationShowComponent implements OnInit {
     // Selected tab
     selectedTab = 'home';
 
-    @ViewChild('varWarning', {static: true})
+    @ViewChild('varWarning', {static: false})
     private varWarningModal: WarningModalComponent;
 
     // queryparam for breadcrum
