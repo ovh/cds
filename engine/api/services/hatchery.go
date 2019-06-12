@@ -20,7 +20,7 @@ func CountHatcheries(db gorp.SqlExecutor, wfNodeRunID int64) (int64, error) {
 						JOIN workflow ON workflow.id = workflow_run.workflow_id
 						JOIN project ON project.id = workflow.project_id
 						JOIN project_group ON project_group.project_id = project.id
-				WHERE workflow_node_run.id = $2
+				WHERE workflow_node_run_job.id = $2
 				AND project_group.role >= 5
 			)
 			OR
@@ -45,7 +45,7 @@ func LoadHatcheriesCountByNodeJobRunID(db gorp.SqlExecutor, wfNodeJobRunID int64
 						JOIN workflow ON workflow.id = workflow_run.workflow_id
 						JOIN project ON project.id = workflow.project_id
 						JOIN project_group ON project_group.project_id = project.id
-				WHERE workflow_node_run.id = $2
+				WHERE workflow_node_run_job.id = $2
 				AND project_group.role >= 5
 			)
 			OR
