@@ -235,14 +235,6 @@ func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.S
 	return err
 }
 
-// QueueJobIncAttempts add hatcheryID that cannot run this job and return the spawn attempts list
-func (c *client) QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64, error) {
-	var spawnAttempts []int64
-	path := fmt.Sprintf("/queue/workflows/%d/attempt", jobID)
-	_, err := c.PostJSON(ctx, path, nil, &spawnAttempts)
-	return spawnAttempts, err
-}
-
 // QueueJobBook books a job for a Hatchery
 func (c *client) QueueJobBook(ctx context.Context, id int64) error {
 	path := fmt.Sprintf("/queue/workflows/%d/book", id)

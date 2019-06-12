@@ -25,16 +25,14 @@ type workerStarterRequest struct {
 	requirements        []sdk.Requirement
 	hostname            string
 	timestamp           int64
-	spawnAttempts       []int64
 	workflowNodeRunID   int64
 	registerWorkerModel *sdk.Model
 }
 
 type workerStarterResult struct {
-	request      workerStarterRequest
-	isRun        bool
-	temptToSpawn bool
-	err          error
+	request workerStarterRequest
+	isRun   bool
+	err     error
 }
 
 func PanicDump(h Interface) func(s string) (io.WriteCloser, error) {
@@ -73,10 +71,9 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			isRun, err := spawnWorkerForJob(h, j)
 			//Check the result
 			res := workerStarterResult{
-				request:      j,
-				err:          err,
-				isRun:        isRun,
-				temptToSpawn: true,
+				request: j,
+				err:     err,
+				isRun:   isRun,
 			}
 
 			_, cend := observability.Span(ctx2, "sendResult")
