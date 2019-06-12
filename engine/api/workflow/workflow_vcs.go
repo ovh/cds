@@ -21,5 +21,5 @@ func createVCSClientFromRootNode(ctx context.Context, db gorp.SqlExecutor, store
 	if vcsServer == nil {
 		return nil, sdk.WithStack(fmt.Errorf("no vcsServer found"))
 	}
-	return repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+	return repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 }

@@ -21,7 +21,7 @@ func (g *gerritConsumer) AuthorizeToken(ctx context.Context, state, code string)
 }
 
 //GetAuthorized returns an authorized client
-func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, username, password string) (sdk.VCSAuthorizedClient, error) {
+func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, username, password string, _ int64) (sdk.VCSAuthorizedClient, error) {
 	client, err := ger.NewClient(g.URL, nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to create gerrit client")

@@ -64,7 +64,7 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	ghConsummer := New(clientID, clientSecret, "", "", "http://localhost", "", "", "", "", cache, true, true)
-	cli, err := ghConsummer.GetAuthorizedClient(context.Background(), accessToken, "")
+	cli, err := ghConsummer.GetAuthorizedClient(context.Background(), accessToken, "", 0)
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}
@@ -117,7 +117,7 @@ func TestClientAuthorizeToken(t *testing.T) {
 
 	t.Logf("Token is %s", accessToken)
 
-	ghClient, err := ghConsummer.GetAuthorizedClient(context.Background(), accessToken, accessTokenSecret)
+	ghClient, err := ghConsummer.GetAuthorizedClient(context.Background(), accessToken, accessTokenSecret, 0)
 	test.NoError(t, err)
 	assert.NotNil(t, ghClient)
 }

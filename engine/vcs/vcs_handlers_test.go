@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/sdk"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/stretchr/testify/assert"
@@ -140,8 +142,8 @@ func Test_accessTokenAuth(t *testing.T) {
 	req := newRequest(t, s, "GET", uri, nil)
 
 	//Without any header, this should return 401
-	req.Header.Set(HeaderXAccessToken, "")
-	req.Header.Set(HeaderXAccessTokenSecret, "")
+	req.Header.Set(sdk.HeaderXAccessToken, "")
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, "")
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -178,9 +180,9 @@ func Test_getReposHandler(t *testing.T) {
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -220,9 +222,9 @@ func Test_getRepoHandler(t *testing.T) {
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -262,9 +264,9 @@ func Test_getBranchesHandler(t *testing.T) {
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -307,9 +309,9 @@ func Test_getBranchHandler(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -354,9 +356,9 @@ func Test_getCommitsHandler(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -397,9 +399,9 @@ func Test_getCommitHandler(t *testing.T) {
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -440,9 +442,9 @@ func Test_getCommitStatusHandler(t *testing.T) {
 	req := newRequest(t, s, "GET", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -526,9 +528,9 @@ func Test_postRepoGrantHandler(t *testing.T) {
 	req := newRequest(t, s, "POST", uri, nil)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(HeaderXAccessToken, token)
+	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
-	req.Header.Set(HeaderXAccessTokenSecret, token)
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
 
 	//Do the request
 	rec := httptest.NewRecorder()

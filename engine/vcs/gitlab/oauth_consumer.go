@@ -119,7 +119,7 @@ func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string)
 var instancesAuthorizedClient = map[string]*gitlabClient{}
 
 //GetAuthorized returns an authorized client
-func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
+func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string, _created int64) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
 	httpClient := &http.Client{
 		Timeout: 60 * time.Second,
