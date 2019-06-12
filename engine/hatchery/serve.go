@@ -104,7 +104,7 @@ func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req 
 		return ctx, nil
 	}
 
-	hash, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.AuthHeader))
+	hash, err := base64.StdEncoding.DecodeString(req.Header.Get(cdsclient.AuthHeader))
 	if err != nil {
 		return ctx, fmt.Errorf("bad header syntax: %s", err)
 	}

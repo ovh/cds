@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// AddUser creates a new user and generate verification email
-func (api *API) addUserHandler() service.Handler {
+// postAuthLocalSignupHandler create a new authentified user and a consumer.
+func (api *API) postAuthLocalSignupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// TODO: check if local auth is activated
 		tx, err := api.mustDB().Begin()
@@ -39,13 +39,13 @@ func (api *API) addUserHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		if !user.IsValidEmail(createUserRequest.Email) {
-			return sdk.WrapError(sdk.ErrInvalidEmail, "AddUser: Email address %s is not valid", createUserRequest.Email)
-		}
+		//	if !user.IsValidEmail(createUserRequest.Email) {
+		//		return sdk.WrapError(sdk.ErrInvalidEmail, "AddUser: Email address %s is not valid", createUserRequest.Email)
+		//	}
 
-		if !user.IsAllowedDomain(api.Config.Auth.Local.SignupAllowedDomains, createUserRequest.Email) {
-			return sdk.WrapError(sdk.ErrInvalidEmailDomain, "AddUser: Email address %s does not have a valid domain. Allowed domains:%v", createUserRequest.Email, api.Config.Auth.Local.SignupAllowedDomains)
-		}
+		//if !user.IsAllowedDomain(api.Config.Auth.Local.SignupAllowedDomains, createUserRequest.Email) {
+		//	return sdk.WrapError(sdk.ErrInvalidEmailDomain, "AddUser: Email address %s does not have a valid domain. Allowed domains:%v", createUserRequest.Email, api.Config.Auth.Local.SignupAllowedDomains)
+		//}
 
 		if err := localauthentication.CheckPasswordIsValid(createUserRequest.Password); err != nil {
 			return err

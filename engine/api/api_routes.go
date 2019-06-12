@@ -47,7 +47,7 @@ func (api *API) InitRouter() {
 	//r.Handle("/auth/consumer/github/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
 	//r.Handle("/auth/consumer/sso/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
 	//r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.resetUserHandler))
-	//r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.resetUserHandler))
+	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.resetUserHandler))
 	//r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.resetUserHandler))
 	//r.Handle("/auth/consumer/local/confirm/{token}", ScopeNone(), r.GET(api.confirmUserHandler, Auth(false)))
 	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))

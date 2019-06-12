@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,13 +11,12 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/ldapauthentication"
-	"github.com/ovh/cds/engine/api/authentication/localauthentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
@@ -78,7 +76,7 @@ type Configuration struct {
 		Download string `toml:"download" default:"/tmp/cds/download" json:"download"`
 		Keys     string `toml:"keys" default:"/tmp/cds/keys" json:"keys"`
 	} `toml:"directories" json:"directories"`
-	Auth struct {
+	Authentication struct {
 		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory." json:"-"`
 		RSAPrivateKey    string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
@@ -94,8 +92,31 @@ type Configuration struct {
 			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
+			Enable               bool   `toml:"enable" default:"true" json:"enable"`
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
+		CorporateSSO struct {
+			Enabled        bool   `json:"enabled" default:"false" toml:"enabled"`
+			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
+			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
+			Keys           struct {
+				RequestSigningKey  string `json:"request_signing_key" toml:"requestSigningKey"`
+				TokenSigningKey    string `json:"token_signing_key" toml:"tokenSigningKey"`
+				TokenKeySigningKey *struct {
+					KeySigningKey   string `json:"public_signing_key" toml:"publicSigningKey"`
+					SigningKeyClaim string `json:"signing_key_claim" toml:"signingKeyClaim"`
+				} `json:"key_signing_key" toml:"keySigningKey"`
+			} `json:"keys" toml:"keys"`
+			Claims struct { // TODO meh ?
+				Username     string `json:"username"`
+				SessionLevel string `json:"session_level"`
+			} `json:"claims" toml:"claims"`
+		} `json:"corporate_sso" toml:"corporateSSO"`
+		Github struct {
+			Enabled      bool   `json:"enabled" default:"false" toml:"enabled"`
+			ClientID     string `toml:"clientId" json:"-" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
+			ClientSecret string `toml:"clientSecret" json:"-"  comment:"Github OAuth Application Client Secret"`
+		} `toml:"github" json:"github"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true" json:"disable"`
@@ -363,6 +384,10 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("You can't specify just defaultArch without defaultOS in your configuration and vice versa")
 	}
 
+	if a.Config.Authentication.RSAPrivateKey == "" {
+		return errors.New("invalid given authentication rsa private key")
+	}
+
 	return nil
 }
 
@@ -399,17 +424,15 @@ func (a *API) Serve(ctx context.Context) error {
 		return errors.New("worker binary unavailabe")
 	}
 
-	//Initialize secret driver
+	// Initialize secret driver
 	secret.Init(a.Config.Secrets.Key)
 
-	//Initialize the jwt layer
-	if a.Config.Auth.RSAPrivateKey != "" { // Temporary condition...
-		if err := accesstoken.Init(a.Name, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
-			return fmt.Errorf("unable to initialize the JWT Layer: %v", err)
-		}
+	// Initialize the jwt layer
+	if err := accesstoken.Init(a.Name, []byte(a.Config.Authentication.RSAPrivateKey)); err != nil {
+		return errors.Wrap(err, "unable to initialize the JWT Layer")
 	}
 
-	//Initialize mail package
+	// Initialize mail package
 	log.Info("Initializing mail driver...")
 	mail.Init(a.Config.SMTP.User,
 		a.Config.SMTP.Password,
@@ -423,7 +446,7 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
 	if a.Config.Features.Izanami.APIURL != "" {
 		if err := feature.Init(a.Config.Features.Izanami.APIURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
-			return fmt.Errorf("Feature flipping not enabled with izanami: %v", err)
+			return errors.Wrap(err, "feature flipping not enabled with izanami: %v")
 		}
 	}
 
@@ -508,8 +531,8 @@ func (a *API) Serve(ctx context.Context) error {
 
 	log.Info("Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
-		DefaultGroupName: a.Config.Auth.DefaultGroup,
-		SharedInfraToken: a.Config.Auth.SharedInfraToken,
+		DefaultGroupName: a.Config.Authentication.DefaultGroup,
+		SharedInfraToken: a.Config.Authentication.SharedInfraToken,
 	}
 	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
 		return fmt.Errorf("cannot setup databases: %v", err)
@@ -557,22 +580,23 @@ func (a *API) Serve(ctx context.Context) error {
 	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication drivers...")
-	a.AuthenticationDrivers = map[string]authentication.Driver{}
-	if a.Config.Auth.LDAP.Enable {
-		cfg := ldapauthentication.LDAPConfig{
-			Host:         a.Config.Auth.LDAP.Host,
-			Port:         a.Config.Auth.LDAP.Port,
-			Base:         a.Config.Auth.LDAP.Base,
-			DN:           a.Config.Auth.LDAP.DN,
-			SSL:          a.Config.Auth.LDAP.SSL,
-			UserFullname: a.Config.Auth.LDAP.Fullname,
-			BindDN:       a.Config.Auth.LDAP.BindDN,
-			BindPwd:      a.Config.Auth.LDAP.BindPwd,
-		}
-		a.AuthenticationDrivers["ldap"] = ldapauthentication.New(cfg)
-	} else {
-		a.AuthenticationDrivers["local"] = localauthentication.New()
-	}
+	// TODO
+	//a.AuthenticationDrivers = map[string]authentication.Driver{}
+	//if a.Config.Auth.LDAP.Enable {
+	//	cfg := ldapauthentication.LDAPConfig{
+	//		Host:         a.Config.Auth.LDAP.Host,
+	//		Port:         a.Config.Auth.LDAP.Port,
+	//		Base:         a.Config.Auth.LDAP.Base,
+	//		DN:           a.Config.Auth.LDAP.DN,
+	//		SSL:          a.Config.Auth.LDAP.SSL,
+	//		UserFullname: a.Config.Auth.LDAP.Fullname,
+	//		BindDN:       a.Config.Auth.LDAP.BindDN,
+	//		BindPwd:      a.Config.Auth.LDAP.BindPwd,
+	//	}
+	//	a.AuthenticationDrivers["ldap"] = ldapauthentication.New(cfg)
+	//} else {
+	//	a.AuthenticationDrivers["local"] = localauthentication.New()
+	//}
 
 	log.Info("Initializing event broker...")
 	kafkaOptions := event.KafkaConfig{

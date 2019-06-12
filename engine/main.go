@@ -158,7 +158,7 @@ All options
 		var sharedInfraToken = sdk.RandomString(128)
 
 		if conf.API != nil {
-			conf.API.Auth.SharedInfraToken = sharedInfraToken
+			conf.API.Authentication.SharedInfraToken = sharedInfraToken
 			conf.API.Secrets.Key = sdk.RandomString(32)
 			conf.API.Providers = append(conf.API.Providers, api.ProviderConfiguration{
 				Name:  "sample-provider",

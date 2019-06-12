@@ -13,20 +13,22 @@ import (
 )
 
 var (
-	LocalIssuer string
-	signingKey  *rsa.PrivateKey
-	verifyKey   *rsa.PublicKey
+	issuerName string
+	signingKey *rsa.PrivateKey
+	verifyKey  *rsa.PublicKey
 )
 
 // Init the package by passing the signing key
 func Init(issuer string, k []byte) error {
-	LocalIssuer = issuer
+	issuerName = issuer
+
 	var err error
 	signingKey, err = jwt.ParseRSAPrivateKeyFromPEM(k)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	verifyKey = &signingKey.PublicKey
+
 	return nil
 }
 

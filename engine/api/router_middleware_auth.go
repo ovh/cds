@@ -95,10 +95,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
 	}
 
-	// Checks permissions
-	if !rc.NeedAuth {
-		return ctx, nil
-	}
 	if rc.NeedAdmin {
 		if !isAdmin(ctx) || !sdk.IsInArray(sdk.AccessTokenScopeAdmin, actualScopes) {
 			return ctx, sdk.WithStack(sdk.ErrForbidden)

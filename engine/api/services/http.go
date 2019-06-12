@@ -13,8 +13,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/go-gorp/gorp"
@@ -220,9 +218,10 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 		}
 	}
 
-	if HTTPSigner == nil {
-		HTTPSigner = httpsig.NewRSASHA256Signer(accesstoken.LocalIssuer, accesstoken.GetSigningKey(), []string{"(request-target)", "host", "date"})
-	}
+	//
+	//if HTTPSigner == nil {
+	//	HTTPSigner = httpsig.NewRSASHA256Signer(accesstoken.LocalIssuer, accesstoken.GetSigningKey(), []string{"(request-target)", "host", "date"})
+	//}
 
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {

@@ -15,7 +15,7 @@ func NewJWT(s *sdk.AuthSession) (string, error) {
 		GroupIDs: s.GroupIDs,
 		Scopes:   s.Scopes,
 		StandardClaims: jwt.StandardClaims{
-			Issuer:    LocalIssuer,
+			Issuer:    issuerName,
 			Subject:   s.ConsumerID,
 			Id:        s.ID,
 			IssuedAt:  time.Now().Unix(),

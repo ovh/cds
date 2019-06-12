@@ -1,0 +1,5 @@
+package authentication
+
+func Init() {
+
+}
