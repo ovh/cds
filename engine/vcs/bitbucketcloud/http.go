@@ -96,12 +96,12 @@ func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Re
 func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, error) {
 	callURL, err := url.ParseRequestURI(rootURL + path)
 	if err != nil {
-		return 0, nil, nil, err
+		return 0, nil, nil, sdk.WithStack(err)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, callURL.String(), nil)
 	if err != nil {
-		return 0, nil, nil, err
+		return 0, nil, nil, sdk.WithStack(err)
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -123,12 +123,12 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 			return client.get(location)
 		}
 	case http.StatusUnauthorized:
-		return res.StatusCode, nil, nil, ErrorUnauthorized
+		return res.StatusCode, nil, nil, sdk.WithStack(ErrorUnauthorized)
 	}
 
 	resBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return res.StatusCode, nil, nil, err
+		return res.StatusCode, nil, nil, sdk.WithStack(err)
 	}
 
 	return res.StatusCode, resBody, res.Header, nil
@@ -137,7 +137,7 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 func (client *bitbucketcloudClient) delete(path string) error {
 	req, err := http.NewRequest(http.MethodDelete, rootURL+path, nil)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
@@ -204,15 +204,15 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 	// Check for an http error status (ie not 200 StatusOK)
 	switch resp.StatusCode {
 	case 404:
-		return sdk.ErrNotFound
+		return sdk.WithStack(sdk.ErrNotFound)
 	case 403:
-		return sdk.ErrForbidden
+		return sdk.WithStack(sdk.ErrForbidden)
 	case 401:
-		return sdk.ErrUnauthorized
+		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
 		log.Warning("bitbucketClient.do> %s", string(body))
-		return sdk.ErrWrongRequest
+		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 
-	return json.Unmarshal(body, v)
+	return sdk.WithStack(json.Unmarshal(body, v))
 }

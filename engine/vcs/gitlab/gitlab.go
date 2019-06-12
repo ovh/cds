@@ -17,7 +17,7 @@ var (
 // gitlabClient implements VCSAuthorizedClient interface
 type gitlabClient struct {
 	client              *gitlab.Client
-	accesToken          string
+	accessToken         string
 	uiURL               string
 	proxyURL            string
 	disableStatus       bool
@@ -53,5 +53,5 @@ func New(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store ca
 }
 
 func (c *gitlabClient) GetAccessToken(_ context.Context) string {
-	return c.accesToken
+	return c.accessToken
 }

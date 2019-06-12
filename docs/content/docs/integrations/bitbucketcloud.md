@@ -27,7 +27,7 @@ This integration enables some features:
 
 ### Complete CDS Configuration File
 
-Set value to `privateKey`. You can modify `consumerKey` if you want.
+Set value to `clientId` and `clientSecret`.
 
 ```yaml
  [vcs.servers]

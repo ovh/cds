@@ -40,13 +40,13 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 		status, body, _, err := client.get(url)
 		if err != nil {
 			log.Warning("bitbucketcloudClient.CurrentUser> Error %s", err)
-			return user, err
+			return user, sdk.WithStack(err)
 		}
 		if status >= 400 {
 			return user, sdk.NewError(sdk.ErrUserNotFound, errorAPI(body))
 		}
 		if err := json.Unmarshal(body, &user); err != nil {
-			return user, err
+			return user, sdk.WithStack(err)
 		}
 		//Put the body on cache for 1 hour
 		client.Cache.SetWithTTL(cacheKey, user, 60*60)

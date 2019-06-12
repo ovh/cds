@@ -11,6 +11,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	bitbucketCloudAccessTokenURL = "https://bitbucket.org/site/oauth2/access_token"
+)
+
 //AuthorizeRedirect returns the request token, the Authorize Bitbucket cloud
 func (consumer *bitbucketcloudConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	requestToken, err := sdk.GenerateHash()
@@ -39,7 +43,7 @@ func (consumer *bitbucketcloudConsumer) AuthorizeToken(ctx context.Context, _, c
 	headers := map[string][]string{}
 	headers["Accept"] = []string{"application/json"}
 
-	status, res, err := consumer.postForm("https://bitbucket.org/site/oauth2/access_token", params, headers)
+	status, res, err := consumer.postForm(bitbucketCloudAccessTokenURL, params, headers)
 	if err != nil {
 		return "", "", err
 	}
@@ -65,7 +69,7 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 	headers := map[string][]string{}
 	headers["Accept"] = []string{"application/json"}
 
-	status, res, err := consumer.postForm("https://bitbucket.org/site/oauth2/access_token", params, headers)
+	status, res, err := consumer.postForm(bitbucketCloudAccessTokenURL, params, headers)
 	if err != nil {
 		return "", "", err
 	}

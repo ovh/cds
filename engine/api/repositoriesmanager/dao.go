@@ -48,7 +48,7 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 func UpdateForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServers []sdk.ProjectVCSServer) error {
 	b1, err := yaml.Marshal(vcsServers)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	log.Debug("repositoriesmanager.UpdateForProject> %s %s", proj.Key, string(b1))
@@ -59,7 +59,7 @@ func UpdateForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServers []sdk.P
 	}
 
 	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.Key, encryptedVCSServerStr); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	proj.VCSServers = vcsServers

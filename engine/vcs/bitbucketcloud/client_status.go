@@ -168,7 +168,7 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 		eventNR.Number,
 	)
 
-	//CDS can avoid sending bitbucket targer url in status, if it's disable
+	//CDS can avoid sending bitbucket target url in status, if it's disable
 	if disabledStatusDetail {
 		data.urlPipeline = "https://ovh.github.io/cds/" // because it's mandatory
 	}
