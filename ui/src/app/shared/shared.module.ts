@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
@@ -209,6 +210,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWizardNodeContextComponent,
         WorkflowWizardNodeInputComponent,
         WorkflowWizardNodeConditionComponent,
+        ConditionsComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,
@@ -270,6 +272,7 @@ import { ZoneComponent } from './zone/zone.component';
         TokenListComponent,
         NgSemanticModule,
         NgxAutoScroll,
+        ConditionsComponent,
         ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,

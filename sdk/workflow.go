@@ -823,7 +823,7 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			Conditions:                n.Context.Conditions,
 			DefaultPayload:            n.Context.DefaultPayload,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
-			Mutex:                     n.Context.Mutex,
+			Mutex: n.Context.Mutex,
 		},
 		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
 		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),
@@ -1489,9 +1489,9 @@ type WorkflowNodeConditions struct {
 
 //WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type WorkflowNodeCondition struct {
-	Variable string `json:"variable"`
-	Operator string `json:"operator"`
-	Value    string `json:"value"`
+	Variable string `json:"variable" yaml:"variable"`
+	Operator string `json:"operator" yaml:"operator"`
+	Value    string `json:"value" yaml:"value"`
 }
 
 //WorkflowNodeContext represents a context attached on a node

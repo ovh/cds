@@ -23,36 +23,33 @@ type structarg struct {
 
 // LoadPipeline loads a pipeline from database
 func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
-	var p sdk.Pipeline
-
-	var lastModified time.Time
+	var p Pipeline
 	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.last_modified, pipeline.from_repository
 			FROM pipeline
 	 			JOIN project on pipeline.project_id = project.id
 	 		WHERE pipeline.name = $1 AND project.projectKey = $2`
 
-	if err := db.QueryRow(query, name, projectKey).Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified, &p.FromRepository); err != nil {
+	if err := db.SelectOne(&p, query, name, projectKey); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.WithStack(sdk.ErrPipelineNotFound)
 		}
 		return nil, sdk.WithStack(err)
 	}
-	p.LastModified = lastModified.Unix()
-	p.ProjectKey = projectKey
 
+	pip := sdk.Pipeline(p)
 	if deep {
-		if err := loadPipelineDependencies(context.TODO(), db, &p); err != nil {
+		if err := loadPipelineDependencies(context.TODO(), db, &pip); err != nil {
 			return nil, err
 		}
 	} else {
-		parameters, err := GetAllParametersInPipeline(context.TODO(), db, p.ID)
+		parameters, err := GetAllParametersInPipeline(context.TODO(), db, pip.ID)
 		if err != nil {
 			return nil, err
 		}
 		p.Parameter = parameters
 	}
 
-	return &p, nil
+	return &pip, nil
 }
 
 // LoadPipelineByID loads a pipeline from database
@@ -64,36 +61,32 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 	)
 	defer end()
 
-	var lastModified time.Time
-	var p sdk.Pipeline
-	query := `SELECT pipeline.name, pipeline.description, project.projectKey, pipeline.last_modified, pipeline.from_repository
+	var p Pipeline
+	query := `SELECT pipeline.*
 	FROM pipeline
-		JOIN project on pipeline.project_id = project.id
 	WHERE pipeline.id = $1`
 
-	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Description, &p.ProjectKey, &lastModified, &p.FromRepository)
-	if err != nil {
+	if err := db.SelectOne(&p, query, pipelineID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrPipelineNotFound
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
-	p.LastModified = lastModified.Unix()
-	p.ID = pipelineID
+	pip := sdk.Pipeline(p)
 
 	if deep {
-		if err := loadPipelineDependencies(ctx, db, &p); err != nil {
+		if err := loadPipelineDependencies(ctx, db, &pip); err != nil {
 			return nil, err
 		}
 	} else {
-		parameters, err := GetAllParametersInPipeline(ctx, db, p.ID)
+		parameters, err := GetAllParametersInPipeline(ctx, db, pip.ID)
 		if err != nil {
 			return nil, err
 		}
-		p.Parameter = parameters
+		pip.Parameter = parameters
 	}
 
-	return &p, nil
+	return &pip, nil
 }
 
 // LoadByWorkerModel loads pipelines from database for a given worker model name
@@ -179,7 +172,7 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, u *sdk.User, mo
 
 // LoadByWorkflowID loads pipelines from database for a given workflow id
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, error) {
-	pips := []sdk.Pipeline{}
+	pips := []Pipeline{}
 	query := `SELECT DISTINCT pipeline.*
 	FROM pipeline
 		JOIN workflow_node ON pipeline.id = workflow_node.pipeline_id
@@ -188,12 +181,16 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, er
 
 	if _, err := db.Select(&pips, query, workflowID); err != nil {
 		if err == sql.ErrNoRows {
-			return pips, nil
+			return []sdk.Pipeline{}, nil
 		}
 		return nil, sdk.WrapError(err, "Unable to load pipelines linked to workflow id %d", workflowID)
 	}
+	pipsSdk := make([]sdk.Pipeline, len(pips))
+	for i := range pips {
+		pipsSdk[i] = sdk.Pipeline(pips[i])
+	}
 
-	return pips, nil
+	return pipsSdk, nil
 }
 
 func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline) error {
@@ -230,47 +227,31 @@ func DeletePipeline(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, 
 
 // LoadPipelines loads all pipelines in a project
 func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool) ([]sdk.Pipeline, error) {
-	var pip []sdk.Pipeline
+	var pips []sdk.Pipeline
 	query := `SELECT id, name, description, project_id, last_modified, from_repository
 			  FROM pipeline
 			  WHERE project_id = $1
 			  ORDER BY pipeline.name`
 
-	rows, errquery := db.Query(query, projectID)
-	if errquery != nil {
-		return nil, errquery
+	if _, err := db.Select(&pips, query, projectID); err != nil {
+		return nil, sdk.WithStack(err)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var p sdk.Pipeline
-		var lastModified time.Time
-
-		// scan pipeline id
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &lastModified, &p.FromRepository); err != nil {
-			return nil, err
-		}
-		p.LastModified = lastModified.Unix()
-
+	for i := range pips {
 		if loadDependencies {
 			// load pipeline stages
-			if err := LoadPipelineStage(context.TODO(), db, &p); err != nil {
+			if err := LoadPipelineStage(context.TODO(), db, &pips[i]); err != nil {
 				return nil, err
 			}
 		}
-
-		pip = append(pip, p)
-	}
-
-	for i := range pip {
-		params, err := GetAllParametersInPipeline(context.TODO(), db, pip[i].ID)
+		params, err := GetAllParametersInPipeline(context.TODO(), db, pips[i].ID)
 		if err != nil {
 			return nil, err
 		}
-		pip[i].Parameter = params
+		pips[i].Parameter = params
 	}
 
-	return pip, nil
+	return pips, nil
 }
 
 // LoadAllNames returns all pipeline names

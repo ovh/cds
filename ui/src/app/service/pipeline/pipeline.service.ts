@@ -1,6 +1,7 @@
 
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Application } from '../../model/application.model';
@@ -108,6 +109,16 @@ export class PipelineService {
      */
     getApplications(key: string, pipName: string): Observable<Application[]> {
         return this._http.get<Application[]>('/project/' + key + '/pipeline/' + pipName + '/application');
+    }
+
+    /**
+     * Get the list of condition names for a given pipeline
+     * @param key Project unique key
+     * @param pipName Pipeline name
+     * @returns {Observable<WorkflowTriggerConditionCache>}
+     */
+    getStageConditionsName(key: string, pipName: string): Observable<WorkflowTriggerConditionCache> {
+        return this._http.get<WorkflowTriggerConditionCache>('/project/' + key + '/pipeline/' + pipName + '/stage/condition');
     }
 
     /**
