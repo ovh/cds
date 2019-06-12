@@ -110,7 +110,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     show(): void {
         if (this.nodeEditModal) {
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeEditModal);
-            this.modalConfig.mustScroll = false;
+            this.modalConfig.mustScroll = true;
             this.modalConfig.size = ModalSize.Large;
             this.modalConfig.isClosable = true;
             this.modal = this._modalService.open(this.modalConfig);
