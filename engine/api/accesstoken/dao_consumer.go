@@ -57,6 +57,12 @@ func LoadConsumerByID(ctx context.Context, db gorp.SqlExecutor, id string, opts 
 	return getConsumer(ctx, db, query, opts...)
 }
 
+// LoadConsumerByTypeAndUserID returns an auth consumer from database for given type and user id.
+func LoadConsumerByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, consumerType sdk.AuthConsumerType, userID string, opts ...LoadConsumerOptionFunc) (*sdk.AuthConsumer, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND user_id = $2").Args(consumerType, userID)
+	return getConsumer(ctx, db, query, opts...)
+}
+
 // InsertConsumer in database.
 func InsertConsumer(db gorp.SqlExecutor, c *sdk.AuthConsumer) error {
 	if err := gorpmapping.Insert(db, c); err != nil {

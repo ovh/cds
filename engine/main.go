@@ -158,7 +158,7 @@ All options
 		var sharedInfraToken = sdk.RandomString(128)
 
 		if conf.API != nil {
-			conf.API.Authentication.SharedInfraToken = sharedInfraToken
+			conf.API.Auth.SharedInfraToken = sharedInfraToken
 			conf.API.Secrets.Key = sdk.RandomString(32)
 			conf.API.Providers = append(conf.API.Providers, api.ProviderConfiguration{
 				Name:  "sample-provider",
@@ -536,7 +536,7 @@ See $ engine config command for more details.
 
 func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {
 	if err := serve(c, s, serviceName, cfg); err != nil {
-		sdk.Exit("Service has been stopped: %s %v", serviceName, err)
+		sdk.Exit("Service has been stopped: %s %+v", serviceName, err)
 	}
 }
 
@@ -561,7 +561,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 
 	go func() {
 		if err := s.Serve(c); err != nil {
-			log.Error("%s> Serve: %v", serviceName, err)
+			log.Error("%s> Serve: %+v", serviceName, err)
 			cancel()
 		}
 	}()
@@ -569,7 +569,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	<-ctx.Done()
 
 	if ctx.Err() != nil {
-		log.Error("%s> Service exiting with err: %v", serviceName, ctx.Err())
+		log.Error("%s> Service exiting with err: %+v", serviceName, ctx.Err())
 	} else {
 		log.Info("%s> Service exiting", serviceName)
 	}

@@ -3,6 +3,7 @@ package accesstoken
 import (
 	"context"
 	"crypto/rsa"
+	"fmt"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
@@ -13,16 +14,17 @@ import (
 )
 
 var (
-	issuerName string
+	IssuerName string
 	signingKey *rsa.PrivateKey
 	verifyKey  *rsa.PublicKey
 )
 
 // Init the package by passing the signing key
 func Init(issuer string, k []byte) error {
-	issuerName = issuer
+	IssuerName = issuer
 
 	var err error
+	fmt.Println(string(k))
 	signingKey, err = jwt.ParseRSAPrivateKeyFromPEM(k)
 	if err != nil {
 		return sdk.WithStack(err)

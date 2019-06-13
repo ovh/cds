@@ -168,6 +168,7 @@ func DefaultHeaders() map[string]string {
 	}
 }
 
+// TODO create specific handler for no auth
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri

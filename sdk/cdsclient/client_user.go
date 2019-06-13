@@ -2,7 +2,6 @@ package cdsclient
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -43,7 +42,7 @@ func (c *client) UserList() ([]sdk.User, error) {
 }
 
 func (c *client) UserSignup(username, fullname, email, callback string) error {
-	u := new(sdk.User)
+	/*u := new(sdk.User)
 	u.Username = username
 	u.Fullname = fullname
 	u.Email = email
@@ -59,7 +58,7 @@ func (c *client) UserSignup(username, fullname, email, callback string) error {
 	}
 	if code >= 300 {
 		return fmt.Errorf("Error %d", code)
-	}
+	}*/
 	return nil
 }
 
@@ -80,7 +79,7 @@ func (c *client) UserGetGroups(username string) (map[string][]sdk.Group, error) 
 }
 
 func (c *client) UserReset(username, email, callback string) error {
-	req := sdk.UserRequest{
+	/*req := sdk.UserRequest{
 		//User: sdk.User{
 		//		Email: email,
 		//},
@@ -93,7 +92,7 @@ func (c *client) UserReset(username, email, callback string) error {
 	}
 	if code != http.StatusCreated {
 		return fmt.Errorf("Error %d", code)
-	}
+	}*/
 	return nil
 }
 

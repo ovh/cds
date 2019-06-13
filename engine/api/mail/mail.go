@@ -110,17 +110,14 @@ func smtpClient() (*smtp.Client, error) {
 
 // SendMailVerifyToken Send mail to verify user account
 func SendMailVerifyToken(userMail, username, token, callback string) error {
-	callbackURL := getCallbackURL(username, token, callback)
+	callbackURL := fmt.Sprintf(callback, token)
 
 	mailContent, err := createTemplate(templateSignedUP, callbackURL)
 	if err != nil {
 		return err
 	}
-	return SendEmail("Welcome to CDS", &mailContent, userMail, false)
-}
 
-func getCallbackURL(username, token, callback string) string {
-	return fmt.Sprintf(callback, username, token)
+	return SendEmail("Welcome to CDS", &mailContent, userMail, false)
 }
 
 func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {

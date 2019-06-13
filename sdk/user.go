@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	json "encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -192,16 +193,6 @@ type Favorite struct {
 	WorkflowIDs []int64 `json:"workflow_ids" yaml:"workflow_ids"`
 }
 
-// UserRequest request new user creation
-type UserRequest struct {
-	Fullname             string `json:"fullname"`
-	Email                string `json:"email"`
-	Username             string `json:"username"`
-	Password             string `json:"password"`
-	PasswordConfirmation string `json:"password_confirmation"`
-	Callback             string `json:"callback"`
-}
-
 type UserResponse struct {
 	AuthentifiedUser
 	VerifyToken string `json:"verify_token"`
@@ -221,16 +212,14 @@ type UserLoginRequest struct {
 	Password     string `json:"password"`
 }
 
-// UserLoginResponse  response from rest API
-type UserLoginResponse struct {
-	User  AuthentifiedUser `json:"user"`
-	Token string           `json:"token"`
-}
-
 type UserLoginCallbackRequest struct {
 	RequestToken string `json:"request_token"`
 	PublicKey    []byte `json:"public_key"`
 }
 
-// UserEmailPattern  pattern for user email address
-const UserEmailPattern = "(\\w[-._\\w]*\\w@\\w[-._\\w]*\\w\\.\\w{2,3})"
+// IsValidEmail  Check if user email address is ok
+func IsValidEmail(email string) bool {
+	pattern := "(\\w[-._\\w]*\\w@\\w[-._\\w]*\\w\\.\\w{2,3})"
+	regexp := regexp.MustCompile(pattern)
+	return regexp.MatchString(email)
+}

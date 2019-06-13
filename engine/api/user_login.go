@@ -4,16 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/user"
-
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoginUser take user credentials and creates a auth token
-func (api *API) loginUserHandler() service.Handler {
+/*func (api *API) loginUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var loginUserRequest sdk.UserLoginRequest
 		if err := service.UnmarshalBody(r, &loginUserRequest); err != nil {
@@ -67,7 +62,7 @@ func (api *API) loginUserHandler() service.Handler {
 		var loginUserResponse sdk.UserLoginResponse
 		return service.WriteJSON(w, loginUserResponse, http.StatusOK)
 	}
-}
+}*/
 
 func (api *API) loginUserCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

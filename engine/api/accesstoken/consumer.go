@@ -28,3 +28,24 @@ func NewConsumerBuiltin(db gorp.SqlExecutor, name, description, userID string, g
 
 	return &c, nil
 }
+
+// NewConsumerLocal returns a new local consumer for given data.
+func NewConsumerLocal(db gorp.SqlExecutor, userID string, hash []byte) (*sdk.AuthConsumer, error) {
+	c := sdk.AuthConsumer{
+		ID:                 sdk.UUID(),
+		Name:               string(sdk.ConsumerLocal),
+		AuthentifiedUserID: userID,
+		Type:               sdk.ConsumerLocal,
+		Data: map[string]string{
+			"hash":     string(hash),
+			"verified": sdk.FalseString,
+		},
+		Created: time.Now(),
+	}
+
+	if err := InsertConsumer(db, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
