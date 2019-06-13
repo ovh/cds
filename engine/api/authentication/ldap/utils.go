@@ -1,10 +1,11 @@
-package ldapauthentication
+package ldap
 
 import (
 	"errors"
 
-	"github.com/ovh/cds/sdk/log"
 	"gopkg.in/ldap.v2"
+
+	"github.com/ovh/cds/sdk/log"
 )
 
 var errUserNotFound = errors.New("user not found")

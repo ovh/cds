@@ -220,7 +220,7 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 
 	//
 	//if HTTPSigner == nil {
-	//	HTTPSigner = httpsig.NewRSASHA256Signer(accesstoken.LocalIssuer, accesstoken.GetSigningKey(), []string{"(request-target)", "host", "date"})
+	//	HTTPSigner = httpsig.NewRSASHA256Signer(authentication.LocalIssuer, authentication.GetSigningKey(), []string{"(request-target)", "host", "date"})
 	//}
 
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)

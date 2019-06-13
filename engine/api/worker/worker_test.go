@@ -88,7 +88,7 @@ func TestAuthentication(t *testing.T) {
 	test.NoError(t, err)
 	assert.NotNil(t, token)
 
-	test.NoError(t, accesstoken.Insert(db, &token))
+	test.NoError(t, authentication.Insert(db, &token))
 
 	w.AccessTokenID = &token.ID
 	if err := worker.Update(db, w); err != nil {

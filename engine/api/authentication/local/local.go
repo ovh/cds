@@ -1,26 +1,18 @@
-package localauthentication
+package local
 
 import (
 	"context"
 	"net/http"
 	"strings"
-	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
-	"github.com/nbutton23/zxcvbn-go"
-	"golang.org/x/crypto/bcrypt"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
 var _ sdk.AuthDriver = new(localAuthentication)
 
-func New(allowedDomains string) sdk.AuthDriver {
+func NewDriver(allowedDomains string) sdk.AuthDriver {
 	var domains []string
 
 	if allowedDomains != "" {
@@ -73,7 +65,7 @@ func (l localAuthentication) CheckRequest(req sdk.AuthDriverRequest) error {
 	}
 
 	password := req["password"]
-	if err := l.IsPasswordValid(password); err != nil {
+	if err := isPasswordValid(password); err != nil {
 		return err
 	}
 
@@ -81,7 +73,7 @@ func (l localAuthentication) CheckRequest(req sdk.AuthDriverRequest) error {
 }
 
 func (l *localAuthentication) CheckAuthentication(ctx context.Context, db gorp.SqlExecutor, r *http.Request) (*sdk.AuthentifiedUser, error) {
-	_, end := observability.Span(ctx, "localauthentication.CheckAuthentication")
+	/*_, end := observability.Span(ctx, "localauthentication.CheckAuthentication")
 	defer end()
 
 	vars := mux.Vars(r)
@@ -102,26 +94,9 @@ func (l *localAuthentication) CheckAuthentication(ctx context.Context, db gorp.S
 		return nil, err
 	}
 
-	return u, nil
-}
+	return u, nil*/
 
-func (l localAuthentication) IsPasswordValid(password string) error {
-	passwordStrength := zxcvbn.PasswordStrength(password, nil).Score
-	if passwordStrength < 3 {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "given password is not strong enough")
-	}
-	return nil
-}
-
-func GenerateVerifyToken(consumerID string) (string, error) {
-	issuedAt := time.Now()
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, jwt.StandardClaims{
-		Issuer:    accesstoken.IssuerName,
-		Subject:   consumerID,
-		IssuedAt:  issuedAt.Unix(),
-		ExpiresAt: issuedAt.Add(24 * time.Hour).Unix(),
-	})
-	return accesstoken.SignJWT(jwtToken)
+	return nil, nil
 }
 
 // IsAllowedDomain return true is email is allowed, false otherwise.
@@ -132,21 +107,4 @@ func (l localAuthentication) IsAllowedDomain(email string) bool {
 		}
 	}
 	return false
-}
-
-// HashPassword returns a hash from given password.
-func HashPassword(password string) ([]byte, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrUnknownError, "cannot generate hash for given password"))
-	}
-	return hash, nil
-}
-
-// CompareHashAndPassword returns an error if given hash and password don't match.
-func CompareHashAndPassword(hash []byte, password string) error {
-	if err := bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
-		return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrInvalidPassword))
-	}
-	return nil
 }

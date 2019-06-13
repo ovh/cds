@@ -6,17 +6,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-	"github.com/ovh/cds/engine/api/cache"
-
-	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // ErrNoWorker means the given worker ID is not found
@@ -71,8 +69,8 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	}
 
 	// Load the access token of the hatchery
-	atoken, err := accesstoken.LoadSessionByID(context.Background(), db, hatchery.TokenID,
-		accesstoken.LoadSessionOptions.WithGroups,
+	atoken, err := authentication.LoadSessionByID(context.Background(), db, hatchery.TokenID,
+		authentication.LoadSessionOptions.WithGroups,
 	)
 	if err != nil {
 		return nil, "", err
@@ -102,12 +100,12 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	// we probably should remove shareinfra from the groups
 	// and make the intersection with hatchery accesstoken group
 
-	//	jwtoken, jwt, err := accesstoken.New( /*hatchery.Maintainer*/ sdk.AuthConsumer{} /*execsgroups*/, nil, []string{sdk.AccessTokenScopeRunExecution}, spawnArgs.HatcheryName, spawnArgs.WorkerName, time.Now().Add(24*time.Hour))
+	//	jwtoken, jwt, err := authentication.New( /*hatchery.Maintainer*/ sdk.AuthConsumer{} /*execsgroups*/, nil, []string{sdk.AccessTokenScopeRunExecution}, spawnArgs.HatcheryName, spawnArgs.WorkerName, time.Now().Add(24*time.Hour))
 	/*if err != nil {
 		return nil, "", err
 	}
 
-	if err := accesstoken.InsertSession(db, &jwtoken); err != nil {
+	if err := authentication.InsertSession(db, &jwtoken); err != nil {
 		return nil, "", err
 	}
 

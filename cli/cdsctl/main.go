@@ -20,8 +20,8 @@ var (
 
 func main() {
 	root = rootFromSubCommands([]*cobra.Command{
-		doc(),         // hidden command
-		accesstoken(), // experimental command
+		doc(), // hidden command
+		consumer(),
 		action(),
 		login(),             // nearly deprecated
 		loginExperimental(), // experimental command to handle JWT

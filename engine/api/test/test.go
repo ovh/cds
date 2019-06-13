@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -95,7 +95,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	RedisPassword = cfg["redisPassword"]
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
-	accesstoken.Init("cds_test", TestKey) // nolint
+	authentication.Init("cds_test", TestKey) // nolint
 
 	sigKeys := database.RollingKeyConfig{
 		Cipher: "hmac",

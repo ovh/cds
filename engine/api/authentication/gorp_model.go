@@ -1,4 +1,4 @@
-package accesstoken
+package authentication
 
 import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"

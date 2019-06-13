@@ -9,16 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/authentication/ldapauthentication"
-	"github.com/ovh/cds/engine/api/authentication/localauthentication"
-
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/ldap"
+	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
@@ -430,7 +429,7 @@ func (a *API) Serve(ctx context.Context) error {
 	secret.Init(a.Config.Secrets.Key)
 
 	// Initialize the jwt layer
-	if err := accesstoken.Init(a.Name, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
+	if err := authentication.Init(a.Name, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
 
@@ -585,7 +584,7 @@ func (a *API) Serve(ctx context.Context) error {
 	// TODO
 	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
 	if a.Config.Auth.LDAP.Enable {
-		a.AuthenticationDrivers[sdk.ConsumerLDAP] = ldapauthentication.New(ldapauthentication.LDAPConfig{
+		a.AuthenticationDrivers[sdk.ConsumerLDAP] = ldap.NewDriver(ldap.LDAPConfig{
 			Host:         a.Config.Auth.LDAP.Host,
 			Port:         a.Config.Auth.LDAP.Port,
 			Base:         a.Config.Auth.LDAP.Base,
@@ -597,7 +596,7 @@ func (a *API) Serve(ctx context.Context) error {
 		})
 	}
 	if a.Config.Auth.Local.Enable {
-		a.AuthenticationDrivers[sdk.ConsumerLocal] = localauthentication.New(a.Config.Auth.Local.SignupAllowedDomains)
+		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(a.Config.Auth.Local.SignupAllowedDomains)
 	}
 
 	log.Info("Initializing event broker...")

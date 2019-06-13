@@ -8,7 +8,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -57,11 +57,11 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if !ok {
 		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	claims := jwt.Claims.(sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
 	// Check for session based on jwt from context
-	session, err := accesstoken.VerifySession(ctx, api.mustDB(), sessionID)
+	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
 	if err != nil {
 		return ctx, err
 	}
@@ -69,8 +69,8 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	ctx = context.WithValue(ctx, contextSession, session)
 
 	// Load auth consumer for current session in database
-	consumer, err := accesstoken.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-		accesstoken.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	if err != nil {
 		return ctx, err
 	}
@@ -163,11 +163,11 @@ func (api *API) jwtMiddleware(ctx context.Context, req *http.Request, rc *servic
 
 	log.Debug("authJWTMiddleware> checking jwt token %s...", jwtRaw[:12])
 
-	jwt, err := accesstoken.VerifyJWT(jwtRaw)
+	jwt, err := authentication.CheckSessionJWT(jwtRaw)
 	if err != nil {
 		return ctx, err
 	}
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	claims := jwt.Claims.(sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
 	// Checking X-XSRF-TOKEN header
@@ -178,7 +178,7 @@ func (api *API) jwtMiddleware(ctx context.Context, req *http.Request, rc *servic
 
 		log.Debug("authJWTMiddleware> checking xsrf token %s...", xsrfToken[:12])
 
-		if !accesstoken.CheckXSRFToken(api.Cache, sessionID, xsrfToken) {
+		if !authentication.CheckXSRFToken(api.Cache, sessionID, xsrfToken) {
 			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 		}
 	}

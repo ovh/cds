@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
@@ -31,7 +31,7 @@ func Delete(db gorp.SqlExecutor, id string) error {
 	}
 
 	if accessTokenID.Valid {
-		if err := accesstoken.DeleteSessionByID(db, accessTokenID.String); err != nil {
+		if err := authentication.DeleteSessionByID(db, accessTokenID.String); err != nil {
 			return err
 		}
 	}

@@ -17,6 +17,7 @@ import (
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
 	CheckRequest(AuthDriverRequest) error
+	//InitConsumer(AuthDriverRequest) (*AuthConsumer, error)
 	CheckAuthentication(context.Context, gorp.SqlExecutor, *http.Request) (*AuthentifiedUser, error)
 }
 

@@ -14,17 +14,16 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func accesstoken() *cobra.Command {
-
+func consumer() *cobra.Command {
 	var (
 		cmd = cli.Command{
-			Name:  "xtoken",
-			Short: "Manage CDS access tokens [EXPERIMENTAL]",
+			Name:  "xconsumer",
+			Short: "Manage CDS auth consumers [EXPERIMENTAL]",
 		}
 
 		listbyUserCmd = cli.Command{
 			Name:  "list",
-			Short: "List your access tokens",
+			Short: "List your auth consumers",
 			Flags: []cli.Flag{
 				{
 					Name:      "group",
@@ -90,7 +89,6 @@ func accesstoken() *cobra.Command {
 }
 
 func accesstokenListRun(v cli.Values) (cli.ListResult, error) {
-
 	type displayToken struct {
 		ID          string `cli:"id,key"`
 		Description string `cli:"description"`

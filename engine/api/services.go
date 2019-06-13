@@ -7,18 +7,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ovh/cds/sdk/jws"
-
-	"github.com/ovh/cds/engine/api/accesstoken"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -38,7 +36,7 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		pubKey, err := jws.ExportPublicKey(accesstoken.GetSigningKey())
+		pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
 		if err != nil {
 			return sdk.WrapError(err, "Unable to export public signing key")
 		}

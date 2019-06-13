@@ -1,4 +1,4 @@
-package ldapauthentication
+package ldap
 
 import (
 	"context"
@@ -36,7 +36,7 @@ type LDAPConfig struct {
 	BindPwd      string
 }
 
-func New(cfg LDAPConfig) sdk.AuthDriver {
+func NewDriver(cfg LDAPConfig) sdk.AuthDriver {
 	return &ldapAuthentication{
 		conf: cfg,
 	}

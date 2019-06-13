@@ -50,13 +50,13 @@ import (
 	expiration := time.Now().Add(time.Duration(accessTokenRequest.ExpirationDelaySecond) * time.Second)
 
 	// Create the token
-	token, jwttoken, err = accesstoken.New(u, scopeGroup, accessTokenRequest.Scopes, accessTokenRequest.Origin, accessTokenRequest.Description, expiration)
+	token, jwttoken, err = authentication.New(u, scopeGroup, accessTokenRequest.Scopes, accessTokenRequest.Origin, accessTokenRequest.Description, expiration)
 	if err != nil {
 		return token, jwttoken, sdk.WithStack(err)
 	}
 
 	// Insert the token
-	if err := accesstoken.Insert(tx, &token); err != nil {
+	if err := authentication.Insert(tx, &token); err != nil {
 		return token, jwttoken, sdk.WithStack(err)
 	}
 
@@ -106,9 +106,9 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 		/*vars := mux.Vars(r)
 				id := vars["id"]
 
-				t, err := accesstoken.LoadByID(ctx, api.mustDB(), id,
-					accesstoken.LoadOptions.WithAuthentifiedUser,
-					accesstoken.LoadOptions.WithGroups,
+				t, err := authentication.LoadByID(ctx, api.mustDB(), id,
+					authentication.LoadOptions.WithAuthentifiedUser,
+					authentication.LoadOptions.WithGroups,
 				)
 				if err != nil {
 					return sdk.WithStack(err)
@@ -120,7 +120,7 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 				}
 
 				// Create the token
-				jwttoken, err := accesstoken.Regen(t)
+				jwttoken, err := authentication.Regen(t)
 				if err != nil {
 					return sdk.WithStack(err)
 				}
@@ -142,9 +142,9 @@ func (api *API) getAccessTokenByUserHandler() service.Handler {
 					return sdk.WithStack(err)
 				}
 
-				tokens, err := accesstoken.LoadAllByUserID(ctx, api.mustDB(), id,
-					accesstoken.LoadOptions.WithGroups,
-					accesstoken.LoadOptions.WithAuthentifiedUser,
+				tokens, err := authentication.LoadAllByUserID(ctx, api.mustDB(), id,
+					authentication.LoadOptions.WithGroups,
+					authentication.LoadOptions.WithAuthentifiedUser,
 				)
 				if err != nil {
 					return err
@@ -176,9 +176,9 @@ func (api *API) getAccessTokenByGroupHandler() service.Handler {
 								return sdk.WithStack(sdk.ErrForbidden)
 							}
 
-							tokens, err := accesstoken.LoadAllByGroupID(ctx, api.mustDB(), id,
-								accesstoken.LoadOptions.WithGroups,
-								accesstoken.LoadOptions.WithAuthentifiedUser,
+							tokens, err := authentication.LoadAllByGroupID(ctx, api.mustDB(), id,
+								authentication.LoadOptions.WithGroups,
+								authentication.LoadOptions.WithAuthentifiedUser,
 							)
 							if err != nil {
 								return err
@@ -195,9 +195,9 @@ func (api *API) deleteAccessTokenHandler() service.Handler {
 		/*vars := mux.Vars(r)
 		id := vars["id"]
 
-		t, err := accesstoken.LoadByID(ctx, api.mustDB(), id,
-			accesstoken.LoadOptions.WithAuthentifiedUser,
-			accesstoken.LoadOptions.WithGroups,
+		t, err := authentication.LoadByID(ctx, api.mustDB(), id,
+			authentication.LoadOptions.WithAuthentifiedUser,
+			authentication.LoadOptions.WithGroups,
 		)
 		if err != nil {
 			return sdk.WithStack(err)
@@ -208,7 +208,7 @@ func (api *API) deleteAccessTokenHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		if err := accesstoken.Delete(api.mustDB(), id); err != nil {
+		if err := authentication.Delete(api.mustDB(), id); err != nil {
 			return sdk.WithStack(err)
 		}*/
 

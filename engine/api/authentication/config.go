@@ -1,5 +1,0 @@
-package authentication
-
-func Init() {
-
-}

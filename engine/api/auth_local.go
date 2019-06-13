@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
-	"github.com/ovh/cds/engine/api/authentication/localauthentication"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -71,19 +71,19 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Generate password hash to store in consumer
-		hash, err := localauthentication.HashPassword(reqData["password"])
+		hash, err := local.HashPassword(reqData["password"])
 		if err != nil {
 			return err
 		}
 
 		// Create new local consumer for new user, set this consumer as pending validation
-		consumer, err := accesstoken.NewConsumerLocal(tx, newUser.ID, hash)
+		consumer, err := authentication.NewConsumerLocal(tx, newUser.ID, hash)
 		if err != nil {
 			return err
 		}
 
 		// Generate a token to verify consumer
-		verifyToken, err := localauthentication.GenerateVerifyToken(consumer.ID)
+		verifyToken, err := local.GenerateVerifyToken(consumer.ID)
 		if err != nil {
 			return err
 		}
@@ -106,22 +106,12 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 // ConfirmUser verify token send via email and mark user as verified
 func (api *API) getVerifyAuthLocalHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get user name in URL
 		vars := mux.Vars(r)
-		username := vars["username"]
 		token := vars["token"]
 
-		if username == "" || token == "" {
-			return sdk.ErrInvalidUsername
+		if token == "" {
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
-
-		// Load user
-		usr, err := user.LoadByUsername(ctx, api.mustDB(), username)
-		if err != nil {
-			return err
-		}
-
-		_ = usr
 
 		//TODO: check if has local auth
 
@@ -166,7 +156,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Try to load a local consumer for user
-		consumer, err := accesstoken.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID)
+		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID)
 		if err != nil {
 			return err
 		}
@@ -184,18 +174,18 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		if !okHash {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
-		if err := localauthentication.CompareHashAndPassword([]byte(hash), reqData.Password); err != nil {
+		if err := local.CompareHashAndPassword([]byte(hash), reqData.Password); err != nil {
 			return err
 		}
 
 		// Generate a new session for consumer
-		session, err := accesstoken.NewSession(tx, consumer, time.Now().Add(24*time.Hour*30))
+		session, err := authentication.NewSession(tx, consumer, time.Now().Add(24*time.Hour*30))
 		if err != nil {
 			return err
 		}
 
 		// Generate a jwt for current session
-		jwt, err := accesstoken.NewJWT(session)
+		jwt, err := authentication.NewSessionJWT(session)
 		if err != nil {
 			return err
 		}
@@ -243,7 +233,7 @@ func (api *API) resetUserHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		verifyToken, err := localauthentication.GenerateVerifyToken(resetUserRequest.Username)
+		verifyToken, err := local.GenerateVerifyToken(resetUserRequest.Username)
 		if err != nil {
 			return err
 		}

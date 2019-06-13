@@ -18,7 +18,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -106,18 +105,18 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 		log.Error("user cannot be load for id %s: %v", data.ID, err)
 	}
 
-	consumer, err := accesstoken.NewConsumerBuiltin(db, "Test consumer for user "+data.Username, "", u.ID, nil, []string{sdk.AccessTokenScopeALL})
+	consumer, err := authentication.NewConsumerBuiltin(db, "Test consumer for user "+data.Username, "", u.ID, nil, []string{sdk.AccessTokenScopeALL})
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
 	}
 
 	expiration := time.Now().Add(5 * time.Minute)
-	session, err := accesstoken.NewSession(db, consumer, expiration)
+	session, err := authentication.NewSession(db, consumer, expiration)
 	if err != nil {
 		log.Error("cannot create auth session: %v", err)
 	}
 
-	jwt, err := accesstoken.NewJWT(session)
+	jwt, err := authentication.NewJWT(session)
 	if err != nil {
 		log.Error("cannot create jwt: %v", err)
 	}
@@ -153,19 +152,19 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 
 	log.Debug("lambda user: %s", string(btes))
 
-	consumer, err := accesstoken.NewConsumerBuiltin(db, "Test consumer for user "+u.Username, "", u.ID,
+	consumer, err := authentication.NewConsumerBuiltin(db, "Test consumer for user "+u.Username, "", u.ID,
 		sdk.GroupPointersToIDs(groups), []string{sdk.AccessTokenScopeALL})
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
 	}
 
 	expiration := time.Now().Add(5 * time.Minute)
-	session, err := accesstoken.NewSession(db, consumer, expiration)
+	session, err := authentication.NewSession(db, consumer, expiration)
 	if err != nil {
 		log.Error("cannot create auth session: %v", err)
 	}
 
-	jwt, err := accesstoken.NewJWT(session)
+	jwt, err := authentication.NewJWT(session)
 	if err != nil {
 		log.Error("cannot create jwt: %v", err)
 	}
@@ -381,26 +380,26 @@ func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri s
 
 /*func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.AuthentifiedUser, groups ...sdk.Group) (string, error) {
 	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := accesstoken.New(u, groups, []string{sdk.AccessTokenScopeALL}, "test", sdk.RandomString(5), expiration)
+	token, jwt, err := authentication.New(u, groups, []string{sdk.AccessTokenScopeALL}, "test", sdk.RandomString(5), expiration)
 	if err != nil {
 		return "", err
 	}
-	err = accesstoken.Insert(db, &token)
+	err = authentication.Insert(db, &token)
 	return jwt, err
 }*/
 
 /*func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser, groups ...sdk.Group) (string, string, error) {
 	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := accesstoken.New(u, groups, []string{sdk.AccessTokenScopeALL}, accesstoken.OriginUI, sdk.RandomString(5), expiration)
+	token, jwt, err := authentication.New(u, groups, []string{sdk.AccessTokenScopeALL}, authentication.OriginUI, sdk.RandomString(5), expiration)
 	if err != nil {
 		return "", "", err
 	}
-	err = accesstoken.Insert(db, &token)
+	err = authentication.Insert(db, &token)
 	if err != nil {
 		return "", "", err
 	}
 
-	xsrf := accesstoken.StoreXSRFToken(store, token)
+	xsrf := authentication.StoreXSRFToken(store, token)
 	return jwt, xsrf, err
 }*/
 
@@ -485,10 +484,10 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	usr1, _ := InsertLambdaUser(db)
 
 	//exp := time.Now().Add(5 * time.Minute)
-	//token, _, err := accesstoken.New(*usr1, []sdk.Group{grp}, []string{sdk.AccessTokenScopeHatchery}, "cds_test", "cds test", exp)
+	//token, _, err := authentication.New(*usr1, []sdk.Group{grp}, []string{sdk.AccessTokenScopeHatchery}, "cds_test", "cds test", exp)
 	//test.NoError(t, err)
 
-	//test.NoError(t, accesstoken.Insert(db, &token))
+	//test.NoError(t, authentication.Insert(db, &token))
 
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)
@@ -514,10 +513,10 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 	usr1, _ := InsertAdminUser(db)
 
 	//exp := time.Now().Add(5 * time.Minute)
-	//token, _, err := accesstoken.New(*usr1, nil, []string{sdk.AccessTokenScopeALL}, "cds_test", name, exp)
+	//token, _, err := authentication.New(*usr1, nil, []string{sdk.AccessTokenScopeALL}, "cds_test", name, exp)
 	//test.NoError(t, err)
 
-	//test.NoError(t, accesstoken.Insert(db, &token))
+	//test.NoError(t, authentication.Insert(db, &token))
 
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)

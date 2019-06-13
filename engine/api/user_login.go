@@ -88,7 +88,7 @@ func (api *API) loginUserCallbackHandler() service.Handler {
 					return sdk.WithStack(err)
 				}
 
-				jwt, err := accesstoken.Regen(&accessToken)
+				jwt, err := authentication.Regen(&accessToken)
 				if err != nil {
 					return sdk.WithStack(err)
 				}
