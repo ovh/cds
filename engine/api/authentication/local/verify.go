@@ -22,12 +22,12 @@ func GenerateVerifyToken(consumerID string) (string, error) {
 }
 
 func CheckVerifyToken(jwtToken string) (*jwt.Token, error) {
-	token, err := jwt.ParseWithClaims(jwtToken, jwt.StandardClaims{}, authentication.VerifyJWT)
+	token, err := jwt.ParseWithClaims(jwtToken, &jwt.StandardClaims{}, authentication.VerifyJWT)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
 
-	if claims, ok := token.Claims.(jwt.StandardClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
 		log.Debug("localauthentication.CheckVerifyToken> jwt token is valid: %v %v", claims.Issuer, claims.ExpiresAt)
 		return token, nil
 	}

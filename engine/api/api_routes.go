@@ -50,7 +50,7 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, Auth(false)))
-	r.Handle("/auth/consumer/local/verify/{token}", ScopeNone(), r.GET(api.getVerifyAuthLocalHandler))
+	r.Handle("/auth/consumer/local/verify/{token}", ScopeNone(), r.GET(api.getVerifyAuthLocalHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.registerWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.unregisterWorkerHandler))
 

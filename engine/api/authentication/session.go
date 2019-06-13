@@ -63,12 +63,12 @@ func NewSessionJWT(s *sdk.AuthSession) (string, error) {
 
 // CheckSessionJWT validate given session jwt token.
 func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
-	token, err := jwt.ParseWithClaims(jwtToken, sdk.AuthSessionJWTClaims{}, VerifyJWT)
+	token, err := jwt.ParseWithClaims(jwtToken, &sdk.AuthSessionJWTClaims{}, VerifyJWT)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
 
-	if claims, ok := token.Claims.(sdk.AuthSessionJWTClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*sdk.AuthSessionJWTClaims); ok && token.Valid {
 		log.Debug("authentication.CheckSessionJWT> jwt token is valid: %v %v",
 			claims.StandardClaims.Issuer, claims.StandardClaims.ExpiresAt)
 		return token, nil
