@@ -29,12 +29,6 @@ type workerStarterRequest struct {
 	registerWorkerModel *sdk.Model
 }
 
-type workerStarterResult struct {
-	request workerStarterRequest
-	isRun   bool
-	err     error
-}
-
 func PanicDump(h Interface) func(s string) (io.WriteCloser, error) {
 	return func(s string) (io.WriteCloser, error) {
 		dir, err := h.PanicDumpDirectory()
