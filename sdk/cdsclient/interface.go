@@ -282,7 +282,7 @@ type WorkerClient interface {
 	WorkerModelSpawnError(id int64, info sdk.SpawnErrorForm) error
 	WorkerModels(*WorkerModelFilter) ([]sdk.Model, error)
 	WorkerModelsEnabled() ([]sdk.Model, error)
-	WorkerRegister(ctx context.Context, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
+	WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
 	WorkerSetStatus(ctx context.Context, status string) error
 }
 

@@ -247,7 +247,6 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 	}
 
 	req.Header.Set("Connection", "close")
-	req.Header.Add(cdsclient.RequestedWithHeader, cdsclient.RequestedWithValue)
 	for i := range mods {
 		if mods[i] != nil {
 			mods[i](req)

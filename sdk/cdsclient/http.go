@@ -3,7 +3,6 @@ package cdsclient
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"regexp"
 	"runtime/pprof"
 	"strings"
 
@@ -21,19 +21,8 @@ import (
 )
 
 const (
-	//SessionTokenHeader is user as HTTP header
-	SessionTokenHeader = "Session-Token"
-	// AuthHeader is used as HTTP header
-	AuthHeader = "X_AUTH_HEADER"
-	// RequestedWithHeader is used as HTTP header
-	RequestedWithHeader = "X-Requested-With"
-	// RequestedWithValue is used as HTTP header
-	RequestedWithValue = "X-CDS-SDK"
-	// RequestedNameHeader is used as HTTP header
-	RequestedNameHeader = "X-Requested-Name"
 	// RequestedIfModifiedSinceHeader is used as HTTP header
 	RequestedIfModifiedSinceHeader = "If-Modified-Since"
-
 	// ResponseAPITimeHeader is used as HTTP header
 	ResponseAPITimeHeader = "X-Api-Time"
 	// ResponseAPINanosecondsTimeHeader is used as HTTP header
@@ -161,6 +150,10 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 	return bodyBtes, respHeader, code, nil
 }
 
+// signin route pattern
+
+var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
+
 // Stream makes an authenticated http request and return io.ReadCloser
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
 	labels := pprof.Labels("path", path, "method", method)
@@ -213,36 +206,19 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		req.Header.Set("Connection", "close")
-		req.Header.Add(RequestedWithHeader, RequestedWithValue)
-		if c.name != "" {
-			req.Header.Add(RequestedNameHeader, c.name)
-		}
 		if c.isProvider {
 			req.Header.Add("X-Provider-Name", c.config.User)
-			req.Header.Add("X-Provider-Token", c.config.Token)
+			req.Header.Add("X-Provider-Token", c.config.ProviderToken)
 		}
 
-		//No auth on /login route
-		if !strings.HasPrefix(path, "/login") {
-			if c.config.Hash != "" {
-				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-				req.Header.Set(AuthHeader, basedHash)
-			}
-
-			// TODO
-			if _, _, err := new(jwt.Parser).ParseUnverified("" /*c.config.AccessToken,*/, &sdk.AuthSessionJWTClaims{}); err == nil {
+		//No auth on signing routes
+		if !signinRouteRegexp.MatchString(path) {
+			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
 				if c.config.Verbose {
 					fmt.Println("JWT recognized")
 				}
-				auth := "Bearer " + c.config.AccessToken
+				auth := "Bearer " + c.config.SessionToken
 				req.Header.Add("Authorization", auth)
-			} else {
-				// TEMPORARY CODE TO HANDLE OLD TOKEN
-				if c.config.User != "" && c.config.Token != "" {
-					req.Header.Add(SessionTokenHeader, c.config.Token)
-					req.SetBasicAuth(c.config.User, c.config.Token)
-				}
-				// TEMPORARY CODE - END
 			}
 		}
 
@@ -325,25 +301,23 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("Connection", "close")
-	req.Header.Add(RequestedWithHeader, RequestedWithValue)
 	if c.isProvider {
 		req.Header.Add("X-Provider-Name", c.config.User)
-		req.Header.Add("X-Provider-Token", c.config.Token)
+		req.Header.Add("X-Provider-Token", c.config.ProviderToken)
 	}
 
 	for i := range mods {
 		mods[i](req)
 	}
 
-	//No auth on /login route
-	if !strings.HasPrefix(path, "/login") {
-		if c.config.Hash != "" {
-			basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-			req.Header.Set(AuthHeader, basedHash)
-		}
-		if !c.isProvider && c.config.User != "" && c.config.Token != "" {
-			req.Header.Add(SessionTokenHeader, c.config.Token)
-			req.SetBasicAuth(c.config.User, c.config.Token)
+	//No auth on signing routes
+	if !signinRouteRegexp.MatchString(path) {
+		if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
+			if c.config.Verbose {
+				fmt.Println("JWT recognized")
+			}
+			auth := "Bearer " + c.config.SessionToken
+			req.Header.Add("Authorization", auth)
 		}
 	}
 

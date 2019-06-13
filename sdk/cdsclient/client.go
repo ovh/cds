@@ -111,10 +111,10 @@ func NewClientFromEnv() (Interface, error) {
 // NewProviderClient returns an implementation for ProviderClient interface
 func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	conf := Config{
-		Host:  cfg.Host,
-		Retry: 2,
-		Token: cfg.Token,
-		User:  cfg.Name,
+		Host:         cfg.Host,
+		Retry:        2,
+		SessionToken: cfg.Token,
+		User:         cfg.Name,
 	}
 
 	if cfg.RequestSecondsTimeout == 0 {

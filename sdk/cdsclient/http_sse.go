@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"runtime/pprof"
 	"strings"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -50,22 +53,17 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("Connection", "close")
-	req.Header.Add(RequestedWithHeader, RequestedWithValue)
-	if c.name != "" {
-		req.Header.Add(RequestedNameHeader, c.name)
-	}
 	if c.isProvider {
 		req.Header.Add("X-Provider-Name", c.config.User)
-		req.Header.Add("X-Provider-Token", c.config.Token)
+		req.Header.Add("X-Provider-Token", c.config.ProviderToken)
 	}
 
-	if c.config.Hash != "" {
-		basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-		req.Header.Set(AuthHeader, basedHash)
-	}
-	if c.config.User != "" && c.config.Token != "" {
-		req.Header.Add(SessionTokenHeader, c.config.Token)
-		req.SetBasicAuth(c.config.User, c.config.Token)
+	if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
+		if c.config.Verbose {
+			fmt.Println("JWT recognized")
+		}
+		auth := "Bearer " + c.config.SessionToken
+		req.Header.Add("Authorization", auth)
 	}
 
 	resp, err := c.httpSSEClient.Do(req)

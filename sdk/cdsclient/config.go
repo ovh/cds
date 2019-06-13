@@ -5,6 +5,7 @@ type Config struct {
 	Host                  string
 	User                  string
 	SessionToken          string
+	ProviderToken         string
 	Verbose               bool
 	Retry                 int
 	InsecureSkipVerifyTLS bool

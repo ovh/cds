@@ -48,22 +48,28 @@ func (c *client) WorkerRefresh(ctx context.Context) error {
 	return nil
 }
 
-func (c *client) WorkerRegister(ctx context.Context, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error) {
+func (c *client) WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	var w sdk.Worker
-	code, err := c.PostJSON(ctx, "/worker", form, &w)
+
+	var jwtHeader = func(r *http.Request) {
+		r.Header.Set("Authorization", "Bearer "+authToken)
+	}
+
+	_, headers, code, err := c.RequestJSON(ctx, "POST", "/auth/consumer/worker/signin", form, &w, jwtHeader)
 	if code == http.StatusUnauthorized {
 		return nil, false, sdk.ErrUnauthorized
 	}
-	if code > 300 && err == nil {
-		return nil, false, fmt.Errorf("HTTP %d", code)
-	} else if err != nil {
+	if err != nil {
 		return nil, false, err
 	}
-
 	c.isWorker = true
-	c.config.Hash = w.ID
+	c.config.SessionToken = headers.Get("X-CDS-JWT")
+
+	if c.config.Verbose {
+		fmt.Printf("Registering session %s for worker %s\n", c.config.SessionToken[:12], w.Name)
+	}
 
 	return &w, w.Uptodate, nil
 }

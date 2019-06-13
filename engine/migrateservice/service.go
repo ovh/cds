@@ -68,7 +68,7 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	s.API = s.cfg.API.HTTP.URL
 	s.Name = s.cfg.Name
 	s.HTTPURL = s.cfg.URL
-	s.Token = s.cfg.API.Token
+	s.AuthenticationToken = s.cfg.API.Token
 	s.Type = services.TypeDBMigrate
 	s.ServiceName = "cds-migrate"
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures

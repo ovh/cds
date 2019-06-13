@@ -39,7 +39,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.API = s.Cfg.API.HTTP.URL
 	s.Name = s.Cfg.Name
 	s.HTTPURL = s.Cfg.URL
-	s.Token = s.Cfg.API.Token
+	s.AuthenticationToken = s.Cfg.API.Token
 	s.Type = services.TypeRepositories
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-repositories"

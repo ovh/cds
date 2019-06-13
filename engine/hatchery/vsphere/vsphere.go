@@ -45,7 +45,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.Token = h.Config.API.Token
+	h.AuthenticationToken = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-vsphere"

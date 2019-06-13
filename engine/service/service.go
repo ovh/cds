@@ -26,12 +26,13 @@ type APIServiceConfiguration struct {
 // Common is the struct representing a CDS µService
 type Common struct {
 	Client               cdsclient.Interface
-	Hash                 string
+	APIPublicKey         []byte
 	StartupTime          time.Time
 	API                  string
 	Name                 string
 	HTTPURL              string
-	Token                string
+	AuthenticationToken  string
+	SessionToken         string
 	Type                 string
 	MaxHeartbeatFailures int
 	ServiceName          string

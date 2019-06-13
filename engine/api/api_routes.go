@@ -51,6 +51,9 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/verify/{token}", ScopeNone(), r.GET(api.getVerifyAuthLocalHandler))
+	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.registerWorkerHandler, Auth(false)))
+	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.unregisterWorkerHandler))
+
 	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))
 	//r.Handle("/auth/consumer/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
 	//r.Handle("/admin/user/{id}/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getAccessTokenByUserHandler))

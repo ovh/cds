@@ -2,7 +2,6 @@ package hatchery
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -104,14 +103,7 @@ func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req 
 		return ctx, nil
 	}
 
-	hash, err := base64.StdEncoding.DecodeString(req.Header.Get(cdsclient.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad header syntax: %s", err)
-	}
-
-	if c.Hash == string(hash) {
-		return ctx, nil
-	}
+	// TODO: checks that the request is signed by the API public key
 
 	return ctx, sdk.ErrUnauthorized
 }
