@@ -36,9 +36,9 @@ const (
 
 // Stage represents exported sdk.Stage
 type Stage struct {
-	Enabled    *bool             `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Jobs       map[string]Job    `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Conditions map[string]string `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Enabled    *bool                       `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Jobs       map[string]Job              `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Conditions *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 }
 
 // Job represents exported sdk.Job
@@ -120,13 +120,11 @@ func newStagesForPipelineV1(stages []sdk.Stage) ([]string, map[string]Stage) {
 			st.Enabled = &s.Enabled
 			hasOptions = true
 		}
-		if len(s.Prerequisites) > 0 {
-			st.Conditions = make(map[string]string)
+		if len(s.Conditions.PlainConditions) > 0 || s.Conditions.LuaScript != "" {
+			st.Conditions = &s.Conditions
 			hasOptions = true
 		}
-		for _, r := range s.Prerequisites {
-			st.Conditions[r.Parameter] = r.ExpectedValue
-		}
+
 		if hasOptions == true {
 			opts[s.Name] = st
 		}
@@ -305,12 +303,8 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 			mapStages[s].Enabled = true
 		}
 
-		//Compute stage Prerequisites
-		for n, c := range opt.Conditions {
-			mapStages[s].Prerequisites = append(mapStages[s].Prerequisites, sdk.Prerequisite{
-				Parameter:     n,
-				ExpectedValue: c,
-			})
+		if opt.Conditions != nil {
+			mapStages[s].Conditions = *opt.Conditions
 		}
 	}
 

@@ -1,6 +1,8 @@
 package gitlab
 
 import (
+	"context"
+
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -15,6 +17,7 @@ var (
 // gitlabClient implements VCSAuthorizedClient interface
 type gitlabClient struct {
 	client              *gitlab.Client
+	accessToken         string
 	uiURL               string
 	proxyURL            string
 	disableStatus       bool
@@ -37,14 +40,18 @@ type gitlabConsumer struct {
 // New instanciate a new gitlab consumer
 func New(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
 	return &gitlabConsumer{
-		URL:                      URL,
-		secret:                   clientSecret,
-		cache:                    store,
-		appID:                    appID,
+		URL:    URL,
+		secret: clientSecret,
+		cache:  store,
+		appID:  appID,
 		AuthorizationCallbackURL: callbackURL,
-		uiURL:                    uiURL,
-		proxyURL:                 proxyURL,
-		disableStatus:            disableStatus,
-		disableStatusDetail:      disableStatusDetail,
+		uiURL:               uiURL,
+		proxyURL:            proxyURL,
+		disableStatus:       disableStatus,
+		disableStatusDetail: disableStatusDetail,
 	}
+}
+
+func (c *gitlabClient) GetAccessToken(_ context.Context) string {
+	return c.accessToken
 }

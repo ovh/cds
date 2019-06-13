@@ -302,21 +302,15 @@ func (h *HatcheryOpenstack) killAwolServers() {
 }
 
 func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerModelNameLastModified, serverID, model, flavor string) {
-	var oldImageID string
-	var oldDateLastModified string
+	oldImagesID := []string{}
 	for _, img := range h.getImages() {
-		w, _ := img.Metadata["worker_model_name"]
-		if w == workerModelName {
-			oldImageID = img.ID
-			if d, ok := img.Metadata["worker_model_last_modified"]; ok {
-				oldDateLastModified = d.(string)
+		if w, _ := img.Metadata["worker_model_name"]; w == workerModelName {
+			oldImagesID = append(oldImagesID, img.ID)
+			if d, ok := img.Metadata["worker_model_last_modified"]; ok && d.(string) == workerModelNameLastModified {
+				// no need to recreate an image
+				return
 			}
 		}
-	}
-
-	if oldDateLastModified == workerModelNameLastModified {
-		// no need to recreate an image
-		return
 	}
 
 	log.Info("killAwolServersComputeImage> create image before deleting server")
@@ -358,12 +352,13 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerM
 			}
 		}
 
-		if oldImageID != "" {
+		for _, oldImageID := range oldImagesID {
 			log.Info("killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelName, oldImageID)
 			if err := images.Delete(h.openstackClient, oldImageID).ExtractErr(); err != nil {
 				log.Error("killAwolServersComputeImage> error while deleting old image %s", oldImageID)
 			}
 		}
+
 		h.resetImagesCache()
 	}
 }
@@ -469,21 +464,21 @@ func (h *HatcheryOpenstack) WorkersStartedByModel(model *sdk.Model) int {
 
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryOpenstack) NeedRegistration(m *sdk.Model) bool {
-	var oldDateLastModified string
+	if m.NeedRegistration {
+		log.Debug("NeedRegistration> true as worker model.NeedRegistration=true")
+		return true
+	}
 	for _, img := range h.getImages() {
 		w, _ := img.Metadata["worker_model_name"]
 		if w == m.Name {
 			if d, ok := img.Metadata["worker_model_last_modified"]; ok {
-				oldDateLastModified = d.(string)
-				break
+				if fmt.Sprintf("%d", m.UserLastModified.Unix()) == d.(string) {
+					log.Debug("NeedRegistration> false. An image is already available for this workerModel.UserLastModified")
+					return false
+				}
 			}
 		}
 	}
-
-	var out bool
-	if m.NeedRegistration || fmt.Sprintf("%d", m.UserLastModified.Unix()) != oldDateLastModified {
-		out = true
-	}
-	log.Debug("NeedRegistration> %t for %s - m.NeedRegistration:%t m.UserLastModified:%d oldDateLastModified:%s", out, m.Name, m.NeedRegistration, m.UserLastModified.Unix(), oldDateLastModified)
-	return out
+	log.Debug("NeedRegistration> true. No existing image found for this worker model")
+	return true
 }

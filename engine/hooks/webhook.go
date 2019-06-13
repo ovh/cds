@@ -34,6 +34,9 @@ func getRepositoryHeader(whe *sdk.WebHookExecution) string {
 		return GitlabHeader
 	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:refs_changed" {
 		return BitbucketHeader
+	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:push" {
+		// We return a fake header to make a difference between server and cloud version
+		return BitbucketCloudHeader
 	}
 	return ""
 }
@@ -132,7 +135,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		payload["payload"] = string(payloadStr)
 		payloads = append(payloads, payload)
 	case BitbucketHeader:
-		var pushEvent BitbucketPushEvent
+		var pushEvent BitbucketServerPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 		}
@@ -169,6 +172,58 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 			payload["cds.triggered_by.username"] = pushEvent.Actor.Name
 			payload["cds.triggered_by.fullname"] = pushEvent.Actor.DisplayName
 			payload["cds.triggered_by.email"] = pushEvent.Actor.EmailAddress
+			payloadStr, err := json.Marshal(pushEvent)
+			if err != nil {
+				log.Error("Unable to marshal payload: %v", err)
+			}
+			payload["payload"] = string(payloadStr)
+			payloads = append(payloads, payload)
+		}
+	case BitbucketCloudHeader:
+		var event BitbucketCloudPushEvent
+		if err := json.Unmarshal(t.WebHook.RequestBody, &event); err != nil {
+			return nil, sdk.WrapError(err, "unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
+		}
+		pushEvent := event.Push
+		if len(pushEvent.Changes) == 0 {
+			return nil, nil
+		}
+
+		for _, pushChange := range pushEvent.Changes {
+			if pushChange.Closed {
+				if pushChange.Old.Type == "branch" {
+					err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.Old.Name, "refs/heads/"))
+					if err != nil {
+						log.Error("cannot enqueue branch deletion: %v", err)
+					}
+				}
+				continue
+			}
+			payload := make(map[string]interface{})
+			payload["git.author"] = event.Actor.DisplayName
+			if len(pushChange.New.Target.Message) > 0 {
+				payload["git.message"] = pushChange.New.Target.Message
+			}
+
+			if pushChange.New.Type == "branch" {
+				payload["git.branch"] = strings.TrimPrefix(pushChange.New.Name, "refs/heads/")
+			} else if pushChange.New.Type == "tag" {
+				payload["git.tag"] = strings.TrimPrefix(pushChange.New.Name, "refs/tags/")
+			} else {
+				log.Warning("Uknown push type: %s", pushChange.New.Type)
+				continue
+			}
+			payload["git.hash.before"] = pushChange.Old.Target.Hash
+			payload["git.hash"] = pushChange.New.Target.Hash
+			hashShort := pushChange.New.Target.Hash
+			if len(hashShort) >= 7 {
+				hashShort = hashShort[:7]
+			}
+			payload["git.hash.short"] = hashShort
+			payload["git.repository"] = event.Repository.FullName
+
+			payload["cds.triggered_by.username"] = event.Actor.Username
+			payload["cds.triggered_by.fullname"] = event.Actor.DisplayName
 			payloadStr, err := json.Marshal(pushEvent)
 			if err != nil {
 				log.Error("Unable to marshal payload: %v", err)

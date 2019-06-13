@@ -66,7 +66,7 @@ spec:
         - name: CDS_LOG_LEVEL
           value: {{ default "" .Values.logLevel | quote }}
         command: ["/bin/sh"]
-        args: ["-c", "echo $CDS_CONFIG_FILE | base64 --decode > config.toml && /app/cds-engine-linux-amd64 start elasticsearch --config config.toml"]
+        args: ["-c", "echo $CDS_CONFIG_FILE | base64 -d > config.toml && /app/cds-engine-linux-amd64 start elasticsearch --config config.toml"]
         ports:
         - name: http
           containerPort: 8084

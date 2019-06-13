@@ -85,7 +85,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		// GET VCS URL
 		// Get vcs info to known if we are on the default branch or not
 		if projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer); projectVCSServer != nil {
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, projectVCSServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, p.Key, projectVCSServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationOverviewHandler> Cannot get repo client %s: %v", app.VCSServer, erra)
 			}

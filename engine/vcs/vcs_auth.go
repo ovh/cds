@@ -5,23 +5,19 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-)
-
-// HTTP Headers
-const (
-	HeaderXAccessToken       = "X-CDS-ACCESS-TOKEN"
-	HeaderXAccessTokenSecret = "X-CDS-ACCESS-TOKEN-SECRET"
 )
 
 // Context
 type contextKey string
 
 var (
-	contextKeyAccessToken       contextKey = "access-token"
-	contextKeyAccessTokenSecret contextKey = "access-token-secret"
+	contextKeyAccessToken        contextKey = "access-token"
+	contextKeyAccessTokenCreated contextKey = "access-token-created"
+	contextKeyAccessTokenSecret  contextKey = "access-token-secret"
 )
 
 func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
@@ -34,16 +30,22 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 		return ctx, fmt.Errorf("bad header syntax: %s", err)
 	}
 
-	encodedAccessToken := req.Header.Get(HeaderXAccessToken)
+	encodedAccessToken := req.Header.Get(sdk.HeaderXAccessToken)
 	accessToken, err := base64.StdEncoding.DecodeString(encodedAccessToken)
 	if err != nil {
 		return ctx, fmt.Errorf("bad header syntax: %s", err)
 	}
 
-	encodedAccessTokenSecret := req.Header.Get(HeaderXAccessTokenSecret)
+	encodedAccessTokenSecret := req.Header.Get(sdk.HeaderXAccessTokenSecret)
 	accessTokenSecret, err := base64.StdEncoding.DecodeString(encodedAccessTokenSecret)
 	if err != nil {
 		return ctx, fmt.Errorf("bad header syntax: %s", err)
+	}
+
+	encodedAccessTokenCreated := req.Header.Get(sdk.HeaderXAccessTokenCreated)
+	accessTokenCreated, err := base64.StdEncoding.DecodeString(encodedAccessTokenCreated)
+	if err != nil {
+		return ctx, fmt.Errorf("bad header syntax for access token created: %s", err)
 	}
 
 	if len(accessToken) != 0 {
@@ -51,6 +53,9 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 	}
 	if len(accessTokenSecret) != 0 {
 		ctx = context.WithValue(ctx, contextKeyAccessTokenSecret, string(accessTokenSecret))
+	}
+	if len(accessTokenCreated) != 0 {
+		ctx = context.WithValue(ctx, contextKeyAccessTokenCreated, string(accessTokenCreated))
 	}
 
 	if s.Hash != string(hash) {
@@ -60,14 +65,27 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 	return ctx, nil
 }
 
-func getAccessTokens(ctx context.Context) (string, string, bool) {
+func getAccessTokens(ctx context.Context) (string, string, int64, bool) {
+	var created int64
 	accessToken, ok := ctx.Value(contextKeyAccessToken).(string)
 	if !ok {
-		return "", "", false
+		return "", "", created, false
 	}
 	accessTokenSecret, ok := ctx.Value(contextKeyAccessTokenSecret).(string)
 	if !ok {
-		return "", "", false
+		return "", "", created, false
 	}
-	return string(accessToken), string(accessTokenSecret), len(accessToken) > 0
+	accessTokenCreated, ok := ctx.Value(contextKeyAccessTokenCreated).(string)
+	if !ok {
+		return "", "", created, false
+	}
+	if accessTokenCreated != "" {
+		var err error
+		created, err = strconv.ParseInt(accessTokenCreated, 10, 64)
+		if err != nil {
+			return "", "", created, false
+		}
+	}
+
+	return string(accessToken), string(accessTokenSecret), created, len(accessToken) > 0
 }

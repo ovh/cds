@@ -1,6 +1,6 @@
 import { ActionWarning } from './action.model';
 import { Job } from './job.model';
-import { Prerequisite } from './prerequisite.model';
+import { WorkflowNodeConditions } from './workflow.model';
 import { WorkflowNodeJobRun } from './workflow.run.model';
 
 export class Stage {
@@ -11,7 +11,7 @@ export class Stage {
   enabled: boolean;
   jobs: Array<Job>;
   run_jobs: Array<WorkflowNodeJobRun>;
-  prerequisites: Array<Prerequisite>;
+  conditions: WorkflowNodeConditions;
   last_modified: number;
   warnings: Array<ActionWarning>;
   // UI params
