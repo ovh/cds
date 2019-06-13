@@ -111,7 +111,7 @@ func Create(ctx context.Context, h Interface) error {
 	)
 
 	// run the starters pool
-	workersStartChan, workerStartResultChan := startWorkerStarters(ctx, h)
+	workersStartChan := startWorkerStarters(ctx, h)
 
 	hostname, errh := os.Hostname()
 	if errh != nil {
@@ -237,10 +237,6 @@ func Create(ctx context.Context, h Interface) error {
 
 			// No model has been found, let's send a failing result
 			if chosenModel == nil {
-				workerStartResultChan <- workerStarterResult{
-					request: workerRequest,
-					isRun:   false,
-				}
 				log.Debug("hatchery> no model")
 				endTrace("no model")
 				continue
