@@ -104,6 +104,15 @@ func LoadByUsername(ctx context.Context, db gorp.SqlExecutor, username string, o
 	return get(ctx, db, query, opts...)
 }
 
+// Count users in database.
+func Count(db gorp.SqlExecutor) (int, error) {
+	var count int
+	if err := db.QueryRow("SELECT COUNT(id) FROM authentified_user").Scan(&count); err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return count, nil
+}
+
 // Insert a user in database.
 func Insert(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) error {
 	if u.ID == "" {

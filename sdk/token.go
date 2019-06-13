@@ -1,15 +1,63 @@
 package sdk
 
 import (
+	"context"
 	"database/sql/driver"
 	json "encoding/json"
+	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/go-gorp/gorp"
 	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk/log"
 )
+
+type AuthDriver interface {
+	GetManifest() AuthDriverManifest
+	CheckRequest(AuthDriverRequest) error
+	CheckAuthentication(context.Context, gorp.SqlExecutor, *http.Request) (*AuthentifiedUser, error)
+}
+
+type AuthDriverManifest struct {
+	Type   AuthConsumerType          `json:"type"`
+	URL    string                    `json:"url"`
+	Method string                    `json:"method"`
+	Fields []AuthDriverManifestField `json:"fields"`
+}
+
+type AuthDriverManifestFieldType string
+
+const (
+	FieldString   AuthDriverManifestFieldType = "string"
+	FieldEmail    AuthDriverManifestFieldType = "email"
+	FieldPassword AuthDriverManifestFieldType = "password"
+)
+
+type AuthDriverManifestField struct {
+	Name string                      `json:"name"`
+	Type AuthDriverManifestFieldType `json:"type"`
+}
+
+type AuthDriverRequest map[string]string
+
+// IsValid checks that current driver request is valid according given driver manifest.
+func (r AuthDriverRequest) IsValid(m AuthDriverManifest) error {
+	for _, f := range m.Fields {
+		v, okValue := r[f.Name]
+		if !okValue || v == "" {
+			return NewErrorFrom(ErrWrongRequest, "missing driver field '%s' of type '%s'", f.Name, f.Type)
+		}
+
+		// check value of type email
+		if f.Type == FieldEmail && !IsValidEmail(v) {
+			return NewErrorFrom(ErrWrongRequest, "given value for field '%s' is not an email", f.Name)
+		}
+	}
+
+	return nil
+}
 
 // AuthConsumerRequest struct used by clients to create a new builtin auth consumer.
 type AuthConsumerRequest struct {
@@ -25,7 +73,11 @@ type AuthConsumerType string
 
 // Consumer types.
 const (
-	ConsumerBuiltin AuthConsumerType = "builtin"
+	ConsumerBuiltin      AuthConsumerType = "builtin"
+	ConsumerLocal        AuthConsumerType = "local"
+	ConsumerLDAP         AuthConsumerType = "ldap"
+	ConsumerCorporateSSO AuthConsumerType = "corporate-sso"
+	ConsumerGithub       AuthConsumerType = "github"
 )
 
 // AuthConsumerData contains specific information from the auth driver.
@@ -188,4 +240,33 @@ func (perms GroupPermissions) ProjectPermission(key string) (int, bool) {
 		}
 	}
 	return -1, false
+}
+
+// AuthConsumerLocalSignupResponse response for a auth local signup.
+type AuthConsumerLocalSignupResponse struct {
+	VerifyToken string `json:"verify_token"`
+}
+
+// AuthConsumerLocalSigninRequest request struct to signin on local auth.
+type AuthConsumerLocalSigninRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// IsValid returns validity for signin request.
+func (r AuthConsumerLocalSigninRequest) IsValid() error {
+	if r.Username == "" {
+		return NewErrorFrom(ErrInvalidUsername, "empty username is invalid")
+	}
+	if r.Password == "" {
+		return NewErrorFrom(ErrInvalidUsername, "empty password is invalid")
+	}
+
+	return nil
+}
+
+// AuthConsumerLocalSigninResponse response for a auth local signin.
+type AuthConsumerLocalSigninResponse struct {
+	Token string            `json:"token"`
+	User  *AuthentifiedUser `json:"user"`
 }

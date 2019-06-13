@@ -11,14 +11,13 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/ldap.v2"
 
-	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-var _ authentication.Driver = new(ldapAuthentication)
+var _ sdk.AuthDriver = new(ldapAuthentication)
 
 type ldapAuthentication struct {
 	conf LDAPConfig
@@ -37,7 +36,7 @@ type LDAPConfig struct {
 	BindPwd      string
 }
 
-func New(cfg LDAPConfig) authentication.Driver {
+func New(cfg LDAPConfig) sdk.AuthDriver {
 	return &ldapAuthentication{
 		conf: cfg,
 	}
@@ -89,6 +88,29 @@ func (l *ldapAuthentication) CheckAuthentication(ctx context.Context, db gorp.Sq
 	//u.Email = entry[0].Attributes["mail"]
 
 	return u, nil
+}
+
+func (l ldapAuthentication) GetManifest() sdk.AuthDriverManifest {
+	return sdk.AuthDriverManifest{
+		Type:   sdk.ConsumerLDAP,
+		Method: http.MethodPost,
+		URL:    "/auth/consumer/ldap/signin",
+		Fields: []sdk.AuthDriverManifestField{
+			{
+				Name: "username",
+				Type: sdk.FieldString,
+			},
+			{
+				Name: "password",
+				Type: sdk.FieldPassword,
+			},
+		},
+	}
+}
+
+func (l ldapAuthentication) CheckRequest(req sdk.AuthDriverRequest) error {
+	// TODO
+	return nil
 }
 
 func (l *ldapAuthentication) openLDAP() error {

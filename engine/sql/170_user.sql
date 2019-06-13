@@ -75,8 +75,9 @@ ALTER TABLE services ADD COLUMN IF NOT EXISTS token_id VARCHAR(64);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS sig BYTEA;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS encrypted_jwt BYTEA;
 ALTER TABLE services ALTER COLUMN hash DROP NOT NULL;
-SELECT create_unique_index('services', 'IDX_SERVICES_TOKENID', 'token_id');
+--SELECT create_unique_index('services', 'IDX_SERVICES_TOKENID', 'token_id');
 
 ALTER TABLE worker RENAME TO old_worker;
 

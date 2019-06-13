@@ -28,8 +28,6 @@ func (api *API) InitRouter() {
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, TracingPostMiddleware)
 
 	r := api.Router
-	r.Handle("/login", ScopeNone(), r.POST(api.loginUserHandler, Auth(false)))
-	r.Handle("/login/callback", ScopeNone(), r.POST(api.loginUserCallbackHandler, Auth(false)))
 
 	log.Info("Initializing Events broker")
 	// Initialize event broker
@@ -43,13 +41,16 @@ func (api *API) InitRouter() {
 	api.eventsBroker.Init(context.Background(), api.PanicDump())
 
 	// Auth
+	//r.Handle("/login", ScopeNone(), r.POST(api.loginUserHandler, Auth(false)))
+	//r.Handle("/login/callback", ScopeNone(), r.POST(api.loginUserCallbackHandler, Auth(false)))
 	//r.Handle("/auth/logged", ScopeNone(), r.GET(api.getUserLoggedHandler))
 	//r.Handle("/auth/consumer/github/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
 	//r.Handle("/auth/consumer/sso/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
 	//r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.resetUserHandler))
-	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.resetUserHandler))
-	//r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.resetUserHandler))
-	//r.Handle("/auth/consumer/local/confirm/{token}", ScopeNone(), r.GET(api.confirmUserHandler, Auth(false)))
+	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, Auth(false)))
+	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, Auth(false)))
+	r.Handle("/auth/consumer/local/verify/{token}", ScopeNone(), r.GET(api.getVerifyAuthLocalHandler))
 	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))
 	//r.Handle("/auth/consumer/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
 	//r.Handle("/admin/user/{id}/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getAccessTokenByUserHandler))

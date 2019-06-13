@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication/ldapauthentication"
+	"github.com/ovh/cds/engine/api/authentication/localauthentication"
+
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -16,7 +19,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
@@ -76,7 +78,7 @@ type Configuration struct {
 		Download string `toml:"download" default:"/tmp/cds/download" json:"download"`
 		Keys     string `toml:"keys" default:"/tmp/cds/keys" json:"keys"`
 	} `toml:"directories" json:"directories"`
-	Authentication struct {
+	Auth struct {
 		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory." json:"-"`
 		RSAPrivateKey    string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
@@ -291,7 +293,7 @@ type API struct {
 		WorkflowRunsMarkToDelete *stats.Int64Measure
 		WorkflowRunsDeleted      *stats.Int64Measure
 	}
-	AuthenticationDrivers map[string]authentication.Driver
+	AuthenticationDrivers map[sdk.AuthConsumerType]sdk.AuthDriver
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -384,7 +386,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("You can't specify just defaultArch without defaultOS in your configuration and vice versa")
 	}
 
-	if a.Config.Authentication.RSAPrivateKey == "" {
+	if aConfig.Auth.RSAPrivateKey == "" {
 		return errors.New("invalid given authentication rsa private key")
 	}
 
@@ -428,8 +430,8 @@ func (a *API) Serve(ctx context.Context) error {
 	secret.Init(a.Config.Secrets.Key)
 
 	// Initialize the jwt layer
-	if err := accesstoken.Init(a.Name, []byte(a.Config.Authentication.RSAPrivateKey)); err != nil {
-		return errors.Wrap(err, "unable to initialize the JWT Layer")
+	if err := accesstoken.Init(a.Name, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
+		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
 
 	// Initialize mail package
@@ -531,8 +533,8 @@ func (a *API) Serve(ctx context.Context) error {
 
 	log.Info("Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
-		DefaultGroupName: a.Config.Authentication.DefaultGroup,
-		SharedInfraToken: a.Config.Authentication.SharedInfraToken,
+		DefaultGroupName: a.Config.Auth.DefaultGroup,
+		SharedInfraToken: a.Config.Auth.SharedInfraToken,
 	}
 	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
 		return fmt.Errorf("cannot setup databases: %v", err)
@@ -581,22 +583,22 @@ func (a *API) Serve(ctx context.Context) error {
 
 	log.Info("Initializing Authentication drivers...")
 	// TODO
-	//a.AuthenticationDrivers = map[string]authentication.Driver{}
-	//if a.Config.Auth.LDAP.Enable {
-	//	cfg := ldapauthentication.LDAPConfig{
-	//		Host:         a.Config.Auth.LDAP.Host,
-	//		Port:         a.Config.Auth.LDAP.Port,
-	//		Base:         a.Config.Auth.LDAP.Base,
-	//		DN:           a.Config.Auth.LDAP.DN,
-	//		SSL:          a.Config.Auth.LDAP.SSL,
-	//		UserFullname: a.Config.Auth.LDAP.Fullname,
-	//		BindDN:       a.Config.Auth.LDAP.BindDN,
-	//		BindPwd:      a.Config.Auth.LDAP.BindPwd,
-	//	}
-	//	a.AuthenticationDrivers["ldap"] = ldapauthentication.New(cfg)
-	//} else {
-	//	a.AuthenticationDrivers["local"] = localauthentication.New()
-	//}
+	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
+	if a.Config.Auth.LDAP.Enable {
+		a.AuthenticationDrivers[sdk.ConsumerLDAP] = ldapauthentication.New(ldapauthentication.LDAPConfig{
+			Host:         a.Config.Auth.LDAP.Host,
+			Port:         a.Config.Auth.LDAP.Port,
+			Base:         a.Config.Auth.LDAP.Base,
+			DN:           a.Config.Auth.LDAP.DN,
+			SSL:          a.Config.Auth.LDAP.SSL,
+			UserFullname: a.Config.Auth.LDAP.Fullname,
+			BindDN:       a.Config.Auth.LDAP.BindDN,
+			BindPwd:      a.Config.Auth.LDAP.BindPwd,
+		})
+	}
+	if a.Config.Auth.Local.Enable {
+		a.AuthenticationDrivers[sdk.ConsumerLocal] = localauthentication.New(a.Config.Auth.Local.SignupAllowedDomains)
+	}
 
 	log.Info("Initializing event broker...")
 	kafkaOptions := event.KafkaConfig{
@@ -730,7 +732,7 @@ func (a *API) Serve(ctx context.Context) error {
 		externalServices = append(externalServices, serv)
 	}
 	if err := services.InitExternal(a.mustDB, a.Cache, externalServices); err != nil {
-		return fmt.Errorf("unable to init external service: %v", err)
+		return fmt.Errorf("unable to init external service: %+v", err)
 	}
 	sdk.GoRoutine(ctx, "pings-external-services",
 		func(ctx context.Context) {
