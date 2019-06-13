@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { SharedService } from '../../shared.service';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { SharedService } from 'app/shared/shared.service';
 
 @Component({
     selector: 'app-variable-value',
     templateUrl: './variable.value.html',
-    styleUrls: ['./variable.value.scss']
+    styleUrls: ['./variable.value.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VariableValueComponent implements OnInit {
     @Input() type: string;

@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PipelineStatus } from '../../../../../model/pipeline.model';
-import { Stage } from '../../../../../model/stage.model';
-import { WNode } from '../../../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../../../model/workflow.run.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Stage } from 'app/model/stage.model';
+import { WNode } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 
 @Component({
     selector: 'app-stage-step-summary',
@@ -37,7 +37,6 @@ export class StageStepSummaryComponent implements OnInit {
     }
 
     goToStageLogs() {
-        // /project/TEST/workflow/coucou/run/38/node/805?name=deploy&stageId=2
         this._router.navigate([
             'project',
             this._route.snapshot.params['key'],

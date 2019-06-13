@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { VariableAudit } from '../../../model/variable.model';
-import { Table } from '../../table/table';
+import { VariableAudit } from 'app/model/variable.model';
+import { Table } from 'app/shared/table/table';
 
 @Component({
     selector: 'app-variable-audit',

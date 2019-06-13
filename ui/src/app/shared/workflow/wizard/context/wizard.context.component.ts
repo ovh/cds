@@ -2,18 +2,18 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { IdName, Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { filter, finalize, first } from 'rxjs/operators';
-import { Environment } from '../../../../model/environment.model';
-import { PermissionValue } from '../../../../model/permission.model';
-import { IdName, Project } from '../../../../model/project.model';
-import { WNode, Workflow } from '../../../../model/workflow.model';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-node-context',

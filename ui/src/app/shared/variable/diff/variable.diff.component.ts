@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {Variable} from '../../../model/variable.model';
+import { Variable } from 'app/model/variable.model';
 
 @Component({
     selector: 'app-variable-diff',

@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
@@ -31,7 +32,6 @@ import { DiffItemComponent } from './diff/item/diff.item.component';
 import { DiffListComponent } from './diff/list/diff.list.component';
 import { DurationService } from './duration/duration.service';
 import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.component';
-import { GroupFormComponent } from './group/form/group.form.component';
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
@@ -132,6 +132,13 @@ import { ZoneComponent } from './zone/zone.component';
         NgxChartsModule
     ],
     declarations: [
+        // OnPushComponent
+        DeleteButtonComponent,
+        GroupFormComponent,
+        VariableFormComponent,
+        VariableValueComponent,
+
+        // Component to migrate
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
@@ -141,12 +148,11 @@ import { ZoneComponent } from './zone/zone.component';
         ChartComponentComponent,
         CommitListComponent,
         CutPipe,
-        DeleteButtonComponent,
         ConfirmButtonComponent,
         UploadButtonComponent,
         ForMapPipe,
-        GroupFormComponent,
         KeysPipe,
+
         KeysFormComponent,
         KeysListComponent,
         NgForNumber,
@@ -168,8 +174,7 @@ import { ZoneComponent } from './zone/zone.component';
         VariableComponent,
         VariableAuditComponent,
         VariableDiffComponent,
-        VariableFormComponent,
-        VariableValueComponent,
+
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
         WarningModalComponent,
@@ -253,13 +258,13 @@ import { ZoneComponent } from './zone/zone.component';
         CommonModule,
         ClipboardModule,
         CutPipe,
+        GroupFormComponent,
         DeleteButtonComponent,
         ConfirmButtonComponent,
         UploadButtonComponent,
         DragulaModule,
         ForMapPipe,
         FormsModule,
-        GroupFormComponent,
         KeysPipe,
         KeysFormComponent,
         KeysListComponent,

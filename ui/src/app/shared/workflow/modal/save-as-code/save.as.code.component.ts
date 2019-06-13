@@ -1,14 +1,14 @@
 import {Component, Input, NgZone, ViewChild} from '@angular/core';
+import { Operation } from 'app/model/operation.model';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { environment } from 'environments/environment';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
-import {environment} from '../../../../../environments/environment';
-import {Operation} from '../../../../model/operation.model';
-import {Project} from '../../../../model/project.model';
-import {Workflow} from '../../../../model/workflow.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {CDSWebWorker} from '../../../worker/web.worker';
 
 @Component({
     selector: 'app-workflow-save-as-code-modal',

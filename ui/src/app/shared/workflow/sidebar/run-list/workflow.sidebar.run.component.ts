@@ -1,16 +1,16 @@
 import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {Store} from '@ngxs/store';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { WorkflowRun, WorkflowRunTags } from 'app/model/workflow.run.model';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { DurationService } from 'app/shared/duration/duration.service';
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { PipelineStatus } from '../../../../model/pipeline.model';
-import { Project } from '../../../../model/project.model';
-import { Workflow } from '../../../../model/workflow.model';
-import { WorkflowRun, WorkflowRunTags } from '../../../../model/workflow.run.model';
-import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { DurationService } from '../../../duration/duration.service';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',

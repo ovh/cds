@@ -1,12 +1,13 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {Variable} from '../../../model/variable.model';
-import {VariableService} from '../../../service/variable/variable.service';
-import {VariableEvent} from '../variable.event.model';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { Variable } from 'app/model/variable.model';
+import { VariableService } from 'app/service/variable/variable.service';
+import { VariableEvent } from 'app/shared/variable/variable.event.model';
 
 @Component({
     selector: 'app-variable-form',
     templateUrl: './variable.form.html',
-    styleUrls: ['./variable.form.scss']
+    styleUrls: ['./variable.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VariableFormComponent {
 

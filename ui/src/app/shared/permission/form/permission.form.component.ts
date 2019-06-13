@@ -1,9 +1,9 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { Group, GroupPermission } from 'app/model/group.model';
+import { GroupService } from 'app/service/group/group.service';
+import { PermissionEvent } from 'app/shared/permission/permission.event.model';
+import { PermissionService } from 'app/shared/permission/permission.service';
 import {first} from 'rxjs/operators';
-import {Group, GroupPermission} from '../../../model/group.model';
-import {GroupService} from '../../../service/group/group.service';
-import {PermissionEvent} from '../permission.event.model';
-import {PermissionService} from '../permission.service';
 
 @Component({
     selector: 'app-permission-form',

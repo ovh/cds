@@ -1,5 +1,5 @@
-import {Environment} from '../../model/environment.model';
-import {GroupPermission} from '../../model/group.model';
+import { Environment } from 'app/model/environment.model';
+import { GroupPermission } from 'app/model/group.model';
 
 export class PermissionEvent {
     type: string;

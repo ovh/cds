@@ -1,12 +1,12 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
+import { PermissionValue } from 'app/model/permission.model';
+import { Label, Project } from 'app/model/project.model';
 import { SaveLabelsInProject } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { finalize } from 'rxjs/operators';
-import { PermissionValue } from '../../../model/permission.model';
-import { Label, Project } from '../../../model/project.model';
 
 @Component({
     selector: 'app-labels-edit',

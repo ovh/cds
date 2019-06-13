@@ -7,8 +7,8 @@ import {
     Output
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs/Subscription';
-import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
 
 export class Tab {
     translate: string;

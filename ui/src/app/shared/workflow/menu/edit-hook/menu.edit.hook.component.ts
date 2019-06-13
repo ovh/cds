@@ -1,14 +1,6 @@
-import {
-    Component,
-    EventEmitter,
-    Input,
-    Output
-} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {PermissionValue} from 'app/model/permission.model';
-import {
-    WNodeHook,
-    Workflow,
-} from 'app/model/workflow.model';
+import {WNodeHook, Workflow} from 'app/model/workflow.model';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {IPopup} from 'ng2-semantic-ui';
 

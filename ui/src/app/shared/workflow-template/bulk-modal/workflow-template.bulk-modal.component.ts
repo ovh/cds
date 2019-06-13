@@ -1,22 +1,19 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+    InstanceStatus,
+    InstanceStatusUtil, OperationStatus, OperationStatusUtil,
+    ParamData,
+    WorkflowTemplate, WorkflowTemplateBulk,
+    WorkflowTemplateBulkOperation,
+    WorkflowTemplateInstance
+} from 'app/model/workflow-template.model';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
 import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
 import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/internal/operators/finalize';
-import {
-    InstanceStatus,
-    InstanceStatusUtil,
-    OperationStatus,
-    OperationStatusUtil,
-    ParamData,
-    WorkflowTemplate,
-    WorkflowTemplateBulk,
-    WorkflowTemplateBulkOperation,
-    WorkflowTemplateInstance
-} from '../../../model/workflow-template.model';
-import { WorkflowTemplateService } from '../../../service/services.module';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { Column, ColumnType, Select } from '../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-workflow-template-bulk-modal',
