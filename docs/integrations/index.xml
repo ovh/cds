@@ -11,12 +11,24 @@
     
     
     <item>
+      <title>Bitbucket Cloud</title>
+      <link>https://ovh.github.io/cds/docs/integrations/bitbucketcloud/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/bitbucketcloud/</guid>
+      <description>The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud  How to configure Bitbucket Cloud integration  Go on Bitbucket.</description>
+    </item>
+    
+    <item>
       <title>Bitbucket Server</title>
       <link>https://ovh.github.io/cds/docs/integrations/bitbucket/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/integrations/bitbucket/</guid>
-      <description>The Bitbucket Integration have to be configured on your CDS by a CDS Administrator.
+      <description>The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
  Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:</description>

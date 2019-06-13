@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>OpenStack Swift - CDS - Continuous Delivery Service</title>
+<title>Bitbucket Cloud - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,23 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
-With this integration, you can use a dedicated OpenStack Swift Storage on :
- action Artifact Upload action Artifact Download action Serve Static Files worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own OpenStack Storage and not use the shared storage.">
+    content="The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud  How to configure Bitbucket Cloud integration  Go on Bitbucket.">
 <meta property="og:description"
-    content="The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
-With this integration, you can use a dedicated OpenStack Swift Storage on :
- action Artifact Upload action Artifact Download action Serve Static Files worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own OpenStack Storage and not use the shared storage.">
+    content="The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud  How to configure Bitbucket Cloud integration  Go on Bitbucket.">
 <meta name="twitter:description"
-    content="The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.
-With this integration, you can use a dedicated OpenStack Swift Storage on :
- action Artifact Upload action Artifact Download action Serve Static Files worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own OpenStack Storage and not use the shared storage.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/">
-<meta property="og:title" content="OpenStack Swift">
-<meta name="twitter:title" content="OpenStack Swift">
+    content="The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
+This integration enables some features:
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud  How to configure Bitbucket Cloud integration  Go on Bitbucket.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/bitbucketcloud/">
+<meta property="og:title" content="Bitbucket Cloud">
+<meta name="twitter:title" content="Bitbucket Cloud">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -357,7 +360,7 @@ With this integration, you can use a dedicated OpenStack Swift Storage on :
 			<div id="docsContent">
         		
 
-<h1>OpenStack Swift</h1>
+<h1>Bitbucket Cloud</h1>
 
 
 
@@ -365,122 +368,87 @@ With this integration, you can use a dedicated OpenStack Swift Storage on :
 <ul>
 <li>
 <ul>
-<li><a href="#configure-with-webui">Configure with WebUI</a></li>
-<li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
+<li><a href="#how-to-configure-bitbucket-cloud-integration">How to configure Bitbucket Cloud integration</a>
 <ul>
-<li><a href="#import-a-openstack-swift-on-your-cds-project">Import a OpenStack Swift on your CDS Project</a></li>
-<li><a href="#create-a-public-openstack-swift-for-whole-cds-projects">Create a Public OpenStack Swift for whole CDS Projects</a></li>
+<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
+<li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
+<li><a href="#vcs-events">Vcs events</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p>The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.</p>
+<p>The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.</p>
 
-<p>With this integration, you can use a dedicated OpenStack Swift Storage on :</p>
+<p>This integration allows you to link a Git Repository hosted by your Bitbucket Cloud
+to a CDS Application.</p>
+
+<p>This integration enables some features:</p>
 
 <ul>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/">Artifact Upload</a></li>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/">Artifact Download</a></li>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/">Serve Static Files</a></li>
-<li><a href="https://ovh.github.io/cds/docs/components/worker/cache/">worker cache command</a></li>
+<li><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/">Git Repository Webhook</a></li>
+<li>Easy to use action <a href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
+<li>Send <a href="https://confluence.atlassian.com/bitbucket/check-build-status-in-a-pull-request-945541505.html">build notifications</a> on your Pull-Requests and Commits on Bitbucket Cloud</li>
 </ul>
 
-<p>Notice: by default, the storage is configured in CDS Configuration. This integration
-allows user to use their own OpenStack Storage and not use the shared storage.</p>
+<h2 id="how-to-configure-bitbucket-cloud-integration">How to configure Bitbucket Cloud integration</h2>
 
-<h2 id="configure-with-webui">Configure with WebUI</h2>
+<ul>
+<li>Go on <a href="https://bitbucket.org/dashboard/overview">Bitbucket.org</a> and log in.</li>
+<li>From your avatar in the bottom left, click <strong><em>Bitbucket settings</em></strong>.</li>
+<li>Click OAuth from the left navigation.</li>
+<li>Click the Add consumer button.</li>
+<li>Bitbucket requests some informations: for the <code>name</code> you can simply write CDS, <code>description</code> is optional, <code>callback url</code> must be the URL of your CDS -&gt; {CDS_UI_URL}/cdsapi/repositories_manager/oauth2/callback (if you are in development mode you have to omit /cdsapi and replace {CDS_UI_URL} with your API URL), <code>URL</code> is optional.</li>
+<li>Click on Save and toggle the consumer name to see the generated <code>Key</code> and <code>Secret</code>. It correspond to <code>clientId</code> and <code>clientSecret</code> in the CDS config.toml file.</li>
+</ul>
 
-<p>You can add a OpenStack Swift on your CDS Project.</p>
+<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
 
-<p><img src="../images/openstack-swift-integration-webui.png" alt="Integration" /></p>
+<p>Set value to <code>clientId</code> and <code>clientSecret</code>.</p>
 
-<h2 id="configure-with-cdsctl">Configure with cdsctl</h2>
+<pre><code class="language-yaml"> [vcs.servers]
+    [vcs.servers.bitbucketcloud]
 
-<h3 id="import-a-openstack-swift-on-your-cds-project">Import a OpenStack Swift on your CDS Project</h3>
+      [vcs.servers.bitbucketcloud.bitbucketcloud]
 
-<p>Create a file project-configuration.yml:</p>
+        # Bitbucket Cloud OAuth Key
+        clientId = &quot;XXXX&quot;
 
-<pre><code class="language-yml">name: MyOpenstackTenant
-model:
-  name: Openstack
-  public: false
-config:
-  address:
-    value: https://auth.cloud.ovh.net/v2.0/
-    type: string
-  domain:
-    value: &quot;&quot;
-    type: string
-  password:
-    value: 'your-password-here'
-    type: password
-  region:
-    value: your-region
-    type: string
-  storage_container_prefix:
-    value: cds-prefix-
-    type: string
-  storage_temporary_url_supported:
-    value: &quot;true&quot;
-    type: string
-  tenant_name:
-    value: &quot;your-openstack-tenant&quot;
-    type: string
-  username:
-    value: your-openstack-user
-    type: string
+        # Bitbucket Cloud OAuth Secret
+        clientSecret = &quot;XXXX&quot;
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        # Does webhooks creation are supported by VCS Server
+        disableWebHooksCreation = false
+
+        #proxyWebhook = &quot;https://myproxy.com/&quot;
+
+        [vcs.servers.bitbucketcloud.bitbucketcloud.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = false
 </code></pre>
 
-<p>Import the integration on your CDS Project with:</p>
+<p>See how to generate <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
 
-<pre><code class="language-bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
+<h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
+
+<pre><code class="language-bash">$ engine start vcs
+
+# you can also start CDS api and vcs in the same process:
+$ engine start api vcs
 </code></pre>
 
-<h3 id="create-a-public-openstack-swift-for-whole-cds-projects">Create a Public OpenStack Swift for whole CDS Projects</h3>
+<h2 id="vcs-events">Vcs events</h2>
 
-<p>You can also add a OpenStack Swift with cdsctl. As a CDS Administrator,
-this allows you to propose a Public OpenStack Swift, available on all CDS Projects.</p>
-
-<p>Create a file public-configuration.yml:</p>
-
-<pre><code class="language-yml">name: Openstack
-storage: true
-public: true
-public_configurations:
-  your-public-openstack-integration:
-    &quot;address&quot;:
-      value: https://auth.cloud.ovh.net/v2.0/
-      type: string
-    &quot;domain&quot;:
-      value: &quot;&quot;
-      type: string
-    &quot;password&quot;:
-      value: 'your-password-here'
-      type: password
-    &quot;region&quot;:
-      value: your-region
-      type: string
-    &quot;storage_container_prefix&quot;:
-      value: cds-prefix-
-      type: string
-    &quot;storage_temporary_url_supported&quot;:
-      value: &quot;true&quot;
-      type: string
-    &quot;tenant_name&quot;:
-      value: &quot;your-openstack-tenant&quot;
-      type: string
-    &quot;username&quot;:
-      value: your-openstack-user
-      type: string
-</code></pre>
-
-<p>Import the integration with :</p>
-
-<pre><code class="language-bash">cdsctl admin integration-model import public-configuration.yml
-</code></pre>
+<p>For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).</p>
 
 
 
