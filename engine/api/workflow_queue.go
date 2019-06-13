@@ -802,6 +802,14 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load queue")
 		}
 
+		// clean jobs
+		for i := range jobs {
+			job := &jobs[i]
+			job.IntegrationPluginBinaries = nil
+			job.Parameters = nil
+			job.SpawnInfos = nil
+		}
+
 		return service.WriteJSON(w, jobs, http.StatusOK)
 	}
 }
