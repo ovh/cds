@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 
 	project := sdk.ParameterValue(params, "cds.project")

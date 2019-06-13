@@ -10,7 +10,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) error {
+func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
+	log.Info("Starting worker %s", w.Name())
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	httpServerCtx, stopHTTPServer := context.WithCancel(ctx)
@@ -31,23 +32,26 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) error
 
 	//Definition of the function which must be called to stop the worker
 	var endFunc = func() {
-		log.Info("Stopping the worker")
+		log.Info("Stopping worker %s", w.Name())
+		if err := w.Unregister(); err != nil {
+			log.Error("Unable to unregister: %v", err)
+			mainError = err
+		}
 		refreshTick.Stop()
-		w.Unregister()
 		cancel()
 		stopHTTPServer()
 
 		if err := ctx.Err(); err != nil {
-			log.Error("Exiting worker: %v", err)
+			log.Warning("Exiting worker: %v", err)
 		} else {
-			log.Info("Exiting worker")
+			log.Warning("Exiting worker")
 		}
 	}
 
 	if bookedJobID != 0 {
 		if err := processBookedWJob(ctx, w, jobsChan, bookedJobID); err != nil {
 			// Unbook job
-			if errR := w.Client().QueueJobRelease(bookedJobID); errR != nil {
+			if errR := w.Client().QueueJobRelease(ctx, bookedJobID); errR != nil {
 				log.Error("runCmd> QueueJobRelease> Cannot release job")
 			}
 			bookedJobID = 0
@@ -58,17 +62,17 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) error
 			endFunc()
 			return sdk.WrapError(err, "unable to process booked job")
 		}
+	} else {
+		sdk.GoRoutine(ctx, "worker.QueuePolling", func(ctx context.Context) {
+			if err := w.Client().QueuePolling(ctx, jobsChan, errsChan, 2*time.Second, "", nil); err != nil {
+				log.Info("Queues polling stopped: %v", err)
+			}
+		})
 	}
 
 	if err := w.Client().WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
 		log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 	}
-
-	go func(ctx context.Context) {
-		if err := w.Client().QueuePolling(ctx, jobsChan, errsChan, 2*time.Second, 0, "", nil); err != nil {
-			log.Info("Queues polling stopped: %v", err)
-		}
-	}(ctx)
 
 	// Errors check loops
 	go func(errs chan error) {
@@ -155,7 +159,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) error
 
 			// Unregister from engine
 			log.Info("Job is done. Unregistering...")
-			cancel()
+			defer endFunc()
 			return nil
 		}
 	}
@@ -163,7 +167,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) error
 
 func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.WorkflowNodeJobRun, bookedWJobID int64) error {
 	log.Debug("Try to take the workflow node job %d", bookedWJobID)
-	wjob, err := w.Client().QueueJobInfo(bookedWJobID)
+	wjob, err := w.Client().QueueJobInfo(ctx, bookedWJobID)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load workflow node job %d", bookedWJobID)
 	}

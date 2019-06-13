@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	jobID, err := workerruntime.JobID(ctx)
 	if err != nil {
 		return sdk.Result{}, err
@@ -31,7 +31,7 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a *sdk.
 		return sdk.Result{}, fmt.Errorf("unable to retrieve deployment integration (%v)... Aborting", err)
 	}
 
-	job, err := wk.Client().QueueJobInfo(jobID)
+	job, err := wk.Client().QueueJobInfo(ctx, jobID)
 	if err != nil {
 		return sdk.Result{}, err
 	}

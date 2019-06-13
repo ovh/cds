@@ -113,7 +113,7 @@ func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 	return deferFunc, nil
 }
 
-func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	chanRes := make(chan sdk.Result)
 	chanErr := make(chan error)
 

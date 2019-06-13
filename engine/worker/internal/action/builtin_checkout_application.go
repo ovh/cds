@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	// Load action param
 	directory := sdk.ParameterFind(a.Parameters, "directory")
 

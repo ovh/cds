@@ -77,7 +77,7 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 }
 
 // NewWorker returns client for a worker
-func NewWorker(endpoint string, name string, c *http.Client) Interface {
+func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 10,

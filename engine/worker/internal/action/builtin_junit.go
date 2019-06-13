@@ -10,11 +10,10 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/venom"
 )
 
-func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	res.Status = sdk.StatusFail
 
@@ -66,14 +65,8 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 		return res, err
 	}
 
-	uri := fmt.Sprintf("/queue/workflows/%d/test", jobID)
-	statusCode, errPost := wk.Client().(cdsclient.Raw).PostJSON(ctx, uri, tests, nil)
-	if errPost == nil && statusCode > 300 {
-		errPost = fmt.Errorf("HTTP %d", statusCode)
-	}
-
-	if errPost != nil {
-		return res, fmt.Errorf("JUnit parse: failed to send tests details: %s", errPost)
+	if err := wk.Client().QueueSendUnitTests(ctx, jobID, tests); err != nil {
+		return res, fmt.Errorf("JUnit parse: failed to send tests details: %s", err)
 	}
 
 	return res, nil

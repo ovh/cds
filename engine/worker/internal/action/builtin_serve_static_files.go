@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 
 	jobID, err := workerruntime.JobID(ctx)

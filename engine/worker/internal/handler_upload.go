@@ -45,7 +45,7 @@ func uploadHandler(wk *CurrentWorker) http.HandlerFunc {
 			},
 		}
 
-		result, err := action.RunArtifactUpload(context.Background(), wk, &a, wk.currentJob.wJob.Parameters, wk.currentJob.secrets)
+		result, err := action.RunArtifactUpload(context.Background(), wk, a, wk.currentJob.wJob.Parameters, wk.currentJob.secrets)
 		if err != nil {
 			writeError(w, r, err)
 			return

@@ -26,9 +26,7 @@ func init() {
 	mapBuiltinActions[sdk.ServeStaticFiles] = action.RunServeStaticFiles
 }
 
-func (w *CurrentWorker) runBuiltin(ctx context.Context, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) sdk.Result {
-	defer w.drainLogsAndCloseLogger(ctx)
-
+func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) sdk.Result {
 	f, ok := mapBuiltinActions[a.Name]
 	if !ok {
 		res := sdk.Result{
@@ -40,6 +38,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a *sdk.Action, params []
 		return res
 	}
 
+	log.Debug("running builin action %s", a.Name)
 	res, err := f(ctx, w, a, params, secrets)
 	if err != nil {
 		res.Status = sdk.StatusFail
@@ -50,7 +49,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a *sdk.Action, params []
 	return res
 }
 
-func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, params []sdk.Parameter) sdk.Result {
+func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action, params []sdk.Parameter) sdk.Result {
 	chanRes := make(chan sdk.Result, 1)
 	done := make(chan struct{})
 	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {

@@ -4,9 +4,7 @@ package cdsclient
 type Config struct {
 	Host                  string
 	User                  string
-	Token                 string
-	AccessToken           string
-	Hash                  string
+	SessionToken          string
 	Verbose               bool
 	Retry                 int
 	InsecureSkipVerifyTLS bool

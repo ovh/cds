@@ -15,10 +15,8 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/vcs"
 )
 
 func processJobParameter(params []sdk.Parameter, secrets []sdk.Variable) {
@@ -93,51 +91,8 @@ func (w *CurrentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 	return nil
 }
 
-func (w *CurrentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
-	// Process action build arguments
-	var project, workflow, node, job string
-	for _, abp := range params {
-		// Process build variable for root action
-		for j := range a.Parameters {
-			if abp.Name == a.Parameters[j].Name {
-				a.Parameters[j].Value = abp.Value
-			}
-			switch abp.Name {
-			case "cds.project":
-				project = abp.Value
-			case "cds.workflow":
-				workflow = abp.Value
-			case "cds.node":
-				node = abp.Value
-			case "cds.job":
-				job = abp.Value
-			}
-		}
-	}
-
-	if a.Name != sdk.ScriptAction {
-		// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
-		var getFilteredEnv = func(s string) string {
-			if strings.HasPrefix(s, "CDS_") {
-				return s
-			}
-			return os.Getenv(s)
-		}
-		for i := range a.Parameters {
-			a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
-		}
-	}
-
-	log.Info("startAction> project:%s workflow:%s node:%s job:%s", project, workflow, node, job)
-	return w.runJob(ctx, a, buildID, params, secrets, stepOrder, stepName)
-}
-
 func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) error {
-	tmp := map[string]string{}
-	for _, v := range params {
-		tmp[v.Name] = v.Value
-	}
-
+	tmp := sdk.ParametersToMap(params)
 	for i := range a.Parameters {
 		var err error
 		a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, tmp)
@@ -148,35 +103,96 @@ func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 	return nil
 }
 
-func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
-	log.Info("runJob> start run %d stepOrder:%d", buildID, stepOrder)
-	defer func() { log.Info("runJob> end run %d stepOrder:%d", buildID, stepOrder) }()
-	// Replace variable placeholder that may have been added by last step
-	if err := w.replaceVariablesPlaceholder(a, params); err != nil {
-		return sdk.Result{
-			Status:  sdk.StatusFail,
-			BuildID: buildID,
-			Reason:  err.Error(),
+func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+	log.Info("runJob> start job %s (%d)", a.Name, jobID)
+	defer func() { log.Info("runJob> job %s (%d)", a.Name, jobID) }()
+
+	var jobResult = sdk.Result{
+		Status:  sdk.StatusSuccess,
+		BuildID: jobID,
+	}
+
+	var nDisabled, nCriticalFailed int
+	for jobStepIndex, step := range a.Actions {
+		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
+		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
+			jobResult.Status = sdk.StatusFail
+			jobResult.Reason = fmt.Sprintf("Cannot update step (%d) status (%s): %v", jobStepIndex, sdk.StatusBuilding, err)
+			return jobResult, err
+		}
+		var stepResult = sdk.Result{
+			Status:  sdk.StatusNeverBuilt,
+			BuildID: jobID,
+		}
+		if nCriticalFailed == 0 || step.AlwaysExecuted {
+			stepResult = w.runAction(ctx, step, jobID, params, secrets, step.Name)
+			// TODO: manage new variables
+			switch stepResult.Status {
+			case sdk.StatusDisabled:
+				nDisabled++
+			case sdk.StatusFail:
+				if !step.Optional {
+					nCriticalFailed++
+				}
+			}
+		}
+		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, stepResult.Status); err != nil {
+			jobResult.Status = sdk.StatusFail
+			jobResult.Reason = fmt.Sprintf("Cannot update step (%d) status (%s): %v", jobStepIndex, sdk.StatusBuilding, err)
+			return jobResult, err
 		}
 	}
-	// Set the params
-	w.currentJob.params = params
-	// Unset the params at the end
+
+	//If all steps are disabled, set action status to disabled
+	jobResult.Status = sdk.StatusSuccess
+	if nDisabled >= len(a.Actions) {
+		jobResult.Status = sdk.StatusDisabled
+	}
+	if nCriticalFailed > 0 {
+		jobResult.Status = sdk.StatusFail
+	}
+	return jobResult, nil
+}
+
+func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable, actionName string) sdk.Result {
+	log.Info("runAction> start action %s %d", actionName, jobID)
+	defer func() { log.Info("runAction> end action %s run %d", actionName, jobID) }()
+
+	w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
+	var t0 = time.Now()
 	defer func() {
-		w.currentJob.params = nil
-		w.currentJob.secrets = nil
-		w.currentJob.newVariables = nil
+		w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
 	}()
 
 	//If the action is disabled; skip it
-	if !a.Enabled {
+	if !a.Enabled || w.manualExit {
 		return sdk.Result{
 			Status:  sdk.StatusDisabled,
-			BuildID: buildID,
+			BuildID: jobID,
 		}
 	}
 
-	ctx = workerruntime.SetStepOrder(ctx, stepOrder)
+	// Replace variable placeholder that may have been added by last step
+	if err := w.replaceVariablesPlaceholder(&a, params); err != nil {
+		return sdk.Result{
+			Status:  sdk.StatusFail,
+			BuildID: jobID,
+			Reason:  err.Error(),
+		}
+	}
+
+	// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
+	if a.Name != sdk.ScriptAction {
+		var getFilteredEnv = func(s string) string {
+			if strings.HasPrefix(s, "CDS_") {
+				return s
+			}
+			return os.Getenv(s)
+		}
+		for i := range a.Parameters {
+			a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		}
+	}
 
 	//If the action if a edge of the action tree; run it
 	switch a.Type {
@@ -191,12 +207,12 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	if len(a.Actions) == 0 {
 		return sdk.Result{
 			Status:  sdk.StatusSuccess,
-			BuildID: buildID,
+			BuildID: jobID,
 		}
 	}
 
 	//Run children actions
-	r, nDisabled := w.runSteps(ctx, a.Actions, a, buildID, params, secrets, stepOrder, stepName, 0)
+	r, nDisabled := w.runSteps(ctx, a.Actions, a, jobID, params, secrets, actionName)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= len(a.Actions) {
 		r.Status = sdk.StatusDisabled
@@ -205,79 +221,36 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	return r
 }
 
-func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params []sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
-	log.Info("runSteps> start run %d stepOrder:%d len(steps):%d context=%p", buildID, stepOrder, len(steps), ctx)
+func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
+	log.Info("runSteps> start action steps %s %d len(steps):%d context=%p", stepName, jobID, len(steps), ctx)
 	defer func() {
-		log.Info("runSteps> end run %d stepOrder:%d len(steps):%d context=%p (%s)", buildID, stepOrder, len(steps), ctx, ctx.Err())
+		log.Info("runSteps> end action steps %s %d len(steps):%d context=%p (%s)", stepName, jobID, len(steps), ctx, ctx.Err())
 	}()
 	var criticalStepFailed bool
 	var nbDisabledChildren int
 
-	// Nothing to do, success !
-	if len(steps) == 0 {
-		return sdk.Result{
-			Status:  sdk.StatusSuccess,
-			BuildID: buildID,
-		}, 0
-	}
-
 	r := sdk.Result{
 		Status:  sdk.StatusFail,
-		BuildID: buildID,
+		BuildID: jobID,
 	}
 
 	for i, child := range steps {
-		if stepOrder == -1 {
-			w.currentJob.currentStep = stepBaseCount + i
-		} else {
-			w.currentJob.currentStep = stepOrder
-		}
 		childName := fmt.Sprintf("%s/%s-%d", stepName, child.Name, i+1)
 		if child.StepName != "" {
 			childName = "/" + child.StepName
 		}
 		if !child.Enabled || w.manualExit {
-			// Update step status and continue
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusDisabled); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled, buildID, err)
-			}
-
-			if w.manualExit {
-				_ = w.sendLog(buildID, fmt.Sprintf("End of Step \"%s\" [Disabled - user worker exit]\n", childName), w.currentJob.currentStep, true)
-			} else {
-				_ = w.sendLog(buildID, fmt.Sprintf("End of Step \"%s\" [Disabled]\n", childName), w.currentJob.currentStep, true)
-			}
 			nbDisabledChildren++
 			continue
 		}
 
 		if !criticalStepFailed || child.AlwaysExecuted {
-			// Update step status
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusDisabled); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled, buildID, err)
-			}
-			_ = w.sendLog(buildID, fmt.Sprintf("Starting step \"%s\"\n", childName), w.currentJob.currentStep, false)
-
-			r = w.startAction(ctx, &child, buildID, params, secrets, w.currentJob.currentStep, childName)
+			r = w.runAction(ctx, child, jobID, params, secrets, childName)
 			if r.Status != sdk.StatusSuccess && !child.Optional {
 				criticalStepFailed = true
 			}
-
-			if r.Reason != "" {
-				_ = w.sendLog(buildID, fmt.Sprintf("End of step \"%s\" [%s] with reason: %s", childName, r.Status, r.Reason), w.currentJob.currentStep, true)
-			} else {
-				_ = w.sendLog(buildID, fmt.Sprintf("End of step \"%s\" [%s]", childName, r.Status), w.currentJob.currentStep, true)
-			}
-
-			// Update step status
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, r.Status); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled, buildID, err)
-			}
-		} else if criticalStepFailed && !child.AlwaysExecuted { // Update status of steps which are never built
-			// Update step status
-			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusNeverBuilt); err != nil {
-				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusNeverBuilt, buildID, err)
-			}
+		} else if criticalStepFailed && !child.AlwaysExecuted {
+			r.Status = sdk.StatusNeverBuilt
 		}
 	}
 
@@ -298,14 +271,11 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 		Done:      time.Now(),
 	}
 
-	path := fmt.Sprintf("/queue/workflows/%d/step", buildID)
-
 	for try := 1; try <= 10; try++ {
-		log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
 		ctxt, cancel := context.WithTimeout(ctx, 120*time.Second)
-		code, lasterr := w.client.(cdsclient.Raw).PostJSON(ctxt, path, step, nil)
-		if lasterr == nil && code < 300 {
-			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d OK", status, buildID, stepOrder)
+		lasterr := w.Client().QueueSendStepResult(ctxt, buildID, step)
+		if lasterr == nil {
+			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
 			cancel()
 			return nil
 		}
@@ -313,7 +283,7 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 		if ctx.Err() != nil {
 			return fmt.Errorf("updateStepStatus> step:%d job:%d worker is cancelled", stepOrder, buildID)
 		}
-		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 15s", stepOrder, code, lasterr, try)
+		log.Warning("updateStepStatus> Cannot send step %d result: err: %s - try: %d - new try in 15s", stepOrder, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
 	return fmt.Errorf("updateStepStatus> Could not send built result 10 times on step %d, giving up. job: %d", stepOrder, buildID)
@@ -348,7 +318,7 @@ func teardownBuildDirectory(wd string) error {
 
 func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) string {
 	var encodedName = base64.RawStdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
-	paths := append([]string{encodedName}, suffixes...)
+	paths := append([]string{fs.Name(), encodedName}, suffixes...)
 	dir := path.Join(paths...)
 
 	if _, err := fs.Stat(dir); os.IsExist(err) {
@@ -358,59 +328,61 @@ func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes 
 	return dir
 }
 
-func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) sdk.Result {
+func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
 	ctx := w.currentJob.context
 	t0 := time.Now()
 
-	// start logger routine with a large buffer
-	w.logger.logChan = make(chan sdk.Log, 100000)
-	go w.logProcessor(ctx)
-	defer w.drainLogsAndCloseLogger(ctx)
-
 	// Timeout must be the same as the goroutine which stop jobs in package api/workflow
 	ctx, cancel := context.WithTimeout(ctx, 24*time.Hour)
-	log.Info("processJob> Process Job")
-	defer func() { log.Info("processJob> Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
+	log.Info("processJob> Process Job %s (%d)", jobInfo.NodeJobRun.Job.Action.Name, jobInfo.NodeJobRun.ID)
+	defer func() {
+		log.Info("processJob> Process Job Done %s (%d) :%s", jobInfo.NodeJobRun.Job.Action.Name, jobInfo.NodeJobRun.ID, sdk.Round(time.Since(t0), time.Second).String())
+	}()
 	defer cancel()
 
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
-
+	// start logger routine with a large buffer
+	w.logger.logChan = make(chan sdk.Log, 100000)
+	go w.logProcessor(ctx, jobInfo.NodeJobRun.ID)
 	defer w.drainLogsAndCloseLogger(ctx)
 
 	// Setup working directory
 	wd := workingDirectory(w.basedir, jobInfo, "run")
+	log.Debug("processJob> Setup workspace - mkdir %s", wd)
 
 	if err := setupBuildDirectory(wd); err != nil {
 		log.Debug("processJob> setupBuildDirectory error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
-		}
+		}, err
 	}
 	w.currentJob.workingDirectory = wd
 
+	var jobParameters = jobInfo.NodeJobRun.Parameters
+
 	//Add working directory as job parameter
-	jobInfo.NodeJobRun.Parameters = append(jobInfo.NodeJobRun.Parameters, sdk.Parameter{
+	jobParameters = append(jobParameters, sdk.Parameter{
 		Name:  "cds.workspace",
 		Type:  sdk.StringParameter,
 		Value: wd,
 	})
 
 	// add cds.worker on parameters available
-	jobInfo.NodeJobRun.Parameters = append(jobInfo.NodeJobRun.Parameters, sdk.Parameter{
+	jobParameters = append(jobParameters, sdk.Parameter{
 		Name:  "cds.worker",
 		Type:  sdk.StringParameter,
 		Value: jobInfo.NodeJobRun.Job.WorkerName,
 	})
 
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
-	processJobParameter(jobInfo.NodeJobRun.Parameters, jobInfo.Secrets)
-	if err := w.processActionVariables(&jobInfo.NodeJobRun.Job.Action, nil, jobInfo.NodeJobRun.Parameters, jobInfo.Secrets); err != nil {
+	processJobParameter(jobParameters, jobInfo.Secrets)
+	if err := w.processActionVariables(&jobInfo.NodeJobRun.Job.Action, nil, jobParameters, jobInfo.Secrets); err != nil {
 		log.Warning("processJob> Cannot process action %s parameters: %s", jobInfo.NodeJobRun.Job.Action.Name, err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: cannot process action %s parameters", jobInfo.NodeJobRun.Job.Action.Name),
-		}
+		}, err
 	}
 
 	// Add secrets as string or password in ActionBuild.Args
@@ -421,21 +393,21 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) sdk.Resul
 			Name:  s.Name,
 			Value: s.Value,
 		}
-		jobInfo.NodeJobRun.Parameters = append(jobInfo.NodeJobRun.Parameters, p)
+		jobParameters = append(jobParameters, p)
 	}
 
 	// Setup user ssh keys
 	keysDirectory = workingDirectory(w.basedir, jobInfo, "keys")
 	log.Debug("processJob> Setup user ssh keys - mkdir %s", keysDirectory)
-	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
+	if err := os.MkdirAll(keysDirectory, 0700); err != nil {
 		log.Debug("processJob> call os.MkdirAll error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: cannot setup workingDirectory (%s)", err),
-		}
+		}, err
 	}
 
-	// DEPRECATED - BEGIN
+	/* // DEPRECATED - BEGIN
 	if err := w.setupSSHKey(jobInfo.Secrets, keysDirectory); err != nil {
 		log.Debug("processJob> call w.setupSSHKey error:%s", err)
 		return sdk.Result{
@@ -452,14 +424,15 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) sdk.Resul
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: cannot setup vcs ssh key (%s)", err),
 		}
-	}
+	} */
 
-	res := w.startAction(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.NodeJobRun.Parameters, jobInfo.Secrets, -1, "")
+	res, err := w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobParameters, jobInfo.Secrets)
+
 	if err := teardownBuildDirectory(wd); err != nil {
 		log.Error("Cannot remove build directory: %s", err)
 	}
 	if err := teardownBuildDirectory(keysDirectory); err != nil {
 		log.Error("Cannot remove keys directory: %s", err)
 	}
-	return res
+	return res, err
 }

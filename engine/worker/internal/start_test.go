@@ -5,18 +5,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/sdk"
-
-	"github.com/ovh/cds/engine/worker/internal"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/spf13/afero"
 	"gopkg.in/h2non/gock.v1"
+
+	"github.com/ovh/cds/engine/worker/internal"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestStartWorker(t *testing.T) {
+func init() {
+	log.Initialize(&log.Conf{Level: "debug"})
+}
+
+func TestStartWorkerWithABookedJob(t *testing.T) {
 	defer gock.Off()
+	gock.Observe(gock.DumpRequest)
 
 	gock.New("http://lolcat.host").Get("/action/requirement").
 		Reply(200).
@@ -29,6 +34,7 @@ func TestStartWorker(t *testing.T) {
 		})
 
 	gock.New("http://lolcat.host").Post("/worker").
+		HeaderPresent("Authorization").
 		Reply(201).
 		JSON(sdk.Worker{
 			ID:      "xxxx-xxxx-xxxxx",
@@ -36,6 +42,7 @@ func TestStartWorker(t *testing.T) {
 		})
 
 	gock.New("http://lolcat.host").Get("/worker/model").
+		HeaderPresent("Authorization").
 		Reply(200).
 		JSON([]sdk.Model{
 			{
@@ -44,11 +51,88 @@ func TestStartWorker(t *testing.T) {
 			},
 		})
 
+	gock.New("http://lolcat.host").Post("/worker/waiting").Times(2).
+		HeaderPresent("Authorization").
+		Reply(200).JSON(nil)
+
 	gock.New("http://lolcat.host").Get("/queue/workflows/42/infos").
+		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(sdk.WorkflowNodeJobRun{
 			ID: 42,
 		})
+
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/take").
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(
+			sdk.WorkflowNodeJobRunData{
+				NodeJobRun: sdk.WorkflowNodeJobRun{
+					ID: 42,
+					Parameters: []sdk.Parameter{
+						{
+							Name:  "cds.project",
+							Value: "my-project",
+						},
+						{
+							Name:  "cds.workflow",
+							Value: "my-workflow",
+						},
+						{
+							Name:  "cds.node",
+							Value: "my-node",
+						},
+						{
+							Name:  "cds.job",
+							Value: "my-job",
+						},
+					},
+					Job: sdk.ExecutedJob{
+						Job: sdk.Job{
+							Enabled: true,
+							Action: sdk.Action{
+								Name:    "First Job",
+								Enabled: true,
+								Actions: []sdk.Action{
+									{
+										Name:     sdk.CheckoutApplicationAction,
+										Type:     sdk.BuiltinAction,
+										Enabled:  true,
+										StepName: "checkout",
+										Parameters: []sdk.Parameter{
+											{
+												Name:  "directory",
+												Value: "{{.cds.workspace}}",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		)
+
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(2).
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(nil)
+
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(2).
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(nil)
+
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/result").
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(nil)
+
+	gock.New("http://lolcat.host").Post("/worker/unregister").
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(nil)
 
 	var w = new(internal.CurrentWorker)
 
@@ -58,7 +142,7 @@ func TestStartWorker(t *testing.T) {
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPClient())
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPSSEClient())
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	err := internal.StartWorker(ctx, w, 42)

@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sguiheux/go-coverage"
+
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/venom"
 )
 
 type Filter struct {
@@ -232,12 +235,17 @@ type ProjectVariablesClient interface {
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int) error
+	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
 	QueueJobBook(ctx context.Context, id int64) error
-	QueueJobRelease(id int64) error
-	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
+	QueueJobRelease(ctx context.Context, id int64) error
+	QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
+	QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error
+	QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error
+	QueueSendLogs(ctx context.Context, id int64, log sdk.Log) error
+	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
+	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error)
 	QueueStaticFilesUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error)
@@ -366,6 +374,20 @@ type Interface interface {
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
+}
+
+type WorkerInterface interface {
+	GRPCPluginsClient
+	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
+	QueueClient
+	Requirements() ([]sdk.Requirement, error)
+	WorkerClient
+	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
+	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
+	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
+	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
+	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
+	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 }
 
 // Raw is a low-level interface exposing HTTP functions

@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	tagPrerelease := sdk.ParameterFind(a.Parameters, "tagPrerelease")
 	tagMetadata := sdk.ParameterFind(a.Parameters, "tagMetadata")
 	tagLevel := sdk.ParameterFind(a.Parameters, "tagLevel")

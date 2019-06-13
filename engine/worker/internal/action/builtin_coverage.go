@@ -9,10 +9,9 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime, a *sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	res.Status = sdk.StatusFail
 
@@ -58,13 +57,7 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		return res, err
 	}
 
-	uri := fmt.Sprintf("/queue/workflows/%d/coverage", jobID)
-	code, err := wk.Client().(cdsclient.Raw).PostJSON(ctx, uri, report, nil)
-	if err == nil && code > 300 {
-		err = fmt.Errorf("HTTP %d", code)
-	}
-
-	if err != nil {
+	if err := wk.Client().QueueSendCoverage(ctx, jobID, report); err != nil {
 		return res, fmt.Errorf("coverage parser: failed to send coverage details: %s", err)
 	}
 

@@ -2,17 +2,13 @@ package internal
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
-
 	"github.com/golang/protobuf/ptypes"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -21,7 +17,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	defer cancelQueueTakeJob()
 	info, err := w.client.QueueTakeJob(ctxQueueTakeJob, job)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to take workflow node run job. This worker can work on another job.")
+		return sdk.WrapError(err, "Unable to take job %d", job.ID)
 	}
 	t := ""
 	log.Info("takeWorkflowJob> Job %d taken%s", job.ID, t)
@@ -55,9 +51,9 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 				j := &sdk.WorkflowNodeJobRun{}
 				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
 				defer cancelGetJSON()
-				code, err := w.client.(cdsclient.Raw).GetJSON(ctxGetJSON, fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
-				if err != nil {
-					if code == http.StatusNotFound {
+
+				if _, err := w.Client().QueueJobInfo(ctxGetJSON, jobID); err != nil {
+					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
 						cancel()
 						return
@@ -87,7 +83,8 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	}(cancel, job.ID, tick)
 
 	//Run !
-	res := w.ProcessJob(*info)
+	res, err := w.ProcessJob(*info)
+	// We keep the err for later usage
 	tick.Stop()
 
 	now, _ := ptypes.TimestampProto(time.Now())
@@ -95,7 +92,6 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	res.Duration = sdk.Round(time.Since(start), time.Second).String()
 
 	//Wait until the logchannel is empty
-	w.drainLogsAndCloseLogger(ctx)
 	res.BuildID = job.ID
 
 	var lasterr error
@@ -117,5 +113,8 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 		time.Sleep(15 * time.Second)
 	}
 	log.Error("takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", job.ID)
+	if lasterr == nil {
+		lasterr = err
+	}
 	return lasterr
 }

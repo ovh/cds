@@ -40,7 +40,6 @@ type CurrentWorker struct {
 	}
 	currentJob struct {
 		wJob             *sdk.WorkflowNodeJobRun
-		currentStep      int
 		newVariables     []sdk.Variable
 		pkey             string
 		gitsshPath       string
@@ -53,11 +52,11 @@ type CurrentWorker struct {
 		Name   string `json:"name"`
 		Status string `json:"status"`
 	}
-	client cdsclient.Interface
+	client cdsclient.WorkerInterface
 }
 
 // BuiltInAction defines builtin action signature
-type BuiltInAction func(context.Context, workerruntime.Runtime, *sdk.Action, []sdk.Parameter, []sdk.Variable) (sdk.Result, error)
+type BuiltInAction func(context.Context, workerruntime.Runtime, sdk.Action, []sdk.Parameter, []sdk.Variable) (sdk.Result, error)
 
 func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, modelID int64, insecure bool, workspace afero.Fs) error {
 	wk.status.Name = name
@@ -83,7 +82,7 @@ func (wk *CurrentWorker) Name() string {
 	return wk.status.Name
 }
 
-func (wk *CurrentWorker) Client() cdsclient.Interface {
+func (wk *CurrentWorker) Client() cdsclient.WorkerInterface {
 	return wk.client
 }
 

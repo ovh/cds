@@ -51,10 +51,10 @@ type Runtime interface {
 	Name() string
 	Register(ctx context.Context) error
 	Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error
-	ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result
+	ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error)
 	SendLog(level Level, format string)
 	Unregister() error
-	Client() cdsclient.Interface
+	Client() cdsclient.WorkerInterface
 	Workspace() afero.Fs
 	Environ() []string
 	Blur(interface{}) error

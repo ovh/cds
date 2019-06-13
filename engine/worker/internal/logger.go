@@ -3,11 +3,8 @@ package internal
 import (
 	"container/list"
 	"context"
-	"fmt"
 	"strings"
 	"time"
-
-	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/golang/protobuf/ptypes"
 
@@ -34,7 +31,7 @@ func (wk *CurrentWorker) sendLog(buildID int64, value string, stepOrder int, fin
 	return nil
 }
 
-func (wk *CurrentWorker) logProcessor(ctx context.Context) error {
+func (wk *CurrentWorker) logProcessor(ctx context.Context, jobID int64) error {
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer func() {
 		ticker.Stop()
@@ -48,13 +45,12 @@ func (wk *CurrentWorker) logProcessor(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			wk.sendHTTPLog()
+			wk.sendHTTPLog(jobID)
 		}
 	}
-	return nil
 }
 
-func (wk *CurrentWorker) sendHTTPLog() {
+func (wk *CurrentWorker) sendHTTPLog(jobID int64) {
 	var logs []*sdk.Log
 	var currentStepLog *sdk.Log
 	// While list is not empty
@@ -89,9 +85,7 @@ func (wk *CurrentWorker) sendHTTPLog() {
 
 	for _, l := range logs {
 		log.Debug("LOG: %v", l.Val)
-		path := fmt.Sprintf("/queue/workflows/%d/log", wk.currentJob.wJob.ID)
-		_, err := wk.client.(cdsclient.Raw).PostJSON(context.Background(), path, l, nil)
-		if err != nil {
+		if err := wk.Client().QueueSendLogs(wk.currentJob.context, jobID, *l); err != nil {
 			log.Error("error: cannot send logs: %s", err)
 			continue
 		}
