@@ -120,19 +120,18 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				continue
 			}
 
-			reqMods := []RequestModifier{}
+			urlValues := url.Values{}
 			if ratioService != nil {
-				reqMods = append(reqMods, SetHeader("ratioService", strconv.Itoa(*ratioService)))
+				urlValues.Set("ratioService", strconv.Itoa(*ratioService))
 			}
 
 			if modelType != "" {
-				reqMods = append(reqMods, SetHeader("modelType", modelType))
+				urlValues.Set("modelType", modelType)
 			}
 
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-
 			queue := sdk.WorkflowQueue{}
-			if _, err := c.GetJSON(ctxt, "/queue/workflows", &queue, reqMods...); err != nil {
+			if _, err := c.GetJSON(ctxt, "/queue/workflows?"+urlValues.Encode(), &queue, nil); err != nil {
 				errs <- sdk.WrapError(err, "Unable to load jobs")
 				cancel()
 				continue
