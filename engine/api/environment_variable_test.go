@@ -65,10 +65,9 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
-	projectResult := &sdk.Project{}
-	json.Unmarshal(res, &projectResult)
-	assert.Equal(t, len(projectResult.Environments), 1)
-	assert.Equal(t, len(projectResult.Environments[0].Variable), 1)
+	v := &sdk.Variable{}
+	json.Unmarshal(res, &v)
+	assert.NotEqual(t, v.ID, 0)
 
 	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
 	if err != nil {
@@ -136,10 +135,9 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
-	projectResult := &sdk.Project{}
-	json.Unmarshal(res, &projectResult)
-	assert.Equal(t, len(projectResult.Environments), 1)
-	assert.Equal(t, len(projectResult.Environments[0].Variable), 1)
+	vUpdated := sdk.Variable{}
+	json.Unmarshal(res, &vUpdated)
+	assert.Equal(t, vUpdated.Value, "new bar")
 
 	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
 	if err != nil {
@@ -200,11 +198,6 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
-	projectResult := &sdk.Project{}
-	json.Unmarshal(res, &projectResult)
-	assert.Equal(t, len(projectResult.Environments), 1)
-	assert.Equal(t, len(projectResult.Environments[0].Variable), 0)
 
 	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
 	if err != nil {
