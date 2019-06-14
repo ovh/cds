@@ -375,7 +375,7 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 		if v.Type == sdk.KeyVariable {
 			errVar = application.AddKeyPairToApplication(db, store, newApp, v.Name, u)
 		} else {
-			errVar = application.InsertVariable(db, store, newApp, v, u)
+			errVar = application.InsertVariable(db, store, newApp, &v, u)
 		}
 		if errVar != nil {
 			return errVar
