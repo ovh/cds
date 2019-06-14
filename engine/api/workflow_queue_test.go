@@ -209,7 +209,7 @@ func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *tes
 	//Register the worker
 	testRegisterWorker(t, api, router, ctx)
 
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, "", "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -231,7 +231,7 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 
 	//Register the worker
 	testRegisterHatchery(t, api, router, ctx)
-	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, "", "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -422,7 +422,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postBookWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "POST", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, "", "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -988,7 +988,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	uri := router.GetRoute("POST", api.postVulnerabilityReportHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, request)
+	req := assets.NewJWTAuthentifiedRequest(t, "", "POST", uri, request)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -1273,7 +1273,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 
 	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, request)
+	req := assets.NewJWTAuthentifiedRequest(t, "", "POST", uri, request)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)

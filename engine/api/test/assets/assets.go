@@ -4,14 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/rsa"
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"io"
-	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -30,7 +24,6 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -203,71 +196,9 @@ func NewAuthentifiedRequestFromProvider(t *testing.T, name, token, method, uri s
 	return req
 }
 
-// NewAuthentifiedMultipartRequestFromWorker  prepare multipart request with file to upload
-func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, path string, fileName string, params map[string]string) *http.Request {
-	file, err := os.Open(path)
-	if err != nil {
-		t.Fail()
-	}
-	defer file.Close()
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(fileName, filepath.Base(path))
-	if err != nil {
-		t.Fail()
-	}
-	if _, err := io.Copy(part, file); err != nil {
-		t.Fail()
-	}
-
-	for key, val := range params {
-		_ = writer.WriteField(key, val)
-	}
-
-	contextType := writer.FormDataContentType()
-
-	if err := writer.Close(); err != nil {
-		t.Fail()
-	}
-
-	req, err := http.NewRequest("POST", uri, body)
-	if err != nil {
-		t.Fail()
-	}
-	req.Header.Set("Content-Type", contextType)
-	req.Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
-	req.Header.Set("ARTIFACT-FILENAME", fileName)
-
-	AuthentifyRequestFromWorker(t, req, w)
-
-	return req
-}
-
-// NewAuthentifiedRequestFromHatchery prepare a request
-func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.FailNow()
-	}
-
-	AuthentifyRequestFromService(t, req, "h.Hash")
-	return req
-}
-
 // AuthentifyRequest  have to be used only for tests
-func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.AuthentifiedUser, token string) {
-	req.Header.Add(cdsclient.RequestedWithHeader, cdsclient.RequestedWithValue)
-	req.Header.Add(cdsclient.SessionTokenHeader, token)
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
+func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.AuthentifiedUser, jwt string) {
+	auth := "Bearer " + jwt
 	req.Header.Add("Authorization", auth)
 }
 

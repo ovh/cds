@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -193,6 +194,8 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
+	ctx := context.TODO()
+
 	g, err := group.LoadByName(ctx, api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
@@ -221,13 +224,15 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 		}
 	}
 
-	hSrv, hPrivKey, hConsumer, hJWT := assets.InsertHatchery(t, api.mustDB(), g)
+	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, api.mustDB(), *g)
 	session, jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
-		Model:        model,
+		Model:        *model,
 		WorkerName:   hSrv.Name + "-worker",
 	})
 	test.NoError(t, err)
+	assert.NotNil(t, hConsumer)
+	assert.NotNil(t, session)
 
 	uri := api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
 	test.NotEmpty(t, uri)
