@@ -134,6 +134,7 @@ import { ZoneComponent } from './zone/zone.component';
     ],
     declarations: [
         // OnPushComponent
+        DataTableComponent,
         DeleteButtonComponent,
         GroupFormComponent,
         VariableAuditComponent,
@@ -229,7 +230,6 @@ import { ZoneComponent } from './zone/zone.component';
         FavoriteCardsComponent,
         SelectorPipe,
         SelectPipe,
-        DataTableComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,
         WorkflowTemplateBulkModalComponent,

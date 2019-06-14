@@ -99,7 +99,7 @@
                     <app-permission-form (createGroupPermissionEvent)="groupManagement($event)" [loading]="permFormLoading"></app-permission-form>
                 </ng-container>
                 <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')"
-                    (event)="groupManagement($event, null, true)" #permWarning></app-warning-modal>
+                    (event)="groupManagement($event, true)" #permWarning></app-warning-modal>
             </div>
             <div *ngSwitchCase="'advanced'" class="padded">
                 <app-workflow-admin [project]="project" [workflow]="detailedWorkflow"></app-workflow-admin>
@@ -113,10 +113,6 @@
                 <app-audit-list [audits]="detailedWorkflow.audits" [loading]="loading" (rollback)="rollback($event)"></app-audit-list>
             </div>
         </app-scrollview>
-        <ng-container>
-            <app-workflow-trigger-join-src [join]="selectedJoin" [loading]="loading" (event)="deleteJoinSrc($event)"
-                #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
-        </ng-container>
         <ng-container>
             <app-workflow-node-run-param #workflowStartParam [project]="project" [workflow]="detailedWorkflow"
                 [nodeToRun]="detailedWorkflow.workflow_data.node"></app-workflow-node-run-param>

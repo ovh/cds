@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, Output, Pipe, PipeTransform } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output,
+    Pipe,
+    PipeTransform
+} from '@angular/core';
 import { Table } from './table';
 
 type direction = string;
@@ -80,7 +89,8 @@ export interface WithKey {
 @Component({
     selector: 'app-data-table',
     templateUrl: './data-table.html',
-    styleUrls: ['./data-table.scss']
+    styleUrls: ['./data-table.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataTableComponent<T extends WithKey> extends Table<T> implements OnChanges {
     @Input() columns: Array<Column<T>>;
