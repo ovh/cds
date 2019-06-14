@@ -76,10 +76,7 @@ func getAccessTokens(ctx context.Context) (string, string, int64, bool) {
 		return "", "", created, false
 	}
 	accessTokenCreated, ok := ctx.Value(contextKeyAccessTokenCreated).(string)
-	if !ok {
-		return "", "", created, false
-	}
-	if accessTokenCreated != "" {
+	if ok && accessTokenCreated != "" {
 		var err error
 		created, err = strconv.ParseInt(accessTokenCreated, 10, 64)
 		if err != nil {
