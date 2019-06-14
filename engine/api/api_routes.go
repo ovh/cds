@@ -54,7 +54,7 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
 	r.Handle("/auth/consumer/builtin/signout", ScopeNone(), r.POST(api.postServiceUnregisterHandler))
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
-	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.unregisterWorkerHandler))
+	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
 
 	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))
 	//r.Handle("/auth/consumer/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
@@ -361,10 +361,8 @@ func (api *API) InitRouter() {
 
 	// Workers
 	r.Handle("/worker", Scope(sdk.AccessTokenScopeAdmin, sdk.AccessTokenScopeWorker, sdk.AccessTokenScopeHatchery), r.GET(api.getWorkersHandler))
-	r.Handle("/worker/refresh", Scope(sdk.AccessTokenScopeWorker), r.POST(api.refreshWorkerHandler))
-	r.Handle("/worker/checking", Scope(sdk.AccessTokenScopeWorker), r.POST(api.workerCheckingHandler))
+	r.Handle("/worker/refresh", Scope(sdk.AccessTokenScopeWorker), r.POST(api.postRefreshWorkerHandler))
 	r.Handle("/worker/waiting", Scope(sdk.AccessTokenScopeWorker), r.POST(api.workerWaitingHandler))
-	r.Handle("/worker/unregister", Scope(sdk.AccessTokenScopeWorker), r.POST(api.unregisterWorkerHandler))
 	r.Handle("/worker/{id}/disable", Scope(sdk.AccessTokenScopeAdmin, sdk.AccessTokenScopeHatchery), r.POST(api.disableWorkerHandler))
 
 	// Worker models

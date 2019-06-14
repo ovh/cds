@@ -21,7 +21,7 @@ func Update(db gorp.SqlExecutor, w *sdk.Worker) error {
 
 // Delete remove worker from database, it also removes the associated access_token
 func Delete(db gorp.SqlExecutor, id string) error {
-	accessTokenID, err := db.SelectNullStr("SELECT access_token_id FROM worker WHERE id = $1", id)
+	accessTokenID, err := db.SelectNullStr("SELECT auth_consumer_id FROM worker WHERE id = $1", id)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -34,13 +34,16 @@ func Delete(db gorp.SqlExecutor, id string) error {
 		if err := authentication.DeleteSessionByID(db, accessTokenID.String); err != nil {
 			return err
 		}
+		if err := authentication.DeleteConsumerByID(db, accessTokenID.String); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func LoadByAccessTokenID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE access_token_id = $1").Args(id)
+func LoadByAuthConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE auth_consumer_id = $1").Args(id)
 	var w sdk.Worker
 	found, err := gorpmapping.Get(ctx, db, query, &w)
 	if err != nil {

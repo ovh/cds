@@ -71,13 +71,13 @@ CREATE TABLE auth_session
 
 SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
 
-ALTER TABLE services ADD COLUMN IF NOT EXISTS token_id VARCHAR(64);
+ALTER TABLE services ADD COLUMN IF NOT EXISTS consumer_id VARCHAR(64);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS sig BYTEA;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS encrypted_jwt BYTEA;
 ALTER TABLE services ALTER COLUMN hash DROP NOT NULL;
---SELECT create_unique_index('services', 'IDX_SERVICES_TOKENID', 'token_id');
+SELECT create_unique_index('services', 'IDX_SERVICES_CONSUMER_ID', 'consumer_id');
 
 ALTER TABLE worker RENAME TO old_worker;
 
@@ -107,7 +107,7 @@ DROP TABLE "authentified_user_migration";
 DROP TABLE "user_local_authentication";
 DROP TABLE "user_contact";
 DROP TABLE "worker";
-DROP TABLE "access_token_group";
-DROP TABLE "access_token";
+DROP TABLE "auth_session";
+DROP TABLE "auth_consumer";
 DROP TABLE "authentified_user";
 ALTER TABLE old_worker RENAME TO worker;

@@ -3,192 +3,20 @@ package api
 import (
 	"context"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workermodel"
-
-	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 )
-
-// TODO
-/*func Test_workerCheckingHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
-	defer end()
-
-	//1. Load all workers
-	workers, err := worker.LoadWorkers(api.mustDB(), "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	//2. Delete all workers
-	for _, w := range workers {
-		if err := worker.Delete(api.mustDB(), w.ID); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	//3. Create model
-	g, err := group.LoadByName(ctx, api.mustDB(), "shared.infra")
-	if err != nil {
-		t.Fatalf("Error getting group : %s", err)
-	}
-	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), "Test1", g.ID)
-	if model == nil {
-		model = &sdk.Model{
-			Name:    "Test1",
-			GroupID: g.ID,
-			Type:    sdk.Docker,
-			ModelDocker: sdk.ModelDocker{
-				Image: "buildpack-deps:jessie",
-			},
-			RegisteredCapabilities: sdk.RequirementList{
-				{
-					Name:  "capa1",
-					Type:  sdk.BinaryRequirement,
-					Value: "1",
-				},
-			},
-		}
-
-		if err := workermodel.Insert(api.mustDB(), model); err != nil {
-			t.Fatalf("Error inserting model : %s", err)
-		}
-	}
-
-	//4. Registering worker
-	h := sdk.Service{
-		Name:    "test-hatchery-Test_workerCheckingHandler",
-		GroupID: &g.ID,
-	}
-	if err := services.Insert(api.mustDB(), &h); err != nil {
-		t.Fatalf("Error inserting hatchery : %s", err)
-	}
-
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
-		t.Fatalf("Error inserting token : %s", err)
-	}
-
-	workr, err := worker.RegisterWorker(api.mustDB(), api.Cache, "test-worker", "test-key", model.ID, &h, nil, "linux", "amd64")
-	if err != nil {
-		t.Fatalf("Error Registering worker : %s", err)
-	}
-
-	//Prepare request
-	uri := router.GetRoute("POST", api.workerCheckingHandler, nil)
-	test.NotEmpty(t, uri)
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
-	req.Header.Set("User-Agent", string(sdk.WorkerAgent))
-
-	//Do the request
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-
-	assert.Equal(t, 204, w.Code)
-
-	workers, err = worker.LoadWorkers(api.mustDB(), "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, w := range workers {
-		assert.Equal(t, sdk.StatusChecking, w.Status)
-	}
-
-}
-
-func Test_workerWaitingHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
-	defer end()
-
-	//1. Load all workers
-	workers, errlw := worker.LoadWorkers(api.mustDB(), "")
-	if errlw != nil {
-		t.Fatal(errlw)
-	}
-	//2. Delete all workers
-	for _, w := range workers {
-		if err := worker.Delete(api.mustDB(), w.ID); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	//3. Create model
-	g, err := group.LoadByName(ctx, api.mustDB(), "shared.infra")
-	if err != nil {
-		t.Fatalf("Error getting group : %s", err)
-	}
-	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), "Test1", g.ID)
-	if model == nil {
-		model = &sdk.Model{
-			Name:    "Test1",
-			GroupID: g.ID,
-			Type:    sdk.Docker,
-			ModelDocker: sdk.ModelDocker{
-				Image: "buildpack-deps:jessie",
-			},
-			RegisteredCapabilities: sdk.RequirementList{
-				{
-					Name:  "capa1",
-					Type:  sdk.BinaryRequirement,
-					Value: "1",
-				},
-			},
-		}
-
-		if err := workermodel.Insert(api.mustDB(), model); err != nil {
-			t.Fatalf("Error inserting model : %s", err)
-		}
-	}
-
-	//4. Registering worker
-	h := sdk.Service{
-		Name:    "test-hatchery-Test_workerWaitingHandler",
-		GroupID: &g.ID,
-	}
-	if err := services.Insert(api.mustDB(), &h); err != nil {
-		t.Fatalf("Error inserting hatchery : %s", err)
-	}
-
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
-		t.Fatalf("Error inserting token : %s", err)
-	}
-
-	workr, err := worker.RegisterWorker(api.mustDB(), api.Cache, "test-worker", "test-key", model.ID, &h, nil, "linux", "amd64")
-	if err != nil {
-		t.Fatalf("Error Registering worker : %s", err)
-	}
-
-	worker.SetStatus(api.mustDB(), workr.ID, sdk.StatusBuilding)
-
-	//Prepare request
-	uri := router.GetRoute("POST", api.workerWaitingHandler, nil)
-	test.NotEmpty(t, uri)
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
-
-	//Do the request
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-
-	assert.Equal(t, 204, w.Code)
-
-	workers, err = worker.LoadWorkers(api.mustDB(), "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, w := range workers {
-		assert.Equal(t, sdk.StatusWaiting, w.Status)
-	}
-
-}*/
 
 func TestPostRegisterWorkerHandler(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
@@ -236,7 +64,11 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 
 	uri := api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
 	test.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.WorkerRegistrationForm{
+		Arch:    runtime.GOARCH,
+		OS:      runtime.GOOS,
+		Version: sdk.VERSION,
+	})
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -245,4 +77,25 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
+	workerJWT := rec.Header().Get("X-CDS-JWT")
+	t.Logf(">>%s", workerJWT)
+
+	uri = api.Router.GetRoute("POST", api.postRefreshWorkerHandler, nil)
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, workerJWT, "POST", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 204, rec.Code)
+
+	uri = api.Router.GetRoute("POST", api.postUnregisterWorkerHandler, nil)
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, workerJWT, "POST", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 204, rec.Code)
+
 }

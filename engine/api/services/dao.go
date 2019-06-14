@@ -113,9 +113,6 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service{
 		Service: *s,
 	}
-	if err := gorpmapping.Insert(db, &sdb); err != nil {
-		return err
-	}
 	if err := gorpmapping.InsertAndSign(db, &sdb); err != nil {
 		return err
 	}

@@ -33,7 +33,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		var registrationForm sdk.WorkerRegistrationForm
-		if err := service.UnmarshalBody(r, registrationForm); err != nil {
+		if err := service.UnmarshalBody(r, &registrationForm); err != nil {
 			return sdk.WrapError(err, "Unable to parse registration form")
 		}
 
@@ -176,9 +176,9 @@ func (api *API) disableWorkerHandler() service.Handler {
 	}
 }
 
-func (api *API) refreshWorkerHandler() service.Handler {
+func (api *API) postRefreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+		wk, err := worker.LoadByAuthConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -190,9 +190,9 @@ func (api *API) refreshWorkerHandler() service.Handler {
 	}
 }
 
-func (api *API) unregisterWorkerHandler() service.Handler {
+func (api *API) postUnregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+		wk, err := worker.LoadByAuthConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -203,27 +203,9 @@ func (api *API) unregisterWorkerHandler() service.Handler {
 	}
 }
 
-func (api *API) workerCheckingHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
-		if err != nil {
-			return err
-		}
-
-		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusChecking); err != nil {
-			return sdk.WrapError(err, "cannot update worker %s", wk.ID)
-		}
-		key := cache.Key("worker", wk.ID)
-		wk.Status = sdk.StatusChecking
-		api.Cache.Set(key, wk)
-
-		return nil
-	}
-}
-
 func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAccessTokenID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+		wk, err := worker.LoadByAuthConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -255,16 +237,15 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 	}
 	defer tx.Rollback() // nolint
 
-	query := `SELECT name, status, action_build_id, job_type FROM worker WHERE id = $1 FOR UPDATE`
+	query := `SELECT name, status, job_run_id FROM worker WHERE id = $1 FOR UPDATE`
 	var st, name string
 	var jobID sql.NullInt64
-	var jobType sql.NullString
-	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID, &jobType); err != nil {
+	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID); err != nil {
 		log.Debug("DisableWorker[%s]> Cannot lock worker: %v", id, err)
 		return nil
 	}
 
-	if st == sdk.StatusBuilding && jobID.Valid && jobType.Valid {
+	if st == sdk.StatusBuilding && jobID.Valid {
 		// Worker is awol while building !
 		// We need to restart this action
 		wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)

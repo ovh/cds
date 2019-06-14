@@ -99,7 +99,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			break
 		}
 	}
-	if !scopeOK && len(actualScopes) > 0 {
+	if len(expectedScopes) > 0 && !scopeOK {
 		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
 	}
 
