@@ -136,8 +136,12 @@ import { ZoneComponent } from './zone/zone.component';
         // OnPushComponent
         DeleteButtonComponent,
         GroupFormComponent,
+        VariableAuditComponent,
+        VariableComponent,
+        VariableDiffComponent,
         VariableFormComponent,
         VariableValueComponent,
+        WarningMarkComponent,
 
         // Component to migrate
         ActionComponent,
@@ -172,9 +176,6 @@ import { ZoneComponent } from './zone/zone.component';
         StatusIconComponent,
         TruncatePipe,
         SafeHtmlPipe,
-        VariableComponent,
-        VariableAuditComponent,
-        VariableDiffComponent,
 
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
@@ -183,7 +184,6 @@ import { ZoneComponent } from './zone/zone.component';
         ConfirmModalComponent,
         LabelsEditComponent,
         WarningTabComponent,
-        WarningMarkComponent,
         WarningMarkListComponent,
 
         WorkflowWNodeComponent,

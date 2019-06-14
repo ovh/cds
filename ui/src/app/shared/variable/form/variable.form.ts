@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Variable } from 'app/model/variable.model';
 import { VariableService } from 'app/service/variable/variable.service';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-variable-form',
@@ -18,10 +19,11 @@ export class VariableFormComponent {
     @Input() loading = false;
     @Output() createVariableEvent = new EventEmitter<VariableEvent>();
 
-    constructor(private _variableService: VariableService) {
+    constructor(private _variableService: VariableService, private _cd: ChangeDetectorRef) {
         this.variableTypes = this._variableService.getTypesFromCache();
         if (!this.variableTypes) {
-            this._variableService.getTypesFromAPI().subscribe(types => this.variableTypes = types);
+            this._variableService.getTypesFromAPI().pipe(finalize( () => this._cd.detectChanges()))
+                .subscribe(types => this.variableTypes = types);
         }
     }
 

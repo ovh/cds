@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
@@ -11,11 +19,13 @@ import { VariableService } from 'app/service/variable/variable.service';
 import { Table } from 'app/shared/table/table';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-variable',
     templateUrl: './variable.html',
-    styleUrls: ['./variable.scss']
+    styleUrls: ['./variable.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VariableComponent extends Table<Variable> {
 
@@ -53,13 +63,15 @@ export class VariableComponent extends Table<Variable> {
     filter: string;
 
     constructor(private _variableService: VariableService, private _projAudit: ProjectAuditService,
-        private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService) {
+        private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService, private _cd: ChangeDetectorRef) {
         super();
         this.variableTypes = this._variableService.getTypesFromCache();
         if (!this.variableTypes) {
-            this._variableService.getTypesFromAPI().subscribe(types => {
-                this.variableTypes = types;
+            this._variableService.getTypesFromAPI().pipe(finalize(() => {
                 this.ready = true;
+                this._cd.detectChanges();
+            })).subscribe(types => {
+                this.variableTypes = types;
             });
         } else {
             this.ready = true;
