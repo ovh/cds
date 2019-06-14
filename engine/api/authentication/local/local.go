@@ -101,6 +101,10 @@ func (l *localAuthentication) CheckAuthentication(ctx context.Context, db gorp.S
 
 // IsAllowedDomain return true is email is allowed, false otherwise.
 func (l localAuthentication) IsAllowedDomain(email string) bool {
+	if len(l.allowedDomains) == 0 {
+		return true
+	}
+
 	for _, domain := range l.allowedDomains {
 		if strings.HasSuffix(email, "@"+domain) && strings.Count(email, "@") == 1 {
 			return true

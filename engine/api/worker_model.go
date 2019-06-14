@@ -231,7 +231,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		if isMaintainer(ctx) || isAdmin(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)
 		} else {
-			groupIDs := append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID)
+			groupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), groupIDs, &filter, workermodel.LoadOptions.Default)
 		}
 		if err != nil {

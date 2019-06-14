@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -57,7 +58,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if !ok {
 		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
-	claims := jwt.Claims.(sdk.AuthSessionJWTClaims)
+	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
 	// Check for session based on jwt from context
@@ -78,6 +79,13 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
+	// TODO remove this when refact old user table
+	deprecatedUserGroups, err := group.LoadAllByDeprecatedUserID(ctx, api.mustDB(), consumer.AuthentifiedUser.OldUserStruct.ID)
+	if err != nil {
+		return ctx, err
+	}
+	consumer.AuthentifiedUser.OldUserStruct.Groups = deprecatedUserGroups
+
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
 	// Checks scopes
@@ -91,7 +99,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			break
 		}
 	}
-	if !scopeOK {
+	if !scopeOK && len(actualScopes) > 0 {
 		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
 	}
 
@@ -167,7 +175,7 @@ func (api *API) jwtMiddleware(ctx context.Context, req *http.Request, rc *servic
 	if err != nil {
 		return ctx, err
 	}
-	claims := jwt.Claims.(sdk.AuthSessionJWTClaims)
+	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
 	// Checking X-XSRF-TOKEN header

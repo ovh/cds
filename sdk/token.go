@@ -116,7 +116,15 @@ type AuthConsumer struct {
 }
 
 func (c AuthConsumer) GetGroupIDs() []int64 {
-	return c.GroupIDs
+	if len(c.GroupIDs) > 0 {
+		return c.GroupIDs
+	}
+
+	if c.AuthentifiedUser != nil {
+		return c.AuthentifiedUser.GetGroupIDs()
+	}
+
+	return nil
 }
 
 func (c AuthConsumer) Admin() bool {
@@ -241,11 +249,6 @@ func (perms GroupPermissions) ProjectPermission(key string) (int, bool) {
 		}
 	}
 	return -1, false
-}
-
-// AuthConsumerLocalSignupResponse response for a auth local signup.
-type AuthConsumerLocalSignupResponse struct {
-	VerifyToken string `json:"verify_token"`
 }
 
 // AuthConsumerLocalSigninRequest request struct to signin on local auth.

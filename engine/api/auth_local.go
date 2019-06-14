@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -95,11 +96,11 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return err
 		}
 
-		createUserResponse := sdk.AuthConsumerLocalSignupResponse{
-			VerifyToken: verifyToken,
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
-		return service.WriteJSON(w, createUserResponse, http.StatusCreated)
+		return service.WriteJSON(w, nil, http.StatusCreated)
 	}
 }
 
@@ -107,19 +108,74 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 func (api *API) getVerifyAuthLocalHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		token := vars["token"]
+		tokenString := vars["token"]
 
-		if token == "" {
+		if tokenString == "" {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		//TODO: check if has local auth
+		token, err := local.CheckVerifyToken(tokenString)
+		if err != nil {
+			return err
+		}
 
-		//TODO: Verify token (as a JWT token)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
 
-		//TODO: store the new password on the local auth
+		claims := token.Claims.(*jwt.StandardClaims)
+		consumerID := claims.Subject
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		// Get the consumer from database and set it to verified
+		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		if err != nil {
+			return err
+		}
+		if consumer == nil {
+			return sdk.WithStack(sdk.ErrWrongRequest)
+		}
+		consumer.Data["verified"] = sdk.TrueString
+		if err := authentication.UpdateConsumer(tx, consumer); err != nil {
+			return err
+		}
+
+		// Generate a new session for consumer
+		session, err := authentication.NewSession(tx, consumer, time.Now().Add(24*time.Hour*30))
+		if err != nil {
+			return err
+		}
+
+		// Generate a jwt for current session
+		jwt, err := authentication.NewSessionJWT(session)
+		if err != nil {
+			return err
+		}
+
+		// Set a cookie with the jwt token
+		http.SetCookie(w, &http.Cookie{
+			Name:    jwtCookieName,
+			Value:   jwt,
+			Expires: session.ExpireAt,
+		})
+
+		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+		if err != nil {
+			return err
+		}
+
+		// Prepare http response
+		resp := sdk.AuthConsumerLocalSigninResponse{
+			Token: jwt,
+			User:  usr,
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, resp, http.StatusOK)
 	}
 }
 
@@ -188,6 +244,10 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		jwt, err := authentication.NewSessionJWT(session)
 		if err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		// Set a cookie with the jwt token

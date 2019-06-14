@@ -2,7 +2,6 @@ package authentication
 
 import (
 	"crypto/rsa"
-	"fmt"
 
 	jwt "github.com/dgrijalva/jwt-go"
 
@@ -20,7 +19,6 @@ func Init(issuer string, k []byte) error {
 	IssuerName = issuer
 
 	var err error
-	fmt.Println(string(k))
 	signingKey, err = jwt.ParseRSAPrivateKeyFromPEM(k)
 	if err != nil {
 		return sdk.WithStack(err)
