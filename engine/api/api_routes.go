@@ -51,7 +51,9 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/verify/{token}", ScopeNone(), r.GET(api.getVerifyAuthLocalHandler))
-	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.registerWorkerHandler, Auth(false)))
+	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
+	r.Handle("/auth/consumer/builtin/signout", ScopeNone(), r.POST(api.postServiceUnregisterHandler))
+	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.unregisterWorkerHandler))
 
 	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))
@@ -358,7 +360,7 @@ func (api *API) InitRouter() {
 	r.Handle("/user/{username}/groups", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserGroupsHandler))
 
 	// Workers
-	r.Handle("/worker", Scope(sdk.AccessTokenScopeAdmin, sdk.AccessTokenScopeWorker, sdk.AccessTokenScopeHatchery), r.GET(api.getWorkersHandler), r.POST(api.registerWorkerHandler, Auth(false)))
+	r.Handle("/worker", Scope(sdk.AccessTokenScopeAdmin, sdk.AccessTokenScopeWorker, sdk.AccessTokenScopeHatchery), r.GET(api.getWorkersHandler))
 	r.Handle("/worker/refresh", Scope(sdk.AccessTokenScopeWorker), r.POST(api.refreshWorkerHandler))
 	r.Handle("/worker/checking", Scope(sdk.AccessTokenScopeWorker), r.POST(api.workerCheckingHandler))
 	r.Handle("/worker/waiting", Scope(sdk.AccessTokenScopeWorker), r.POST(api.workerWaitingHandler))

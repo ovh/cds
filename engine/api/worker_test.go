@@ -1,5 +1,22 @@
 package api
 
+import (
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workermodel"
+
+	"github.com/ovh/cds/engine/api/bootstrap"
+)
+
 // TODO
 /*func Test_workerCheckingHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
@@ -171,3 +188,56 @@ func Test_workerWaitingHandler(t *testing.T) {
 	}
 
 }*/
+
+func TestPostRegisterWorkerHandler(t *testing.T) {
+	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	g, err := group.LoadByName(ctx, api.mustDB(), "shared.infra")
+	if err != nil {
+		t.Fatalf("Error getting group : %s", err)
+	}
+
+	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), "Test1", g.ID)
+	if model == nil {
+		model = &sdk.Model{
+			Name:    "Test1",
+			GroupID: g.ID,
+			Type:    sdk.Docker,
+			ModelDocker: sdk.ModelDocker{
+				Image: "buildpack-deps:jessie",
+			},
+			RegisteredCapabilities: sdk.RequirementList{
+				{
+					Name:  "capa1",
+					Type:  sdk.BinaryRequirement,
+					Value: "1",
+				},
+			},
+		}
+
+		if err := workermodel.Insert(api.mustDB(), model); err != nil {
+			t.Fatalf("Error inserting model : %s", err)
+		}
+	}
+
+	hSrv, hPrivKey, hConsumer, hJWT := assets.InsertHatchery(t, api.mustDB(), g)
+	session, jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
+		HatcheryName: hSrv.Name,
+		Model:        model,
+		WorkerName:   hSrv.Name + "-worker",
+	})
+	test.NoError(t, err)
+
+	uri := api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+}

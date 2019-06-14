@@ -8,15 +8,15 @@ import (
 
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
-	ID            string    `json:"id" cli:"-" db:"id"`
-	Name          string    `json:"name" cli:"name,key" db:"name"`
-	LastBeat      time.Time `json:"lastbeat" cli:"lastbeat" db:"last_beat"`
-	ModelID       int64     `json:"model_id" cli:"-"  db:"model_id"`
-	JobRunID      *int64    `json:"job_run_id" cli:"-"  db:"job_run_id"`
-	Status        string    `json:"status" cli:"status" db:"status"` // Waiting, Building, Disabled, Unknown
-	HatcheryID    int64     `json:"hatchery_id" cli:"-" db:"hatchery_id"`
-	Uptodate      bool      `json:"uptodate" cli:"-" db:"-"`
-	AccessTokenID *string   `json:"-" cli:"-"  db:"access_token_id"`
+	ID         string    `json:"id" cli:"-" db:"id"`
+	Name       string    `json:"name" cli:"name,key" db:"name"`
+	LastBeat   time.Time `json:"lastbeat" cli:"lastbeat" db:"last_beat"`
+	ModelID    int64     `json:"model_id" cli:"-"  db:"model_id"`
+	JobRunID   *int64    `json:"job_run_id" cli:"-"  db:"job_run_id"`
+	Status     string    `json:"status" cli:"status" db:"status"` // Waiting, Building, Disabled, Unknown
+	HatcheryID int64     `json:"hatchery_id" cli:"-" db:"hatchery_id"`
+	Uptodate   bool      `json:"uptodate" cli:"-" db:"-"`
+	ConsumerID string    `json:"-" cli:"-"  db:"consumer_id"`
 }
 
 // WorkerRegistrationForm represents the arguments needed to register a worker

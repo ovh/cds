@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
@@ -116,7 +118,7 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 		log.Error("cannot create auth session: %v", err)
 	}
 
-	jwt, err := authentication.NewJWT(session)
+	jwt, err := authentication.NewSessionJWT(session)
 	if err != nil {
 		log.Error("cannot create jwt: %v", err)
 	}
@@ -164,7 +166,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		log.Error("cannot create auth session: %v", err)
 	}
 
-	jwt, err := authentication.NewJWT(session)
+	jwt, err := authentication.NewSessionJWT(session)
 	if err != nil {
 		log.Error("cannot create jwt: %v", err)
 	}
@@ -172,45 +174,10 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 	return u, jwt
 }
 
-// AuthentifyRequestFromWorker have to be used only for tests
-func AuthentifyRequestFromWorker(t *testing.T, req *http.Request, w *sdk.Worker) {
-	//req.Header.Set("User-Agent", string(sdk.WorkerAgent))
-	req.Header.Add(cdsclient.AuthHeader, base64.StdEncoding.EncodeToString([]byte(w.ID)))
-}
-
-// AuthentifyRequestFromService have to be used only for tests
-func AuthentifyRequestFromService(t *testing.T, req *http.Request, hash string) {
-	//req.Header.Add("User-Agent", string(sdk.ServiceAgent))
-	req.Header.Add(cdsclient.AuthHeader, base64.StdEncoding.EncodeToString([]byte(hash)))
-}
-
 // AuthentifyRequestFromProvider have to be used only for tests
 func AuthentifyRequestFromProvider(t *testing.T, req *http.Request, name, token string) {
 	req.Header.Add("X-Provider-Name", name)
 	req.Header.Add("X-Provider-Token", token)
-}
-
-// NewAuthentifiedRequestFromWorker prepare a request
-func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-
-	AuthentifyRequestFromWorker(t, req, w)
-
-	return req
 }
 
 // NewAuthentifiedRequestFromProvider prepare a request
@@ -480,14 +447,11 @@ func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 	return &m
 }
 
-func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey) {
+func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
 	usr1, _ := InsertLambdaUser(db)
 
-	//exp := time.Now().Add(5 * time.Minute)
-	//token, _, err := authentication.New(*usr1, []sdk.Group{grp}, []string{sdk.AccessTokenScopeHatchery}, "cds_test", "cds test", exp)
-	//test.NoError(t, err)
-
-	//test.NoError(t, authentication.Insert(db, &token))
+	hConsumer, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", usr1.ID, []int64{grp.ID}, []string{sdk.AccessTokenScopeALL})
+	test.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)
@@ -496,17 +460,23 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:       sdk.RandomString(10),
+			Name:       hConsumer.Name,
 			Type:       services.TypeHatchery,
 			PublicKey:  publicKey,
 			Maintainer: *usr1,
-			//TokenID:    token.ID,
+			ConsumerID: hConsumer.ID,
 		},
 	}
 
 	test.NoError(t, services.Insert(db, &srv))
 
-	return &srv, privateKey
+	session, err := authentication.NewSession(db, hConsumer, time.Now().Add(time.Hour))
+	test.NoError(t, err)
+
+	jwt, err := authentication.NewSessionJWT(session)
+	test.NoError(t, err)
+
+	return &srv, privateKey, hConsumer, jwt
 }
 
 func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) (*sdk.Service, *rsa.PrivateKey) {

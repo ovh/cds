@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, maintainer sdk.AuthentifiedUser, expiration time.Time, w SpawnArguments) (sdk.AuthSession, string, error) {
+func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration time.Time, w SpawnArguments) (sdk.AuthSession, string, error) {
 	var token sdk.AuthSession
 	token.ID = sdk.UUID()
 	token.Created = time.Now()

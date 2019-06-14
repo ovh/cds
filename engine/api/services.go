@@ -46,7 +46,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		srv.TokenID = getAPIConsumer(ctx).ID
+		srv.ConsumerID = getAPIConsumer(ctx).ID
 
 		//Service must be with a sharedinfra group token
 		// except for hatchery: users can start hatchery with their group
@@ -102,6 +102,12 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		w.Header().Set("X-Api-Pub-Signing-Key", encodedPubKey)
 
 		return service.WriteJSON(w, srv, http.StatusOK)
+	}
+}
+
+func (api *API) postServiceUnregisterHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return nil
 	}
 }
 
