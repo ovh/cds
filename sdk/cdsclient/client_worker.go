@@ -22,7 +22,7 @@ func (c *client) WorkerList(ctx context.Context) ([]sdk.Worker, error) {
 func (c *client) WorkerUnregister(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	if _, err := c.PostJSON(ctx, "/worker/unregister", nil, nil); err != nil {
+	if _, err := c.PostJSON(ctx, "/auth/consumer/worker/signout", nil, nil); err != nil {
 		return err
 	}
 	return nil

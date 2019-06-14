@@ -33,13 +33,13 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		})
 
-	gock.New("http://lolcat.host").Post("/worker").
+	gock.New("http://lolcat.host").Post("/auth/consumer/worker/signin").
 		HeaderPresent("Authorization").
 		Reply(201).
 		JSON(sdk.Worker{
 			ID:      "xxxx-xxxx-xxxxx",
 			ModelID: 1,
-		})
+		}).AddHeader("X-CDS-JWT", "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJJRCI6IjJiNTA3ZDZiLTlhZWYtNGNlNS04MzhlLTA1OTU5NjhjMGU5NSIsIkdyb3VwSURzIjpbMV0sIlNjb3BlcyI6WyJXb3JrZXIiLCJSdW5FeGVjdXRpb24iXSwiZXhwIjoxNTYwNTA5NTQyLCJqdGkiOiIyYjUwN2Q2Yi05YWVmLTRjZTUtODM4ZS0wNTk1OTY4YzBlOTUiLCJpYXQiOjE1NjA1MDU5NDIsImlzcyI6ImNkc190ZXN0Iiwic3ViIjoiMTU4ODY5M2YtOTE5NC00ODg5LWJmYjAtZWY3Nzc5M2QzY2ViIn0.jLot6mtYHdnNAKxUS7OK7d6fVyMQyc7fS2NW4s727dxjx01Q2pPUQJBr16gKsS4ETSKh2ik7kqGGXdOz3i67DxMlPHcs0Azka1VOlefPcA77is-oVu0MPh4JbL0KA7fCu_98VKLJH3B0jYr4HEG9285ZOjFg7L5yuR7OqeFfCE3MrigyMKaNOrNE2FohOK9o50GyW_pAr6uNXcTu-yvqQUsz2B2gsd90HK2iWnvb8pKnBVVPg9Q0VA5l2IoFZR_p_UKSJZcFyFnjWKBVy33b70xupDnCpD-3OcbIFAQ5NPRvU_BnEjj_Jm59Ljrv3pJt1ErTMTkMA9QIFdYkDp5a6Q")
 
 	gock.New("http://lolcat.host").Get("/worker/model").
 		HeaderPresent("Authorization").
@@ -119,7 +119,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(2).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(1).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
@@ -129,7 +129,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/worker/unregister").
+	gock.New("http://lolcat.host").Post("/auth/consumer/worker/signout").
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
