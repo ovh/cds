@@ -6,6 +6,8 @@ import { getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Store } from '@ngxs/store';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { AppComponent } from './app.component';
@@ -20,8 +22,6 @@ import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
 import { SharedModule } from './shared/shared.module';
 import { NgxsStoreModule } from './store/store.module';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 
 describe('App: CDS', () => {
 

@@ -40,7 +40,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
 			if projectVCSServer != nil {
-				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectVCSServer)
+				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, projectVCSServer)
 				if errclient != nil {
 					return errclient
 				}
@@ -63,7 +63,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if err != nil {
 		return err
 	}
-	code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+	_, code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
 		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 		// so, it's just a warn log
@@ -144,7 +144,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 	if len(hookToUpdate) > 0 {
 		// Create hook on µservice
-		code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
+		_, code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}
@@ -245,7 +245,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		return nil
 	}
 
-	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectVCSServer)
+	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, projectVCSServer)
 	if errclient != nil {
 		return sdk.WrapError(errclient, "createVCSConfiguration> Cannot get vcs client")
 	}
@@ -292,7 +292,7 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		defaultBranch := "master"
 		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 		if projectVCSServer != nil {
-			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectVCSServer)
+			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, projectVCSServer)
 			if errclient != nil {
 				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(errclient, "DefaultPayload> Cannot get authorized client")
 			}

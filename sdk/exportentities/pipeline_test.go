@@ -319,10 +319,13 @@ var (
 					BuildOrder: 2,
 					Name:       "stage 2",
 					Enabled:    true,
-					Prerequisites: []sdk.Prerequisite{
-						{
-							Parameter:     "param1",
-							ExpectedValue: "value1",
+					Conditions: sdk.WorkflowNodeConditions{
+						PlainConditions: []sdk.WorkflowNodeCondition{
+							{
+								Variable: "param1",
+								Operator: "regex",
+								Value:    "value1",
+							},
 						},
 					},
 					Jobs: []sdk.Job{{
@@ -465,7 +468,7 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 
 				assert.Equal(t, stage.BuildOrder, s1.BuildOrder, "Build order does not match")
 				assert.Equal(t, stage.Enabled, s1.Enabled, "Enabled does not match")
-				test.EqualValuesWithoutOrder(t, stage.Prerequisites, s1.Prerequisites)
+				test.EqualValuesWithoutOrder(t, stage.Conditions.PlainConditions, s1.Conditions.PlainConditions)
 
 				for _, j := range stage.Jobs {
 					var jobFound bool
@@ -643,7 +646,7 @@ func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 
 				assert.Equal(t, stage.BuildOrder, s1.BuildOrder, "Build order does not match")
 				assert.Equal(t, stage.Enabled, s1.Enabled, "Enabled does not match")
-				test.EqualValuesWithoutOrder(t, stage.Prerequisites, s1.Prerequisites)
+				test.EqualValuesWithoutOrder(t, stage.Conditions.PlainConditions, s1.Conditions.PlainConditions)
 
 				for _, j := range stage.Jobs {
 					var jobFound bool

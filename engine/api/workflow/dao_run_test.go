@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -253,7 +252,6 @@ vcs_ssh_key: proj-blabla
 
 	toDeleteNb := 0
 	for _, wfRun := range wruns {
-		fmt.Printf("%+v\n=======\n", wfRun)
 		if wfRun.ToDelete {
 			toDeleteNb++
 		}

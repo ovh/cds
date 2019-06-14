@@ -104,7 +104,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		details := fmt.Sprintf("on project:%s workflow:%s node:%s num:%d sub:%d vcs:%s", proj.Name, wr.Workflow.Name, nodeRun.WorkflowNodeName, nodeRun.Number, nodeRun.SubNumber, vcsServer.Name)
 
 		//Get the RepositoriesManager Client
-		client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+		client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 		if errClient != nil {
 			return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client %s", details)
 		}
@@ -213,7 +213,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	//Get the RepositoriesManager Client
-	client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+	client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if errClient != nil {
 		return sdk.WrapError(errClient, "sendVCSEventStatus> Cannot get client")
 	}

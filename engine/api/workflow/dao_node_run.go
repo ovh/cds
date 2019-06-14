@@ -557,7 +557,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, vcsServer)
 	if errclient != nil {
 		return nil, cur, sdk.WrapError(errclient, "GetNodeRunBuildCommits> Cannot get client")
 	}

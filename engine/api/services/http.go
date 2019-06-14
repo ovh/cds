@@ -67,7 +67,7 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, body.Bytes(), mods...)
+			res, _, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, body.Bytes(), mods...)
 			if err != nil {
 				return code, sdk.WrapError(err, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 			}
@@ -90,7 +90,7 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 }
 
 // DoJSONRequest performs an http request on a service
-func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (http.Header, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -98,9 +98,9 @@ func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string,
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			code, err := doJSONRequest(ctx, srv, method, path, in, out, mods...)
+			headers, code, err := doJSONRequest(ctx, srv, method, path, in, out, mods...)
 			if err == nil {
-				return code, nil
+				return headers, code, nil
 			}
 			lastErr = err
 			lastCode = code
@@ -109,34 +109,34 @@ func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string,
 			break
 		}
 	}
-	return lastCode, lastErr
+	return nil, lastCode, lastErr
 }
 
 // DoJSONRequest performs an http request on service
-func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (http.Header, int, error) {
 	var b = []byte{}
 	var err error
 
 	if in != nil {
 		b, err = json.Marshal(in)
 		if err != nil {
-			return 0, sdk.WrapError(err, "Unable to marshal input")
+			return nil, 0, sdk.WrapError(err, "Unable to marshal input")
 		}
 	}
 
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
-	res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, b, mods...)
+	res, headers, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, b, mods...)
 	if err != nil {
-		return code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
+		return headers, code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return code, sdk.WrapError(err, "Unable to marshal output")
+			return headers, code, sdk.WrapError(err, "Unable to marshal output")
 		}
 	}
 
-	return code, nil
+	return headers, code, nil
 }
 
 // PostMultipart post a file content through multipart upload
@@ -161,7 +161,7 @@ func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filenam
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, "POST", path, body.Bytes(), mods...)
+			res, _, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, "POST", path, body.Bytes(), mods...)
 			lastCode = code
 			lastErr = err
 
@@ -183,7 +183,7 @@ func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filenam
 }
 
 // DoRequest performs an http request on a service
-func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, http.Header, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -191,9 +191,9 @@ func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, arg
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			btes, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, args, mods...)
+			btes, headers, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, args, mods...)
 			if err == nil {
-				return btes, code, nil
+				return btes, headers, code, nil
 			}
 			lastErr = err
 			lastCode = code
@@ -202,11 +202,11 @@ func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, arg
 			break
 		}
 	}
-	return nil, lastCode, lastErr
+	return nil, nil, lastCode, lastErr
 }
 
 // doRequest performs an http request on service
-func doRequest(ctx context.Context, httpURL string, hash string, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func doRequest(ctx context.Context, httpURL string, hash string, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, http.Header, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
@@ -215,7 +215,7 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 
 	callURL, err := url.ParseRequestURI(httpURL + path)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 
 	var requestError error
@@ -226,7 +226,7 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 		req, requestError = http.NewRequest(method, callURL.String(), nil)
 	}
 	if requestError != nil {
-		return nil, 0, requestError
+		return nil, nil, 0, requestError
 	}
 
 	req = req.WithContext(ctx)
@@ -255,27 +255,27 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 	//Do the request
 	resp, errDo := HTTPClient.Do(req)
 	if errDo != nil {
-		return nil, 0, sdk.WrapError(errDo, "services.DoRequest> Request failed")
+		return nil, nil, 0, sdk.WrapError(errDo, "services.DoRequest> Request failed")
 	}
 	defer resp.Body.Close()
 
 	// Read the body
 	body, errBody := ioutil.ReadAll(resp.Body)
 	if errBody != nil {
-		return nil, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
+		return nil, resp.Header, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
 
 	log.Debug("services.DoRequest> response code:%d body:%s", resp.StatusCode, string(body))
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {
-		return body, resp.StatusCode, nil
+		return body, resp.Header, resp.StatusCode, nil
 	}
 
 	// Try to catch the CDS Error
 	if cdserr := sdk.DecodeError(body); cdserr != nil {
-		return nil, resp.StatusCode, cdserr
+		return nil, resp.Header, resp.StatusCode, cdserr
 	}
 
-	return nil, resp.StatusCode, fmt.Errorf("Request Failed")
+	return nil, resp.Header, resp.StatusCode, fmt.Errorf("Request Failed")
 }

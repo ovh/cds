@@ -65,7 +65,7 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
 	}
 
-	c, errC = AuthorizedClient(ctx, db, store, vcsServer)
+	c, errC = AuthorizedClient(ctx, db, store, event.ProjectKey, vcsServer)
 	if errC != nil {
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, errC)
 	}

@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+// HTTP Headers
+const (
+	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"
+	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED"
+	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"
+)
+
 // BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build or Node Run
 type BuildNumberAndHash struct {
 	BuildNumber int64
@@ -30,7 +37,7 @@ type VCSConfiguration struct {
 type VCSServer interface {
 	AuthorizeRedirect(context.Context) (string, string, error)
 	AuthorizeToken(context.Context, string, string) (string, string, error)
-	GetAuthorizedClient(context.Context, string, string) (VCSAuthorizedClient, error)
+	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClient, error)
 }
 
 // VCSAuthorizedClient is an interface for a connected client on a VCS Server.
@@ -82,6 +89,9 @@ type VCSAuthorizedClient interface {
 
 	// Permissions
 	GrantWritePermission(ctx context.Context, repo string) error
+
+	// Access Token
+	GetAccessToken(ctx context.Context) string
 }
 
 // GetDefaultBranch return the default branch

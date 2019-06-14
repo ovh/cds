@@ -27,9 +27,10 @@ const (
 	TypeOutgoingWebHook    = "OutgoingWebhook"
 	TypeOutgoingWorkflow   = "OutgoingWorkflow"
 
-	GithubHeader    = "X-Github-Event"
-	GitlabHeader    = "X-Gitlab-Event"
-	BitbucketHeader = "X-Event-Key"
+	GithubHeader         = "X-Github-Event"
+	GitlabHeader         = "X-Gitlab-Event"
+	BitbucketHeader      = "X-Event-Key"
+	BitbucketCloudHeader = "X-Event-Key_Cloud" // Fake header, do not use to fetch header, just to return custom header
 
 	ConfigNumber    = "Number"
 	ConfigSubNumber = "SubNumber"

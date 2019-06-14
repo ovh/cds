@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -28,7 +29,7 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.V
 	if err != nil {
 		return vcsServer, sdk.WrapError(err, "Unable to load services")
 	}
-	if _, err := services.DoJSONRequest(ctx, srvs, "GET", fmt.Sprintf("/vcs/%s", vcsName), nil, &vcsServer); err != nil {
+	if _, _, err := services.DoJSONRequest(ctx, srvs, "GET", fmt.Sprintf("/vcs/%s", vcsName), nil, &vcsServer); err != nil {
 		return vcsServer, sdk.WithStack(err)
 	}
 	return vcsServer, nil
@@ -42,7 +43,7 @@ func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string
 	}
 
 	vcsServers := make(map[string]sdk.VCSConfiguration)
-	if _, err := services.DoJSONRequest(ctx, srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
+	if _, _, err := services.DoJSONRequest(ctx, srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return vcsServers, nil
@@ -56,11 +57,14 @@ type vcsConsumer struct {
 }
 
 type vcsClient struct {
-	name   string
-	token  string
-	secret string
-	srvs   []sdk.Service
-	cache  *gocache.Cache
+	name       string
+	token      string
+	secret     string
+	projectKey string
+	created    int64 //Timestamp .Unix() of creation
+	srvs       []sdk.Service
+	cache      *gocache.Cache
+	db         gorp.SqlExecutor
 }
 
 func (c *vcsClient) Cache() *gocache.Cache {
@@ -98,7 +102,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
 	log.Info("Performing request on %s", path)
-	if _, err := services.DoJSONRequest(ctx, srv, "GET", path, nil, &res); err != nil {
+	if _, _, err := services.DoJSONRequest(ctx, srv, "GET", path, nil, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}
 
@@ -118,14 +122,14 @@ func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret s
 
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	if _, err := services.DoJSONRequest(ctx, srv, "POST", path, body, &res); err != nil {
+	if _, _, err := services.DoJSONRequest(ctx, srv, "POST", path, body, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}
 
 	return res["token"], res["secret"], nil
 }
 
-func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token string, secret string) (sdk.VCSAuthorizedClient, error) {
+func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret string, created int64) (sdk.VCSAuthorizedClient, error) {
 	s := GetProjectVCSServer(c.proj, c.name)
 	if s == nil {
 		return nil, sdk.ErrNoReposManagerClientAuth
@@ -137,11 +141,14 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token string, sec
 	}
 
 	return &vcsClient{
-		name:   c.name,
-		token:  token,
-		secret: secret,
-		srvs:   srvs,
-		cache:  gocache.New(5*time.Second, 60*time.Second),
+		name:       c.name,
+		token:      token,
+		projectKey: c.proj.Key,
+		created:    created,
+		secret:     secret,
+		srvs:       srvs,
+		cache:      gocache.New(5*time.Second, 60*time.Second),
+		db:         c.dbFunc(),
 	}, nil
 }
 
@@ -165,6 +172,17 @@ func (c *localAuthorizedClientCache) Set(repo *sdk.ProjectVCSServer, vcs sdk.VCS
 	c.cache[hash] = vcs
 }
 
+func (c *localAuthorizedClientCache) Delete(repo *sdk.ProjectVCSServer) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	hash := repo.Hash()
+	if hash == 0 {
+		return
+	}
+	delete(c.cache, hash)
+}
+
 func (c *localAuthorizedClientCache) Get(repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, bool) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
@@ -174,7 +192,7 @@ func (c *localAuthorizedClientCache) Get(repo *sdk.ProjectVCSServer) (sdk.VCSAut
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
-func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
+func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
 	if repo == nil {
 		return nil, sdk.ErrNoReposManagerClientAuth
 	}
@@ -188,21 +206,35 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
+	var created int64
+
+	if _, ok := repo.Data["created"]; ok {
+		created, err = strconv.ParseInt(repo.Data["created"], 10, 64)
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
+	}
 
 	vcs = &vcsClient{
-		name:   repo.Name,
-		token:  repo.Data["token"],
-		secret: repo.Data["secret"],
-		srvs:   srvs,
+		name:       repo.Name,
+		token:      repo.Data["token"],
+		secret:     repo.Data["secret"],
+		created:    created,
+		srvs:       srvs,
+		db:         db,
+		projectKey: projectKey,
 	}
 	local.Set(repo, vcs)
 	return vcs, nil
 }
 
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
-	code, err := services.DoJSONRequest(ctx, c.srvs, method, path, in, out, func(req *http.Request) {
-		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
-		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
+	headers, code, err := services.DoJSONRequest(ctx, c.srvs, method, path, in, out, func(req *http.Request) {
+		req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
+		req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
+		if c.created != 0 {
+			req.Header.Set(sdk.HeaderXAccessTokenCreated, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", c.created))))
+		}
 	})
 
 	if code >= 400 {
@@ -220,14 +252,45 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 		}
 	}
 
+	if err != nil {
+		return code, sdk.WithStack(err)
+	}
+	err = c.checkAccessToken(ctx, headers)
+
 	return code, sdk.WithStack(err)
 }
 
 func (c *vcsClient) postMultipart(ctx context.Context, path string, fileContent []byte, out interface{}) (int, error) {
 	return services.PostMultipart(ctx, c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
-		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
-		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
+		req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
+		req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
+}
+
+func (c *vcsClient) checkAccessToken(ctx context.Context, header http.Header) error {
+	if newAccessToken := header.Get(sdk.HeaderXAccessToken); newAccessToken != "" {
+		c.token = newAccessToken
+
+		vcsservers, err := LoadAllForProject(c.db, c.projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load vcs servers for project %s", c.projectKey)
+		}
+
+		for i := range vcsservers {
+			if vcsservers[i].Name == c.name {
+				vcsservers[i].Data["token"] = c.token
+				vcsservers[i].Data["created"] = fmt.Sprintf("%d", time.Now().Unix())
+				local.Delete(&vcsservers[i])
+				break
+			}
+		}
+
+		if err := UpdateForProject(c.db, &sdk.Project{Key: c.projectKey}, vcsservers); err != nil {
+			return sdk.WrapError(err, "cannot update vcsservers for project %s", c.projectKey)
+		}
+	}
+
+	return nil
 }
 
 func (c *vcsClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
@@ -541,6 +604,10 @@ func (c *vcsClient) GrantWritePermission(ctx context.Context, repo string) error
 		return sdk.WithStack(err)
 	}
 	return nil
+}
+
+func (c *vcsClient) GetAccessToken(_ context.Context) string {
+	return ""
 }
 
 // WebhooksInfos is a set of info about webhooks

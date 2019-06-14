@@ -297,3 +297,70 @@ func (api *API) deleteStageHandler() service.Handler {
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
+
+func (api *API) getStageConditionsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		projectKey := vars[permProjectKey]
+		pipelineKey := vars["pipelineKey"]
+
+		data := struct {
+			Operators      map[string]string `json:"operators"`
+			ConditionNames []string          `json:"names"`
+		}{
+			Operators: sdk.WorkflowConditionsOperators,
+			ConditionNames: []string{
+				"git.hash",
+				"git.hash.short",
+				"git.branch",
+				"git.tag",
+				"git.author",
+				"git.repository",
+				"git.url",
+				"git.http_url",
+				"git.server",
+			},
+		}
+
+		// Check if pipeline exist
+		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, false)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineKey)
+		}
+
+		pipParams, err := pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), pipelineData.ID)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot get all parameters in pipeline")
+		}
+
+		for _, pipParam := range pipParams {
+			data.ConditionNames = append(data.ConditionNames, pipParam.Name)
+		}
+
+		// add cds variable
+		data.ConditionNames = append(data.ConditionNames,
+			"cds.version",
+			"cds.application",
+			"cds.environment",
+			"cds.job",
+			"cds.manual",
+			"cds.pipeline",
+			"cds.project",
+			"cds.run",
+			"cds.run.number",
+			"cds.run.subnumber",
+			"cds.stage",
+			"cds.triggered_by.email",
+			"cds.triggered_by.fullname",
+			"cds.triggered_by.username",
+			"cds.ui.pipeline.run",
+			"cds.worker",
+			"cds.workflow",
+			"cds.workspace",
+			"payload",
+		)
+
+		return service.WriteJSON(w, data, http.StatusOK)
+	}
+}
