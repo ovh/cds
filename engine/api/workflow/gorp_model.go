@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/lib/pq"
-
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 
 	"github.com/ovh/cds/sdk"
@@ -88,7 +86,6 @@ type JobRun struct {
 	Parameters                sql.NullString `db:"variables"`
 	Status                    string         `db:"status"`
 	Retry                     int            `db:"retry"`
-	SpawnAttempts             *pq.Int64Array `db:"spawn_attempts"`
 	Queued                    time.Time      `db:"queued"`
 	Start                     time.Time      `db:"start"`
 	Done                      time.Time      `db:"done"`
@@ -116,8 +113,6 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	}
 	j.Status = jr.Status
 	j.Retry = jr.Retry
-	array := pq.Int64Array(jr.SpawnAttempts)
-	j.SpawnAttempts = &array
 	j.Queued = jr.Queued
 	j.Start = jr.Start
 	j.Done = jr.Done
@@ -153,9 +148,6 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		Done:              j.Done,
 		BookedBy:          j.BookedBy,
 		ContainsService:   j.ContainsService,
-	}
-	if j.SpawnAttempts != nil {
-		jr.SpawnAttempts = *j.SpawnAttempts
 	}
 	if err := gorpmapping.JSONNullString(j.Job, &jr.Job); err != nil {
 		return jr, sdk.WrapError(err, "column job")

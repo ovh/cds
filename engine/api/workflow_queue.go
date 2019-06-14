@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -220,74 +219,6 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "job not booked")
 		}
 		return service.WriteJSON(w, nil, http.StatusOK)
-	}
-}
-
-func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errc := requestVarInt(r, "id")
-		if errc != nil {
-			return sdk.WrapError(errc, "Invalid id")
-		}
-		h := getHatchery(ctx)
-		if h == nil {
-			return service.WriteJSON(w, nil, http.StatusUnauthorized)
-		}
-		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
-		if err != nil {
-			return err
-		}
-
-		hCount, err := services.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot get hatcheries count")
-		}
-
-		if int64(len(spawnAttempts)) >= hCount {
-			infos := []sdk.SpawnInfo{
-				{
-					RemoteTime: time.Now(),
-					Message: sdk.SpawnMsg{
-						ID:   sdk.MsgSpawnInfoHatcheryCannotStartJob.ID,
-						Args: []interface{}{},
-					},
-				},
-			}
-
-			tx, errBegin := api.mustDB().Begin()
-			if errBegin != nil {
-				return sdk.WrapError(errBegin, "Cannot start transaction")
-			}
-			defer tx.Rollback()
-
-			if err := workflow.AddSpawnInfosNodeJobRun(tx, id, infos); err != nil {
-				return sdk.WrapError(err, "Cannot save spawn info on node job run %d", id)
-			}
-
-			wfNodeJobRun, errLj := workflow.LoadNodeJobRun(tx, api.Cache, id)
-			if errLj != nil {
-				return sdk.WrapError(errLj, "Cannot load node job run")
-			}
-
-			wfNodeRun, errLr := workflow.LoadAndLockNodeRunByID(ctx, tx, wfNodeJobRun.WorkflowNodeRunID)
-			if errLr != nil {
-				return sdk.WrapError(errLr, "cannot load node run: %d", wfNodeJobRun.WorkflowNodeRunID)
-			}
-
-			if found, err := workflow.SyncNodeRunRunJob(ctx, tx, wfNodeRun, *wfNodeJobRun); err != nil || !found {
-				return sdk.WrapError(err, "Cannot sync run job (found=%v)", found)
-			}
-
-			if err := workflow.UpdateNodeRun(tx, wfNodeRun); err != nil {
-				return sdk.WrapError(err, "Cannot update node job run")
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WrapError(err, "Cannot commit tx")
-			}
-		}
-
-		return service.WriteJSON(w, spawnAttempts, http.StatusOK)
 	}
 }
 

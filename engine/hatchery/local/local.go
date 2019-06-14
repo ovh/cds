@@ -196,7 +196,7 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
-			log.Debug("CanSpawn false hatchery.checkRequirement ok:%v err:%v", ok, err)
+			log.Debug("CanSpawn false hatchery.checkRequirement ok:%v err:%v r:%v", ok, err, r)
 			return false
 		}
 	}
