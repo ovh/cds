@@ -45,7 +45,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Check that hatchery exists
-		hatchSrv, err := services.FindByNameAndType(api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
+		hatchSrv, err := services.GetByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
 		if err != nil {
 			return sdk.WrapError(err, "registerWorkerHandler> Unable to load hatchery %s", workerTokenFromHatchery.Worker.HatcheryName)
 		}
@@ -118,7 +118,7 @@ func (api *API) getWorkersHandler() service.Handler {
 		var workers []sdk.Worker
 		var err error
 		if !isAdmin(ctx) {
-			h, err := services.FindByTokenID(api.mustDB(), getAPIConsumer(ctx).ID)
+			h, err := services.GetByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
@@ -151,7 +151,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if wk.Status == sdk.StatusBuilding {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
 			}
-			hatcherySrv, err := services.FindByTokenID(api.mustDB(), getAPIConsumer(ctx).ID)
+			hatcherySrv, err := services.GetByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}

@@ -231,7 +231,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 		if err := local.CompareHashAndPassword([]byte(hash), reqData.Password); err != nil {
-			return err
+			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrWrongRequest))
 		}
 
 		// Generate a new session for consumer

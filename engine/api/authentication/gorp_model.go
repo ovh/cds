@@ -5,9 +5,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type authConsumer struct {
+	sdk.AuthConsumer
+	gorpmapping.SignedEntity
+}
+
+type authSession struct {
+	sdk.AuthSession
+	gorpmapping.SignedEntity
+}
+
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(sdk.AuthSession{}, "auth_session", false, "id"),
-		gorpmapping.New(sdk.AuthConsumer{}, "auth_consumer", false, "id"),
+		gorpmapping.New(authConsumer{}, "auth_consumer", false, "id"),
+		gorpmapping.New(authSession{}, "auth_session", false, "id"),
 	)
 }

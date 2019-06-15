@@ -16,7 +16,12 @@ type TableMapping struct {
 	Keys          []string
 }
 
-// New initialize a TableMapping
+// SignedEntity struct for signed entity stored in database.
+type SignedEntity struct {
+	Signature []byte `json:"-" db:"sig"`
+}
+
+// New initialize a TableMapping.
 func New(target interface{}, name string, autoIncrement bool, keys ...string) TableMapping {
 	return TableMapping{Target: target, Name: name, AutoIncrement: autoIncrement, Keys: keys}
 }

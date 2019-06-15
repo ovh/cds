@@ -2,37 +2,54 @@ package authentication
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadConsumerOptionFunc) ([]sdk.AuthConsumer, error) {
-	pConsumers := []*sdk.AuthConsumer{}
+	cs := []authConsumer{}
 
-	if err := gorpmapping.GetAll(ctx, db, q, &pConsumers); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &cs); err != nil {
 		return nil, sdk.WrapError(err, "cannot get auth consumers")
 	}
-	if len(pConsumers) > 0 {
+
+	// Check signature of data, if invalid do not return it
+	verifiedConsumers := make([]*sdk.AuthConsumer, 0, len(cs))
+	for i := range cs {
+		isValid, err := gorpmapping.CheckSignature(cs[i], cs[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error("authentication.getConsumers> auth consumer %s data corrupted", cs[i].ID)
+			continue
+		}
+		verifiedConsumers = append(verifiedConsumers, &cs[i].AuthConsumer)
+	}
+
+	if len(verifiedConsumers) > 0 {
 		for i := range opts {
-			if err := opts[i](ctx, db, pConsumers...); err != nil {
+			if err := opts[i](ctx, db, verifiedConsumers...); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	consumers := make([]sdk.AuthConsumer, len(pConsumers))
-	for i := range pConsumers {
-		consumers[i] = *pConsumers[i]
+	consumers := make([]sdk.AuthConsumer, len(verifiedConsumers))
+	for i := range verifiedConsumers {
+		consumers[i] = *verifiedConsumers[i]
 	}
 
 	return consumers, nil
 }
 
 func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadConsumerOptionFunc) (*sdk.AuthConsumer, error) {
-	var consumer sdk.AuthConsumer
+	var consumer authConsumer
 
 	found, err := gorpmapping.Get(ctx, db, q, &consumer)
 	if err != nil {
@@ -42,13 +59,24 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 		return nil, nil
 	}
 
+	isValid, err := gorpmapping.CheckSignature(consumer, consumer.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error("authentication.getConsumer> auth consumer %s data corrupted", consumer.ID)
+		return nil, nil
+	}
+
+	ac := consumer.AuthConsumer
+
 	for i := range opts {
-		if err := opts[i](ctx, db, &consumer); err != nil {
+		if err := opts[i](ctx, db, &ac); err != nil {
 			return nil, err
 		}
 	}
 
-	return &consumer, nil
+	return &ac, nil
 }
 
 // LoadConsumerByID returns an auth consumer from database.
@@ -64,17 +92,21 @@ func LoadConsumerByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, consu
 }
 
 // InsertConsumer in database.
-func InsertConsumer(db gorp.SqlExecutor, c *sdk.AuthConsumer) error {
-	if err := gorpmapping.Insert(db, c); err != nil {
+func InsertConsumer(db gorp.SqlExecutor, ac *sdk.AuthConsumer) error {
+	ac.ID = sdk.UUID()
+	ac.Created = time.Now()
+	c := authConsumer{AuthConsumer: *ac}
+	if err := gorpmapping.InsertAndSign(db, &c); err != nil {
 		return sdk.WrapError(err, "unable to insert auth consumer")
 	}
+	*ac = c.AuthConsumer
 	return nil
 }
 
 // UpdateConsumer in database.
-func UpdateConsumer(db gorp.SqlExecutor, c *sdk.AuthConsumer) error {
-	if err := gorpmapping.Update(db, c); err != nil {
-		return sdk.WrapError(err, "unable to update auth consumer with id: %s", c.ID)
+func UpdateConsumer(db gorp.SqlExecutor, ac *sdk.AuthConsumer) error {
+	if err := gorpmapping.UpdatetAndSign(db, &authConsumer{AuthConsumer: *ac}); err != nil {
+		return sdk.WrapError(err, "unable to update auth consumer with id: %s", ac.ID)
 	}
 	return nil
 }

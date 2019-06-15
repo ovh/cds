@@ -1,18 +1,6 @@
 package authentication_test
 
-import (
-	"context"
-	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/sdk"
-)
-
+/*
 func TestInsert(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -110,4 +98,4 @@ func TestFind(t *testing.T) {
 	assert.Len(t, tokens, 2)
 
 	test.NoError(t, authentication.Delete(db, token.ID))
-}
+}*/

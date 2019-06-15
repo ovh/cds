@@ -104,13 +104,13 @@ type AuthConsumer struct {
 	ID                 string           `json:"id" cli:"id,key" db:"id"`
 	Name               string           `json:"name" cli:"name" db:"name"`
 	Description        string           `json:"description" cli:"description" db:"description"`
-	ParentID           *string          `json:"parent_id" db:"parent_id"`
+	ParentID           *string          `json:"parent_id,omitempty" db:"parent_id"`
 	AuthentifiedUserID string           `json:"user_id,omitempty" db:"user_id"`
 	Type               AuthConsumerType `json:"type" cli:"type" db:"type"`
-	Data               AuthConsumerData `json:"data" db:"data"`
+	Data               AuthConsumerData `json:"data,omitempty" db:"data"`
 	Created            time.Time        `json:"created" cli:"created" db:"created"`
-	GroupIDs           Int64Slice       `json:"group_ids" cli:"group_ids" db:"group_ids"`
-	Scopes             StringSlice      `json:"scopes" cli:"scopes" db:"scopes"`
+	GroupIDs           Int64Slice       `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
+	Scopes             StringSlice      `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user" db:"-"`
 }

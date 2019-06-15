@@ -5,9 +5,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type authentifiedUser struct {
+	sdk.AuthentifiedUser
+	gorpmapping.SignedEntity
+}
+
 type persistentSessionToken sdk.UserToken
 
-type userContact sdk.UserContact
+type userContact struct {
+	sdk.UserContact
+	gorpmapping.SignedEntity
+}
 
 type authentifiedUserMigration struct {
 	AuthentifiedUserID string `db:"authentified_user_id"`

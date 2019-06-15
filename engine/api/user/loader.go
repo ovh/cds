@@ -30,27 +30,17 @@ func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.Authenti
     ORDER BY id ASC
   `).Args(gorpmapping.IDStringsToQueryString(userIDs))
 
-	var dbContacts []userContact
-	if err := gorpmapping.GetAll(ctx, db, query, &dbContacts); err != nil {
+	contacts, err := getContacts(ctx, db, query)
+	if err != nil {
 		return err
 	}
 
-	mapUsers := make(map[string][]sdk.UserContact, len(dbContacts))
-	for i := range dbContacts {
-		if _, ok := mapUsers[dbContacts[i].UserID]; !ok {
-			mapUsers[dbContacts[i].UserID] = make([]sdk.UserContact, 0, len(dbContacts))
+	mapUsers := make(map[string][]sdk.UserContact, len(contacts))
+	for i := range contacts {
+		if _, ok := mapUsers[contacts[i].UserID]; !ok {
+			mapUsers[contacts[i].UserID] = make([]sdk.UserContact, 0, len(contacts))
 		}
-
-		// TODO do not return if any error
-		ok, err := gorpmapping.CheckSignature(db, dbContacts[i])
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return sdk.WithStack(sdk.ErrCorruptedData)
-		}
-
-		mapUsers[dbContacts[i].UserID] = append(mapUsers[dbContacts[i].UserID], sdk.UserContact(dbContacts[i]))
+		mapUsers[contacts[i].UserID] = append(mapUsers[contacts[i].UserID], contacts[i])
 	}
 
 	for i := range aus {

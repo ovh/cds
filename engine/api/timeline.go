@@ -64,7 +64,7 @@ func (api *API) getTimelineHandler() service.Handler {
 			request.Filter.Projects = append(request.Filter.Projects, pFilter)
 		}*/
 
-		events, err := event.GetEvents(api.mustDB(), api.Cache, sdk.EventFilter{})
+		events, err := event.GetEvents(ctx, api.mustDB(), api.Cache, sdk.EventFilter{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load events")
 		}

@@ -55,7 +55,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		}
 
 		// GET METRICS
-		m1, errMV := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyVulnerability)
+		m1, errMV := metrics.GetMetrics(ctx, db, key, app.ID, sdk.MetricKeyVulnerability)
 		if errMV != nil {
 			return sdk.WrapError(errMV, "getApplicationOverviewHandler> Cannot list vulnerability metrics")
 		}
@@ -64,7 +64,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: m1,
 		})
 
-		m2, errUT := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyUnitTest)
+		m2, errUT := metrics.GetMetrics(ctx, db, key, app.ID, sdk.MetricKeyUnitTest)
 		if errUT != nil {
 			return sdk.WrapError(errUT, "getApplicationOverviewHandler> Cannot list Unit test metrics")
 		}
@@ -73,7 +73,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: m2,
 		})
 
-		mCov, errCov := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyCoverage)
+		mCov, errCov := metrics.GetMetrics(ctx, db, key, app.ID, sdk.MetricKeyCoverage)
 		if errCov != nil {
 			return sdk.WrapError(errCov, "getApplicationOverviewHandler> Cannot list coverage metrics")
 		}

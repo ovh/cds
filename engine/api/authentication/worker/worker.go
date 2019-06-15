@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"context"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
 
@@ -29,7 +31,7 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
-	h, err := services.FindByNameAndType(db, claims.Worker.HatcheryName, services.TypeHatchery)
+	h, err := services.GetByNameAndType(context.Background(), db, claims.Worker.HatcheryName, services.TypeHatchery)
 	if err != nil {
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}

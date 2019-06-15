@@ -18,15 +18,6 @@ CREATE TABLE IF NOT EXISTS "authentified_user_migration" (
 SELECT create_foreign_key_idx_cascade('FK_AUTHENTIFIED_USER_MIGRATION_USER', 'authentified_user_migration', 'user', 'user_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_AUTHENTIFIED_USER_MIGRATION_AUTHENTIFIED_USER', 'authentified_user_migration', 'authentified_user', 'authentified_user_id', 'id');
 
-CREATE TABLE IF NOT EXISTS "user_local_authentication" (
-  user_id VARCHAR(36) PRIMARY KEY,
-  encrypted_password BYTEA,
-  verified BOOLEAN NOT NULL DEFAULT FALSE,
-  sig BYTEA
-);
-
-SELECT create_foreign_key_idx_cascade('FK_LOCAL_AUTH_AUTHENTIFIED', 'user_local_authentication', 'authentified_user', 'user_id', 'id');
-
 CREATE TABLE IF NOT EXISTS "user_contact" (
   id BIGSERIAL PRIMARY KEY,
   user_id VARCHAR(36),
@@ -51,7 +42,8 @@ CREATE TABLE auth_consumer
     data JSONB,
     created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,    
     group_ids JSONB,
-    scopes JSONB
+    scopes JSONB,
+    sig BYTEA
 );
 
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER', 'auth_consumer', 'authentified_user', 'user_id', 'id');
@@ -66,45 +58,46 @@ CREATE TABLE auth_session
     expired_at TIMESTAMP WITH TIME ZONE,
     created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     group_ids JSONB,
-    scopes JSONB
+    scopes JSONB,
+    sig BYTEA
 );
 
 SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
 
-ALTER TABLE services ADD COLUMN IF NOT EXISTS consumer_id VARCHAR(64);
+ALTER TABLE services ADD COLUMN IF NOT EXISTS auth_consumer_id VARCHAR(36);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS sig BYTEA;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS encrypted_jwt BYTEA;
 ALTER TABLE services ALTER COLUMN hash DROP NOT NULL;
-SELECT create_unique_index('services', 'IDX_SERVICES_CONSUMER_ID', 'consumer_id');
+SELECT create_unique_index('services', 'IDX_SERVICES_AUTH_CONSUMER_ID', 'auth_consumer_id');
 
 ALTER TABLE worker RENAME TO old_worker;
 
 CREATE TABLE worker
 (
-    id VARCHAR(64) PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     last_beat TIMESTAMP WITH TIME ZONE NOT NULL,
     status VARCHAR(255) NOT NULL,
     model_id BIGINT NOT NULL,
     job_run_id BIGINT,
     hatchery_id BIGINT NOT NULL,
-    auth_consumer_id VARCHAR(64) REFERENCES auth_consumer(id)
+    auth_consumer_id VARCHAR(36) REFERENCES auth_consumer(id)
 );
 
 SELECT create_foreign_key('FK_WORKER_MODEL', 'worker', 'worker_model', 'model_id', 'id');
-select create_index('worker','IDX_WORKER_MODEL', 'model_id,id');
+select create_index('worker', 'IDX_WORKER_MODEL', 'model_id,id');
 SELECT create_foreign_key('FK_WORKER_WORKFLOW_NODE_RUN_JOB', 'worker', 'workflow_node_run_job', 'job_run_id', 'id');
 SELECT create_unique_index('worker', 'IDX_WORKER_JOB_RUN', 'job_run_id');
 SELECT create_unique_index('worker', 'IDX_WORKER_NAME', 'name');
 SELECT create_foreign_key('FK_WORKER_SERVICES', 'worker', 'services', 'hatchery_id', 'id');
+SELECT create_unique_index('worker', 'IDX_WORKER_AUTH_CONSUMER_ID', 'auth_consumer_id');
 
 -- TODO DELETE CASCASDE access_token when worker is removed
 
 -- +migrate Down
 DROP TABLE "authentified_user_migration";
-DROP TABLE "user_local_authentication";
 DROP TABLE "user_contact";
 DROP TABLE "worker";
 DROP TABLE "auth_session";

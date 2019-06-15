@@ -7,7 +7,7 @@ import (
 
 type service struct {
 	sdk.Service
-	EncryptedJWT []byte `db:"encrypted_jwt" json:"-"`
+	gorpmapping.SignedEntity
 }
 
 func init() {

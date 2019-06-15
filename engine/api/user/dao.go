@@ -11,24 +11,24 @@ import (
 )
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.AuthentifiedUser, error) {
-	paus := []*sdk.AuthentifiedUser{}
+	us := []authentifiedUser{}
 
-	if err := gorpmapping.GetAll(ctx, db, q, &paus); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &us); err != nil {
 		return nil, sdk.WrapError(err, "cannot get authentified users")
 	}
 
 	// Check signature of data, if invalid do not return it
-	verifiedUsers := make([]*sdk.AuthentifiedUser, 0, len(paus))
-	for i := range paus {
-		isValid, err := gorpmapping.CheckSignature(db, paus[i])
+	verifiedUsers := make([]*sdk.AuthentifiedUser, 0, len(us))
+	for i := range us {
+		isValid, err := gorpmapping.CheckSignature(us[i], us[i].Signature)
 		if err != nil {
 			return nil, err
 		}
 		if !isValid {
-			log.Error("user.getAll> user %s (%s) data corrupted", paus[i].Username, paus[i].ID)
+			log.Error("user.getAll> user %s (%s) data corrupted", us[i].Username, us[i].ID)
 			continue
 		}
-		verifiedUsers = append(verifiedUsers, paus[i])
+		verifiedUsers = append(verifiedUsers, &us[i].AuthentifiedUser)
 	}
 
 	if len(verifiedUsers) > 0 {
@@ -48,7 +48,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
-	var u sdk.AuthentifiedUser
+	var u authentifiedUser
 
 	found, err := gorpmapping.Get(ctx, db, q, &u)
 	if err != nil {
@@ -58,7 +58,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 		return nil, nil
 	}
 
-	isValid, err := gorpmapping.CheckSignature(db, u)
+	isValid, err := gorpmapping.CheckSignature(u, u.Signature)
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +67,15 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 		return nil, nil
 	}
 
+	au := u.AuthentifiedUser
+
 	for i := range opts {
-		if err := opts[i](ctx, db, &u); err != nil {
+		if err := opts[i](ctx, db, &au); err != nil {
 			return nil, err
 		}
 	}
 
-	return &u, nil
+	return &au, nil
 }
 
 // LoadAll returns all users from database.
@@ -167,7 +169,7 @@ func DeleteByID(db gorp.SqlExecutor, id string) error {
 }
 
 func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
-	dbc := userContact(*c)
+	dbc := userContact{UserContact: *c}
 	if err := gorpmapping.InsertAndSign(db, &dbc); err != nil {
 		return err
 	}
@@ -176,7 +178,7 @@ func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 }
 
 func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
-	dbc := userContact(*c)
+	dbc := userContact{UserContact: *c}
 	if err := gorpmapping.UpdatetAndSign(db, &dbc); err != nil {
 		return err
 	}
@@ -184,7 +186,7 @@ func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 }
 
 func DeleteContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
-	dbc := userContact(*c)
+	dbc := userContact{UserContact: *c}
 	if err := gorpmapping.Delete(db, &dbc); err != nil {
 		return err
 	}

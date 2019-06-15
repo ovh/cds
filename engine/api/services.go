@@ -75,7 +75,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		//Try to find the service, and keep; else generate a new one
-		oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
+		oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
 		if oldSrv != nil {
 			srv.ID = oldSrv.ID
 		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
@@ -111,28 +111,28 @@ func (api *API) postServiceUnregisterHandler() service.Handler {
 	}
 }
 
-func (api *API) serviceAPIHeartbeat(c context.Context) {
+func (api *API) serviceAPIHeartbeat(ctx context.Context) {
 	tick := time.NewTicker(30 * time.Second).C
 
 	var u = sdk.AuthentifiedUser{} // TODO: fake user for the API ?
 
 	// first call
-	api.serviceAPIHeartbeatUpdate(api.mustDB(), u)
+	api.serviceAPIHeartbeatUpdate(ctx, api.mustDB(), u)
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting serviceAPIHeartbeat: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("Exiting serviceAPIHeartbeat: %v", ctx.Err())
 				return
 			}
 		case <-tick:
-			api.serviceAPIHeartbeatUpdate(api.mustDB(), u)
+			api.serviceAPIHeartbeatUpdate(ctx, api.mustDB(), u)
 		}
 	}
 }
 
-func (api *API) serviceAPIHeartbeatUpdate(db *gorp.DbMap, authUser sdk.AuthentifiedUser) {
+func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap, authUser sdk.AuthentifiedUser) {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
@@ -156,7 +156,7 @@ func (api *API) serviceAPIHeartbeatUpdate(db *gorp.DbMap, authUser sdk.Authentif
 	}
 
 	//Try to find the service, and keep; else generate a new one
-	oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
+	oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
 	if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 		log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
 		return

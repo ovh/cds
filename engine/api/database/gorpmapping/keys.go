@@ -48,7 +48,7 @@ func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
 	if err != nil {
 		return err
 	}
-	ok, err := checkSign(data, sig)
+	ok, err := CheckSignature(data, sig)
 	if err != nil {
 		return err
 	}

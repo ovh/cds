@@ -590,7 +590,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 
 		//Push the hook to hooks µService
 		//Load service "hooks"
-		srvs, errS := services.FindByType(api.mustDB(), services.TypeHooks)
+		srvs, errS := services.GetAllByType(ctx, api.mustDB(), services.TypeHooks)
 		if errS != nil {
 			return sdk.WrapError(errS, "getWorkflowHookHandler> Unable to load hooks services")
 		}

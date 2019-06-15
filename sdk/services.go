@@ -10,7 +10,7 @@ import (
 type CanonicalService struct {
 	ID         int64            `json:"id" db:"id"`
 	Name       string           `json:"name" db:"name" cli:"name,key"`
-	ConsumerID string           `json:"consumer_id" db:"consumer_id" cli:"consumer_id"`
+	ConsumerID string           `json:"-" db:"auth_consumer_id"`
 	Type       string           `json:"type" db:"type" cli:"type"`
 	HTTPURL    string           `json:"http_url" db:"http_url" cli:"url"`
 	Config     ServiceConfig    `json:"config" db:"config" cli:"-"`

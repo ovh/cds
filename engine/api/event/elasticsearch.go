@@ -14,19 +14,19 @@ import (
 )
 
 // PushInElasticSearch pushes event to an elasticsearch
-func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Store) {
+func PushInElasticSearch(ctx context.Context, db gorp.SqlExecutor, store cache.Store) {
 	eventChan := make(chan sdk.Event, 10)
 	Subscribe(eventChan)
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("PushInElasticSearch> Exiting: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("PushInElasticSearch> Exiting: %v", ctx.Err())
 				return
 			}
 		case e := <-eventChan:
-			esServices, errS := services.FindByType(db, services.TypeElasticsearch)
+			esServices, errS := services.GetAllByType(ctx, db, services.TypeElasticsearch)
 			if errS != nil {
 				log.Error("PushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
@@ -51,8 +51,8 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 }
 
 // GetEvents retrieves events from elasticsearch
-func GetEvents(db gorp.SqlExecutor, store cache.Store, filters sdk.EventFilter) ([]json.RawMessage, error) {
-	srvs, err := services.FindByType(db, services.TypeElasticsearch)
+func GetEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filters sdk.EventFilter) ([]json.RawMessage, error) {
+	srvs, err := services.GetAllByType(ctx, db, services.TypeElasticsearch)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to get elasticsearch service")
 	}

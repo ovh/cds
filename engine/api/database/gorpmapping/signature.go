@@ -28,20 +28,6 @@ func UpdatetAndSign(db gorp.SqlExecutor, i interface{}) error {
 	return sdk.WithStack(dbSign(db, i))
 }
 
-func CheckSignature(db gorp.SqlExecutor, i interface{}) (bool, error) {
-	table, key, id, err := dbMappingPKey(i)
-	if err != nil {
-		return false, sdk.WithStack(fmt.Errorf("table %s primary key field %s not found: %v", table, key, err))
-	}
-	query := fmt.Sprintf("SELECT sig FROM %s WHERE %s = $1", table, key)
-	var sig []byte
-	if err := db.SelectOne(&sig, query, id); err != nil {
-		log.Error("unable to check signature in table '%s' for key '%s' = '%v'", table, key, id)
-		return false, sdk.WithStack(err)
-	}
-	return checkSign(i, sig)
-}
-
 func sign(i interface{}) ([]byte, error) {
 	k, err := keyloader.LoadKey(KeySignIdentifier)
 	if err != nil {
@@ -66,10 +52,11 @@ func sign(i interface{}) ([]byte, error) {
 		return nil, sdk.WithStack(fmt.Errorf("unable to encrypt content: %v", err))
 	}
 
-	return []byte(btes), nil
+	return btes, nil
 }
 
-func checkSign(i interface{}, sig []byte) (bool, error) {
+// CheckSignature return true if a given signature is valid for given object.
+func CheckSignature(i interface{}, sig []byte) (bool, error) {
 	k, err := keyloader.LoadKey(KeySignIdentifier)
 	if err != nil {
 		return false, sdk.WithStack(fmt.Errorf("unable to the load the key: %v", err))
@@ -88,10 +75,11 @@ func checkSign(i interface{}, sig []byte) (bool, error) {
 		}
 	}
 
-	decryptedSig, err := k.Decrypt([]byte(sig))
+	decryptedSig, err := k.Decrypt(sig)
 	if err != nil {
 		return false, sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
 	}
+
 	return string(clearContent) == string(decryptedSig), nil
 }
 

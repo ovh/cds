@@ -90,10 +90,10 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 }
 
 // InitExternal initializes external services
-func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.ExternalService) error {
+func InitExternal(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.ExternalService) error {
 	db := dbFunc()
 	for _, s := range ss {
-		oldSrv, errOldSrv := FindByName(db, s.Name)
+		oldSrv, errOldSrv := GetByName(ctx, db, s.Name)
 		if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 			return sdk.WithStack(fmt.Errorf("Unable to find service %s", s.Name))
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -11,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -19,6 +21,7 @@ import (
 const (
 	jwtCookieName  = "jwt_token"
 	xsrfHeaderName = "X-XSRF-TOKEN"
+	xsrfCookieName = "xsrf_token"
 )
 
 func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
@@ -49,7 +52,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// Check for a JWT in current request and add it to the context
-	ctx, err = api.jwtMiddleware(ctx, req, rc)
+	ctx, err = api.jwtMiddleware(ctx, w, req, rc)
 	if err != nil {
 		return ctx, err
 	}
@@ -148,7 +151,7 @@ func (api *API) authStatusTokenMiddleware(ctx context.Context, w http.ResponseWr
 	return ctx, true, nil
 }
 
-func (api *API) jwtMiddleware(ctx context.Context, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 	ctx, end := observability.Span(ctx, "router.authJWTMiddleware")
 	defer end()
 
@@ -178,17 +181,26 @@ func (api *API) jwtMiddleware(ctx context.Context, req *http.Request, rc *servic
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
-	// Checking X-XSRF-TOKEN header
-	if xsrfTokenNeeded {
+	// Checking X-XSRF-TOKEN header if needed and permission level higher than read
+	if xsrfTokenNeeded && rc.PermissionLevel > permission.PermissionRead {
 		log.Debug("authJWTMiddleware> searching for a xsrf token")
 
 		xsrfToken := req.Header.Get(xsrfHeaderName)
 
 		log.Debug("authJWTMiddleware> checking xsrf token %s...", xsrfToken[:12])
 
-		if !authentication.CheckXSRFToken(api.Cache, sessionID, xsrfToken) {
+		if !authentication.CheckSessionXSRFToken(api.Cache, sessionID, xsrfToken) {
 			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 		}
+
+		xsrfToken = authentication.NewSessionXSRFToken(api.Cache, sessionID)
+
+		// Set a cookie with the jwt token
+		http.SetCookie(w, &http.Cookie{
+			Name:    xsrfCookieName,
+			Value:   xsrfToken,
+			Expires: time.Now().Add(time.Duration(authentication.XSRFTokenDuration) * time.Second),
+		})
 	}
 
 	ctx = context.WithValue(ctx, contextJWTRaw, jwt)

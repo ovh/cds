@@ -60,7 +60,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if len(hookToDelete) > 0 {
 		//Push the hook to hooks µService
 		//Load service "hooks"
-		srvs, err := services.FindByType(db, services.TypeHooks)
+		srvs, err := services.GetAllByType(ctx, db, services.TypeHooks)
 		if err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		oldHooks = oldWorkflow.WorkflowData.GetHooks()
 	}
 	if len(wf.WorkflowData.Node.Hooks) > 0 {
-		srvs, err := services.FindByType(db, services.TypeHooks)
+		srvs, err := services.GetAllByType(ctx, db, services.TypeHooks)
 		if err != nil {
 			return sdk.WrapError(err, "unable to get services dao")
 		}

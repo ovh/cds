@@ -730,7 +730,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 		externalServices = append(externalServices, serv)
 	}
-	if err := services.InitExternal(a.mustDB, a.Cache, externalServices); err != nil {
+	if err := services.InitExternal(ctx, a.mustDB, a.Cache, externalServices); err != nil {
 		return fmt.Errorf("unable to init external service: %+v", err)
 	}
 	sdk.GoRoutine(ctx, "pings-external-services",
