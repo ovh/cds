@@ -66,7 +66,7 @@ echo "lol"`,
 
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			script, err := prepareScriptContent(&tst.parameters)
+			script, err := prepareScriptContent(tst.parameters)
 			if tst.shouldHaveError {
 				assert.Error(t, err)
 			} else {

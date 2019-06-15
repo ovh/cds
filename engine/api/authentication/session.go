@@ -14,10 +14,8 @@ import (
 // NewSession returns a new session for a given auth consumer.
 func NewSession(db gorp.SqlExecutor, c *sdk.AuthConsumer, expiration time.Time) (*sdk.AuthSession, error) {
 	s := sdk.AuthSession{
-		ID:         sdk.UUID(),
 		ConsumerID: c.ID,
 		ExpireAt:   expiration,
-		Created:    time.Now(),
 		GroupIDs:   c.GroupIDs,
 		Scopes:     c.Scopes,
 	}

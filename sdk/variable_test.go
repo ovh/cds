@@ -1,4 +1,4 @@
-package sdk
+package sdk_test
 
 import (
 	"reflect"
@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_sdk.EnvVartoENV(t *testing.T) {
+func Test_EnvVartoENV(t *testing.T) {
 	tests := []struct {
 		name string
 		args sdk.Parameter

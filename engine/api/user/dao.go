@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -116,13 +117,14 @@ func Count(db gorp.SqlExecutor) (int, error) {
 }
 
 // Insert a user in database.
-func Insert(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) error {
-	if u.ID == "" {
-		u.ID = sdk.UUID()
-	}
-	if err := gorpmapping.InsertAndSign(db, u); err != nil {
+func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
+	au.ID = sdk.UUID()
+	au.DateCreation = time.Now()
+	u := authentifiedUser{AuthentifiedUser: *au}
+	if err := gorpmapping.InsertAndSign(db, &u); err != nil {
 		return err
 	}
+	*au = u.AuthentifiedUser
 
 	// TODO: refactor this when authenticatedUser.group will replace user.group
 	oldUser := &sdk.User{
@@ -148,8 +150,13 @@ func Insert(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) error {
 }
 
 // Update a user in database.
-func Update(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) error {
-	return gorpmapping.UpdatetAndSign(db, &u)
+func Update(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
+	u := authentifiedUser{AuthentifiedUser: *au}
+	if err := gorpmapping.UpdatetAndSign(db, &u); err != nil {
+		return sdk.WrapError(err, "unable to update authentified user with id: %s", au.ID)
+	}
+	*au = u.AuthentifiedUser
+	return nil
 }
 
 // DeleteByID a user in database.

@@ -10,20 +10,20 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/pipeline"
-
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -2163,7 +2163,7 @@ name: app-no-repo
 	return app
 }
 
-func mock(f func(r *http.Request) (*http.Response, error)) sdk.HTTPClient {
+func mock(f func(r *http.Request) (*http.Response, error)) cdsclient.HTTPClient {
 	return &mockServiceClient{f}
 }
 

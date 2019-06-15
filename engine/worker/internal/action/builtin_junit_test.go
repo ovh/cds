@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/venom"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func Test_computeStats(t *testing.T) {
-
 	t.SkipNow()
 	type args struct {
 		res *sdk.Result
@@ -19,7 +19,7 @@ func Test_computeStats(t *testing.T) {
 		name                    string
 		args                    args
 		want                    []string
-		status                  sdk.Status
+		status                  string
 		totalOK, totalKO, total int
 	}{
 		{
@@ -199,7 +199,7 @@ func Test_computeStats(t *testing.T) {
 			if got := computeStats(tt.args.res, tt.args.v); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("computeStats() = %v, want %v", got, tt.want)
 			}
-			if tt.args.res.Status != tt.status.String() {
+			if tt.args.res.Status != tt.status {
 				t.Errorf("status = %v, want %v", tt.args.res.Status, tt.status)
 			}
 

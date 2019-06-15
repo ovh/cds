@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ func TestDAO(t *testing.T) {
 	db, _, end := test.SetupPG(t)
 	defer end()
 
-	allSrv, err := services.All(db)
+	allSrv, err := services.GetAll(context.TODO(), db)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -45,13 +46,13 @@ func TestDAO(t *testing.T) {
 
 	test.NoError(t, services.Insert(db, &srv))
 
-	srv2, err := services.FindByName(db, srv.Name)
+	srv2, err := services.GetByName(context.TODO(), db, srv.Name)
 	test.NoError(t, err)
 
 	assert.Equal(t, srv.Name, srv2.Name)
 	assert.Equal(t, string(srv.PublicKey), string(srv2.PublicKey))
 
-	all, err := services.FindByType(db, srv.Type)
+	all, err := services.GetAllByType(context.TODO(), db, srv.Type)
 	test.NoError(t, err)
 
 	assert.True(t, len(all) >= 1)
@@ -60,6 +61,6 @@ func TestDAO(t *testing.T) {
 		test.NoError(t, services.Delete(db, &s))
 	}
 
-	_, err = services.FindDeadServices(db, 0)
+	_, err = services.FindDeadServices(context.TODO(), db, 0)
 	test.NoError(t, err)
 }

@@ -1,101 +1,112 @@
 package authentication_test
 
-/*
-func TestInsert(t *testing.T) {
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/sdk"
+)
+
+func TestLoadSession(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	usr1, _ := assets.InsertLambdaUser(db)
-	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	u := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+	}
+	test.NoError(t, user.Insert(db, &u))
 
-	exp := time.Now().Add(5 * time.Minute)
-	token, _, err := authentication.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
+	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
-	test.NoError(t, authentication.Insert(db, &token))
-
-	reloadedToken, err := authentication.LoadByID(context.TODO(), db, token.ID, authentication.LoadOptions.WithGroups)
+	s, err := authentication.NewSession(db, c, time.Now())
 	test.NoError(t, err)
 
-	t.Logf("reloaded token is s%+v", reloadedToken)
-
-	assert.Len(t, reloadedToken.Groups, 1)
-
-	test.NoError(t, authentication.Delete(db, token.ID))
+	// LoadSessionByID
+	res, err := authentication.LoadSessionByID(context.TODO(), db, sdk.RandomString(10))
+	test.NoError(t, err)
+	test.Nil(t, res)
+	res, err = authentication.LoadSessionByID(context.TODO(), db, s.ID)
+	test.NoError(t, err)
+	test.NotNil(t, res)
+	test.Equal(t, s, res)
 }
 
-func TestUpdate(t *testing.T) {
+func TestInsertSession(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	usr1, _ := assets.InsertLambdaUser(db)
-	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	u := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+	}
+	test.NoError(t, user.Insert(db, &u))
 
-	exp := time.Now().Add(5 * time.Minute)
-	token, _, err := authentication.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
+	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
-	test.NoError(t, authentication.Insert(db, &token))
-
-	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	token.Groups = append(token.Groups, *grp2)
-	_, err = authentication.Regen(&token)
+	s, err := authentication.NewSession(db, c, time.Now())
 	test.NoError(t, err)
 
-	test.NoError(t, authentication.Update(db, &token))
-
-	reloadedToken, err := authentication.LoadByID(context.TODO(), db, token.ID, authentication.LoadOptions.WithGroups)
+	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
 	test.NoError(t, err)
-
-	t.Logf("reloaded token is s%+v", reloadedToken)
-
-	assert.Len(t, reloadedToken.Groups, 2)
-	test.NoError(t, authentication.Delete(db, reloadedToken.ID))
+	test.NotNil(t, res)
+	test.Equal(t, s, res)
 }
 
-func TestFind(t *testing.T) {
+func TestUpdateSession(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	usr1, _ := assets.InsertLambdaUser(db, grp1) // This creates an access token
+	g := assets.InsertGroup(t, db)
 
-	exp := time.Now().Add(5 * time.Minute)
-	token, _, err := authentication.New(*usr1, []sdk.Group{*grp1}, []string{sdk.AccessTokenScopeALL}, "cds_test", "cds test", exp)
+	u := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+	}
+	test.NoError(t, user.Insert(db, &u))
+
+	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
-	test.NoError(t, authentication.Insert(db, &token))
-
-	// TestFindByID
-	reloadedToken, err := authentication.LoadByID(context.TODO(), db, token.ID, authentication.LoadOptions.WithAuthentifiedUser, authentication.LoadOptions.WithGroups)
+	s, err := authentication.NewSession(db, c, time.Now())
 	test.NoError(t, err)
-	assert.Len(t, reloadedToken.Groups, 1)
-	test.Equal(t, usr1.ID, reloadedToken.AuthentifiedUser.ID)
-	assert.Len(t, reloadedToken.AuthentifiedUser.GetGroups(), 1)
 
-	// LoadAllByUserID
-	tokens, err := authentication.LoadAllByUserID(context.TODO(), db, usr1.ID,
-		authentication.LoadOptions.WithAuthentifiedUser,
-		authentication.LoadOptions.WithGroups,
-	)
+	s.GroupIDs = []int64{g.ID}
+	test.NoError(t, authentication.UpdateSession(db, s))
+
+	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
 	test.NoError(t, err)
-	assert.Len(t, tokens, 2)
+	test.NotNil(t, res)
+	test.Equal(t, s, res)
+}
 
-	usr2, _ := assets.InsertLambdaUser(db)
-	tokens, err = authentication.LoadAllByUserID(context.TODO(), db, usr2.ID,
-		authentication.LoadOptions.WithAuthentifiedUser,
-		authentication.LoadOptions.WithGroups,
-	)
+func TestDeleteSession(t *testing.T) {
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	u := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+	}
+	test.NoError(t, user.Insert(db, &u))
+
+	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
-	assert.Len(t, tokens, 1)
 
-	// LoadAllByGroupID
-	tokens, err = authentication.LoadAllByGroupID(context.TODO(), db, grp1.ID,
-		authentication.LoadOptions.WithAuthentifiedUser,
-		authentication.LoadOptions.WithGroups,
-	)
+	s, err := authentication.NewSession(db, c, time.Now())
 	test.NoError(t, err)
-	assert.Len(t, tokens, 2)
 
-	test.NoError(t, authentication.Delete(db, token.ID))
-}*/
+	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
+	test.NoError(t, err)
+	test.NotNil(t, res)
+
+	test.NoError(t, authentication.DeleteSessionByID(db, s.ID))
+
+	res, err = authentication.LoadSessionByID(context.TODO(), db, s.ID)
+	test.NoError(t, err)
+	test.Nil(t, res)
+}

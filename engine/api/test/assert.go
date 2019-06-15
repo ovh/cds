@@ -18,9 +18,16 @@ func NoError(t *testing.T, err error, msg ...interface{}) {
 	}
 }
 
-// NotNil logs Fatal if there nil value
+// NotNil logs Fatal if there is nil value.
 func NotNil(t *testing.T, i interface{}, msg ...interface{}) {
 	if !assert.NotNil(t, i) {
+		t.Fatal(msg...)
+	}
+}
+
+// Nil logs Fatal if there is no nil value.
+func Nil(t *testing.T, i interface{}, msg ...interface{}) {
+	if !assert.Nil(t, i) {
 		t.Fatal(msg...)
 	}
 }

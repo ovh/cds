@@ -3,8 +3,9 @@ package sdk_test
 import (
 	"testing"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func TestWorkflowRunTag(t *testing.T) {
