@@ -1,12 +1,22 @@
 package action
 
 import (
+	"context"
+	"os"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/log"
 )
+
+func init() {
+	log.Initialize(&log.Conf{Level: "debug"})
+}
 
 func Test_prepareScriptContent(t *testing.T) {
 	type testcase struct {
@@ -78,4 +88,75 @@ echo "lol"`,
 		})
 	}
 
+}
+
+type TestWorker struct {
+	t *testing.T
+}
+
+func (w TestWorker) Blur(i interface{}) error {
+	w.t.Log("Blur")
+	return nil
+}
+
+func (_ TestWorker) Client() cdsclient.WorkerInterface {
+	return nil
+}
+
+func (_ TestWorker) Environ() []string {
+	return os.Environ()
+}
+
+func (_ TestWorker) HTTPPort() int32 {
+	return 0
+}
+
+func (_ TestWorker) Name() string {
+	return "test"
+}
+
+func (_ TestWorker) Workspace() afero.Fs {
+	return afero.NewOsFs()
+}
+
+func (_ TestWorker) Register(ctx context.Context) error {
+	return nil
+}
+func (_ TestWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
+	return nil
+}
+func (_ TestWorker) ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
+	return sdk.Result{}, nil
+}
+func (w TestWorker) SendLog(level workerruntime.Level, format string) {
+	w.t.Log("SendLog> [" + string(level) + "] " + format)
+
+}
+func (_ TestWorker) Unregister() error {
+	return nil
+}
+
+var _ workerruntime.Runtime = new(TestWorker)
+
+func TestRunScriptAction(t *testing.T) {
+	wk := TestWorker{t}
+	ctx := workerruntime.SetWorkingDirectory(context.TODO(), os.TempDir())
+	res, err := RunScriptAction(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "script",
+					Value: "sleep 1\necho this is a test from $HOME\nsleep 1",
+				},
+			},
+		},
+		nil,
+		[]sdk.Variable{
+			{
+				Name:  "password",
+				Value: "password",
+			},
+		})
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
 }

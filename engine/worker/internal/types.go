@@ -150,8 +150,8 @@ func (w *CurrentWorker) Blur(i interface{}) error {
 
 	dataS := string(data)
 	for i := range w.currentJob.secrets {
-		if len(logsecrets[i].Value) >= sdk.SecretMinLength {
-			dataS = strings.Replace(dataS, w.currentJob.secrets[i].Value, "**"+w.currentJob.secrets[i].Name+"**", -1)
+		if len(w.currentJob.secrets[i].Value) >= sdk.SecretMinLength {
+			dataS = strings.Replace(dataS, w.currentJob.secrets[i].Value, sdk.PasswordPlaceholder, -1)
 		}
 	}
 

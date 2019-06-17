@@ -71,6 +71,8 @@ func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 		log.Warning("Cannot create tmp file: %s", errt)
 		return nil, errors.New("cannot create temporary file, aborting")
 	}
+	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
+	log.Debug("runScriptAction> writeScriptContent> Script content: \n\t%s", script.content)
 
 	// Put script in file
 	n, errw := tmpscript.Write(script.content)
@@ -117,6 +119,11 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 	chanRes := make(chan sdk.Result)
 	chanErr := make(chan error)
 
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return sdk.Result{}, err
+	}
+
 	go func() {
 		res := sdk.Result{Status: sdk.StatusSuccess}
 		script, err := prepareScriptContent(a.Parameters)
@@ -132,10 +139,10 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- err
 		}
 
-		log.Info("runScriptAction> %s %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"))
+		log.Info("runScriptAction> Running command %s %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"))
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
-
+		cmd.Dir = workdir
 		cmd.Env = wk.Environ()
 
 		workerpath, err := osext.Executable()
@@ -143,7 +150,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- fmt.Errorf("Failure due to internal error (Worker Path): %v", err)
 		}
 
-		log.Info("Worker binary path: %s", path.Dir(workerpath))
+		log.Debug("runScriptAction> Worker binary path: %s", path.Dir(workerpath))
 		for i := range cmd.Env {
 			if strings.HasPrefix(cmd.Env[i], "PATH") {
 				cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))

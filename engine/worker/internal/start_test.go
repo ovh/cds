@@ -21,8 +21,6 @@ func init() {
 
 func TestStartWorkerWithABookedJob(t *testing.T) {
 	defer gock.Off()
-	gock.Observe(gock.DumpRequest)
-
 	gock.New("http://lolcat.host").Get("/action/requirement").
 		Reply(200).
 		JSON([]sdk.Requirement{
@@ -59,7 +57,16 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(sdk.WorkflowNodeJobRun{
-			ID: 42,
+			ID:     42,
+			Status: sdk.StatusWaiting,
+		})
+
+	gock.New("http://lolcat.host").Get("/queue/workflows/42/infos").Times(2).
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(sdk.WorkflowNodeJobRun{
+			ID:     42,
+			Status: sdk.StatusBuilding,
 		})
 
 	gock.New("http://lolcat.host").Post("/queue/workflows/42/take").
@@ -67,6 +74,12 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(
 			sdk.WorkflowNodeJobRunData{
+				Secrets: []sdk.Variable{
+					{
+						Name:  "cds.myPassword",
+						Value: "my very sensitive data",
+					},
+				},
 				NodeJobRun: sdk.WorkflowNodeJobRun{
 					ID: 42,
 					Parameters: []sdk.Parameter{
@@ -95,6 +108,18 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 								Enabled: true,
 								Actions: []sdk.Action{
 									{
+										Name:     sdk.ScriptAction,
+										Type:     sdk.BuiltinAction,
+										Enabled:  true,
+										StepName: "sleep",
+										Parameters: []sdk.Parameter{
+											{
+												Name:  "script",
+												Value: "sleep 10\necho {{.cds.myPassword}}\necho 2",
+											},
+										},
+									},
+									{
 										Name:     sdk.CheckoutApplicationAction,
 										Type:     sdk.BuiltinAction,
 										Enabled:  true,
@@ -106,6 +131,32 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 											},
 										},
 									},
+									{
+										Name:           "my-default-action",
+										Type:           sdk.DefaultAction,
+										Enabled:        true,
+										AlwaysExecuted: true,
+										Parameters: []sdk.Parameter{
+											{
+												Name:  "directory",
+												Value: "{{.cds.workspace}}",
+											},
+										},
+										Actions: []sdk.Action{
+											{
+												Name:     sdk.ScriptAction,
+												Type:     sdk.BuiltinAction,
+												Enabled:  true,
+												StepName: "change directory",
+												Parameters: []sdk.Parameter{
+													{
+														Name:  "script",
+														Value: "cd {{.directory}}",
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -114,12 +165,12 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(2).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(6).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(1).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(2).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
@@ -136,16 +187,30 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 
 	var w = new(internal.CurrentWorker)
 
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", 1, true, afero.NewMemMapFs()); err != nil {
+	fs := afero.NewOsFs()
+	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", 1, true, fs); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPClient())
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPSSEClient())
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	err := internal.StartWorker(ctx, w, 42)
 	assert.NoError(t, err)
 	assert.True(t, gock.IsDone())
+	if !gock.IsDone() {
+		pending := gock.Pending()
+		for _, m := range pending {
+			t.Logf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
+		}
+	}
+	assert.False(t, gock.HasUnmatchedRequest(), "gock should not have unmatched request")
+	if gock.HasUnmatchedRequest() {
+		reqs := gock.GetUnmatchedRequests()
+		for _, req := range reqs {
+			t.Logf("Request %s %s unmatched", req.Method, req.URL.String())
+		}
+	}
 }

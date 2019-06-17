@@ -27,10 +27,9 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	// Set build variables
 	w.currentJob.wJob = &info.NodeJobRun
+	log.Debug("takeWorkflowJob> setting secrets %v", info.Secrets)
 	w.currentJob.secrets = info.Secrets
 	// Reset build variables
-	w.currentJob.gitsshPath = ""
-	w.currentJob.pkey = ""
 	w.currentJob.newVariables = nil
 
 	start := time.Now()
@@ -48,11 +47,12 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 				if !ok {
 					return
 				}
-				j := &sdk.WorkflowNodeJobRun{}
+				var j *sdk.WorkflowNodeJobRun
+				var err error
 				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
 				defer cancelGetJSON()
 
-				if _, err := w.Client().QueueJobInfo(ctxGetJSON, jobID); err != nil {
+				if j, err = w.Client().QueueJobInfo(ctxGetJSON, jobID); err != nil {
 					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
 						cancel()
@@ -72,7 +72,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 					continue // do not kill the worker here, could be a timeout
 				}
 
-				if j.Status != sdk.StatusDisabled {
+				if j == nil || j.Status != sdk.StatusBuilding {
 					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
 					cancel()
 					return

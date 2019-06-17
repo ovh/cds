@@ -41,6 +41,7 @@ type (
 const (
 	jobID contextKey = iota
 	stepOrder
+	workDir
 	LevelDebug Level = "DEBUG"
 	LevelInfo  Level = "INFO"
 	LevelWarn  Level = "WARN"
@@ -85,4 +86,17 @@ func StepOrder(ctx context.Context) (int, error) {
 
 func SetStepOrder(ctx context.Context, i int) context.Context {
 	return context.WithValue(ctx, stepOrder, i)
+}
+
+func WorkingDirectory(ctx context.Context) (string, error) {
+	wdi := ctx.Value(workDir)
+	wd, ok := wdi.(string)
+	if !ok {
+		return "", errors.New("unable to get working directory")
+	}
+	return wd, nil
+}
+
+func SetWorkingDirectory(ctx context.Context, s string) context.Context {
+	return context.WithValue(ctx, workDir, s)
 }

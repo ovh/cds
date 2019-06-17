@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -290,16 +291,11 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
-func setupBuildDirectory(wd string) error {
-	if err := os.MkdirAll(wd, 0755); err != nil {
+func setupBuildDirectory(fs afero.Fs, wd string) error {
+	if err := fs.MkdirAll(wd, 0755); err != nil {
 		return err
 	}
 
-	if err := os.Chdir(wd); err != nil {
-		return err
-	}
-
-	var err error
 	u, err := user.Current()
 	if err != nil {
 		log.Error("Error while getting current user %v", err)
@@ -316,7 +312,7 @@ func teardownBuildDirectory(wd string) error {
 	return os.RemoveAll(wd)
 }
 
-func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) string {
+func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
 	var encodedName = base64.RawStdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
 	paths := append([]string{fs.Name(), encodedName}, suffixes...)
 	dir := path.Join(paths...)
@@ -325,7 +321,8 @@ func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes 
 		log.Info("workingDirectory> cleaning directory %s", dir)
 		_ = os.RemoveAll(dir)
 	}
-	return dir
+	dir, err := filepath.Abs(dir)
+	return dir, sdk.WithStack(err)
 }
 
 func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
@@ -347,10 +344,14 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	defer w.drainLogsAndCloseLogger(ctx)
 
 	// Setup working directory
-	wd := workingDirectory(w.basedir, jobInfo, "run")
-	log.Debug("processJob> Setup workspace - mkdir %s", wd)
+	wd, err := workingDirectory(w.basedir, jobInfo, "run")
+	if err != nil {
+		return sdk.Result{}, err
+	}
+	ctx = workerruntime.SetWorkingDirectory(ctx, wd)
+	log.Debug("processJob> Setup workspace - %s", wd)
 
-	if err := setupBuildDirectory(wd); err != nil {
+	if err := setupBuildDirectory(w.basedir, wd); err != nil {
 		log.Debug("processJob> setupBuildDirectory error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -397,8 +398,11 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	}
 
 	// Setup user ssh keys
-	keysDirectory = workingDirectory(w.basedir, jobInfo, "keys")
-	log.Debug("processJob> Setup user ssh keys - mkdir %s", keysDirectory)
+	keysDirectory, err = workingDirectory(w.basedir, jobInfo, "keys")
+	if err != nil {
+		return sdk.Result{}, err
+	}
+	log.Debug("processJob> Setup user ssh keys - %s", keysDirectory)
 	if err := os.MkdirAll(keysDirectory, 0700); err != nil {
 		log.Debug("processJob> call os.MkdirAll error:%s", err)
 		return sdk.Result{
@@ -406,25 +410,6 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 			Reason: fmt.Sprintf("Error: cannot setup workingDirectory (%s)", err),
 		}, err
 	}
-
-	/* // DEPRECATED - BEGIN
-	if err := w.setupSSHKey(jobInfo.Secrets, keysDirectory); err != nil {
-		log.Debug("processJob> call w.setupSSHKey error:%s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
-		}
-	}
-	// DEPRECATED - END
-
-	// The right way to go is :
-	if err := vcs.SetupSSHKey(jobInfo.Secrets, keysDirectory, nil); err != nil {
-		log.Debug("processJob> call vcs.SetupSSHKey error:%s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot setup vcs ssh key (%s)", err),
-		}
-	} */
 
 	res, err := w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobParameters, jobInfo.Secrets)
 

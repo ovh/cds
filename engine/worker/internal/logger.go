@@ -3,7 +3,6 @@ package internal
 import (
 	"container/list"
 	"context"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -12,13 +11,9 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var logsecrets []sdk.Variable
-
 func (wk *CurrentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
-	for i := range logsecrets {
-		if len(logsecrets[i].Value) >= sdk.SecretMinLength {
-			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
-		}
+	if err := wk.Blur(&value); err != nil {
+		return err
 	}
 
 	l := sdk.NewLog(buildID, value, wk.currentJob.wJob.WorkflowNodeRunID, stepOrder)
