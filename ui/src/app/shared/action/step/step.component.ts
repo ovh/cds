@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
@@ -7,7 +7,8 @@ import { StepEvent } from 'app/shared/action/step/step.event';
 @Component({
     selector: 'app-action-step',
     templateUrl: './step.html',
-    styleUrls: ['./step.scss']
+    styleUrls: ['./step.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionStepComponent {
 

@@ -117,6 +117,7 @@ export class ActionComponent implements OnDestroy, OnInit {
                 }
                 let indexAdd = this.editableAction.requirements.findIndex(req => r.requirement.value === req.value);
                 if (indexAdd === -1) {
+                    this.editableAction.requirements = Object.assign([], this.editableAction.requirements);
                     this.editableAction.requirements.push(r.requirement);
                 }
                 if (r.requirement.type === 'model') {
