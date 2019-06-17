@@ -30,17 +30,6 @@ type Node struct {
 	Groups              []GroupPermission `json:"groups,omitempty" db:"-"`
 }
 
-//NodeHook represents a hook which cann trigger the workflow from a given node
-type NodeHook struct {
-	ID            int64                  `json:"id" db:"id"`
-	UUID          string                 `json:"uuid" db:"uuid"`
-	Ref           string                 `json:"ref" db:"ref"`
-	NodeID        int64                  `json:"node_id" db:"node_id"`
-	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
-	HookModelName string                 `json:"-" db:"-"`
-	Config        WorkflowNodeHookConfig `json:"config" db:"-"`
-}
-
 // NodeContext represents a node linked to a pipeline
 type NodeContext struct {
 	ID                        int64                  `json:"id" db:"id"`
@@ -57,6 +46,24 @@ type NodeContext struct {
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions" db:"-"`
 	Mutex                     bool                   `json:"mutex" db:"mutex"`
+}
+
+// FilterHooksConfig filter all hooks configuration and remove somme configuration key
+func (n *Node) FilterHooksConfig(s ...string) {
+	if n == nil {
+		return
+	}
+
+	for _, h := range n.Hooks {
+		for i := range s {
+			for k := range h.Config {
+				if k == s[i] {
+					delete(h.Config, k)
+					break
+				}
+			}
+		}
+	}
 }
 
 //AddTrigger adds a trigger to the destination node from the node found by its name

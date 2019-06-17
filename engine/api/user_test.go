@@ -496,8 +496,6 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 		},
 	}
 
-	(&wf).RetroMigrate()
-
 	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u1))
 
 	uri := api.Router.GetRoute("POST", api.postUserFavoriteHandler, nil)

@@ -100,8 +100,6 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
@@ -937,7 +935,6 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
@@ -1079,8 +1076,6 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 			},
 		},
 	}
-
-	(&w).RetroMigrate()
 
 	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)

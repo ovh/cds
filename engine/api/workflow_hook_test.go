@@ -56,7 +56,6 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	//Prepare request
@@ -125,7 +124,6 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, admin))
 
 	//Prepare request
