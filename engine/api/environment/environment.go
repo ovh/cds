@@ -311,3 +311,21 @@ func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u
 
 	return InsertVariable(db, envID, p, u)
 }
+
+// LoadAllNames returns all environment names
+func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
+	query := `SELECT environment.id, environment.name
+			  FROM environment
+			  WHERE project_id = $1
+			  ORDER BY environment.name`
+
+	var res sdk.IDNames
+	if _, err := db.Select(&res, query, projID); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WithStack(err)
+	}
+
+	return res, nil
+}

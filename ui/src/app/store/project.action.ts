@@ -219,6 +219,10 @@ export class FetchEnvironmentsInProject {
     static readonly type = '[Project] Fetch Environments in Project';
     constructor(public payload: { projectKey: string }) { }
 }
+export class FetchEnvironmentInProject {
+    static readonly type = '[Project] Fetch Environment in Project';
+    constructor(public payload: { projectKey: string, envName: string }) { }
+}
 export class LoadEnvironmentsInProject {
     static readonly type = '[Project] Load Environments in Project';
     constructor(public payload: Environment[]) { }

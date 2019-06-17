@@ -24,6 +24,7 @@ type Project struct {
 	ProjectGroups    []GroupPermission    `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variable         []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments     []Environment        `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	EnvironmentNames IDNames              `json:"environment_names,omitempty"  yaml:"environment_names,omitempty" db:"-"  cli:"-"`
 	Labels           []Label              `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
 	Permission       int                  `json:"permission"  yaml:"-" db:"-"  cli:"-"`
 	Created          time.Time            `json:"created"  yaml:"created" db:"created" `

@@ -5,11 +5,13 @@ import { Store } from '@ngxs/store';
 import { AddApplication, CloneApplication, FetchApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { Subscription } from 'rxjs';
 import { finalize, first, flatMap } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';
 import { Project } from '../../../model/project.model';
 import { Variable } from '../../../model/variable.model';
 import { VariableService } from '../../../service/variable/variable.service';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
@@ -17,6 +19,7 @@ import { ToastService } from '../../../shared/toast/ToastService';
     templateUrl: './application.add.html',
     styleUrls: ['./application.add.scss']
 })
+@AutoUnsubscribe()
 export class ApplicationAddComponent implements OnInit {
 
     ready = false;
@@ -37,6 +40,7 @@ export class ApplicationAddComponent implements OnInit {
     suggestion: Array<string>;
     img: string;
     fileTooLarge = false;
+    dataSubscription: Subscription;
 
     constructor(
         private _activatedRoute: ActivatedRoute,
@@ -46,7 +50,7 @@ export class ApplicationAddComponent implements OnInit {
         private _varService: VariableService,
         private store: Store
     ) {
-        this._activatedRoute.data.subscribe(datas => {
+        this.dataSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
     }

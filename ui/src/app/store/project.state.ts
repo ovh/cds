@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Action, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -29,6 +29,18 @@ export class ProjectStateModel {
     }
 })
 export class ProjectState {
+
+    static selectEnvironment(name: string) {
+        return createSelector(
+            [ProjectState],
+            (state: ProjectStateModel): Environment => {
+                if (!state.project || !state.project.environments) {
+                    return null;
+                }
+                return state.project.environments.find((env) => env.name === name);
+            }
+        );
+    }
 
     constructor(private _http: HttpClient, private _navbarService: NavbarService) { }
 
@@ -804,6 +816,38 @@ export class ProjectState {
     }
 
     //  ------- Environment --------- //
+    @Action(ProjectAction.FetchEnvironmentInProject)
+    fetchEnvironment(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchEnvironmentInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+
+        return this._http
+            .get<Environment>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}`)
+            .pipe(tap((environment: Environment) => {
+                let envs = state.project.environments;
+                if (Array.isArray(envs)) {
+                    envs = envs.map((env) => {
+                        if (env.name === action.payload.envName) {
+                            return environment;
+                        }
+                        return env;
+                    })
+                } else {
+                    envs = [environment];
+                }
+                ctx.dispatch(<ProjectStateModel>{
+                    ...state,
+                    project: {
+                        ...state.project,
+                        environments: envs,
+                    }
+                });
+            }));
+    }
+
     @Action(ProjectAction.FetchEnvironmentsInProject)
     fetchEnvironments(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchEnvironmentsInProject) {
         const state = ctx.getState();
@@ -934,7 +978,7 @@ export class ProjectState {
 
     @Action(ProjectAction.CallbackRepositoryManagerBasicAuthInProject)
     callbackRepositoryManagerBasicAuth(ctx: StateContext<ProjectStateModel>,
-                                       action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
+        action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
         const state = ctx.getState();
         let data = {
             'username': action.payload.basicUser,

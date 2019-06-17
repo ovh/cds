@@ -1,0 +1,41 @@
+<div id="AddEnvironment" class="scrollingContent">
+    <div class="paddingContent">
+        <div class="viewContent">
+
+            <form class="ui form" (ngSubmit)="createEnv()">
+                <h2>{{ 'environment_create' | translate }}</h2>
+
+                <div class="ui grid">
+                    <div class="ui row">
+                        <div class="sixteen wide column">
+                            <div class="field">
+                                <label>{{'environment_name' | translate}} *</label>
+                                <input type="text" name="envname" [(ngModel)]="newEnvironment.name"
+                                    (ngModelChange)="checkPattern(newEnvironment.name)">
+                                <div class="ui error message" *ngIf="envPatternError">
+                                    {{ 'environment_name_error' | translate }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui row">
+                        <div class="wide column sixteen">
+                            <div class="field">
+                                <a class="ui button" [routerLink]="['/project', project.key]"
+                                    [queryParams]="{ tab: 'environments'}">{{
+                                        'btn_cancel' | translate }}</a>
+                                <button class="ui green right floated button" [class.loading]="loading"
+                                    [class.disabled]="!newEnvironment.name || envPatternError">{{ 'btn_create' |
+                                        translate }}
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

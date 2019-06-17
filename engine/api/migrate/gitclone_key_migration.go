@@ -43,15 +43,16 @@ func getPipelineUsingAction(db gorp.SqlExecutor, name string) ([]pipelineUsingAc
 			action.type, action.name as actionName, action.id as actionId,
 			pipeline_stage.id as stageId,
 			pipeline.name as pipName, project.name, project.projectkey,
-			workflow.name as wName, workflow_node.id as nodeId,  workflow_node.name as nodeName
+			workflow.name as wName, w_node.id as nodeId,  w_node.name as nodeName
 		FROM action_edge
 		LEFT JOIN action on action.id = parent_id
 		LEFT OUTER JOIN pipeline_action ON pipeline_action.action_id = action.id
 		LEFT OUTER JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
 		LEFT OUTER JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
 		LEFT OUTER JOIN project ON pipeline.project_id = project.id
-		LEFT OUTER JOIN workflow_node ON workflow_node.pipeline_id = pipeline.id
-		LEFT OUTER JOIN workflow ON workflow_node.workflow_id = workflow.id
+		LEFT OUTER JOIN w_node_context ON w_node_context.pipeline_id = pipeline.id
+		LEFT OUTER JOIN w_node ON w_node.id = w_node_context.node_id
+		LEFT OUTER JOIN workflow ON w_node.workflow_id = workflow.id
 		LEFT JOIN action as actionChild ON  actionChild.id = child_id
 		WHERE actionChild.name = $1 and actionChild.public = true AND pipeline.name IS NOT NULL
 		ORDER BY projectkey, pipName, actionName;

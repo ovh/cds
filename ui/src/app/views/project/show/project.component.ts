@@ -171,6 +171,7 @@ export class ProjectShowComponent implements OnInit {
             new LoadOpts('withApplicationNames', 'application_names'),
             new LoadOpts('withPipelineNames', 'pipeline_names'),
             new LoadOpts('withWorkflowNames', 'workflow_names'),
+            new LoadOpts('withEnvironmentNames', 'environment_names'),
             new LoadOpts('withLabels', 'labels'),
         ];
 
@@ -178,9 +179,6 @@ export class ProjectShowComponent implements OnInit {
             switch (this.selectedTab.key) {
                 case 'variables':
                     opts.push(new LoadOpts('withVariables', 'variables'));
-                    break;
-                case 'environments':
-                    opts.push(new LoadOpts('withEnvironments', 'environments'));
                     break;
                 case 'permissions':
                     opts.push(new LoadOpts('withEnvironments', 'environments'));

@@ -188,6 +188,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withPipelines := FormBool(r, "withPipelines")
 		withPipelineNames := FormBool(r, "withPipelineNames")
 		withEnvironments := FormBool(r, "withEnvironments")
+		withEnvironmentNames := FormBool(r, "withEnvironmentNames")
 		withGroups := FormBool(r, "withGroups")
 		withPermission := FormBool(r, "withPermission")
 		withKeys := FormBool(r, "withKeys")
@@ -218,6 +219,9 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		if withEnvironments {
 			opts = append(opts, project.LoadOptions.WithEnvironments)
+		}
+		if withEnvironmentNames {
+			opts = append(opts, project.LoadOptions.WithEnvironmentNames)
 		}
 		if withGroups {
 			opts = append(opts, project.LoadOptions.WithGroups)
