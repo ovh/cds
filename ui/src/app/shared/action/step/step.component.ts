@@ -14,6 +14,7 @@ export class ActionStepComponent {
     _step: Action;
     stepURL: Array<string>;
     withAdvanced: boolean;
+    collapsed_advanced = false;
     @Input('step')
     set step(step: Action) {
         this._step = step;
