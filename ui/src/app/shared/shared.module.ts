@@ -134,6 +134,7 @@ import { ZoneComponent } from './zone/zone.component';
     ],
     declarations: [
         // OnPushComponent
+        ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
         CutPipe,
@@ -161,7 +162,6 @@ import { ZoneComponent } from './zone/zone.component';
         WarningMarkComponent,
 
         // Component to migrate
-        ActionComponent,
         AuditListComponent,
         BreadcrumbComponent,
         ProjectBreadcrumbComponent,
