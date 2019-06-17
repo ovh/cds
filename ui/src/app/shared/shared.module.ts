@@ -162,8 +162,6 @@ import { ZoneComponent } from './zone/zone.component';
 
         // Component to migrate
         ActionComponent,
-
-
         AuditListComponent,
         BreadcrumbComponent,
         ProjectBreadcrumbComponent,

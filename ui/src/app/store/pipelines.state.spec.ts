@@ -278,11 +278,7 @@ describe('Pipelines', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline/pip1/parameter/testvar';
-        })).flush(<Pipeline>{
-            name: 'pip1',
-            projectKey: testProjectKey,
-            parameters: [parameter],
-        });
+        })).flush(parameter);
         store.selectOnce(PipelinesState).subscribe(state => {
             expect(Object.keys(state.pipelines).length).toEqual(1);
         });
@@ -321,11 +317,7 @@ describe('Pipelines', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline/pip1/parameter/testvar';
-        })).flush(<Pipeline>{
-            name: 'pip1',
-            projectKey: testProjectKey,
-            parameters: [parameter],
-        });
+        })).flush(parameter);
 
         parameter.name = 'testvarrenamed';
         store.dispatch(new pipelinesActions.UpdatePipelineParameter({
@@ -372,11 +364,7 @@ describe('Pipelines', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline/pip1/parameter/testvar';
-        })).flush(<Pipeline>{
-            name: 'pip1',
-            projectKey: testProjectKey,
-            parameters: [parameter],
-        });
+        })).flush(parameter);
 
         store.dispatch(new pipelinesActions.DeletePipelineParameter({
             projectKey: testProjectKey,
@@ -385,11 +373,7 @@ describe('Pipelines', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline/pip1/parameter/testvar';
-        })).flush(<Pipeline>{
-            name: 'pip1',
-            projectKey: testProjectKey,
-            parameters: [],
-        });
+        })).flush(parameter);
         store.selectOnce(PipelinesState).subscribe(state => {
             expect(Object.keys(state.pipelines).length).toEqual(1);
         });
