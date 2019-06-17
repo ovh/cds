@@ -1,23 +1,18 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/howeyc/gopass"
-	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/jws"
 )
 
 var loginCmd = cli.Command{
@@ -60,7 +55,7 @@ func loginExperimental() *cobra.Command {
 }
 
 func loginJWTRun(v cli.Values) error {
-	var apiURL = v.GetString("api-url")
+	/*var apiURL = v.GetString("api-url")
 	if strings.HasSuffix(apiURL, "/") {
 		fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
 	}
@@ -137,9 +132,9 @@ func loginJWTRun(v cli.Values) error {
 	}
 	client = cdsclient.New(conf)
 
-	//u, err := client.UserGet("" /* TODO accessToken.User.Username*/)
+	//u, err := client.UserGet( accessToken.User.Username)
 	//if err != nil {
-	//	return fmt.Errorf("unable to get user %s: %v", "" /* TODO accessToken.User.Username*/, err)
+	//	return fmt.Errorf("unable to get user %s: %v", accessToken.User.Username, err)
 	//}
 
 	//ids := sdk.GroupsToIDs(u.Groups)
@@ -158,13 +153,15 @@ func loginJWTRun(v cli.Values) error {
 
 	// Delete the first token
 	if err := client.AccessTokenDelete(accessToken.ID); err != nil {
-		return fmt.Errorf("unable to delete login access token %s: %v", "" /* TODO accessToken.Description*/, err)
+		return fmt.Errorf("unable to delete login access token %s: %v", accessToken.Description, err)
 	}
 
 	fmt.Println("cdsctl: Login successful")
-	fmt.Println("cdsctl: Logged in as", "" /* TODO newAccessToken.User.Username*/)
+	fmt.Println("cdsctl: Logged in as", newAccessToken.User.Username)
 
-	return doAfterLogin(apiURL, "" /* TODO newAccessToken.User.Username*/, jwt, v.GetBool("env"), v.GetBool("insecure"))
+	return doAfterLogin(apiURL, newAccessToken.User.Username, jwt, v.GetBool("env"), v.GetBool("insecure"))*/
+
+	return nil
 }
 
 func loginRun(v cli.Values) error {

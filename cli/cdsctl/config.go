@@ -112,14 +112,14 @@ func loadConfig(cmd *cobra.Command, configFile string) (*cdsclient.Config, error
 
 	// TEMPORARY CODE
 	// Try to parse the token as JWT and set it as access token
-	if _, _, err := new(jwt.Parser).ParseUnverified(c.Token, &sdk.AccessTokenJWTClaims{}); err == nil {
-		conf.AccessToken = c.Token
-		conf.Token = ""
+	if _, _, err := new(jwt.Parser).ParseUnverified(c.Token, &sdk.AuthSessionJWTClaims{}); err == nil {
+		conf.SessionToken = c.Token
+		//conf.Token = ""
 		if verbose {
 			fmt.Println("JWT recognized")
 		}
 	} else {
-		conf.Token = c.Token
+		//conf.Token = c.Token
 	}
 	// TEMPORARY CODE - END
 

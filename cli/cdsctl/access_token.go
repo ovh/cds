@@ -1,17 +1,9 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk"
 )
 
 func consumer() *cobra.Command {
@@ -59,7 +51,7 @@ func consumer() *cobra.Command {
 			},
 		}
 
-		regenCmd = cli.Command{
+		/*regenCmd = cli.Command{
 			Name:  "regen",
 			Short: "Regenerate access token",
 			VariadicArgs: cli.Arg{
@@ -75,21 +67,21 @@ func consumer() *cobra.Command {
 				Name:       "token-id",
 				AllowEmpty: true,
 			},
-		}
+		}*/
 	)
 
 	return cli.NewCommand(cmd, nil,
 		cli.SubCommands{
 			cli.NewListCommand(listbyUserCmd, accesstokenListRun, nil),
 			cli.NewCommand(newCmd, accesstokenNewRun, nil),
-			cli.NewCommand(regenCmd, accesstokenRegenRun, nil),
-			cli.NewCommand(deleteCmd, accesstokenDeleteRun, nil),
+			//cli.NewCommand(regenCmd, accesstokenRegenRun, nil),
+			//cli.NewCommand(deleteCmd, accesstokenDeleteRun, nil),
 		},
 	)
 }
 
 func accesstokenListRun(v cli.Values) (cli.ListResult, error) {
-	type displayToken struct {
+	/*type displayToken struct {
 		ID          string `cli:"id,key"`
 		Description string `cli:"description"`
 		UserName    string `cli:"user"`
@@ -137,11 +129,13 @@ func accesstokenListRun(v cli.Values) (cli.ListResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(displayAllTokensFunc(tokens)), nil
+	return cli.AsListResult(displayAllTokensFunc(tokens)), nil*/
+
+	return nil, nil
 }
 
 func accesstokenNewRun(v cli.Values) error {
-	allGroups, err := client.GroupList()
+	/*allGroups, err := client.GroupList()
 	if err != nil {
 		return err
 	}
@@ -218,11 +212,11 @@ func accesstokenNewRun(v cli.Values) error {
 	fmt.Println()
 
 	displayToken(t, jwt)
-
+	*/
 	return nil
 }
 
-func displayToken(t sdk.AccessToken, jwt string) {
+/*func displayToken(t sdk.AccessToken, jwt string) {
 	fmt.Println("Token successfully generated")
 	fmt.Println(cli.Cyan("ID"), "\t\t", t.ID)
 	// TODO
@@ -239,8 +233,9 @@ func displayToken(t sdk.AccessToken, jwt string) {
 	fmt.Println()
 	fmt.Println(cli.Red("Here it is, keep it in a safe place, it will never ne displayed again."))
 	fmt.Println(jwt)
-}
+}*/
 
+/*
 func accesstokenRegenRun(v cli.Values) error {
 	tokenIDs := v.GetStringSlice("token-id")
 	for _, id := range tokenIDs {
@@ -267,3 +262,4 @@ func accesstokenDeleteRun(v cli.Values) error {
 
 	return nil
 }
+*/
