@@ -63,7 +63,7 @@ export class VariableComponent extends Table<Variable> {
     filter: string;
 
     constructor(private _variableService: VariableService, private _projAudit: ProjectAuditService,
-        private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService, private _cd: ChangeDetectorRef) {
+        private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService, public _cd: ChangeDetectorRef) {
         super();
         this.variableTypes = this._variableService.getTypesFromCache();
         if (!this.variableTypes) {
