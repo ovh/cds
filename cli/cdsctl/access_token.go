@@ -7,80 +7,91 @@ import (
 )
 
 func consumer() *cobra.Command {
-	var (
-		cmd = cli.Command{
-			Name:  "xconsumer",
-			Short: "Manage CDS auth consumers [EXPERIMENTAL]",
-		}
+	cmd := cli.Command{
+		Name:  "consumer",
+		Short: "Manage CDS auth consumers",
+	}
 
-		listbyUserCmd = cli.Command{
-			Name:  "list",
-			Short: "List your auth consumers",
-			Flags: []cli.Flag{
-				{
-					Name:      "group",
-					Type:      cli.FlagSlice,
-					ShortHand: "g",
-					Usage:     "filter by group",
+	listCmd := cli.Command{
+		Name:  "list",
+		Short: "List your auth consumers",
+		Flags: []cli.Flag{
+			{
+				Name:      "group",
+				Type:      cli.FlagSlice,
+				ShortHand: "g",
+				Usage:     "filter by group",
+			},
+		},
+	}
+
+	newCmd := cli.Command{
+		Name:  "new",
+		Short: "Create a new auth consumer for current user",
+		Flags: []cli.Flag{
+			{
+				Name:      "name",
+				ShortHand: "n",
+				Usage:     "what is the name of this consumer",
+			},
+			{
+				Name:      "description",
+				ShortHand: "d",
+				Usage:     "what is the purpose of this consumer",
+			},
+			{
+				Name:      "expiration",
+				ShortHand: "e",
+				Usage:     "expiration delay of the token (1d, 24h, 1440m, 86400s)",
+				Default:   "1d",
+				IsValid: func(s string) bool {
+					return true
 				},
 			},
-		}
-
-		newCmd = cli.Command{
-			Name:  "new",
-			Short: "Create a new access token",
-			Flags: []cli.Flag{
-				{
-					Name:      "description",
-					ShortHand: "d",
-					Usage:     "what is the purpose of this token",
-				}, {
-					Name:      "expiration",
-					ShortHand: "e",
-					Usage:     "expiration delay of the token (1d, 24h, 1440m, 86400s)",
-					Default:   "1d",
-					IsValid: func(s string) bool {
-						return true
-					},
-				}, {
-					Name:      "group",
-					Type:      cli.FlagSlice,
-					ShortHand: "g",
-					Usage:     "define the scope of the token through groups",
-				},
+			{
+				Name:      "group-ids",
+				Type:      cli.FlagSlice,
+				ShortHand: "g",
+				Usage:     "define the list of group ids for the consumer",
 			},
-		}
-
-		/*regenCmd = cli.Command{
-			Name:  "regen",
-			Short: "Regenerate access token",
-			VariadicArgs: cli.Arg{
-				Name:       "token-id",
-				AllowEmpty: false,
+			{
+				Name:      "scopes",
+				Type:      cli.FlagSlice,
+				ShortHand: "s",
+				Usage:     "define the list of scope for the consumer",
 			},
-		}
+		},
+	}
 
-		deleteCmd = cli.Command{
-			Name:  "delete",
-			Short: "Delete access token",
-			VariadicArgs: cli.Arg{
-				Name:       "token-id",
-				AllowEmpty: true,
-			},
-		}*/
-	)
+	regenCmd := cli.Command{
+		Name:  "regen",
+		Short: "Generate a new session for given auth consumer",
+		VariadicArgs: cli.Arg{
+			Name:       "consumer-id",
+			AllowEmpty: false,
+		},
+	}
+
+	deleteCmd := cli.Command{
+		Name:  "delete",
+		Short: "Delete an auth consumer",
+		VariadicArgs: cli.Arg{
+			Name:       "consumer-id",
+			AllowEmpty: true,
+		},
+	}
 
 	return cli.NewCommand(cmd, nil,
 		cli.SubCommands{
-			cli.NewListCommand(listbyUserCmd, accesstokenListRun, nil),
-			cli.NewCommand(newCmd, accesstokenNewRun, nil),
-			//cli.NewCommand(regenCmd, accesstokenRegenRun, nil),
-			//cli.NewCommand(deleteCmd, accesstokenDeleteRun, nil),
+			cli.NewListCommand(listCmd, authConsumerListRun, nil),
+			cli.NewCommand(newCmd, authConsumerNewRun, nil),
+			cli.NewCommand(regenCmd, authConsumerRegenRun, nil),
+			cli.NewCommand(deleteCmd, authConsumerDeleteRun, nil),
 		},
 	)
 }
 
-func accesstokenListRun(v cli.Values) (cli.ListResult, error) {
+func authConsumerListRun(v cli.Values) (cli.ListResult, error) {
 	/*type displayToken struct {
 		ID          string `cli:"id,key"`
 		Description string `cli:"description"`
@@ -134,7 +145,7 @@ func accesstokenListRun(v cli.Values) (cli.ListResult, error) {
 	return nil, nil
 }
 
-func accesstokenNewRun(v cli.Values) error {
+func authConsumerNewRun(v cli.Values) error {
 	/*allGroups, err := client.GroupList()
 	if err != nil {
 		return err
@@ -235,9 +246,8 @@ func accesstokenNewRun(v cli.Values) error {
 	fmt.Println(jwt)
 }*/
 
-/*
-func accesstokenRegenRun(v cli.Values) error {
-	tokenIDs := v.GetStringSlice("token-id")
+func authConsumerRegenRun(v cli.Values) error {
+	/*tokenIDs := v.GetStringSlice("token-id")
 	for _, id := range tokenIDs {
 
 		t, jwt, err := client.AccessTokenRegen(id)
@@ -246,20 +256,19 @@ func accesstokenRegenRun(v cli.Values) error {
 		}
 
 		displayToken(t, jwt)
-	}
+	}*/
 
 	return nil
 }
 
-func accesstokenDeleteRun(v cli.Values) error {
-	tokenIDs := v.GetStringSlice("token-id")
+func authConsumerDeleteRun(v cli.Values) error {
+	/*tokenIDs := v.GetStringSlice("token-id")
 	for _, id := range tokenIDs {
 		if err := client.AccessTokenDelete(id); err != nil {
 			fmt.Println("unable to delete token", id, cli.Red(err.Error()))
 		}
 
-	}
+	}*/
 
 	return nil
 }
-*/
