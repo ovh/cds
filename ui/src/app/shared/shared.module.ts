@@ -160,6 +160,14 @@ import { ZoneComponent } from './zone/zone.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningMarkComponent,
+        WorkflowNodeHookComponent,
+        WorkflowWNodeForkComponent,
+        WorkflowWNodeJoinComponent,
+        WorkflowWNodeOutGoingHookComponent,
+        WorkflowWNodePipelineComponent,
+
+
+
 
         // Component to migrate
         AuditListComponent,
@@ -187,10 +195,6 @@ import { ZoneComponent } from './zone/zone.component';
         WarningTabComponent,
         WarningMarkListComponent,
         WorkflowWNodeComponent,
-        WorkflowWNodeForkComponent,
-        WorkflowWNodeJoinComponent,
-        WorkflowWNodeOutGoingHookComponent,
-        WorkflowWNodePipelineComponent,
         WorkflowWizardOutgoingHookComponent,
         WorkflowHookModalComponent,
         WorkflowSidebarHookComponent,
@@ -207,7 +211,6 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeRunParamComponent,
         WorkflowDeleteNodeComponent,
         WorkflowNodeHookFormComponent,
-        WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
         WorkflowTriggerComponent,
         WorkflowNodeEditModalComponent,
