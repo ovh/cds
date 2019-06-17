@@ -70,7 +70,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 	return nil
 }
 
-func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing.T) {
+func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 	deleteAll(t, api, "TESTPIPELINESTAGES")
@@ -89,11 +89,10 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 
 	//Insert Stage
 	stage := &sdk.Stage{
-		Name:          "stage_Test_0",
-		PipelineID:    pip.ID,
-		BuildOrder:    1,
-		Enabled:       true,
-		Prerequisites: []sdk.Prerequisite{},
+		Name:       "stage_Test_0",
+		PipelineID: pip.ID,
+		BuildOrder: 1,
+		Enabled:    true,
 	}
 	pip.Stages = append(pip.Stages, *stage)
 
@@ -110,7 +109,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	assert.Equal(t, len(pip.Stages), len(loadedPip.Stages))
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
-	assert.Equal(t, len(pip.Stages[0].Prerequisites), len(loadedPip.Stages[0].Prerequisites))
+	assert.Equal(t, len(pip.Stages[0].Conditions.PlainConditions), len(loadedPip.Stages[0].Conditions.PlainConditions))
 	assert.Equal(t, len(pip.Stages[0].Jobs), len(loadedPip.Stages[0].Jobs))
 
 	//Delete pipeline
@@ -123,7 +122,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	test.NoError(t, err)
 }
 
-func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing.T) {
+func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -143,11 +142,10 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 
 	//Insert Stage
 	stage := &sdk.Stage{
-		Name:          "stage_Test_0",
-		PipelineID:    pip.ID,
-		BuildOrder:    1,
-		Enabled:       true,
-		Prerequisites: []sdk.Prerequisite{},
+		Name:       "stage_Test_0",
+		PipelineID: pip.ID,
+		BuildOrder: 1,
+		Enabled:    true,
 	}
 	pip.Stages = append(pip.Stages, *stage)
 
@@ -179,7 +177,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	assert.Equal(t, 1, len(loadedPip.Stages))
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
-	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
+	assert.Equal(t, 0, len(loadedPip.Stages[0].Conditions.PlainConditions))
 	assert.Equal(t, 1, len(loadedPip.Stages[0].Jobs))
 	assert.Equal(t, job.Action.Name, loadedPip.Stages[0].Jobs[0].Action.Name)
 	assert.Equal(t, true, loadedPip.Stages[0].Jobs[0].Enabled)
@@ -194,7 +192,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	test.NoError(t, err)
 }
 
-func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2ActionsStageWithoutPrerequisite(t *testing.T) {
+func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2ActionsStageWithoutCondition(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -214,11 +212,10 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	//Insert Stage
 	stage0 := &sdk.Stage{
-		Name:          "stage_Test_0",
-		PipelineID:    pip.ID,
-		BuildOrder:    1,
-		Enabled:       true,
-		Prerequisites: []sdk.Prerequisite{},
+		Name:       "stage_Test_0",
+		PipelineID: pip.ID,
+		BuildOrder: 1,
+		Enabled:    true,
 	}
 	pip.Stages = append(pip.Stages, *stage0)
 
@@ -227,11 +224,10 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	//Insert Stage
 	stage1 := &sdk.Stage{
-		Name:          "stage_Test_1",
-		PipelineID:    pip.ID,
-		BuildOrder:    2,
-		Enabled:       true,
-		Prerequisites: []sdk.Prerequisite{},
+		Name:       "stage_Test_1",
+		PipelineID: pip.ID,
+		BuildOrder: 2,
+		Enabled:    true,
 	}
 	pip.Stages = append(pip.Stages, *stage1)
 
@@ -276,12 +272,14 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
-	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
+	assert.Equal(t, 0, len(loadedPip.Stages[0].Conditions.PlainConditions))
+	assert.Equal(t, 0, len(loadedPip.Stages[0].Conditions.LuaScript))
 	assert.Equal(t, 0, len(loadedPip.Stages[0].Jobs))
 
 	assert.Equal(t, pip.Stages[1].Name, loadedPip.Stages[1].Name)
 	assert.Equal(t, pip.Stages[1].Enabled, loadedPip.Stages[1].Enabled)
-	assert.Equal(t, 0, len(loadedPip.Stages[1].Prerequisites))
+	assert.Equal(t, 0, len(loadedPip.Stages[1].Conditions.PlainConditions))
+	assert.Equal(t, 0, len(loadedPip.Stages[1].Conditions.LuaScript))
 	assert.Equal(t, 2, len(loadedPip.Stages[1].Jobs))
 
 	assert.Equal(t, job.Action.Name, loadedPip.Stages[1].Jobs[0].Action.Name)
@@ -300,7 +298,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	test.NoError(t, err)
 }
 
-func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequisites(t *testing.T) {
+func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -320,11 +318,10 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 
 	//Insert Stage
 	stage := &sdk.Stage{
-		Name:          "stage_Test_0",
-		PipelineID:    pip.ID,
-		BuildOrder:    1,
-		Enabled:       true,
-		Prerequisites: []sdk.Prerequisite{},
+		Name:       "stage_Test_0",
+		PipelineID: pip.ID,
+		BuildOrder: 1,
+		Enabled:    true,
 	}
 	pip.Stages = append(pip.Stages, *stage)
 
@@ -350,14 +347,18 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 		PipelineID: pip.ID,
 		BuildOrder: 2,
 		Enabled:    true,
-		Prerequisites: []sdk.Prerequisite{
-			{
-				Parameter:     ".git.branch",
-				ExpectedValue: "master",
-			},
-			{
-				Parameter:     ".git.author",
-				ExpectedValue: "someone@somewhere.com",
+		Conditions: sdk.WorkflowNodeConditions{
+			PlainConditions: []sdk.WorkflowNodeCondition{
+				sdk.WorkflowNodeCondition{
+					Variable: ".git.branch",
+					Operator: "regex",
+					Value:    "master",
+				},
+				sdk.WorkflowNodeCondition{
+					Variable: ".git.author",
+					Operator: "regex",
+					Value:    "someone@somewhere.com",
+				},
 			},
 		},
 	}
@@ -391,13 +392,13 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	assert.Equal(t, pip.Stages[0].Name, loadedPip.Stages[0].Name)
 	assert.Equal(t, pip.Stages[0].Enabled, loadedPip.Stages[0].Enabled)
 
-	assert.Equal(t, 0, len(loadedPip.Stages[0].Prerequisites))
+	assert.Equal(t, 0, len(loadedPip.Stages[0].Conditions.PlainConditions))
 	assert.Equal(t, 1, len(loadedPip.Stages[0].Jobs))
 
 	assert.Equal(t, pip.Stages[1].Name, loadedPip.Stages[1].Name)
 	assert.Equal(t, pip.Stages[1].Enabled, loadedPip.Stages[1].Enabled)
 
-	assert.Equal(t, 2, len(loadedPip.Stages[1].Prerequisites))
+	assert.Equal(t, 2, len(loadedPip.Stages[1].Conditions.PlainConditions))
 	assert.Equal(t, 1, len(loadedPip.Stages[1].Jobs))
 
 	assert.Equal(t, job.Action.Name, loadedPip.Stages[0].Jobs[0].Action.Name)
@@ -406,16 +407,16 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	assert.Equal(t, job1.Action.Name, loadedPip.Stages[1].Jobs[0].Action.Name)
 	assert.Equal(t, true, loadedPip.Stages[1].Jobs[0].Enabled)
 
-	assert.Equal(t, 2, len(loadedPip.Stages[1].Prerequisites))
+	assert.Equal(t, 2, len(loadedPip.Stages[1].Conditions.PlainConditions))
 
 	var foundGitBranch, foundGitAuthor bool
-	for _, p := range loadedPip.Stages[1].Prerequisites {
-		if p.Parameter == ".git.branch" {
-			assert.Equal(t, "master", p.ExpectedValue)
+	for _, p := range loadedPip.Stages[1].Conditions.PlainConditions {
+		if p.Variable == ".git.branch" {
+			assert.Equal(t, "master", p.Value)
 			foundGitBranch = true
 		}
-		if p.Parameter == ".git.author" {
-			assert.Equal(t, "someone@somewhere.com", p.ExpectedValue)
+		if p.Variable == ".git.author" {
+			assert.Equal(t, "someone@somewhere.com", p.Value)
 			foundGitAuthor = true
 		}
 	}
@@ -433,7 +434,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	test.NoError(t, err)
 }
 
-func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
+func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -457,10 +458,13 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 		PipelineID: pip.ID,
 		BuildOrder: 1,
 		Enabled:    true,
-		Prerequisites: []sdk.Prerequisite{
-			{
-				Parameter:     ".git.branch",
-				ExpectedValue: "master",
+		Conditions: sdk.WorkflowNodeConditions{
+			PlainConditions: []sdk.WorkflowNodeCondition{
+				sdk.WorkflowNodeCondition{
+					Variable: ".git.banch",
+					Operator: "regex",
+					Value:    "master",
+				},
 			},
 		},
 	}
@@ -491,7 +495,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	test.NoError(t, err)
 }
 
-func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
+func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -515,10 +519,13 @@ func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
 		PipelineID: pip.ID,
 		BuildOrder: 1,
 		Enabled:    true,
-		Prerequisites: []sdk.Prerequisite{
-			{
-				Parameter:     ".git.branch",
-				ExpectedValue: "master",
+		Conditions: sdk.WorkflowNodeConditions{
+			PlainConditions: []sdk.WorkflowNodeCondition{
+				sdk.WorkflowNodeCondition{
+					Variable: ".git.banch",
+					Operator: "regex",
+					Value:    "master",
+				},
 			},
 		},
 	}
@@ -527,14 +534,18 @@ func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
 	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 
-	stage.Prerequisites = []sdk.Prerequisite{
-		{
-			Parameter:     "param1",
-			ExpectedValue: "value1",
-		},
-		{
-			Parameter:     "param2",
-			ExpectedValue: "value2",
+	stage.Conditions = sdk.WorkflowNodeConditions{
+		PlainConditions: []sdk.WorkflowNodeCondition{
+			sdk.WorkflowNodeCondition{
+				Variable: "param1",
+				Operator: "regex",
+				Value:    "value1",
+			},
+			sdk.WorkflowNodeCondition{
+				Variable: "param2",
+				Operator: "regex",
+				Value:    "value2",
+			},
 		},
 	}
 
@@ -549,16 +560,16 @@ func TestUpdateStageShouldUpdateStagePrerequisites(t *testing.T) {
 	//Check all the things
 	assert.NotNil(t, loadedPip)
 	assert.Equal(t, 1, len(loadedPip.Stages))
-	assert.Equal(t, 2, len(loadedPip.Stages[0].Prerequisites))
+	assert.Equal(t, 2, len(loadedPip.Stages[0].Conditions.PlainConditions))
 
 	var foundParam1, foundParam2 bool
-	for _, p := range loadedPip.Stages[0].Prerequisites {
-		if p.Parameter == "param1" {
-			assert.Equal(t, "value1", p.ExpectedValue)
+	for _, p := range loadedPip.Stages[0].Conditions.PlainConditions {
+		if p.Variable == "param1" {
+			assert.Equal(t, "value1", p.Value)
 			foundParam1 = true
 		}
-		if p.Parameter == "param2" {
-			assert.Equal(t, "value2", p.ExpectedValue)
+		if p.Variable == "param2" {
+			assert.Equal(t, "value2", p.Value)
 			foundParam2 = true
 		}
 	}

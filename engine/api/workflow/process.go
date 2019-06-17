@@ -34,7 +34,7 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitServer, sdk.StringParameter, vcsInfos.Server)
 }
 
-func checkNodeRunCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
+func checkCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
 	var conditionsOK bool
 	var errc error
 	if conditions.LuaScript == "" {

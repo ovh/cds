@@ -45,18 +45,19 @@ type Configuration struct {
 
 // ServerConfiguration is the configuration for a VCS server
 type ServerConfiguration struct {
-	URL       string                        `toml:"url" comment:"URL of this VCS Server" json:"url" json:"url"`
-	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty" json:"github"`
-	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty" json:"gitlab"`
-	Bitbucket *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty" json:"bitbucket"`
-	Gerrit    *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty" json:"gerrit"`
+	URL            string                        `toml:"url" comment:"URL of this VCS Server" json:"url"`
+	Github         *GithubServerConfiguration    `toml:"github" json:"github,omitempty"`
+	Gitlab         *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty"`
+	Bitbucket      *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty"`
+	BitbucketCloud *BitbucketCloudConfiguration  `toml:"bitbucket_cloud" json:"bitbucket_cloud,omitempty"`
+	Gerrit         *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty"`
 }
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
 	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Github OAuth Application Client Secret"`
-	APIURL       string `toml:"apiUrl" json:"-" comment:"The URL for the GitHub API."`
+	APIURL       string `toml:"apiUrl" json:"-" default:"https://api.github.com" comment:"The URL for the GitHub API."`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
@@ -119,6 +120,28 @@ type BitbucketServerConfiguration struct {
 }
 
 func (s BitbucketServerConfiguration) check() error {
+	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
+		return fmt.Errorf("Bitbucket proxy webhook must have the HTTP scheme")
+	}
+	return nil
+}
+
+// BitbucketCloudConfiguration represents the bitbucket configuration
+type BitbucketCloudConfiguration struct {
+	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Bitbucket cloud. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucketcloud/ \n#######\n Bitbucket cloud OAuth Application Client ID"`
+	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Bitbucket Cloud OAuth Application Client Secret"`
+	Status       struct {
+		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
+	}
+	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	// DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	ProxyWebhook string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	// Username        string `toml:"username" comment:"optional. Github username, used to add comment on Pull Request on failed build." json:"username"`
+	// Token           string `toml:"token" comment:"optional, Bitbucket Cloud Token associated to username, used to add comment on Pull Request" json:"-"`
+}
+
+func (s BitbucketCloudConfiguration) check() error {
 	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
 		return fmt.Errorf("Bitbucket proxy webhook must have the HTTP scheme")
 	}

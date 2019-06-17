@@ -27,9 +27,10 @@ const (
 	TypeOutgoingWebHook    = "OutgoingWebhook"
 	TypeOutgoingWorkflow   = "OutgoingWorkflow"
 
-	GithubHeader    = "X-Github-Event"
-	GitlabHeader    = "X-Gitlab-Event"
-	BitbucketHeader = "X-Event-Key"
+	GithubHeader         = "X-Github-Event"
+	GitlabHeader         = "X-Gitlab-Event"
+	BitbucketHeader      = "X-Event-Key"
+	BitbucketCloudHeader = "X-Event-Key_Cloud" // Fake header, do not use to fetch header, just to return custom header
 
 	ConfigNumber    = "Number"
 	ConfigSubNumber = "SubNumber"
@@ -89,7 +90,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			}
 		}
 		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
-			s.Dao.DeleteTask(t)
+			s.deleteTask(ctx, t)
 			log.Info("Hook> Task %s deleted on synchronization", t.UUID)
 		}
 	}
@@ -103,7 +104,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		}
 		t, err := s.hookToTask(&h)
 		if err != nil {
-			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
+			log.Error("Hook> Unable to transform hoot to tast task %+v: %v", h, err)
 			continue
 		}
 		s.Dao.SaveTask(t)
@@ -140,12 +141,8 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 	gerritRepoHooks[vcsName] = true
 }
 
-func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
-	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
-		return nil, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
-	}
-
-	switch h.WorkflowHookModel.Name {
+func (s *Service) hookToTask(h *sdk.NodeHook) (*sdk.Task, error) {
+	switch h.HookModelName {
 	case sdk.GerritHookModelName:
 		return &sdk.Task{
 			UUID:   h.UUID,
@@ -202,8 +199,7 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 			Type: TypeWorkflowHook,
 		}, nil
 	}
-
-	return nil, fmt.Errorf("Unsupported hook: %s", h.WorkflowHookModel.Name)
+	return nil, fmt.Errorf("Unsupported hook: %s", h.HookModelName)
 }
 
 func (s *Service) startTasks(ctx context.Context) error {

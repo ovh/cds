@@ -146,7 +146,26 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         n.context.environment_id = this.editableNode.context.environment_id;
         n.context.project_integration_id = this.editableNode.context.project_integration_id;
         n.context.mutex = this.editableNode.context.mutex;
+
+        let previousName = n.name;
         n.name = this.editableNode.name;
+
+        if (previousName !== n.name) {
+            if (clonedWorkflow.notifications) {
+                clonedWorkflow.notifications.forEach(notif => {
+                    if (notif.source_node_ref) {
+                        notif.source_node_ref = notif.source_node_ref.map(ref => {
+                           if (ref === previousName) {
+                               return n.name;
+                           }
+                           return ref;
+                        });
+                    }
+
+                });
+            }
+        }
+
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,

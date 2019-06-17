@@ -91,9 +91,6 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/token", r.GET(api.getGroupTokenListHandler), r.POST(api.generateTokenHandler))
 	r.Handle("/group/{permGroupName}/token/{tokenid}", r.DELETE(api.deleteTokenHandler))
 
-	// Hatchery
-	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
-
 	// Hooks
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
@@ -178,6 +175,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/rollback/{auditID}", r.POST(api.postPipelineRollbackHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/audits", r.GET(api.getPipelineAuditHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage", r.POST(api.addStageHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/condition", r.GET(api.getStageConditionsHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/move", r.POST(api.moveStageHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}", r.GET(api.getStageHandler), r.PUT(api.updateStageHandler), r.DELETE(api.deleteStageHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}/job", r.POST(api.addJobToStageHandler))
@@ -285,7 +283,6 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), NeedHatchery(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/vulnerability", r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery(), EnableTracing(), MaintenanceAware()))

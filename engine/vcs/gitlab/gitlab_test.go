@@ -63,7 +63,7 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", "", cache, true, true)
-	cli, err := glConsummer.GetAuthorizedClient(context.Background(), accessToken, "")
+	cli, err := glConsummer.GetAuthorizedClient(context.Background(), accessToken, "", 0)
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}
@@ -116,7 +116,7 @@ func TestClientAuthorizeToken(t *testing.T) {
 
 	t.Logf("Token is %s", accessToken)
 
-	ghClient, err := glConsumer.GetAuthorizedClient(context.Background(), accessToken, accessTokenSecret)
+	ghClient, err := glConsumer.GetAuthorizedClient(context.Background(), accessToken, accessTokenSecret, 0)
 	test.NoError(t, err)
 	assert.NotNil(t, ghClient)
 }

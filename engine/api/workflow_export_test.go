@@ -98,7 +98,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.RenameNode(db, &w))
-	(&w).RetroMigrate()
+
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
@@ -219,7 +219,6 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.RenameNode(db, &w))
-	(&w).RetroMigrate()
 
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
@@ -323,7 +322,6 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.RenameNode(db, &w))
-	(&w).RetroMigrate()
 
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 

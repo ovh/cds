@@ -172,7 +172,7 @@ func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, 
 	// Get report latest report on previous branch
 	var defaultBranch string
 	projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, wnr.VCSServer)
-	client, erra := repositoriesmanager.AuthorizedClient(ctx, db, cache, projectVCSServer)
+	client, erra := repositoriesmanager.AuthorizedClient(ctx, db, cache, proj.Key, projectVCSServer)
 	if erra != nil {
 		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "ComputeLatestDefaultBranchReport> Cannot get repo client %s : %s", wnr.VCSServer, erra)
 	}

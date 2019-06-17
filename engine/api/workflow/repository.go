@@ -263,14 +263,15 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 
 func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption) (sdk.Operation, error) {
 	ope := sdk.Operation{}
-	if w.Root.Context.Application == nil {
+	if w.WorkflowData.Node.Context.ApplicationID == 0 {
 		return ope, sdk.WrapError(sdk.ErrApplicationNotFound, "CreateFromRepository> Workflow node root does not have a application context")
 	}
+	app := w.Applications[w.WorkflowData.Node.Context.ApplicationID]
 	ope = sdk.Operation{
-		VCSServer:          w.Root.Context.Application.VCSServer,
-		RepoFullName:       w.Root.Context.Application.RepositoryFullname,
+		VCSServer:          app.VCSServer,
+		RepoFullName:       app.RepositoryFullname,
 		URL:                w.FromRepository,
-		RepositoryStrategy: w.Root.Context.Application.RepositoryStrategy,
+		RepositoryStrategy: app.RepositoryStrategy,
 		Setup: sdk.OperationSetup{
 			Checkout: sdk.OperationCheckout{
 				Branch: "",
@@ -334,7 +335,7 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 
 	if multipartData == nil {
-		if _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
+		if _, _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
 			return sdk.WrapError(err, "Unable to perform operation")
 		}
 		return nil
@@ -352,7 +353,7 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.O
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}
 
-	if _, err := services.DoJSONRequest(ctx, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
+	if _, _, err := services.DoJSONRequest(ctx, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
 		return sdk.WrapError(err, "Unable to get operation")
 	}
 	return nil

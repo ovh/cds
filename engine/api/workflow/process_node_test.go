@@ -51,11 +51,14 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
+	_, err = db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
+
 	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithoutPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
-	defer func() {
-		_ = services.Delete(db, mockVCSSservice) // nolint
-	}()
+
+	mockHookServices := &sdk.Service{Name: "TestHookRunWithoutPayloadProcessNodeBuildParameter", Type: services.TypeHooks}
+	test.NoError(t, services.Insert(db, mockHookServices))
 
 	//This is a mock for the vcs service
 	services.HTTPClient = mock(
@@ -64,7 +67,6 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
 			w.Body = ioutil.NopCloser(body)
-
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
@@ -78,6 +80,16 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -102,6 +114,18 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					Timestamp: time.Now().Unix(),
 				}
 				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -149,13 +173,10 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	w.WorkflowData.Node.Context.DefaultPayload = map[string]string{
 		"git.branch":     "master",
 		"git.repository": "sguiheux/demo",
 	}
-	w.Root.Context.DefaultPayload = w.WorkflowData.Node.Context.DefaultPayload
 
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -204,11 +225,13 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
+	_, err = db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithHashOnlyProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
-	defer func() {
-		_ = services.Delete(db, mockVCSSservice) // nolint
-	}()
+
+	mockHookServices := &sdk.Service{Name: "TestHookRunWithHashOnlyProcessNodeBuildParameter", Type: services.TypeHooks}
+	test.NoError(t, services.Insert(db, mockHookServices))
 
 	//This is a mock for the vcs service
 	services.HTTPClient = mock(
@@ -217,7 +240,6 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
 			w.Body = ioutil.NopCloser(body)
-
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
@@ -233,6 +255,16 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
 			case "/vcs/github/repos/sguiheux/demo/commits/currentcommit":
 				c := sdk.VCSCommit{
@@ -245,6 +277,18 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 					Timestamp: time.Now().Unix(),
 				}
 				if err := enc.Encode(c); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -292,13 +336,10 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
-
 	w.WorkflowData.Node.Context.DefaultPayload = map[string]string{
 		"git.branch":     "master",
 		"git.repository": "sguiheux/demo",
 	}
-	w.Root.Context.DefaultPayload = w.WorkflowData.Node.Context.DefaultPayload
 
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -346,6 +387,8 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -373,6 +416,16 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -437,7 +490,6 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -483,6 +535,8 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -510,6 +564,16 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+				// NEED for default payload on insert
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -567,7 +631,6 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -621,6 +684,8 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -790,7 +855,6 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -860,6 +924,8 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -887,6 +953,17 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultCommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{
+					b,
+				}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -964,7 +1041,6 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1029,6 +1105,8 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -1056,6 +1134,15 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -1134,7 +1221,6 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1195,6 +1281,8 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -1229,6 +1317,15 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -1315,7 +1412,6 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1381,6 +1477,8 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -1415,6 +1513,15 @@ func TestGitParamWithJoin(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -1511,7 +1618,6 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1584,6 +1690,8 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -1618,6 +1726,15 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -1713,7 +1830,6 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1779,6 +1895,8 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
@@ -1806,6 +1924,15 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -1892,7 +2019,6 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN

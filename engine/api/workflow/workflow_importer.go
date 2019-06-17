@@ -3,16 +3,13 @@ package workflow
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Import is able to create a new workflow and all its components
@@ -30,20 +27,9 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		w.HistoryLength = 20
 	}
 
-	//Manage default payload
-	var err error
-	if w.Root.Context == nil {
-		w.Root.Context = &sdk.WorkflowNodeContext{}
-	}
 	if w.WorkflowData.Node.Context == nil {
 		w.WorkflowData.Node.Context = &sdk.NodeContext{}
 	}
-
-	// TODO compute on WD.Node
-	if w.Root.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
-		log.Warning("workflow.Import> Cannot set default payload : %v", err)
-	}
-	w.WorkflowData.Node.Context.DefaultPayload = w.Root.Context.DefaultPayload
 
 	// create the workflow if not exists
 	if oldW == nil {
@@ -52,11 +38,6 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgWorkflowImportedInserted, w.Name)
-		}
-
-		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		if errHr := HookRegistration(ctx, db, store, nil, *w, proj); errHr != nil {
-			return sdk.WrapError(errHr, "Cannot register hook")
 		}
 
 		// set the workflow id on template instance if exist
@@ -72,31 +53,31 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	// Retrieve existing hook
-	oldHooks := oldW.WorkflowData.GetHooksMapRef()
-	for i := range w.Root.Hooks {
-		h := &w.Root.Hooks[i]
+	oldHooksByRef := oldW.WorkflowData.GetHooksMapRef()
+	for i := range w.WorkflowData.Node.Hooks {
+		h := &w.WorkflowData.Node.Hooks[i]
 		if h.Ref != "" {
-			if oldH, has := oldHooks[h.Ref]; has {
+			if oldH, has := oldHooksByRef[h.Ref]; has {
 				if len(h.Config) == 0 {
 					h.Config = oldH.Config
 				}
 				h.UUID = oldH.UUID
+				continue
 			}
 		}
 	}
-
 	w.ID = oldW.ID
-	if err := Update(ctx, db, store, w, oldW, proj, u); err != nil {
-		return sdk.WrapError(err, "Unable to update workflow")
-	}
 
 	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 	// Hook registration must only be done on default branch in case of workflow as-code
 	// The derivation branch is set in workflow parser it is not comming from the default branch
-	if w.DerivationBranch == "" {
-		if errHr := HookRegistration(ctx, db, store, oldW, *w, proj); errHr != nil {
-			return sdk.WrapError(errHr, "Cannot register hook")
-		}
+	uptOptions := UpdateOptions{
+		DisableHookManagement: w.DerivationBranch != "",
+		OldWorkflow:           oldW,
+	}
+
+	if err := Update(ctx, db, store, w, proj, u, uptOptions); err != nil {
+		return sdk.WrapError(err, "Unable to update workflow")
 	}
 
 	if err := importWorkflowGroups(db, w); err != nil {

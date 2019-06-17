@@ -96,7 +96,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	if w.FromRepository != "" {
 		if len(w.WorkflowData.Node.Hooks) == 0 {
-
 			// When you came from run workflow you have uuid
 			if opts.HookUUID != "" && oldW != nil {
 				oldHooks := oldW.WorkflowData.GetHooks()
@@ -125,16 +124,12 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				})
 			}
 
-			w.RetroMigrate()
 			var err error
 			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 			}
-			w.WorkflowData.Node.Context.DefaultPayload = w.Root.Context.DefaultPayload
 		}
 	}
-
-	w.RetroMigrate()
 
 	if opts.WorkflowName != "" && w.Name != opts.WorkflowName {
 		return nil, nil, sdk.WrapError(sdk.ErrWorkflowNameImport, "Wrong workflow name")

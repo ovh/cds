@@ -179,7 +179,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		}
 
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
+		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
 		if erra != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 		}

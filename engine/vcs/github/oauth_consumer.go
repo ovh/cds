@@ -62,7 +62,7 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 		return "", "", err
 	}
 
-	if status < 200 && status >= 400 {
+	if status < 200 || status >= 400 {
 		return "", "", fmt.Errorf("Github error (%d) %s ", status, string(res))
 	}
 
@@ -81,7 +81,7 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 var instancesAuthorizedClient = map[string]*githubClient{}
 
 //GetAuthorized returns an authorized client
-func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
+func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string, _ int64) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &githubClient{

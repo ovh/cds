@@ -331,13 +331,9 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 	report := new(ProcessorReport)
 
-	_, next := observability.Span(ctx, "sdk.WorkflowCheckConditions")
-	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
+	_, next := observability.Span(ctx, "checkCondition")
+	conditionsOK := checkCondition(wr, stage.Conditions, run.BuildParameters)
 	next()
-	if err != nil {
-		return report, sdk.WrapError(err, "cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
-	}
-
 	if !conditionsOK {
 		stage.Status = sdk.StatusSkipped
 	}
@@ -646,7 +642,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	}
 
 	// Add payload from root
-	if wf.Root.Context.DefaultPayload != nil {
+	if wf.WorkflowData.Node.Context.DefaultPayload != nil {
 		e := dump.NewDefaultEncoder()
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false
@@ -655,7 +651,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 		e.ExtraFields.Type = false
 
 		tempParams := sdk.ParametersToMap(res)
-		m1, errm1 := e.ToStringMap(wf.Root.Context.DefaultPayload)
+		m1, errm1 := e.ToStringMap(wf.WorkflowData.Node.Context.DefaultPayload)
 		if errm1 == nil {
 			mergedParameters := sdk.ParametersMapMerge(tempParams, m1, sdk.MapMergeOptions.ExcludeGitParams)
 			res = sdk.ParametersFromMap(mergedParameters)
@@ -742,7 +738,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 
 	if nodeRun.HookExecutionID != "" {
 		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
-		if _, err := services.DoJSONRequest(ctx, srvs, "POST", path, nil, nil); err != nil {
+		if _, _, err := services.DoJSONRequest(ctx, srvs, "POST", path, nil, nil); err != nil {
 			return fmt.Errorf("unable to stop task execution: %v", err)
 		}
 	}
@@ -907,7 +903,7 @@ func (i vcsInfos) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
 }
 
-func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
+func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]
@@ -942,7 +938,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	}
 
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectKey, vcsServer)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "cannot get client")
 	}

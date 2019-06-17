@@ -1,6 +1,8 @@
 package gerrit
 
 import (
+	"context"
+
 	g "github.com/andygrunwald/go-gerrit"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -40,4 +42,8 @@ func New(URL string, store cache.Store, disableStatus bool, disableStatusDetail 
 		reviewerName:        reviewerName,
 		reviewerToken:       reviewerToken,
 	}
+}
+
+func (c *gerritClient) GetAccessToken(_ context.Context) string {
+	return c.reviewerToken
 }
