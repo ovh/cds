@@ -1,4 +1,4 @@
-// +build freebsd openbsd linux,386 linux,arm windows,386 windows,arm nokeychain
+// +build freebsd openbsd linux,386 linux,amd64 linux nokeychain,arm windows,386 windows,arm nokeychain
 
 package main
 
