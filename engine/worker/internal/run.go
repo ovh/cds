@@ -114,6 +114,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	}
 
 	var nDisabled, nCriticalFailed int
+	var newVariables []sdk.Variable
 	for jobStepIndex, step := range a.Actions {
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
@@ -127,7 +128,14 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		}
 		if nCriticalFailed == 0 || step.AlwaysExecuted {
 			stepResult = w.runAction(ctx, step, jobID, params, secrets, step.Name)
-			// TODO: manage new variables
+
+			for _, newVariable := range stepResult.NewVariables {
+				// append the new variable from a step to the following steps
+				params = append(params, newVariable.ToParameter("cds.build"))
+				// Propagate new variables from step result to jobs result
+				newVariables = append(newVariables, newVariable)
+			}
+
 			switch stepResult.Status {
 			case sdk.StatusDisabled:
 				nDisabled++
@@ -144,6 +152,9 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		}
 	}
 
+	// Propagate new variables from steps to jobs result
+	jobResult.NewVariables = newVariables
+
 	//If all steps are disabled, set action status to disabled
 	jobResult.Status = sdk.StatusSuccess
 	if nDisabled >= len(a.Actions) {
@@ -156,8 +167,8 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 }
 
 func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable, actionName string) sdk.Result {
-	log.Info("runAction> start action %s %d", actionName, jobID)
-	defer func() { log.Info("runAction> end action %s run %d", actionName, jobID) }()
+	log.Info("runAction> start action %s %s %d", a.StepName, actionName, jobID)
+	defer func() { log.Info("runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
 	w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
 	var t0 = time.Now()
@@ -252,6 +263,13 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 			}
 		} else if criticalStepFailed && !child.AlwaysExecuted {
 			r.Status = sdk.StatusNeverBuilt
+		}
+
+		for _, newVariable := range r.NewVariables {
+			// append the new variable from a chile to the following children
+			params = append(params, newVariable.ToParameter("cds.build"))
+			// Propagate new variables from child result to action
+			r.NewVariables = append(r.NewVariables, newVariable)
 		}
 	}
 
@@ -412,6 +430,10 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	}
 
 	res, err := w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobParameters, jobInfo.Secrets)
+
+	if len(res.NewVariables) > 0 {
+		log.Debug("processJob> new variables: %v", res.NewVariables)
+	}
 
 	if err := teardownBuildDirectory(wd); err != nil {
 		log.Error("Cannot remove build directory: %s", err)

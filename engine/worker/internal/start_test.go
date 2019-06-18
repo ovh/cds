@@ -115,11 +115,10 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "script",
-												Value: "sleep 10\necho {{.cds.myPassword}}\necho 2",
+												Value: "#!/bin/bash\nset -ex\nsleep 10\necho {{.cds.myPassword}}\necho $CDS_EXPORT_PORT\nworker export newvar newval",
 											},
 										},
-									},
-									{
+									}, {
 										Name:     sdk.CheckoutApplicationAction,
 										Type:     sdk.BuiltinAction,
 										Enabled:  true,
@@ -151,7 +150,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 												Parameters: []sdk.Parameter{
 													{
 														Name:  "script",
-														Value: "cd {{.directory}}",
+														Value: "cd {{.directory}}\nenv",
 													},
 												},
 											},

@@ -28,5 +28,6 @@ func addBuildVarHandler(wk *CurrentWorker) http.HandlerFunc {
 		v.Name = "cds.build." + v.Name
 
 		wk.currentJob.newVariables = append(wk.currentJob.newVariables, v)
+		log.Debug("Variable %s added to %+v", v.Name, wk.currentJob.newVariables)
 	}
 }

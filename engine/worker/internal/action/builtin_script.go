@@ -72,7 +72,6 @@ func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 		return nil, errors.New("cannot create temporary file, aborting")
 	}
 	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
-	log.Debug("runScriptAction> writeScriptContent> Script content: \n\t%s", script.content)
 
 	// Put script in file
 	n, errw := tmpscript.Write(script.content)

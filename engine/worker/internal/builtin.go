@@ -38,7 +38,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 		return res
 	}
 
-	log.Debug("running builin action %s", a.Name)
+	log.Debug("running builin action %s %s", a.StepName, a.Name)
 	res, err := f(ctx, w, a, params, secrets)
 	if err != nil {
 		res.Status = sdk.StatusFail

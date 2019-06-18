@@ -14,6 +14,14 @@ type Variable struct {
 	Type  string `json:"type" cli:"type"`
 }
 
+func (v Variable) ToParameter(prefix string) Parameter {
+	return Parameter{
+		Name:  "." + prefix + "." + v.Name,
+		Value: v.Value,
+		Type:  v.Type,
+	}
+}
+
 // VariableAudit represent audit for a variable
 type VariableAudit struct {
 	ID         int        `json:"id"`

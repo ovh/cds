@@ -27,7 +27,6 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	// Set build variables
 	w.currentJob.wJob = &info.NodeJobRun
-	log.Debug("takeWorkflowJob> setting secrets %v", info.Secrets)
 	w.currentJob.secrets = info.Secrets
 	// Reset build variables
 	w.currentJob.newVariables = nil
