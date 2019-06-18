@@ -90,7 +90,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		if !isGroupOK {
-			return sdk.WrapError(sdk.ErrForbidden, "This worker is not authorized to take this job:%d execGroups:%+v", id, pbj.ExecGroups)
+      return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", getWorker(ctx).Name, workerModel, id, pbj.ExecGroups)
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
