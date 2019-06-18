@@ -175,8 +175,9 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, er
 	pips := []Pipeline{}
 	query := `SELECT DISTINCT pipeline.*
 	FROM pipeline
-		JOIN workflow_node ON pipeline.id = workflow_node.pipeline_id
-		JOIN workflow ON workflow_node.workflow_id = workflow.id
+		JOIN w_node_context ON pipeline.id = w_node_context.pipeline_id
+    JOIN w_node ON w_node.id = w_node_context.node_id
+		JOIN workflow ON w_node.workflow_id = workflow.id
 	WHERE workflow.id = $1`
 
 	if _, err := db.Select(&pips, query, workflowID); err != nil {

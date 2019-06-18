@@ -18,7 +18,7 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class PipelineAsCodeEditorComponent implements OnInit {
-    @ViewChild('codeMirror') codemirror: any;
+    @ViewChild('codeMirror', {static: false}) codemirror: any;
 
     // Project that contains the pipeline
     @Input() project: Project;

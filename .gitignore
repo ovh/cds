@@ -24,6 +24,7 @@ debug.test
 myOpenstackIntegration.yml
 myAWSS3Integration.yml
 test_results.yml
+test_results.xml
 *.dump
 .tmp
 contrib/**/dist

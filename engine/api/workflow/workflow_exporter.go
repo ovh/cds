@@ -80,36 +80,34 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		wf.Template = i.Template
 	}
 
-	apps := wf.GetApplications()
-	envs := wf.GetEnvironments()
-	pips := wf.GetPipelines()
-
 	//Reload app to retrieve secrets
-	for i := range apps {
-		app := &apps[i]
+	for i := range wf.Applications {
+		app := wf.Applications[i]
 		vars, errv := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
 		if errv != nil {
 			return wp, sdk.WrapError(errv, "cannot load application variables %s", app.Name)
 		}
 		app.Variable = vars
 
-		if err := application.LoadAllDecryptedKeys(db, app); err != nil {
+		if err := application.LoadAllDecryptedKeys(db, &app); err != nil {
 			return wp, sdk.WrapError(err, "cannot load application keys %s", app.Name)
 		}
+		wf.Applications[i] = app
 	}
 
 	//Reload env to retrieve secrets
-	for i := range envs {
-		env := &envs[i]
+	for i := range wf.Environments {
+		env := wf.Environments[i]
 		vars, errv := environment.GetAllVariable(db, proj.Key, env.Name, environment.WithClearPassword())
 		if errv != nil {
 			return wp, sdk.WrapError(errv, "cannot load environment variables %s", env.Name)
 		}
 		env.Variable = vars
 
-		if err := environment.LoadAllDecryptedKeys(db, env); err != nil {
+		if err := environment.LoadAllDecryptedKeys(db, &env); err != nil {
 			return wp, sdk.WrapError(err, "cannot load environment keys %s", env.Name)
 		}
+		wf.Environments[i] = env
 	}
 
 	buffw := new(bytes.Buffer)
@@ -123,7 +121,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	wp.Workflow.Name = wf.Name
 	wp.Workflow.Value = base64.StdEncoding.EncodeToString(buffw.Bytes())
 
-	for _, a := range apps {
+	for _, a := range wf.Applications {
 		if a.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
@@ -137,7 +135,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		})
 	}
 
-	for _, e := range envs {
+	for _, e := range wf.Environments {
 		if e.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
@@ -151,7 +149,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		})
 	}
 
-	for _, p := range pips {
+	for _, p := range wf.Pipelines {
 		if p.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}

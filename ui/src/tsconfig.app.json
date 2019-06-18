@@ -11,7 +11,7 @@
       "dom"
     ],
     "outDir": "../out-tsc/app",
-    "module": "es2015",
+    "module": "esnext",
     "baseUrl": "",
     "paths": {},
     "types": []
@@ -27,5 +27,8 @@
     "../node_modules/ng-semantic/demo/**/*.ts",
     "../node_modules/angular2-prettyjson/node_modules/**/*.ts",
     "../node_modules/angular2-prettyjson/**/*.ts"
-  ]
+  ],
+  "angularCompilerOptions": {
+    "enableIvy": false
+  }
 }

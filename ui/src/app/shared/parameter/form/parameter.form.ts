@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
@@ -12,7 +12,6 @@ import { SharedService } from 'app/shared/shared.service';
     styleUrls: ['./parameter.form.scss']
 })
 export class ParameterFormComponent {
-    @ViewChild('selectType') selectType: ElementRef;
 
     @Input() project: Project;
     @Input() suggest: Array<string>;

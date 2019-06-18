@@ -120,19 +120,18 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				continue
 			}
 
-			reqMods := []RequestModifier{}
+			urlValues := url.Values{}
 			if ratioService != nil {
-				reqMods = append(reqMods, SetHeader("ratioService", strconv.Itoa(*ratioService)))
+				urlValues.Set("ratioService", strconv.Itoa(*ratioService))
 			}
 
 			if modelType != "" {
-				reqMods = append(reqMods, SetHeader("modelType", modelType))
+				urlValues.Set("modelType", modelType)
 			}
 
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-
 			queue := sdk.WorkflowQueue{}
-			if _, err := c.GetJSON(ctxt, "/queue/workflows", &queue, reqMods...); err != nil {
+			if _, err := c.GetJSON(ctxt, "/queue/workflows?"+urlValues.Encode(), &queue, nil); err != nil {
 				errs <- sdk.WrapError(err, "Unable to load jobs")
 				cancel()
 				continue
@@ -233,14 +232,6 @@ func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.S
 	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
 	_, err := c.PostJSON(ctx, path, &in, nil)
 	return err
-}
-
-// QueueJobIncAttempts add hatcheryID that cannot run this job and return the spawn attempts list
-func (c *client) QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64, error) {
-	var spawnAttempts []int64
-	path := fmt.Sprintf("/queue/workflows/%d/attempt", jobID)
-	_, err := c.PostJSON(ctx, path, nil, &spawnAttempts)
-	return spawnAttempts, err
 }
 
 // QueueJobBook books a job for a Hatchery

@@ -8,136 +8,23 @@ const (
 	GerritIcon    = "git"
 )
 
-// FilterHooksConfig filter all hooks configuration and remove some configuration key
-func (w *Workflow) FilterHooksConfig(s ...string) {
-	if w.Root == nil {
-		return
-	}
-
-	w.Root.FilterHooksConfig(s...)
-	for i := range w.Joins {
-		for j := range w.Joins[i].Triggers {
-			w.Joins[i].Triggers[j].WorkflowDestNode.FilterHooksConfig(s...)
-		}
-	}
-}
-
-// GetHooks returns the list of all hooks in the workflow tree
-func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
-	if w == nil {
-		return nil
-	}
-
-	if w.Root == nil {
-		return nil
-	}
-
-	res := map[string]WorkflowNodeHook{}
-
-	a := w.Root.GetHooks()
-	for k, v := range a {
-		res[k] = v
-	}
-
-	for _, j := range w.Joins {
-		for _, t := range j.Triggers {
-			b := t.WorkflowDestNode.GetHooks()
-			for k, v := range b {
-				res[k] = v
-			}
-		}
-	}
-
-	return res
-}
-
-// WorkflowNodeOutgoingHook represents a outgoing hook
-type WorkflowNodeOutgoingHook struct {
-	ID                  int64                             `json:"id" db:"id"`
-	Name                string                            `json:"name" db:"name"`
-	Ref                 string                            `json:"ref" db:"-"`
-	WorkflowNodeID      int64                             `json:"workflow_node_id" db:"workflow_node_id"`
-	WorkflowHookModelID int64                             `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
-	WorkflowHookModel   WorkflowHookModel                 `json:"model" db:"-"`
-	Config              WorkflowNodeHookConfig            `json:"config" db:"-"`
-	Triggers            []WorkflowNodeOutgoingHookTrigger `json:"triggers,omitempty" db:"-"`
-}
-
-func (h WorkflowNodeOutgoingHook) migrate(withID bool) Node {
-	newNode := Node{
-		Name: h.Name,
-		Ref:  h.Ref,
-		Type: NodeTypeOutGoingHook,
-		OutGoingHookContext: &NodeOutGoingHook{
-			Config:      h.Config,
-			HookModelID: h.WorkflowHookModelID,
-		},
-		Triggers: make([]NodeTrigger, 0, len(h.Triggers)),
-	}
-	if withID {
-		newNode.ID = h.ID
-	}
-	if h.Ref == "" {
-		h.Ref = h.Name
-	}
-	for _, t := range h.Triggers {
-		child := t.WorkflowDestNode.migrate(withID)
-		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
-			ParentNodeName: newNode.Name,
-			ChildNode:      child,
-		})
-	}
-	return newNode
-}
-
-//WorkflowNodeFork represents a hook which cann trigger the workflow from a given node
-type WorkflowNodeFork struct {
-	ID             int64                     `json:"id" db:"id"`
-	Name           string                    `json:"name" db:"name"`
-	WorkflowNodeID int64                     `json:"workflow_node_id" db:"workflow_node_id"`
-	Triggers       []WorkflowNodeForkTrigger `json:"triggers,omitempty" db:"-"`
-}
-
-func (f WorkflowNodeFork) migrate(withID bool) Node {
-	newNode := Node{
-		Name:     f.Name,
-		Ref:      f.Name,
-		Type:     NodeTypeFork,
-		Triggers: make([]NodeTrigger, 0, len(f.Triggers)),
-	}
-	if withID {
-		newNode.ID = f.ID
-	}
-	if newNode.Ref == "" {
-		newNode.Ref = newNode.Name
-	}
-	for _, t := range f.Triggers {
-		child := t.WorkflowDestNode.migrate(withID)
-		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
-			ParentNodeName: newNode.Name,
-			ChildNode:      child,
-		})
-	}
-	return newNode
-}
-
-//WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
-type WorkflowNodeHook struct {
-	ID                  int64                  `json:"id" db:"id"`
-	UUID                string                 `json:"uuid" db:"uuid"`
-	Ref                 string                 `json:"ref" db:"ref"`
-	WorkflowNodeID      int64                  `json:"workflow_node_id" db:"workflow_node_id"`
-	WorkflowHookModelID int64                  `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
-	WorkflowHookModel   WorkflowHookModel      `json:"model" db:"-"`
-	Config              WorkflowNodeHookConfig `json:"config" db:"-"`
+//NodeHook represents a hook which cann trigger the workflow from a given node
+type NodeHook struct {
+	ID            int64                  `json:"id" db:"id"`
+	UUID          string                 `json:"uuid" db:"uuid"`
+	Ref           string                 `json:"ref" db:"ref"`
+	NodeID        int64                  `json:"node_id" db:"node_id"`
+	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
+	HookModelName string                 `json:"hook_model_name" db:"-"`
+	Config        WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
 //Equals checks functionnal equality between two hooks
-func (h WorkflowNodeHook) Equals(h1 WorkflowNodeHook) bool {
+func (h NodeHook) Equals(h1 NodeHook) bool {
 	if h.UUID != h1.UUID {
 		return false
 	}
-	if h.WorkflowHookModelID != h1.WorkflowHookModelID {
+	if h.HookModelID != h1.HookModelID {
 		return false
 	}
 	for k, cfg := range h.Config {
@@ -159,6 +46,18 @@ func (h WorkflowNodeHook) Equals(h1 WorkflowNodeHook) bool {
 		}
 	}
 	return true
+}
+
+// FilterHooksConfig filter all hooks configuration and remove some configuration key
+func (w *Workflow) FilterHooksConfig(s ...string) {
+	if w.WorkflowData == nil {
+		return
+	}
+
+	w.WorkflowData.Node.FilterHooksConfig(s...)
+	for i := range w.WorkflowData.Joins {
+		w.WorkflowData.Joins[i].FilterHooksConfig(s...)
+	}
 }
 
 // WorkflowHookModelBuiltin is a constant for the builtin hook models
@@ -242,40 +141,4 @@ type WorkflowHookModel struct {
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
 	Disabled      bool                   `json:"disabled" db:"disabled"`
-}
-
-// FilterHooksConfig filter all hooks configuration and remove somme configuration key
-func (n *WorkflowNode) FilterHooksConfig(s ...string) {
-	if n == nil {
-		return
-	}
-
-	for _, h := range n.Hooks {
-		for i := range s {
-			for k := range h.Config {
-				if k == s[i] {
-					delete(h.Config, k)
-					break
-				}
-			}
-		}
-	}
-}
-
-//GetHooks returns all hooks for the node and its children
-func (n *WorkflowNode) GetHooks() map[string]WorkflowNodeHook {
-	res := map[string]WorkflowNodeHook{}
-
-	for _, h := range n.Hooks {
-		res[h.UUID] = h
-	}
-
-	for _, t := range n.Triggers {
-		b := t.WorkflowDestNode.GetHooks()
-		for k, v := range b {
-			res[k] = v
-		}
-	}
-
-	return res
 }

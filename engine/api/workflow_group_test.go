@@ -49,8 +49,6 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	(&w).RetroMigrate()
-
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
@@ -116,8 +114,6 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	(&w).RetroMigrate()
-
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
@@ -177,7 +173,6 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
@@ -273,8 +268,6 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	(&w).RetroMigrate()
-
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
@@ -350,8 +343,6 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
-
-	(&newWf).RetroMigrate()
 
 	//Prepare request
 	vars := map[string]string{
@@ -436,8 +427,6 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
-
-	(&newWf).RetroMigrate()
 
 	//Prepare request to create workflow
 	vars := map[string]string{
@@ -587,8 +576,6 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
-
-	(&newWf).RetroMigrate()
 
 	//Prepare request to create workflow
 	vars := map[string]string{

@@ -110,7 +110,6 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 			},
 		},
 	}
-	(&wf).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &wf, proj, u))
 
@@ -169,7 +168,6 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		},
 	}
 
-	(&wf).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?withUsage=true", nil)
@@ -831,13 +829,13 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 			ProjectID:  proj.ID,
 			ProjectKey: proj.Key,
 			Name:       sdk.RandomString(10),
-			Root: &sdk.WorkflowNode{
-				Name:         "root",
-				PipelineID:   pip.ID,
-				PipelineName: pip.Name,
-				Context: &sdk.WorkflowNodeContext{
-					Application:   &app,
-					ApplicationID: app.ID,
+			WorkflowData: &sdk.WorkflowData{
+				Node: sdk.Node{
+					Name: "root",
+					Context: &sdk.NodeContext{
+						PipelineID:    pip.ID,
+						ApplicationID: app.ID,
+					},
 				},
 			},
 		}
@@ -896,13 +894,13 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 			ProjectKey: proj.Key,
 			Name:       sdk.RandomString(10),
 			Groups:     proj.ProjectGroups,
-			Root: &sdk.WorkflowNode{
-				Name:         "root",
-				PipelineID:   pip.ID,
-				PipelineName: pip.Name,
-				Context: &sdk.WorkflowNodeContext{
-					Application:   &app,
-					ApplicationID: app.ID,
+			WorkflowData: &sdk.WorkflowData{
+				Node: sdk.Node{
+					Name: "root",
+					Context: &sdk.NodeContext{
+						PipelineID:    pip.ID,
+						ApplicationID: app.ID,
+					},
 				},
 			},
 		}

@@ -81,8 +81,6 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to rename node")
 		}
 
-		wf.RetroMigrate()
-
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
 }
@@ -162,6 +160,12 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
+		}
+
+		if wf != nil {
+			event.PublishWorkflowUpdate(proj.Key, *wrkflw, *wf, u)
+		} else {
+			event.PublishWorkflowAdd(proj.Key, *wrkflw, u)
 		}
 
 		if wrkflw != nil {

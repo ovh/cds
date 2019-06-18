@@ -97,11 +97,14 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/task/bulk":
-				hooks := map[string]sdk.WorkflowNodeHook{}
-				h := sdk.WorkflowNodeHook{
-					UUID: "ze",
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
 				}
-				hooks[h.UUID] = h
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
@@ -169,7 +172,6 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 		},
 	}
 	assert.NoError(t, workflow.RenameNode(db, &w))
-	(&w).RetroMigrate()
 
 	var errP error
 	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithApplicationWithDeploymentStrategies, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithIntegrations)

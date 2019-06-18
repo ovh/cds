@@ -776,10 +776,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
 		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	}, a.PanicDump())
-
-	migrate.Add(sdk.Migration{Name: "WorkflowOldStruct", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.WorkflowRunOldModel(ctx, a.DBConnectionFactory.GetDBMap)
-	}})
 	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})

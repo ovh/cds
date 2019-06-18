@@ -16,7 +16,7 @@ import { forkJoin } from 'rxjs';
     styleUrls: ['./workflow-template.apply-modal.scss']
 })
 export class WorkflowTemplateApplyModalComponent implements OnChanges {
-    @ViewChild('workflowTemplateApplyModal') workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('workflowTemplateApplyModal', {static: false}) workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     open: boolean;
 
