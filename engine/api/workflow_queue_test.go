@@ -939,9 +939,12 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
+	workflowDeepPipeline, err := workflow.LoadByID(db, api.Cache, p, w.ID, u, workflow.LoadOptions{DeepPipeline: true})
+	assert.NoError(t, err)
+
+	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
 	assert.NoError(t, errwr)
-	wrDB.Workflow = w
+	wrDB.Workflow = *workflowDeepPipeline
 
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{User: *u},
