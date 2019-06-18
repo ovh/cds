@@ -1280,7 +1280,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			return nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
 		}
 		if workflowExists {
-			oldWf, err = Load(ctx, db, store, proj, data.wrkflw.Name, u, LoadOptions{WithIcon: true, DeepPipeline: false})
+			oldWf, err = Load(ctx, db, store, proj, data.wrkflw.Name, u, LoadOptions{WithIcon: true})
 			if err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
 			}
