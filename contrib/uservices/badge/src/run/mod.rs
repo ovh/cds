@@ -58,10 +58,8 @@ impl Handler<CreateRun> for DbExecutor {
     type Result = Result<Run, BadgeError>;
 
     fn handle(&mut self, msg: CreateRun, _: &mut Self::Context) -> Self::Result {
-        // use diesel::select;
         use schema::run::dsl::*;
         let conn: &PgConnection = &self.0.get().unwrap();
-        // let run_inserted = insert_into(run)
         insert_into(run)
             .values((
                 run_id.eq(&msg.run.run_id),
@@ -72,8 +70,6 @@ impl Handler<CreateRun> for DbExecutor {
                 status.eq(&msg.run.status),
             ))
             .execute(conn)?;
-        // .get_result::<Run>(conn)
-        // .map_err(|err| BadgeError::UnexpectedError{cause: err})?;
 
         Ok(msg.run)
     }

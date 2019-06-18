@@ -1,4 +1,4 @@
-use actix::{Actor, Addr, Context, Running, SyncContext};
+use actix::{Actor, Addr, Context, Running};
 use futures::{Future, Stream};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -83,7 +83,6 @@ impl Actor for KafkaConsumerActor {
                     }
                     match serde_json::from_slice::<Event>(payload.unwrap()) {
                         Ok(ref event) if event.type_event == "sdk.EventRunWorkflow" => {
-                            // TODO: add a boolean to check if we want to generate badge
                             let mut branch = None;
                             if let Some(ref tags) = &event.tag {
                                 branch = tags

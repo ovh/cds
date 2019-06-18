@@ -47,10 +47,9 @@ mod kafka;
 mod models;
 mod run;
 mod schema;
-
 mod status;
 mod web;
-use actix::prelude::*;
+
 use actix::{Actor, Arbiter, SyncArbiter, System};
 use clap::{App, Arg, SubCommand};
 use diesel::prelude::PgConnection;
