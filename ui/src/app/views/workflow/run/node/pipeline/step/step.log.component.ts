@@ -92,7 +92,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     _stepStatus: StepStatus;
     pipelineBuildStatusEnum = PipelineStatus;
     MAX_PRETTY_LOGS_LINES = 3500;
-    @ViewChild('logsContent') logsElt: ElementRef;
+    @ViewChild('logsContent', {static: false}) logsElt: ElementRef;
 
     constructor(
         private _authStore: AuthentificationStore,

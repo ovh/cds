@@ -45,7 +45,7 @@ export class WorkflowAdminComponent implements OnInit {
     purgeTag: string;
     iconUpdated = false;
 
-    @ViewChild('updateWarning')
+    @ViewChild('updateWarning', {static: false})
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;

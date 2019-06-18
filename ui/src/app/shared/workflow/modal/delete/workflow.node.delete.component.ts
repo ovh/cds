@@ -11,7 +11,7 @@ import { WNode, Workflow } from '../../../../model/workflow.model';
 })
 export class WorkflowDeleteNodeComponent {
 
-    @ViewChild('deleteModal')
+    @ViewChild('deleteModal', {static: false})
     deleteModalTemplate: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
