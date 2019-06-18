@@ -180,7 +180,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
 
-	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(p, workflowRun, noderun)
+	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, p, workflowRun, noderun)
 	if errK != nil {
 		return nil, sdk.WrapError(errK, "Cannot load keys")
 	}

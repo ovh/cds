@@ -324,7 +324,7 @@ func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 }
 
 // LoadNodeJobRunKeys loads all keys for a job run
-func LoadNodeJobRunKeys(p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
+func LoadNodeJobRunKeys(db gorp.SqlExecutor, p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
 	var app *sdk.Application
 	var env *sdk.Environment
 
@@ -333,12 +333,18 @@ func LoadNodeJobRunKeys(p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.Workfl
 		appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
 		if has {
 			app = &appMap
+			if err := application.LoadAllBase64Keys(db, app); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 	if n.Context.EnvironmentID != 0 {
 		envMap, has := wr.Workflow.Environments[n.Context.EnvironmentID]
 		if has {
 			env = &envMap
+			if err := environment.LoadAllBase64Keys(db, env); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 
