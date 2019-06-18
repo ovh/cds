@@ -71,7 +71,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	// Browse all node to find IDs
-	if err := IsValid(ctx, store, db, w, proj, u); err != nil {
+	if err := IsValid(ctx, store, db, w, proj, u, LoadOptions{DeepPipeline: false}); err != nil {
 		return nil, nil, sdk.WrapError(err, "Workflow is not valid")
 	}
 
