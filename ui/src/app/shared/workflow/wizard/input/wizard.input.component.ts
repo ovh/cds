@@ -226,6 +226,11 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
 
         n.context.default_payload = this.editableNode.context.default_payload;
         n.context.default_pipeline_parameters = this.editableNode.context.default_pipeline_parameters;
+        if (n.context.default_pipeline_parameters) {
+            n.context.default_pipeline_parameters.forEach(p => {
+               p.value = p.value.toString();
+            });
+        }
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
