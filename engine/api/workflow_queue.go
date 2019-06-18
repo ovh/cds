@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
 
@@ -461,13 +460,8 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		observability.Tag(observability.TagWorkflowNodeRun, job.WorkflowNodeRunID),
 		observability.Tag(observability.TagJob, job.Job.Action.Name))
 
-	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
-	if errt != nil {
-		return nil, sdk.WrapError(errt, "postJobResult> Cannot parse remote time")
-	}
-
 	infos := []sdk.SpawnInfo{{
-		RemoteTime: remoteTime,
+		RemoteTime: res.RemoteTime,
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
 	}}
 

@@ -225,7 +225,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		break
 	}
 
-	log.Info("runScriptAction> %s %s", res.GetStatus(), res.GetReason())
+	log.Info("runScriptAction> %s %s", res.Status, res.Reason)
 	return res, globalErr
 }
 

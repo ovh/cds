@@ -1,7 +1,12 @@
 package internal_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,6 +26,7 @@ func init() {
 
 func TestStartWorkerWithABookedJob(t *testing.T) {
 	defer gock.Off()
+
 	gock.New("http://lolcat.host").Get("/action/requirement").
 		Reply(200).
 		JSON([]sdk.Requirement{
@@ -115,7 +121,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "script",
-												Value: "#!/bin/bash\nset -ex\nsleep 10\necho {{.cds.myPassword}}\necho $CDS_EXPORT_PORT\nworker export newvar newval",
+												Value: "#!/bin/bash\nset -ex\nsleep 10\necho my password should not be displayed here: {{.cds.myPassword}}\necho $CDS_EXPORT_PORT\nworker export newvar newval",
 											},
 										},
 									}, {
@@ -184,6 +190,55 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(nil)
 
+	var logBuffer = new(bytes.Buffer)
+
+	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
+		bodyContent, err := ioutil.ReadAll(request.Body)
+		assert.NoError(t, err)
+		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		if mock != nil {
+			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
+
+			switch mock.Request().URLStruct.String() {
+			case "http://lolcat.host/queue/workflows/42/step":
+				var result sdk.StepStatus
+				err := json.Unmarshal(bodyContent, &result)
+				assert.NoError(t, err)
+				switch result.StepOrder {
+				case 0:
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Fail()
+					}
+				case 1:
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusFail {
+						t.Fail()
+					}
+				case 2:
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Fail()
+					}
+				default:
+					t.Fail()
+				}
+			case "http://lolcat.host/queue/workflows/42/log":
+				var log sdk.Log
+				err := json.Unmarshal(bodyContent, &log)
+				assert.NoError(t, err)
+				logBuffer.WriteString(log.GetVal()) // nolint
+			case "http://lolcat.host/queue/workflows/42/result":
+				var result sdk.Result
+				err := json.Unmarshal(bodyContent, &result)
+				assert.NoError(t, err)
+				assert.Equal(t, int64(42), result.BuildID)
+				assert.Equal(t, sdk.StatusFail, result.Status)
+				assert.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
+				assert.Equal(t, "newval", result.NewVariables[0].Value)
+			}
+		}
+	}
+
+	gock.Observe(checkRequest)
+
 	var w = new(internal.CurrentWorker)
 
 	fs := afero.NewOsFs()
@@ -212,4 +267,9 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			t.Logf("Request %s %s unmatched", req.Method, req.URL.String())
 		}
 	}
+
+	assert.Equal(t, 2, strings.Count(logBuffer.String(), "my password should not be displayed here: **********\n"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_NEWVAR=newval"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_KEY=********"))
+
 }

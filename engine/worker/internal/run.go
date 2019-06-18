@@ -114,7 +114,6 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	}
 
 	var nDisabled, nCriticalFailed int
-	var newVariables []sdk.Variable
 	for jobStepIndex, step := range a.Actions {
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 		if err := w.updateStepStatus(ctx, jobID, jobStepIndex, sdk.StatusBuilding); err != nil {
@@ -133,7 +132,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 				// append the new variable from a step to the following steps
 				params = append(params, newVariable.ToParameter("cds.build"))
 				// Propagate new variables from step result to jobs result
-				newVariables = append(newVariables, newVariable)
+				w.currentJob.newVariables = append(w.currentJob.newVariables, newVariable)
 			}
 
 			switch stepResult.Status {
@@ -153,7 +152,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	}
 
 	// Propagate new variables from steps to jobs result
-	jobResult.NewVariables = newVariables
+	jobResult.NewVariables = w.currentJob.newVariables
 
 	//If all steps are disabled, set action status to disabled
 	jobResult.Status = sdk.StatusSuccess
