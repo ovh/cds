@@ -2,11 +2,9 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    ElementRef,
     EventEmitter,
     Input,
-    Output,
-    ViewChild
+    Output
 } from '@angular/core';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
@@ -23,7 +21,6 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ParameterFormComponent {
-    @ViewChild('selectType') selectType: ElementRef;
 
     @Input() project: Project;
     @Input() suggest: Array<string>;

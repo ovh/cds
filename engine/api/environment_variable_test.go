@@ -66,7 +66,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
 	v := &sdk.Variable{}
-	json.Unmarshal(res, &v)
+	assert.NoError(t, json.Unmarshal(res, &v))
 	assert.NotEqual(t, v.ID, 0)
 
 	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
@@ -136,7 +136,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
 	vUpdated := sdk.Variable{}
-	json.Unmarshal(res, &vUpdated)
+	assert.NoError(t, json.Unmarshal(res, &vUpdated))
 	assert.Equal(t, vUpdated.Value, "new bar")
 
 	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")

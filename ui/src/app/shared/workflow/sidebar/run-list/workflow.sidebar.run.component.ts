@@ -19,7 +19,7 @@ import { Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarRunListComponent implements OnDestroy {
-    @ViewChild('tagsList') tagsList: ElementRef;
+    @ViewChild('tagsList', {static: false}) tagsList: ElementRef;
 
     @Input() project: Project;
 

@@ -16,7 +16,7 @@ import { finalize } from 'rxjs/operators';
 export class LabelsEditComponent {
     @Input() project: Project;
 
-    @ViewChild('labelsEditModal')
+    @ViewChild('labelsEditModal', {static: false})
     public labelsEditModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;

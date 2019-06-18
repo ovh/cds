@@ -15,7 +15,7 @@ import (
 )
 
 // MinCompatibleRelease represent the minimum release which is working with these migrations, need to update when we delete migration in our codebase
-const MinCompatibleRelease = "0.38.1"
+const MinCompatibleRelease = "0.39.3"
 
 var migrations = []sdk.Migration{}
 

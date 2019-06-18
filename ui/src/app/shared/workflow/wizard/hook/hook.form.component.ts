@@ -21,7 +21,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookFormComponent implements OnInit {
-    @ViewChild('textareaCodeMirror') codemirror: any;
+    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
 
     _hook: WNodeHook = new WNodeHook();
     canDelete = false;
