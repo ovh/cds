@@ -13,7 +13,6 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import { SemanticDimmerComponent } from 'ng-semantic/ng-semantic';
 import { Project } from '../../../model/project.model';
 import { WNode, Workflow } from '../../../model/workflow.model';
 import { WorkflowRun } from '../../../model/workflow.run.model';
@@ -75,14 +74,11 @@ export class WorkflowGraphComponent implements AfterViewInit {
     _direction: string;
 
     // workflow graph
-    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: any;
+    @ViewChild('svgGraph', { read: ViewContainerRef, static: false }) svgContainer: any;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
     svgWidth: number = window.innerWidth;
     svgHeight: number = window.innerHeight;
-
-    @ViewChild('dimmer')
-    dimmer: SemanticDimmerComponent;
 
     linkWithJoin = false;
     nodeToLink: WNode;

@@ -45,8 +45,6 @@ func Test_ProjectPerms(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	(&newWf).RetroMigrate()
-
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,

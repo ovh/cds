@@ -49,6 +49,12 @@ func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 		return sdk.WrapError(errDP, "insertNodeContextData> Cannot stringify default payload")
 	}
 
+	for _, cond := range n.Context.Conditions.PlainConditions {
+		if _, ok := sdk.WorkflowConditionsOperators[cond.Operator]; !ok {
+			return sdk.ErrWorkflowConditionBadOperator
+		}
+	}
+
 	var errC error
 	tempContext.Conditions, errC = gorpmapping.JSONToNullString(n.Context.Conditions)
 	if errC != nil {

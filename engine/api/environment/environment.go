@@ -129,9 +129,9 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Environment, error) {
 	envs := []sdk.Environment{}
 	query := `SELECT DISTINCT environment.* FROM environment
-	JOIN workflow_node_context ON workflow_node_context.environment_id = environment.id
-	JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
-	JOIN workflow ON workflow.id = workflow_node.workflow_id
+	JOIN w_node_context ON w_node_context.environment_id = environment.id
+	JOIN w_node ON w_node.id = w_node_context.node_id
+	JOIN workflow ON workflow.id = w_node.workflow_id
 	WHERE workflow.id = $1`
 
 	if _, err := db.Select(&envs, query, workflowID); err != nil {

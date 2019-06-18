@@ -35,9 +35,9 @@ import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditComponent implements OnInit {
-    @ViewChild('templateApplyModal')
+    @ViewChild('templateApplyModal', {static: false})
     templateApplyModal: WorkflowTemplateApplyModalComponent;
-    @ViewChild('templateBulkModal')
+    @ViewChild('templateBulkModal', {static: false})
     templateBulkModal: WorkflowTemplateBulkModalComponent;
 
     oldWorkflowTemplate: WorkflowTemplate;

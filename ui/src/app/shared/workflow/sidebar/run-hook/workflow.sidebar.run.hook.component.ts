@@ -8,7 +8,6 @@ import { WorkflowNodeRun, WorkflowNodeRunHookEvent, WorkflowRun } from 'app/mode
 import { HookService } from 'app/service/hook/hook.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/details/hook.details.component';
-import { WorkflowNodeHookFormComponent } from 'app/shared/workflow/wizard/hook/hook.form.component';
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -20,10 +19,8 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarRunHookComponent implements OnInit {
-    @ViewChild('workflowConfigHook')
-    workflowConfigHook: WorkflowNodeHookFormComponent;
 
-    @ViewChild('workflowDetailsHook')
+    @ViewChild('workflowDetailsHook', {static: false})
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     @Input() project: Project;

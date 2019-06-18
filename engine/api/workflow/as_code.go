@@ -236,27 +236,9 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				CreationDate:   time.Now(),
 			}
 
-			// add repo webhook
-			found := false
-			for _, h := range wf.WorkflowData.GetHooks() {
-				if h.HookModelName == sdk.RepositoryWebHookModelName {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				h := sdk.WorkflowNodeHook{
-					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
-					WorkflowHookModel: sdk.RepositoryWebHookModel,
-				}
-				wf.Root.Hooks = append(wf.Root.Hooks, h)
-			}
-
-			// Update the workflow
-			oldW, err := LoadByID(db, store, p, wf.ID, u, LoadOptions{})
-			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to load workflow %s: %v", wf.Name, err)
+			oldW, errOld := LoadByID(db, store, p, wf.ID, u, LoadOptions{})
+			if errOld != nil {
+				log.Error("postWorkflowAsCodeHandler> unable to load workflow: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to load workflow"
 				return
@@ -278,26 +260,14 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				return
 			}
 
-			if err := Update(ctx, tx, store, wf, oldW, p, u); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to update workflow: %v", err)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to update workflow"
-				return
-			}
-
-			if errHr := HookRegistration(ctx, tx, store, oldW, *wf, p); errHr != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to update hook registration: %v", errHr)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to update hook"
-				return
-			}
-
 			if err := tx.Commit(); err != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to commit workflow: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to commit transaction"
 				return
 			}
+
+			event.PublishWorkflowUpdate(p.Key, *wf, *oldW, u)
 			return
 		}
 

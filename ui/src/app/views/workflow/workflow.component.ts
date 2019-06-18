@@ -11,7 +11,6 @@ import {
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
@@ -33,7 +32,7 @@ import { WorkflowSaveAsCodeComponent } from '../../shared/workflow/modal/save-as
 })
 @AutoUnsubscribe()
 export class WorkflowComponent {
-    @ViewChild('templateApplyModal')
+    @ViewChild('templateApplyModal', { static: false })
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
     project: Project;
@@ -55,11 +54,9 @@ export class WorkflowComponent {
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
-    @ViewChild('invertedSidebar')
-    sidebar: SemanticSidebarComponent;
-    @ViewChild('saveAsCode')
+    @ViewChild('saveAsCode', {static: false})
     saveAsCode: WorkflowSaveAsCodeComponent;
-    @ViewChild('popup')
+    @ViewChild('popup', {static: false})
     popupFromlRepository: SuiPopup;
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
     @ViewChildren(SuiPopupTemplateController) popups2: QueryList<SuiPopupTemplateController<SuiPopup>>;

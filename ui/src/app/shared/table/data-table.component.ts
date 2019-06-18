@@ -168,11 +168,10 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
 
     getData(): Array<T> {
         this.filteredData = this.data;
-        if (this.filter && this.filterFunc) {
-            this.filteredData = this.data.filter(this.filterFunc(this.filter));
-        }
-
         if (this.filteredData) {
+            if (this.filter && this.filterFunc) {
+                this.filteredData = this.data.filter(this.filterFunc(this.filter));
+            }
             this.dataChange.emit(this.filteredData.length);
         }
 

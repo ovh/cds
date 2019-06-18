@@ -20,7 +20,7 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarCodeComponent implements OnInit {
-    @ViewChild('codeMirror') codemirror: any;
+    @ViewChild('codeMirror', {static: false}) codemirror: any;
 
     // Project that contains the workflow
     @Input() project: Project;

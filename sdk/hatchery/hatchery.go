@@ -111,46 +111,12 @@ func Create(ctx context.Context, h Interface) error {
 	)
 
 	// run the starters pool
-	workersStartChan, workerStartResultChan := startWorkerStarters(ctx, h)
+	workersStartChan := startWorkerStarters(ctx, h)
 
 	hostname, errh := os.Hostname()
 	if errh != nil {
 		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
 	}
-	// read the result channel in another goroutine to let the main goroutine start new workers
-	sdk.GoRoutine(ctx, "checkStarterResult", func(ctx context.Context) {
-		for startWorkerRes := range workerStartResultChan {
-			if startWorkerRes.err != nil {
-				errs <- startWorkerRes.err
-			}
-			if startWorkerRes.temptToSpawn {
-				found := false
-				for _, hID := range startWorkerRes.request.spawnAttempts {
-					if hID == h.ID() {
-						found = true
-						break
-					}
-				}
-				if !found {
-					ctxHatcheryCount, cancelHatcheryCount := context.WithTimeout(ctx, 10*time.Second)
-					if hCount, err := h.CDSClient().HatcheryCount(ctxHatcheryCount, startWorkerRes.request.workflowNodeRunID); err == nil {
-						if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
-							ctxtJobIncAttemps, cancelJobIncAttemps := context.WithTimeout(ctx, 10*time.Second)
-							if _, errQ := h.CDSClient().QueueJobIncAttempts(ctxtJobIncAttemps, startWorkerRes.request.id); errQ != nil {
-								log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
-							}
-							cancelJobIncAttemps()
-						}
-					} else {
-						log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
-					}
-					cancelHatcheryCount()
-				}
-			}
-		}
-	},
-		PanicDump(h),
-	)
 
 	// read the errs channel in another goroutine too
 	sdk.GoRoutine(ctx, "checkErrs", func(ctx context.Context) {
@@ -257,7 +223,6 @@ func Create(ctx context.Context, h Interface) error {
 				requirements:      j.Job.Action.Requirements,
 				hostname:          hostname,
 				timestamp:         time.Now().Unix(),
-				spawnAttempts:     j.SpawnAttempts,
 				workflowNodeRunID: j.WorkflowNodeRunID,
 			}
 
@@ -272,11 +237,6 @@ func Create(ctx context.Context, h Interface) error {
 
 			// No model has been found, let's send a failing result
 			if chosenModel == nil {
-				workerStartResultChan <- workerStarterResult{
-					request:      workerRequest,
-					isRun:        false,
-					temptToSpawn: true,
-				}
 				log.Debug("hatchery> no model")
 				endTrace("no model")
 				continue

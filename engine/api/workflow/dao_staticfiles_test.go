@@ -71,8 +71,6 @@ func TestInsertStaticFiles(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	(&w).RetroMigrate()
-
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_staticfiles_1", u, workflow.LoadOptions{

@@ -1,11 +1,10 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflow.action';
 import { finalize } from 'rxjs/operators';
 import { IdName, Label, Project } from '../../../../../model/project.model';
 import { Warning } from '../../../../../model/warning.model';
 import { HelpersService } from '../../../../../service/helpers/helpers.service';
-import { LabelsEditComponent } from '../../../../../shared/labels/edit/labels.edit.component';
 
 @Component({
   selector: 'app-project-workflows-blocs',
@@ -58,10 +57,6 @@ export class ProjectWorkflowListBlocsComponent {
   get labelFilter(): string {
     return this._filterLabel;
   }
-
-  // Modal
-  @ViewChild('projectLabels')
-  projectLabels: LabelsEditComponent;
 
   _labels: Label[];
   _workflows: IdName[];
