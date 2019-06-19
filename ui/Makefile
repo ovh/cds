@@ -2,7 +2,7 @@ reset:
 	rm -rf node_modules
 	rm -rf semantic
 	rm -rf semantic\\
-	rm package-lock.json
+	rm -f package-lock.json
 
 install:
 	npm install

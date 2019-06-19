@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { WNode, Workflow } from '../../../../model/workflow.model';
 
 @Component({
@@ -11,9 +10,9 @@ import { WNode, Workflow } from '../../../../model/workflow.model';
 })
 export class WorkflowDeleteNodeComponent {
 
-    @ViewChild('deleteModal', {static: false})
+    @ViewChild('deleteModal', { static: false })
     deleteModalTemplate: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
 
     @Input() node: WNode;
     @Input() workflow: Workflow;

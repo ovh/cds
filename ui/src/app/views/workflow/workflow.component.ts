@@ -2,6 +2,7 @@ import { Component, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from '@richardlt/ng2-semantic-ui';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
@@ -11,7 +12,6 @@ import {
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
