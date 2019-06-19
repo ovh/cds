@@ -5,7 +5,12 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -283,31 +288,6 @@ func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri s
 	return req
 }
 
-/*func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.AuthentifiedUser, groups ...sdk.Group) (string, error) {
-	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := authentication.New(u, groups, []string{sdk.AccessTokenScopeALL}, "test", sdk.RandomString(5), expiration)
-	if err != nil {
-		return "", err
-	}
-	err = authentication.Insert(db, &token)
-	return jwt, err
-}*/
-
-/*func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser, groups ...sdk.Group) (string, string, error) {
-	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := authentication.New(u, groups, []string{sdk.AccessTokenScopeALL}, authentication.OriginUI, sdk.RandomString(5), expiration)
-	if err != nil {
-		return "", "", err
-	}
-	err = authentication.Insert(db, &token)
-	if err != nil {
-		return "", "", err
-	}
-
-	xsrf := authentication.StoreXSRFToken(store, token)
-	return jwt, xsrf, err
-}*/
-
 // GetBuiltinOrPluginActionByName returns a builtin or plugin action for given name if exists.
 func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Action {
 	a, err := action.LoadByTypesAndName(context.TODO(), db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
@@ -324,6 +304,50 @@ func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name stri
 		t.FailNow()
 	}
 	return a
+}
+
+func NewJWTAuthentifiedMultipartRequest(t *testing.T, jwt string, method, uri string, path string, fileName string, params map[string]string) *http.Request {
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fail()
+	}
+	defer file.Close()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(fileName, filepath.Base(path))
+	if err != nil {
+		t.Fail()
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		t.Fail()
+	}
+
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
+
+	contextType := writer.FormDataContentType()
+
+	if err := writer.Close(); err != nil {
+		t.Fail()
+	}
+
+	req, err := http.NewRequest("POST", uri, body)
+	if err != nil {
+		t.Fail()
+	}
+	req.Header.Set("Content-Type", contextType)
+	req.Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
+	req.Header.Set("ARTIFACT-FILENAME", fileName)
+
+	auth := "Bearer " + jwt
+	req.Header.Add("Authorization", auth)
+
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
+	return req
 }
 
 // NewAction returns an enabled action.

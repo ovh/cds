@@ -3,19 +3,26 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
+	"path"
 	"testing"
 	"time"
+
+	"github.com/ovh/venom"
 
 	"github.com/sguiheux/go-coverage"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -478,8 +485,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	// TODO
-	/*api, _, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -502,7 +508,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri := router.Prefix + fmt.Sprintf("/queue/workflows/%d/spawn/infos", ctx.job.ID)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "POST", uri, info)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "POST", uri, info)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 202, rec.Code)
@@ -511,12 +517,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -564,7 +565,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postWorkflowJobTestsResultsHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, tests)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, tests)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -577,7 +578,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postWorkflowJobStepStatusHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, step)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, step)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -588,12 +589,11 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	test.NoError(t, errN)
 
 	assert.NotNil(t, nodeRun.Tests)
-	assert.Equal(t, 2, nodeRun.Tests.Total)*/
+	assert.Equal(t, 2, nodeRun.Tests.Total)
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	// TODO
-	/*api, _, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -628,12 +628,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -662,7 +657,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["md5sum"] = "123"
 	params["sha512sum"] = "1234"
 	params["nodeJobRunID"] = fmt.Sprintf("%d", ctx.job.ID)
-	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
+	req = assets.NewJWTAuthentifiedMultipartRequest(t, ctx.workerToken, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -686,7 +681,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	}
 	uri = router.GetRoute("GET", api.getWorkflowRunArtifactsHandler, vars)
 	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -705,7 +700,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	}
 	uri = router.GetRoute("GET", api.getDownloadArtifactHandler, vars)
 	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 
@@ -713,12 +708,11 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "Hi, I am foo", string(body))*/
+	assert.Equal(t, "Hi, I am foo", string(body))
 }
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
-	// TODO
-	/*api, _, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -752,12 +746,7 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -784,10 +773,10 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 		"entrypoint":   "index.html",
 		"nodeJobRunID": fmt.Sprintf("%d", ctx.job.ID),
 	}
-	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "mystaticfile"), "mystaticfile", params)
+	req = assets.NewJWTAuthentifiedMultipartRequest(t, ctx.workerToken, "POST", uri, path.Join(os.TempDir(), "mystaticfile"), "mystaticfile", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusNotImplemented, rec.Code)*/
+	assert.Equal(t, http.StatusNotImplemented, rec.Code)
 }
 
 func TestPostVulnerabilityReportHandler(t *testing.T) {
