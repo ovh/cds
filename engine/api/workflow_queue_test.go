@@ -915,7 +915,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	uri := router.GetRoute("POST", api.postVulnerabilityReportHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, "", "POST", uri, request)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, request)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -1200,7 +1200,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 
 	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, "", "POST", uri, request)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, request)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
