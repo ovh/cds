@@ -193,7 +193,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
 		if err != nil {
-			log.Warning("router> unable to parse request date %s: %v", dateRFC5322, err)
+			log.Debug("router> unable to parse request date %s: %v", dateRFC5322, err)
 		} else {
 			ctx = context.WithValue(ctx, contextDate, dateReq)
 		}

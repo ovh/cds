@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ovh/cds/engine/api/services"
+
+	"github.com/ovh/cds/engine/api/worker"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -74,19 +78,19 @@ func getRemoteTime(c context.Context) time.Time {
 	return t
 }
 
-/*func JWT(c context.Context) *sdk.AccessToken {
-	i := c.Value(contextJWT)
+func getAuthSession(c context.Context) *sdk.AuthSession {
+	i := c.Value(contextSession)
 	if i == nil {
-		log.Debug("api.JWT> no jwt token found in context")
+		log.Debug("api.getAuthSession> no AuthSession found in context")
 		return nil
 	}
-	u, ok := i.(*sdk.AccessToken)
+	u, ok := i.(*sdk.AuthSession)
 	if !ok {
-		log.Debug("api.JWT> jwt token type in context is invalid")
+		log.Debug("api.getAuthSession> AuthSession type in context is invalid")
 		return nil
 	}
 	return u
-}*/
+}
 
 func JWTRaw(c context.Context) string {
 	i := c.Value(contextJWTRaw)
@@ -132,39 +136,36 @@ func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 }
 
 func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
-	/*db := a.mustDBWithCtx(ctx)
-		t := JWT(ctx)
-		if t == nil {
-			return nil, false
-		}
-		w, err := worker.LoadByAccessTokenID(ctx, db, t.ID)
-		if err != nil {
-			log.Error("unable to get worker from token %s: %v", t.ID, err)
-			return nil, false
-		}
-		if w == nil {
-			return nil, false
-		}
-	  return w, true*/
-
-	return nil, false
+	db := a.mustDBWithCtx(ctx)
+	s := getAuthSession(ctx)
+	if s == nil {
+		return nil, false
+	}
+	w, err := worker.LoadByAuthConsumerID(ctx, db, s.ConsumerID)
+	if err != nil {
+		log.Error("unable to get worker from session %s: %v", s.ID, err)
+		return nil, false
+	}
+	if w == nil {
+		return nil, false
+	}
+	return w, true
 }
 
 func (a *API) isHatchery(ctx context.Context) (*sdk.Service, bool) {
-	/*db := a.mustDBWithCtx(ctx)
-		t := JWT(ctx)
-		if t == nil {
-			return nil, false
-		}
-		s, err := services.FindByTokenID(db, t.ID)
-		if err != nil {
-			log.Error("unable to get hatchery from token %s: %v", t.ID, err)
-			return nil, false
-		}
-		if s.Type != services.TypeHatchery {
-			return nil, false
-		}
-	  return s, true*/
+	db := a.mustDBWithCtx(ctx)
+	session := getAuthSession(ctx)
+	if session == nil {
+		return nil, false
+	}
 
-	return nil, false
+	s, err := services.GetByConsumerID(ctx, db, session.ConsumerID)
+	if err != nil {
+		log.Error("unable to get hatchery from session %s: %v", session.ID, err)
+		return nil, false
+	}
+	if s.Type != services.TypeHatchery {
+		return nil, false
+	}
+	return s, true
 }

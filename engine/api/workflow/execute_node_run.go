@@ -23,9 +23,29 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func syncJobInNodeRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) {
+	stage := &n.Stages[stageIndex]
+	for i := range stage.RunJobs {
+		rj := &stage.RunJobs[i]
+		if rj.ID == j.ID {
+			rj.Status = j.Status
+			rj.Start = j.Start
+			rj.Done = j.Done
+			rj.Model = j.Model
+			rj.ModelType = j.ModelType
+			rj.ContainsService = j.ContainsService
+			rj.Job = j.Job
+			rj.Header = j.Header
+			rj.Parameters = j.Parameters
+		}
+	}
+}
+
 func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) (*ProcessorReport, error) {
 	_, end := observability.Span(ctx, "workflow.syncTakeJobInNodeRun")
 	defer end()
+
+	log.Debug("workflow.syncTakeJobInNodeRun> job parameters= %+v", j.Parameters)
 
 	report := new(ProcessorReport)
 
@@ -53,6 +73,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.ContainsService = j.ContainsService
 			rj.Job = j.Job
 			rj.Header = j.Header
+			rj.Parameters = j.Parameters
 		}
 		if rj.Status != sdk.StatusStopped {
 			isStopped = false
@@ -514,6 +535,9 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	// browse all running jobs
 	for indexJob := range stage.RunJobs {
 		runJob := &stage.RunJobs[indexJob]
+
+		log.Debug("syncStage> job %d build parameters: %+v", runJob.ID, runJob.Parameters)
+
 		// If job is runnning, sync it
 		if runJob.Status == sdk.StatusBuilding || runJob.Status == sdk.StatusWaiting {
 			runJobDB, errJob := LoadNodeJobRun(db, store, runJob.ID)

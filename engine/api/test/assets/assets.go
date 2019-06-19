@@ -220,6 +220,9 @@ func NewAuthentifiedRequest(t *testing.T, u *sdk.AuthentifiedUser, pass, method,
 		t.FailNow()
 	}
 	AuthentifyRequest(t, req, u, pass)
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
 
 	return req
 }
@@ -244,6 +247,10 @@ func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i i
 
 	auth := "Bearer " + jwt
 	req.Header.Add("Authorization", auth)
+
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
 
 	return req
 }

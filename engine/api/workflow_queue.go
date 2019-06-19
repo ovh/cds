@@ -461,6 +461,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 	// Manage build variables, we have to push them on the job and to propagate on the node above
 	for _, v := range res.NewVariables {
+		log.Debug("postJobResult> managing new variable %s on job %d", v.Name, job.ID)
 		found := false
 		for i := range job.Parameters {
 			currentV := &job.Parameters[i]
@@ -471,6 +472,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 			}
 		}
 		if !found {
+			log.Debug("postJobResult> adding new variable %s on job %d", v.Name, job.ID)
 			sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
 		}
 	}
@@ -479,12 +481,15 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		return nil, sdk.WrapError(err, "Unable to update node job run %d", res.BuildID)
 	}
 
+	log.Debug("postJobResult> job build parameters: %+v", job.Parameters)
+
 	node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	if errn != nil {
 		return nil, sdk.WrapError(errn, "postJobResult> Unable to load node %d", job.WorkflowNodeRunID)
 	}
 
 	for _, v := range res.NewVariables {
+		log.Debug("postJobResult> managing new variable %s on node %d", v.Name, node.ID)
 		found := false
 		for i := range node.BuildParameters {
 			currentV := &node.BuildParameters[i]
@@ -502,7 +507,12 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	if err := workflow.UpdateNodeRunBuildParameters(tx, node.ID, node.BuildParameters); err != nil {
 		return nil, sdk.WrapError(err, "Unable to update node run %d", node.ID)
 	}
-	// ^ build variables are nox updated on job run and on node
+	// ^ build variables are now updated on job run and on node
+
+	//Update worker status
+	if err := worker.SetStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
+		return nil, sdk.WrapError(err, "Cannot update worker %s status", wr.ID)
+	}
 
 	// Update action status
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
@@ -512,11 +522,6 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	report, err := workflow.UpdateNodeJobRunStatus(ctx, newDBFunc, tx, store, proj, job, res.Status)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot update NodeJobRun %d status", job.ID)
-	}
-
-	//Update worker status
-	if err := worker.SetStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
-		return nil, sdk.WrapError(err, "Cannot update worker %s status", wr.ID)
 	}
 
 	//Commit the transaction
@@ -1010,76 +1015,3 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 		return nil
 	}
 }
-
-/*
-func (api *API) postWorkflowJobVariableHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errr := requestVarInt(r, "permID")
-		if errr != nil {
-			return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
-		}
-
-		// Unmarshal into variable
-		var v sdk.Variable
-		if err := service.UnmarshalBody(r, &v); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler")
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "postWorkflowJobVariableHandler> Unable to start tx")
-		}
-		defer tx.Rollback()
-
-		job, errj := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, api.Cache, id)
-		if errj != nil {
-			return errj
-		}
-
-		found := false
-		for i := range job.Parameters {
-			currentV := &job.Parameters[i]
-			if currentV.Name == v.Name {
-				currentV.Value = v.Value
-				found = true
-				break
-			}
-		}
-		if !found {
-			sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
-		}
-
-		if err := workflow.UpdateNodeJobRun(ctx, tx, job); err != nil {
-			return sdk.WrapError(err, "Unable to update node job run %d", id)
-		}
-
-		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
-		if errn != nil {
-			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node %d", job.WorkflowNodeRunID)
-		}
-
-		found = false
-		for i := range node.BuildParameters {
-			currentP := &node.BuildParameters[i]
-			if currentP.Name == v.Name {
-				currentP.Value = v.Value
-				found = true
-				break
-			}
-		}
-		if !found {
-			sdk.AddParameter(&node.BuildParameters, v.Name, sdk.StringParameter, v.Value)
-		}
-
-		if err := workflow.UpdateNodeRunBuildParameters(tx, node.ID, node.BuildParameters); err != nil {
-			return sdk.WrapError(err, "Unable to update node run %d", node.ID)
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Unable to commit tx")
-		}
-
-		return nil
-	}
-}
-*/
