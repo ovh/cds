@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -29,7 +30,7 @@ import (
 
 func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		/*id, err := requestVarInt(r, "id")
+		id, err := requestVarInt(r, "id")
 		if err != nil {
 			return err
 		}
@@ -37,11 +38,6 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		wk, ok := api.isWorker(ctx)
 		if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		var takeForm sdk.WorkerTakeForm
-		if err := service.UnmarshalBody(r, &takeForm); err != nil {
-			return err
 		}
 
 		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
@@ -73,7 +69,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
-		report, errT := takeJob(ctx, api.mustDB, api.Cache, p, id, &takeForm, wm.Name, pbji, wk)
+		report, errT := takeJob(ctx, api.mustDB, api.Cache, p, id, wm.Name, pbji, wk)
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot takeJob nodeJobRunID:%d", id)
 		}
@@ -81,13 +77,13 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
 		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
 
-		return service.WriteJSON(w, pbji, http.StatusOK)*/
+		return service.WriteJSON(w, pbji, http.StatusOK)
 
 		return nil
 	}
 }
 
-/*func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, takeForm *sdk.WorkerTakeForm, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker) (*workflow.ProcessorReport, error) {
+func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker) (*workflow.ProcessorReport, error) {
 	// Start a tx
 	tx, errBegin := dbFunc().Begin()
 	if errBegin != nil {
@@ -98,19 +94,13 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	//Prepare spawn infos
 	infos := []sdk.SpawnInfo{
 		{
-			RemoteTime: takeForm.Time,
+			RemoteTime: getRemoteTime(ctx),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}},
 		},
 		{
-			RemoteTime: takeForm.Time,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, takeForm.Version, takeForm.OS, takeForm.Arch}},
+			RemoteTime: getRemoteTime(ctx),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}},
 		},
-	}
-	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
-		infos = append(infos, sdk.SpawnInfo{
-			RemoteTime: takeForm.Time,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJob.ID, Args: []interface{}{wk.Name}},
-		})
 	}
 
 	//Take node job run
@@ -133,7 +123,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	if noderun.Status == sdk.StatusWaiting {
 		noderun.Status = sdk.StatusBuilding
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
-			return nil, sdk.WrapError(err, "Cannot get node run")
+			return nil, sdk.WrapError(err, "Cannot update node run")
 		}
 		report.Add(*noderun)
 	}
@@ -173,7 +163,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	}
 
 	return report, nil
-}*/
+}
 
 func (api *API) postBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -468,6 +458,51 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
 		return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
 	}
+
+	// Manage build variables, we have to push them on the job and to propagate on the node above
+	for _, v := range res.NewVariables {
+		found := false
+		for i := range job.Parameters {
+			currentV := &job.Parameters[i]
+			if currentV.Name == v.Name {
+				currentV.Value = v.Value
+				found = true
+				break
+			}
+		}
+		if !found {
+			sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
+		}
+	}
+
+	if err := workflow.UpdateNodeJobRun(ctx, tx, job); err != nil {
+		return nil, sdk.WrapError(err, "Unable to update node job run %d", res.BuildID)
+	}
+
+	node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	if errn != nil {
+		return nil, sdk.WrapError(errn, "postJobResult> Unable to load node %d", job.WorkflowNodeRunID)
+	}
+
+	for _, v := range res.NewVariables {
+		found := false
+		for i := range node.BuildParameters {
+			currentV := &node.BuildParameters[i]
+			if currentV.Name == v.Name {
+				currentV.Value = v.Value
+				found = true
+				break
+			}
+		}
+		if !found {
+			sdk.AddParameter(&node.BuildParameters, v.Name, sdk.StringParameter, v.Value)
+		}
+	}
+
+	if err := workflow.UpdateNodeRunBuildParameters(tx, node.ID, node.BuildParameters); err != nil {
+		return nil, sdk.WrapError(err, "Unable to update node run %d", node.ID)
+	}
+	// ^ build variables are nox updated on job run and on node
 
 	// Update action status
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)

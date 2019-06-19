@@ -31,6 +31,7 @@ const (
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
 	TagToken              = "token"
+	TagPermission         = "permission"
 )
 
 // LinkTo a traceID

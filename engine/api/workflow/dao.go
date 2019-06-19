@@ -1442,3 +1442,27 @@ func IsDeploymentIntegrationUsed(db gorp.SqlExecutor, projectID int64, appID int
 
 	return nb > 0, nil
 }
+
+func LoadMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKey, workflowName string, groupIDs []int64) (int, error) {
+	ctx, end := observability.Span(ctx, "workflow.LoadMaxLevelPermission")
+	defer end()
+
+	query := gorpmapping.NewQuery(`
+		SELECT max(workflow_perm.role)
+		FROM workflow_perm
+		JOIN workflow ON workflow.id = workflow_perm.workflow_id
+		JOIN project ON project.id = workflow.project_id
+		JOIN project_group ON project_group.id = workflow_perm.project_group_id
+		WHERE project_group.project_id = project.id
+		AND project.projectkey = $1
+		AND workflow.name = $2
+		AND project_group.group_id = ANY(string_to_array($3, ',')::int[])
+		GROUP BY project.projectkey, workflow.name
+	`).Args(projectKey, workflowName, gorpmapping.IDsToQueryString(groupIDs))
+
+	maxRole, err := gorpmapping.GetInt(db, query)
+	if err != nil {
+		return 0, err
+	}
+	return int(maxRole), nil
+}

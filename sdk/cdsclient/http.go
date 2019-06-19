@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"runtime/pprof"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -183,6 +184,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		req = req.WithContext(ctx)
+		date := sdk.FormatDateRFC5322(time.Now())
+		req.Header.Set("Date", date)
+		req.Header.Set("X-CDS-RemoteTime", date)
 
 		if c.config.Verbose {
 			log.Printf("Stream > context> %s\n", tracingutils.DumpContext(ctx))

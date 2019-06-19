@@ -17,6 +17,9 @@ type Worker struct {
 	HatcheryID int64     `json:"hatchery_id" cli:"-" db:"hatchery_id"`
 	Uptodate   bool      `json:"uptodate" cli:"-" db:"-"`
 	ConsumerID string    `json:"-" cli:"-"  db:"auth_consumer_id"`
+	Version    string    `json:"version" cli:"version"  db:"version"`
+	OS         string    `json:"os" cli:"os"  db:"os"`
+	Arch       string    `json:"arch" cli:"arch"  db:"arch"`
 }
 
 // WorkerRegistrationForm represents the arguments needed to register a worker

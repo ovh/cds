@@ -83,7 +83,10 @@ CREATE TABLE worker
     model_id BIGINT NOT NULL,
     job_run_id BIGINT,
     hatchery_id BIGINT NOT NULL,
-    auth_consumer_id VARCHAR(36) REFERENCES auth_consumer(id)
+    auth_consumer_id VARCHAR(36) REFERENCES auth_consumer(id),
+    version VARCHAR(255) NOT NULL,
+    os VARCHAR(255) NOT NULL,
+    arch VARCHAR(255) NOT NULL
 );
 
 SELECT create_foreign_key('FK_WORKER_MODEL', 'worker', 'worker_model', 'model_id', 'id');
@@ -102,5 +105,6 @@ DROP TABLE "user_contact";
 DROP TABLE "worker";
 DROP TABLE "auth_session";
 DROP TABLE "auth_consumer";
+DROP TABLE "user_local_authentication";
 DROP TABLE "authentified_user";
 ALTER TABLE old_worker RENAME TO worker;

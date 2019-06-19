@@ -248,24 +248,14 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 }
 
 func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	// TODO
-	/*
-		var err error
-		//Generate token
-		ctx.workerToken, err = token.GenerateToken()
-		test.NoError(t, err)
-		//Insert token
-		test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.OldUserStruct.Groups[0].ID, ctx.workerToken, sdk.Persistent, "", ""))
-		//Register the worker
-		params := &sdk.WorkerRegistrationForm{
-			Name:  sdk.RandomString(10),
-			Token: ctx.workerToken,
-			OS:    "linux",
-			Arch:  "amd64",
-		}
-		ctx.worker, err = worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities, params.OS, params.Arch)
-		test.NoError(t, err)
-	*/
+	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.OldUserStruct.Groups[0].ID)
+	if err != nil {
+		t.Fatalf("Error getting group : %s", err)
+	}
+	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test1")
+	w, workerJWT := RegisterWorker(t, api, g.ID, model.Name)
+	ctx.workerToken = workerJWT
+	ctx.worker = w
 }
 
 func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
@@ -429,8 +419,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
-	// TODO
-	/*api, _, router, end := newTestAPI(t)
+	api, _, router, end := newTestAPI(t)
 	defer end()
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -450,12 +439,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -467,18 +451,16 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 
 	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/log", ctx.job.ID)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, logs)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, logs)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 202, rec.Code)
-
-	now, _ := ptypes.TimestampProto(time.Now())
 
 	//Send result
 	res := sdk.Result{
 		Duration:   "10",
 		Status:     sdk.StatusSuccess,
-		RemoteTime: now,
+		RemoteTime: time.Now(),
 		BuildID:    ctx.job.ID,
 	}
 
@@ -491,10 +473,10 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postWorkflowJobResultHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, res)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, res)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 204, rec.Code)*/
+	assert.Equal(t, 204, rec.Code)
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {

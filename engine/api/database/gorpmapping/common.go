@@ -169,6 +169,20 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) (bool
 	return true, nil
 }
 
+func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
+	res, err := db.SelectNullInt(q.query, q.arguments...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, sdk.WithStack(err)
+	}
+	if !res.Valid {
+		return 0, nil
+	}
+	return res.Int64, nil
+}
+
 type IDs pq.Int64Array
 
 // And returns a new AND expression from given ones.

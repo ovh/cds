@@ -413,11 +413,8 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) (*sdk.Service, *rsa.PrivateKey) {
 	usr1, _ := InsertAdminUser(db)
 
-	//exp := time.Now().Add(5 * time.Minute)
-	//token, _, err := authentication.New(*usr1, nil, []string{sdk.AccessTokenScopeALL}, "cds_test", name, exp)
-	//test.NoError(t, err)
-
-	//test.NoError(t, authentication.Insert(db, &token))
+	hConsumer, err := authentication.NewConsumerBuiltin(db, name, name, usr1.ID, []int64{group.SharedInfraGroup.ID}, []string{sdk.AccessTokenScopeALL})
+	test.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)
@@ -426,11 +423,11 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:       name,
+			Name:       hConsumer.Name,
 			Type:       serviceType,
 			PublicKey:  publicKey,
 			Maintainer: *usr1,
-			//TokenID:    token.ID,
+			ConsumerID: hConsumer.ID,
 		},
 	}
 

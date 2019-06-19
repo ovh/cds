@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/observability"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -11,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -57,7 +60,52 @@ func (api *API) checkProjectPermissions(ctx context.Context, key string, expecte
 }
 
 func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVars map[string]string) error {
-	return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s, missing project key value", workflowName)
+	ctx, end := observability.Span(ctx, "api.checkWorkflowPermissions")
+	defer end()
+
+	projectKey, has := routeVars["permProjectKey"]
+	if projectKey == "" {
+		projectKey, has = routeVars["key"]
+	}
+	if !has {
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s, missing project key value", workflowName)
+	}
+
+	if workflowName == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given workflow name")
+	}
+
+	maxLevelPermission, err := workflow.LoadMaxLevelPermission(ctx, api.mustDB(), projectKey, workflowName, getAPIConsumer(ctx).GetGroupIDs())
+	if err != nil {
+		return sdk.NewError(sdk.ErrForbidden, err)
+	}
+
+	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
+		// If it's about READ: we have to check if the user is a maintainer or an admin
+		if perm < permission.PermissionReadExecute {
+			if !isMaintainer(ctx) {
+				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
+				log.Debug("checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
+				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
+			}
+			log.Debug("checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
+			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_maintainer"))
+			return nil
+		} else {
+			// If it's about Execute of Write: we have to check if the user is an admin
+			if !isAdmin(ctx) {
+				// The caller doesn't enough permission level from its groups and is not an admin
+				log.Debug("checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
+				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
+			}
+			log.Debug("checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
+			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
+			return nil
+		}
+	}
+	log.Debug("checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
+	observability.Current(ctx, observability.Tag(observability.TagPermission, "is_granted"))
+	return nil
 }
 
 func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVars map[string]string) error {

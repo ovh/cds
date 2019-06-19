@@ -190,6 +190,14 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		// Push scope in the context
 		ctx = context.WithValue(ctx, contextScope, scope)
 
+		dateRFC5322 := req.Header.Get("Date")
+		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
+		if err != nil {
+			log.Warning("router> unable to parse request date %s: %v", dateRFC5322, err)
+		} else {
+			ctx = context.WithValue(ctx, contextDate, dateReq)
+		}
+
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
 

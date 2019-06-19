@@ -75,6 +75,10 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
+	maxRole, err := workflow.LoadMaxLevelPermission(context.TODO(), db, proj.Key, w.Name, []int64{proj.ProjectGroups[0].Group.ID})
+	test.NoError(t, err)
+	assert.Equal(t, 7, maxRole)
+
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 

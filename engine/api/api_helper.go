@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -59,6 +60,18 @@ func getHandlerScope(c context.Context) HandlerScope {
 		return nil
 	}
 	return u
+}
+
+func getRemoteTime(c context.Context) time.Time {
+	i := c.Value(contextDate)
+	if i == nil {
+		return time.Now()
+	}
+	t, ok := i.(time.Time)
+	if !ok {
+		return time.Now()
+	}
+	return t
 }
 
 /*func JWT(c context.Context) *sdk.AccessToken {

@@ -84,6 +84,9 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 		HatcheryID: hatcheryID,
 		LastBeat:   time.Now(),
 		ConsumerID: consumer.ID,
+		Version:    registrationForm.Version,
+		OS:         registrationForm.OS,
+		Arch:       registrationForm.Arch,
 	}
 	w.Uptodate = registrationForm.Version == sdk.VERSION
 

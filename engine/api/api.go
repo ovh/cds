@@ -775,13 +775,6 @@ func (a *API) Serve(ctx context.Context) error {
 
 	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
 
-	go func() {
-		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Addr, a.Config.GRPC.Port, false, "", "", a.Config.Log.StepMaxSize); err != nil {
-			log.Error("Cannot start GRPC server: %v", err)
-		}
-	}()
-
 	if err := version.Upsert(a.mustDB()); err != nil {
 		return sdk.WrapError(err, "Cannot upsert cds version")
 	}

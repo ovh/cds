@@ -14,6 +14,7 @@ const (
 	contextJWT
 	contextJWTRaw
 	contextScope
+	contextDate
 )
 
 // ContextValues retuns auth values of a context

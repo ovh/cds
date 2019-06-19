@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http/httptest"
 	"runtime"
 	"testing"
@@ -18,40 +19,16 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
-func TestPostRegisterWorkerHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
-	defer end()
-
-	ctx := context.TODO()
-
-	g, err := group.LoadByName(ctx, api.mustDB(), "shared.infra")
+func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelName string) (*sdk.Worker, string) {
+	model, err := workermodel.LoadByNameAndGroupID(api.mustDB(), existingWorkerModelName, groupID)
 	if err != nil {
-		t.Fatalf("Error getting group : %s", err)
+		t.Fatalf("RegisterWorker> Error getting worker model : %s", err)
 	}
 
-	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), "Test1", g.ID)
-	if model == nil {
-		model = &sdk.Model{
-			Name:    "Test1",
-			GroupID: g.ID,
-			Type:    sdk.Docker,
-			ModelDocker: sdk.ModelDocker{
-				Image: "buildpack-deps:jessie",
-			},
-			RegisteredCapabilities: sdk.RequirementList{
-				{
-					Name:  "capa1",
-					Type:  sdk.BinaryRequirement,
-					Value: "1",
-				},
-			},
-		}
-
-		if err := workermodel.Insert(api.mustDB(), model); err != nil {
-			t.Fatalf("Error inserting model : %s", err)
-		}
+	g, err := group.LoadByID(context.TODO(), api.mustDB(), groupID)
+	if err != nil {
+		t.Fatalf("RegisterWorker> Error getting group : %s", err)
 	}
-
 	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, api.mustDB(), *g)
 	session, jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
@@ -76,16 +53,64 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	//Check result
-	t.Logf(">>%s", rec.Body.String())
+	var w sdk.Worker
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &w))
 	workerJWT := rec.Header().Get("X-CDS-JWT")
-	t.Logf(">>%s", workerJWT)
 
-	uri = api.Router.GetRoute("POST", api.postRefreshWorkerHandler, nil)
+	return &w, workerJWT
+}
+
+func LoadSharedInfraGroup(t *testing.T, api *API) *sdk.Group {
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
+	if err != nil {
+		t.Fatalf("Error getting group : %s", err)
+	}
+	return g
+}
+
+func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelName string) *sdk.Model {
+	model, _ := workermodel.LoadByNameAndGroupID(api.mustDB(), workermodelName, groupID)
+	if model == nil {
+		model = &sdk.Model{
+			Name:    workermodelName,
+			GroupID: groupID,
+			Type:    sdk.Docker,
+			ModelDocker: sdk.ModelDocker{
+				Image: "buildpack-deps:jessie",
+			},
+			RegisteredCapabilities: sdk.RequirementList{
+				{
+					Name:  "capa1",
+					Type:  sdk.BinaryRequirement,
+					Value: "1",
+				},
+			},
+		}
+
+		if err := workermodel.Insert(api.mustDB(), model); err != nil {
+			t.Fatalf("Error inserting model : %s", err)
+		}
+	}
+
+	return model
+}
+
+func TestPostRegisterWorkerHandler(t *testing.T) {
+	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	g := LoadSharedInfraGroup(t, api)
+
+	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test1")
+
+	_, workerJWT := RegisterWorker(t, api, g.ID, model.Name)
+
+	uri := api.Router.GetRoute("POST", api.postRefreshWorkerHandler, nil)
 	test.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, workerJWT, "POST", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, workerJWT, "POST", uri, nil)
 
 	//Do the request
-	rec = httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
 
