@@ -5,7 +5,7 @@ import omit from 'lodash-es/omit';
 import { finalize } from 'rxjs/operators';
 import { User } from '../../../../model/user.model';
 import { ModelPattern } from '../../../../model/worker-model.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';

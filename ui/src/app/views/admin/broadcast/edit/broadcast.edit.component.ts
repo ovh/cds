@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
 import { User } from 'app/model/user.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AuthentificationStore } from 'app/service/authentication/authentification.store';
 import { BroadcastService } from 'app/service/broadcast/broadcast.service';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -39,8 +39,10 @@ export class BroadcastEditComponent {
         private sharedService: SharedService,
         private _navbarService: NavbarService,
         private _broadcastStore: BroadcastStore,
-        private _toast: ToastService, private _translate: TranslateService,
-        private _route: ActivatedRoute, private _router: Router,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _route: ActivatedRoute,
+        private _router: Router,
         private _authentificationStore: AuthentificationStore,
         private _broadcastService: BroadcastService,
     ) {

@@ -7,7 +7,7 @@ import { finalize } from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
 import { User } from '../../../../model/user.model';
 import { Warning } from '../../../../model/warning.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 

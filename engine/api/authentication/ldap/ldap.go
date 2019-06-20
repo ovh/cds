@@ -1,31 +1,23 @@
 package ldap
 
 import (
-	"context"
-	"crypto/tls"
-	"fmt"
-	"net/http"
-	"strings"
+	"time"
 
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
-	"gopkg.in/ldap.v2"
+	ldap "gopkg.in/ldap.v2"
 
-	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
-var _ sdk.AuthDriver = new(ldapAuthentication)
+var _ sdk.AuthDriver = new(authDriver)
 
-type ldapAuthentication struct {
-	conf LDAPConfig
-	conn *ldap.Conn
+type authDriver struct {
+	signupDisabled bool
+	conf           Config
+	conn           *ldap.Conn
 }
 
-//LDAPConfig handles all config to connect to the LDAP
-type LDAPConfig struct {
+// Config handles all config to connect to the LDAP.
+type Config struct {
 	Host         string
 	Port         int
 	Base         string
@@ -36,13 +28,15 @@ type LDAPConfig struct {
 	BindPwd      string
 }
 
-func NewDriver(cfg LDAPConfig) sdk.AuthDriver {
-	return &ldapAuthentication{
-		conf: cfg,
+// NewDriver returns a new ldap auth driver.
+func NewDriver(signupDisabled bool, cfg Config) sdk.AuthDriver {
+	return &authDriver{
+		signupDisabled: signupDisabled,
+		conf:           cfg,
 	}
 }
 
-func (l *ldapAuthentication) CheckAuthentication(ctx context.Context, db gorp.SqlExecutor, r *http.Request) (*sdk.AuthentifiedUser, error) {
+/*func (l *ldapDriver) CheckAuthentication(ctx context.Context, db gorp.SqlExecutor, r *http.Request) (*sdk.AuthentifiedUser, error) {
 	_, end := observability.Span(ctx, "ldapAuthentication.CheckAuthentication")
 	defer end()
 
@@ -88,32 +82,35 @@ func (l *ldapAuthentication) CheckAuthentication(ctx context.Context, db gorp.Sq
 	//u.Email = entry[0].Attributes["mail"]
 
 	return u, nil
-}
+}*/
 
-func (l ldapAuthentication) GetManifest() sdk.AuthDriverManifest {
+func (d authDriver) GetManifest() sdk.AuthDriverManifest {
 	return sdk.AuthDriverManifest{
-		Type:   sdk.ConsumerLDAP,
-		Method: http.MethodPost,
-		URL:    "/auth/consumer/ldap/signin",
-		Fields: []sdk.AuthDriverManifestField{
-			{
-				Name: "username",
-				Type: sdk.FieldString,
-			},
-			{
-				Name: "password",
-				Type: sdk.FieldPassword,
-			},
-		},
+		Type:           sdk.ConsumerLDAP,
+		SignupDisabled: d.signupDisabled,
 	}
 }
 
-func (l ldapAuthentication) CheckRequest(req sdk.AuthDriverRequest) error {
+func (d authDriver) GetSigninURI(state string) string {
 	// TODO
+	return ""
+}
+
+func (d authDriver) GetSessionDuration() time.Duration {
+	return time.Hour * 24 * 30 // 1 month session
+}
+
+func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
+	if email, ok := req["email"]; !ok || email == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for ldap signin")
+	}
+	if password, ok := req["password"]; !ok || password == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for ldap signin")
+	}
 	return nil
 }
 
-func (l *ldapAuthentication) openLDAP() error {
+/*func (l *ldapDriver) openLDAP() error {
 	address := fmt.Sprintf("%s:%d", l.conf.Host, l.conf.Port)
 
 	log.Info("Auth> Preparing connection to LDAP server: %s", address)
@@ -161,10 +158,10 @@ func (l *ldapAuthentication) openLDAP() error {
 	}
 
 	return nil
-}
+}*/
 
 //Bind binds
-func (l *ldapAuthentication) Bind(username, password string) error {
+/*func (l *ldapDriver) Bind(username, password string) error {
 	bindRequest := fmt.Sprintf(l.conf.DN, username)
 	bindRequest = strings.Replace(bindRequest, "{{.ldapBase}}", l.conf.Base, -1)
 	log.Debug("LDAP> Bind user %s", bindRequest)
@@ -185,10 +182,10 @@ func (l *ldapAuthentication) Bind(username, password string) error {
 	}
 
 	return nil
-}
+}*/
 
 //Search search
-func (l *ldapAuthentication) Search(filter string, attributes ...string) ([]Entry, error) {
+/*func (l *ldapDriver) Search(filter string, attributes ...string) ([]Entry, error) {
 	attr := append(attributes, "dn")
 
 	if l.conf.BindDN != "" {
@@ -249,4 +246,8 @@ func (l *ldapAuthentication) Search(filter string, attributes ...string) ([]Entr
 	}
 
 	return entries, nil
+}*/
+
+func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+	return sdk.AuthDriverUserInfo{}, sdk.WithStack(sdk.ErrNotImplemented)
 }

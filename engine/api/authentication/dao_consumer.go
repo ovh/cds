@@ -56,7 +56,7 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 		return nil, sdk.WrapError(err, "cannot get auth consumer")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(consumer, consumer.Signature)
@@ -88,6 +88,12 @@ func LoadConsumerByID(ctx context.Context, db gorp.SqlExecutor, id string, opts 
 // LoadConsumerByTypeAndUserID returns an auth consumer from database for given type and user id.
 func LoadConsumerByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, consumerType sdk.AuthConsumerType, userID string, opts ...LoadConsumerOptionFunc) (*sdk.AuthConsumer, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND user_id = $2").Args(consumerType, userID)
+	return getConsumer(ctx, db, query, opts...)
+}
+
+// LoadConsumerByTypeAndUserExternalID returns an auth consumer from database for given type and user id.
+func LoadConsumerByTypeAndUserExternalID(ctx context.Context, db gorp.SqlExecutor, consumerType sdk.AuthConsumerType, userExternalID string, opts ...LoadConsumerOptionFunc) (*sdk.AuthConsumer, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND (data->>'external_id')::text = $2").Args(consumerType, userExternalID)
 	return getConsumer(ctx, db, query, opts...)
 }
 

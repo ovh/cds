@@ -12,7 +12,7 @@ import * as format from 'string-format-obj';
 import { environment } from '../environments/environment';
 import { AppService } from './app.service';
 import { Event, EventType } from './model/event.model';
-import { AuthentificationStore } from './service/auth/authentification.store';
+import { AuthentificationStore } from './service/authentication/authentification.store';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
 import { ThemeStore } from './service/theme/theme.store';

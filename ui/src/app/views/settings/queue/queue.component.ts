@@ -6,7 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { PipelineStatus } from '../../../model/pipeline.model';
 import { User } from '../../../model/user.model';
 import { WorkflowNodeJobRun } from '../../../model/workflow.run.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { WorkflowRunService } from '../../../service/workflow/run/workflow.run.service';
 import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';

@@ -110,8 +110,7 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 		log.Error("cannot create auth consumer: %v", err)
 	}
 
-	expiration := time.Now().Add(5 * time.Minute)
-	session, err := authentication.NewSession(db, consumer, expiration)
+	session, err := authentication.NewSession(db, consumer, 5*time.Minute)
 	if err != nil {
 		log.Error("cannot create auth session: %v", err)
 	}
@@ -158,8 +157,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		log.Error("cannot create auth consumer: %v", err)
 	}
 
-	expiration := time.Now().Add(5 * time.Minute)
-	session, err := authentication.NewSession(db, consumer, expiration)
+	session, err := authentication.NewSession(db, consumer, 5*time.Minute)
 	if err != nil {
 		log.Error("cannot create auth session: %v", err)
 	}
@@ -432,7 +430,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 
 	test.NoError(t, services.Insert(db, &srv))
 
-	session, err := authentication.NewSession(db, hConsumer, time.Now().Add(time.Hour))
+	session, err := authentication.NewSession(db, hConsumer, 5*time.Minute)
 	test.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session)

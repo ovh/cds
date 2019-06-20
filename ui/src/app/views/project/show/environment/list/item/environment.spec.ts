@@ -13,7 +13,7 @@ import { Environment } from '../../../../../../model/environment.model';
 import { Project } from '../../../../../../model/project.model';
 import { Variable } from '../../../../../../model/variable.model';
 import { ApplicationAuditService } from '../../../../../../service/application/application.audit.service';
-import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../../../../service/authentication/authentification.store';
 import { EnvironmentAuditService } from '../../../../../../service/environment/environment.audit.service';
 import { EnvironmentService } from '../../../../../../service/environment/environment.service';
 import { NavbarService } from '../../../../../../service/navbar/navbar.service';

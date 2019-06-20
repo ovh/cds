@@ -2,7 +2,7 @@ import {Injectable, NgZone} from '@angular/core';
 import {EventSourcePolyfill} from 'ng-event-source';
 import {Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
-import {AuthentificationStore} from '../auth/authentification.store';
+import {AuthentificationStore} from '../authentication/authentification.store';
 
 @Injectable()
 export class LastUpdateService {

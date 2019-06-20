@@ -15,7 +15,7 @@ import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
 import { User } from '../../../model/user.model';
 import { Workflow } from '../../../model/workflow.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { KeyService } from '../../../service/keys/keys.service';
 import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';

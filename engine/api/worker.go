@@ -6,18 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
-
-	"github.com/ovh/cds/engine/api/authentication"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
-
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -88,7 +85,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
 
-		workerSession, err := authentication.NewSession(tx, workerConsumer, time.Unix(workerTokenFromHatchery.ExpiresAt, 0))
+		workerSession, err := authentication.NewSession(tx, workerConsumer, workerauth.SessionDuration)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName)

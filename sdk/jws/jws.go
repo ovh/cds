@@ -10,6 +10,8 @@ import (
 	"errors"
 
 	"gopkg.in/square/go-jose.v2"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // NewRandomRSAKey generates a public/private key pair
@@ -53,13 +55,17 @@ func NewSigner(privateKey *rsa.PrivateKey) (jose.Signer, error) {
 func Sign(signer jose.Signer, content interface{}) (string, error) {
 	btes, err := json.Marshal(content)
 	if err != nil {
-		return "", err
+		return "", sdk.WithStack(err)
 	}
 	object, err := signer.Sign(btes)
 	if err != nil {
-		return "", err
+		return "", sdk.WithStack(err)
 	}
-	return object.CompactSerialize()
+	compact, err := object.CompactSerialize()
+	if err != nil {
+		return "", sdk.WithStack(err)
+	}
+	return compact, nil
 }
 
 // Verify parses the serialized, protected JWS object, than verifying the signature on the payload

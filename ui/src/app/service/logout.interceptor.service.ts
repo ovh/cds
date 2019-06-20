@@ -1,11 +1,11 @@
-import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {NavigationExtras, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Observable, throwError as observableThrowError} from 'rxjs';
-import {catchError} from 'rxjs/operators';
-import {ToastService} from '../shared/toast/ToastService';
-import {AuthentificationStore} from './auth/authentification.store';
+import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { NavigationExtras, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Observable, throwError as observableThrowError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { ToastService } from '../shared/toast/ToastService';
+import { AuthentificationStore } from './authentication/authentification.store';
 
 
 @Injectable()
@@ -31,12 +31,12 @@ export class LogoutInterceptor implements HttpInterceptor {
                         };
 
                         if (this._router.routerState.snapshot.url
-                            && this._router.routerState.snapshot.url.indexOf('account/login') === -1) {
-                          navigationExtras.queryParams = {redirect: this._router.routerState.snapshot.url};
+                            && this._router.routerState.snapshot.url.indexOf('auth/signin') === -1) {
+                            navigationExtras.queryParams = { redirect: this._router.routerState.snapshot.url };
                         }
 
                         if (navigationExtras.queryParams.redirect) {
-                            this._router.navigate(['/account/login'], navigationExtras);
+                            this._router.navigate(['/auth/signin'], navigationExtras);
                             this._authStore.removeUser();
                         }
                     } else {
@@ -53,6 +53,6 @@ export class LogoutInterceptor implements HttpInterceptor {
                     }
                     return observableThrowError(e);
                 }
-        }));
+            }));
     }
 }

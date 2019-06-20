@@ -7,7 +7,7 @@ import { Bookmark } from '../../model/bookmark.model';
 import { Groups } from '../../model/group.model';
 import { Token } from '../../model/token.model';
 import { User, UserLoginRequest } from '../../model/user.model';
-import { AuthentificationStore } from '../auth/authentification.store';
+import { AuthentificationStore } from '../authentication/authentification.store';
 
 @Injectable()
 export class UserService {

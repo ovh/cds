@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/model/user.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AuthentificationStore } from 'app/service/authentication/authentification.store';
 import { ConfigService } from 'app/service/config/config.service';
 import { ThemeStore } from 'app/service/services.module';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';

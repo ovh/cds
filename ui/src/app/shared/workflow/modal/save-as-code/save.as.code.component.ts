@@ -6,7 +6,7 @@ import {environment} from '../../../../../environments/environment';
 import {Operation} from '../../../../model/operation.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {AuthentificationStore} from '../../../../service/authentication/authentification.store';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {CDSWebWorker} from '../../../worker/web.worker';
 

@@ -8,7 +8,7 @@ import { NavbarProjectData, NavbarSearchItem } from 'app/model/navbar.model';
 import { NavbarRecentData } from 'app/model/navbar.model';
 import { User } from 'app/model/user.model';
 import { ApplicationStore } from 'app/service/application/application.store';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AuthentificationStore } from 'app/service/authentication/authentification.store';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { LanguageStore } from 'app/service/language/language.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';

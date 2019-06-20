@@ -9,7 +9,7 @@ import { Job, StepStatus } from '../../../../../../model/job.model';
 import { BuildResult, Log, PipelineStatus } from '../../../../../../model/pipeline.model';
 import { Project } from '../../../../../../model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
-import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../../../../service/authentication/authentification.store';
 import { AutoUnsubscribe } from '../../../../../../shared/decorator/autoUnsubscribe';
 import { DurationService } from '../../../../../../shared/duration/duration.service';
 import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';

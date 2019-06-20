@@ -16,6 +16,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/github"
+	"github.com/ovh/cds/engine/api/authentication/gitlab"
 	"github.com/ovh/cds/engine/api/authentication/ldap"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -82,22 +84,25 @@ type Configuration struct {
 		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory." json:"-"`
 		RSAPrivateKey    string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		LDAP             struct {
-			Enable   bool   `toml:"enable" default:"false" json:"enable"`
-			Host     string `toml:"host" json:"host"`
-			Port     int    `toml:"port" default:"636" json:"port"`
-			SSL      bool   `toml:"ssl" default:"true" json:"ssl"`
-			Base     string `toml:"base" default:"dc=myorganization,dc=com" json:"base"`
-			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com" json:"dn"`
-			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
-			BindDN   string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"bindDN"`
-			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
+			Enable         bool   `toml:"enable" default:"false" json:"enable"`
+			SignupDisabled bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
+			Host           string `toml:"host" json:"host"`
+			Port           int    `toml:"port" default:"636" json:"port"`
+			SSL            bool   `toml:"ssl" default:"true" json:"ssl"`
+			Base           string `toml:"base" default:"dc=myorganization,dc=com" json:"base"`
+			DN             string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com" json:"dn"`
+			Fullname       string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
+			BindDN         string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"bindDN"`
+			BindPwd        string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
 			Enable               bool   `toml:"enable" default:"true" json:"enable"`
+			SignupDisabled       bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
 		CorporateSSO struct {
 			Enabled        bool   `json:"enabled" default:"false" toml:"enabled"`
+			SignupDisabled bool   `json:"signup_disabled" default:"false" toml:"signup_disabled"`
 			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
 			Keys           struct {
@@ -114,10 +119,20 @@ type Configuration struct {
 			} `json:"claims" toml:"claims"`
 		} `json:"corporate_sso" toml:"corporateSSO"`
 		Github struct {
-			Enabled      bool   `json:"enabled" default:"false" toml:"enabled"`
-			ClientID     string `toml:"clientId" json:"-" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
-			ClientSecret string `toml:"clientSecret" json:"-"  comment:"Github OAuth Application Client Secret"`
+			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
+			SignupDisabled bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
+			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"#######\n Github URL"`
+			APIURL         string `toml:"api_url" json:"url" default:"https://api.github.com" comment:"#######\n Github API URL"`
+			ClientID       string `toml:"clientId" json:"-" comment:"#######\n Github OAuth Client ID"`
+			ClientSecret   string `toml:"clientSecret" json:"-"  comment:"Github OAuth Client Secret"`
 		} `toml:"github" json:"github"`
+		Gitlab struct {
+			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
+			SignupDisabled bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
+			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"#######\n Gitlab URL"`
+			ApplicationID  string `toml:"applicationID" json:"-" comment:"#######\n Gitlab OAuth Application ID"`
+			Secret         string `toml:"secret" json:"-"  comment:"Gitlab OAuth Application Secret"`
+		} `toml:"gitlab" json:"gitlab"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true" json:"disable"`
@@ -583,20 +598,46 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info("Initializing Authentication drivers...")
 	// TODO
 	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	if a.Config.Auth.LDAP.Enable {
-		a.AuthenticationDrivers[sdk.ConsumerLDAP] = ldap.NewDriver(ldap.LDAPConfig{
-			Host:         a.Config.Auth.LDAP.Host,
-			Port:         a.Config.Auth.LDAP.Port,
-			Base:         a.Config.Auth.LDAP.Base,
-			DN:           a.Config.Auth.LDAP.DN,
-			SSL:          a.Config.Auth.LDAP.SSL,
-			UserFullname: a.Config.Auth.LDAP.Fullname,
-			BindDN:       a.Config.Auth.LDAP.BindDN,
-			BindPwd:      a.Config.Auth.LDAP.BindPwd,
-		})
-	}
 	if a.Config.Auth.Local.Enable {
-		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(a.Config.Auth.Local.SignupAllowedDomains)
+		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(
+			a.Config.Auth.Local.SignupDisabled,
+			a.Config.URL.UI,
+			a.Config.Auth.Local.SignupAllowedDomains,
+		)
+	}
+	if a.Config.Auth.LDAP.Enable {
+		a.AuthenticationDrivers[sdk.ConsumerLDAP] = ldap.NewDriver(
+			a.Config.Auth.LDAP.SignupDisabled,
+			ldap.Config{
+				Host:         a.Config.Auth.LDAP.Host,
+				Port:         a.Config.Auth.LDAP.Port,
+				Base:         a.Config.Auth.LDAP.Base,
+				DN:           a.Config.Auth.LDAP.DN,
+				SSL:          a.Config.Auth.LDAP.SSL,
+				UserFullname: a.Config.Auth.LDAP.Fullname,
+				BindDN:       a.Config.Auth.LDAP.BindDN,
+				BindPwd:      a.Config.Auth.LDAP.BindPwd,
+			},
+		)
+	}
+	if a.Config.Auth.Github.Enabled {
+		a.AuthenticationDrivers[sdk.ConsumerGithub] = github.NewDriver(
+			a.Config.Auth.Github.SignupDisabled,
+			a.Config.URL.UI,
+			a.Config.Auth.Github.URL,
+			a.Config.Auth.Github.APIURL,
+			a.Config.Auth.Github.ClientID,
+			a.Config.Auth.Github.ClientSecret,
+		)
+	}
+	if a.Config.Auth.Gitlab.Enabled {
+		a.AuthenticationDrivers[sdk.ConsumerGitlab] = gitlab.NewDriver(
+			a.Config.Auth.Gitlab.SignupDisabled,
+			a.Config.URL.UI,
+			a.Config.Auth.Gitlab.URL,
+			a.Config.Auth.Gitlab.ApplicationID,
+			a.Config.Auth.Gitlab.Secret,
+		)
 	}
 
 	log.Info("Initializing event broker...")

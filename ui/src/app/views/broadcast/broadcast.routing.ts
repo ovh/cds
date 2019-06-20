@@ -1,8 +1,8 @@
-import {ModuleWithProviders} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
-import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
-import {BroadcastDetailsComponent} from './details/broadcast.details.component';
-import {BroadcastListComponent} from './list/broadcast.list.component';
+import { ModuleWithProviders } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { CanActivateAuthRoute } from '../../service/authentication/authenRouteActivate';
+import { BroadcastDetailsComponent } from './details/broadcast.details.component';
+import { BroadcastListComponent } from './list/broadcast.list.component';
 
 const routes: Routes = [
     {

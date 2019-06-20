@@ -1,0 +1,33 @@
+<div class="ui centered grid">
+    <div class="row">
+        <div class="column">
+            <div class="ui bottom attached segment">
+                <div class="ui info message">
+                    <p>You can now copy this parameters to your terminal then close this tab.</p>
+                </div>
+                <form class="ui form">
+                    <div class="field">
+                        <label>State</label>
+                        <div class="ui fluid action input">
+                            <input type="text" value="{{state}}">
+                            <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                                ngxClipboard [cbContent]="state">
+                                <i class="copy icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Code</label>
+                        <div class="ui fluid action input">
+                            <input type="text" value="{{code}}">
+                            <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                                ngxClipboard [cbContent]="code">
+                                <i class="copy icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

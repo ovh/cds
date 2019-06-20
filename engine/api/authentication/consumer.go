@@ -61,3 +61,24 @@ func NewConsumerLocal(db gorp.SqlExecutor, userID string, hash []byte) (*sdk.Aut
 
 	return &c, nil
 }
+
+// NewConsumerExternal returns a new local consumer for given data.
+func NewConsumerExternal(db gorp.SqlExecutor, userID string, consumerType sdk.AuthConsumerType, userInfo sdk.AuthDriverUserInfo) (*sdk.AuthConsumer, error) {
+	c := sdk.AuthConsumer{
+		Name:               string(consumerType),
+		AuthentifiedUserID: userID,
+		Type:               consumerType,
+		Data: map[string]string{
+			"external_id": userInfo.ExternalID,
+			"fullname":    userInfo.Fullname,
+			"username":    userInfo.Username,
+			"email":       userInfo.Email,
+		},
+	}
+
+	if err := InsertConsumer(db, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}

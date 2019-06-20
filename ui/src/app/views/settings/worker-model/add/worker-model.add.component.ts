@@ -6,7 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';

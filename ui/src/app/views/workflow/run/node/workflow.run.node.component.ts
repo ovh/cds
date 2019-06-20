@@ -6,7 +6,7 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AuthentificationStore } from 'app/service/authentication/authentification.store';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';

@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
+import { CanActivateAuthRoute } from '../../service/authentication/authenRouteActivate';
 import { ProjectForWorkflowResolver, ProjectResolver } from '../../service/project/project.resolver';
 import { WorkflowAddComponent } from './add/workflow.add.component';
 import { WorkflowNodeRunComponent } from './run/node/workflow.run.node.component';

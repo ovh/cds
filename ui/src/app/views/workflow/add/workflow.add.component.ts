@@ -8,7 +8,7 @@ import { Repository } from 'app/model/repositories.model';
 import { VCSStrategy } from 'app/model/vcs.model';
 import { WorkflowTemplate } from 'app/model/workflow-template.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AuthentificationStore } from 'app/service/authentication/authentification.store';
 import { ImportAsCodeService } from 'app/service/import-as-code/import.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { ThemeStore } from 'app/service/services.module';

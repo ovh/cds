@@ -56,7 +56,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 		return nil, sdk.WrapError(err, "cannot get user")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrUserNotFound)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(u, u.Signature)

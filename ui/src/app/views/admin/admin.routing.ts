@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthAdminRoute } from '../../service/auth/authenAdminRouteActivate';
+import { CanActivateAuthAdminRoute } from '../../service/authentication/authenAdminRouteActivate';
 import { AdminComponent } from './admin.component';
 import { BroadcastAddComponent } from './broadcast/add/broadcast.add.component';
 import { BroadcastEditComponent } from './broadcast/edit/broadcast.edit.component';

@@ -3,110 +3,22 @@ package api
 import (
 	"context"
 	"net/http"
-	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/local"
-	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
-// postAuthLocalSignupHandler create a new authentified user and a consumer.
-func (api *API) postAuthLocalSignupHandler() service.Handler {
+func (api *API) getAuthLocalVerifyHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		localDriver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
+		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		// Extract and validate signup request
-		var reqData sdk.AuthDriverRequest
-		if err := service.UnmarshalBody(r, &reqData); err != nil {
-			return err
-		}
-		if err := localDriver.CheckRequest(reqData); err != nil {
-			return err
-		}
-
-		// Check that user don't already exists in database
-		existingUser, err := user.LoadByUsername(ctx, tx, reqData["username"])
-		if err != nil {
-			return err
-		}
-		if existingUser != nil {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a user with given username")
-		}
-
-		// Prepare new user
-		newUser := sdk.AuthentifiedUser{
-			Ring:         sdk.UserRingUser,
-			Username:     reqData["username"],
-			Fullname:     reqData["fullname"],
-			DateCreation: time.Now(),
-		}
-
-		// The first user is set as ADMIN
-		countUsers, err := user.Count(tx)
-		if err != nil {
-			return err
-		}
-		if countUsers == 0 {
-			newUser.Ring = sdk.UserRingAdmin
-		}
-
-		// Insert the new user in database
-		if err := user.Insert(tx, &newUser); err != nil {
-			return err
-		}
-
-		// Generate password hash to store in consumer
-		hash, err := local.HashPassword(reqData["password"])
-		if err != nil {
-			return err
-		}
-
-		// Create new local consumer for new user, set this consumer as pending validation
-		consumer, err := authentication.NewConsumerLocal(tx, newUser.ID, hash)
-		if err != nil {
-			return err
-		}
-
-		// Generate a token to verify consumer
-		verifyToken, err := local.GenerateVerifyToken(consumer.ID)
-		if err != nil {
-			return err
-		}
-
-		// Insert the authentication
-		if err := mail.SendMailVerifyToken(reqData["email"], newUser.Username, verifyToken,
-			api.Config.URL.API+"/auth/consumer/local/verify/%s"); err != nil {
-			log.Warning("api.postAuthLocalSignupHandler> Cannot send verify token email for user %s: %v", newUser.Username, err)
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return service.WriteJSON(w, nil, http.StatusCreated)
-	}
-}
-
-// ConfirmUser verify token send via email and mark user as verified
-func (api *API) getVerifyAuthLocalHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		tokenString := vars["token"]
 
@@ -114,7 +26,7 @@ func (api *API) getVerifyAuthLocalHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		token, err := local.CheckVerifyToken(tokenString)
+		consumerID, err := authentication.CheckVerifyConsumerToken(tokenString)
 		if err != nil {
 			return err
 		}
@@ -125,24 +37,22 @@ func (api *API) getVerifyAuthLocalHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		claims := token.Claims.(*jwt.StandardClaims)
-		consumerID := claims.Subject
-
 		// Get the consumer from database and set it to verified
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
 		if err != nil {
-			return err
+			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
 		}
-		if consumer == nil {
-			return sdk.WithStack(sdk.ErrWrongRequest)
+		if consumer.Type != sdk.ConsumerLocal {
+			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
 		}
+
 		consumer.Data["verified"] = sdk.TrueString
 		if err := authentication.UpdateConsumer(tx, consumer); err != nil {
 			return err
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(tx, consumer, time.Now().Add(24*time.Hour*30))
+		session, err := authentication.NewSession(tx, consumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -152,100 +62,12 @@ func (api *API) getVerifyAuthLocalHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-
-		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-		})
 
 		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
 		if err != nil {
 			return err
 		}
 
-		// Prepare http response
-		resp := sdk.AuthConsumerLocalSigninResponse{
-			Token: jwt,
-			User:  usr,
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return service.WriteJSON(w, resp, http.StatusOK)
-	}
-}
-
-// postAuthLocalSigninHandler returns a new session for an existing local consumer.
-func (api *API) postAuthLocalSigninHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		//localDriver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
-		//if !okDriver {
-		//	return sdk.WithStack(sdk.ErrForbidden)
-		//}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		// Extract and validate signup request
-		var reqData sdk.AuthConsumerLocalSigninRequest
-		if err := service.UnmarshalBody(r, &reqData); err != nil {
-			return err
-		}
-		if err := reqData.IsValid(); err != nil {
-			return err
-		}
-
-		// Try to load a user in database for given username
-		usr, err := user.LoadByUsername(ctx, tx, reqData.Username)
-		if err != nil {
-			return err
-		}
-		if usr == nil {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-
-		// Try to load a local consumer for user
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID)
-		if err != nil {
-			return err
-		}
-		if consumer == nil {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-
-		// Check if local auth is active
-		if verified, ok := consumer.Data["verified"]; !ok || verified != sdk.TrueString {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-
-		// Check given password with consumer password
-		hash, okHash := consumer.Data["hash"]
-		if !okHash {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-		if err := local.CompareHashAndPassword([]byte(hash), reqData.Password); err != nil {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrWrongRequest))
-		}
-
-		// Generate a new session for consumer
-		session, err := authentication.NewSession(tx, consumer, time.Now().Add(24*time.Hour*30))
-		if err != nil {
-			return err
-		}
-
-		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session)
-		if err != nil {
-			return err
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -258,7 +80,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		})
 
 		// Prepare http response
-		resp := sdk.AuthConsumerLocalSigninResponse{
+		resp := sdk.AuthConsumerSigninResponse{
 			Token: jwt,
 			User:  usr,
 		}
@@ -267,7 +89,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 	}
 }
 
-func (api *API) resetUserHandler() service.Handler {
+/*func (api *API) resetUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
@@ -306,4 +128,4 @@ func (api *API) resetUserHandler() service.Handler {
 
 		return service.WriteJSON(w, resetUserResponse, http.StatusOK)
 	}
-}
+}*/

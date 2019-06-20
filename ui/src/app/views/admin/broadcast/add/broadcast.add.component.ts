@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
 import { User } from 'app/model/user.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AuthentificationStore } from 'app/service/authentication/authentification.store';
 import { BroadcastService } from 'app/service/broadcast/broadcast.service';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';

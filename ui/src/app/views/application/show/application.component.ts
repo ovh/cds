@@ -16,7 +16,7 @@ import { Project } from '../../../model/project.model';
 import { User } from '../../../model/user.model';
 import { Workflow } from '../../../model/workflow.model';
 import { ApplicationStore } from '../../../service/application/application.store';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../shared/toast/ToastService';

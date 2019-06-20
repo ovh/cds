@@ -110,27 +110,3 @@ func (api *API) getUsersHandler() service.Handler {
 		return service.WriteJSON(w, users, http.StatusOK)
 	}
 }
-
-// getUserLoggedHandler check if the current user is connected
-func (api *API) getUserLoggedHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if getAPIConsumer(ctx) == nil {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-		return service.WriteJSON(w, nil, http.StatusOK)
-	}
-}
-
-//AuthModeHandler returns the auth mode : local ok ldap
-/* func (api *API) authModeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		mode := "local"
-		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
-			mode = "ldap"
-		}
-		res := map[string]string{
-			"auth_mode": mode,
-		}
-		return service.WriteJSON(w, res, http.StatusOK)
-	}
-} */

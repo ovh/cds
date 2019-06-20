@@ -12,7 +12,7 @@ import { PermissionValue } from '../../../model/permission.model';
 import { LoadOpts, Project } from '../../../model/project.model';
 import { User } from '../../../model/user.model';
 import { Warning } from '../../../model/warning.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { HelpersService } from '../../../service/helpers/helpers.service';
 import { WarningStore } from '../../../service/warning/warning.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';

@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
+import { CanActivateAuthRoute } from '../../service/authentication/authenRouteActivate';
 import { ActionAddComponent } from './action/add/action.add.component';
 import { ActionEditComponent } from './action/edit/action.edit.component';
 import { ActionListComponent } from './action/list/action.list.component';

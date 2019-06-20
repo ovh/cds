@@ -1,10 +1,10 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import {ApplicationQueryParamResolver} from '../../service/application/application.resolver';
-import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
-import {ProjectResolver} from '../../service/project/project.resolver';
-import {PipelineAddComponent} from './add/pipeline.add.component';
-import {PipelineShowComponent} from './show/pipeline.show.component';
+import { ApplicationQueryParamResolver } from '../../service/application/application.resolver';
+import { CanActivateAuthRoute } from '../../service/authentication/authenRouteActivate';
+import { ProjectResolver } from '../../service/project/project.resolver';
+import { PipelineAddComponent } from './add/pipeline.add.component';
+import { PipelineShowComponent } from './show/pipeline.show.component';
 
 const pipelineRoutes: Routes = [
     {
@@ -12,14 +12,16 @@ const pipelineRoutes: Routes = [
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
         children: [
-            { path: '',
+            {
+                path: '',
                 component: PipelineAddComponent,
                 resolve: {
                     project: ProjectResolver
                 },
                 data: { title: 'Add • Pipeline' }
             },
-            { path: ':pipName',
+            {
+                path: ':pipName',
                 component: PipelineShowComponent,
                 data: { title: '{pipName} • Pipeline' },
                 resolve: {

@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
+import {CanActivateAuthRoute} from '../../service/authentication/authenRouteActivate';
 import {ProjectAddComponent} from './add/project.add.component';
 import {ProjectListComponent} from './list/project.list.component';
 import {ProjectShowComponent} from './show/project.component';

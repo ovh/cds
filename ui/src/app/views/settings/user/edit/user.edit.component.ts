@@ -5,7 +5,7 @@ import { finalize, first } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
 import { Token, TokenEvent } from '../../../../model/token.model';
 import { User } from '../../../../model/user.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { GroupService } from '../../../../service/group/group.service';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';

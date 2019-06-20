@@ -29,7 +29,7 @@ func TestWithGroups(t *testing.T) {
 	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, []int64{g1.ID, g2.ID}, nil)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Now())
+	s, err := authentication.NewSession(db, c, time.Second)
 	test.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID,

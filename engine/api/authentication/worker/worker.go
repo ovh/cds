@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
@@ -12,6 +13,9 @@ import (
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
+
+// SessionDuration the life time of a worker session.
+var SessionDuration = 24 * time.Hour
 
 // VerifyToken checks token technical validity
 func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, error) {

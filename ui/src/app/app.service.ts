@@ -8,7 +8,7 @@ import { Broadcast, BroadcastEvent } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
-import { AuthentificationStore } from './service/auth/authentification.store';
+import { AuthentificationStore } from './service/authentication/authentification.store';
 import { BroadcastStore } from './service/broadcast/broadcast.store';
 import { RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';

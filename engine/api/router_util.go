@@ -163,7 +163,7 @@ func requestVar(r *http.Request, s string) (string, error) {
 	vars := mux.Vars(r)
 	v, has := vars[s]
 	if !has {
-		return "", sdk.ErrNotFound
+		return "", sdk.WithStack(sdk.ErrNotFound)
 	}
 	return v, nil
 }

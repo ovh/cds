@@ -20,7 +20,7 @@ import { Usage } from '../../../model/usage.model';
 import { ApplicationService } from '../../../service/application/application.service';
 import { ApplicationStore } from '../../../service/application/application.store';
 import { ApplicationWorkflowService } from '../../../service/application/application.workflow.service';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { EnvironmentService } from '../../../service/environment/environment.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';

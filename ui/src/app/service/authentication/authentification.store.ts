@@ -1,7 +1,6 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
-import {User} from '../../model/user.model';
-
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { User } from '../../model/user.model';
 
 @Injectable()
 export class AuthentificationStore {
@@ -66,7 +65,7 @@ export class AuthentificationStore {
     isAdmin(): boolean {
         // user is connected ?
         if (!this.isConnected()) {
-          return false;
+            return false;
         }
         // user is admin ?
         return this._connectedUser.getValue().admin;

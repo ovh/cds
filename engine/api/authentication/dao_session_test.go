@@ -25,7 +25,7 @@ func TestLoadSession(t *testing.T) {
 	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Now())
+	s, err := authentication.NewSession(db, c, time.Second)
 	test.NoError(t, err)
 
 	// LoadSessionByID
@@ -50,7 +50,7 @@ func TestInsertSession(t *testing.T) {
 	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Now())
+	s, err := authentication.NewSession(db, c, time.Second)
 	test.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
@@ -73,7 +73,7 @@ func TestUpdateSession(t *testing.T) {
 	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Now())
+	s, err := authentication.NewSession(db, c, time.Second)
 	test.NoError(t, err)
 
 	s.GroupIDs = []int64{g.ID}
@@ -97,7 +97,7 @@ func TestDeleteSession(t *testing.T) {
 	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Now())
+	s, err := authentication.NewSession(db, c, time.Second)
 	test.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)

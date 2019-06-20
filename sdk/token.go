@@ -1,63 +1,46 @@
 package sdk
 
 import (
-	"context"
 	"database/sql/driver"
 	json "encoding/json"
-	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/go-gorp/gorp"
 	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk/log"
 )
 
+// AuthDriver interface.
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
-	CheckRequest(AuthDriverRequest) error
-	//InitConsumer(AuthDriverRequest) (*AuthConsumer, error)
-	CheckAuthentication(context.Context, gorp.SqlExecutor, *http.Request) (*AuthentifiedUser, error)
+	GetSessionDuration() time.Duration
+	GetSigninURI(state string) string
+	CheckSigninRequest(AuthConsumerSigninRequest) error
+	GetUserInfo(AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
 }
 
+// AuthDriverManifest struct discribe a auth driver.
 type AuthDriverManifest struct {
-	Type   AuthConsumerType          `json:"type"`
-	URL    string                    `json:"url"`
-	Method string                    `json:"method"`
-	Fields []AuthDriverManifestField `json:"fields"`
+	Type           AuthConsumerType `json:"type"`
+	SignupDisabled bool             `json:"signup_enabled,omitempty"`
 }
 
-type AuthDriverManifestFieldType string
+// AuthConsumerSigninRequest struct for auth consumer signin request.
+type AuthConsumerSigninRequest map[string]string
 
-const (
-	FieldString   AuthDriverManifestFieldType = "string"
-	FieldEmail    AuthDriverManifestFieldType = "email"
-	FieldPassword AuthDriverManifestFieldType = "password"
-)
-
-type AuthDriverManifestField struct {
-	Name string                      `json:"name"`
-	Type AuthDriverManifestFieldType `json:"type"`
+// AuthConsumerSigninResponse response for a auth consumer signin.
+type AuthConsumerSigninResponse struct {
+	Token string            `json:"token"`
+	User  *AuthentifiedUser `json:"user"`
 }
 
-type AuthDriverRequest map[string]string
-
-// IsValid checks that current driver request is valid according given driver manifest.
-func (r AuthDriverRequest) IsValid(m AuthDriverManifest) error {
-	for _, f := range m.Fields {
-		v, okValue := r[f.Name]
-		if !okValue || v == "" {
-			return NewErrorFrom(ErrWrongRequest, "missing driver field '%s' of type '%s'", f.Name, f.Type)
-		}
-
-		// check value of type email
-		if f.Type == FieldEmail && !IsValidEmail(v) {
-			return NewErrorFrom(ErrWrongRequest, "given value for field '%s' is not an email", f.Name)
-		}
-	}
-
-	return nil
+// AuthDriverUserInfo struct discribed a user returns by a auth driver.
+type AuthDriverUserInfo struct {
+	ExternalID string
+	Username   string
+	Fullname   string
+	Email      string
 }
 
 // AuthConsumerRequest struct used by clients to create a new builtin auth consumer.
@@ -79,7 +62,26 @@ const (
 	ConsumerLDAP         AuthConsumerType = "ldap"
 	ConsumerCorporateSSO AuthConsumerType = "corporate-sso"
 	ConsumerGithub       AuthConsumerType = "github"
+	ConsumerGitlab       AuthConsumerType = "gitlab"
 )
+
+// IsValid returns validity of given auth consumer type.
+func (t AuthConsumerType) IsValid() bool {
+	switch t {
+	case ConsumerBuiltin, ConsumerLocal, ConsumerLDAP, ConsumerCorporateSSO, ConsumerGithub, ConsumerGitlab:
+		return true
+	}
+	return false
+}
+
+// IsValidExternal returns validity of given auth consumer type.
+func (t AuthConsumerType) IsValidExternal() bool {
+	switch t {
+	case ConsumerLDAP, ConsumerCorporateSSO, ConsumerGithub, ConsumerGitlab:
+		return true
+	}
+	return false
+}
 
 // AuthConsumerData contains specific information from the auth driver.
 type AuthConsumerData map[string]string
@@ -249,28 +251,4 @@ func (perms GroupPermissions) ProjectPermission(key string) (int, bool) {
 		}
 	}
 	return -1, false
-}
-
-// AuthConsumerLocalSigninRequest request struct to signin on local auth.
-type AuthConsumerLocalSigninRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-// IsValid returns validity for signin request.
-func (r AuthConsumerLocalSigninRequest) IsValid() error {
-	if r.Username == "" {
-		return NewErrorFrom(ErrInvalidUsername, "empty username is invalid")
-	}
-	if r.Password == "" {
-		return NewErrorFrom(ErrInvalidUsername, "empty password is invalid")
-	}
-
-	return nil
-}
-
-// AuthConsumerLocalSigninResponse response for a auth local signin.
-type AuthConsumerLocalSigninResponse struct {
-	Token string            `json:"token"`
-	User  *AuthentifiedUser `json:"user"`
 }

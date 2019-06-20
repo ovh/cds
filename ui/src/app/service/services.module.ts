@@ -16,9 +16,9 @@ import { ApplicationService } from './application/application.service';
 import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
 import { AuthentificationInterceptor } from './auth.interceptor.service';
-import { CanActivateAuthAdminRoute } from './auth/authenAdminRouteActivate';
-import { CanActivateAuthRoute } from './auth/authenRouteActivate';
-import { AuthentificationStore } from './auth/authentification.store';
+import { CanActivateAuthAdminRoute } from './authentication/authenAdminRouteActivate';
+import { CanActivateAuthRoute } from './authentication/authenRouteActivate';
+import { AuthentificationStore } from './authentication/authentification.store';
 import { BroadcastService } from './broadcast/broadcast.service';
 import { BroadcastStore } from './broadcast/broadcast.store';
 import { ConfigService } from './config/config.service';
@@ -40,9 +40,11 @@ import { ParameterService } from './parameter/parameter.service';
 import { PipelineCoreService } from './pipeline/pipeline.core.service';
 import { PipelineService } from './pipeline/pipeline.service';
 import { ProjectAuditService } from './project/project.audit.service';
-import { ProjectForApplicationResolver,
+import {
+    ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
-    ProjectResolver } from './project/project.resolver';
+    ProjectResolver
+} from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
 import { RepoManagerService } from './repomanager/project.repomanager.service';

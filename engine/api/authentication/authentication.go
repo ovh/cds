@@ -6,6 +6,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 )
 
 var (
@@ -35,7 +36,7 @@ func GetSigningKey() *rsa.PrivateKey {
 	return signingKey
 }
 
-// SignJWT returns a jwt signed string using CDS signing key.
+// SignJWT returns a jwt string using CDS signing key.
 func SignJWT(jwtToken *jwt.Token) (string, error) {
 	ss, err := jwtToken.SignedString(signingKey)
 	if err != nil {
@@ -50,4 +51,22 @@ func VerifyJWT(token *jwt.Token) (interface{}, error) {
 		return nil, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unexpected signing method: %v", token.Header["alg"])
 	}
 	return verifyKey, nil
+}
+
+// SignJWS returns a jws string using CDS signing key.
+func SignJWS(content interface{}) (string, error) {
+	signer, err := jws.NewSigner(signingKey)
+	if err != nil {
+		return "", err
+	}
+	signature, err := jws.Sign(signer, content)
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
+}
+
+// VerifyJWS checks the validity of given jws string with CDS signing key.
+func VerifyJWS(signature string, content interface{}) error {
+	return jws.Verify(verifyKey, signature, content)
 }

@@ -41,24 +41,23 @@ func (api *API) InitRouter() {
 	api.eventsBroker.Init(context.Background(), api.PanicDump())
 
 	// Auth
-	//r.Handle("/login", ScopeNone(), r.POST(api.loginUserHandler, Auth(false)))
-	//r.Handle("/login/callback", ScopeNone(), r.POST(api.loginUserCallbackHandler, Auth(false)))
-	//r.Handle("/auth/logged", ScopeNone(), r.GET(api.getUserLoggedHandler))
-	//r.Handle("/auth/consumer/github/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
-	//r.Handle("/auth/consumer/sso/callback", ScopeNone(), r.POST(api.addUserHandler, Auth(false)))
-	//r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.resetUserHandler))
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, Auth(false)))
-	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
+
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, Auth(false)))
-	r.Handle("/auth/consumer/local/verify/{token}", ScopeNone(), r.GET(api.getVerifyAuthLocalHandler))
+	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/local/verify/{token}", ScopeNone(), r.GET(api.getAuthLocalVerifyHandler, Auth(false)))
+	//r.Handle("/auth/consumer/local/askReset", ScopeNone(), r.POST(api.postAuthLocalAskResetHandler, Auth(false)))
+	//r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.postAuthLocalResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
 	r.Handle("/auth/consumer/builtin/signout", ScopeNone(), r.POST(api.postServiceUnregisterHandler))
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
-
-	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postNewAccessTokenHandler))
-	//r.Handle("/auth/consumer/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putRegenAccessTokenHandler), r.DELETE(api.deleteAccessTokenHandler))
-	//r.Handle("/admin/user/{id}/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getAccessTokenByUserHandler))
+	r.Handle("/auth/consumer/{consumerType}/askSignin", ScopeNone(), r.GET(api.getAuthAskSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/{consumerType}/signin", ScopeNone(), r.POST(api.postAuthSigninHandler, Auth(false)))
+	//r.Handle("/auth/consumer/{consumerType}/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
+	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postConsumerHandler))
+	//r.Handle("/auth/consumer/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putConsumerHandler), r.DELETE(api.deleteConsumerHandler))
+	//r.Handle("/admin/user/{id}/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getConsumerByUserHandler))
 
 	// Action
 	r.Handle("/action", Scope(sdk.AccessTokenScopeAction), r.GET(api.getActionsHandler), r.POST(api.postActionHandler))
@@ -351,7 +350,6 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUsersHandler))
-	r.Handle("/user/me", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserLoggedHandler, Auth(false), DEPRECATED))
 	r.Handle("/user/favorite", Scope(sdk.AccessTokenScopeUser), r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/timeline", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
