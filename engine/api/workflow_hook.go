@@ -77,7 +77,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, wf.GetApplication(node.Context.ApplicationID).VCSServer)
 			if vcsServer != nil {
-				client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
+				client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, vcsServer)
 				if errclient != nil {
 					return sdk.WrapError(errclient, "getWorkflowHookModelsHandler> Cannot get vcs client")
 				}

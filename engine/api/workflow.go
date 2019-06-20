@@ -597,7 +597,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 
 		path := fmt.Sprintf("/task/%s/execution", uuid)
 		task := sdk.Task{}
-		if _, err := services.DoJSONRequest(ctx, api.mustDB(), srvs, "GET", path, nil, &task); err != nil {
+		if _, _, err := services.DoJSONRequest(ctx, api.mustDB(), srvs, "GET", path, nil, &task); err != nil {
 			return sdk.WrapError(err, "Unable to get hook %s task and executions", uuid)
 		}
 

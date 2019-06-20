@@ -77,7 +77,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, rm)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot get client got %s %s", key, app.VCSServer)
 		}

@@ -3,7 +3,6 @@ package workflow
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"sync"
@@ -331,7 +330,7 @@ func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 }
 
 // LoadNodeJobRunKeys loads all keys for a job run
-func LoadNodeJobRunKeys(p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
+func LoadNodeJobRunKeys(db gorp.SqlExecutor, p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
 	var app *sdk.Application
 	var env *sdk.Environment
 
@@ -340,12 +339,18 @@ func LoadNodeJobRunKeys(p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.Workfl
 		appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
 		if has {
 			app = &appMap
+			if err := application.LoadAllBase64Keys(db, app); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 	if n.Context.EnvironmentID != 0 {
 		envMap, has := wr.Workflow.Environments[n.Context.EnvironmentID]
 		if has {
 			env = &envMap
+			if err := environment.LoadAllBase64Keys(db, env); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 
@@ -574,27 +579,6 @@ func FreeNodeJobRun(store cache.Store, id int64) error {
 		return nil
 	}
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
-}
-
-//AddNodeJobAttempt add an hatchery attempt to spawn a job
-func AddNodeJobAttempt(db gorp.SqlExecutor, id, hatcheryID int64) ([]int64, error) {
-	var ids []int64
-	query := "UPDATE workflow_node_run_job SET spawn_attempts = array_append(spawn_attempts, $1) WHERE id = $2"
-	if _, err := db.Exec(query, hatcheryID, id); err != nil && err != sql.ErrNoRows {
-		return ids, sdk.WrapError(err, "cannot update node run job")
-	}
-
-	rows, err := db.Query("SELECT DISTINCT unnest(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", id)
-	var hID int64
-	defer rows.Close()
-	for rows.Next() {
-		if errS := rows.Scan(&hID); errS != nil {
-			return ids, sdk.WrapError(errS, "AddNodeJobAttempt> cannot scan")
-		}
-		ids = append(ids, hID)
-	}
-
-	return ids, err
 }
 
 //AddLog adds a build log

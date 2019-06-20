@@ -207,9 +207,9 @@ type WorkflowNodeConditions struct {
 
 //WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type WorkflowNodeCondition struct {
-	Variable string `json:"variable"`
-	Operator string `json:"operator"`
-	Value    string `json:"value"`
+	Variable string `json:"variable" yaml:"variable"`
+	Operator string `json:"operator" yaml:"operator"`
+	Value    string `json:"value" yaml:"value"`
 }
 
 //WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook

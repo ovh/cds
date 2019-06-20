@@ -71,7 +71,7 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 		pingURL = fmt.Sprintf("%s:%s", s.HealthURL, s.HealthPort)
 	}
 	s.HTTPURL = pingURL
-	_, code, err := doRequest(context.Background(), db, &serv.Service, "GET", s.HealthPath, nil)
+	_, _, code, err := doRequest(context.Background(), db, &serv.Service, "GET", s.HealthPath, nil)
 	if err != nil || code >= 400 {
 		mon.Lines[0].Status = sdk.MonitoringStatusWarn
 		mon.Lines[0].Value = "Health: KO"

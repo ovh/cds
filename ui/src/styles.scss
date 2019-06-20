@@ -87,6 +87,10 @@ body ::-webkit-scrollbar-thumb {
     border-radius: $scrollbarradius;
 }
 
+.toast {
+    padding: 0;
+}
+
 // dropdown
 .ui.buttons {
     sm-dropdown>.ui.dropdown:last-child .menu {

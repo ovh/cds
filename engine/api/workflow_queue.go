@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -65,7 +64,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		// Checks that the token used by the worker cas access to one of the execgroups
 		grantedGroupIDs := append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID)
 		if !pbj.ExecGroups.HasOneOf(grantedGroupIDs...) {
-			return sdk.WrapError(sdk.ErrForbidden, "This worker is not authorized to take this job:%d execGroups:%+v", id, pbj.ExecGroups)
+			return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, wm, id, pbj.ExecGroups)
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
@@ -151,7 +150,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
 
-	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(p, workflowRun, noderun)
+	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, p, workflowRun, noderun)
 	if errK != nil {
 		return nil, sdk.WrapError(errK, "Cannot load keys")
 	}
@@ -195,76 +194,6 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "job not booked")
 		}
 		return service.WriteJSON(w, nil, http.StatusOK)
-	}
-}
-
-func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
-		if err != nil {
-			return err
-		}
-
-		h, ok := api.isHatchery(ctx)
-		if !ok {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
-		if err != nil {
-			return err
-		}
-
-		hCount, err := services.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot get hatcheries count")
-		}
-
-		if int64(len(spawnAttempts)) >= hCount {
-			infos := []sdk.SpawnInfo{
-				{
-					RemoteTime: time.Now(),
-					Message: sdk.SpawnMsg{
-						ID:   sdk.MsgSpawnInfoHatcheryCannotStartJob.ID,
-						Args: []interface{}{},
-					},
-				},
-			}
-
-			tx, errBegin := api.mustDB().Begin()
-			if errBegin != nil {
-				return sdk.WrapError(errBegin, "Cannot start transaction")
-			}
-			defer tx.Rollback()
-
-			if err := workflow.AddSpawnInfosNodeJobRun(tx, id, infos); err != nil {
-				return sdk.WrapError(err, "Cannot save spawn info on node job run %d", id)
-			}
-
-			wfNodeJobRun, errLj := workflow.LoadNodeJobRun(tx, api.Cache, id)
-			if errLj != nil {
-				return sdk.WrapError(errLj, "Cannot load node job run")
-			}
-
-			wfNodeRun, errLr := workflow.LoadAndLockNodeRunByID(ctx, tx, wfNodeJobRun.WorkflowNodeRunID)
-			if errLr != nil {
-				return sdk.WrapError(errLr, "cannot load node run: %d", wfNodeJobRun.WorkflowNodeRunID)
-			}
-
-			if found, err := workflow.SyncNodeRunRunJob(ctx, tx, wfNodeRun, *wfNodeJobRun); err != nil || !found {
-				return sdk.WrapError(err, "Cannot sync run job (found=%v)", found)
-			}
-
-			if err := workflow.UpdateNodeRun(tx, wfNodeRun); err != nil {
-				return sdk.WrapError(err, "Cannot update node job run")
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WrapError(err, "Cannot commit tx")
-			}
-		}
-
-		return service.WriteJSON(w, spawnAttempts, http.StatusOK)
 	}
 }
 
@@ -955,7 +884,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 			// Get vcs info to known if we are on the default branch or not
 			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, nr.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectVCSServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, projectVCSServer)
 			if erra != nil {
 				log.Error("postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, erra)
 				return nil

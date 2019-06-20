@@ -196,7 +196,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				ope.Error = "No vcsServer found"
 				return
 			}
-			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, vcsServer)
 			if errclient != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
 				ope.Status = sdk.OperationStatusError

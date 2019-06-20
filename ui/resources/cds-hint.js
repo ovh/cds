@@ -2,17 +2,17 @@
  * Hint addon for codemirror
  */
 
-(function(mod) {
+(function (mod) {
     if (typeof exports == "object" && typeof module == "object") // CommonJS
         mod(require("../../lib/codemirror"), require("../../mode/css/css"));
     else if (typeof define == "function" && define.amd) // AMD
         define(["../../lib/codemirror", "../../mode/css/css"], mod);
     else // Plain browser env
         mod(CodeMirror);
-})(function(CodeMirror) {
+})(function (CodeMirror) {
     "use strict";
 
-    CodeMirror.registerHelper("hint", "cds", function(cm, options) {
+    CodeMirror.registerHelper("hint", "cds", function (cm, options) {
         // Suggest list
         var cdsCompletionList = options.cdsCompletionList;
 
@@ -24,7 +24,7 @@
         var text = '';
 
         if (!line) {
-          return null;
+            return null;
         }
         text = line.text;
 
@@ -49,12 +49,15 @@
             list: cdsCompletionList.filter(function (l) {
                 return l.indexOf(areaBefore.substring(areaBefore.lastIndexOf('{{.'))) !== -1;
             }),
-            from: { line: cur.line, ch: areaBefore.lastIndexOf('{{.')},
+            from: {
+                line: cur.line,
+                ch: areaBefore.lastIndexOf('{{.')
+            },
             to: CodeMirror.Pos(cur.line, cur.ch)
         };
     });
 
-    CodeMirror.registerHelper("hint", "condition", function(cm, options) {
+    CodeMirror.registerHelper("hint", "condition", function (cm, options) {
         var cdsPrefix = 'cds_';
         var workflowPrefix = 'workflow_';
         var gitPrefix = 'git_';
@@ -63,7 +66,6 @@
 
         // Get cursor position
         var cur = cm.getCursor(0);
-
         // Get current line
         var text = cm.doc.children[0].lines[cur.line].text;
         if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1 && text.indexOf(gitPrefix) === -1) {
@@ -82,12 +84,15 @@
                     l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(workflowPrefix))) !== -1 ||
                     l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(gitPrefix))) !== -1;
             }),
-            from: { line: cur.line, ch: ch},
+            from: {
+                line: cur.line,
+                ch: ch
+            },
             to: CodeMirror.Pos(cur.line, cur.ch)
         };
     });
 
-    CodeMirror.registerHelper("hint", "payload", function(cm, options) {
+    CodeMirror.registerHelper("hint", "payload", function (cm, options) {
         var branchPrefix = '"git.branch":';
         var tagPrefix = '"git.tag":';
         var repoPrefix = '"git.repository":';
@@ -106,7 +111,7 @@
             return null;
         }
 
-        switch(true) {
+        switch (true) {
             case text.indexOf(branchPrefix) !== -1:
                 payloadCompletionList = options.payloadCompletionList.branches;
                 prefix = branchPrefix;
@@ -148,7 +153,10 @@
 
         return {
             list: payloadCompletionList,
-            from: { line: cur.line, ch: lastIndexOfPrefix + prefix.length + inc},
+            from: {
+                line: cur.line,
+                ch: lastIndexOfPrefix + prefix.length + inc
+            },
             to: CodeMirror.Pos(cur.line, lastIndexOfComma)
         };
     });

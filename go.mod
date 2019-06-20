@@ -151,7 +151,7 @@ require (
 	github.com/marstr/guid v1.1.0 // indirect
 	github.com/maruel/panicparse v0.0.0-20170227222818-25bcac0d793c // indirect
 	github.com/maruel/ut v1.0.0 // indirect
-	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b
+	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b // indirect
 	github.com/mattn/go-colorable v0.0.5 // indirect
 	github.com/mattn/go-isatty v0.0.0-20160806122752-66b8e73f3f5c // indirect
 	github.com/mattn/go-oci8 v0.0.0-20181017025833-e3e58f4cc797 // indirect

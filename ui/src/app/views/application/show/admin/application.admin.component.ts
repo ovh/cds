@@ -21,7 +21,7 @@ export class ApplicationAdminComponent implements OnInit {
 
     @Input() application: Application;
     @Input() project: Project;
-    @ViewChild('updateWarning')
+    @ViewChild('updateWarning', {static: false})
     private updateWarningModal: WarningModalComponent;
 
     user: User;

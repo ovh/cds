@@ -58,7 +58,7 @@
                             <app-workflow-run-job-spawn-info [project]="project" [workflowName]="workflowName"
                                 [nodeRun]="nodeRun"
                                 [jobStatus]="mapJobStatus.get(selectedRunJob.job.pipeline_action_id).status"
-                                [nodeJobRun]="selectedRunJob" [variables]="selectedRunJob.parameters"
+                                [nodeJobRun]="selectedRunJob" [variables]="selectedRunJobParameters[selectedRunJob.id]"
                                 [(displayServicesLogs)]="displayServiceLogs">
                             </app-workflow-run-job-spawn-info>
                         </li>

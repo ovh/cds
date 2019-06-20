@@ -152,8 +152,9 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			Name:     rmName,
 			Username: username,
 			Data: map[string]string{
-				"token":  token,
-				"secret": secret,
+				"token":   token,
+				"secret":  secret,
+				"created": fmt.Sprintf("%d", time.Now().Unix()),
 			},
 		}
 
@@ -213,8 +214,9 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			Name:     rmName,
 			Username: getAPIConsumer(ctx).AuthentifiedUser.Username,
 			Data: map[string]string{
-				"token":  username,
-				"secret": secret,
+				"token":   username,
+				"secret":  secret,
+				"created": fmt.Sprintf("%d", time.Now().Unix()),
 			},
 		}
 
@@ -222,7 +224,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(err, "unable to set repository manager data for project %s", projectKey)
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, vcsServerForProject)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsServerForProject)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client for project %s: %v", proj.Key, err)
 		}
@@ -291,8 +293,9 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			Name:     rmName,
 			Username: getAPIConsumer(ctx).AuthentifiedUser.Username,
 			Data: map[string]string{
-				"token":  token,
-				"secret": secret,
+				"token":   token,
+				"secret":  secret,
+				"created": fmt.Sprintf("%d", time.Now().Unix()),
 			},
 		}
 
@@ -380,7 +383,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
 
 		var errAuthClient error
-		client, errAuthClient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
+		client, errAuthClient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
 		if errAuthClient != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s: %v", projectKey, rmName, errAuthClient)
 		}
@@ -426,7 +429,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
@@ -462,7 +465,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		}
 
 		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, projectKey, rm)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
@@ -514,7 +517,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				if wfDB.WorkflowData.Node.Context == nil {
 					wfDB.WorkflowData.Node.Context = &sdk.NodeContext{}
 				}
-				if wfDB.WorkflowData.Node.Context == nil || wfDB.WorkflowData.Node.Context.ApplicationID != app.ID {
+				if wfDB.WorkflowData.Node.Context.ApplicationID != app.ID {
 					continue
 				}
 
@@ -527,18 +530,18 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					continue
 				}
 
-				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, &wf)
+				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, wfDB)
 				if errPay != nil {
 					return sdk.WrapError(errPay, "attachRepositoriesManager> Cannot get defaultPayload")
 				}
-				wf.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, &wf, proj, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
+				wfDB.WorkflowData.Node.Context.DefaultPayload = defaultPayload
+
+				if err := workflow.Update(ctx, db, api.Cache, wfDB, proj, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
 					return sdk.WrapError(err, "Cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 
-				event.PublishWorkflowUpdate(proj.Key, wf, *wfOld, getAPIConsumer(ctx))
-
+				event.PublishWorkflowUpdate(proj.Key, *wfDB, *wfOld, getAPIConsumer(ctx))
 			}
 		}
 

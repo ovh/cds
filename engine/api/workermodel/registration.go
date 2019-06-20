@@ -81,9 +81,9 @@ func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
 // UpdateSpawnErrorWorkerModel updates worker model error registration
 func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError sdk.SpawnErrorForm) error {
 	// some times when the docker container fails to start, the docker logs is not empty but only contains utf8 null char
-	if spawnError.Error == string([]byte{0x00}) {
-		spawnError.Error = ""
-	}
+	rs := strings.NewReplacer(string([]byte{0x00}), "", string([]byte{0xbf}), "")
+	spawnError.Error = rs.Replace(spawnError.Error)
+	spawnError.Logs = []byte(rs.Replace(string(spawnError.Logs)))
 
 	query := `UPDATE worker_model SET nb_spawn_err=nb_spawn_err+1, last_spawn_err=$3, last_spawn_err_log=$4, date_last_spawn_err=$2 WHERE id = $1`
 	res, err := db.Exec(query, modelID, time.Now(), spawnError.Error, spawnError.Logs)

@@ -20,9 +20,9 @@ export class ProjectPermissionsComponent {
     @Input() project: Project;
     @Input() warnings: Array<Warning>;
 
-    @ViewChild('permWarning')
+    @ViewChild('permWarning', {static: false})
     permWarningModal: WarningModalComponent;
-    @ViewChild('confirmPropagationModal')
+    @ViewChild('confirmPropagationModal', {static: false})
     confirmPropagationModal: ConfirmModalComponent;
 
     permissionEnum = PermissionValue;

@@ -51,6 +51,9 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
+	_, err = db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_VCS", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
@@ -68,7 +71,6 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
 			w.Body = ioutil.NopCloser(body)
-
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
@@ -119,13 +121,15 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/task/bulk":
-				if err := enc.Encode(map[string]sdk.NodeHook{
-					"123": {
-						Config:        sdk.WebHookModel.DefaultConfig,
-						HookModelName: sdk.WebHookModelName,
-						HookModelID:   webHookModel.ID,
-					},
-				}); err != nil {
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -225,7 +229,10 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter", services.TypeVCS)
+	_, err = db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_VCS", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -242,7 +249,6 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
 			w.Body = ioutil.NopCloser(body)
-
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
@@ -283,13 +289,15 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/task/bulk":
-				if err := enc.Encode(map[string]sdk.NodeHook{
-					"123": {
-						Config:        sdk.WebHookModel.DefaultConfig,
-						HookModelName: sdk.WebHookModelName,
-						HookModelID:   webHookModel.ID,
-					},
-				}); err != nil {
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -388,6 +396,8 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
@@ -533,6 +543,8 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -679,6 +691,8 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -916,6 +930,8 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -948,9 +964,11 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
-					LatestCommit: "defaultcommit",
+					LatestCommit: "defaultCommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode([]sdk.VCSBranch{
+					b,
+				}); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
@@ -1092,6 +1110,8 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -1265,6 +1285,8 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -1458,6 +1480,8 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
@@ -1668,6 +1692,8 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}))
 
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) //nolint
@@ -1869,6 +1895,9 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 			"secret": "bar",
 		},
 	}))
+
+	_, err := db.Exec("DELETE FROM services")
+	assert.NoError(t, err)
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint

@@ -358,14 +358,13 @@ type WorkflowNodeJobRun struct {
 	Parameters                []Parameter        `json:"parameters,omitempty"`
 	Status                    string             `json:"status"`
 	Retry                     int                `json:"retry"`
-	SpawnAttempts             []int64            `json:"spawn_attempts,omitempty"`
 	Queued                    time.Time          `json:"queued,omitempty"`
 	QueuedSeconds             int64              `json:"queued_seconds,omitempty"`
 	Start                     time.Time          `json:"start,omitempty"`
 	Done                      time.Time          `json:"done,omitempty"`
 	Model                     string             `json:"model,omitempty"`
 	ModelType                 string             `json:"model_type,omitempty"`
-	BookedBy                  Service            `json:"bookedby"`
+	BookedBy                  Service            `json:"bookedby,omitempty"`
 	SpawnInfos                []SpawnInfo        `json:"spawninfos"`
 	ExecGroups                Groups             `json:"exec_groups"`
 	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`

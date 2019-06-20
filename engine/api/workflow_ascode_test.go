@@ -90,11 +90,14 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 			case "/task/bulk":
-				hooks := map[string]sdk.NodeHook{}
-				h := sdk.NodeHook{
-					UUID: "ze",
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
 				}
-				hooks[h.UUID] = h
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}

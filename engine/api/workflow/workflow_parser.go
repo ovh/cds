@@ -96,7 +96,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	if w.FromRepository != "" {
 		if len(w.WorkflowData.Node.Hooks) == 0 {
-
 			// When you came from run workflow you have uuid
 			if opts.HookUUID != "" && oldW != nil {
 				oldHooks := oldW.WorkflowData.GetHooks()
@@ -116,6 +115,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 					oldW.WorkflowData.Node.Hooks[0].HookModelName == sdk.RepositoryWebHookModel.Name {
 					opts.HookUUID = oldW.WorkflowData.Node.Hooks[0].UUID
 				}
+
 				w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
 					HookModelName: sdk.RepositoryWebHookModel.Name,
 					HookModelID:   sdk.RepositoryWebHookModel.ID,
@@ -123,6 +123,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 					UUID:          opts.HookUUID,
 				})
 			}
+
 			var err error
 			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to get default payload")

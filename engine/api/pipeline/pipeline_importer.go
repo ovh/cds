@@ -137,9 +137,12 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 	//Check if we have to delete stages
 	for _, os := range oldPipeline.Stages {
 		var stageFound bool
+		var currentStage sdk.Stage
 		for _, s := range pip.Stages {
 			if s.Name == os.Name {
 				stageFound = true
+				currentStage = s
+				currentStage.ID = os.ID
 				break
 			}
 		}
@@ -158,6 +161,11 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 			}
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeleted, os.Name)
+			}
+		} else {
+			// Update stage
+			if err := UpdateStage(db, &currentStage); err != nil {
+				return sdk.WrapError(err, "cannot update stage %s (id=%d) for conditions, build_order and name", currentStage.Name, currentStage.ID)
 			}
 		}
 	}

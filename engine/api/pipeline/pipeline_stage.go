@@ -5,7 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strconv"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -13,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -24,16 +24,13 @@ var (
 // LoadStage Get a stage from its ID and pipeline ID
 func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage, error) {
 	query := `
-		SELECT pipeline_stage.id, pipeline_stage.pipeline_id, pipeline_stage.name, pipeline_stage.build_order, pipeline_stage.enabled, pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
+		SELECT pipeline_stage.id, pipeline_stage.pipeline_id, pipeline_stage.name, pipeline_stage.build_order, pipeline_stage.enabled
 		FROM pipeline_stage
-		LEFT OUTER JOIN pipeline_stage_prerequisite ON pipeline_stage_prerequisite.pipeline_stage_id = pipeline_stage.id
 		WHERE pipeline_stage.pipeline_id = $1
 		AND pipeline_stage.id = $2;
 		`
 
 	var stage sdk.Stage
-	stage.Prerequisites = []sdk.Prerequisite{}
-
 	rows, err := db.Query(query, pipelineID, stageID)
 	if err == sql.ErrNoRows {
 		return nil, ErrNoStage
@@ -44,14 +41,8 @@ func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage
 	defer rows.Close()
 
 	for rows.Next() {
-		var parameter, expectedValue sql.NullString
-		rows.Scan(&stage.ID, &stage.PipelineID, &stage.Name, &stage.BuildOrder, &stage.Enabled, &parameter, &expectedValue)
-		if parameter.Valid && expectedValue.Valid {
-			p := sdk.Prerequisite{
-				Parameter:     parameter.String,
-				ExpectedValue: expectedValue.String,
-			}
-			stage.Prerequisites = append(stage.Prerequisites, p)
+		if err := rows.Scan(&stage.ID, &stage.PipelineID, &stage.Name, &stage.BuildOrder, &stage.Enabled); err != nil {
+			return nil, sdk.WithStack(err)
 		}
 	}
 
@@ -65,24 +56,19 @@ func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	if err := db.QueryRow(query, s.PipelineID, s.Name, s.BuildOrder, s.Enabled).Scan(&s.ID); err != nil {
 		return err
 	}
-	return InsertStagePrequisites(db, s)
+	return InsertStageConditions(db, s)
 }
 
-// InsertStagePrequisites insert prequisite for given stage in database
-func InsertStagePrequisites(db gorp.SqlExecutor, s *sdk.Stage) error {
-	if len(s.Prerequisites) > 0 {
-		query := "INSERT INTO \"pipeline_stage_prerequisite\"  (pipeline_stage_id, parameter, expected_value) VALUES "
-		args := []interface{}{s.ID}
-		for i, p := range s.Prerequisites {
-			if i > 0 {
-				query += ","
-			}
-			args = append(args, p.Parameter, p.ExpectedValue)
-			query += fmt.Sprintf("($1, $%d, $%d)", len(args)-1, len(args))
+// InsertStageConditions insert prequisite for given stage in database
+func InsertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
+	if len(s.Conditions.PlainConditions) > 0 || s.Conditions.LuaScript != "" {
+		query := "UPDATE pipeline_stage SET conditions = $1 WHERE id = $2"
+
+		conditionsBts, err := json.Marshal(s.Conditions)
+		if err != nil {
+			return sdk.WrapError(err, "cannot marshal condition for stage %d", s.ID)
 		}
-		query += " RETURNING id"
-		var i int
-		if err := db.QueryRow(query, args...).Scan(&i); err != nil {
+		if _, err := db.Exec(query, conditionsBts, s.ID); err != nil {
 			return err
 		}
 	}
@@ -102,16 +88,15 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 
 	query := `
 	SELECT pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified,
-			pipeline_stage_R.build_order, pipeline_stage_R.enabled, pipeline_stage_R.parameter,
-			pipeline_stage_R.expected_value, pipeline_action_R.id as pipeline_action_id, pipeline_action_R.action_id, pipeline_action_R.action_last_modified,
+			pipeline_stage_R.build_order, pipeline_stage_R.enabled, pipeline_stage_R.conditions,
+			pipeline_action_R.id as pipeline_action_id, pipeline_action_R.action_id, pipeline_action_R.action_last_modified,
 			pipeline_action_R.action_args, pipeline_action_R.action_enabled
 	FROM (
 		SELECT pipeline_stage.id, pipeline_stage.pipeline_id,
 				pipeline_stage.name, pipeline_stage.last_modified, pipeline_stage.build_order,
 				pipeline_stage.enabled,
-				pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
+				pipeline_stage.conditions
 		FROM pipeline_stage
-		LEFT OUTER JOIN pipeline_stage_prerequisite ON pipeline_stage.id = pipeline_stage_prerequisite.pipeline_stage_id
 		WHERE pipeline_id = $1
 	) as pipeline_stage_R
 	LEFT OUTER JOIN (
@@ -140,14 +125,13 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 		var stageBuildOrder int
 		var pipelineActionID, actionID sql.NullInt64
 		var stageName string
-		var stagePrerequisiteParameter, stagePrerequisiteExpectedValue, actionArgs sql.NullString
+		var stageConditions, actionArgs sql.NullString
 		var stageEnabled, actionEnabled sql.NullBool
 		var stageLastModified, actionLastModified pq.NullTime
 
 		err = rows.Scan(
 			&stageID, &pipelineID, &stageName, &stageLastModified,
-			&stageBuildOrder, &stageEnabled, &stagePrerequisiteParameter,
-			&stagePrerequisiteExpectedValue, &pipelineActionID, &actionID, &actionLastModified,
+			&stageBuildOrder, &stageEnabled, &stageConditions, &pipelineActionID, &actionID, &actionLastModified,
 			&actionArgs, &actionEnabled)
 		if err != nil {
 			return sdk.WithStack(err)
@@ -168,23 +152,8 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 			stagesPtr = append(stagesPtr, stageData)
 		}
 
-		//Stage prequisites
-		if stagePrerequisiteParameter.Valid && stagePrerequisiteExpectedValue.Valid {
-			p := sdk.Prerequisite{
-				Parameter:     stagePrerequisiteParameter.String,
-				ExpectedValue: stagePrerequisiteExpectedValue.String,
-			}
-			var found bool
-			for i := range stageData.Prerequisites {
-				if stageData.Prerequisites[i].Parameter == p.Parameter &&
-					stageData.Prerequisites[i].ExpectedValue == p.ExpectedValue {
-					found = true
-					break
-				}
-			}
-			if !found {
-				stageData.Prerequisites = append(stageData.Prerequisites, p)
-			}
+		if err := gorpmapping.JSONNullString(stageConditions, &stageData.Conditions); err != nil {
+			return sdk.WrapError(err, "cannot unmarshal stage conditions for stage id %d", stageID)
 		}
 
 		//Get actions
@@ -267,13 +236,8 @@ func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 		return err
 	}
 
-	//Remove all prequisites
-	if err := deleteStagePrerequisites(db, s.ID); err != nil {
-		return sdk.WithStack(err)
-	}
-
 	//Insert all prequisites
-	return InsertStagePrequisites(db, s)
+	return InsertStageConditions(db, s)
 }
 
 // DeleteStageByID Delete stage with associated pipeline action
@@ -295,11 +259,6 @@ func DeleteStageByID(ctx context.Context, tx gorp.SqlExecutor, s *sdk.Stage) err
 }
 
 func deleteStageByID(tx gorp.SqlExecutor, s *sdk.Stage) error {
-	//Delete stage prequisites
-	if err := deleteStagePrerequisites(tx, s.ID); err != nil {
-		return err
-	}
-
 	//Delete stage
 	query := `DELETE FROM pipeline_stage WHERE id = $1`
 	_, err := tx.Exec(query, s.ID)
@@ -337,14 +296,6 @@ func seleteAllStageID(db gorp.SqlExecutor, pipelineID int64) ([]int64, error) {
 	return stageIDs, nil
 }
 
-func deleteStagePrerequisites(db gorp.SqlExecutor, stageID int64) error {
-	log.Debug("deleteStagePrerequisites> delete prequisites for stage %d ", stageID)
-	//Delete stage prequisites
-	queryDelete := `DELETE FROM pipeline_stage_prerequisite WHERE pipeline_stage_id = $1`
-	_, err := db.Exec(queryDelete, strconv.Itoa(int(stageID)))
-	return sdk.WithStack(err)
-}
-
 // DeleteAllStage  Delete all stages from pipeline ID
 func DeleteAllStage(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) error {
 	stageIDs, err := seleteAllStageID(db, pipelineID)
@@ -354,10 +305,6 @@ func DeleteAllStage(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) 
 
 	for _, id := range stageIDs {
 		if err := DeletePipelineActionByStage(ctx, db, id); err != nil {
-			return err
-		}
-		// delete stage prequisites
-		if err := deleteStagePrerequisites(db, id); err != nil {
 			return err
 		}
 	}

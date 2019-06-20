@@ -25,7 +25,7 @@ import { Column, ColumnType, Select } from '../../../shared/table/data-table.com
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateBulkModalComponent {
-    @ViewChild('workflowTemplateBulkModal') workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('workflowTemplateBulkModal', {static: false}) workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     open: boolean;
 

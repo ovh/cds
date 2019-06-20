@@ -51,7 +51,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	}(&msgList)
 
 	var globalError error
-
 	if exist && !opts.Force {
 		return pip, nil, sdk.ErrPipelineAlreadyExists
 	} else if exist {

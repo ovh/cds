@@ -197,7 +197,7 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
-			log.Debug("CanSpawn false hatchery.checkRequirement ok:%v err:%v", ok, err)
+			log.Debug("CanSpawn false hatchery.checkRequirement ok:%v err:%v r:%v", ok, err, r)
 			return false
 		}
 	}
@@ -464,6 +464,12 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 		return true, nil
 	case sdk.PluginRequirement:
 		return true, nil
+	case sdk.OSArchRequirement:
+		osarch := strings.Split(r.Value, "/")
+		if len(osarch) != 2 {
+			return false, fmt.Errorf("invalid requirement %s", r.Value)
+		}
+		return osarch[0] == strings.ToLower(sdk.GOOS) && osarch[1] == strings.ToLower(sdk.GOARCH), nil
 	default:
 		return false, nil
 	}

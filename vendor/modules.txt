@@ -26,8 +26,6 @@ github.com/alecthomas/jsonschema
 github.com/andygrunwald/go-gerrit
 # github.com/aokoli/goutils v1.1.0
 github.com/aokoli/goutils
-# github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05
-github.com/araddon/gou
 # github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53
 github.com/armon/consul-api
 # github.com/artyom/untar v0.0.0-20160228112026-02ed5a2449a6
@@ -73,8 +71,6 @@ github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 github.com/beorn7/perks/quantile
 # github.com/bgentry/speakeasy v0.0.0-20160813190634-a1ccbf2c40df
 github.com/bgentry/speakeasy
-# github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932
-github.com/bitly/go-hostpool
 # github.com/blang/semver v3.5.1+incompatible
 github.com/blang/semver
 # github.com/bsm/sarama-cluster v2.1.15+incompatible
@@ -370,8 +366,6 @@ github.com/kr/fs
 # github.com/lib/pq v0.0.0-20161014011634-ae8357db35d7
 github.com/lib/pq
 github.com/lib/pq/oid
-# github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024
-github.com/lytics/logrus
 # github.com/magiconair/properties v0.0.0-20160908093658-0723e352fa35
 github.com/magiconair/properties
 # github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
@@ -383,8 +377,6 @@ github.com/mailru/easyjson/buffer
 github.com/manucorporat/sse
 # github.com/maruel/panicparse v0.0.0-20170227222818-25bcac0d793c
 github.com/maruel/panicparse/stack
-# github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b
-github.com/mattbaird/elastigo/lib
 # github.com/mattn/go-colorable v0.0.5
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.0-20160806122752-66b8e73f3f5c

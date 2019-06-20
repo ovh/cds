@@ -27,9 +27,10 @@ const (
 	TypeOutgoingWebHook    = "OutgoingWebhook"
 	TypeOutgoingWorkflow   = "OutgoingWorkflow"
 
-	GithubHeader    = "X-Github-Event"
-	GitlabHeader    = "X-Gitlab-Event"
-	BitbucketHeader = "X-Event-Key"
+	GithubHeader         = "X-Github-Event"
+	GitlabHeader         = "X-Gitlab-Event"
+	BitbucketHeader      = "X-Event-Key"
+	BitbucketCloudHeader = "X-Event-Key_Cloud" // Fake header, do not use to fetch header, just to return custom header
 
 	ConfigNumber    = "Number"
 	ConfigSubNumber = "SubNumber"
@@ -89,7 +90,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			}
 		}
 		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
-			s.Dao.DeleteTask(t)
+			s.deleteTask(ctx, t)
 			log.Info("Hook> Task %s deleted on synchronization", t.UUID)
 		}
 	}

@@ -111,9 +111,6 @@ func (api *API) InitRouter() {
 	//r.Handle("/group/{permGroupName}/token", Scope(sdk.AccessTokenScopeGroup), r.GET(api.getGroupTokenListHandler), r.POST(api.generateTokenHandler))
 	//r.Handle("/group/{permGroupName}/token/{tokenid}", Scope(sdk.AccessTokenScopeGroup), r.DELETE(api.deleteTokenHandler))
 
-	// Hatchery
-	r.Handle("/hatchery/count/{workflowNodeRunID}", Scope(sdk.AccessTokenScopeHatchery), r.GET(api.hatcheryCountHandler))
-
 	// Hooks
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", Scope(sdk.AccessTokenScopeRun), r.GET(api.getHookPollingVCSEvents))
 
@@ -197,6 +194,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/rollback/{auditID}", Scope(sdk.AccessTokenScopeProject), r.POST(api.postPipelineRollbackHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/audits", Scope(sdk.AccessTokenScopeProject), r.GET(api.getPipelineAuditHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage", Scope(sdk.AccessTokenScopeProject), r.POST(api.addStageHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/condition", Scope(sdk.AccessTokenScopeProject), r.GET(api.getStageConditionsHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/move", Scope(sdk.AccessTokenScopeProject), r.POST(api.moveStageHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}", Scope(sdk.AccessTokenScopeProject), r.GET(api.getStageHandler), r.PUT(api.updateStageHandler), r.DELETE(api.deleteStageHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}/job", Scope(sdk.AccessTokenScopeProject), r.POST(api.addJobToStageHandler))
@@ -304,7 +302,6 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/count", Scope(sdk.AccessTokenScopeRun), r.GET(api.countWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/take", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postTakeWorkflowJobHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/book", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postBookWorkflowJobHandler /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/attempt", Scope(sdk.AccessTokenScopeRunExecution), r.POST(api.postIncWorkflowJobAttemptHandler /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/infos", Scope(sdk.AccessTokenScopeRunExecution), r.GET(api.getWorkflowJobHandler /*, NeedWorker()*/ /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/vulnerability", Scope(sdk.AccessTokenScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", Scope(sdk.AccessTokenScopeRunExecution), r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1) /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))

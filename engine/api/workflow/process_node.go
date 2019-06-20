@@ -237,7 +237,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	var errVcs error
 	if needVCSInfo {
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		vcsInf, errVcs = getVCSInfos(ctx, db, store, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
+		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 		if errVcs != nil {
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
@@ -268,12 +268,12 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			return nil, false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "Unable to find node %d", hook.NodeID)
 		}
 
-		if !checkNodeRunCondition(wr, dest.Context.Conditions, params) {
+		if !checkCondition(wr, dest.Context.Conditions, params) {
 			log.Debug("Avoid trigger workflow from hook %s", hook.UUID)
 			return nil, false, nil
 		}
 	} else {
-		if !checkNodeRunCondition(wr, n.Context.Conditions, run.BuildParameters) {
+		if !checkCondition(wr, n.Context.Conditions, run.BuildParameters) {
 			log.Debug("Condition failed %d/%d %+v", wr.ID, n.ID, run.BuildParameters)
 			return nil, false, nil
 		}
