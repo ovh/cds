@@ -34,7 +34,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     groups: Array<GroupPermission>;
 
 
-    @ViewChild('nodeEditModal')
+    @ViewChild('nodeEditModal', {static: false})
     public nodeEditModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;

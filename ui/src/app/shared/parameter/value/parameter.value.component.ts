@@ -62,7 +62,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     @Output() valueChange = new EventEmitter<string | number | boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
 
-    @ViewChild('codeMirror') codemirror: any;
+    @ViewChild('codeMirror', {static: false}) codemirror: any;
 
     codeMirrorConfig: any;
     repositoriesManager: Array<RepositoriesManager>;

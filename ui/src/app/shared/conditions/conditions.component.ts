@@ -52,7 +52,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
 
     @Output() conditionsChange = new EventEmitter<WorkflowNodeConditions>();
 
-    @ViewChild('textareaCodeMirror') codemirror: CodemirrorComponent;
+    @ViewChild('textareaCodeMirror', {static: false}) codemirror: CodemirrorComponent;
     codeMirrorConfig: any;
     isAdvanced = false;
     suggest: Array<string> = [];
@@ -117,7 +117,13 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     addEmptyCondition(): void {
         let emptyCond = new WorkflowNodeCondition();
         emptyCond.operator = 'eq';
-        this.conditions.plain.push(emptyCond);
+
+        if (!this.conditions.plain) {
+            this.conditions.plain = [emptyCond];
+        } else {
+            this.conditions.plain.push(emptyCond);
+        }
+        this.conditionsChange.emit(this.conditions);
     }
 
     pushChange(event: string, e?: string): void {

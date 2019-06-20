@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IdName, Label, Project } from 'app/model/project.model';
 import { Warning } from 'app/model/warning.model';
 import { HelpersService } from 'app/service/helpers/helpers.service';
-import { LabelsEditComponent } from 'app/shared/labels/edit/labels.edit.component';
 import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
@@ -86,10 +85,6 @@ export class ProjectWorkflowListLabelsComponent {
   get labelFilter(): string {
     return this._filterLabel;
   }
-
-  // Modal
-  @ViewChild('projectLabels')
-  projectLabels: LabelsEditComponent;
 
   _project: Project;
   _labels: Label[];

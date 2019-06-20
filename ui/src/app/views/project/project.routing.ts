@@ -14,10 +14,22 @@ const projectRoutes: Routes = [
             { path: '', component: ProjectAddComponent, data: { title: 'Add • Project' } },
             { path: 'list/all', component: ProjectListComponent, data: { title: 'List • Project' } },
             { path: ':key', component: ProjectShowComponent, data: { title: '{key} • Project' } },
-            { path: ':key/workflow', loadChildren: 'app/views/workflow/workflow.module#WorkflowModule' },
-            { path: ':key/application', loadChildren: 'app/views/application/application.module#ApplicationModule' },
-            { path: ':key/environment', loadChildren: 'app/views/environment/environment.module#EnvironmentModule' },
-            { path: ':key/pipeline', loadChildren: 'app/views/pipeline/pipeline.module#PipelineModule' }
+            {
+                path: ':key/workflow', loadChildren:
+                    () => import('app/views/workflow/workflow.module').then(m => m.WorkflowModule)
+            },
+            {
+                path: ':key/environment', loadChildren:
+                    () => import('app/views/environment/environment.module').then(m => m.EnvironmentModule)
+            },
+            {
+                path: ':key/application', loadChildren:
+                    () => import('app/views/application/application.module').then(m => m.ApplicationModule)
+            },
+            {
+                path: ':key/pipeline', loadChildren:
+                    () => import('app/views/pipeline/pipeline.module').then(m => m.PipelineModule)
+            }
         ]
     }
 ];

@@ -11,7 +11,6 @@ import { WNodeHook } from '../../../../model/workflow.model';
 import { HookService } from '../../../../service/hook/hook.service';
 import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
-import { WorkflowNodeHookFormComponent } from '../../wizard/hook/hook.form.component';
 
 @Component({
     selector: 'app-workflow-sidebar-run-hook',
@@ -20,10 +19,8 @@ import { WorkflowNodeHookFormComponent } from '../../wizard/hook/hook.form.compo
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarRunHookComponent implements OnInit {
-    @ViewChild('workflowConfigHook')
-    workflowConfigHook: WorkflowNodeHookFormComponent;
 
-    @ViewChild('workflowDetailsHook')
+    @ViewChild('workflowDetailsHook', {static: false})
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     @Input() project: Project;

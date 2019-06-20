@@ -38,7 +38,7 @@ export class ProjectVariablesComponent implements OnInit {
     variableWarning: Map<string, Warning>;
     unusedVariableWarning: Array<Warning>;
 
-    @ViewChild('varWarning')
+    @ViewChild('varWarning', {static: false})
     varWarningModal: WarningModalComponent;
 
     permissionEnum = PermissionValue;
