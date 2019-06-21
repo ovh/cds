@@ -102,7 +102,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 
 		// Insert the authentication
 		if err := mail.SendMailVerifyToken(reqData["email"], newUser.Username, verifyToken,
-			api.Config.URL.UI+"/auth/consumer/local/verify?token=%s"); err != nil {
+			api.Config.URL.UI+"/auth/verify?token=%s"); err != nil {
 			return sdk.WrapError(err, "cannot send verify token email for user %s", newUser.Username)
 		}
 
@@ -323,7 +323,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 
 		// Insert the authentication
 		if err := mail.SendMailAskResetToken(contact.Value, consumer.AuthentifiedUser.Username, resetToken,
-			api.Config.URL.API+"/auth/consumer/local/verify/%s"); err != nil {
+			api.Config.URL.API+"/auth/reset?token=%s"); err != nil {
 			return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
 		}
 

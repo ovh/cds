@@ -32,10 +32,6 @@ export class ResetComponent {
         });
     }
 
-    navigateToSignUp() {
-        this._router.navigate(['/auth/signin']);
-    }
-
     navigateToLogin() {
         this._router.navigate(['/auth/signin']);
     }

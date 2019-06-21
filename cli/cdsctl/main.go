@@ -23,8 +23,7 @@ func main() {
 		doc(), // hidden command
 		consumer(),
 		action(),
-		login(),             // nearly deprecated
-		loginExperimental(), // experimental command to handle JWT
+		login(),
 		signup(),
 		application(),
 		environment(),

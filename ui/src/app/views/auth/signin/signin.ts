@@ -46,6 +46,6 @@ export class SigninComponent {
     }
 
     navigateToPassword() {
-        this._router.navigate(['/auth/reset']);
+        this._router.navigate(['/auth/ask-reset']);
     }
 }

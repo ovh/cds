@@ -4,28 +4,8 @@
   background-color: $darkBackground;
   height: 100%;
 
-  .left {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    div {
-      flex: 1;
-
-      .logo {
-        height: 80px;
-      }
-    }
-  }
-
-  .right {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    div {
-      flex: 1;
-      margin: 40px;
-    }
+  .logo {
+    margin: 80px auto;
+    height: 100px;
   }
 }

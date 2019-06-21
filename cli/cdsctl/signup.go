@@ -108,5 +108,6 @@ func doConfirm(username string, insecureSkipVerifyTLS bool) error {
 	fmt.Println("All is fine. Here is your new password:")
 	fmt.Println(password)
 
-	return doLogin(client.APIURL(), username, password, false, insecureSkipVerifyTLS)
+	//return doLogin(client.APIURL(), username, password, false, insecureSkipVerifyTLS)
+	return nil
 }

@@ -6,12 +6,14 @@
         <div class="ui bottom attached segment">
             <form class="ui form" (ngSubmit)="resetPassword()" #loginForm="ngForm">
                 <div class="field">
-                    <label>{{ 'user_label_new_password' | translate }}</label>
-                    <input type="password" [(ngModel)]="user.password" name="password">
+                    <label>{{ 'user_label_email' | translate }}</label>
+                    <input type="email" [(ngModel)]="user.email" name="email">
                 </div>
                 <div class="field right aligned">
+                    <a class="pointing" (click)="navigateToLogin()">{{ 'account_login_title' | translate }}</a>
+                    &nbsp;&nbsp;&nbsp;
                     <button class="ui green button"
-                        type="submit">{{ 'account_password_btn_reset_validate' | translate }}</button>
+                        type="submit">{{ 'account_password_btn_reset' | translate }}</button>
                 </div>
             </form>
         </div>

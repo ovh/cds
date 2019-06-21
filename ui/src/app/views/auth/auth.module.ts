@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
+import { AskResetComponent } from './ask-reset/ask-reset';
 import { AuthComponent } from './auth.component';
 import { authRouting } from './auth.routing';
 import { CallbackComponent } from './callback/callback.component';
@@ -11,6 +12,7 @@ import { VerifyComponent } from './verify/verify.component';
     declarations: [
         AuthComponent,
         SigninComponent,
+        AskResetComponent,
         ResetComponent,
         VerifyComponent,
         CallbackComponent

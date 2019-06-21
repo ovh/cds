@@ -1,13 +1,16 @@
 {
   "access_refused": "accès refusé",
 
+  "auth_button_signin_with": "Se connecter avec {{consumer}}",
+
   "account_btn_password": "Mot de passe perdu",
   "account_btn_signup": "Créer un compte",
-  "account_btn_login": "Se connecter",
+  "account_btn_signin": "Se connecter",
 
   "account_login_btn_connect": "Connexion",
   "account_login_title": "Se connecter à CDS",
   "account_password_btn_reset": "Réinitialiser le mot de passe",
+  "account_password_btn_reset_validate": "Modifier le mot de passe",
   "account_password_title": "Mot de passe oublié",
   "account_password_waiting_text": "Vous allez recevoir un email afin de réinitialiser votre mot de passe.",
   "account_signup_btn_create": "Créer le compte",
@@ -814,6 +817,7 @@
 
   "user_label_fullname": "Nom complet de l'utilisateur",
   "user_label_username": "Nom d'utilisateur",
+  "user_label_new_password": "Nouveau mot de passe",
   "user_label_password": "Mot de passe",
   "user_label_email": "Adresse email",
   "user_label_admin": "Administrateur CDS ?",

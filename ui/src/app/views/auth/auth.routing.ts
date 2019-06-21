@@ -18,6 +18,11 @@ const routes: Routes = [
                 data: { title: 'CDS • Sign in' }
             },
             {
+                path: 'ask-reset',
+                component: ResetComponent,
+                data: { title: 'CDS • Ask password reset' }
+            },
+            {
                 path: 'reset',
                 component: ResetComponent,
                 data: { title: 'CDS • Reset password' }

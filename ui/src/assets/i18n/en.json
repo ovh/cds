@@ -1,13 +1,16 @@
 {
   "access_refused": "access refused",
 
-  "account_btn_password": "Forgotten password",
-  "account_btn_signup": "Create an account",
-  "account_btn_login": "Sign In",
+  "auth_button_signin_with": "Sign in with {{consumer}}",
 
-  "account_login_btn_connect": "Sign In",
+  "account_btn_password": "Forgotten password",
+  "account_btn_signup": "Sign up",
+  "account_btn_signin": "Sign in",
+
+  "account_login_btn_connect": "Sign in",
   "account_login_title": "Sign In to CDS",
   "account_password_btn_reset": "Reset password",
+  "account_password_btn_reset_validate": "Modify password",
   "account_password_title": "Forgotten password",
   "account_password_waiting_text": "You will receive an email to reset your password.",
   "account_signup_btn_create": "Create",
@@ -815,6 +818,7 @@
 
   "user_label_fullname": "Fullname",
   "user_label_username": "Username",
+  "user_label_new_password": "New password",
   "user_label_password": "Password",
   "user_label_email": "Mail address",
   "user_label_admin": "CDS Administrator?",
