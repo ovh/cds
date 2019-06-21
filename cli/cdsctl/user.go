@@ -49,12 +49,12 @@ func userMeRun(v cli.Values) (interface{}, error) {
 		return nil, err
 	}
 	var res = struct {
-		Url      string `cli:"url"`
+		URL      string `cli:"url"`
 		Username string `cli:"username,key"`
 		Fullname string `cli:"fullname"`
 		Email    string `cli:"email"`
 	}{
-		Url:      cfg.Host,
+		URL:      cfg.Host,
 		Username: u.Username,
 		Fullname: u.Fullname,
 		Email:    u.Email,
