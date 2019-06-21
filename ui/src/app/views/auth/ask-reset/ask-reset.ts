@@ -32,7 +32,7 @@ export class AskResetComponent {
     });
   }
 
-  navigateToLogin() {
+  navigateToSignin() {
     this._router.navigate(['/auth/signin']);
   }
 }

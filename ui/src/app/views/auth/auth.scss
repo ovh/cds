@@ -4,6 +4,10 @@
   background-color: $darkBackground;
   height: 100%;
 
+  .column {
+    width: 600px;
+  }
+
   .logo {
     margin: 80px auto;
     height: 100px;

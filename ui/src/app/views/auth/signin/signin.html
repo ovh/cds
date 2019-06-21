@@ -1,9 +1,10 @@
 <div class="ui grid">
     <div class="column">
-        <sui-tabset>
+        <sui-tabset *ngIf="localDriver">
             <div class="ui top attached tabular menu">
                 <a class="item" suiTabHeader="1">{{ 'account_btn_signin' | translate}}</a>
-                <a class="item" suiTabHeader="2">{{ 'account_btn_signup' | translate}}</a>
+                <a *ngIf="!localDriver.signup_disabled" class="item"
+                    suiTabHeader="2">{{ 'account_btn_signup' | translate}}</a>
             </div>
             <div class="ui bottom attached segment" suiTabContent="1">
                 <form class="ui form" (ngSubmit)="signIn()" #loginForm="ngForm">
@@ -16,14 +17,14 @@
                         <input type="password" [(ngModel)]="user.password" name="password">
                     </div>
                     <div class="field right aligned">
-                        <a class="pointing" (click)="navigateToPassword()">{{ 'account_btn_password' | translate }}</a>
+                        <a class="pointing" (click)="navigateToAskReset()">{{ 'account_btn_password' | translate }}</a>
                         &nbsp;&nbsp;&nbsp;
                         <button class="ui green button"
                             type="submit">{{ 'account_login_btn_connect' | translate }}</button>
                     </div>
                 </form>
             </div>
-            <div class="ui bottom attached segment" suiTabContent="2">
+            <div *ngIf="!localDriver.signup_disabled" class="ui bottom attached segment" suiTabContent="2">
                 <form class="ui form" (ngSubmit)="createUser()" #loginForm="ngForm">
                     <div class="field">
                         <label>{{ 'user_label_username' | translate }}</label>
@@ -48,18 +49,13 @@
                 </form>
             </div>
         </sui-tabset>
-        <div class="ui bottom attached segment">
+        <div *ngIf="externalDrivers && externalDrivers.length > 0" class="ui bottom attached segment">
             <form class="ui form">
-                <div class="field">
-                    <a href="{{apiURL}}/auth/consumer/github/askSignin" class="fluid ui github button primary">
-                        <i class="github icon"></i>
-                        {{ 'auth_button_signin_with' | translate: {consumer: 'github'} }}
-                    </a>
-                </div>
-                <div class="field">
-                    <a href="{{apiURL}}/auth/consumer/gitlab/askSignin" class="fluid ui gitlab button primary">
-                        <i class="gitlab icon"></i>
-                        {{ 'auth_button_signin_with' | translate: {consumer: 'gitlab'} }}
+                <div *ngFor="let driver of externalDrivers" class="field">
+                    <a href="{{apiURL}}/auth/consumer/{{driver.type}}/askSignin"
+                        class="fluid ui {{driver.type}} button primary">
+                        <i class="{{driver.type}} icon"></i>
+                        {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
                     </a>
                 </div>
             </form>

@@ -23,7 +23,7 @@ type AuthDriver interface {
 // AuthDriverManifest struct discribe a auth driver.
 type AuthDriverManifest struct {
 	Type           AuthConsumerType `json:"type"`
-	SignupDisabled bool             `json:"signup_enabled,omitempty"`
+	SignupDisabled bool             `json:"signup_disabled,omitempty"`
 }
 
 // AuthConsumerSigninRequest struct for auth consumer signin request.

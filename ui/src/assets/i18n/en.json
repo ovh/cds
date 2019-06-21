@@ -2,6 +2,9 @@
   "access_refused": "access refused",
 
   "auth_button_signin_with": "Sign in with {{consumer}}",
+  "auth_value_copied": "Value copied",
+  "auth_message_copy": "You can now copy this parameters to your terminal then close this tab.",
+  "auth_message_missing_param": "One or more params are missing to continue. You can try to sign in again.",
 
   "account_btn_password": "Forgotten password",
   "account_btn_signup": "Sign up",
@@ -17,7 +20,7 @@
   "account_signup_title": "Create a new user",
   "account_signup_waiting_text": "You will receive an email to activate your account.",
   "account_verify_title": "Account information",
-  "account_verify_error": "Unable to activate this account.",
+  "account_verify_error": "Unable to verify this account.",
 
   "action_step_title": "Job steps",
   "action_step_final_title": "Job final steps",

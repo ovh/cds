@@ -18,6 +18,7 @@ import { ApplicationWorkflowService } from './application/application.workflow.s
 import { AuthentificationInterceptor } from './auth.interceptor.service';
 import { CanActivateAuthAdminRoute } from './authentication/authenAdminRouteActivate';
 import { CanActivateAuthRoute } from './authentication/authenRouteActivate';
+import { AuthenticationService } from './authentication/authentication.service';
 import { AuthentificationStore } from './authentication/authentification.store';
 import { BroadcastService } from './broadcast/broadcast.service';
 import { BroadcastStore } from './broadcast/broadcast.store';
@@ -81,6 +82,7 @@ export class ServicesModule {
                 ApplicationService,
                 ApplicationNoCacheService,
                 ApplicationStore,
+                AuthenticationService,
                 AuthentificationStore,
                 ConfigService,
                 DownloadService,
@@ -153,6 +155,7 @@ export {
     ApplicationResolver,
     ApplicationNoCacheService,
     ApplicationStore,
+    AuthenticationService,
     AuthentificationStore,
     CanActivateAuthRoute,
     CanActivateAuthAdminRoute,
@@ -189,6 +192,5 @@ export {
     WorkflowStore,
     WorkflowRunService,
     WorkflowCoreService
-
 };
 

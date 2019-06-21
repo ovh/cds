@@ -1,7 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { User } from 'app/model/user.model';
-import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { UserService } from '../../../service/user/user.service';
 
 @Component({
@@ -14,9 +12,7 @@ export class ResetComponent {
     showWaitingMessage = false;
 
     constructor(
-        private _userService: UserService,
-        private _router: Router,
-        _authStore: AuthentificationStore
+        private _userService: UserService
     ) {
         this.user = new User();
     }
@@ -30,9 +26,5 @@ export class ResetComponent {
         this._userService.resetPassword(this.user, baseHref).subscribe(() => {
             this.showWaitingMessage = true;
         });
-    }
-
-    navigateToLogin() {
-        this._router.navigate(['/auth/signin']);
     }
 }

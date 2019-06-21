@@ -1,47 +1,54 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { UserLoginRequest } from '../../../model/user.model';
-import { AuthentificationStore } from '../../../service/authentication/authentification.store';
-import { UserService } from '../../../service/user/user.service';
+import { AuthenticationService } from 'app/service/services.module';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-auth-verify',
     templateUrl: './verify.html',
-    styleUrls: ['./verify.scss']
+    styleUrls: ['./verify.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VerifyComponent implements OnInit {
     userVerified: any;
     userVerifiedDisplay: any;
-    showErrorMessage = false;
+    showErrorMessage: boolean;
+    loading: boolean;
 
     constructor(
-        private _userService: UserService,
         private _router: Router,
         private _activatedRoute: ActivatedRoute,
-        _authStore: AuthentificationStore
-    ) { }
+        private _authenticationService: AuthenticationService,
+        private _cd: ChangeDetectorRef
+    ) {
+        this.loading = true;
+    }
 
     ngOnInit(): void {
         let params: Params = this._activatedRoute.snapshot.params;
-        if (params['username'] && params['token']) {
-            this._userService.verify(params['username'], params['token']).subscribe(res => {
-                this.userVerified = res;
-                this.userVerifiedDisplay = cloneDeep(res);
-                delete this.userVerifiedDisplay.user.permissions;
+
+        let token = params['token'];
+        if (!token) {
+            this.showErrorMessage = true;
+            this.loading = false;
+            this._cd.detectChanges();
+            return;
+        }
+
+        this._authenticationService.localVerify(token)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.detectChanges();
+            }))
+            .subscribe(res => {
+                // TODO store token then redirect
+                // this._router.navigate(['home']);
             }, () => {
                 this.showErrorMessage = true;
             });
-        }
     }
 
-    signIn() {
-        let userloginRequest = new UserLoginRequest();
-        userloginRequest.username = this.userVerified.user.username;
-        userloginRequest.password = this.userVerified.password;
-
-        this._userService.login(userloginRequest).subscribe(() => {
-            this._router.navigate(['home']);
-        });
+    navigateToSignin() {
+        this._router.navigate(['/auth/signin']);
     }
 }

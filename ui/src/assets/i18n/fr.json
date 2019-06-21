@@ -2,6 +2,9 @@
   "access_refused": "accès refusé",
 
   "auth_button_signin_with": "Se connecter avec {{consumer}}",
+  "auth_value_copied": "La valeur a été copiée",
+  "auth_message_copy": "Vous pouvez maintenant copier ces paramètres dans votre terminal puis fermer cet onglet.",
+  "auth_message_missing_param": "Un ou plusieurs paramètres sont manquants pour poursuivre. Vous pouvez essayer de vous connecter à nouveau.",
 
   "account_btn_password": "Mot de passe perdu",
   "account_btn_signup": "Créer un compte",
@@ -17,7 +20,7 @@
   "account_signup_title": "Création d'un nouvel utilisateur",
   "account_signup_waiting_text": "Vous aller recevoir un email afin d'activer votre compte.",
   "account_verify_title": "Information du compte",
-  "account_verify_error": "Impossible d'activer le compte.",
+  "account_verify_error": "Impossible de vérifier le compte.",
 
   "action_step_title": "Étapes du job",
   "action_step_final_title": "Étapes finales du job",
