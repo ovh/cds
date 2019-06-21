@@ -112,16 +112,19 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 	}
 
 	var env sdk.Environment
-	query := `SELECT environment.id, environment.name,  environment.project_id, environment.from_repository
+	query := `SELECT environment.id, environment.name,  environment.project_id, environment.from_repository, environment.last_modified
 		  FROM environment
 		  JOIN project ON project.id = environment.project_id
 		  WHERE project.projectKey = $1 AND environment.name = $2`
-	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name, &env.ProjectID, &env.FromRepository); err != nil {
+	var lastModified time.Time
+	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name, &env.ProjectID, &env.FromRepository, &lastModified); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoEnvironment
 		}
 		return nil, err
 	}
+	env.LastModified = lastModified.Unix()
+	env.ProjectKey = projectKey
 	return &env, loadDependencies(db, &env)
 }
 

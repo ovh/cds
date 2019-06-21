@@ -55,6 +55,5 @@ export class ProjectEnvironmentListComponent {
 
     constructor() {
 
-        console.log('ici');
     }
 }

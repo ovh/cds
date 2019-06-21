@@ -8,8 +8,6 @@ import { ProjectAdminComponent } from './show/admin/project.admin.component';
 import { ProjectRepoManagerComponent } from './show/admin/repomanager/list/project.repomanager.list.component';
 import { ProjectApplicationListComponent } from './show/application/application.list.component';
 import { ProjectEnvironmentListComponent } from './show/environment/environment.list.component';
-import { ProjectEnvironmentFormComponent } from './show/environment/form/environment.form.component';
-import { ProjectEnvironmentComponent } from './show/environment/list/item/environment.component';
 import { ProjectIntegrationFormComponent } from './show/integrations/form/integration.form.component';
 import { ProjectIntegrationListComponent } from './show/integrations/list/integration.list.component';
 import { ProjectIntegrationsComponent } from './show/integrations/project.integrations.component';
@@ -30,9 +28,7 @@ import { ProjectWorkflowListComponent } from './show/workflow/workflow.list.comp
         ProjectListComponent,
         ProjectAdminComponent,
         ProjectApplicationListComponent,
-        ProjectEnvironmentFormComponent,
         ProjectEnvironmentListComponent,
-        ProjectEnvironmentComponent,
         ProjectKeysComponent,
         ProjectPipelinesComponent,
         ProjectVariablesComponent,

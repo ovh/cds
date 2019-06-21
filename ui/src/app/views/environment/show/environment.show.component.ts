@@ -1,12 +1,11 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ProjectStore } from 'app/service/services.module';
-import * as applicationsActions from 'app/store/applications.action';
+import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import * as projectActions from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { Environment } from '../../../model/environment.model';
@@ -17,9 +16,7 @@ import { User } from '../../../model/user.model';
 import { Workflow } from '../../../model/workflow.model';
 import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../shared/toast/ToastService';
-import { VariableEvent } from '../../../shared/variable/variable.event.model';
 import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
@@ -50,10 +47,7 @@ export class EnvironmentShowComponent implements OnInit {
     worker: CDSWebWorker;
 
     // Selected tab
-    selectedTab = 'home';
-
-    @ViewChild('varWarning')
-    private varWarningModal: WarningModalComponent;
+    selectedTab = 'variables';
 
     // queryparam for breadcrum
     workflowName: string;
@@ -69,7 +63,6 @@ export class EnvironmentShowComponent implements OnInit {
     perm = PermissionValue;
 
     constructor(
-        private _projectStore: ProjectStore,
         private _route: ActivatedRoute,
         private _router: Router,
         private _authStore: AuthentificationStore,
@@ -115,12 +108,16 @@ export class EnvironmentShowComponent implements OnInit {
                         .pipe(filter((env) => env != null))
                         .subscribe((env: Environment) => {
                             this.readyEnv = true;
-                            // TODO: to delete when all CDS application will be in store. In fact we make a copy to break the read only rule
                             this.environment = cloneDeep(env);
-
+                            if (env.usage) {
+                                this.workflows = env.usage.workflows || [];
+                                this.environments = env.usage.environments || [];
+                                this.pipelines = env.usage.pipelines || [];
+                                this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
+                            }
                         }, () => {
                             this._router.navigate(['/project', key], { queryParams: { tab: 'environments' } });
-                        })
+                        });
                 }
             }
         });
@@ -143,40 +140,35 @@ export class EnvironmentShowComponent implements OnInit {
      * Event on variable
      * @param event
      */
-    variableEvent(event: VariableEvent, skip?: boolean) {
-        if (!skip && this.environment.externalChange) {
-            this.varWarningModal.show(event);
-        } else {
-            event.variable.value = String(event.variable.value);
-            switch (event.type) {
-                case 'add':
-                    this.varFormLoading = true;
-                    this.store.dispatch(new applicationsActions.AddApplicationVariable({
-                        projectKey: this.project.key,
-                        applicationName: this.application.name,
-                        variable: event.variable
-                    })).pipe(finalize(() => {
-                        event.variable.updating = false;
-                        this.varFormLoading = false;
-                    })).subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
-                    break;
-                case 'update':
-                    this.store.dispatch(new applicationsActions.UpdateApplicationVariable({
-                        projectKey: this.project.key,
-                        applicationName: this.application.name,
-                        variableName: event.variable.name,
-                        variable: event.variable
-                    })).pipe(finalize(() => event.variable.updating = false))
-                        .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
-                    break;
-                case 'delete':
-                    this.store.dispatch(new applicationsActions.DeleteApplicationVariable({
-                        projectKey: this.project.key,
-                        applicationName: this.application.name,
-                        variable: event.variable
-                    })).subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
-                    break;
-            }
+    variableEvent(event: VariableEvent): void {
+        event.variable.value = String(event.variable.value);
+        switch (event.type) {
+            case 'add':
+                this.varFormLoading = true;
+                this.store.dispatch(new projectActions.AddEnvironmentVariableInProject({
+                    projectKey: this.project.key,
+                    environmentName: this.environment.name,
+                    variable: event.variable
+                })).pipe(finalize(() => this.varFormLoading = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
+                break;
+            case 'update':
+                this.store.dispatch(new projectActions.UpdateEnvironmentVariableInProject({
+                    projectKey: this.project.key,
+                    environmentName: this.environment.name,
+                    variableName: event.variable.name,
+                    changes: event.variable
+                })).pipe(finalize(() => event.variable.updating = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
+                break;
+            case 'delete':
+                this.store.dispatch(new projectActions.DeleteEnvironmentVariableInProject({
+                    projectKey: this.project.key,
+                    environmentName: this.environment.name,
+                    variable: event.variable
+                })).pipe(finalize(() => event.variable.updating = false))
+                    .subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
+                break;
         }
     }
 }

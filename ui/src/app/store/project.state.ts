@@ -136,6 +136,11 @@ export class ProjectState {
                                     projectUpdated.environments = [];
                                 }
                                 break;
+                            case 'environment_names':
+                                if (!res.environment_names) {
+                                    projectUpdated.environment_names = [];
+                                }
+                                break;
                             case 'integrations':
                                 if (!res.integrations) {
                                     projectUpdated.integrations = [];
@@ -823,9 +828,11 @@ export class ProjectState {
         if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
             ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
         }
+        let params = new HttpParams();
+        params = params.append('withUsage', 'true');
 
         return this._http
-            .get<Environment>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}`)
+            .get<Environment>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}`, { params })
             .pipe(tap((environment: Environment) => {
                 let envs = state.project.environments;
                 if (Array.isArray(envs)) {
@@ -838,7 +845,56 @@ export class ProjectState {
                 } else {
                     envs = [environment];
                 }
-                ctx.dispatch(<ProjectStateModel>{
+                ctx.setState(<ProjectStateModel>{
+                    ...state,
+                    project: {
+                        ...state.project,
+                        environments: envs,
+                    }
+                });
+            }));
+    }
+
+    @Action(ProjectAction.AddEnvironmentKey)
+    addEnvironmentKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddEnvironmentKey) {
+        const state = ctx.getState();
+        return this._http.post<Key>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}/keys`, action.payload.key)
+            .pipe(tap((key: Key) => {
+                let envs = state.project.environments;
+                if (Array.isArray(envs)) {
+                    envs = envs.map((env) => {
+                        if (env.name === action.payload.envName) {
+                            return { ...env, keys: [key].concat(env.keys) };
+                        }
+                        return env;
+                    })
+                }
+                ctx.setState(<ProjectStateModel>{
+                    ...state,
+                    project: {
+                        ...state.project,
+                        environments: envs,
+                    }
+                });
+            }));
+    }
+
+    @Action(ProjectAction.DeleteEnvironmentKey)
+    deleteEnvironmentKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteEnvironmentKey) {
+        const state = ctx.getState();
+        return this._http.delete<null>('/project/' + action.payload.projectKey +
+            '/environment/' + action.payload.envName + '/keys/' + action.payload.key.name)
+            .pipe(tap(() => {
+                let envs = state.project.environments;
+                if (Array.isArray(envs)) {
+                    envs = envs.map((env) => {
+                        if (env.name === action.payload.envName) {
+                            return { ...env, keys: env.keys.filter((key) => key.name === action.payload.key.name) };
+                        }
+                        return env;
+                    })
+                }
+                ctx.setState(<ProjectStateModel>{
                     ...state,
                     project: {
                         ...state.project,

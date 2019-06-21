@@ -219,8 +219,16 @@ export class FetchEnvironmentsInProject {
     static readonly type = '[Project] Fetch Environments in Project';
     constructor(public payload: { projectKey: string }) { }
 }
+export class AddEnvironmentKey {
+    static readonly type = '[Project] Add Environment Key in Project';
+    constructor(public payload: { projectKey: string, envName: string, key: Key }) { }
+}
+export class DeleteEnvironmentKey {
+    static readonly type = '[Project] Delete Environment Key in Project';
+    constructor(public payload: { projectKey: string, envName: string, key: Key }) { }
+}
 export class FetchEnvironmentInProject {
-    static readonly type = '[Project] Fetch Environment in Project';
+    static readonly type = '[Project] Fetch Single Environment in Project';
     constructor(public payload: { projectKey: string, envName: string }) { }
 }
 export class LoadEnvironmentsInProject {

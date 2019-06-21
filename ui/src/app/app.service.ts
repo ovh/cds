@@ -19,12 +19,7 @@ import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from 
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
-import {
-    ExternalChangeWorkflow,
-    GetWorkflow,
-    GetWorkflowRun,
-    UpdateWorkflowRunList
-} from './store/workflow.action';
+import { ExternalChangeWorkflow, GetWorkflow, GetWorkflowRun, UpdateWorkflowRunList } from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
 
 @Injectable()
@@ -156,7 +151,7 @@ export class AppService {
                 } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
                     opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
                 } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withEnvironments', 'environments'));
+                    opts.push(new LoadOpts('withEnvironmentNames', 'environment_names'));
                 } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
                     opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
                     opts.push(new LoadOpts('withLabels', 'labels'));

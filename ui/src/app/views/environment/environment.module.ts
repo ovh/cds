@@ -2,15 +2,17 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { EnvironmentAddComponent } from './add/environment.add.component';
 import { environmentRouting } from './environment.routing';
-// import { EnvironmentShowComponent } from './show/environment.show.component';
-// import { EnvironmentKeysComponent } from './show/keys/environment.keys.component';
+import { EnvironmentAdvancedComponent } from './show/advanced/environment.advanced.component';
+import { EnvironmentShowComponent } from './show/environment.show.component';
+import { EnvironmentKeysComponent } from './show/keys/environment.keys.component';
 
 
 @NgModule({
     declarations: [
         EnvironmentAddComponent,
-        // EnvironmentShowComponent,
-        // EnvironmentKeysComponent,
+        EnvironmentShowComponent,
+        EnvironmentKeysComponent,
+        EnvironmentAdvancedComponent,
     ],
     imports: [
         SharedModule,
