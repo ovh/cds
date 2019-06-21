@@ -33,7 +33,7 @@ func (api *API) getProjectsHandler() service.Handler {
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
 
-		//A provider can make a call for a specific user
+		// A provider can make a call for a specific user
 		if getProvider(ctx) != nil && requestedUserName != "" {
 			//var err error
 			//Load the specific user

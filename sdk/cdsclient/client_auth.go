@@ -7,6 +7,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request sdk.AuthConsumerSigninRequest) (*sdk.AuthConsumerSigninResponse, error) {
+	var res sdk.AuthConsumerSigninResponse
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(consumerType)+"/signin", request, &res)
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
 func (c *client) AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error) {
 	u, err := c.UserGet(username)
 	if err != nil {

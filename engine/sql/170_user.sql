@@ -24,9 +24,11 @@ CREATE TABLE IF NOT EXISTS "user_contact" (
   type TEXT NOT NULL,
   value TEXT NOT NULL,
   primary_contact BOOLEAN NOT NULL DEFAULT FALSE,
+  verified BOOLEAN NOT NULL DEFAULT FALSE,
   sig BYTEA
 );
 
+SELECT create_unique_index('user_contact', 'IDX_USER_CONTACT_VALUE', 'type,value');
 SELECT create_foreign_key_idx_cascade('FK_USER_CONTACT_AUTHENTIFIED', 'user_contact', 'authentified_user', 'user_id', 'id');
 
 DROP TABLE IF EXISTS auth_consumer;

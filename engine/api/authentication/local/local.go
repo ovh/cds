@@ -75,6 +75,35 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 	return nil
 }
 
+// CheckVerifyRequest checks that given driver request is valid for a verify consumer.
+func (d AuthDriver) CheckVerifyRequest(req sdk.AuthConsumerSigninRequest) error {
+	if token, ok := req["token"]; !ok || token == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid token for local verify")
+	}
+	return nil
+}
+
+// CheckAskResetRequest checks that given driver request is valid for a ask reset with auth local.
+func (d AuthDriver) CheckAskResetRequest(req sdk.AuthConsumerSigninRequest) error {
+	if email, ok := req["email"]; !ok || email == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signin")
+	}
+	return nil
+}
+
+// CheckResetRequest checks that given driver request is valid for a reset with auth local.
+func (d AuthDriver) CheckResetRequest(req sdk.AuthConsumerSigninRequest) error {
+	if token, ok := req["token"]; !ok || token == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid token for local reset")
+	}
+	if password, ok := req["password"]; !ok || password == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for local signup")
+	} else if err := isPasswordValid(password); err != nil {
+		return err
+	}
+	return nil
+}
+
 // isAllowedDomain return true is email is allowed, false otherwise.
 func (d AuthDriver) isAllowedDomain(email string) bool {
 	if len(d.allowedDomains) == 0 {

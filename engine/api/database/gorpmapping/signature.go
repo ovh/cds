@@ -59,25 +59,25 @@ func sign(i interface{}) ([]byte, error) {
 func CheckSignature(i interface{}, sig []byte) (bool, error) {
 	k, err := keyloader.LoadKey(KeySignIdentifier)
 	if err != nil {
-		return false, sdk.WithStack(fmt.Errorf("unable to the load the key: %v", err))
+		return false, sdk.WrapError(err, "unable to the load the key")
 	}
 
 	var clearContent []byte
 	if cannonical, ok := i.(Canonicaller); ok {
 		clearContent, err = cannonical.Canonical()
 		if err != nil {
-			return false, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+			return false, sdk.WrapError(err, "unable to marshal content")
 		}
 	} else {
 		clearContent, err = json.Marshal(i)
 		if err != nil {
-			return false, sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
+			return false, sdk.WrapError(err, "unable to marshal content")
 		}
 	}
 
 	decryptedSig, err := k.Decrypt(sig)
 	if err != nil {
-		return false, sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
+		return false, sdk.WrapError(err, "unable to decrypt content")
 	}
 
 	return string(clearContent) == string(decryptedSig), nil

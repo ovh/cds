@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -83,4 +85,20 @@ func LoadDeprecatedUserWithoutAuthByID(ctx context.Context, db gorp.SqlExecutor,
     WHERE id = $1
   `).Args(id)
 	return getDeprecatedUser(ctx, db, query, opts...)
+}
+
+func insertDeprecatedUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
+	su, err := json.Marshal(u)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	sa, err := json.Marshal(a)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	query := `INSERT INTO "user" (username, admin, data, auth, created, origin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`
+	if err := db.QueryRow(query, u.Username, u.Admin, su, sa, time.Now(), u.Origin).Scan(&u.ID); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
 }

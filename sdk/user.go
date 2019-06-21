@@ -127,33 +127,24 @@ func (u AuthentifiedUser) Maintainer() bool {
 	return u.Ring == UserRingMaintainer
 }
 
+// GetEmail return the primary email for the authentified user (should exists).
 func (u AuthentifiedUser) GetEmail() string {
 	if u.Contacts == nil {
 		return ""
 	}
 	byEmails := u.Contacts.Filter(UserContactTypeEmail)
-	if len(byEmails) == 0 {
-		return ""
-	}
 	primaryEmailAdress := byEmails.Primary()
-	if primaryEmailAdress != nil {
-		return primaryEmailAdress.Value
-	}
-	return byEmails[0].Value
+	return primaryEmailAdress.Value
 }
 
-type UserLocalAuthentication struct {
-	UserID        string `json:"user_id" db:"user_id"`
-	ClearPassword string `json:"clear_password" db:"-"`
-	Verified      bool   `json:"verified" db:"verified"`
-}
-
+// UserContact struct
 type UserContact struct {
 	ID             int    `json:"id" db:"id"`
 	UserID         string `json:"user_id" db:"user_id"`
 	Type           string `json:"type" db:"type"`
 	Value          string `json:"value" db:"value"`
 	PrimaryContact bool   `json:"primary_contact" db:"primary_contact"`
+	Verified       bool   `json:"verified" db:"verified"`
 }
 
 const UserContactTypeEmail = "email"
@@ -169,9 +160,10 @@ func (u UserContacts) Filter(t string) UserContacts {
 	}
 	return filtered
 }
-func (u UserContacts) Find(t, v string) *UserContact {
+
+func (u UserContacts) Find(contactType, contactValue string) *UserContact {
 	for _, c := range u {
-		if c.Type == t && c.Value == v {
+		if c.Type == contactType && c.Value == contactValue {
 			return &c
 		}
 	}
@@ -210,11 +202,6 @@ type UserLoginRequest struct {
 	RequestToken string `json:"request_token"`
 	Username     string `json:"username"`
 	Password     string `json:"password"`
-}
-
-type UserLoginCallbackRequest struct {
-	RequestToken string `json:"request_token"`
-	PublicKey    []byte `json:"public_key"`
 }
 
 // IsValidEmail  Check if user email address is ok

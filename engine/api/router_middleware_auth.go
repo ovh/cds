@@ -88,6 +88,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, err
 	}
 	consumer.AuthentifiedUser.OldUserStruct.Groups = deprecatedUserGroups
+	log.Debug("api.authMiddleware> consumer is on behalf of user %s who can access groups: %v", consumer.AuthentifiedUser.GetFullname(), deprecatedUserGroups)
 
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
@@ -102,7 +103,8 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			break
 		}
 	}
-	if len(expectedScopes) > 0 && !scopeOK {
+	// Actual scope empty list means wildcard scope.
+	if len(expectedScopes) > 0 && len(actualScopes) > 0 && !scopeOK {
 		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
 	}
 

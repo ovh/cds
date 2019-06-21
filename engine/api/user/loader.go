@@ -23,14 +23,7 @@ var LoadOptions = struct {
 func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {
 	userIDs := sdk.AuthentifiedUsersToIDs(aus)
 
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM user_contact
-    WHERE user_id = ANY(string_to_array($1, ',')::text[])
-    ORDER BY id ASC
-  `).Args(gorpmapping.IDStringsToQueryString(userIDs))
-
-	contacts, err := getContacts(ctx, db, query)
+	contacts, err := LoadContactsByUserID(ctx, db, userIDs)
 	if err != nil {
 		return err
 	}

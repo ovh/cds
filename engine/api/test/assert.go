@@ -9,11 +9,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// NoError logs Fatal if there is an error
+// NoError logs Fatal if there is an error.
 func NoError(t *testing.T, err error, msg ...interface{}) {
-	assert.NoError(t, err)
-	if err != nil {
-		t.Error(err)
+	if !assert.NoError(t, err) {
+		t.Fatal(msg...)
+	}
+}
+
+// Error logs Fatal if there is no error.
+func Error(t *testing.T, err error, msg ...interface{}) {
+	if !assert.Error(t, err) {
 		t.Fatal(msg...)
 	}
 }

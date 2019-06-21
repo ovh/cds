@@ -118,15 +118,17 @@ type AuthConsumer struct {
 }
 
 func (c AuthConsumer) GetGroupIDs() []int64 {
+	var groupIDs []int64
+
 	if len(c.GroupIDs) > 0 {
-		return c.GroupIDs
+		groupIDs = c.GroupIDs
+	} else if c.AuthentifiedUser != nil {
+		groupIDs = c.AuthentifiedUser.GetGroupIDs()
 	}
 
-	if c.AuthentifiedUser != nil {
-		return c.AuthentifiedUser.GetGroupIDs()
-	}
+	log.Debug("AuthConsumer.GetGroupIDs> consumer on behalf of user %s can access groups: %v", c.AuthentifiedUser.GetFullname(), groupIDs)
 
-	return nil
+	return groupIDs
 }
 
 func (c AuthConsumer) Admin() bool {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-redis/redis"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -94,17 +95,27 @@ func (s *RedisStore) Get(key string, value interface{}) bool {
 
 //SetWithTTL a value in local store (0 for eternity)
 func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
-	if s.Client == nil {
-		return
+	if err := s.SetWithDuration(key, value, time.Duration(ttl)*time.Second); err != nil {
+		log.Warning("redis> error caching %s: %v", key, err)
 	}
-	b, err := json.Marshal(value)
-	if err != nil {
-		log.Warning("redis> error caching %s: %s", key, err)
+}
+
+// SetWithDuration a value in local store (0 for eternity)
+func (s *RedisStore) SetWithDuration(key string, value interface{}, duration time.Duration) error {
+	if s.Client == nil {
+		return nil
 	}
 
-	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
-		log.Error("redis> set error %s: %v", key, err)
+	b, err := json.Marshal(value)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
+
+	if err := s.Client.Set(key, string(b), duration).Err(); err != nil {
+		return sdk.WrapError(err, "set error %s", key)
+	}
+
+	return nil
 }
 
 //UpdateTTL update the ttl linked to the key

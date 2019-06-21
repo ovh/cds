@@ -23,6 +23,7 @@ type Store interface {
 	Get(key string, value interface{}) bool
 	Set(key string, value interface{})
 	SetWithTTL(key string, value interface{}, ttl int)
+	SetWithDuration(key string, value interface{}, duration time.Duration) error
 	UpdateTTL(key string, ttl int)
 	Delete(key string)
 	DeleteAll(key string)

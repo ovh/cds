@@ -23,7 +23,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 	for i := range us {
 		isValid, err := gorpmapping.CheckSignature(us[i], us[i].Signature)
 		if err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "error when checking signature for user %s", us[i].ID)
 		}
 		if !isValid {
 			log.Error("user.getAll> user %s (%s) data corrupted", us[i].Username, us[i].ID)
@@ -65,7 +65,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	}
 	if !isValid {
 		log.Error("user.get> user %s (%s) data corrupted", u.Username, u.ID)
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrUserNotFound)
 	}
 
 	au := u.AuthentifiedUser
@@ -108,9 +108,9 @@ func LoadByUsername(ctx context.Context, db gorp.SqlExecutor, username string, o
 }
 
 // Count users in database.
-func Count(db gorp.SqlExecutor) (int, error) {
-	var count int
-	if err := db.QueryRow("SELECT COUNT(id) FROM authentified_user").Scan(&count); err != nil {
+func Count(db gorp.SqlExecutor) (int64, error) {
+	count, err := db.SelectInt("SELECT COUNT(id) FROM authentified_user")
+	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
 	return count, nil
@@ -138,7 +138,7 @@ func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 			HashedPassword: sdk.RandomString(12),
 		},
 	}
-	if err := insertUser(db, oldUser, &oldUser.Auth); err != nil {
+	if err := insertDeprecatedUser(db, oldUser, &oldUser.Auth); err != nil {
 		return sdk.WrapError(err, "unable to insert old user for authenticated_user.id=%s", u.ID)
 	}
 	query := "INSERT INTO authentified_user_migration(authentified_user_id, user_id) VALUES($1, $2)"
@@ -161,41 +161,6 @@ func Update(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 
 // DeleteByID a user in database.
 func DeleteByID(db gorp.SqlExecutor, id string) error {
-	u, err := LoadByID(context.Background(), db, id)
-	if err != nil {
-		return err
-	}
-	if u == nil {
-		return sdk.WrapError(sdk.ErrNotFound, "cannot delete not exiting authentified user with id %s", id)
-	}
-
-	// TODO: Delete user group
-
-	_, err = db.Delete(u)
+	_, err := db.Exec("DELETE FROM authentified_user WHERE id = $1", id)
 	return sdk.WithStack(err)
-}
-
-func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
-	dbc := userContact{UserContact: *c}
-	if err := gorpmapping.InsertAndSign(db, &dbc); err != nil {
-		return err
-	}
-	c.ID = dbc.ID
-	return nil
-}
-
-func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
-	dbc := userContact{UserContact: *c}
-	if err := gorpmapping.UpdatetAndSign(db, &dbc); err != nil {
-		return err
-	}
-	return nil
-}
-
-func DeleteContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
-	dbc := userContact{UserContact: *c}
-	if err := gorpmapping.Delete(db, &dbc); err != nil {
-		return err
-	}
-	return nil
 }

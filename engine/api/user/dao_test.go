@@ -13,60 +13,36 @@ import (
 )
 
 func TestAuthenticatedUserDAO(t *testing.T) {
-	var u = sdk.AuthentifiedUser{
-		Username:     sdk.RandomString(10),
-		Fullname:     sdk.RandomString(10),
-		Ring:         sdk.UserRingAdmin,
-		DateCreation: time.Now(),
-	}
-
 	db, _, _ := test.SetupPG(t)
 
-	assert.NoError(t, user.Insert(db, &u))
-	assert.NoError(t, user.Update(db, &u))
+	u := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingAdmin,
+	}
+	test.NoError(t, user.Insert(db, &u))
 
-	u1, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
-	assert.NoError(t, err)
-	assert.NotNil(t, u1)
+	u1, err := user.LoadByID(context.TODO(), db, u.ID)
+	test.NoError(t, err)
+	test.Equal(t, u.Username, u1.Username)
+
+	u.Username = sdk.RandomString(10)
+	test.NoError(t, user.Update(db, &u))
+
+	u1, err = user.LoadByID(context.TODO(), db, u.ID)
+	test.NoError(t, err)
+	test.Equal(t, u.Username, u1.Username)
 
 	// Try to corrupt the data
 	_, err = db.Exec("UPDATE authentified_user SET ring = $1 WHERE id = $2", sdk.UserRingMaintainer, u.ID)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	// Now the loading should failed
-	u2, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
-	assert.Error(t, err)
-	assert.Nil(t, u2)
+	_, err = user.LoadByID(context.TODO(), db, u.ID)
+	test.Error(t, err)
+	test.Equal(t, true, sdk.ErrorIs(err, sdk.ErrUserNotFound))
 
-	assert.NoError(t, user.DeleteByID(db, u.ID))
-}
-
-func TestLoadContacts(t *testing.T) {
-	var u = sdk.AuthentifiedUser{
-		Username:     sdk.RandomString(10),
-		Fullname:     sdk.RandomString(10),
-		Ring:         sdk.UserRingAdmin,
-		DateCreation: time.Now(),
-	}
-
-	db, _, _ := test.SetupPG(t)
-	assert.NoError(t, user.Insert(db, &u))
-
-	var c = sdk.UserContact{
-		UserID:         u.ID,
-		PrimaryContact: true,
-		Type:           sdk.UserContactTypeEmail,
-		Value:          "test@lolcat.host",
-	}
-	assert.NoError(t, user.InsertContact(db, &c))
-
-	u1, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithContacts)
-	assert.NoError(t, err)
-	assert.NotNil(t, u1)
-
-	assert.Len(t, u1.Contacts, 1)
-
-	assert.NoError(t, user.DeleteByID(db, u1.ID))
+	test.NoError(t, user.DeleteByID(db, u.ID))
 }
 
 func TestLoadDeprecatedUser(t *testing.T) {
@@ -78,26 +54,18 @@ func TestLoadDeprecatedUser(t *testing.T) {
 	}
 
 	db, _, _ := test.SetupPG(t)
-	assert.NoError(t, user.Insert(db, &u))
-
-	var c = sdk.UserContact{
-		UserID:         u.ID,
-		PrimaryContact: true,
-		Type:           sdk.UserContactTypeEmail,
-		Value:          "test@lolcat.host",
-	}
-	assert.NoError(t, user.InsertContact(db, &c))
+	test.NoError(t, user.Insert(db, &u))
 
 	u1, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
-	assert.NoError(t, err)
-	assert.NotNil(t, u1.OldUserStruct)
+	test.NoError(t, err)
+	test.NotNil(t, u1.OldUserStruct)
 
-	assert.NoError(t, user.DeleteByID(db, u1.ID))
+	test.NoError(t, user.DeleteByID(db, u1.ID))
 }
 
 func TestLoadAll(t *testing.T) {
 	db, _, _ := test.SetupPG(t)
-	for i := 0; i <= 10; i++ {
+	for i := 0; i < 10; i++ {
 		var u = sdk.AuthentifiedUser{
 			Username:     sdk.RandomString(10),
 			Fullname:     sdk.RandomString(10),
@@ -111,13 +79,37 @@ func TestLoadAll(t *testing.T) {
 			UserID:         u.ID,
 			PrimaryContact: true,
 			Type:           sdk.UserContactTypeEmail,
-			Value:          "test@lolcat.host",
+			Value:          u.Username + "@lolcat.host",
 		}
 		assert.NoError(t, user.InsertContact(db, &c))
 	}
 
 	users, err := user.LoadAll(context.TODO(), db, user.LoadOptions.WithContacts)
-	assert.NoError(t, err)
+	test.NoError(t, err)
 
 	assert.True(t, len(users) >= 10)
+}
+
+func TestLoadAllByIDs(t *testing.T) {
+	db, _, _ := test.SetupPG(t)
+
+	ids := make([]string, 3)
+	for i := 0; i < 2; i++ {
+		var u = sdk.AuthentifiedUser{
+			Username:     sdk.RandomString(10),
+			Fullname:     sdk.RandomString(10),
+			Ring:         sdk.UserRingAdmin,
+			DateCreation: time.Now(),
+		}
+
+		assert.NoError(t, user.Insert(db, &u))
+
+		ids[i] = u.ID
+	}
+	ids[2] = sdk.UUID()
+
+	users, err := user.LoadAllByIDs(context.TODO(), db, ids)
+	test.NoError(t, err)
+
+	test.Equal(t, 2, len(users))
 }

@@ -255,7 +255,6 @@ type UserClient interface {
 	UserGet(username string) (*sdk.User, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UserLogin(username, password string) (bool, string, error)
-	//UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error)
 	UserReset(username, email, callback string) error
 	UserSignup(username, fullname, email, callback string) error
 	ListAllTokens() ([]sdk.Token, error)
@@ -337,7 +336,7 @@ type IntegrationClient interface {
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
-	AuthConsumerClient
+	AuthClient
 	ActionClient
 	AdminService
 	APIURL() string
@@ -454,8 +453,9 @@ func WithUsage() RequestModifier {
 	}
 }
 
-// AuthConsumerClient is the interface for access token management.
-type AuthConsumerClient interface {
+// AuthClient is the interface for authentication management.
+type AuthClient interface {
+	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (*sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error)
 	AuthConsumerDelete(id string) error
 	AuthConsumerCreate(request sdk.AuthConsumerRequest) (sdk.AuthConsumer, string, error)

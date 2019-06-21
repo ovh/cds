@@ -20,12 +20,33 @@ type emailParam struct {
 var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort string
 var smtpTLS, smtpEnable bool
 
-const templateSignedUP = `Welcome to CDS,
+const templateSignedup = `Welcome to CDS,
 
 You recently signed up for CDS.
 
-To verify your email address, follow this link :
+To verify your email address, follow this link:
 {{.URL}}
+
+Regards,
+--
+CDS Team
+`
+
+const templateAskReset = `Hi {{.Username}},
+
+You asked for a password reset.
+
+Follow this link to set a new password on your account:
+{{.URL}}
+
+Regards,
+--
+CDS Team
+`
+
+const templateReset = `Hi {{.Username}},
+
+Your password was successfully.
 
 Regards,
 --
@@ -108,16 +129,40 @@ func smtpClient() (*smtp.Client, error) {
 	return c, nil
 }
 
-// SendMailVerifyToken Send mail to verify user account
+// SendMailVerifyToken send mail to verify user account.
 func SendMailVerifyToken(userMail, username, token, callback string) error {
 	callbackURL := fmt.Sprintf(callback, token)
 
-	mailContent, err := createTemplate(templateSignedUP, callbackURL)
+	mailContent, err := createTemplate(templateSignedup, callbackURL)
 	if err != nil {
 		return err
 	}
 
-	return SendEmail("Welcome to CDS", &mailContent, userMail, false)
+	return SendEmail("[CDS] Welcome to CDS", &mailContent, userMail, false)
+}
+
+// SendMailAskResetToken send mail to ask reset a user account.
+func SendMailAskResetToken(userMail, username, token, callback string) error {
+	callbackURL := fmt.Sprintf(callback, token)
+
+	mailContent, err := createTemplate(templateAskReset, callbackURL)
+	if err != nil {
+		return err
+	}
+
+	return SendEmail("[CDS] Reset your password", &mailContent, userMail, false)
+}
+
+// SendMailResetToken send mail to reset a user account.
+func SendMailResetToken(userMail, username, token, callback string) error {
+	callbackURL := fmt.Sprintf(callback, token)
+
+	mailContent, err := createTemplate(templateReset, callbackURL)
+	if err != nil {
+		return err
+	}
+
+	return SendEmail("[CDS] Your password was reset", &mailContent, userMail, false)
 }
 
 func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {
