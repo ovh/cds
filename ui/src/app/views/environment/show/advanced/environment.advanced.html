@@ -44,7 +44,7 @@
                 <input type="text" placeholder="{{'environment_clone_placeholder' | translate}}"
                     [(ngModel)]="cloneName">
                 <button class="ui blue right labeled icon button" [class.disabled]="!cloneName"
-                    [class.loading]="cloneLoading" (click)="cloneEnvironment(cloneModal)">
+                    [class.loading]="loading" (click)="cloneEnvironment(cloneModal)">
                     <i class="copy icon"></i>
                     {{'common_clone' | translate}}
                 </button>
