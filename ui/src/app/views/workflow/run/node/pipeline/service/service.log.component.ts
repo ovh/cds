@@ -1,12 +1,12 @@
 import { Component, ElementRef, Input, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
-import { environment } from '../../../../../../../environments/environment';
-import { ServiceLog } from '../../../../../../model/pipeline.model';
 import { PipelineStatus } from '../../../../../../model/pipeline.model';
+import { ServiceLog } from '../../../../../../model/pipeline.model';
 import { Project } from '../../../../../../model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
-import { AuthentificationStore } from '../../../../../../service/authentication/authentification.store';
 import { AutoUnsubscribe } from '../../../../../../shared/decorator/autoUnsubscribe';
 import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';
 
@@ -51,7 +51,9 @@ export class WorkflowServiceLogComponent implements OnDestroy {
     _nodeJobRun: WorkflowNodeJobRun;
     ansi_up = new AU.default;
 
-    constructor(private _authStore: AuthentificationStore) {
+    constructor(
+        private _store: Store
+        ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
     }
 
@@ -70,9 +72,9 @@ export class WorkflowServiceLogComponent implements OnDestroy {
         if (!this.worker) {
             this.worker = new CDSWebWorker('./assets/worker/web/workflow-service-log.js');
             this.worker.start({
-                user: this._authStore.getUser(),
-                session: this._authStore.getSessionToken(),
-                api: environment.apiURL,
+                user: this._store.selectSnapshot(AuthenticationState.user),
+                // session: this._authStore.getSessionToken(),
+                api: '/cdsapi',
                 key: this.project.key,
                 workflowName: this.workflowName,
                 number: this.nodeRun.num,

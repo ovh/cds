@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -15,7 +16,6 @@ import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
 import { User } from '../../../model/user.model';
 import { Workflow } from '../../../model/workflow.model';
-import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { KeyService } from '../../../service/keys/keys.service';
 import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
@@ -58,7 +58,7 @@ export class PipelineShowComponent implements OnInit {
     pipName: string;
 
     queryParams: Params;
-    @ViewChild('paramWarning', {static: false})
+    @ViewChild('paramWarning', { static: false })
     parameterModalWarning: WarningModalComponent;
 
     keys: AllKeys;
@@ -68,16 +68,15 @@ export class PipelineShowComponent implements OnInit {
     selectedTab = 'pipeline';
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _routeActivated: ActivatedRoute,
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private _authentificationStore: AuthentificationStore,
         private _keyService: KeyService,
         private _pipCoreService: PipelineCoreService
     ) {
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
         this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];
@@ -88,7 +87,7 @@ export class PipelineShowComponent implements OnInit {
         this.branch = this.getQueryParam('branch');
         this.remote = this.getQueryParam('remote');
 
-        this.projectSubscription = this.store.select(ProjectState)
+        this.projectSubscription = this._store.select(ProjectState)
             .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
 
@@ -105,7 +104,7 @@ export class PipelineShowComponent implements OnInit {
     }
 
     refreshDatas(key: string, pipName: string) {
-        this.store.dispatch(new FetchPipeline({
+        this._store.dispatch(new FetchPipeline({
             projectKey: key,
             pipelineName: pipName
         }));
@@ -151,7 +150,7 @@ export class PipelineShowComponent implements OnInit {
             this.pipelineSubscriber.unsubscribe();
         }
 
-        this.pipelineSubscriber = this.store.select(PipelinesState.selectPipeline(this.projectKey, this.pipName))
+        this.pipelineSubscriber = this._store.select(PipelinesState.selectPipeline(this.projectKey, this.pipName))
             .pipe(
                 filter((pip) => pip != null)
             )
@@ -183,7 +182,7 @@ export class PipelineShowComponent implements OnInit {
             switch (event.type) {
                 case 'add':
                     this.paramFormLoading = true;
-                    this.store.dispatch(new AddPipelineParameter({
+                    this._store.dispatch(new AddPipelineParameter({
                         projectKey: this.project.key,
                         pipelineName: this.pipeline.name,
                         parameter: event.parameter
@@ -191,7 +190,7 @@ export class PipelineShowComponent implements OnInit {
                         .subscribe(() => this._toast.success('', this._translate.instant('parameter_added')));
                     break;
                 case 'update':
-                    this.store.dispatch(new UpdatePipelineParameter({
+                    this._store.dispatch(new UpdatePipelineParameter({
                         projectKey: this.project.key,
                         pipelineName: this.pipeline.name,
                         parameterName: event.parameter.previousName || event.parameter.name,
@@ -199,7 +198,7 @@ export class PipelineShowComponent implements OnInit {
                     })).subscribe(() => this._toast.success('', this._translate.instant('parameter_updated')));
                     break;
                 case 'delete':
-                    this.store.dispatch(new DeletePipelineParameter({
+                    this._store.dispatch(new DeletePipelineParameter({
                         projectKey: this.project.key,
                         pipelineName: this.pipeline.name,
                         parameter: event.parameter

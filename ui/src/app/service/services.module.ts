@@ -15,11 +15,10 @@ import {
 import { ApplicationService } from './application/application.service';
 import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
-import { AuthentificationInterceptor } from './auth.interceptor.service';
 import { CanActivateAuthAdminRoute } from './authentication/authenAdminRouteActivate';
-import { CanActivateAuthRoute } from './authentication/authenRouteActivate';
 import { AuthenticationService } from './authentication/authentication.service';
-import { AuthentificationStore } from './authentication/authentification.store';
+import { LogoutInterceptor } from './authentication/logout.interceptor';
+import { XSRFInterceptor } from './authentication/xsrf.interceptor';
 import { BroadcastService } from './broadcast/broadcast.service';
 import { BroadcastStore } from './broadcast/broadcast.store';
 import { ConfigService } from './config/config.service';
@@ -32,8 +31,8 @@ import { HookService } from './hook/hook.service';
 import { ImportAsCodeService } from './import-as-code/import.service';
 import { IntegrationService } from './integration/integration.service';
 import { KeyService } from './keys/keys.service';
+import { LanguageInterceptor } from './language/language.interceptor';
 import { LanguageStore } from './language/language.store';
-import { LogoutInterceptor } from './logout.interceptor.service';
 import { MonitoringService } from './monitoring/monitoring.service';
 import { NavbarService } from './navbar/navbar.service';
 import { NotificationService } from './notification/notification.service';
@@ -83,10 +82,8 @@ export class ServicesModule {
                 ApplicationNoCacheService,
                 ApplicationStore,
                 AuthenticationService,
-                AuthentificationStore,
                 ConfigService,
                 DownloadService,
-                CanActivateAuthRoute,
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 EnvironmentService,
@@ -129,7 +126,12 @@ export class ServicesModule {
                 WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
-                    useClass: AuthentificationInterceptor,
+                    useClass: XSRFInterceptor,
+                    multi: true
+                },
+                {
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: LanguageInterceptor,
                     multi: true
                 },
                 {
@@ -156,8 +158,6 @@ export {
     ApplicationNoCacheService,
     ApplicationStore,
     AuthenticationService,
-    AuthentificationStore,
-    CanActivateAuthRoute,
     CanActivateAuthAdminRoute,
     ConfigService,
     DownloadService,

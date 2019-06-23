@@ -5,14 +5,13 @@ import { Component, NgZone, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
-import { environment } from '../environments/environment';
 import { AppService } from './app.service';
 import { Event, EventType } from './model/event.model';
-import { AuthentificationStore } from './service/authentication/authentification.store';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
 import { ThemeStore } from './service/theme/theme.store';
@@ -21,6 +20,7 @@ import { ToastService } from './shared/toast/ToastService';
 import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
+import { AuthenticationState } from './store/authentication.state';
 
 @Component({
     selector: 'app-root',
@@ -54,11 +54,11 @@ export class AppComponent implements OnInit {
         private _theme: ThemeStore,
         private _activatedRoute: ActivatedRoute,
         private _titleService: Title,
-        private _authStore: AuthentificationStore,
         private _router: Router,
         private _notification: NotificationService,
         private _appService: AppService,
-        private _toastService: ToastService
+        private _toastService: ToastService,
+        private _store: Store
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfig = this._toastService.getConfig();
@@ -88,7 +88,7 @@ export class AppComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this._authStore.getUserlst().subscribe(user => {
+        this._store.select(AuthenticationState.user).subscribe(user => {
             if (!user) {
                 this.isConnected = false;
                 this.stopWorker(this.sseWorker, null);
@@ -152,12 +152,14 @@ export class AppComponent implements OnInit {
         }
         let authKey: string;
         let authValue: string;
-        let user = this._authStore.getUser();
+        let user = this._store.selectSnapshot(AuthenticationState.user);
         // ADD user AUTH
-        let sessionToken = this._authStore.getSessionToken();
-        if (sessionToken) {
-            authKey = this._authStore.localStorageSessionKey;
-            authValue = sessionToken;
+        // TODO refact SSE auth
+        // let sessionToken = this._authStore.getSessionToken();
+        // if (sessionToken) {
+        if (false) {
+            // authKey = this._authStore.localStorageSessionKey;
+            // authValue = sessionToken;
         } else if (user) {
             authKey = 'Authorization';
             authValue = 'Basic ' + user.token;
@@ -185,10 +187,10 @@ export class AppComponent implements OnInit {
         this.sseWorker.start({
             headAuthKey: authKey,
             headAuthValue: authValue,
-            urlSubscribe: environment.apiURL + '/events/subscribe',
-            urlUnsubscribe: environment.apiURL + 'events/unsubscribe',
-            sseURL: environment.apiURL + '/events',
-            pingURL: environment.apiURL + '/user/logged'
+            urlSubscribe: '/cdsapi/events/subscribe',
+            urlUnsubscribe: '/cdsapi/events/unsubscribe',
+            sseURL: '/cdsapi/events',
+            pingURL: '/cdsapi/user/logged'
         });
         this._sseSubscription = this.sseWorker.response()
             .pipe(

@@ -5,6 +5,11 @@
   "auth_value_copied": "La valeur a été copiée",
   "auth_message_copy": "Vous pouvez maintenant copier ces paramètres dans votre terminal puis fermer cet onglet.",
   "auth_message_missing_param": "Un ou plusieurs paramètres sont manquants pour poursuivre. Vous pouvez essayer de vous connecter à nouveau.",
+  "auth_ask_reset_error": "L'adresse renseignée est invalide ou inconnue.",
+  "auth_ask_reset_success": "La demande de récupération de mot de passe a été prise en compte, si un compte CDS existe avec l'adresse renseignée vous recevrez un lien pour le mettre à jour.",
+  "auth_reset_error": "Nouveau mot de passe invalide ou mauvaise clé de récupération transmise.",
+  "auth_reset_success": "Le mot de passe a été mis à jour avec succès.",
+  "auth_btn_go_back_home": "Retourner à CDS",
 
   "account_btn_password": "Mot de passe perdu",
   "account_btn_signup": "Créer un compte",

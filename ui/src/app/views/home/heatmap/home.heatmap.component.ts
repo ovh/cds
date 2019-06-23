@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
-import { AuthentificationStore } from 'app/service/services.module';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
@@ -52,16 +51,12 @@ export class HomeHeatmapComponent implements OnInit {
         private _timelineStore: TimelineStore,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private _appService: AppService,
-        private _authStore: AuthentificationStore
+        private _appService: AppService
     ) {
         this.filter = new TimelineFilter();
     }
 
     ngOnInit(): void {
-        if (!this._authStore.isConnected) {
-            return;
-        }
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
             this.filter = f;
             this._appService.initFilter(this.filter);

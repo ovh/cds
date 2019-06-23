@@ -69,19 +69,26 @@ func CheckSigninStateToken(signature string) error {
 }
 
 // NewVerifyConsumerToken returns a new verify consumer token for given consumer id.
-func NewVerifyConsumerToken(consumerID string) (string, error) {
+func NewVerifyConsumerToken(store cache.Store, consumerID string) (string, error) {
 	state := verifyConsumer{
 		defaultSignaturePayload: defaultSignaturePayload{
-			Type:   signinStatePayload,
+			Type:   verifyConsumerPayload,
+			Nonce:  sdk.UUID(),
 			Expire: time.Now().Add(verifyConsumerDuration).Unix(),
 		},
 		ConsumerID: consumerID,
 	}
+
+	cacheKey := cache.Key("authentication:consumer:verify", state.ConsumerID)
+	if err := store.SetWithDuration(cacheKey, state.Nonce, verifyConsumerDuration); err != nil {
+		return "", err
+	}
+
 	return SignJWS(state)
 }
 
 // CheckVerifyConsumerToken checks that the given signature is a valid verify consumer token.
-func CheckVerifyConsumerToken(signature string) (string, error) {
+func CheckVerifyConsumerToken(store cache.Store, signature string) (string, error) {
 	var state verifyConsumer
 	if err := VerifyJWS(signature, &state); err != nil {
 		return "", err
@@ -89,7 +96,21 @@ func CheckVerifyConsumerToken(signature string) (string, error) {
 	if state.Type != verifyConsumerPayload || state.Expire < time.Now().Unix() {
 		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given verify consumer token")
 	}
+
+	cacheKey := cache.Key("authentication:consumer:verify", state.ConsumerID)
+
+	var nonce string
+	if ok := store.Get(cacheKey, &nonce); !ok || nonce != state.Nonce {
+		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given verify consumer token")
+	}
+
 	return state.ConsumerID, nil
+}
+
+// CleanVerifyConsumerToken deletes a consumer verify token from cache if exists.
+func CleanVerifyConsumerToken(store cache.Store, consumerID string) {
+	cacheKey := cache.Key("authentication:consumer:verify", consumerID)
+	store.Delete(cacheKey)
 }
 
 // NewResetConsumerToken returns a new reset consumer token for given consumer id.
@@ -129,4 +150,10 @@ func CheckResetConsumerToken(store cache.Store, signature string) (string, error
 	}
 
 	return state.ConsumerID, nil
+}
+
+// CleanResetConsumerToken deletes a consumer reset token from cache if exists.
+func CleanResetConsumerToken(store cache.Store, consumerID string) {
+	cacheKey := cache.Key("authentication:consumer:reset", consumerID)
+	store.Delete(cacheKey)
 }

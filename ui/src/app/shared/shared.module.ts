@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
@@ -237,7 +238,8 @@ import { ZoneComponent } from './zone/zone.component';
         DurationService,
         PermissionService,
         SharedService,
-        ToastService
+        ToastService,
+        AuthenticationGuard
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

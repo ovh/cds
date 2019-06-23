@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -8,7 +10,6 @@ import { Group } from '../../../../model/group.model';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { User } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
-import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -46,7 +47,7 @@ export class WorkerModelEditComponent implements OnInit {
         private _translate: TranslateService,
         private _route: ActivatedRoute,
         private _router: Router,
-        private _authentificationStore: AuthentificationStore
+        private _store: Store
     ) { }
 
     selectTab(tab: Tab): void {
@@ -74,7 +75,7 @@ export class WorkerModelEditComponent implements OnInit {
             key: 'usage'
         }];
 
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.getGroups();
         this.getWorkerModelComponents();
 

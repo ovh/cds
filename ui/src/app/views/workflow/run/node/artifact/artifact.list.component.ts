@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { environment } from 'app/../environments/environment';
 import { WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 
@@ -31,7 +30,7 @@ export class WorkflowRunArtifactListComponent {
                 selector: (a: WorkflowNodeRunArtifact) => {
                     let size = this.getHumainFileSize(a.size);
                     return {
-                        link: `${environment.apiURL}/workflow/artifact/${a.download_hash}`,
+                        link: `/cdsapi/workflow/artifact/${a.download_hash}`,
                         value: `${a.name} (${size})`
                     };
                 }

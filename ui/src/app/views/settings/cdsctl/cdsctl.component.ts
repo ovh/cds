@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild, } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { User } from 'app/model/user.model';
-import { AuthentificationStore } from 'app/service/authentication/authentification.store';
 import { ConfigService } from 'app/service/config/config.service';
 import { ThemeStore } from 'app/service/services.module';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -39,7 +40,7 @@ export class CdsctlComponent implements OnInit {
     themeSubscription: Subscription;
 
     constructor(
-        private _authentificationStore: AuthentificationStore,
+        private _store: Store,
         private _configService: ConfigService,
         private _translate: TranslateService,
         private _theme: ThemeStore
@@ -90,7 +91,7 @@ export class CdsctlComponent implements OnInit {
             }
         });
 
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
         this.loading = true;
         this._configService.getConfig()

@@ -1,5 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AskResetComponent } from './ask-reset/ask-reset';
 import { AuthComponent } from './auth.component';
 import { CallbackComponent } from './callback/callback.component';
 import { ResetComponent } from './reset/reset';
@@ -19,7 +20,7 @@ const routes: Routes = [
             },
             {
                 path: 'ask-reset',
-                component: ResetComponent,
+                component: AskResetComponent,
                 data: { title: 'CDS • Ask password reset' }
             },
             {

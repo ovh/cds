@@ -20,8 +20,17 @@ export class AuthenticationService {
     });
   }
 
-  localSignin(consumerType: string, username: string, password: string): Observable<AuthConsumerSigninResponse> {
-    return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/${consumerType}/signin`, {
+  localSignup(fullname: string, email: string, username: string, password: string): Observable<AuthConsumerSigninResponse> {
+    return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signup', {
+      fullname,
+      email,
+      username,
+      password
+    });
+  }
+
+  localSignin(username: string, password: string): Observable<AuthConsumerSigninResponse> {
+    return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signin', {
       username,
       password
     });
@@ -30,6 +39,19 @@ export class AuthenticationService {
   localVerify(token: string): Observable<AuthConsumerSigninResponse> {
     return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/verify`, {
       token
+    });
+  }
+
+  localAskReset(email: string): Observable<AuthConsumerSigninResponse> {
+    return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/askReset`, {
+      email,
+    });
+  }
+
+  localReset(token: string, password: string): Observable<AuthConsumerSigninResponse> {
+    return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/reset`, {
+      token,
+      password
     });
   }
 }

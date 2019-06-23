@@ -1,7 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ApplicationQueryParamResolver } from '../../service/application/application.resolver';
-import { CanActivateAuthRoute } from '../../service/authentication/authenRouteActivate';
 import { ProjectResolver } from '../../service/project/project.resolver';
 import { PipelineAddComponent } from './add/pipeline.add.component';
 import { PipelineShowComponent } from './show/pipeline.show.component';
@@ -9,8 +9,8 @@ import { PipelineShowComponent } from './show/pipeline.show.component';
 const pipelineRoutes: Routes = [
     {
         path: '',
-        canActivate: [CanActivateAuthRoute],
-        canActivateChild: [CanActivateAuthRoute],
+        canActivate: [AuthenticationGuard],
+        canActivateChild: [AuthenticationGuard],
         children: [
             {
                 path: '',

@@ -189,19 +189,22 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 
 		xsrfToken := req.Header.Get(xsrfHeaderName)
 
-		log.Debug("authJWTMiddleware> checking xsrf token %s...", xsrfToken[:12])
+		log.Debug("authJWTMiddleware> checking xsrf token")
 
 		if !authentication.CheckSessionXSRFToken(api.Cache, sessionID, xsrfToken) {
 			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 		}
+	}
 
-		xsrfToken = authentication.NewSessionXSRFToken(api.Cache, sessionID)
+	if xsrfTokenNeeded {
+		xsrfToken := authentication.NewSessionXSRFToken(api.Cache, sessionID)
 
 		// Set a cookie with the jwt token
 		http.SetCookie(w, &http.Cookie{
 			Name:    xsrfCookieName,
 			Value:   xsrfToken,
 			Expires: time.Now().Add(time.Duration(authentication.XSRFTokenDuration) * time.Second),
+			Path:    "/",
 		})
 	}
 

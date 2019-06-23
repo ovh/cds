@@ -2,12 +2,12 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { DeleteProject, UpdateProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
 import { User } from '../../../../model/user.model';
 import { Warning } from '../../../../model/warning.model';
-import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -47,15 +47,14 @@ export class ProjectAdminComponent implements OnInit {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
-        private _authStore: AuthentificationStore,
-        private store: Store
+        private _store: Store
     ) { };
 
     ngOnInit(): void {
         if (this.project.permission !== 7) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
-        this.user = this._authStore.getUser();
+        this.user = this._store.selectSnapshot(AuthenticationState.user);
     }
 
     onSubmitProjectUpdate(skip?: boolean) {
@@ -63,7 +62,7 @@ export class ProjectAdminComponent implements OnInit {
             this.warningUpdateModal.show();
         } else {
             this.loading = true;
-            this.store.dispatch(new UpdateProject(this.project))
+            this._store.dispatch(new UpdateProject(this.project))
                 .pipe(finalize(() => this.loading = false))
                 .subscribe(() => this._toast.success('', this._translate.instant('project_update_msg_ok')));
         }
@@ -71,7 +70,7 @@ export class ProjectAdminComponent implements OnInit {
 
     deleteProject(): void {
         this.loading = true;
-        this.store.dispatch(new DeleteProject({ projectKey: this.project.key }))
+        this._store.dispatch(new DeleteProject({ projectKey: this.project.key }))
             .pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('project_deleted'));

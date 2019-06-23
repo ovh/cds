@@ -347,6 +347,7 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUsersHandler))
+	r.Handle("/user/me", Scope(sdk.AccessTokenScopeUser), r.GET(api.getUserMeHandler))
 	r.Handle("/user/favorite", Scope(sdk.AccessTokenScopeUser), r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/timeline", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AccessTokenScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))

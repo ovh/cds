@@ -17,7 +17,6 @@ import { Pipeline } from './model/pipeline.model';
 import { Project } from './model/project.model';
 import { User } from './model/user.model';
 import { ApplicationService } from './service/application/application.service';
-import { AuthentificationStore } from './service/authentication/authentification.store';
 import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
 import { SharedModule } from './shared/shared.module';
@@ -26,13 +25,11 @@ import { NgxsStoreModule } from './store/store.module';
 describe('App: CDS', () => {
 
     let injector: Injector;
-    let authStore: AuthentificationStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                AuthentificationStore,
                 Store,
                 WorkflowService,
                 WorkflowRunService,

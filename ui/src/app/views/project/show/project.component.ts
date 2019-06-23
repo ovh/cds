@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import * as immutable from 'immutable';
@@ -12,7 +13,6 @@ import { PermissionValue } from '../../../model/permission.model';
 import { LoadOpts, Project } from '../../../model/project.model';
 import { User } from '../../../model/user.model';
 import { Warning } from '../../../model/warning.model';
-import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { HelpersService } from '../../../service/helpers/helpers.service';
 import { WarningStore } from '../../../service/warning/warning.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
@@ -52,15 +52,14 @@ export class ProjectShowComponent implements OnInit {
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private _authentificationStore: AuthentificationStore,
         private _warningStore: WarningStore,
         private _helpersService: HelpersService,
-        private store: Store
+        private _store: Store
     ) {
         this.initWarnings();
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
-        this.projectSubscriber = this.store.select(ProjectState)
+        this.projectSubscriber = this._store.select(ProjectState)
             .pipe(filter((projState: ProjectStateModel) => {
                 return projState && projState.project && projState.project.key !== null && !projState.project.externalChange &&
                     this._route.snapshot.params['key'] === projState.project.key;
@@ -188,7 +187,7 @@ export class ProjectShowComponent implements OnInit {
             }
         }
 
-        this.store.dispatch(new FetchProject({ projectKey: key, opts }))
+        this._store.dispatch(new FetchProject({ projectKey: key, opts }))
             .subscribe(null, () => this._router.navigate(['/home']));
 
         this.warningsSub = this._warningStore.getProjectWarnings(key).subscribe(ws => {
@@ -240,7 +239,7 @@ export class ProjectShowComponent implements OnInit {
 
     updateFav() {
         this.loadingFav = true;
-        this.store.dispatch(new UpdateFavoriteProject({ projectKey: this.project.key }))
+        this._store.dispatch(new UpdateFavoriteProject({ projectKey: this.project.key }))
             .pipe(finalize(() => this.loadingFav = false))
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }

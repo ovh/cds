@@ -13,10 +13,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type emailParam struct {
-	URL string
-}
-
 var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort string
 var smtpTLS, smtpEnable bool
 
@@ -133,7 +129,7 @@ func smtpClient() (*smtp.Client, error) {
 func SendMailVerifyToken(userMail, username, token, callback string) error {
 	callbackURL := fmt.Sprintf(callback, token)
 
-	mailContent, err := createTemplate(templateSignedup, callbackURL)
+	mailContent, err := createTemplate(templateSignedup, callbackURL, username)
 	if err != nil {
 		return err
 	}
@@ -145,7 +141,7 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 func SendMailAskResetToken(userMail, username, token, callback string) error {
 	callbackURL := fmt.Sprintf(callback, token)
 
-	mailContent, err := createTemplate(templateAskReset, callbackURL)
+	mailContent, err := createTemplate(templateAskReset, callbackURL, username)
 	if err != nil {
 		return err
 	}
@@ -157,7 +153,7 @@ func SendMailAskResetToken(userMail, username, token, callback string) error {
 func SendMailResetToken(userMail, username, token, callback string) error {
 	callbackURL := fmt.Sprintf(callback, token)
 
-	mailContent, err := createTemplate(templateReset, callbackURL)
+	mailContent, err := createTemplate(templateReset, callbackURL, username)
 	if err != nil {
 		return err
 	}
@@ -165,24 +161,18 @@ func SendMailResetToken(userMail, username, token, callback string) error {
 	return SendEmail("[CDS] Your password was reset", &mailContent, userMail, false)
 }
 
-func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {
+func createTemplate(templ, callbackURL, username string) (bytes.Buffer, error) {
 	var b bytes.Buffer
 
 	// Create mail template
 	t := template.New("Email template")
 	t, err := t.Parse(templ)
 	if err != nil {
-		fmt.Printf("Error with parsing template:%s \n", err.Error())
-		return b, err
+		return b, sdk.WrapError(err, "error with parsing template")
 	}
 
-	param := emailParam{
-		URL: callbackURL,
-	}
-	err = t.Execute(&b, param)
-	if err != nil {
-		fmt.Printf("Error with Execute template:%s \n", err.Error())
-		return b, err
+	if err := t.Execute(&b, struct{ URL, Username string }{callbackURL, username}); err != nil {
+		return b, sdk.WrapError(err, "cannot execute template")
 	}
 
 	return b, nil

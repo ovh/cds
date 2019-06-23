@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthRoute } from '../../service/authentication/authenRouteActivate';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { BroadcastDetailsComponent } from './details/broadcast.details.component';
 import { BroadcastListComponent } from './list/broadcast.list.component';
 
@@ -8,12 +8,12 @@ const routes: Routes = [
     {
         path: '',
         component: BroadcastListComponent,
-        canActivate: [CanActivateAuthRoute],
+        canActivate: [AuthenticationGuard],
     },
     {
         path: ':id',
         component: BroadcastDetailsComponent,
-        canActivate: [CanActivateAuthRoute],
+        canActivate: [AuthenticationGuard],
     }
 ];
 

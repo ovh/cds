@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthenticationService } from 'app/service/services.module';
 import { finalize } from 'rxjs/operators';
 
@@ -17,7 +17,7 @@ export class VerifyComponent implements OnInit {
 
     constructor(
         private _router: Router,
-        private _activatedRoute: ActivatedRoute,
+        private _route: ActivatedRoute,
         private _authenticationService: AuthenticationService,
         private _cd: ChangeDetectorRef
     ) {
@@ -25,27 +25,27 @@ export class VerifyComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        let params: Params = this._activatedRoute.snapshot.params;
-
-        let token = params['token'];
-        if (!token) {
-            this.showErrorMessage = true;
-            this.loading = false;
-            this._cd.detectChanges();
-            return;
-        }
-
-        this._authenticationService.localVerify(token)
-            .pipe(finalize(() => {
+        this._route.queryParams.subscribe(queryParams => {
+            let token = queryParams['token'];
+            if (!token) {
+                this.showErrorMessage = true;
                 this.loading = false;
                 this._cd.detectChanges();
-            }))
-            .subscribe(res => {
-                // TODO store token then redirect
-                // this._router.navigate(['home']);
-            }, () => {
-                this.showErrorMessage = true;
-            });
+                return;
+            }
+
+            this._authenticationService.localVerify(token)
+                .pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.detectChanges();
+                }))
+                .subscribe(res => {
+                    // TODO show successfull verify with redirect button
+                    // this._router.navigate(['home']);
+                }, () => {
+                    this.showErrorMessage = true;
+                });
+        });
     }
 
     navigateToSignin() {

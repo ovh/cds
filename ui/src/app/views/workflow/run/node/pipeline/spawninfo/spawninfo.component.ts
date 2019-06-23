@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
-import { environment } from '../../../../../../../environments/environment';
 import { Parameter } from '../../../../../../model/parameter.model';
 import { PipelineStatus, SpawnInfo } from '../../../../../../model/pipeline.model';
 import { Project } from '../../../../../../model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
-import { AuthentificationStore } from '../../../../../../service/authentication/authentification.store';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
 @Component({
@@ -51,7 +51,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
 
     @Output() displayServicesLogsChange = new EventEmitter<boolean>();
 
-    @ViewChild('jobVariable', {static: false})
+    @ViewChild('jobVariable', { static: false })
     jobVariable: WorkflowRunJobVariableComponent;
 
     _nodeJobRun: WorkflowNodeJobRun;
@@ -71,7 +71,10 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
         this.stopWorker();
     }
 
-    constructor(private _authStore: AuthentificationStore, private _translate: TranslateService) { }
+    constructor(
+        private _store: Store,
+        private _translate: TranslateService
+    ) { }
 
     refreshDisplayServiceLogsLink() {
         if (this.nodeJobRun.job && this.nodeJobRun.job.action && Array.isArray(this.nodeJobRun.job.action.requirements)) {
@@ -112,9 +115,9 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
         if (!this.worker) {
             this.worker = new CDSWebWorker('./assets/worker/web/workflow-spawninfos.js');
             this.worker.start({
-                user: this._authStore.getUser(),
-                session: this._authStore.getSessionToken(),
-                api: environment.apiURL,
+                user: this._store.selectSnapshot(AuthenticationState.user),
+                // session: this._authStore.getSessionToken(),
+                api: '/cdsapi',
                 key: this.project.key,
                 workflowName: this.workflowName,
                 number: this.nodeRun.num,

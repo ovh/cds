@@ -1,19 +1,15 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthDriverManifest } from 'app/model/authentication.model';
-import { UserLoginRequest } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
-import { UserService } from 'app/service/user/user.service';
-import { environment } from 'environments/environment';
 
 @Component({
     selector: 'app-auth-signin',
     templateUrl: './signin.html',
-    styleUrls: ['./signin.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    styleUrls: ['./signin.scss']
 })
 export class SigninComponent implements OnInit {
-    user: UserLoginRequest;
     redirect: string;
     apiURL: string;
 
@@ -22,20 +18,13 @@ export class SigninComponent implements OnInit {
     externalDrivers: Array<AuthDriverManifest>;
 
     constructor(
-        private _userService: UserService,
         private _authenticationService: AuthenticationService,
         private _router: Router,
-        private _route: ActivatedRoute,
-        private _cd: ChangeDetectorRef
+        private _route: ActivatedRoute
     ) {
-        this.user = new UserLoginRequest();
-
         this._route.queryParams.subscribe(queryParams => {
             this.redirect = queryParams.redirect;
-            this.user.request_token = queryParams.request;
         });
-
-        this.apiURL = environment.apiURL;
     }
 
     ngOnInit() {
@@ -43,12 +32,23 @@ export class SigninComponent implements OnInit {
             this.localDriver = ds.find(d => d.type === 'local');
             this.ldapDriver = ds.find(d => d.type === 'ldap');
             this.externalDrivers = ds.filter(d => d.type !== 'local' && d.type !== 'ldap');
-            this._cd.detectChanges();
         });
     }
 
-    signIn() {
-        this._userService.login(this.user).subscribe(() => {
+
+    signup(f: NgForm) {
+        this._authenticationService.localSignup(
+            f.value.fullname,
+            f.value.email,
+            f.value.username,
+            f.value.password
+        ).subscribe(() => {
+            // TODO show successfull signup, you will receive an email
+        });
+    }
+
+    signin(f: NgForm) {
+        this._authenticationService.localSignin(f.value.username, f.value.password).subscribe(() => {
             if (this.redirect) {
                 this._router.navigateByUrl(decodeURIComponent(this.redirect));
             } else {

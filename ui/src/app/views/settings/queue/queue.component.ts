@@ -1,12 +1,12 @@
 import { Component, NgZone, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { environment } from '../../../../environments/environment';
 import { PipelineStatus } from '../../../model/pipeline.model';
 import { User } from '../../../model/user.model';
 import { WorkflowNodeJobRun } from '../../../model/workflow.run.model';
-import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { WorkflowRunService } from '../../../service/workflow/run/workflow.run.service';
 import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
@@ -34,7 +34,7 @@ export class QueueComponent implements OnDestroy {
     path: Array<PathItem>;
 
     constructor(
-        private _authStore: AuthentificationStore,
+        private _store: Store,
         private _wfRunService: WorkflowRunService,
         private _toast: ToastService,
         private _translate: TranslateService
@@ -42,7 +42,7 @@ export class QueueComponent implements OnDestroy {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.loading = true;
         this.status = [this.statusOptions[0]];
-        this.user = this._authStore.getUser();
+        this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.startWorker();
 
         this.path = [<PathItem>{
@@ -65,9 +65,9 @@ export class QueueComponent implements OnDestroy {
 
     getQueueWorkerParams(): any {
         return {
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
+            'user': this._store.selectSnapshot(AuthenticationState.user),
+            // 'session': this._authStore.getSessionToken(),
+            'api': '/cdsapi',
             'status': this.status.length > 0 ? this.status : this.statusOptions
         };
     }

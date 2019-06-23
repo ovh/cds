@@ -53,7 +53,7 @@ func (d AuthDriver) CheckSignupRequest(req sdk.AuthConsumerSigninRequest) error 
 	if username, ok := req["username"]; !ok || username == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing username for local signup")
 	}
-	if email, ok := req["email"]; !ok || email == "" || !d.isAllowedDomain(email) {
+	if email, ok := req["email"]; !ok || !sdk.IsValidEmail(email) || !d.isAllowedDomain(email) {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signup")
 	}
 	if password, ok := req["password"]; !ok || password == "" {
@@ -66,8 +66,8 @@ func (d AuthDriver) CheckSignupRequest(req sdk.AuthConsumerSigninRequest) error 
 
 // CheckSigninRequest checks that given driver request is valid for a signin with auth local.
 func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if email, ok := req["email"]; !ok || email == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signin")
+	if username, ok := req["username"]; !ok || username == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid username for local signin")
 	}
 	if password, ok := req["password"]; !ok || password == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for local signin")
@@ -85,7 +85,7 @@ func (d AuthDriver) CheckVerifyRequest(req sdk.AuthConsumerSigninRequest) error 
 
 // CheckAskResetRequest checks that given driver request is valid for a ask reset with auth local.
 func (d AuthDriver) CheckAskResetRequest(req sdk.AuthConsumerSigninRequest) error {
-	if email, ok := req["email"]; !ok || email == "" {
+	if email, ok := req["email"]; !ok || !sdk.IsValidEmail(email) {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signin")
 	}
 	return nil

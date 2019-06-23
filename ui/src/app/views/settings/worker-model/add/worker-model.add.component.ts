@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
-import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -34,7 +35,7 @@ export class WorkerModelAddComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,
-        private _authentificationStore: AuthentificationStore
+        private _store: Store
     ) { }
 
     ngOnInit() {
@@ -49,7 +50,7 @@ export class WorkerModelAddComponent implements OnInit {
 
         this.workerModel = new WorkerModel();
         this.workerModel.editable = true;
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.getGroups();
         this.getWorkerModelComponents();
     }

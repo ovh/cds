@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import * as projectActions from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
@@ -11,7 +12,6 @@ import { Pipeline } from '../../../../../../model/pipeline.model';
 import { Project } from '../../../../../../model/project.model';
 import { User } from '../../../../../../model/user.model';
 import { Workflow } from '../../../../../../model/workflow.model';
-import { AuthentificationStore } from '../../../../../../service/authentication/authentification.store';
 import { ToastService } from '../../../../../../shared/toast/ToastService';
 import { VariableEvent } from '../../../../../../shared/variable/variable.event.model';
 
@@ -64,10 +64,9 @@ export class ProjectEnvironmentComponent implements OnInit {
         private _toast: ToastService,
         private _router: Router,
         private _translate: TranslateService,
-        private _authenticationStore: AuthentificationStore,
-        private store: Store
+        private _store: Store
     ) {
-        this.currentUser = this._authenticationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
     }
 
     fetchUsage() {
@@ -75,7 +74,7 @@ export class ProjectEnvironmentComponent implements OnInit {
             return;
         }
         this.loadingUsage = true;
-        this.store.dispatch(new projectActions.FetchEnvironmentUsageInProject({
+        this._store.dispatch(new projectActions.FetchEnvironmentUsageInProject({
             projectKey: this.project.key,
             environmentName: this.environment.name
         })).pipe(finalize(() => this.loadingUsage = false))
@@ -88,7 +87,7 @@ export class ProjectEnvironmentComponent implements OnInit {
 
     renameEnvironment(): void {
         this.loading = true;
-        this.store.dispatch(new projectActions.UpdateEnvironmentInProject({
+        this._store.dispatch(new projectActions.UpdateEnvironmentInProject({
             projectKey: this.project.key,
             environmentName: this.oldEnvName,
             changes: this.editableEnvironment
@@ -98,7 +97,7 @@ export class ProjectEnvironmentComponent implements OnInit {
 
     cloneEnvironment(cloneModal?: any): void {
         this.cloneLoading = true;
-        this.store.dispatch(new projectActions.CloneEnvironmentInProject({
+        this._store.dispatch(new projectActions.CloneEnvironmentInProject({
             projectKey: this.project.key,
             cloneName: this.cloneName,
             environment: this.editableEnvironment
@@ -114,7 +113,7 @@ export class ProjectEnvironmentComponent implements OnInit {
 
     deleteEnvironment(): void {
         this.loading = true;
-        this.store.dispatch(new projectActions.DeleteEnvironmentInProject({
+        this._store.dispatch(new projectActions.DeleteEnvironmentInProject({
             projectKey: this.project.key, environment: this.editableEnvironment
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
@@ -129,7 +128,7 @@ export class ProjectEnvironmentComponent implements OnInit {
         switch (event.type) {
             case 'add':
                 this.addVarLoading = true;
-                this.store.dispatch(new projectActions.AddEnvironmentVariableInProject({
+                this._store.dispatch(new projectActions.AddEnvironmentVariableInProject({
                     projectKey: this.project.key,
                     environmentName: this.editableEnvironment.name,
                     variable: event.variable
@@ -137,7 +136,7 @@ export class ProjectEnvironmentComponent implements OnInit {
                     .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                 break;
             case 'update':
-                this.store.dispatch(new projectActions.UpdateEnvironmentVariableInProject({
+                this._store.dispatch(new projectActions.UpdateEnvironmentVariableInProject({
                     projectKey: this.project.key,
                     environmentName: this.editableEnvironment.name,
                     variableName: event.variable.name,
@@ -146,7 +145,7 @@ export class ProjectEnvironmentComponent implements OnInit {
                     .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
                 break;
             case 'delete':
-                this.store.dispatch(new projectActions.DeleteEnvironmentVariableInProject({
+                this._store.dispatch(new projectActions.DeleteEnvironmentVariableInProject({
                     projectKey: this.project.key,
                     environmentName: this.editableEnvironment.name,
                     variable: event.variable

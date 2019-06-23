@@ -7,14 +7,14 @@
                     suiTabHeader="2">{{ 'account_btn_signup' | translate}}</a>
             </div>
             <div class="ui bottom attached segment" suiTabContent="1">
-                <form class="ui form" (ngSubmit)="signIn()" #loginForm="ngForm">
+                <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
                     <div class="field">
                         <label>{{ 'user_label_username' | translate }}</label>
-                        <input type="text" [(ngModel)]="user.username" name="username">
+                        <input type="text" name="username" ngModel required>
                     </div>
                     <div class="field">
                         <label>{{ 'user_label_password' | translate }}</label>
-                        <input type="password" [(ngModel)]="user.password" name="password">
+                        <input type="password" name="password" ngModel required>
                     </div>
                     <div class="field right aligned">
                         <a class="pointing" (click)="navigateToAskReset()">{{ 'account_btn_password' | translate }}</a>
@@ -25,22 +25,22 @@
                 </form>
             </div>
             <div *ngIf="!localDriver.signup_disabled" class="ui bottom attached segment" suiTabContent="2">
-                <form class="ui form" (ngSubmit)="createUser()" #loginForm="ngForm">
+                <form class="ui form" (ngSubmit)="signup(signupForm)" #signupForm="ngForm">
                     <div class="field">
                         <label>{{ 'user_label_username' | translate }}</label>
-                        <input type="text" [(ngModel)]="user.username" name="username">
+                        <input type="text" name="username" ngModel required>
                     </div>
                     <div class="field">
                         <label>{{ 'user_label_fullname' | translate }}</label>
-                        <input type="text" [(ngModel)]="user.fullname" name="fullname">
+                        <input type="text" name="fullname" ngModel required>
                     </div>
                     <div class="field">
                         <label>{{ 'user_label_email' | translate }}</label>
-                        <input type="email" [(ngModel)]="user.email" name="email">
+                        <input type="email" name="email" ngModel required>
                     </div>
                     <div class="field">
                         <label>{{ 'user_label_password' | translate }}</label>
-                        <input type="password" [(ngModel)]="user.password" name="password">
+                        <input type="password" name="password" ngModel required>
                     </div>
                     <div class="field right aligned">
                         <button class="ui green button"
@@ -52,7 +52,7 @@
         <div *ngIf="externalDrivers && externalDrivers.length > 0" class="ui bottom attached segment">
             <form class="ui form">
                 <div *ngFor="let driver of externalDrivers" class="field">
-                    <a href="{{apiURL}}/auth/consumer/{{driver.type}}/askSignin"
+                    <a href="/cdsapi/auth/consumer/{{driver.type}}/askSignin"
                         class="fluid ui {{driver.type}} button primary">
                         <i class="{{driver.type}} icon"></i>
                         {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}

@@ -10,7 +10,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipeline } from 'app/store/pipelines.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
@@ -18,7 +18,6 @@ import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
-import { AuthentificationStore } from '../../../service/authentication/authentification.store';
 import { EnvironmentService } from '../../../service/environment/environment.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
@@ -43,7 +42,6 @@ describe('CDS: Pipeline Add Component', () => {
             providers: [
                 MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
-                AuthentificationStore,
                 ProjectStore,
                 ProjectService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },

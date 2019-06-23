@@ -1,35 +1,40 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
-import { User } from 'app/model/user.model';
-import { AuthentificationStore } from '../../../service/authentication/authentification.store';
-import { UserService } from '../../../service/user/user.service';
+import { AuthenticationService } from 'app/service/services.module';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-auth-ask-reset',
   templateUrl: './ask-reset.html',
   styleUrls: ['./ask-reset.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AskResetComponent {
-  user: User;
-  showWaitingMessage = false;
+  loading: boolean;
+  showSuccessMessage: boolean;
+  showErrorMessage: boolean;
 
   constructor(
-    private _userService: UserService,
+    private _authenticationService: AuthenticationService,
     private _router: Router,
-    _authStore: AuthentificationStore
-  ) {
-    this.user = new User();
-  }
+    private _cd: ChangeDetectorRef
+  ) { }
 
-  resetPassword() {
-    let bases = document.getElementsByTagName('base');
-    let baseHref = null;
-    if (bases.length > 0) {
-      baseHref = bases[0].href;
-    }
-    this._userService.resetPassword(this.user, baseHref).subscribe(() => {
-      this.showWaitingMessage = true;
-    });
+  askReset(f: NgForm) {
+    this.loading = true;
+    this.showSuccessMessage = false;
+    this.showErrorMessage = false;
+    this._authenticationService.localAskReset(f.value.email)
+      .pipe(finalize(() => {
+        this.loading = false;
+        this._cd.detectChanges();
+      }))
+      .subscribe(res => {
+        this.showSuccessMessage = true;
+      }, () => {
+        this.showErrorMessage = true;
+      });
   }
 
   navigateToSignin() {

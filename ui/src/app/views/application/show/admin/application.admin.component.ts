@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { DeleteApplication, UpdateApplication } from 'app/store/applications.action';
+import { AuthenticationState } from 'app/store/authentication.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../model/application.model';
 import { Project } from '../../../../model/project.model';
 import { User } from '../../../../model/user.model';
-import { AuthentificationStore } from '../../../../service/authentication/authentification.store';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -21,7 +21,7 @@ export class ApplicationAdminComponent implements OnInit {
 
     @Input() application: Application;
     @Input() project: Project;
-    @ViewChild('updateWarning', {static: false})
+    @ViewChild('updateWarning', { static: false })
     private updateWarningModal: WarningModalComponent;
 
     user: User;
@@ -34,14 +34,13 @@ export class ApplicationAdminComponent implements OnInit {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
-        private _authStore: AuthentificationStore,
-        private store: Store
+        private _store: Store
     ) {
 
     }
 
     ngOnInit() {
-        this.user = this._authStore.getUser();
+        this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.newName = this.application.name;
         if (this.application.permission !== 7) {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
@@ -57,7 +56,7 @@ export class ApplicationAdminComponent implements OnInit {
             let nameUpdated = this.application.name !== this.newName;
             let app = cloneDeep(this.application);
             app.name = this.newName;
-            this.store.dispatch(new UpdateApplication({
+            this._store.dispatch(new UpdateApplication({
                 projectKey: this.project.key,
                 applicationName: this.application.name,
                 changes: app
@@ -73,7 +72,7 @@ export class ApplicationAdminComponent implements OnInit {
 
     deleteApplication(): void {
         this.loading = true;
-        this.store.dispatch(new DeleteApplication({ projectKey: this.project.key, applicationName: this.application.name }))
+        this._store.dispatch(new DeleteApplication({ projectKey: this.project.key, applicationName: this.application.name }))
             .pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('application_deleted'));

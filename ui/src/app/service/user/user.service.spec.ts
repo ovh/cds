@@ -8,7 +8,6 @@ import { MockBackend } from '@angular/http/testing';
 import { RouterModule } from '@angular/router';
 import { AppModule } from 'app/app.module';
 import { User } from 'app/model/user.model';
-import { AuthentificationStore } from '../auth/authentification.store';
 import { ThemeStore } from '../services.module';
 import { UserService } from './user.service';
 

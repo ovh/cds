@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // postAuthLocalSignupHandler create a new authentified user and a not verified consumer.
@@ -21,7 +22,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := driver.(local.AuthDriver)
+		localDriver := driver.(*local.AuthDriver)
 
 		// Extract and validate signup request
 		var reqData sdk.AuthConsumerSigninRequest
@@ -40,7 +41,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 
 		// Check that user don't already exists in database
 		existingUser, err := user.LoadByUsername(ctx, tx, reqData["username"])
-		if err != nil {
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 			return err
 		}
 		if existingUser != nil {
@@ -95,7 +96,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Generate a token to verify consumer
-		verifyToken, err := authentication.NewVerifyConsumerToken(consumer.ID)
+		verifyToken, err := authentication.NewVerifyConsumerToken(api.Cache, consumer.ID)
 		if err != nil {
 			return err
 		}
@@ -182,6 +183,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			Name:    jwtCookieName,
 			Value:   jwt,
 			Expires: session.ExpireAt,
+			Path:    "/",
 		})
 
 		// Prepare http response
@@ -201,7 +203,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := driver.(local.AuthDriver)
+		localDriver := driver.(*local.AuthDriver)
 
 		var reqData sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
@@ -211,7 +213,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return err
 		}
 
-		consumerID, err := authentication.CheckVerifyConsumerToken(reqData["token"])
+		consumerID, err := authentication.CheckVerifyConsumerToken(api.Cache, reqData["token"])
 		if err != nil {
 			return err
 		}
@@ -257,6 +259,8 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
+		authentication.CleanVerifyConsumerToken(api.Cache, consumer.ID)
+
 		// Set a cookie with the jwt token
 		http.SetCookie(w, &http.Cookie{
 			Name:    jwtCookieName,
@@ -281,7 +285,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := driver.(local.AuthDriver)
+		localDriver := driver.(*local.AuthDriver)
 
 		var reqData sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
@@ -301,6 +305,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		if err != nil {
 			// If there is no contact for given email, return ok to prevent email exploration
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				log.Warning("api.postAuthLocalAskResetHandler> no contact found for email %s: %v", reqData["email"], err)
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			return err
@@ -311,6 +316,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		if err != nil {
 			// If there is no local consumer for given email, return ok to prevent account exploration
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				log.Warning("api.postAuthLocalAskResetHandler> no local consumer found for contact with email %s: %v", reqData["email"], err)
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			return err
@@ -323,7 +329,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 
 		// Insert the authentication
 		if err := mail.SendMailAskResetToken(contact.Value, consumer.AuthentifiedUser.Username, resetToken,
-			api.Config.URL.API+"/auth/reset?token=%s"); err != nil {
+			api.Config.URL.UI+"/auth/reset?token=%s"); err != nil {
 			return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
 		}
 
@@ -342,13 +348,13 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := driver.(local.AuthDriver)
+		localDriver := driver.(*local.AuthDriver)
 
 		var reqData sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
-		if err := localDriver.CheckAskResetRequest(reqData); err != nil {
+		if err := localDriver.CheckResetRequest(reqData); err != nil {
 			return err
 		}
 
@@ -371,6 +377,9 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		if consumer.Type != sdk.ConsumerLocal {
 			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
 		}
+
+		// In case where the user was not verified already set it to verified
+		consumer.Data["verified"] = sdk.TrueString
 
 		// Generate password hash to store in consumer
 		hash, err := local.HashPassword(reqData["password"])
@@ -403,6 +412,8 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		authentication.CleanResetConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
 		http.SetCookie(w, &http.Cookie{

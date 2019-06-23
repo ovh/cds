@@ -45,6 +45,14 @@ func (api *API) deleteUserHandler() service.Handler {
 }
 
 // GetUserHandler returns a specific user's information
+func (api *API) getUserMeHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		consumer := getAPIConsumer(ctx)
+		return service.WriteJSON(w, consumer.AuthentifiedUser, http.StatusOK)
+	}
+}
+
+// GetUserHandler returns a specific user's information
 func (api *API) getUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
