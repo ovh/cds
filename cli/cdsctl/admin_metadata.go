@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/spf13/cobra"
 )
@@ -234,24 +232,12 @@ func adminMetadataWorkflowExportRun(c cli.Values) error {
 
 	lines := []lineMetadata{}
 	for _, p := range projects {
-		mods := []cdsclient.RequestModifier{}
-		mods = append(mods, func(r *http.Request) {
-			q := r.URL.Query()
-			q.Set("withWorkflowNames", "true")
-			r.URL.RawQuery = q.Encode()
-		})
-
-		proj, err := client.ProjectGet(p.Key, mods...)
+		workflows, err := client.WorkflowList(p.Key)
 		if err != nil {
 			return err
 		}
 
-		for _, wName := range proj.WorkflowNames {
-			w, err := client.WorkflowGet(p.Key, wName.Name)
-			if err != nil {
-				return err
-			}
-
+		for _, w := range workflows {
 			m := sdk.Metadata{}
 			// take all metadata from projects
 			for k, v := range p.Metadata {
