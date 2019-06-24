@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
 import { AuthentificationStore } from 'app/service/services.module';
@@ -19,7 +19,7 @@ import { ToolbarComponent } from './toolbar/toolbar.component';
     styleUrls: ['./home.heatmap.scss']
 })
 @AutoUnsubscribe()
-export class HomeHeatmapComponent implements OnInit {
+export class HomeHeatmapComponent implements OnInit, AfterViewInit {
 
     loading = true;
     events: Array<Event>;
@@ -58,10 +58,7 @@ export class HomeHeatmapComponent implements OnInit {
         this.filter = new TimelineFilter();
     }
 
-    ngOnInit(): void {
-        if (!this._authStore.isConnected) {
-            return;
-        }
+    ngAfterViewInit() {
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
             this.filter = f;
             this._appService.initFilter(this.filter);
@@ -137,6 +134,12 @@ export class HomeHeatmapComponent implements OnInit {
                     });
             }
         });
+
+    }
+    ngOnInit(): void {
+        if (!this._authStore.isConnected) {
+            return;
+        }
     }
 
     /**
