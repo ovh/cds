@@ -1,21 +1,31 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    Output,
+    ViewChild
+} from '@angular/core';
+import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
+import { Project } from 'app/model/project.model';
+import { Variable, VariableAudit } from 'app/model/variable.model';
+import { Warning } from 'app/model/warning.model';
+import { ApplicationAuditService } from 'app/service/application/application.audit.service';
+import { EnvironmentAuditService } from 'app/service/environment/environment.audit.service';
+import { ProjectAuditService } from 'app/service/project/project.audit.service';
+import { VariableService } from 'app/service/variable/variable.service';
+import { Table } from 'app/shared/table/table';
+import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
-import { Application } from '../../../model/application.model';
-import { Environment } from '../../../model/environment.model';
-import { Project } from '../../../model/project.model';
-import { Variable, VariableAudit } from '../../../model/variable.model';
-import { Warning } from '../../../model/warning.model';
-import { ApplicationAuditService } from '../../../service/application/application.audit.service';
-import { EnvironmentAuditService } from '../../../service/environment/environment.audit.service';
-import { ProjectAuditService } from '../../../service/project/project.audit.service';
-import { VariableService } from '../../../service/variable/variable.service';
-import { Table } from '../../table/table';
-import { VariableEvent } from '../variable.event.model';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-variable',
     templateUrl: './variable.html',
-    styleUrls: ['./variable.scss']
+    styleUrls: ['./variable.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VariableComponent extends Table<Variable> {
 
@@ -53,13 +63,15 @@ export class VariableComponent extends Table<Variable> {
     filter: string;
 
     constructor(private _variableService: VariableService, private _projAudit: ProjectAuditService,
-        private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService) {
+        private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService, public _cd: ChangeDetectorRef) {
         super();
         this.variableTypes = this._variableService.getTypesFromCache();
         if (!this.variableTypes) {
-            this._variableService.getTypesFromAPI().subscribe(types => {
-                this.variableTypes = types;
+            this._variableService.getTypesFromAPI().pipe(finalize(() => {
                 this.ready = true;
+                this._cd.detectChanges();
+            })).subscribe(types => {
+                this.variableTypes = types;
             });
         } else {
             this.ready = true;

@@ -1,14 +1,13 @@
 import { Component, Input, NgZone, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { Operation } from 'app/model/operation.model';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
-import { Operation } from '../../../../model/operation.model';
-import { Project } from '../../../../model/project.model';
-import { Workflow } from '../../../../model/workflow.model';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { CDSWebWorker } from '../../../worker/web.worker';
 
 @Component({
     selector: 'app-workflow-save-as-code-modal',
@@ -26,7 +25,7 @@ export class WorkflowSaveAsCodeComponent {
     @ViewChild('saveAsCodeModal', { static: false })
     public saveAsCodeModal: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
 
     constructor(
         private _modalService: SuiModalService,

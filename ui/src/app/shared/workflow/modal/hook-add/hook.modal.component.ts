@@ -1,11 +1,10 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
-import { PermissionValue } from '../../../../model/permission.model';
-import { Project } from '../../../../model/project.model';
-import { WNode, WNodeHook, Workflow } from '../../../../model/workflow.model';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { WorkflowNodeHookFormComponent } from '../../wizard/hook/hook.form.component';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { PermissionValue } from 'app/model/permission.model';
+import { Project } from 'app/model/project.model';
+import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowNodeHookFormComponent } from 'app/shared/workflow/wizard/hook/hook.form.component';
 
 @Component({
     selector: 'app-hook-modal',
@@ -28,7 +27,7 @@ export class WorkflowHookModalComponent {
     @ViewChild('hookModalComponent', {static: false})
     public hookModalComponent: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
 
     @ViewChild('hookFormComponent', {static: false})
     hookFormComponent: WorkflowNodeHookFormComponent;

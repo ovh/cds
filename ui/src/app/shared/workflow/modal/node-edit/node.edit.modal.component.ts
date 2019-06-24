@@ -1,6 +1,7 @@
 import {AfterViewInit, Component, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
+import {ModalSize, ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig} from '@richardlt/ng2-semantic-ui';
 import {GroupPermission} from 'app/model/group.model';
 import {PermissionValue} from 'app/model/permission.model';
 import {Project} from 'app/model/project.model';
@@ -13,8 +14,6 @@ import {ProjectState, ProjectStateModel} from 'app/store/project.state';
 import {CloseEditModal, UpdateWorkflow} from 'app/store/workflow.action';
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import {ModalSize, ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 
@@ -36,7 +35,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
     @ViewChild('nodeEditModal', {static: false})
     public nodeEditModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     selected: string;

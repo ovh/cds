@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
+import { ThemeStore } from 'app/service/theme/theme.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import * as JsDiff from 'diff';
 import { Subscription } from 'rxjs';
-import { ThemeStore } from '../../../service/services.module';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 
 export class Mode {
     static UNIFIED = 'unified';

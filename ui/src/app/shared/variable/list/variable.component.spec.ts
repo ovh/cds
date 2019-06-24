@@ -66,11 +66,11 @@ describe('CDS: Variable List Component', () => {
 
         vars.push(variable);
         fixture.componentInstance.variables = vars;
-
-        fixture.detectChanges();
+        fixture.componentInstance._cd.detectChanges();
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
+
         expect(compiled.querySelector('.ui.red.button')).toBeTruthy('Delete button must be displayed');
         compiled.querySelector('.ui.red.button').click();
 

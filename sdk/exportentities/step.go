@@ -426,6 +426,12 @@ func (s Step) IsValid() bool {
 	if s.isGitClone() {
 		count++
 	}
+	if s.isGitTag() {
+		count++
+	}
+	if s.isRelease() {
+		count++
+	}
 	if s.isCheckout() {
 		count++
 	}
@@ -460,6 +466,10 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a = s.asJUnitReport()
 	} else if s.isGitClone() {
 		a, err = s.asGitClone()
+	} else if s.isGitTag() {
+		a, err = s.asGitTag()
+	} else if s.isRelease() {
+		a, err = s.asRelease()
 	} else if s.isCheckout() {
 		a = s.asCheckoutApplication()
 	} else if s.isDeploy() {
@@ -621,6 +631,38 @@ func (s Step) asGitClone() (sdk.Action, error) {
 	}
 	a = sdk.Action{
 		Name:       sdk.GitCloneAction,
+		Type:       sdk.BuiltinAction,
+		Parameters: sdk.ParametersFromMap(m),
+	}
+	return a, nil
+}
+
+func (s Step) isGitTag() bool { return s.GitTag != nil }
+
+func (s Step) asGitTag() (sdk.Action, error) {
+	var a sdk.Action
+	m, err := stepToMap(s.GitTag)
+	if err != nil {
+		return a, err
+	}
+	a = sdk.Action{
+		Name:       sdk.GitTagAction,
+		Type:       sdk.BuiltinAction,
+		Parameters: sdk.ParametersFromMap(m),
+	}
+	return a, nil
+}
+
+func (s Step) isRelease() bool { return s.Release != nil }
+
+func (s Step) asRelease() (sdk.Action, error) {
+	var a sdk.Action
+	m, err := stepToMap(s.Release)
+	if err != nil {
+		return a, err
+	}
+	a = sdk.Action{
+		Name:       sdk.ReleaseAction,
 		Type:       sdk.BuiltinAction,
 		Parameters: sdk.ParametersFromMap(m),
 	}

@@ -1,10 +1,11 @@
-import {Component, Input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input} from '@angular/core';
 import {Group} from '../../../model/group.model';
 
 @Component({
     selector: 'app-group-form',
     templateUrl: './group.form.html',
-    styleUrls: ['./group.form.scss']
+    styleUrls: ['./group.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GroupFormComponent {
     @Input() group: Group;

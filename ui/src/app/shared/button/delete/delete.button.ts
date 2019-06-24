@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'app-delete-button',
     templateUrl: './delete.html',
-    styleUrls: ['./delete.scss']
+    styleUrls: ['./delete.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DeleteButtonComponent {
     @Input() loading = false;

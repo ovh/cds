@@ -452,6 +452,14 @@ a.ui.basic.grey.label:hover {
   }
 }
 
+.ui.modal>.close {
+
+    .night &,
+    :host-context(.night) & {
+        color: $darkTheme_grey_5;
+    }
+}
+
 .ui.menu .dropdown.item .menu {
 
   .night &,
@@ -555,10 +563,6 @@ a.ui.basic.grey.label:hover {
     color: $darkTheme_grey_5;
     border-color: $darkTheme_grey_3;
   }
-}
-
-.ui.modal.scroll {
-  top: 50px;
 }
 
 .ui.tabular.menu {

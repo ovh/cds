@@ -1,22 +1,18 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
-import { Observable, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import {
     InstanceStatus,
-    InstanceStatusUtil,
-    OperationStatus,
-    OperationStatusUtil,
+    InstanceStatusUtil, OperationStatus, OperationStatusUtil,
     ParamData,
-    WorkflowTemplate,
-    WorkflowTemplateBulk,
+    WorkflowTemplate, WorkflowTemplateBulk,
     WorkflowTemplateBulkOperation,
     WorkflowTemplateInstance
-} from '../../../model/workflow-template.model';
-import { WorkflowTemplateService } from '../../../service/services.module';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { Column, ColumnType, Select } from '../../../shared/table/data-table.component';
+} from 'app/model/workflow-template.model';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
+import { Observable, Subscription } from 'rxjs';
+import { finalize } from 'rxjs/internal/operators/finalize';
 
 @Component({
     selector: 'app-workflow-template-bulk-modal',
@@ -25,8 +21,8 @@ import { Column, ColumnType, Select } from '../../../shared/table/data-table.com
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateBulkModalComponent {
-    @ViewChild('workflowTemplateBulkModal', {static: false}) workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    @ViewChild('workflowTemplateBulkModal', { static: false }) workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
     @Input() workflowTemplate: WorkflowTemplate;
@@ -96,8 +92,8 @@ export class WorkflowTemplateBulkModalComponent {
         this.open = true;
 
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateBulkModal);
-
         config.mustScroll = true;
+
         this.modal = this._modalService.open(config);
         this.modal.onApprove(() => {
             this.open = false;

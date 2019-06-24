@@ -160,7 +160,10 @@ export class AppService {
                     opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
                     opts.push(new LoadOpts('withLabels', 'labels'));
                 }
-                this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts }));
+
+                if (event.type_event.indexOf('Variable') === -1) {
+                    this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts }));
+                }
             });
     }
 
@@ -196,11 +199,13 @@ export class AppService {
                     return;
                 }
             } else {
-                this._store.dispatch(new DeleteFromCacheApplication(payload))
+                this._store.dispatch(new DeleteFromCacheApplication(payload));
                 return;
             }
 
-            this._store.dispatch(new ResyncApplication(payload));
+            if (event.type_event.indexOf('Variable') === -1) {
+                this._store.dispatch(new ResyncApplication(payload));
+            }
         });
 
     }

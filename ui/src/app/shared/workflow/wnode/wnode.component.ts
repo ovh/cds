@@ -2,6 +2,7 @@ import { Component, Input, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -24,8 +25,6 @@ import {
     UpdateWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { IPopup } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -240,7 +239,7 @@ export class WorkflowWNodeComponent implements OnInit {
         }
     }
 
-    updateHook(hook: WNodeHook, modal: ActiveModal<boolean, boolean, void>): void {
+    updateHook(hook: WNodeHook, modal: SuiActiveModal<boolean, boolean, void>): void {
         this.loading = true;
 
         let action = new UpdateHookWorkflow({
@@ -301,7 +300,7 @@ export class WorkflowWNodeComponent implements OnInit {
         })).pipe(finalize(() => this.loading = false));
     }
 
-    updateWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>): void {
+    updateWorkflow(w: Workflow, modal: SuiActiveModal<boolean, boolean, void>): void {
         this.loading = true;
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,

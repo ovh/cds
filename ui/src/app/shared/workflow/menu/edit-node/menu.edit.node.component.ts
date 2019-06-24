@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
+import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -7,7 +8,6 @@ import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { IPopup } from 'ng2-semantic-ui';
 import { Subscription } from 'rxjs';
 
 @Component({

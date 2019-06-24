@@ -4,16 +4,17 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
+import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
+import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula';
-import { SuiModule } from 'ng2-semantic-ui';
 import { NgxAutoScroll, NgxAutoScrollModule } from 'ngx-auto-scroll';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
@@ -33,7 +34,6 @@ import { DiffItemComponent } from './diff/item/diff.item.component';
 import { DiffListComponent } from './diff/list/diff.list.component';
 import { DurationService } from './duration/duration.service';
 import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.component';
-import { GroupFormComponent } from './group/form/group.form.component';
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
@@ -134,6 +134,18 @@ import { ZoneComponent } from './zone/zone.component';
         NgxChartsModule
     ],
     declarations: [
+        // OnPushComponent
+        DataTableComponent,
+        DeleteButtonComponent,
+        GroupFormComponent,
+        VariableAuditComponent,
+        VariableComponent,
+        VariableDiffComponent,
+        VariableFormComponent,
+        VariableValueComponent,
+        WarningMarkComponent,
+
+        // Component to migrate
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
@@ -143,12 +155,11 @@ import { ZoneComponent } from './zone/zone.component';
         ChartComponentComponent,
         CommitListComponent,
         CutPipe,
-        DeleteButtonComponent,
         ConfirmButtonComponent,
         UploadButtonComponent,
         ForMapPipe,
-        GroupFormComponent,
         KeysPipe,
+
         KeysFormComponent,
         KeysListComponent,
         NgForNumber,
@@ -167,11 +178,7 @@ import { ZoneComponent } from './zone/zone.component';
         StatusIconComponent,
         TruncatePipe,
         SafeHtmlPipe,
-        VariableComponent,
-        VariableAuditComponent,
-        VariableDiffComponent,
-        VariableFormComponent,
-        VariableValueComponent,
+
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
         WarningModalComponent,
@@ -179,7 +186,6 @@ import { ZoneComponent } from './zone/zone.component';
         ConfirmModalComponent,
         LabelsEditComponent,
         WarningTabComponent,
-        WarningMarkComponent,
         WarningMarkListComponent,
 
         WorkflowWNodeComponent,
@@ -225,7 +231,6 @@ import { ZoneComponent } from './zone/zone.component';
         FavoriteCardsComponent,
         SelectorPipe,
         SelectPipe,
-        DataTableComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,
         WorkflowTemplateBulkModalComponent,
@@ -257,13 +262,13 @@ import { ZoneComponent } from './zone/zone.component';
         CommonModule,
         ClipboardModule,
         CutPipe,
+        GroupFormComponent,
         DeleteButtonComponent,
         ConfirmButtonComponent,
         UploadButtonComponent,
         DragulaModule,
         ForMapPipe,
         FormsModule,
-        GroupFormComponent,
         KeysPipe,
         KeysFormComponent,
         KeysListComponent,
