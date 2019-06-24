@@ -996,11 +996,11 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	}
 
 	p, err := project.Load(db, api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
-	assert.NoError(t, err)
-	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
+	test.NoError(t, err)
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
 	mockVCSservice, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
-	assert.NoError(t, services.Delete(db, mockVCSservice))
+	test.NoError(t, services.Delete(db, mockVCSservice))
 	test.NoError(t, services.Insert(db, mockVCSservice))
 
 	//This is a mock for the repositories service

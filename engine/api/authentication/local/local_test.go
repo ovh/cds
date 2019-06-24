@@ -63,9 +63,9 @@ func TestIsAllowedDomain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewDriver(tt.args.allowedDomains)
-			l := d.(*localAuthentication)
-			if got := l.IsAllowedDomain(tt.args.email); got != tt.want {
+			d := NewDriver(false, "http://localhost:4200", tt.args.allowedDomains)
+			l := d.(*AuthDriver)
+			if got := l.isAllowedDomain(tt.args.email); got != tt.want {
 				t.Errorf("IsAllowedDomain() = %v, want %v", got, tt.want)
 			}
 		})

@@ -7,14 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/authentication/local"
-	"github.com/ovh/cds/sdk"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router, context.CancelFunc) {
@@ -31,7 +30,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Cache:               cache,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver("")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
 	api.InitRouter()
 	f := func() {
 		cancel()
@@ -54,7 +53,7 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 		Cache:               cache,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver("")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)

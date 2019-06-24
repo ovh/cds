@@ -107,6 +107,5 @@ DROP TABLE "user_contact";
 DROP TABLE "worker";
 DROP TABLE "auth_session";
 DROP TABLE "auth_consumer";
-DROP TABLE "user_local_authentication";
 DROP TABLE "authentified_user";
 ALTER TABLE old_worker RENAME TO worker;

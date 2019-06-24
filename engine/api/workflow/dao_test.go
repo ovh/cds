@@ -1522,11 +1522,8 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	_, err = db.Exec("DELETE FROM services")
 	assert.NoError(t, err)
 
-	mockVCSSservice := &sdk.Service{Name: "TestInsertAndDeleteMultiHookVCS", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
-
-	mockHookServices := &sdk.Service{Name: "TestInsertAndDeleteMultiHookHook", Type: services.TypeHooks}
-	test.NoError(t, services.Insert(db, mockHookServices))
+	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookVCS", services.TypeVCS)
+	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookHook", services.TypeHooks)
 
 	//This is a mock for the vcs service
 	services.HTTPClient = mock(
@@ -1723,7 +1720,7 @@ vcs_ssh_key: proj-blabla
 			proj.Pipelines[0].ID: proj.Pipelines[0],
 		},
 	}
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// Add check on Hook
 	assert.Equal(t, "666", w.WorkflowData.Node.Hooks[0].Config["webHookID"].Value)
@@ -1732,7 +1729,7 @@ vcs_ssh_key: proj-blabla
 	t.Logf("%+v", w.WorkflowData.Node.Hooks[0])
 
 	// Load workflow
-	oldW, err := workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	oldW, err := workflow.LoadByID(context.TODO(), db, cache, proj, w.ID, workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	// Add WEB HOOK
@@ -1741,7 +1738,7 @@ vcs_ssh_key: proj-blabla
 		HookModelID: webHookID,
 	})
 
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, workflow.UpdateOptions{OldWorkflow: oldW}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))
@@ -1757,7 +1754,7 @@ vcs_ssh_key: proj-blabla
 
 	}
 
-	oldW, err = workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	oldW, err = workflow.LoadByID(context.TODO(), db, cache, proj, w.ID, workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	// Add Scheduler
@@ -1766,7 +1763,7 @@ vcs_ssh_key: proj-blabla
 		HookModelID: schedulerID,
 	})
 
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, workflow.UpdateOptions{OldWorkflow: oldW}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 3, len(w.WorkflowData.Node.Hooks))
@@ -1791,7 +1788,7 @@ vcs_ssh_key: proj-blabla
 		}
 	}
 
-	oldW, err = workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	oldW, err = workflow.LoadByID(context.TODO(), db, cache, proj, w.ID, workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	// Delete repository webhook
@@ -1802,7 +1799,7 @@ vcs_ssh_key: proj-blabla
 		}
 	}
 	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks[:index], w.WorkflowData.Node.Hooks[index+1:]...)
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, workflow.UpdateOptions{OldWorkflow: oldW}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))

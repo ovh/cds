@@ -64,7 +64,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		// Checks that the token used by the worker cas access to one of the execgroups
 		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		if !pbj.ExecGroups.HasOneOf(grantedGroupIDs...) {
-			return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, wm, id, pbj.ExecGroups)
+			return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, wm.Name, id, pbj.ExecGroups)
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
