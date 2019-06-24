@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -13,8 +14,6 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { debounceTime, finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 declare var CodeMirror: any;
@@ -28,7 +27,7 @@ declare var CodeMirror: any;
 export class WorkflowNodeRunParamComponent implements OnInit {
     @ViewChild('runWithParamModal', {static: false})
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
 
     @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
 

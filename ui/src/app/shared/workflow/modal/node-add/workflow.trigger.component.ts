@@ -1,12 +1,11 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeTrigger, Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from 'app/model/workflow.model';
 import { WorkflowNodeAddWizardComponent } from 'app/shared/workflow/wizard/node-add/node.wizard.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-workflow-trigger',
@@ -17,7 +16,7 @@ export class WorkflowTriggerComponent {
 
     @ViewChild('triggerModal', {static: false})
     triggerModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
     @ViewChild('nodeWizard', {static: false})
     nodeWizard: WorkflowNodeAddWizardComponent;
     @ViewChild('worklflowAddOutgoingHook', {static: false})

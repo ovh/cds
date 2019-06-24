@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import {
@@ -25,8 +24,8 @@ import { Column, ColumnType, Select } from '../../../shared/table/data-table.com
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateBulkModalComponent {
-    @ViewChild('workflowTemplateBulkModal', {static: false}) workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    @ViewChild('workflowTemplateBulkModal', { static: false }) workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
     @Input() workflowTemplate: WorkflowTemplate;
@@ -96,8 +95,8 @@ export class WorkflowTemplateBulkModalComponent {
         this.open = true;
 
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateBulkModal);
-
         config.mustScroll = true;
+
         this.modal = this._modalService.open(config);
         this.modal.onApprove(() => {
             this.open = false;

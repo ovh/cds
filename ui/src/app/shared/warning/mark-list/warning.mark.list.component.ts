@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {SuiPopupConfig} from 'ng2-semantic-ui';
+import {SuiPopupConfig} from '@richardlt/ng2-semantic-ui';
 import {Warning} from '../../../model/warning.model';
 
 @Component({

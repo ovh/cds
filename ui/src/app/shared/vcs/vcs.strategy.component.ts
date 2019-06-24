@@ -1,9 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AddKeyInProject } from 'app/store/project.action';
-import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { finalize } from 'rxjs/operators';
 import { AllKeys } from '../../model/keys.model';
 import { Project } from '../../model/project.model';
@@ -49,7 +48,7 @@ export class VCSStrategyComponent implements OnInit {
 
     @ViewChild('createKey', {static: false})
     sshModalTemplate: ModalTemplate<boolean, boolean, void>;
-    sshModal: ActiveModal<boolean, boolean, void>;
+    sshModal: SuiActiveModal<boolean, boolean, void>;
 
     constructor(
         private store: Store,

@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
-import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { forkJoin } from 'rxjs';
 import { Project } from '../../../model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
@@ -17,7 +16,7 @@ import { Item } from '../../diff/list/diff.list.component';
 })
 export class WorkflowTemplateApplyModalComponent implements OnChanges {
     @ViewChild('workflowTemplateApplyModal', {static: false}) workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
     @Input() project: Project;
