@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/AlecAivazis/survey"
+
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 
@@ -17,13 +19,14 @@ import (
 )
 
 var loginCmd = cli.Command{
-	Name:  "login",
-	Short: "Login to CDS",
+	Name:    "login",
+	Short:   "Login to CDS",
+	Example: `Use it with 'eval' and 'env' flag to set environment variable: eval $(cds login -H API_URL -u USERNAME -p PASSWORD --env)`,
 	Flags: []cli.Flag{
 		{
 			Name:      "api-url",
 			ShortHand: "H",
-			Usage:     "CDS API URL",
+			Usage:     "Url to your CDS api.",
 			IsValid: func(s string) bool {
 				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
 				return match
@@ -31,12 +34,20 @@ var loginCmd = cli.Command{
 		},
 		{
 			Name:  "consumer-type",
-			Usage: "CDS auth consumer type (default: local)",
+			Usage: "CDS auth consumer type (default: local).",
 		},
 		{
 			Name:  "env",
-			Usage: "Display the commands to set up the environment for the cds client",
+			Usage: "Display the commands to set up the environment for the cds client.",
 			Type:  cli.FlagBool,
+		},
+		{
+			Name:      "username",
+			ShortHand: "u",
+		},
+		{
+			Name:      "password",
+			ShortHand: "p",
 		},
 	},
 }
@@ -46,15 +57,76 @@ func login() *cobra.Command {
 }
 
 func loginRun(v cli.Values) error {
-	var apiURL = v.GetString("api-url")
+	env := v.GetBool("env")
+	if env && sdk.GOOS == "windows" {
+		return fmt.Errorf("Env option is not supported on windows yet")
+	}
+
+	apiURL := v.GetString("api-url")
+	if apiURL == "" {
+		return fmt.Errorf("Please set api url")
+	}
 	if strings.HasSuffix(apiURL, "/") {
-		fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
+		return fmt.Errorf("Invalid given api url, remove trailing '/'")
 	}
 
 	consumerType := sdk.AuthConsumerType(v.GetString("consumer-type"))
 	if !consumerType.IsValid() {
-		return fmt.Errorf("invalid given consumer type")
+		return fmt.Errorf("Invalid given consumer type")
 	}
+
+	switch consumerType {
+	case sdk.ConsumerLocal:
+		return loginRunLocal(v)
+	default:
+		return loginRunExternal(v)
+	}
+}
+
+func loginRunLocal(v cli.Values) error {
+	apiURL := v.GetString("api-url")
+
+	username := v.GetString("username")
+	password := v.GetString("password")
+	env := v.GetBool("env")
+	if env && (username == "" || password == "") {
+		return fmt.Errorf("Please set username and password flags to use --env option")
+	}
+
+	if username == "" {
+		username = cli.AskValueChoice("Username")
+	} else if !env {
+		fmt.Printf("Username: %s", username)
+	}
+	if password == "" {
+		if err := survey.AskOne(&survey.Password{Message: "Password"}, &password, nil); err != nil {
+			return err
+		}
+	} else if !env {
+		fmt.Println("Password: ********")
+	}
+
+	conf := cdsclient.Config{
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	}
+
+	client = cdsclient.New(conf)
+
+	res, err := client.AuthConsumerSignin(sdk.ConsumerLocal, sdk.AuthConsumerSigninRequest{
+		"username": username,
+		"password": password,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot signin: %v", err)
+	}
+
+	return doAfterLogin(apiURL, res.User.Username, res.Token, env, v.GetBool("insecure"))
+}
+
+func loginRunExternal(v cli.Values) error {
+	apiURL := v.GetString("api-url")
+	consumerType := sdk.AuthConsumerType(v.GetString("consumer-type"))
 
 	conf := cdsclient.Config{
 		Host:    apiURL,
@@ -90,78 +162,9 @@ func loginRun(v cli.Values) error {
 	return doAfterLogin(apiURL, res.User.Username, res.Token, v.GetBool("env"), v.GetBool("insecure"))
 }
 
-/*func loginRun(v cli.Values) error {
-	url := v.GetString("api-url")
-	username := v.GetString("username")
-	password := v.GetString("password")
-	env := v.GetBool("env")
-	insecureSkipVerifyTLS := v.GetBool("insecure")
-
-	if env &&
-		(url == "" || username == "" || password == "") {
-		return fmt.Errorf("Please set flags to use --env option")
-	}
-
-	if !env {
-		fmt.Println("CDS API URL:", url)
-	}
-
-	//Take the user from flags or ask for on command line
-	if username == "" {
-		fmt.Printf("Username: ")
-		username = cli.ReadLine()
-	} else if !env {
-		fmt.Println("Username:", username)
-	}
-
-	//Take the password from flags or ask for on command line
-	if password == "" {
-		//Ask for the password
-		fmt.Printf("Password: ")
-		b, err := gopass.GetPasswd()
-		password = string(b)
-		if err != nil {
-			cli.ExitOnError(err)
-		}
-	} else if !env {
-		fmt.Println("Password: ********")
-	}
-
-	return doLogin(url, username, password, env, insecureSkipVerifyTLS)
-}
-
-func doLogin(url, username, password string, env, insecureSkipVerifyTLS bool) error {
-	conf := cdsclient.Config{
-		Host:    url,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
-	}
-
-	client = cdsclient.New(conf)
-	ok, token, err := client.UserLogin(username, password)
-	if err != nil {
-		if conf.Verbose {
-			fmt.Fprintf(os.Stderr, "error:%s\n", err)
-		}
-		if strings.HasSuffix(url, "/") {
-			fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
-		}
-		return fmt.Errorf("Please check CDS API URL")
-	}
-	if !ok {
-		return fmt.Errorf("login failed")
-	}
-
-	return doAfterLogin(url, username, token, env, insecureSkipVerifyTLS)
-}*/
-
 func doAfterLogin(url, username, token string, env bool, insecureSkipVerifyTLS bool) error {
 	if insecureSkipVerifyTLS {
 		fmt.Println("Using insecure TLS connection...")
-	}
-
-	if env && sdk.GOOS == "windows" {
-		fmt.Println("env option is not supported on windows yet")
-		os.Exit(1)
 	}
 
 	if env {

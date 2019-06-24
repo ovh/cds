@@ -1,4 +1,4 @@
-<div class="ui centered grid">
+<div class="ui centered grid verify">
     <div class="row">
         <div class="column">
             <div *ngIf="loading;then load;else loaded"></div>
@@ -15,19 +15,19 @@
                         <h3 class="ui top block attached header">
                             {{ 'account_verify_title' | translate }}
                         </h3>
-                        <div class="ui attached segment word-break-all">
-                            <pre [innerHtml]="userVerifiedDisplay | json"></pre>
-                        </div>
                         <div class="ui bottom attached segment">
-                            <button id="loginButton" class="ui button green" type="button"
-                                (click)="signIn()">{{ 'account_login_btn_connect' | translate }}</button>
+                            <div class="ui green message">
+                                <p>{{ 'auth_verify_success' | translate: {username: user.username} }}</p>
+                            </div>
+                            <button id="loginButton" class="fluid ui button green" type="button"
+                                (click)="navigateToHome()">{{ 'auth_btn_go_to_home' | translate }}</button>
                         </div>
                     </div>
                 </ng-template>
                 <ng-template #error>
                     <div class="ui bottom attached segment">
                         <div class="ui red message">
-                            <p>{{ 'account_verify_error' | translate }}</p>
+                            <p>{{ 'auth_verify_error' | translate }}</p>
                         </div>
                         <form class="ui form">
                             <div class="field">

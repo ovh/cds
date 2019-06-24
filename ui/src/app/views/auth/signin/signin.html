@@ -3,8 +3,8 @@
         <sui-tabset *ngIf="localDriver">
             <div class="ui top attached tabular menu">
                 <a class="item" suiTabHeader="1">{{ 'account_btn_signin' | translate}}</a>
-                <a *ngIf="!localDriver.signup_disabled" class="item"
-                    suiTabHeader="2">{{ 'account_btn_signup' | translate}}</a>
+                <a *ngIf="!localDriver.signup_disabled" class="item" suiTabHeader="2"
+                    (activate)="resetSignup()">{{ 'account_btn_signup' | translate}}</a>
             </div>
             <div class="ui bottom attached segment" suiTabContent="1">
                 <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
@@ -25,7 +25,7 @@
                 </form>
             </div>
             <div *ngIf="!localDriver.signup_disabled" class="ui bottom attached segment" suiTabContent="2">
-                <form class="ui form" (ngSubmit)="signup(signupForm)" #signupForm="ngForm">
+                <form *ngIf="!showSuccessSignup" class="ui form" (ngSubmit)="signup(signupForm)" #signupForm="ngForm">
                     <div class="field">
                         <label>{{ 'user_label_username' | translate }}</label>
                         <input type="text" name="username" ngModel required>
@@ -47,6 +47,9 @@
                             type="submit">{{ 'account_signup_btn_create' | translate }}</button>
                     </div>
                 </form>
+                <div *ngIf="showSuccessSignup" class="ui green message">
+                    <p>{{ 'auth_signup_success' | translate }}</p>
+                </div>
             </div>
         </sui-tabset>
         <div *ngIf="externalDrivers && externalDrivers.length > 0" class="ui bottom attached segment">

@@ -1,15 +1,7 @@
 @import "../../../../common";
 
-#verifyComponent {
-    height: 100%;
-    padding-top: 20px;
-    background-color: $darkBackground;
-
-    #logo {
-        margin-bottom: 40px;
-    }
-}
-
-pre {
-    white-space: pre-wrap;
+.verify {
+  .loading {
+    text-align: center;
+  }
 }

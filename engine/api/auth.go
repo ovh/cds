@@ -116,6 +116,15 @@ func (api *API) postAuthSigninHandler() service.Handler {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "a user already exists for external user name %s", userInfo.Username)
 			}
 
+			// Check if a user already exists for external email
+			contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if contact != nil {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "a user already exists for external email %s", userInfo.Email)
+			}
+
 			// Prepare new user
 			newUser := sdk.AuthentifiedUser{
 				Ring:         sdk.UserRingUser,
@@ -133,6 +142,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 				newUser.Ring = sdk.UserRingAdmin
 			}
 
+			// Insert the new user in database
+			if err := user.Insert(tx, &newUser); err != nil {
+				return err
+			}
+
 			userContact := sdk.UserContact{
 				PrimaryContact: true,
 				Type:           sdk.UserContactTypeEmail,
@@ -143,11 +157,6 @@ func (api *API) postAuthSigninHandler() service.Handler {
 
 			// Insert the primary contact for the new user in database
 			if err := user.InsertContact(tx, &userContact); err != nil {
-				return err
-			}
-
-			// Insert the new user in database
-			if err := user.Insert(tx, &newUser); err != nil {
 				return err
 			}
 
@@ -175,6 +184,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			Name:    jwtCookieName,
 			Value:   jwt,
 			Expires: session.ExpireAt,
+			Path:    "/",
 		})
 
 		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)

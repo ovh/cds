@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { User } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/services.module';
 import { finalize } from 'rxjs/operators';
 
@@ -14,6 +15,7 @@ export class VerifyComponent implements OnInit {
     userVerifiedDisplay: any;
     showErrorMessage: boolean;
     loading: boolean;
+    user: User;
 
     constructor(
         private _router: Router,
@@ -40,8 +42,7 @@ export class VerifyComponent implements OnInit {
                     this._cd.detectChanges();
                 }))
                 .subscribe(res => {
-                    // TODO show successfull verify with redirect button
-                    // this._router.navigate(['home']);
+                    this.user = res.user;
                 }, () => {
                     this.showErrorMessage = true;
                 });
@@ -50,5 +51,9 @@ export class VerifyComponent implements OnInit {
 
     navigateToSignin() {
         this._router.navigate(['/auth/signin']);
+    }
+
+    navigateToHome() {
+        this._router.navigate(['/']);
     }
 }

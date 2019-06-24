@@ -16,6 +16,7 @@ export class SigninComponent implements OnInit {
     localDriver: AuthDriverManifest;
     ldapDriver: AuthDriverManifest;
     externalDrivers: Array<AuthDriverManifest>;
+    showSuccessSignup: boolean;
 
     constructor(
         private _authenticationService: AuthenticationService,
@@ -35,6 +36,9 @@ export class SigninComponent implements OnInit {
         });
     }
 
+    resetSignup() {
+        this.showSuccessSignup = false;
+    }
 
     signup(f: NgForm) {
         this._authenticationService.localSignup(
@@ -43,7 +47,7 @@ export class SigninComponent implements OnInit {
             f.value.username,
             f.value.password
         ).subscribe(() => {
-            // TODO show successfull signup, you will receive an email
+            this.showSuccessSignup = true;
         });
     }
 

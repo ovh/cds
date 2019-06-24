@@ -266,6 +266,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			Name:    jwtCookieName,
 			Value:   jwt,
 			Expires: session.ExpireAt,
+			Path:    "/",
 		})
 
 		// Prepare http response
@@ -420,6 +421,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			Name:    jwtCookieName,
 			Value:   jwt,
 			Expires: session.ExpireAt,
+			Path:    "/",
 		})
 
 		// Prepare http response

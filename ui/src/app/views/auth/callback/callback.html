@@ -36,9 +36,12 @@
                         </div>
                     </form>
                 </div>
-                <div *ngIf="missingParams" class="ui bottom attached segment">
-                    <div class="ui red message">
-                        <p>{{ 'auth_message_missing_param' | translate }}</p>
+                <div *ngIf="missingParams || showErrorMessage" class="ui bottom attached segment">
+                    <div *ngIf="missingParams" class="ui red message">
+                        <p>{{ 'auth_callback_missing_param' | translate }}</p>
+                    </div>
+                    <div *ngIf="showErrorMessage" class="ui red message">
+                        <p>{{ 'auth_callback_error' | translate }}</p>
                     </div>
                     <form class="ui form">
                         <div class="field">
