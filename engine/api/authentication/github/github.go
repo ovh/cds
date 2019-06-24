@@ -63,7 +63,7 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 
 	config := &oauth2.Config{
 		Endpoint: oauth2.Endpoint{
-			TokenURL: fmt.Sprintf("%s/oauth/access_token", d.url),
+			TokenURL: fmt.Sprintf("%s/login/oauth/access_token", d.url),
 		},
 	}
 
@@ -71,7 +71,7 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 	t, err := config.Exchange(ctx, req["code"],
 		oauth2.SetAuthURLParam("client_id", d.clientID),
 		oauth2.SetAuthURLParam("client_secret", d.clientSecret),
-		oauth2.SetAuthURLParam("state", req["code"]),
+		oauth2.SetAuthURLParam("state", req["state"]),
 		oauth2.SetAuthURLParam("redirect_uri", d.cdsURL+"/auth/callback/github"),
 	)
 	if err != nil {

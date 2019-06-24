@@ -122,7 +122,7 @@ type Configuration struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
 			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"#######\n Github URL"`
-			APIURL         string `toml:"api_url" json:"url" default:"https://api.github.com" comment:"#######\n Github API URL"`
+			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"#######\n Github API URL"`
 			ClientID       string `toml:"clientId" json:"-" comment:"#######\n Github OAuth Client ID"`
 			ClientSecret   string `toml:"clientSecret" json:"-"  comment:"Github OAuth Client Secret"`
 		} `toml:"github" json:"github"`

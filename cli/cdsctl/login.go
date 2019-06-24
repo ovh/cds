@@ -156,9 +156,6 @@ func loginRunExternal(v cli.Values) error {
 		return fmt.Errorf("cannot signin: %v", err)
 	}
 
-	fmt.Println("cdsctl: Login successful")
-	fmt.Println("cdsctl: Logged in as", res.User.Username)
-
 	return doAfterLogin(apiURL, res.User.Username, res.Token, v.GetBool("env"), v.GetBool("insecure"))
 }
 
@@ -174,6 +171,9 @@ func doAfterLogin(url, username, token string, env bool, insecureSkipVerifyTLS b
 		fmt.Println("# Run this command to configure your shell:")
 		fmt.Println(`# eval $(cds login -H API_URL -u USERNAME -p PASSWORD --env)`)
 		return nil
+	} else {
+		fmt.Println("cdsctl: Login successful")
+		fmt.Println("cdsctl: Logged in as", username)
 	}
 
 	if configFile == "" {
