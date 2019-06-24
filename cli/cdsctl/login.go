@@ -8,10 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/AlecAivazis/survey"
-
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
