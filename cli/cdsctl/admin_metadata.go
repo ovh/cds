@@ -12,17 +12,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/spf13/cobra"
-
-	"github.com/ovh/cds/cli"
 )
 
 var adminMetadataCmd = cli.Command{
 	Name:  "metadata",
 	Short: "Manage CDS Metadata",
+	Long: `Metadata a key/value stored on project / application / workflow.
+
+This allows CDS administrators and/or users to make some statistics and charts in a proper tool.
+	`,
 }
 var adminMetadataProjectCmd = cli.Command{
 	Name:  "project",
@@ -36,7 +39,6 @@ var adminMetadataWorkflowCmd = cli.Command{
 	Name:  "workflow",
 	Short: "Manage CDS Workflow Metadata",
 }
-
 var adminMetadataProjectExportCmd = cli.Command{
 	Name:  "export",
 	Short: "export CDS Project Metadata",
@@ -55,6 +57,15 @@ var adminMetadataProjectImportCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "path"},
 	},
+	Long: `Metadata are represented with key:value
+
+Example of a csv file for a CDS Project
+	
+	project_key;project_name;last_modified;ou1;ou2
+	YOUR_PROJECT_KEY;Your Project Name;2020-01-01T00:00:00;OU_1_VALUE;OU_2_VALUE
+
+You can enter as many metadata as desired, the key name is on the first line of the csv file.
+`,
 }
 var adminMetadataApplicationImportCmd = cli.Command{
 	Name:  "import",
@@ -62,6 +73,15 @@ var adminMetadataApplicationImportCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "path"},
 	},
+	Long: `Metadata are represented with key:value
+
+Example of a csv file for a CDS Application
+	
+	project_key;application_name;last_modified;vcs_repofullname;ou1;ou2
+	YOUR_PROJECT_KEY;Your Application Name;2020-01-01T00:00:00;repo_of_application;OU_1_VALUE;OU_2_VALUE
+
+You can enter as many metadata as desired, the key name is on the first line of the csv file.
+`,
 }
 
 func adminMetadata() *cobra.Command {
