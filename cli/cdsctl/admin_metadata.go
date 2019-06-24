@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/spf13/cobra"
 
@@ -61,13 +63,6 @@ var adminMetadataApplicationImportCmd = cli.Command{
 		{Name: "path"},
 	},
 }
-var adminMetadataWorkflowImportCmd = cli.Command{
-	Name:  "import",
-	Short: "import CDS Workflow Metadata",
-	Args: []cli.Arg{
-		{Name: "path"},
-	},
-}
 
 func adminMetadata() *cobra.Command {
 	return cli.NewCommand(adminMetadataCmd, nil, []*cobra.Command{
@@ -81,7 +76,6 @@ func adminMetadata() *cobra.Command {
 		}),
 		cli.NewCommand(adminMetadataWorkflowCmd, nil, []*cobra.Command{
 			cli.NewCommand(adminMetadataWorkflowExportCmd, adminMetadataWorkflowExportRun, nil),
-			cli.NewCommand(adminMetadataWorkflowImportCmd, adminMetadataWorkflowImportRun, nil),
 		}),
 	})
 }
@@ -220,12 +214,24 @@ func adminMetadataWorkflowExportRun(c cli.Values) error {
 
 	lines := []lineMetadata{}
 	for _, p := range projects {
-		workflows, err := client.WorkflowList(p.Key)
+		mods := []cdsclient.RequestModifier{}
+		mods = append(mods, func(r *http.Request) {
+			q := r.URL.Query()
+			q.Set("withWorkflowNames", "true")
+			r.URL.RawQuery = q.Encode()
+		})
+
+		proj, err := client.ProjectGet(p.Key, mods...)
 		if err != nil {
 			return err
 		}
 
-		for _, w := range workflows {
+		for _, wName := range proj.WorkflowNames {
+			w, err := client.WorkflowGet(p.Key, wName.Name)
+			if err != nil {
+				return err
+			}
+
 			m := sdk.Metadata{}
 			// take all metadata from projects
 			for k, v := range p.Metadata {
@@ -249,10 +255,6 @@ func adminMetadataWorkflowExportRun(c cli.Values) error {
 	titles := []string{"project_key", "workflow_name", "last_modified"}
 	adminMetadataExport(titles, nil, lines)
 	return nil
-}
-
-func adminMetadataWorkflowImportRun(c cli.Values) error {
-	return fmt.Errorf("not yet implemented")
 }
 
 func adminMetadataExport(firstTitles, addTitles []string, lines []lineMetadata) {
