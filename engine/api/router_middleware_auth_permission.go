@@ -46,7 +46,7 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 }
 
 func (api *API) checkProjectPermissions(ctx context.Context, key string, expectedPermissions int, routeVars map[string]string) error {
-	perms, err := loadPermissionsByGroupID(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GroupIDs...)
+	perms, err := loadPermissionsByGroupID(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs()...)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 		return sdk.WrapError(err, "cannot get group for name %s", groupName)
 	}
 
-	log.Debug("groups> %v", g.Members)
+	log.Debug("api.checkGroupPermissions> group %d has members %v", g.ID, g.Members)
 
 	if permissionValue > permission.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
 		if !isGroupAdmin(ctx, g) && !isMaintainer(ctx) {

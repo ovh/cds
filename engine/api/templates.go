@@ -39,7 +39,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 			)
 		} else {
 			ts, err = workflowtemplate.LoadAllByGroupIDs(ctx, api.mustDB(),
-				append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID),
+				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 				workflowtemplate.LoadOptions.Default,
 				workflowtemplate.LoadOptions.WithAudits,
 			)
@@ -142,7 +142,7 @@ func (api *API) getTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -172,7 +172,7 @@ func (api *API) putTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -272,7 +272,7 @@ func (api *API) deleteTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -650,7 +650,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -685,7 +685,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -774,7 +774,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -828,7 +828,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -908,7 +908,7 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
@@ -946,7 +946,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)

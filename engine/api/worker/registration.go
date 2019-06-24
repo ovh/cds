@@ -69,8 +69,8 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	// If worker model is public (sharedInfraGroup) it can be ran by every one
 	// If worker is public it can run every model
 	// Private worker for a group cannot run a private model for another group
-	if !sdk.IsInInt64Array(group.SharedInfraGroup.ID, consumer.GroupIDs) &&
-		!sdk.IsInInt64Array(model.GroupID, consumer.GroupIDs) &&
+	if !sdk.IsInInt64Array(group.SharedInfraGroup.ID, consumer.GetGroupIDs()) &&
+		!sdk.IsInInt64Array(model.GroupID, consumer.GetGroupIDs()) &&
 		model.GroupID != group.SharedInfraGroup.ID {
 		return nil, sdk.WithStack(sdk.ErrForbidden)
 	}

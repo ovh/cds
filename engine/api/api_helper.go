@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ovh/cds/engine/api/group"
+
 	"github.com/ovh/cds/engine/api/services"
 
 	"github.com/ovh/cds/engine/api/worker"
@@ -25,7 +27,7 @@ func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 
 func isGroupMember(ctx context.Context, g *sdk.Group) bool {
 	u := getAPIConsumer(ctx)
-	return g.IsMember(u)
+	return g.IsMember(u) || g.ID == group.SharedInfraGroup.ID
 }
 
 func isMaintainer(ctx context.Context) bool {

@@ -62,7 +62,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			observability.Tag(observability.TagJob, pbj.Job.Action.Name))
 
 		// Checks that the token used by the worker cas access to one of the execgroups
-		grantedGroupIDs := append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID)
+		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		if !pbj.ExecGroups.HasOneOf(grantedGroupIDs...) {
 			return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, wm, id, pbj.ExecGroups)
 		}
@@ -494,7 +494,7 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 		}
 
 		// Checks that the token used by the worker cas access to one of the execgroups
-		grantedGroupIDs := append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID)
+		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		if !pbJob.ExecGroups.HasOneOf(grantedGroupIDs...) {
 			return sdk.WrapError(sdk.ErrForbidden, "This worker is not authorized to send logs for this job:%d execGroups:%+v", id, pbJob.ExecGroups)
 		}
@@ -532,7 +532,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 			log.WorkflowNodeRunID = nodeRunJob.WorkflowNodeRunID
 
 			// Checks that the token used by the worker cas access to one of the execgroups
-			grantedGroupIDs := append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID)
+			grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 			if !nodeRunJob.ExecGroups.HasOneOf(grantedGroupIDs...) {
 				errorOccured = true
 				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Forbidden, you have no execution rights on workflow node"))
@@ -659,7 +659,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 
 		var count sdk.WorkflowNodeJobRunCount
 		if !isMaintainer(ctx) && !isAdmin(ctx) {
-			count, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GroupIDs)
+			count, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
 		} else {
 			count, err = workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
@@ -707,7 +707,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		}
 		var jobs []sdk.WorkflowNodeJobRun
 		if !isMaintainer(ctx) && !isAdmin(ctx) {
-			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GroupIDs)
+			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
 		} else {
 			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}

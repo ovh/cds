@@ -264,7 +264,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			pips, err = pipeline.LoadByWorkerModel(ctx, api.mustDB(), m)
 		} else {
 			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(ctx, api.mustDB(), m,
-				append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID))
+				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID))
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipelines linked to worker model")

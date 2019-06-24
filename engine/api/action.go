@@ -35,7 +35,7 @@ func (api *API) getActionsHandler() service.Handler {
 			)
 		} else {
 			as, err = action.LoadAllTypeDefaultByGroupIDs(ctx, api.mustDB(),
-				append(getAPIConsumer(ctx).GroupIDs, group.SharedInfraGroup.ID),
+				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
@@ -870,9 +870,10 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		usage.Pipelines = filteredPipelines
 
 		// filter usage in action by user's groups
-		mGroupIDs := make(map[int64]struct{}, len(consumer.GroupIDs))
-		for i := range consumer.GroupIDs {
-			mGroupIDs[consumer.GroupIDs[i]] = struct{}{}
+		groupIDs := consumer.GetGroupIDs()
+		mGroupIDs := make(map[int64]struct{}, len(groupIDs))
+		for i := range groupIDs {
+			mGroupIDs[groupIDs[i]] = struct{}{}
 		}
 
 		filteredActions := make([]action.UsageAction, 0, len(usage.Actions))
