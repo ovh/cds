@@ -3,6 +3,8 @@ import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
+import { Variable } from 'app/model/variable.model';
+import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ActionApplication from './applications.action';
 import * as ActionProject from './project.action';
@@ -210,12 +212,15 @@ export class ApplicationsState {
     addVariable(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.AddApplicationVariable) {
         let variable = action.payload.variable;
         let url = '/project/' + action.payload.projectKey + '/application/' + action.payload.applicationName + '/variable/' + variable.name;
-        return this._http.post<Application>(url, variable)
-            .pipe(tap((app) => {
+        return this._http.post<Variable>(url, variable)
+            .pipe(tap((v) => {
                 const state = ctx.getState();
-                let appKey = app.project_key + '/' + app.name;
-                let applicationUpdated = Object.assign({}, state.applications[appKey], { variables: app.variables });
-
+                let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
+                let applicationUpdated = cloneDeep(state.applications[appKey]);
+                if (!applicationUpdated.variables) {
+                    applicationUpdated.variables = new Array<Variable>();
+                }
+                applicationUpdated.variables.push(v);
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -230,12 +235,17 @@ export class ApplicationsState {
             '/application/' + action.payload.applicationName +
             '/variable/' + action.payload.variableName;
 
-        return this._http.put<Application>(url, variable)
-            .pipe(tap((app) => {
+        return this._http.put<Variable>(url, variable)
+            .pipe(tap((updatedVar) => {
                 const state = ctx.getState();
-                let appKey = app.project_key + '/' + app.name;
-                let applicationUpdated = Object.assign({}, state.applications[appKey], { variables: app.variables });
-
+                let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
+                let applicationUpdated = cloneDeep(state.applications[appKey]);
+                applicationUpdated.variables = applicationUpdated.variables.map(v => {
+                   if (v.name !== action.payload.variableName) {
+                       return v;
+                   }
+                   return updatedVar;
+                });
                 ctx.setState({
                     ...state,
                     applications: Object.assign({}, state.applications, { [appKey]: applicationUpdated }),
@@ -247,11 +257,12 @@ export class ApplicationsState {
     deleteVariable(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.DeleteApplicationVariable) {
         let variable = action.payload.variable;
         let url = `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/variable/${variable.name}`;
-        return this._http.delete<Application>(url)
+        return this._http.delete<any>(url)
             .pipe(tap((app) => {
                 const state = ctx.getState();
                 let appKey = action.payload.projectKey + '/' + action.payload.applicationName;
-                let applicationUpdated = Object.assign({}, state.applications[appKey], { variables: app.variables });
+                let applicationUpdated = cloneDeep(state.applications[appKey]);
+                applicationUpdated.variables = applicationUpdated.variables.filter(v => v.name !== action.payload.variable.name);
 
                 ctx.setState({
                     ...state,

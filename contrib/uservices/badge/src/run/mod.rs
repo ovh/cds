@@ -1,7 +1,6 @@
-pub mod handlers;
+// pub mod handlers;
 
 use actix::{Handler, Message};
-use actix_web::{error, Error};
 use diesel::insert_into;
 use diesel::prelude::*;
 use diesel::sql_query;
@@ -9,7 +8,9 @@ use diesel::sql_types::Text;
 
 use super::database::DbExecutor;
 use super::models::Run;
+use crate::error::BadgeError;
 
+#[derive(Clone, Debug)]
 pub struct QueryRun {
     pub project_key: String,
     pub workflow_name: String,
@@ -17,11 +18,11 @@ pub struct QueryRun {
 }
 
 impl Message for QueryRun {
-    type Result = Result<Run, Error>;
+    type Result = Result<Run, BadgeError>;
 }
 
 impl Handler<QueryRun> for DbExecutor {
-    type Result = Result<Run, Error>;
+    type Result = Result<Run, BadgeError>;
 
     fn handle(&mut self, msg: QueryRun, _: &mut Self::Context) -> Self::Result {
         let conn: &PgConnection = &self.0.get().unwrap();
@@ -35,11 +36,10 @@ impl Handler<QueryRun> for DbExecutor {
             .bind::<Text, _>(msg.project_key)
             .bind::<Text, _>(msg.workflow_name)
             .bind::<Text, _>(msg.branch.unwrap_or_default())
-            .get_results(conn)
-            .map_err(error::ErrorInternalServerError)?;
+            .get_results(conn)?;
 
         if run_res.is_empty() {
-            return Err(error::ErrorNotFound("not found"));
+            return Err(BadgeError::NoRunAvailable);
         }
 
         Ok(run_res.pop().unwrap())
@@ -51,17 +51,15 @@ pub struct CreateRun {
 }
 
 impl Message for CreateRun {
-    type Result = Result<Run, Error>;
+    type Result = Result<Run, BadgeError>;
 }
 
 impl Handler<CreateRun> for DbExecutor {
-    type Result = Result<Run, Error>;
+    type Result = Result<Run, BadgeError>;
 
     fn handle(&mut self, msg: CreateRun, _: &mut Self::Context) -> Self::Result {
-        // use diesel::select;
         use schema::run::dsl::*;
         let conn: &PgConnection = &self.0.get().unwrap();
-        // let run_inserted = insert_into(run)
         insert_into(run)
             .values((
                 run_id.eq(&msg.run.run_id),
@@ -71,9 +69,7 @@ impl Handler<CreateRun> for DbExecutor {
                 branch.eq(&msg.run.branch),
                 status.eq(&msg.run.status),
             ))
-            .execute(conn)
-            // .get_result::<Run>(conn)
-            .map_err(error::ErrorInternalServerError)?;
+            .execute(conn)?;
 
         Ok(msg.run)
     }

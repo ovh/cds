@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {GraphConfiguration} from '../../model/graph.model';
+import { GraphConfiguration } from 'app/model/graph.model';
 
 @Component({
     selector: 'app-chart',

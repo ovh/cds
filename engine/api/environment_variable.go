@@ -8,7 +8,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -77,11 +76,6 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "deleteVariableFromEnvironmentHandler: Cannot load project %s", key)
-		}
-
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "deleteVariableFromEnvironmentHandler: Cannot load environment %s", envName)
@@ -109,16 +103,9 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
-
-		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, deprecatedGetUser(ctx))
-		if errEnvs != nil {
-			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
-		}
-
 		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -128,11 +115,6 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 		varName := vars["name"]
-
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "updateVariableInEnvironment: Cannot load %s", key)
-		}
 
 		var newVar sdk.Variable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
@@ -169,15 +151,13 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, deprecatedGetUser(ctx))
-		if errEnvs != nil {
-			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
-		}
-
 		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, p, http.StatusOK)
+		if sdk.NeedPlaceholder(newVar.Type) {
+			newVar.Value = sdk.PasswordPlaceholder
+		}
+
+		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
 }
 
@@ -187,11 +167,6 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 		varName := vars["name"]
-
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "addVariableInEnvironmentHandler: Cannot load project %s", key)
-		}
 
 		var newVar sdk.Variable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
@@ -231,14 +206,12 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, deprecatedGetUser(ctx))
-		if errEnvs != nil {
-			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
-		}
-
 		event.PublishEnvironmentVariableAdd(key, *env, newVar, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, p, http.StatusOK)
+		if sdk.NeedPlaceholder(newVar.Type) {
+			newVar.Value = sdk.PasswordPlaceholder
+		}
+
+		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
 }

@@ -117,7 +117,7 @@ func importVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, 
 			errCreate = AddKeyPairToApplication(db, store, app, newVar.Name, u)
 			break
 		default:
-			errCreate = InsertVariable(db, store, app, newVar, u)
+			errCreate = InsertVariable(db, store, app, &newVar, u)
 			break
 		}
 		if errCreate != nil {

@@ -547,10 +547,7 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.AddVariableInProject(variable));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/variable/myVar';
-        })).flush({
-            ...project,
-            variables: [variable]
-        });
+        })).flush(variable);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -1087,6 +1084,7 @@ describe('Project', () => {
         })).flush(<Project>{
             name: 'proj1',
             key: 'test1',
+            environments: [{name: 'prod'}]
         });
 
         let env = new Environment();
@@ -1103,10 +1101,7 @@ describe('Project', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/environment/prod/variable/testvar';
-        })).flush(<Project>{
-            ...project,
-            environments: [env]
-        });
+        })).flush(variable);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();

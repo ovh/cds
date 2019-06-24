@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
-import { VariableAudit } from '../../../model/variable.model';
-import { Table } from '../../table/table';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { VariableAudit } from 'app/model/variable.model';
+import { Table } from 'app/shared/table/table';
 
 @Component({
     selector: 'app-variable-audit',
     templateUrl: './variable.audit.html',
-    styleUrls: ['./variable.audit.scss']
+    styleUrls: ['./variable.audit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VariableAuditComponent extends Table<VariableAudit> {
 

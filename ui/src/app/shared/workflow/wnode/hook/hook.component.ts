@@ -1,6 +1,7 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
+import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
@@ -9,7 +10,6 @@ import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
 import {ToastService} from 'app/shared/toast/ToastService';
 import {DeleteHookWorkflow, OpenEditModal, SelectHook} from 'app/store/workflow.action';
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {finalize} from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -93,7 +93,7 @@ export class WorkflowNodeHookComponent implements OnInit {
         }
     }
 
-    deleteHook(modal: ActiveModal<boolean, boolean, void>) {
+    deleteHook(modal: SuiActiveModal<boolean, boolean, void>) {
         this.loading = true;
         this._store.dispatch(new DeleteHookWorkflow({
             projectKey: this.project.key,

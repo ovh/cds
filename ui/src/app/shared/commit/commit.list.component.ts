@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { Commit } from '../../model/repositories.model';
-import { Table } from '../table/table';
+import { Commit } from 'app/model/repositories.model';
+import { Table } from 'app/shared/table/table';
 
 @Component({
     selector: 'app-commit-list',

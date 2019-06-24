@@ -44,20 +44,16 @@ mod configuration;
 mod database;
 mod error;
 mod kafka;
-mod middlewares;
 mod models;
 mod run;
 mod schema;
-mod service;
-mod web;
 mod status;
+mod web;
 
-use actix::prelude::*;
-use actix::{Arbiter, SyncArbiter, System};
+use actix::{Actor, Arbiter, SyncArbiter, System};
 use clap::{App, Arg, SubCommand};
 use diesel::prelude::PgConnection;
 use diesel::r2d2::ConnectionManager;
-use sdk_cds::service::ServiceTrait;
 
 use database::DbExecutor;
 use kafka::KafkaConsumerActor;
@@ -121,52 +117,42 @@ fn main() {
                 .build(manager)
                 .expect("Failed to create pool.");
 
-            let addr = SyncArbiter::start(12, move || DbExecutor(pool.clone()));
 
             let brokers: Vec<String> = config.kafka.broker.split(',').map(String::from).collect();
-            let db_addr = addr.clone();
             let kafka_config = config.kafka.clone();
-            let _kafka_addr: Addr<KafkaConsumerActor> = Arbiter::start(|_| KafkaConsumerActor {
+            let clone_pool = pool.clone();
+            let addr = SyncArbiter::start(12, move || DbExecutor(clone_pool.clone()));
+            let addr_clone = addr.clone();
+            let clone_pool = pool.clone();
+            let kafka_actor = KafkaConsumerActor {
                 brokers,
                 topic: kafka_config.topic,
                 group: kafka_config.group,
                 user: kafka_config.user,
                 password: kafka_config.password,
-                db: db_addr,
+                db: clone_pool,
+                db_actor: addr.clone(),
+            };
+            Arbiter::new().exec_fn(move || {
+                let _kafka_addr = kafka_actor.start();
             });
 
             let host = config.http.addr.clone();
             let port = config.http.port;
-            let mut hash = String::new();
-            let mode = config.mode.clone();
 
-            if mode == "web" {
-                let mut cds_service = service::new(config.clone());
-                cds_service
-                    .check_configuration(config.clone())
-                    .expect("Cannot check configuration");
-                cds_service
-                    .apply_configuration(config.clone())
-                    .expect("Cannot apply configuration");
-
-                cds_service
-                    .register(service::status(), config)
-                    .expect("Cannot register service to CDS");
-
-                hash = cds_service.service.hash.clone();
-                let _ = Arbiter::start(|_| cds_service);
-            }
             web::http_server(
                 WebState {
-                    db: addr.clone(),
-                    hash,
+                    db: pool.clone(),
+                    db_actor: addr_clone,
                 },
                 host.clone(),
                 port.to_string(),
             );
 
-            println!("Server is listening on {}:{} in mode {}", host, port, mode);
-            system.run();
+            println!("Server is listening on {}:{}", host, port);
+            if let Err(err) = system.run() {
+                eprintln!("Error when system run {:?}", err);
+            }
         }
         _ => app.write_help(&mut std::io::stdout()).unwrap(),
     }

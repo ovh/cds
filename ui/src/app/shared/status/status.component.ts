@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {PipelineStatus} from '../../model/pipeline.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
 
 @Component({
     selector: 'app-status-icon',

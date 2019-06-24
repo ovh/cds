@@ -4,9 +4,9 @@ import { SharedInfraGroupName } from 'app/model/group.model';
 import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { RequirementStore } from 'app/service/requirement/requirement.store';
+import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
 import { first } from 'rxjs/operators';
-import { RequirementEvent } from '../requirement.event.model';
 
 export const OSArchitecture = 'os-architecture';
 

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AuditWorkflow } from 'app/model/audit.model';
+import { Item } from 'app/shared/diff/list/diff.list.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
-import { AuditWorkflow } from '../../../model/audit.model';
-import { Item } from '../../diff/list/diff.list.component';
 
 @Component({
     selector: 'app-audit-list',

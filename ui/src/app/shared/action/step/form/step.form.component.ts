@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { Action } from '../../../../model/action.model';
-import { StepEvent } from '../step.event';
+import { Action } from 'app/model/action.model';
+import { StepEvent } from 'app/shared/action/step/step.event';
 
 @Component({
     selector: 'app-action-step-form',

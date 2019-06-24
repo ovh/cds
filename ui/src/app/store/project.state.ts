@@ -8,6 +8,7 @@ import { IdName, LoadOpts, Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
 import { AddGroupInAllWorkflows } from './workflow.action';
@@ -283,8 +284,18 @@ export class ProjectState {
     @Action(ProjectAction.AddVariableInProject)
     addVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddVariableInProject) {
         const state = ctx.getState();
-        return this._http.post<Project>('/project/' + state.project.key + '/variable/' + action.payload.name, action.payload)
-            .pipe(tap((project) => ctx.dispatch(new ProjectAction.LoadVariablesInProject(project.variables))));
+        return this._http.post<Variable>('/project/' + state.project.key + '/variable/' + action.payload.name, action.payload)
+            .pipe(tap((v: Variable) => {
+                let p = cloneDeep(state.project);
+                if (!p.variables) {
+                    p.variables = new Array<Variable>();
+                }
+                p.variables.push(v);
+                ctx.setState({
+                    ...state,
+                    project: p,
+                });
+            }));
     }
 
     @Action(ProjectAction.UpdateVariableInProject)
@@ -972,28 +983,72 @@ export class ProjectState {
 
     @Action(ProjectAction.AddEnvironmentVariableInProject)
     addEnvironmentVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddEnvironmentVariableInProject) {
-        return this._http.post<Project>(
+        return this._http.post<Variable>(
             '/project/' + action.payload.projectKey + '/environment/' +
             action.payload.environmentName + '/variable/' + action.payload.variable.name,
             action.payload.variable
-        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+        ).pipe(tap((v: Variable) => {
+            const state = ctx.getState();
+            let proj = cloneDeep(state.project);
+            let env = proj.environments.find(e => e.name === action.payload.environmentName);
+            if (!env) {
+                return;
+            }
+            if (!env.variables) {
+                env.variables = new Array<Variable>();
+            }
+            env.variables.push(v);
+            ctx.setState({
+                ...state,
+                project: proj,
+            });
+        }));
     }
 
     @Action(ProjectAction.DeleteEnvironmentVariableInProject)
     deleteEnvironmentVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteEnvironmentVariableInProject) {
-        return this._http.delete<Project>(
+        return this._http.delete<Variable>(
             '/project/' + action.payload.projectKey + '/environment/' +
             action.payload.environmentName + '/variable/' + action.payload.variable.name
-        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+        ).pipe(tap((v: Variable) => {
+            const state = ctx.getState();
+            let proj = cloneDeep(state.project);
+            let env = proj.environments.find(e => e.name === action.payload.environmentName);
+            if (!env) {
+                return;
+            }
+            env.variables = env.variables.filter(va => va.name !== action.payload.variable.name);
+            ctx.setState({
+                ...state,
+                project: proj,
+            });
+        }));
     }
 
     @Action(ProjectAction.UpdateEnvironmentVariableInProject)
     updateEnvironmentVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateEnvironmentVariableInProject) {
-        return this._http.put<Project>(
+        return this._http.put<Variable>(
             '/project/' + action.payload.projectKey + '/environment/' +
             action.payload.environmentName + '/variable/' + action.payload.variableName,
             action.payload.changes
-        ).pipe(tap((project: Project) => ctx.dispatch(new ProjectAction.LoadEnvironmentsInProject(project.environments))));
+        ).pipe(tap((v: Variable) => {
+            const state = ctx.getState();
+            let proj = cloneDeep(state.project);
+            let env = proj.environments.find(e => e.name === action.payload.environmentName);
+            if (!env) {
+                return;
+            }
+            env.variables = env.variables.map(va => {
+                if (va.name !== action.payload.variableName) {
+                    return va;
+                }
+                return v;
+            });
+            ctx.setState({
+                ...state,
+                project: proj,
+            })
+        }));
     }
 
     @Action(ProjectAction.FetchEnvironmentUsageInProject)

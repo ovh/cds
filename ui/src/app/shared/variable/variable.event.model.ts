@@ -1,4 +1,4 @@
-import {Variable} from '../../model/variable.model';
+import { Variable } from 'app/model/variable.model';
 
 export class VariableEvent {
     type: string;

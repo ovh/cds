@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {Prerequisite} from '../../../model/prerequisite.model';
-import {PrerequisiteEvent} from '../prerequisite.event.model';
+import { Prerequisite } from 'app/model/prerequisite.model';
+import { PrerequisiteEvent } from 'app/shared/prerequisites/prerequisite.event.model';
 
 @Component({
     selector: 'app-prerequisites-form',
