@@ -1,15 +1,18 @@
-<sm-modal class="variables-modal" title="{{ 'pipeline_job_variable_title' | translate }}" #jobVariablesModal>
-    <modal-content>
+<ng-template let-context let-modal="modal" #jobVariablesModal>
+    <div class="header">{{ 'pipeline_job_variable_title' | translate }}</div>
+    <div class="content scrolling">
         <h4 *ngIf="varGit.length > 0">{{ 'pipeline_job_variable_git' | translate }}</h4>
-        <app-parameter-list *ngIf="varGit.length > 0" [parameters]="varGit" mode="job" ></app-parameter-list>
+        <app-parameter-list *ngIf="varGit.length > 0" [parameters]="varGit" mode="job"></app-parameter-list>
         <h4 *ngIf="varCDS.length > 0">{{ 'pipeline_job_variable_cds' | translate }}</h4>
         <app-parameter-list *ngIf="varCDS.length > 0" [parameters]="varCDS" mode="job"></app-parameter-list>
         <h4 *ngIf="varBuild.length > 0">{{ 'pipeline_job_variable_build' | translate }}</h4>
         <app-parameter-list *ngIf="varBuild.length > 0" [parameters]="varBuild" mode="job"></app-parameter-list>
         <h4 *ngIf="varEnvironment.length > 0">{{ 'pipeline_job_variable_env' | translate }}</h4>
-        <app-parameter-list *ngIf="varEnvironment.length > 0" [parameters]="varEnvironment" mode="job"></app-parameter-list>
+        <app-parameter-list *ngIf="varEnvironment.length > 0" [parameters]="varEnvironment" mode="job">
+        </app-parameter-list>
         <h4 *ngIf="varApplication.length > 0">{{ 'pipeline_job_variable_app' | translate }}</h4>
-        <app-parameter-list *ngIf="varApplication.length > 0" [parameters]="varApplication" mode="job"></app-parameter-list>
+        <app-parameter-list *ngIf="varApplication.length > 0" [parameters]="varApplication" mode="job">
+        </app-parameter-list>
         <h4 *ngIf="varPipeline.length > 0">{{ 'pipeline_job_variable_pip' | translate }}</h4>
         <app-parameter-list *ngIf="varPipeline.length > 0" [parameters]="varPipeline" mode="job"></app-parameter-list>
         <h4 *ngIf="varProject.length > 0">{{ 'pipeline_job_variable_project' | translate }}</h4>
@@ -20,8 +23,8 @@
         <app-parameter-list *ngIf="varWorkflow.length > 0" [parameters]="varWorkflow" mode="job"></app-parameter-list>
         <h4 *ngIf="varKey.length > 0">{{ 'pipeline_job_variable_key' | translate }}</h4>
         <app-parameter-list *ngIf="varKey.length > 0" [parameters]="varKey" mode="job"></app-parameter-list>
-    </modal-content>
-    <modal-actions>
-        <button class="ui grey button" (click)="jobVariablesModal.hide()">{{ 'btn_close' | translate }}</button>
-    </modal-actions>
-</sm-modal>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" (click)="clickClose()">{{ 'btn_close' | translate }}</button>
+    </div>
+</ng-template>
