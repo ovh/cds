@@ -2,14 +2,14 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { AllKeys } from 'app/model/keys.model';
+import { Project } from 'app/model/project.model';
+import { VCSConnections, VCSStrategy } from 'app/model/vcs.model';
+import { KeyService } from 'app/service/keys/keys.service';
+import { KeyEvent } from 'app/shared/keys/key.event';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddKeyInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { AllKeys } from '../../model/keys.model';
-import { Project } from '../../model/project.model';
-import { VCSConnections, VCSStrategy } from '../../model/vcs.model';
-import { KeyService } from '../../service/keys/keys.service';
-import { KeyEvent } from '../keys/key.event';
-import { ToastService } from '../toast/ToastService';
 
 @Component({
     selector: 'app-vcs-strategy',

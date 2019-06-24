@@ -1,9 +1,14 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { Project } from 'app/model/project.model';
+import {
+    ParamData,
+    WorkflowTemplate,
+    WorkflowTemplateApplyResult,
+    WorkflowTemplateInstance
+} from 'app/model/workflow-template.model';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { finalize, first } from 'rxjs/operators';
-import { Project } from '../../../model/project.model';
-import { ParamData, WorkflowTemplate, WorkflowTemplateApplyResult, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
-import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
 
 @Component({
     selector: 'app-workflow-template-param-form',

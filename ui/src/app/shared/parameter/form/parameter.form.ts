@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AllKeys } from '../../../model/keys.model';
-import { Parameter } from '../../../model/parameter.model';
-import { Project } from '../../../model/project.model';
-import { ParameterService } from '../../../service/parameter/parameter.service';
-import { SharedService } from '../../shared.service';
-import { ParameterEvent } from '../parameter.event.model';
+import { AllKeys } from 'app/model/keys.model';
+import { Parameter } from 'app/model/parameter.model';
+import { Project } from 'app/model/project.model';
+import { ParameterService } from 'app/service/parameter/parameter.service';
+import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
+import { SharedService } from 'app/shared/shared.service';
 
 @Component({
     selector: 'app-parameter-form',

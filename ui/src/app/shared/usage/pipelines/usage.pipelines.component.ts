@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
-import {Pipeline} from '../../../model/pipeline.model';
-import {Project} from '../../../model/project.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
 
 @Component({
     selector: 'app-usage-pipelines',

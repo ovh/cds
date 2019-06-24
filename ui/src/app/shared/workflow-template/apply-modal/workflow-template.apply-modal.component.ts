@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { Project } from 'app/model/project.model';
+import { WorkflowTemplate, WorkflowTemplateInstance } from 'app/model/workflow-template.model';
+import { Workflow } from 'app/model/workflow.model';
+import { ProjectService } from 'app/service/project/project.service';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
+import { Item } from 'app/shared/diff/list/diff.list.component';
 import { forkJoin } from 'rxjs';
-import { Project } from '../../../model/project.model';
-import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
-import { Workflow } from '../../../model/workflow.model';
-import { ProjectService } from '../../../service/project/project.service';
-import { WorkflowTemplateService } from '../../../service/services.module';
-import { calculateWorkflowTemplateDiff } from '../../diff/diff';
-import { Item } from '../../diff/list/diff.list.component';
 
 @Component({
     selector: 'app-workflow-template-apply-modal',

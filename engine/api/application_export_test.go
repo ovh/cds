@@ -33,7 +33,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(db, api.Cache, app, v1, u))
+	test.NoError(t, application.InsertVariable(db, api.Cache, app, &v1, u))
 
 	v2 := sdk.Variable{
 		Name:  "var2",
@@ -41,7 +41,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(db, api.Cache, app, v2, u))
+	test.NoError(t, application.InsertVariable(db, api.Cache, app, &v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{

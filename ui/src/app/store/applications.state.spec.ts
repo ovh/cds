@@ -341,11 +341,7 @@ describe('Applications', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1/variable/testvar';
-        })).flush(<Application>{
-            name: 'app1',
-            project_key: testProjectKey,
-            variables: [variable],
-        });
+        })).flush(variable);
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.applications).length).toEqual(1);
         });
@@ -388,11 +384,7 @@ describe('Applications', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1/variable/testvar';
-        })).flush(<Application>{
-            name: 'app1',
-            project_key: testProjectKey,
-            variables: [variable],
-        });
+        })).flush(variable);
 
         variable.name = 'testvarrenamed';
         store.dispatch(new ActionApplication.UpdateApplicationVariable({
@@ -443,11 +435,7 @@ describe('Applications', () => {
         }));
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/application/app1/variable/testvar';
-        })).flush(<Application>{
-            name: 'app1',
-            project_key: testProjectKey,
-            variables: [variable],
-        });
+        })).flush(variable);
 
         store.dispatch(new ActionApplication.DeleteApplicationVariable({
             projectKey: testProjectKey,

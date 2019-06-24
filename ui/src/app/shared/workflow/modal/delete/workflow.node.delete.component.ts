@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { WNode, Workflow } from 'app/model/workflow.model';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { WNode, Workflow } from '../../../../model/workflow.model';
+
 
 @Component({
     selector: 'app-workflow-node-delete',

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Mode } from '../item/diff.item.component';
+import { Mode } from 'app/shared/diff/item/diff.item.component';
 
 export class Item {
     name: string;

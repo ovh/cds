@@ -10,7 +10,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
@@ -204,7 +203,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncA
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
+func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
@@ -233,7 +232,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 		ApplicationID: app.ID,
 		Type:          sdk.AuditAdd,
 		Author:        u.Username,
-		VariableAfter: &variable,
+		VariableAfter: variable,
 		VariableID:    variable.ID,
 		Versionned:    time.Now(),
 	}
@@ -241,8 +240,6 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %d", variable.ID)
 	}
-	event.PublishAddVariableApplication(app.ProjectKey, *app, variable, u)
-
 	return nil
 }
 
@@ -288,8 +285,6 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
-	event.PublishUpdateVariableApplication(app.ProjectKey, *app, *variable, *variableBefore, u)
-
 	return nil
 }
 
@@ -322,8 +317,6 @@ func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
-	event.PublishDeleteVariableApplication(app.ProjectKey, *app, *variable, u)
-
 	return nil
 }
 
@@ -351,7 +344,7 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Ap
 		Value: k.Private,
 	}
 
-	if err := InsertVariable(db, store, app, v, u); err != nil {
+	if err := InsertVariable(db, store, app, &v, u); err != nil {
 		return err
 	}
 
@@ -361,7 +354,7 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Ap
 		Value: k.Public,
 	}
 
-	return InsertVariable(db, store, app, p, u)
+	return InsertVariable(db, store, app, &p, u)
 }
 
 // insertAudit  insert an application variable audit

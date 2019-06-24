@@ -1,5 +1,5 @@
+import { environment } from 'environments/environment';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {environment} from '../../../environments/environment';
 import {CDSWorker} from './worker';
 
 declare module SharedWorker {

@@ -1,22 +1,22 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { Action } from 'app/model/action.model';
+import { AllKeys } from 'app/model/keys.model';
+import { Parameter } from 'app/model/parameter.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { Requirement } from 'app/model/requirement.model';
+import { Stage } from 'app/model/stage.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
 import { WorkerModelService } from 'app/service/services.module';
+import { ActionEvent } from 'app/shared/action/action.event.model';
+import { StepEvent } from 'app/shared/action/step/step.event';
+import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
+import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
+import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
-import { Action } from '../../model/action.model';
-import { AllKeys } from '../../model/keys.model';
-import { Parameter } from '../../model/parameter.model';
-import { Pipeline } from '../../model/pipeline.model';
-import { Project } from '../../model/project.model';
-import { Requirement } from '../../model/requirement.model';
-import { Stage } from '../../model/stage.model';
-import { ParameterEvent } from '../parameter/parameter.event.model';
-import { RequirementEvent } from '../requirements/requirement.event.model';
-import { SharedService } from '../shared.service';
-import { ActionEvent } from './action.event.model';
-import { StepEvent } from './step/step.event';
 
 @Component({
     selector: 'app-action',

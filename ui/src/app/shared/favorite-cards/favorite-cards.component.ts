@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
+import { Bookmark } from 'app/model/bookmark.model';
+import { NavbarProjectData } from 'app/model/navbar.model';
 import { UpdateFavoriteProject } from 'app/store/project.action';
 import { UpdateFavoriteWorkflow } from 'app/store/workflow.action';
 import { finalize } from 'rxjs/operators';
-import { Bookmark } from '../../model/bookmark.model';
-import { NavbarProjectData } from '../../model/navbar.model';
 
 @Component({
     selector: 'app-favorite-cards',

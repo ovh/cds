@@ -1,4 +1,4 @@
-import {Requirement} from '../../model/requirement.model';
+import { Requirement } from 'app/model/requirement.model';
 
 export class RequirementEvent {
     type: string;

@@ -1,16 +1,11 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { Project } from 'app/model/project.model';
+import { ParamData, WorkflowTemplate, WorkflowTemplateApplyResult, WorkflowTemplateInstance,
+    WorkflowTemplateRequest } from 'app/model/workflow-template.model';
+import { Workflow } from 'app/model/workflow.model';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
 import { finalize, first } from 'rxjs/operators';
-import { Project } from '../../../model/project.model';
-import {
-    ParamData,
-    WorkflowTemplate,
-    WorkflowTemplateApplyResult,
-    WorkflowTemplateInstance,
-    WorkflowTemplateRequest
-} from '../../../model/workflow-template.model';
-import { Workflow } from '../../../model/workflow.model';
-import { WorkflowTemplateService } from '../../../service/workflow-template/workflow-template.service';
 
 @Component({
     selector: 'app-workflow-template-apply-form',

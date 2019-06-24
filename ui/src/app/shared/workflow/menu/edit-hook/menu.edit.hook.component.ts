@@ -6,10 +6,7 @@ import {
 } from '@angular/core';
 import {IPopup} from '@richardlt/ng2-semantic-ui';
 import {PermissionValue} from 'app/model/permission.model';
-import {
-    WNodeHook,
-    Workflow,
-} from 'app/model/workflow.model';
+import {WNodeHook, Workflow} from 'app/model/workflow.model';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({

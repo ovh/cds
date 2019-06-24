@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Key } from '../../../model/keys.model';
-import { PermissionValue } from '../../../model/permission.model';
-import { Warning } from '../../../model/warning.model';
-import { Table } from '../../table/table';
-import { KeyEvent } from '../key.event';
+import { Key } from 'app/model/keys.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { Warning } from 'app/model/warning.model';
+import { KeyEvent } from 'app/shared/keys/key.event';
+import { Table } from 'app/shared/table/table';
 
 @Component({
     selector: 'app-keys-list',

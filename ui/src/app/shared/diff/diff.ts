@@ -1,6 +1,7 @@
-import { WorkflowTemplate } from '../../model/workflow-template.model';
-import { Base64 } from '../../shared/base64.utils';
-import { Item } from './list/diff.list.component';
+import { WorkflowTemplate } from 'app/model/workflow-template.model';
+import { Base64 } from 'app/shared/base64.utils';
+import { Item } from 'app/shared/diff/list/diff.list.component';
+
 
 export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: WorkflowTemplate): Array<Item> {
     let beforeTemplate: any;

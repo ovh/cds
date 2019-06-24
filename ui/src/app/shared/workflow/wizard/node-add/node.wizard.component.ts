@@ -3,7 +3,13 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { IdName, Project } from 'app/model/project.model';
+import { WNode, WNodeType } from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
 import { AddPipeline } from 'app/store/pipelines.action';
@@ -13,12 +19,6 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, of as observableOf } from 'rxjs';
 import { finalize, first, flatMap, map } from 'rxjs/operators';
-import { Application } from '../../../../model/application.model';
-import { Environment } from '../../../../model/environment.model';
-import { Pipeline } from '../../../../model/pipeline.model';
-import { IdName, Project } from '../../../../model/project.model';
-import { WNode, WNodeType } from '../../../../model/workflow.model';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
   selector: 'app-workflow-node-add-wizard',

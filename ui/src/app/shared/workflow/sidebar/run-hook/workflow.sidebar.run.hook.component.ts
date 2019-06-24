@@ -3,14 +3,14 @@ import {Store} from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { HookStatus, TaskExecution, WorkflowHookTask } from 'app/model/workflow.hook.model';
+import { WNodeHook } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.model';
+import { HookService } from 'app/service/hook/hook.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/details/hook.details.component';
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { WNodeHook } from '../../../../model/workflow.model';
-import { HookService } from '../../../../service/hook/hook.service';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
-import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
 
 @Component({
     selector: 'app-workflow-sidebar-run-hook',
