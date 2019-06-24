@@ -21,12 +21,6 @@
             </a>
         </ng-container>
 
-        <ng-container *ngIf="workflow">
-            <i class="right chevron icon divider"></i>
-            <i class="share alternate icon"></i>
-            <a class="section" [routerLink]="['/project', project.key, 'workflow', workflow]">{{ workflow }}</a>
-        </ng-container>
-
         <!-- APPLICATION -->
         <ng-container *ngIf="application">
             <i class="right chevron icon divider"></i>
