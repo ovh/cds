@@ -85,7 +85,7 @@ type Configuration struct {
 		RSAPrivateKey    string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		LDAP             struct {
 			Enable         bool   `toml:"enable" default:"false" json:"enable"`
-			SignupDisabled bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
+			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			Host           string `toml:"host" json:"host"`
 			Port           int    `toml:"port" default:"636" json:"port"`
 			SSL            bool   `toml:"ssl" default:"true" json:"ssl"`
@@ -97,12 +97,12 @@ type Configuration struct {
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
 			Enable               bool   `toml:"enable" default:"true" json:"enable"`
-			SignupDisabled       bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
+			SignupDisabled       bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
 		CorporateSSO struct {
 			Enabled        bool   `json:"enabled" default:"false" toml:"enabled"`
-			SignupDisabled bool   `json:"signup_disabled" default:"false" toml:"signup_disabled"`
+			SignupDisabled bool   `json:"signupDisabled" default:"false" toml:"signupDisabled"`
 			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
 			Keys           struct {
@@ -120,7 +120,7 @@ type Configuration struct {
 		} `json:"corporate_sso" toml:"corporateSSO"`
 		Github struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
-			SignupDisabled bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
+			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"#######\n Github URL"`
 			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"#######\n Github API URL"`
 			ClientID       string `toml:"clientId" json:"-" comment:"#######\n Github OAuth Client ID"`
@@ -128,7 +128,7 @@ type Configuration struct {
 		} `toml:"github" json:"github"`
 		Gitlab struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
-			SignupDisabled bool   `toml:"signup_disabled" default:"false" json:"signup_disabled"`
+			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"#######\n Gitlab URL"`
 			ApplicationID  string `toml:"applicationID" json:"-" comment:"#######\n Gitlab OAuth Application ID"`
 			Secret         string `toml:"secret" json:"-"  comment:"Gitlab OAuth Application Secret"`

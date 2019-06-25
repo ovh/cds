@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, NavigationExtras, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { User } from 'app/model/user.model';
 import { FetchCurrentUser } from 'app/store/authentication.action';
@@ -10,32 +10,36 @@ import { Observable } from 'rxjs';
 export class AuthenticationGuard implements CanActivate, CanActivateChild {
 
     constructor(
-        private _store: Store
+        private _store: Store,
+        private _router: Router
     ) { }
 
     canActivate(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean> | Promise<boolean> | boolean {
-        const currentUser = this._store.selectSnapshot(AuthenticationState.user);
-        if (currentUser) {
-            return true;
-        }
+        return this._store.select(AuthenticationState.user)
+            .map((u: User): boolean => {
+                if (!u) {
+                    this._store.dispatch(new FetchCurrentUser()).subscribe(
+                        () => { },
+                        error => {
+                            this._router.navigate(['auth/signin'], <NavigationExtras>{
+                                queryParams: {
+                                    redirect: state.url
+                                }
+                            });
+                        }
+                    );
+                    return null;
+                }
 
-        return this._store.dispatch(new FetchCurrentUser()).take(1).map((me: User): boolean => {
-            return !!me;
-        })
-
-        // if (this._authStore.isConnected()) {
-        //     return true;
-        // }
-        // let navigationExtras: NavigationExtras = {
-        //     queryParams: {
-        //         redirect: state.url
-        //     }
-        // };
-        // this._router.navigate(['auth/signin'], navigationExtras);
-        // return false;
+                return true;
+            })
+            .filter(exists => {
+                return exists !== null;
+            })
+            .first();
     }
 
     canActivateChild(

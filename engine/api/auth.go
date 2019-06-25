@@ -107,6 +107,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			return err
 		}
 		if consumer == nil {
+			if driver.GetManifest().SignupDisabled {
+				return sdk.WithStack(sdk.ErrSignupDisabled)
+			}
+
 			// Check if a user already exists for external username
 			u, err := user.LoadByUsername(ctx, tx, userInfo.Username)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrUserNotFound) {

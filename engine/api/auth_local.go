@@ -18,8 +18,8 @@ import (
 func (api *API) postAuthLocalSignupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
-		if !okDriver {
-			return sdk.WithStack(sdk.ErrForbidden)
+		if !okDriver || driver.GetManifest().SignupDisabled {
+			return sdk.WithStack(sdk.ErrSignupDisabled)
 		}
 
 		localDriver := driver.(*local.AuthDriver)

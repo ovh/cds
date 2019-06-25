@@ -46,6 +46,17 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 }
 
 func (api *API) checkProjectPermissions(ctx context.Context, key string, expectedPermissions int, routeVars map[string]string) error {
+	if isMaintainer(ctx) || isAdmin(ctx) {
+		exists, err := project.Exist(api.mustDB(), key)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return sdk.WithStack(sdk.ErrNoProject)
+		}
+		return nil
+	}
+
 	perms, err := loadPermissionsByGroupID(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs()...)
 	if err != nil {
 		return err

@@ -193,6 +193,7 @@ var (
 	ErrInvalidPayloadVariable                        = Error{ID: 176, Status: http.StatusBadRequest}
 	ErrRepositoryUsedByHook                          = Error{ID: 177, Status: http.StatusForbidden}
 	ErrResourceNotInProject                          = Error{ID: 178, Status: http.StatusForbidden}
+	ErrSignupDisabled                                = Error{ID: 179, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -368,6 +369,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
 	ErrRepositoryUsedByHook.ID:                          "There is still a hook on this repository",
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
+	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 }
 
 var errorsFrench = map[int]string{
@@ -543,6 +545,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
 	ErrRepositoryUsedByHook.ID:                          "Il y a encore un hook sur ce dépôt",
 	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
+	ErrSignupDisabled.ID:                                "La création de compte est désactivée pour ce mode d'authentification.",
 }
 
 var errorsLanguages = []map[int]string{
