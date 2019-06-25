@@ -794,7 +794,6 @@ func updateNodeRunStatusAndStage(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeR
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "unable to marshal stages")
 	}
-	log.Debug("workflow.updateNodeRunStatusAndStage> updating node run %d: %s", nodeRun.ID, string(stagesBts))
 
 	if _, err := db.Exec("UPDATE workflow_node_run SET status = $1, stages = $2, done = $3 where id = $4", nodeRun.Status, stagesBts, nodeRun.Done, nodeRun.ID); err != nil {
 		return sdk.WrapError(err, "unable to update workflow_node_run %s", nodeRun.WorkflowNodeName)

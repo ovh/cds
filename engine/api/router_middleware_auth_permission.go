@@ -5,10 +5,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/observability"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -45,29 +42,42 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 	return nil
 }
 
-func (api *API) checkProjectPermissions(ctx context.Context, key string, expectedPermissions int, routeVars map[string]string) error {
-	if isMaintainer(ctx) || isAdmin(ctx) {
-		exists, err := project.Exist(api.mustDB(), key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return sdk.WithStack(sdk.ErrNoProject)
-		}
-		return nil
-	}
+func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, perm int, routeVars map[string]string) error {
+	ctx, end := observability.Span(ctx, "api.checkProjectPermissions")
+	defer end()
 
-	perms, err := loadPermissionsByGroupID(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs()...)
+	maxLevelPermission, err := project.LoadMaxLevelPermission(ctx, api.mustDB(), projectKey, getAPIConsumer(ctx).GetGroupIDs())
 	if err != nil {
-		return err
+		return sdk.NewError(sdk.ErrForbidden, err)
 	}
 
-	actualPermission, isGranted := perms.ProjectPermission(key)
-	if isGranted && actualPermission >= expectedPermissions {
-		return nil
+	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
+		log.Debug("checkProjectPermissions> maxLevelPermission= %d ", maxLevelPermission)
+		// If it's about READ: we have to check if the user is a maintainer or an admin
+		if perm < permission.PermissionReadExecute {
+			if !isMaintainer(ctx) {
+				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
+				log.Debug("checkProjectPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, projectKey)
+				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s", projectKey)
+			}
+			log.Debug("checkProjectPermissions> %s access granted to %s because is maintainer", getAPIConsumer(ctx).ID, projectKey)
+			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_maintainer"))
+			return nil
+		} else {
+			// If it's about Execute of Write: we have to check if the user is an admin
+			if !isAdmin(ctx) {
+				// The caller doesn't enough permission level from its groups and is not an admin
+				log.Debug("checkProjectPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, projectKey)
+				return sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey)
+			}
+			log.Debug("checkProjectPermissions> %s access granted to %s because is admin", getAPIConsumer(ctx).ID, projectKey)
+			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
+			return nil
+		}
 	}
-
-	return sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", key)
+	log.Debug("checkWorkflowPermissions> %s access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, maxLevelPermission)
+	observability.Current(ctx, observability.Tag(observability.TagPermission, "is_granted"))
+	return nil
 }
 
 func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVars map[string]string) error {
@@ -210,16 +220,4 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 	}
 
 	return nil
-}
-
-// loadGroupPermissions retrieves all group memberships
-func loadPermissionsByGroupID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, groupID ...int64) (sdk.GroupPermissions, error) {
-	var grpPerm sdk.GroupPermissions
-
-	projectPermissions, err := project.FindPermissionByGroupID(ctx, db, groupID...)
-	if err != nil {
-		return grpPerm, err
-	}
-	grpPerm.Projects = projectPermissions
-	return grpPerm, nil
 }

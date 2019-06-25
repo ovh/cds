@@ -38,7 +38,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := application.InsertVariable(api.mustDB(), api.Cache, app, &v, u); err != nil {
+	if err := application.InsertVariable(api.mustDB(), api.Cache, app, v, u); err != nil {
 		t.Fatal(err)
 	}
 

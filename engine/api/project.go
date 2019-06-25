@@ -366,6 +366,8 @@ func (api *API) addProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to unmarshal body")
 		}
 
+		log.Debug("addProjectHandler> %+v", p)
+
 		// check projectKey pattern
 		if rgxp := regexp.MustCompile(sdk.ProjectKeyPattern); !rgxp.MatchString(p.Key) {
 			return sdk.WrapError(sdk.ErrInvalidProjectKey, "addProjectHandler> Project key %s do not respect pattern %s", p.Key, sdk.ProjectKeyPattern)
@@ -404,7 +406,7 @@ func (api *API) addProjectHandler() service.Handler {
 
 		if !groupAttached {
 			// check if new auto group does not already exists
-			if _, errl := group.LoadByName(ctx, api.mustDB(), p.Name); errl != nil {
+			if g, errl := group.LoadByName(ctx, api.mustDB(), p.Name); errl != nil {
 				if sdk.ErrorIs(errl, sdk.ErrGroupNotFound) {
 					// group name does not exists, add it on project
 					permG := sdk.GroupPermission{
@@ -416,7 +418,7 @@ func (api *API) addProjectHandler() service.Handler {
 					return sdk.WrapError(errl, "Cannot check if group already exists")
 				}
 			} else {
-				return sdk.WrapError(sdk.ErrGroupPresent, "Group %s already exists", p.Name)
+				return sdk.WrapError(sdk.ErrGroupPresent, "Group %s already exists :%+v", p.Name, g)
 			}
 		}
 

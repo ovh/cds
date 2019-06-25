@@ -4,6 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/test"
+
+	"github.com/ovh/cds/engine/api/test/assets"
+
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/stretchr/testify/assert"
 
@@ -43,7 +48,7 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 	})
 	assert.NoError(t, err, "should be granted because because is admin ")
 
-	// test case: is Admin
+	// test case: is Maintaner
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
@@ -62,5 +67,58 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
+	assert.Error(t, err, "should not be granted ")
+}
+
+func TestAPI_checkProjectPermissions(t *testing.T) {
+	api, _, _, end := newTestAPI(t)
+	defer end()
+
+	g := assets.InsertGroup(t, api.mustDB())
+	authUser, _ := assets.InsertLambdaUser(api.mustDB(), g)
+
+	p := assets.InsertTestProject(t, api.mustDB(), api.Cache, sdk.RandomString(10), sdk.RandomString(10), authUser)
+
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), p.ProjectGroups[0].Group.ID, authUser.OldUserStruct.ID, false))
+
+	consumer, err := authentication.NewConsumerBuiltin(api.mustDB(), "Test consumer for user "+authUser.Username, "", authUser.ID, nil, []string{sdk.AccessTokenScopeALL})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Reload the groups for the user
+	groups, err := group.LoadGroupByUser(api.mustDB(), authUser.OldUserStruct.ID)
+	test.NoError(t, err)
+	authUser.OldUserStruct.Groups = groups
+
+	consumer.AuthentifiedUser = authUser
+	ctx := context.Background()
+
+	// test case: has enough permission
+	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionReadWriteExecute, nil)
+	assert.NoError(t, err, "should be granted because has permission (max permission = 7)")
+
+	// test case: is Admin
+	consumer.AuthentifiedUser.Ring = sdk.UserRingAdmin
+	consumer.GroupIDs = nil
+	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionReadWriteExecute, nil)
+	assert.NoError(t, err, "should be granted because because is admin")
+
+	// test case: is Maintainer
+	consumer.GroupIDs = nil
+	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionRead, nil)
+	assert.NoError(t, err, "should be granted because because is maintainer ")
+
+	// test case: forbidden
+	consumer.GroupIDs = nil
+	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	consumer.AuthentifiedUser.Ring = ""
+	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted ")
 }

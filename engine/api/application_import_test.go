@@ -121,7 +121,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -232,7 +232,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -413,7 +413,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k2.KeyID = kssh.KeyID
 	test.NoError(t, application.InsertKey(api.mustDB(), k2))
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",

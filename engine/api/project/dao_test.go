@@ -155,11 +155,6 @@ func TestLoadAll(t *testing.T) {
 	test.NoError(t, err)
 	assert.True(t, ok)
 
-	perms, err := project.FindPermissionByGroupID(context.TODO(), db, g.ID)
-	test.NoError(t, err)
-
-	assert.Len(t, perms, 1)
-
 	project.Delete(db, cache, "test_TestLoadAll")
 	project.Delete(db, cache, "test_TestLoadAll1")
 

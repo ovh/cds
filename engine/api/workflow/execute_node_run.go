@@ -532,8 +532,6 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	for indexJob := range stage.RunJobs {
 		runJob := &stage.RunJobs[indexJob]
 
-		log.Debug("syncStage> job %d build parameters: %+v", runJob.ID, runJob.Parameters)
-
 		// If job is runnning, sync it
 		if runJob.Status == sdk.StatusBuilding || runJob.Status == sdk.StatusWaiting {
 			runJobDB, errJob := LoadNodeJobRun(db, store, runJob.ID)

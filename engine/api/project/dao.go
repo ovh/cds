@@ -471,17 +471,22 @@ func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID int64, add bool
 	return sdk.WithStack(err)
 }
 
-func FindPermissionByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID ...int64) (sdk.Permissions, error) {
-	var perms sdk.Permissions
-	groupIDs := gorpmapping.IDs(groupID)
-	var query = gorpmapping.NewQuery(`
-		SELECT project.id as "id", project.name as "name", project_group.role as "role", project_group.group_id as "group_id"
-		FROM project JOIN project_group ON project.id = project_group.project_id
-		AND project_group.group_id = ANY(string_to_array($1, ',')::int[])
-	`).Args(gorpmapping.IDsToQueryString(groupIDs))
+func LoadMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKey string, groupIDs []int64) (int, error) {
+	ctx, end := observability.Span(ctx, "project.LoadMaxLevelPermission")
+	defer end()
 
-	if err := gorpmapping.GetAll(ctx, db, query, &perms); err != nil {
-		return perms, err
+	query := gorpmapping.NewQuery(`
+		SELECT max(project_group.role)
+		FROM project_group
+		JOIN project ON project.id = project_group.project_id
+		AND project.projectkey = $1
+		AND project_group.group_id = ANY(string_to_array($2, ',')::int[])
+		GROUP BY project.projectkey
+	`).Args(projectKey, gorpmapping.IDsToQueryString(groupIDs))
+
+	maxRole, err := gorpmapping.GetInt(db, query)
+	if err != nil {
+		return 0, err
 	}
-	return perms, nil
+	return int(maxRole), nil
 }

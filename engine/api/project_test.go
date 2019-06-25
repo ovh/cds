@@ -106,8 +106,8 @@ func Test_addProjectHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	proj := sdk.Project{
-		Key:  strings.ToUpper(sdk.RandomString(10)),
-		Name: sdk.RandomString(10),
+		Key:  strings.ToUpper(sdk.RandomString(15)),
+		Name: sdk.RandomString(15),
 	}
 
 	jsonBody, _ := json.Marshal(proj)

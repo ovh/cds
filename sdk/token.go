@@ -126,8 +126,6 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 		groupIDs = c.AuthentifiedUser.GetGroupIDs()
 	}
 
-	log.Debug("AuthConsumer.GetGroupIDs> consumer on behalf of user %s can access groups: %v", c.AuthentifiedUser.GetFullname(), groupIDs)
-
 	return groupIDs
 }
 

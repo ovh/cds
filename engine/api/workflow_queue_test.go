@@ -477,11 +477,26 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	btes := rec.Body.Bytes()
-	t.Logf("%s", string(btes))
 	test.NoError(t, json.Unmarshal(btes, ctx.run))
 	assert.Contains(t, ctx.run.RootRun().BuildParameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
-	assert.Contains(t, ctx.run.RootRun().Stages[0].RunJobs[0].Parameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
 
+	vars = map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"number":           fmt.Sprintf("%d", ctx.run.Number),
+		"nodeRunID":        fmt.Sprintf("%d", ctx.run.RootRun().ID),
+	}
+	uri = router.GetRoute("GET", api.getWorkflowNodeRunHandler, vars)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, res)
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+	btes = rec.Body.Bytes()
+	var rootRun sdk.WorkflowNodeRun
+	test.NoError(t, json.Unmarshal(btes, &rootRun))
+
+	assert.Contains(t, rootRun.Stages[0].RunJobs[0].Parameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
+	assert.Contains(t, rootRun.BuildParameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {

@@ -112,7 +112,6 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	report := new(ProcessorReport)
 
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status)
-	log.Debug("workflow.UpdateNodeJobRunStatus(start)> job build parameters: %+v", job.Parameters)
 
 	_, next := observability.Span(ctx, "workflow.LoadRunByID")
 	nodeRun, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
@@ -170,13 +169,10 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 			}
 		}
 	}
-	log.Debug("workflow.UpdateNodeJobRunStatus(before UpdateNodeJobRun)> job build parameters: %+v", job.Parameters)
 
 	if err := UpdateNodeJobRun(ctx, db, job); err != nil {
 		return nil, sdk.WrapError(err, "Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
-
-	log.Debug("workflow.UpdateNodeJobRunStatus(after UpdateNodeJobRun, status=%s)> job build parameters: %+v", status, job.Parameters)
 
 	report.Add(*job)
 
@@ -190,9 +186,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 			return nil, sdk.WrapError(errNR, "Cannot LoadNodeRunByID node run %d", nodeRun.ID)
 		}
 		return report.Merge(syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex))
-	} else {
-		syncJobInNodeRun(nodeRun, job, stageIndex)
 	}
+	syncJobInNodeRun(nodeRun, job, stageIndex)
 
 	_, next = observability.Span(ctx, "workflow.LoadRunByID")
 	wr, err := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
