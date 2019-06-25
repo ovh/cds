@@ -23,6 +23,13 @@ func GitClonePrivateKeyParameter(db *gorp.DbMap, store cache.Store) error {
 	var globalError error
 	for _, param := range params {
 		newValue := getNewPrivateKeyValue(param.Value)
+		if param.Value == "" {
+			if _, err := db.Exec("UPDATE action_parameter SET type = 'ssh-key' WHERE id = $1", param.ID); err != nil {
+				log.Error("cannot update action_parameter type %d %s : %v", param.ID, param.Name, err)
+				globalError = sdk.WrapError(err, "%v", globalError)
+			}
+			continue
+		}
 		if newValue == param.Value {
 			log.Warning("bad key, cannot get new private key value for param %d %s --> Value = %s", param.ID, param.Name, param.Value)
 			continue
@@ -40,6 +47,13 @@ func GitClonePrivateKeyParameter(db *gorp.DbMap, store cache.Store) error {
 
 	for _, param := range params {
 		newValue := getNewPrivateKeyValue(param.Value)
+		if param.Value == "" {
+			if _, err := db.Exec("UPDATE action_edge_parameter SET type = 'ssh-key' WHERE id = $1", param.ID); err != nil {
+				log.Error("cannot update action_edge_parameter type %d %s : %v", param.ID, param.Name, err)
+				globalError = sdk.WrapError(err, "%v", globalError)
+			}
+			continue
+		}
 		if newValue == param.Value {
 			log.Warning("bad key, cannot get new private key value for param edge %d %s --> Value = %s", param.ID, param.Name, param.Value)
 			continue
