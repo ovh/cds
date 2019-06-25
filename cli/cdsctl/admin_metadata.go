@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/spf13/cobra"
 )
@@ -40,14 +43,35 @@ var adminMetadataWorkflowCmd = cli.Command{
 var adminMetadataProjectExportCmd = cli.Command{
 	Name:  "export",
 	Short: "export CDS Project Metadata",
+	Flags: []cli.Flag{
+		{
+			Name:    "export-file",
+			Usage:   "Filename of file created",
+			Default: "export_metadata_projects.csv",
+		},
+	},
 }
 var adminMetadataApplicationExportCmd = cli.Command{
 	Name:  "export",
 	Short: "export CDS Application Metadata",
+	Flags: []cli.Flag{
+		{
+			Name:    "export-file",
+			Usage:   "Filename of file created",
+			Default: "export_metadata_applications.csv",
+		},
+	},
 }
 var adminMetadataWorkflowExportCmd = cli.Command{
 	Name:  "export",
 	Short: "export CDS Workflow Metadata",
+	Flags: []cli.Flag{
+		{
+			Name:    "export-file",
+			Usage:   "Filename of file created",
+			Default: "export_metadata_workflows.csv",
+		},
+	},
 }
 var adminMetadataProjectImportCmd = cli.Command{
 	Name:  "import",
@@ -107,6 +131,10 @@ type lineMetadata struct {
 }
 
 func adminMetadataProjectExportRun(c cli.Values) error {
+	var currentDisplay = new(cli.Display)
+	currentDisplay.Printf("Gettings projects list...")
+	currentDisplay.Do(context.Background())
+
 	projects, err := client.ProjectList(false, false)
 	if err != nil {
 		return err
@@ -123,7 +151,7 @@ func adminMetadataProjectExportRun(c cli.Values) error {
 	}
 
 	titles := []string{"project_key", "project_name", "last_modified"}
-	adminMetadataExport(titles, nil, lines)
+	adminMetadataExport(titles, nil, lines, c.GetString("export-file"), currentDisplay)
 	return nil
 }
 
@@ -148,13 +176,18 @@ func adminMetadataProjectImportRun(c cli.Values) error {
 }
 
 func adminMetadataApplicationExportRun(c cli.Values) error {
+	var currentDisplay = new(cli.Display)
+	currentDisplay.Printf("Gettings projects list...")
+	currentDisplay.Do(context.Background())
+
 	projects, err := client.ProjectList(false, false)
 	if err != nil {
 		return err
 	}
 
 	lines := []lineMetadata{}
-	for _, p := range projects {
+	for i, p := range projects {
+		currentDisplay.Printf("%d/%d - fetching applications on project %s...", i, len(projects), p.Key)
 		applications, err := client.ApplicationList(p.Key)
 		if err != nil {
 			return err
@@ -186,7 +219,7 @@ func adminMetadataApplicationExportRun(c cli.Values) error {
 	}
 	titles := []string{"project_key", "application_name", "last_modified"}
 	titlesAdd := []string{"vcs_repofullname"}
-	adminMetadataExport(titles, titlesAdd, lines)
+	adminMetadataExport(titles, titlesAdd, lines, c.GetString("export-file"), currentDisplay)
 	return nil
 }
 
@@ -230,14 +263,39 @@ func adminMetadataWorkflowExportRun(c cli.Values) error {
 		return err
 	}
 
+	var currentDisplay = new(cli.Display)
+	currentDisplay.Printf("Gettings projects list...")
+	currentDisplay.Do(context.Background())
+
+	modsWfs := []cdsclient.RequestModifier{}
+	modsWfs = append(modsWfs, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("minimal", "true")
+		r.URL.RawQuery = q.Encode()
+	})
+
+	modsProjects := []cdsclient.RequestModifier{}
+	modsProjects = append(modsProjects, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withWorkflowNames", "true")
+		r.URL.RawQuery = q.Encode()
+	})
+
 	lines := []lineMetadata{}
-	for _, p := range projects {
-		workflows, err := client.WorkflowList(p.Key)
+	for i, p := range projects {
+		currentDisplay.Printf("%d/%d - fetching project %s...", i, len(projects), p.Key)
+		proj, err := client.ProjectGet(p.Key, modsProjects...)
 		if err != nil {
 			return err
 		}
 
-		for _, w := range workflows {
+		for j, name := range proj.WorkflowNames {
+			currentDisplay.Printf("%d/%d - %d/%d - fetching workflow %s/%s...", i, len(projects), j, len(proj.WorkflowNames), proj.Key, name.Name)
+			w, err := client.WorkflowGet(proj.Key, name.Name, modsWfs...)
+			if err != nil {
+				return fmt.Errorf("Error while getting %s/%s", proj.Key, name.Name)
+			}
+
 			m := sdk.Metadata{}
 			// take all metadata from projects
 			for k, v := range p.Metadata {
@@ -259,11 +317,11 @@ func adminMetadataWorkflowExportRun(c cli.Values) error {
 		}
 	}
 	titles := []string{"project_key", "workflow_name", "last_modified"}
-	adminMetadataExport(titles, nil, lines)
+	adminMetadataExport(titles, nil, lines, c.GetString("export-file"), currentDisplay)
 	return nil
 }
 
-func adminMetadataExport(firstTitles, addTitles []string, lines []lineMetadata) {
+func adminMetadataExport(firstTitles, addTitles []string, lines []lineMetadata, filename string, currentDisplay *cli.Display) {
 	keysTitle := map[string]string{}
 	for _, l := range lines {
 		for k := range l.metadata {
@@ -281,25 +339,34 @@ func adminMetadataExport(firstTitles, addTitles []string, lines []lineMetadata) 
 	// sort the add title keys
 	sort.Strings(addTitles)
 
+	currentDisplay.Printf("Generating file %s...", filename)
+
+	f, err := os.Create(filename)
+	if err != nil {
+		fmt.Fprintf(os.Stdout, "Error while creating file %s: %v", filename, err)
+		return
+	}
+	defer f.Close()
+
 	// prepare header
-	fmt.Printf(strings.Join(firstTitles, ";"))
+	writeLine(f, strings.Join(firstTitles, ";"))
 	for _, k := range addTitles {
-		fmt.Printf(";%s", k)
+		writeLine(f, fmt.Sprintf(";%s", k))
 	}
 	for _, k := range keys {
-		fmt.Printf(";%s", k)
+		writeLine(f, fmt.Sprintf(";%s", k))
 	}
-	fmt.Printf("\n")
+	writeLine(f, fmt.Sprintf("\n"))
 
 	for _, l := range lines {
 		ptime := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
 			l.lastModified.Year(), l.lastModified.Month(), l.lastModified.Day(),
 			l.lastModified.Hour(), l.lastModified.Minute(), l.lastModified.Second())
 
-		fmt.Printf("%s;%s;%s", l.key, l.name, ptime)
+		writeLine(f, fmt.Sprintf("%s;%s;%s", l.key, l.name, ptime))
 
 		for _, k := range addTitles {
-			fmt.Printf(";%s", l.additionalInfos[k])
+			writeLine(f, fmt.Sprintf(";%s", l.additionalInfos[k]))
 		}
 
 		// if metadata key exists, print it
@@ -307,12 +374,22 @@ func adminMetadataExport(firstTitles, addTitles []string, lines []lineMetadata) 
 		for _, k := range keys {
 			if v, exists := l.metadata[k]; exists {
 				nMetadataWrite++
-				fmt.Printf(";%s", v)
+				writeLine(f, fmt.Sprintf(";%s", v))
 			}
 		}
 		// write empty ";"
-		fmt.Printf("%s", strings.Repeat(";", len(keys)-nMetadataWrite))
-		fmt.Printf("\n")
+		writeLine(f, fmt.Sprintf("%s", strings.Repeat(";", len(keys)-nMetadataWrite)))
+		writeLine(f, fmt.Sprintf("\n"))
+		fmt.Printf("")
+	}
+	currentDisplay.Printf("file %s created...\n", filename)
+	// sleep 2s to let display the currentDisplay
+	time.Sleep(2 * time.Second)
+}
+
+func writeLine(fi *os.File, s string) {
+	if _, err := io.WriteString(fi, s); err != nil {
+		fmt.Fprintf(os.Stdout, "error while writing file: %v\n", err)
 	}
 }
 
@@ -328,11 +405,11 @@ func processMetadata(path string, nbColumnsToIgnore int, updateFunc func(key, na
 	metadataKeys := map[int]string{}
 
 	for {
-		line, error := reader.Read()
-		if error == io.EOF {
+		line, err := reader.Read()
+		if err == io.EOF {
 			break
-		} else if error != nil {
-			log.Fatal(error)
+		} else if err != nil {
+			log.Fatal(err)
 		}
 
 		columns := strings.Split(line[0], ";")

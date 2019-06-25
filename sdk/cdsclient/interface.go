@@ -282,7 +282,7 @@ type HookClient interface {
 // WorkflowClient exposes workflows functions
 type WorkflowClient interface {
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
-	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
+	WorkflowGet(projectKey, name string, opts ...RequestModifier) (*sdk.Workflow, error)
 	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	WorkflowDelete(projectKey string, workflowName string) error
 	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error
