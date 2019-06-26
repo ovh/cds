@@ -1844,6 +1844,5 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 
 	var wfRuns []sdk.WorkflowRun
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wfRuns))
-	assert.Equal(t, 1, len(wfRuns))
-	assert.True(t, wfRuns[0].ToDelete)
+	assert.Equal(t, 0, len(wfRuns))
 }
