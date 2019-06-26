@@ -97,7 +97,7 @@ func getNewPrivateKeyValue(privateKeyValue string) string {
 }
 
 func getprivateKeyActionParametersEdge(db *gorp.DbMap) ([]sdk.Parameter, error) {
-	query := "SELECT id, name, value, description, advanced FROM action_edge_parameter WHERE name = 'privateKey' AND advanced <> true AND description LIKE '(optional) Set the private key%'"
+	query := "SELECT id, name, value, description, advanced FROM action_edge_parameter WHERE name = 'privateKey' AND advanced <> true AND description LIKE '%Set the private key to be able to git clone from ssh%'"
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get parameters")
@@ -117,7 +117,7 @@ func getprivateKeyActionParametersEdge(db *gorp.DbMap) ([]sdk.Parameter, error) 
 }
 
 func getprivateKeyActionParameters(db *gorp.DbMap) ([]sdk.Parameter, error) {
-	query := "SELECT id, name, value, description, advanced FROM action_parameter WHERE name = 'privateKey' AND advanced <> true AND description LIKE '(optional) Set the private key%'"
+	query := "SELECT id, name, value, description, advanced FROM action_parameter WHERE name = 'privateKey' AND advanced <> true AND description LIKE '%Set the private key to be able to git clone from ssh%'"
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get parameters")
