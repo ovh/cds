@@ -534,7 +534,7 @@ vcs_ssh_key: proj-blabla
 		}
 	}
 
-	test.Equal(t, false, wfInSuccess, "The workflow should keep at least one workflow run in success")
+	test.Equal(t, true, wfInSuccess, "The workflow should keep at least one workflow run in success")
 }
 
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
