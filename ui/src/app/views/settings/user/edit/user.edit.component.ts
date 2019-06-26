@@ -47,9 +47,6 @@ export class UserEditComponent implements OnInit {
 
             if (this.username === this.currentUser.username) {
                 this.tokensLoading = true;
-                this._userService.getTokens()
-                    .pipe(finalize(() => this.tokensLoading = false))
-                    .subscribe((tokens) => this.tokens = tokens);
             }
 
             this._userService.getUser(this.username).subscribe(u => {

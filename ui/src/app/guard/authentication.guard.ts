@@ -14,16 +14,13 @@ export class AuthenticationGuard implements CanActivate, CanActivateChild {
         private _router: Router
     ) { }
 
-    canActivate(
-        route: ActivatedRouteSnapshot,
-        state: RouterStateSnapshot
-    ): Observable<boolean> | Promise<boolean> | boolean {
+    getCurrentUser(state: RouterStateSnapshot): Observable<boolean> {
         return this._store.select(AuthenticationState.user)
             .map((u: User): boolean => {
                 if (!u) {
                     this._store.dispatch(new FetchCurrentUser()).subscribe(
                         () => { },
-                        error => {
+                        () => {
                             this._router.navigate(['auth/signin'], <NavigationExtras>{
                                 queryParams: {
                                     redirect: state.url
@@ -42,22 +39,17 @@ export class AuthenticationGuard implements CanActivate, CanActivateChild {
             .first();
     }
 
+    canActivate(
+        route: ActivatedRouteSnapshot,
+        state: RouterStateSnapshot
+    ): Observable<boolean> | Promise<boolean> | boolean {
+        return this.getCurrentUser(state);
+    }
+
     canActivateChild(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean> | Promise<boolean> | boolean {
-        return true;
-
-        // if (this._authStore.isConnected()) {
-        //     return true;
-        // }
-        // let navigationExtras: NavigationExtras = {
-        //     queryParams: {}
-        // }
-        // if (state.url && state.url.indexOf('auth/signin') === -1) {
-        //     navigationExtras.queryParams = { redirect: state.url };
-        // }
-        // this._router.navigate(['auth/signin'], navigationExtras);
-        // return false;
+        return this.getCurrentUser(state);
     }
 }

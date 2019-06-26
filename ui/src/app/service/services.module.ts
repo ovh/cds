@@ -15,7 +15,6 @@ import {
 import { ApplicationService } from './application/application.service';
 import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
-import { CanActivateAuthAdminRoute } from './authentication/authenAdminRouteActivate';
 import { AuthenticationService } from './authentication/authentication.service';
 import { LogoutInterceptor } from './authentication/logout.interceptor';
 import { XSRFInterceptor } from './authentication/xsrf.interceptor';
@@ -84,7 +83,6 @@ export class ServicesModule {
                 AuthenticationService,
                 ConfigService,
                 DownloadService,
-                CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 EnvironmentService,
                 GroupService,
@@ -158,7 +156,6 @@ export {
     ApplicationNoCacheService,
     ApplicationStore,
     AuthenticationService,
-    CanActivateAuthAdminRoute,
     ConfigService,
     DownloadService,
     EnvironmentAuditService,

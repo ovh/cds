@@ -79,6 +79,12 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 	return &ac, nil
 }
 
+// LoadConsumersByUserID returns auth consumers from database for given user id.
+func LoadConsumersByUserID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadConsumerOptionFunc) ([]sdk.AuthConsumer, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE user_id = $1 ORDER BY created ASC").Args(id)
+	return getConsumers(ctx, db, query, opts...)
+}
+
 // LoadConsumerByID returns an auth consumer from database.
 func LoadConsumerByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadConsumerOptionFunc) (*sdk.AuthConsumer, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = $1").Args(id)

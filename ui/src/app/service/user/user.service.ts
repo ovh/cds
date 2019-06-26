@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Bookmark } from '../../model/bookmark.model';
 import { Groups } from '../../model/group.model';
-import { Token } from '../../model/token.model';
 import { User } from '../../model/user.model';
 
 @Injectable()
@@ -18,10 +17,6 @@ export class UserService {
 
     getUsers(): Observable<User[]> {
         return this._http.get<User[]>('/user');
-    }
-
-    getTokens(): Observable<Token[]> {
-        return this._http.get<Token[]>('/user/token');
     }
 
     getGroups(username: string): Observable<Groups> {

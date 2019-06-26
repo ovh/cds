@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -28,6 +29,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permActionName":        api.checkActionPermissions,
 		"permActionBuiltinName": api.checkActionBuiltinPermissions,
 		"permTemplateSlug":      api.checkTemplateSlugPermissions,
+		"permUsername":          api.checkUserPermissions,
 	}
 }
 
@@ -48,7 +50,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 
 	maxLevelPermission, err := project.LoadMaxLevelPermission(ctx, api.mustDB(), projectKey, getAPIConsumer(ctx).GetGroupIDs())
 	if err != nil {
-		return sdk.NewError(sdk.ErrForbidden, err)
+		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey))
 	}
 
 	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
@@ -220,4 +222,33 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 	}
 
 	return nil
+}
+
+func (api *API) checkUserPermissions(ctx context.Context, username string, permissionValue int, routeVars map[string]string) error {
+	if username == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
+	}
+
+	// Load user from database, returns an error if not exists
+	u, err := user.LoadByUsername(ctx, api.mustDB(), username)
+	if err != nil {
+		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username))
+	}
+
+	// Valid if the current consumer match given username
+	consumer := getAPIConsumer(ctx)
+	if consumer.GetUsername() == username {
+		log.Debug("checkUserPermissions> %s access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
+		return nil
+	}
+
+	// If the current user is a maintainer and we want a to read user
+	if permissionValue == permission.PermissionRead && isMaintainer(ctx) {
+		// Valid if the user was found
+		log.Debug("checkUserPermissions> %s access granted to %s because is maintainer", getAPIConsumer(ctx).ID, u.ID)
+		return nil
+	}
+
+	log.Debug("checkUserPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, u.ID)
+	return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
 }

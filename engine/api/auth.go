@@ -183,6 +183,15 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			return err
 		}
 
+		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+		if err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
 		// Set a cookie with the jwt token
 		http.SetCookie(w, &http.Cookie{
 			Name:    jwtCookieName,
@@ -191,21 +200,18 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			Path:    "/",
 		})
 
-		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
-		if err != nil {
-			return err
-		}
-
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
 			Token: jwt,
 			User:  usr,
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
 		return service.WriteJSON(w, resp, http.StatusOK)
+	}
+}
+
+func (api *API) postAuthSignoutHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return service.WriteJSON(w, nil, http.StatusNotImplemented)
 	}
 }

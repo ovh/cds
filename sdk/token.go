@@ -109,7 +109,7 @@ type AuthConsumer struct {
 	ParentID           *string          `json:"parent_id,omitempty" db:"parent_id"`
 	AuthentifiedUserID string           `json:"user_id,omitempty" db:"user_id"`
 	Type               AuthConsumerType `json:"type" cli:"type" db:"type"`
-	Data               AuthConsumerData `json:"data,omitempty" db:"data"`
+	Data               AuthConsumerData `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
 	Created            time.Time        `json:"created" cli:"created" db:"created"`
 	GroupIDs           Int64Slice       `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
 	Scopes             StringSlice      `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
