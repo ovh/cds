@@ -72,14 +72,25 @@
                         </div>
                     </div>
                     <div class="info content animated fadeIn spawninfo" *ngIf="showInfos">
-                        <div class="sixteen wide column center aligned">
-                            <button class="ui labeled icon button" suiPopup
-                                [popupText]="'workflow_resync_vcs_tooltip' | translate" popupPlacement="top center"
-                                [class.loading]="loadingAction" (click)="resyncVCSStatus()">
-                                <i class="handshake outline icon"></i>
-                                {{ 'workflow_resync_vcs' | translate }}
-                            </button>
+                        <div class="ui grid">
+                            <div class="ui row">
+                                <div class="three wide column">
+                                </div>
+                                <div class="ten wide column center aligned">
+                                    <button class="ui labeled icon button" suiPopup
+                                        [popupText]="'workflow_resync_vcs_tooltip' | translate"
+                                        popupPlacement="top center" [class.loading]="loadingAction"
+                                        (click)="resyncVCSStatus()">
+                                        <i class="handshake outline icon"></i>
+                                        {{ 'workflow_resync_vcs' | translate }}
+                                    </button>
+                                </div>
+                                <div class="three wide column right aligned">
+                                    <app-delete-button [loading]="loadingDelete" (event)="delete()"></app-delete-button>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="ui black message scrollable">
                             <pre [innerHTML]="getSpawnInfos()"></pre>
                         </div>

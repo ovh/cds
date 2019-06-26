@@ -311,6 +311,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		// as hook service. It's needed to have the buildParameters.
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
+				WithoutDeleted:          true,
 				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: getService(ctx) == nil,
@@ -341,6 +342,33 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteWorkflowRunHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+
+		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
+			workflow.LoadRunOptions{
+				DisableDetailledNodeRun: true,
+			},
+		)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to load workflow %s run number %d", name, number)
+		}
+
+		if err := workflow.MarkWorkflowRunsAsDelete(api.mustDB(), []int64{run.ID}); err != nil {
+			return sdk.WrapError(err, "cannot mark workflow run %d as delete", run.ID)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusAccepted)
+	}
+}
+
 func (api *API) stopWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -351,7 +379,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		run, errL := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
+		run, errL := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithoutDeleted: true})
 		if errL != nil {
 			return sdk.WrapError(errL, "stopWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -547,7 +575,7 @@ func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {
 			return err
 		}
 
-		run, errR := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		run, errR := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true, WithoutDeleted: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "getWorkflowNodeRunHistoryHandler")
 		}
@@ -668,7 +696,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		}
 
 		// Load node run
-		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{})
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithoutDeleted: true})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
@@ -701,7 +729,7 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 		return nil, sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
 	}
 
-	wr, errLw := workflow.LoadRun(ctx, tx, p.Key, workflowName, nodeRun.Number, workflow.LoadRunOptions{})
+	wr, errLw := workflow.LoadRun(ctx, tx, p.Key, workflowName, nodeRun.Number, workflow.LoadRunOptions{WithoutDeleted: true})
 	if errLw != nil {
 		return nil, sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", workflowName)
 	}
@@ -726,7 +754,7 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 	}
 
 	go func(ID int64) {
-		wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true, WithoutDeleted: true})
 		if errLw != nil {
 			log.Error("workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", errLw)
 			return
@@ -762,6 +790,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			WithStaticFiles:     true,
 			WithCoverage:        true,
 			WithVulnerabilities: true,
+			WithoutDeleted:      true,
 		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
@@ -1093,7 +1122,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 			return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
 		}
 
-		wr, errW := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
+		wr, errW := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true, WithoutDeleted: true})
 		if errW != nil {
 			return errW
 		}
@@ -1213,7 +1242,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 		}
 
 		// Check nodeRunID is link to workflow
-		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true, WithoutDeleted: true})
 		if errNR != nil {
 			return sdk.WrapError(errNR, "cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 		}
@@ -1291,7 +1320,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(errP, "postResyncVCSWorkflowRunHandler> Cannot load project")
 		}
 
-		wfr, errW := workflow.LoadRun(ctx, db, key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wfr, errW := workflow.LoadRun(ctx, db, key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true, WithoutDeleted: true})
 		if errW != nil {
 			return sdk.WrapError(errW, "postResyncVCSWorkflowRunHandler> Cannot load workflow run")
 		}
