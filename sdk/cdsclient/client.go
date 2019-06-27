@@ -12,9 +12,6 @@ import (
 )
 
 type client struct {
-	isWorker      bool
-	isService     bool
-	isProvider    bool
 	httpClient    *http.Client
 	httpSSEClient *http.Client
 	config        Config
@@ -71,7 +68,6 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 	cli.config = conf
 	cli.httpClient = NewHTTPClient(timeout, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
-	cli.isService = true
 	cli.init()
 	return cli
 }
@@ -92,7 +88,6 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	}
 	cli.httpSSEClient = NewHTTPClient(0, false)
 
-	cli.isWorker = true
 	cli.name = name
 	cli.init()
 	return cli
@@ -111,10 +106,10 @@ func NewClientFromEnv() (Interface, error) {
 // NewProviderClient returns an implementation for ProviderClient interface
 func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	conf := Config{
-		Host:         cfg.Host,
-		Retry:        2,
-		SessionToken: cfg.Token,
-		User:         cfg.Name,
+		Host:                              cfg.Host,
+		Retry:                             2,
+		BuitinConsumerAuthenticationToken: cfg.Token,
+		Verbose:                           true,
 	}
 
 	if cfg.RequestSecondsTimeout == 0 {
@@ -125,8 +120,6 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	cli.config = conf
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
-	cli.isProvider = true
-	cli.name = cfg.Name
 	cli.init()
 	return cli
 }

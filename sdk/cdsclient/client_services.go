@@ -13,7 +13,7 @@ func (c *client) GetService() *sdk.Service {
 }
 
 func (c *client) ServiceRegister(s sdk.Service) (string, error) {
-	code, err := c.PostJSON(context.Background(), "/services/register", &s, &s)
+	code, err := c.PostJSON(context.Background(), "/services//auth/consumer/service/signin", &s, &s)
 	if code != 201 && code != 200 {
 		if err == nil {
 			return "", fmt.Errorf("HTTP Code %d", code)
@@ -22,7 +22,6 @@ func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	c.isService = true
 	c.service = &s
 
 	if !s.Uptodate {

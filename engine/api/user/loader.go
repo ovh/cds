@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.AuthentifiedUser) error
@@ -63,9 +62,6 @@ func loadDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.Au
 		mUserMigrations[userMigrations[i].AuthentifiedUserID] = userMigrations[i]
 	}
 
-	log.Debug("loadDeprecatedUser> userMigrations: %v", userMigrations)
-	log.Debug("loadDeprecatedUser> mUserMigrations: %v", mUserMigrations)
-
 	userIDs := make([]int64, len(userMigrations))
 	for i := range userMigrations {
 		userIDs[i] = userMigrations[i].UserID
@@ -78,9 +74,6 @@ func loadDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.Au
 	for i := range us {
 		mUsers[us[i].ID] = us[i]
 	}
-
-	log.Debug("loadDeprecatedUser> users: %v", us)
-	log.Debug("loadDeprecatedUser> mUsers: %v", mUsers)
 
 	for _, au := range aus {
 		if userMigration, okMigration := mUserMigrations[au.ID]; okMigration {

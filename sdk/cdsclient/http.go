@@ -157,6 +157,22 @@ var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
 
 // Stream makes an authenticated http request and return io.ReadCloser
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	if path != "/auth/consumer/builtin/signin" && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		if c.config.Verbose {
+			fmt.Println("signin")
+		}
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return nil, nil, -1, err
+		}
+		if c.config.Verbose {
+			fmt.Println("jwt: ", resp.Token)
+		}
+		c.config.SessionToken = resp.Token
+	}
+
 	labels := pprof.Labels("path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
@@ -192,9 +208,6 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			log.Printf("Stream > context> %s\n", tracingutils.DumpContext(ctx))
 		}
 		spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
-		if c.config.Verbose {
-			log.Printf("setup tracing = %v (%v) on request to %s\n", ok, spanCtx, req.URL.String())
-		}
 		if ok {
 			tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
 		}
@@ -210,10 +223,6 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		req.Header.Set("Connection", "close")
-		if c.isProvider {
-			req.Header.Add("X-Provider-Name", c.config.User)
-			req.Header.Add("X-Provider-Token", c.config.ProviderToken)
-		}
 
 		//No auth on signing routes
 		if !signinRouteRegexp.MatchString(path) {
@@ -297,6 +306,16 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 
 // UploadMultiPart upload multipart
 func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	if !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return nil, -1, err
+		}
+		c.config.SessionToken = resp.Token
+	}
+
 	var req *http.Request
 	req, errRequest := http.NewRequest(method, c.config.Host+path, body)
 	if errRequest != nil {
@@ -305,10 +324,6 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("Connection", "close")
-	if c.isProvider {
-		req.Header.Add("X-Provider-Name", c.config.User)
-		req.Header.Add("X-Provider-Token", c.config.ProviderToken)
-	}
 
 	for i := range mods {
 		mods[i](req)

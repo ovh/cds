@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -105,7 +106,7 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 		log.Error("user cannot be load for id %s: %v", data.ID, err)
 	}
 
-	consumer, err := authentication.NewConsumerBuiltin(db, "Test consumer for user "+data.Username, "", u.ID, nil, []string{sdk.AccessTokenScopeALL})
+	consumer, _, err := builtin.NewConsumer(db, "Test consumer for user "+data.Username, "", u.ID, nil, []string{sdk.AccessTokenScopeALL})
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
 	}
@@ -151,7 +152,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 
 	log.Debug("lambda user: %s", string(btes))
 
-	consumer, err := authentication.NewConsumerBuiltin(db, "Test consumer for user "+u.Username, "", u.ID,
+	consumer, _, err := builtin.NewConsumer(db, "Test consumer for user "+u.Username, "", u.ID,
 		sdk.GroupPointersToIDs(groups), []string{sdk.AccessTokenScopeALL})
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
@@ -168,35 +169,6 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 	}
 
 	return u, jwt
-}
-
-// AuthentifyRequestFromProvider have to be used only for tests
-func AuthentifyRequestFromProvider(t *testing.T, req *http.Request, name, token string) {
-	req.Header.Add("X-Provider-Name", name)
-	req.Header.Add("X-Provider-Token", token)
-}
-
-// NewAuthentifiedRequestFromProvider prepare a request
-func NewAuthentifiedRequestFromProvider(t *testing.T, name, token, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-
-	AuthentifyRequestFromProvider(t, req, name, token)
-
-	return req
 }
 
 // AuthentifyRequest  have to be used only for tests
@@ -410,7 +382,7 @@ func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
 	usr1, _ := InsertLambdaUser(db)
 
-	hConsumer, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", usr1.ID, []int64{grp.ID}, []string{sdk.AccessTokenScopeALL})
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", usr1.ID, []int64{grp.ID}, []string{sdk.AccessTokenScopeALL})
 	test.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
@@ -442,7 +414,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) (*sdk.Service, *rsa.PrivateKey) {
 	usr1, _ := InsertAdminUser(db)
 
-	hConsumer, err := authentication.NewConsumerBuiltin(db, name, name, usr1.ID, []int64{group.SharedInfraGroup.ID}, []string{sdk.AccessTokenScopeALL})
+	hConsumer, _, err := builtin.NewConsumer(db, name, name, usr1.ID, []int64{group.SharedInfraGroup.ID}, []string{sdk.AccessTokenScopeALL})
 	test.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()

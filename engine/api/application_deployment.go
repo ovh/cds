@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handler {
@@ -98,11 +97,6 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "unable to commit tx")
-		}
-
-		if getProvider(ctx) != nil {
-			p := getProvider(ctx)
-			log.Info("postApplicationDeploymentStrategyConfigHandler> application %s configuration successfully updated by provider %s", appName, *p)
 		}
 
 		return service.WriteJSON(w, app, http.StatusOK)

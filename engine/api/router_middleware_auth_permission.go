@@ -59,25 +59,25 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 		if perm < permission.PermissionReadExecute {
 			if !isMaintainer(ctx) {
 				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
-				log.Debug("checkProjectPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, projectKey)
+				log.Debug("checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s", projectKey)
 			}
-			log.Debug("checkProjectPermissions> %s access granted to %s because is maintainer", getAPIConsumer(ctx).ID, projectKey)
+			log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_maintainer"))
 			return nil
 		} else {
 			// If it's about Execute of Write: we have to check if the user is an admin
 			if !isAdmin(ctx) {
 				// The caller doesn't enough permission level from its groups and is not an admin
-				log.Debug("checkProjectPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, projectKey)
+				log.Debug("checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 				return sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey)
 			}
-			log.Debug("checkProjectPermissions> %s access granted to %s because is admin", getAPIConsumer(ctx).ID, projectKey)
+			log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is admin", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
 			return nil
 		}
 	}
-	log.Debug("checkWorkflowPermissions> %s access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, maxLevelPermission)
+	log.Debug("checkWorkflowPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, maxLevelPermission)
 	observability.Current(ctx, observability.Tag(observability.TagPermission, "is_granted"))
 	return nil
 }

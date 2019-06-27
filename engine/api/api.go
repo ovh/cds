@@ -191,9 +191,8 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey" json:"-"`
 	} `toml:"vault" json:"vault"`
-	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################" json:"providers"`
-	Services  []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
-	Status    struct {
+	Services []ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
+	Status   struct {
 		API struct {
 			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of API is running, an alert will on Global/API be created on /mon/status" json:"minInstance"`
 		} `toml:"api" json:"api"`
@@ -227,12 +226,6 @@ type Configuration struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-}
-
-// ProviderConfiguration is the piece of configuration for each provider authentication
-type ProviderConfiguration struct {
-	Name  string `toml:"name" json:"name"`
-	Token string `toml:"token" json:"-"`
 }
 
 // ServiceConfiguration is the configuration of external service

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -293,12 +294,9 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	api, tsURL, tsClose := newTestServer(t)
 	defer tsClose()
 
-	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
-		Name:  "test-provider",
-		Token: "my-token",
-	})
-
 	u, _ := assets.InsertAdminUser(api.mustDB())
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), u.ID, u.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
+
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
 	app := &sdk.Application{
@@ -333,11 +331,10 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
-		Name:  "test-provider",
-		Token: "my-token",
+		Token: jws,
 	})
 
-	err := sdkclient.ApplicationDeploymentStrategyUpdate(proj.Key, app.Name, pf.Name, sdk.IntegrationConfig{
+	err = sdkclient.ApplicationDeploymentStrategyUpdate(proj.Key, app.Name, pf.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{
 			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token-2",

@@ -57,6 +57,8 @@ func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelNa
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &w))
 	workerJWT := rec.Header().Get("X-CDS-JWT")
 
+	t.Logf("JWT: %s", workerJWT)
+
 	return &w, workerJWT
 }
 

@@ -8,7 +8,6 @@ type contextKey int
 
 const (
 	contextUserAuthentified contextKey = iota
-	contextProvider
 	contextSession
 	contextAPIConsumer
 	contextJWT

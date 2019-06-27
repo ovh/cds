@@ -48,18 +48,32 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/local/verify", ScopeNone(), r.POST(api.postAuthLocalVerifyHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/askReset", ScopeNone(), r.POST(api.postAuthLocalAskResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.postAuthLocalResetHandler, Auth(false)))
-	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false)))
+
 	r.Handle("/auth/consumer/service/signin", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
 	r.Handle("/auth/consumer/service/signout", ScopeNone(), r.POST(api.postServiceUnregisterHandler))
+
+	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/builtin/signout", ScopeNone(), r.POST(api.postAuthBuiltinSignoutHandler))
+
+	r.Handle("/auth/consumer/service/signin", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
+	r.Handle("/auth/consumer/service/signout", ScopeNone(), r.POST(api.postServiceUnregisterHandler))
+
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
+
 	r.Handle("/auth/consumer/{consumerType}/askSignin", ScopeNone(), r.GET(api.getAuthAskSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/{consumerType}/signin", ScopeNone(), r.POST(api.postAuthSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
+
 	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
 	r.Handle("/user/{permUsername}/auth/consumer/{consumerID}", Scope(sdk.AccessTokenScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))
 	r.Handle("/user/{permUsername}/auth/consumer/{consumerID}/session", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getSessionsByUserHandler))
 	r.Handle("/user/{permUsername}/auth/consumer/{consumerID}/session/{sessionID}", Scope(sdk.AccessTokenScopeAccessToken), r.DELETE(api.deleteSessionByUserHandler))
+
+	//r.Handle("/auth/consumer/{consumerType}/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
+	//r.Handle("/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.POST(api.postConsumerHandler))
+	//r.Handle("/auth/consumer/{id}", Scope(sdk.AccessTokenScopeAccessToken), r.PUT(api.putConsumerHandler), r.DELETE(api.deleteConsumerHandler))
+	//r.Handle("/admin/user/{id}/auth/consumer", Scope(sdk.AccessTokenScopeAccessToken), r.GET(api.getConsumerByUserHandler))
 
 	// Action
 	r.Handle("/action", Scope(sdk.AccessTokenScopeAction), r.GET(api.getActionsHandler), r.POST(api.postActionHandler))

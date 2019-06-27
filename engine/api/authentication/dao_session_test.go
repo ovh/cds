@@ -22,7 +22,7 @@ func TestLoadSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -47,7 +47,7 @@ func TestInsertSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -70,7 +70,7 @@ func TestUpdateSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -94,7 +94,7 @@ func TestDeleteSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)

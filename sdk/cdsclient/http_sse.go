@@ -4,13 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"runtime/pprof"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -31,6 +29,16 @@ type SSEvent struct {
 // close the stream. This is blocking, and so you will likely want to call this
 // in a new goroutine (via `go c.RequestSSEGet(..)`)
 func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSEvent, mods ...RequestModifier) error {
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	if !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return err
+		}
+		c.config.SessionToken = resp.Token
+	}
+
 	labels := pprof.Labels("path", path, "method", "GET")
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
@@ -53,18 +61,9 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("Connection", "close")
-	if c.isProvider {
-		req.Header.Add("X-Provider-Name", c.config.User)
-		req.Header.Add("X-Provider-Token", c.config.ProviderToken)
-	}
 
-	if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
-		if c.config.Verbose {
-			fmt.Println("JWT recognized")
-		}
-		auth := "Bearer " + c.config.SessionToken
-		req.Header.Add("Authorization", auth)
-	}
+	auth := "Bearer " + c.config.SessionToken
+	req.Header.Add("Authorization", auth)
 
 	resp, err := c.httpSSEClient.Do(req)
 	if err != nil {

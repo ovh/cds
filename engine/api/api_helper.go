@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/group"
-
-	"github.com/ovh/cds/engine/api/services"
-
-	"github.com/ovh/cds/engine/api/worker"
-
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -105,18 +102,6 @@ func JWTRaw(c context.Context) string {
 		return ""
 	}
 	return u
-}
-
-func getProvider(c context.Context) *string {
-	i := c.Value(contextProvider)
-	if i == nil {
-		return nil
-	}
-	u, ok := i.(string)
-	if !ok {
-		return nil
-	}
-	return &u
 }
 
 func (a *API) mustDB() *gorp.DbMap {

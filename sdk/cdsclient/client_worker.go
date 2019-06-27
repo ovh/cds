@@ -64,7 +64,6 @@ func (c *client) WorkerRegister(ctx context.Context, authToken string, form sdk.
 	if err != nil {
 		return nil, false, err
 	}
-	c.isWorker = true
 	c.config.SessionToken = headers.Get("X-CDS-JWT")
 
 	if c.config.Verbose {

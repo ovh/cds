@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -17,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -32,23 +34,16 @@ func (api *API) getProjectsHandler() service.Handler {
 		withIcon := FormBool(r, "withIcon")
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
-
-		// A provider can make a call for a specific user
-		if getProvider(ctx) != nil && requestedUserName != "" {
-			//var err error
-			//Load the specific user
-			// TODO
-			/*u, err := user.LoadByUsername(api.mustDB(), requestedUserName)
+		var requestedUser *sdk.AuthentifiedUser
+		if requestedUserName == "" {
+			var err error
+			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
 				}
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}
-
-			 if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
-				return sdk.WrapError(err, "unable to load user '%s' permissions", requestedUserName)
-			} */
 		}
 
 		opts := []project.LoadOptionFunc{
@@ -67,10 +62,12 @@ func (api *API) getProjectsHandler() service.Handler {
 
 		var projects []sdk.Project
 		var err error
-		if isMaintainer(ctx) || isAdmin(ctx) {
+		if !isMaintainer(ctx) && requestedUser == nil {
 			projects, err = project.LoadAll(ctx, api.mustDB(), api.Cache, opts...)
+		} else if requestedUser != nil && isMaintainer(ctx) {
+			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, requestedUser.GetGroupIDs(), opts...)
 		} else {
-			projects, err = project.LoadAllByGroups(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx), opts...)
+			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), opts...)
 		}
 		if err != nil {
 			return err

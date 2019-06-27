@@ -26,7 +26,7 @@ func TestWithGroups(t *testing.T) {
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)
 
-	c, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID, []int64{g1.ID, g2.ID}, nil)
+	c, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, []int64{g1.ID, g2.ID}, nil)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)

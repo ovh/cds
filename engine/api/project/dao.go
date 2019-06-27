@@ -51,7 +51,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, repo string, opts ...
 }
 
 // LoadAllByGroups returns all projects given groups
-func LoadAllByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, IDs []int64, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	query := `SELECT project.*
 	FROM project
 	WHERE project.id IN (
@@ -63,7 +63,7 @@ func LoadAllByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			$2 = ANY(string_to_array($1, ',')::int[])
 	)
 	ORDER by project.name, project.projectkey ASC`
-	args := []interface{}{gorpmapping.IDsToQueryString(u.GetGroupIDs()), group.SharedInfraGroup.ID}
+	args := []interface{}{IDs, group.SharedInfraGroup.ID}
 	return loadprojects(db, store, opts, query, args...)
 }
 

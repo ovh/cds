@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -20,8 +20,9 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 
 	wctx := testRunWorkflow(t, api, api.Router)
 
-	consumer, err := authentication.NewConsumerBuiltin(api.mustDB(), "Test consumer for user "+wctx.user.Username, "", wctx.user.ID, nil, []string{sdk.AccessTokenScopeALL})
+	consumer, _, err := builtin.NewConsumer(api.mustDB(), "Test consumer for user "+wctx.user.Username, "", wctx.user.ID, nil, []string{sdk.AccessTokenScopeALL})
 	require.NoError(t, err)
+
 	consumer.AuthentifiedUser = wctx.user
 
 	ctx := context.Background()
@@ -77,7 +78,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 
 	require.NoError(t, group.InsertUserInGroup(api.mustDB(), p.ProjectGroups[0].Group.ID, authUser.OldUserStruct.ID, false))
 
-	consumer, err := authentication.NewConsumerBuiltin(api.mustDB(), "Test consumer for user "+authUser.Username, "", authUser.ID, nil, []string{sdk.AccessTokenScopeALL})
+	consumer, _, err := builtin.NewConsumer(api.mustDB(), "Test consumer for user "+authUser.Username, "", authUser.ID, nil, []string{sdk.AccessTokenScopeALL})
 	require.NoError(t, err)
 
 	// Reload the groups for the user

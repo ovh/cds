@@ -24,25 +24,6 @@ func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Servic
 	return &c, nil
 }
 
-// NewConsumerBuiltin returns a new builtin consumer for given data.
-func NewConsumerBuiltin(db gorp.SqlExecutor, name, description, userID string, groupIDs []int64, scopes []string) (*sdk.AuthConsumer, error) {
-	c := sdk.AuthConsumer{
-		Name:               name,
-		Description:        description,
-		AuthentifiedUserID: userID,
-		Type:               sdk.ConsumerBuiltin,
-		Data:               map[string]string{},
-		GroupIDs:           groupIDs,
-		Scopes:             scopes,
-	}
-
-	if err := InsertConsumer(db, &c); err != nil {
-		return nil, err
-	}
-
-	return &c, nil
-}
-
 // NewConsumerLocal returns a new local consumer for given data.
 func NewConsumerLocal(db gorp.SqlExecutor, userID string, hash []byte) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{

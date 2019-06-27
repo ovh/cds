@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -76,10 +77,8 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	api, tsURL, tsClose := newTestServer(t)
 	defer tsClose()
 
-	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
-		Name:  "test-provider",
-		Token: "my-token",
-	})
+	admin, _ := assets.InsertAdminUser(api.mustDB())
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), admin.ID, admin.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
 
 	u, _ := assets.InsertLambdaUser(api.mustDB())
 
@@ -120,8 +119,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
-		Name:  "test-provider",
-		Token: "my-token",
+		Token: jws,
 	})
 
 	w, err := sdkclient.WorkflowLoad(pkey, wf.Name)

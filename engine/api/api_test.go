@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
@@ -31,6 +32,8 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
 	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
+	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
+
 	api.InitRouter()
 	f := func() {
 		cancel()
@@ -54,6 +57,8 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
 	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
+	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
+
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)
