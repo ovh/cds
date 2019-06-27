@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {Warning} from '../../../model/warning.model';
+import { Warning } from 'app/model/warning.model';
 
 @Component({
     selector: 'app-warning-tab',

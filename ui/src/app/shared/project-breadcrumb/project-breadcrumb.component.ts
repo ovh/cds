@@ -1,8 +1,8 @@
 import {Component, Input} from '@angular/core';
-import {Action} from '../../model/action.model';
-import {Application} from '../../model/application.model';
-import {Pipeline} from '../../model/pipeline.model';
-import {Project} from '../../model/project.model';
+import { Action } from 'app/model/action.model';
+import { Application } from 'app/model/application.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
 
 @Component({
     selector: 'app-project-breadcrumb',

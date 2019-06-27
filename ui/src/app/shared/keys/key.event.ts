@@ -1,4 +1,5 @@
-import {Key} from '../../model/keys.model';
+import { Key } from 'app/model/keys.model';
+
 export class KeyEvent {
     type: string;
     key: Key;

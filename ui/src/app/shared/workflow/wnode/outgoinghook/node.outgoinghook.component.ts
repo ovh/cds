@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { PipelineStatus } from '../../../../model/pipeline.model';
-import { Project } from '../../../../model/project.model';
-import { WorkflowHookModel } from '../../../../model/workflow.hook.model';
-import { WNode, Workflow, WorkflowNodeHookConfigValue } from '../../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
-import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WorkflowHookModel } from 'app/model/workflow.hook.model';
+import { WNode, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-wnode-outgoing-hook',

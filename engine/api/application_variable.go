@@ -126,14 +126,9 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load variables")
-		}
-
 		event.PublishDeleteVariableApplication(key, *app, *varToDelete, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -179,14 +174,13 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load variables")
-		}
-
 		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, app, http.StatusOK)
+		if sdk.NeedPlaceholder(newVar.Type) {
+			newVar.Value = sdk.PasswordPlaceholder
+		}
+
+		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
 }
 
@@ -225,7 +219,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			err = application.AddKeyPairToApplication(tx, api.Cache, app, newVar.Name, deprecatedGetUser(ctx))
 			break
 		default:
-			err = application.InsertVariable(tx, api.Cache, app, newVar, deprecatedGetUser(ctx))
+			err = application.InsertVariable(tx, api.Cache, app, &newVar, deprecatedGetUser(ctx))
 			break
 		}
 		if err != nil {
@@ -236,13 +230,12 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot get variables")
-		}
-
 		event.PublishAddVariableApplication(key, *app, newVar, deprecatedGetUser(ctx))
 
-		return service.WriteJSON(w, app, http.StatusOK)
+		if sdk.NeedPlaceholder(newVar.Type) {
+			newVar.Value = sdk.PasswordPlaceholder
+		}
+
+		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
 }

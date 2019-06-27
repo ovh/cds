@@ -143,6 +143,10 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 
 		event.PublishUpdateProjectVariable(p, newVar, *previousVar, deprecatedGetUser(ctx))
 
+		if sdk.NeedPlaceholder(newVar.Type) {
+			newVar.Value = sdk.PasswordPlaceholder
+		}
+
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
 }
@@ -203,13 +207,11 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		// Send Add variable event
 		event.PublishAddProjectVariable(p, newVar, deprecatedGetUser(ctx))
 
-		p.Variable, err = project.GetAllVariableInProject(api.mustDB(), p.ID)
-		if err != nil {
-			return sdk.WrapError(err, "AddVariableInProject: Cannot get variables")
-
+		if sdk.NeedPlaceholder(newVar.Type) {
+			newVar.Value = sdk.PasswordPlaceholder
 		}
 
-		return service.WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
 }
 

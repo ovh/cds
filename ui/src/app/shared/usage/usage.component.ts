@@ -1,9 +1,9 @@
 import {Component, Input} from '@angular/core';
-import {Application} from '../../model/application.model';
-import {Environment} from '../../model/environment.model';
-import {Pipeline} from '../../model/pipeline.model';
-import {Project} from '../../model/project.model';
-import {Workflow} from '../../model/workflow.model';
+import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
 
 @Component({
     selector: 'app-usage',

@@ -6,7 +6,14 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ToasterService } from 'angular2-toaster';
-import { AddEnvironmentVariableInProject, DeleteEnvironmentInProject, DeleteEnvironmentVariableInProject, UpdateEnvironmentInProject, UpdateEnvironmentVariableInProject } from 'app/store/project.action';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import {
+    AddEnvironmentVariableInProject,
+    DeleteEnvironmentInProject,
+    DeleteEnvironmentVariableInProject,
+    UpdateEnvironmentInProject,
+    UpdateEnvironmentVariableInProject
+} from 'app/store/project.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import { Environment } from '../../../../../../model/environment.model';
@@ -28,7 +35,6 @@ import { ToastService } from '../../../../../../shared/toast/ToastService';
 import { VariableEvent } from '../../../../../../shared/variable/variable.event.model';
 import { ProjectModule } from '../../../../project.module';
 import { ProjectEnvironmentComponent } from './environment.component';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
 describe('CDS: Environment Component', () => {
 
     beforeEach(() => {

@@ -1,4 +1,4 @@
-import {Prerequisite} from '../../model/prerequisite.model';
+import { Prerequisite } from 'app/model/prerequisite.model';
 
 export class PrerequisiteEvent {
     type: string;

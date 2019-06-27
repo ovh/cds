@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {Parameter} from '../../../model/parameter.model';
+import { Parameter } from 'app/model/parameter.model';
 
 @Component({
     selector: 'app-parameter-description',

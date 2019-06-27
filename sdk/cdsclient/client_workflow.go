@@ -24,10 +24,10 @@ func (c *client) WorkflowList(projectKey string) ([]sdk.Workflow, error) {
 	return w, nil
 }
 
-func (c *client) WorkflowGet(projectKey, workflowName string) (*sdk.Workflow, error) {
+func (c *client) WorkflowGet(projectKey, workflowName string, mods ...RequestModifier) (*sdk.Workflow, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName)
 	w := &sdk.Workflow{}
-	if _, err := c.GetJSON(context.Background(), url, &w); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &w, mods...); err != nil {
 		return nil, err
 	}
 	return w, nil

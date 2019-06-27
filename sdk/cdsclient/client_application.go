@@ -15,6 +15,12 @@ func (c *client) ApplicationCreate(key string, app *sdk.Application) error {
 	return err
 }
 
+func (c *client) ApplicationUpdate(projectKey string, appName string, app *sdk.Application) error {
+	url := fmt.Sprintf("/project/%s/application/%s", url.QueryEscape(projectKey), url.QueryEscape(appName))
+	_, err := c.PutJSON(context.Background(), url, app, app)
+	return err
+}
+
 func (c *client) ApplicationDelete(key string, appName string) error {
 	_, err := c.DeleteJSON(context.Background(), "/project/"+key+"/application/"+appName, nil)
 	return err

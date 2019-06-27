@@ -1,6 +1,10 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import {
     CallbackRepositoryManagerBasicAuthInProject,
     CallbackRepositoryManagerInProject,
@@ -8,10 +12,6 @@ import {
 } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { finalize, flatMap } from 'rxjs/operators';
-import { Project } from '../../../model/project.model';
-import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
-import { WarningModalComponent } from '../../modal/warning/warning.component';
-import { ToastService } from '../../toast/ToastService';
 
 @Component({
     selector: 'app-repomanager-form',

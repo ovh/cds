@@ -1,10 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { TaskExecution } from 'app/model/workflow.hook.model';
 import { ThemeStore } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
-import { ActiveModal } from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -17,7 +16,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit {
   @ViewChild('code', {static: false}) codemirror: any;
   @ViewChild('nodeHookDetailsModal', {static: false}) nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
 
-  modal: ActiveModal<boolean, boolean, void>;
+  modal: SuiActiveModal<boolean, boolean, void>;
   modalConfig: TemplateModalConfig<boolean, boolean, void>;
   task: TaskExecution;
   codeMirrorConfig: any;

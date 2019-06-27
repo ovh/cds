@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SharedInfraGroupName } from 'app/model/group.model';
+import { Requirement } from 'app/model/requirement.model';
+import { WorkerModel } from 'app/model/worker-model.model';
+import { RequirementStore } from 'app/service/requirement/requirement.store';
+import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
+import { Table } from 'app/shared/table/table';
 import { first } from 'rxjs/operators';
-import { Requirement } from '../../../model/requirement.model';
-import { WorkerModel } from '../../../model/worker-model.model';
-import { RequirementStore } from '../../../service/requirement/requirement.store';
-import { Table } from '../../table/table';
-import { RequirementEvent } from '../requirement.event.model';
 
 export const OSArchitecture = 'os-architecture';
 

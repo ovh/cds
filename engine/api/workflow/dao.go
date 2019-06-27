@@ -43,9 +43,9 @@ func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Workflow, error) {
 
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
+	Minimal               bool
 	DeepPipeline          bool
 	Base64Keys            bool
-	OnlyRootNode          bool
 	WithFavorites         bool
 	WithLabels            bool
 	WithIcon              bool
@@ -285,16 +285,22 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	ctx, end := observability.Span(ctx, "workflow.Load",
 		observability.Tag(observability.TagWorkflow, name),
 		observability.Tag(observability.TagProjectKey, proj.Key),
+		observability.Tag("minimal", opts.Minimal),
 		observability.Tag("with_pipeline", opts.DeepPipeline),
-		observability.Tag("only_root", opts.OnlyRootNode),
 		observability.Tag("with_base64_keys", opts.Base64Keys),
 	)
 	defer end()
 
 	var icon string
-	if opts.WithIcon {
-		icon = "workflow.icon,"
+	if !opts.Minimal {
+		if opts.WithIcon {
+			icon = "workflow.icon,"
+		}
+	} else {
+		// if minimal, reset load options to load only from table workflow
+		opts = LoadOptions{Minimal: true}
 	}
+
 	query := fmt.Sprintf(`
 		select workflow.id,
 		workflow.project_id,
@@ -321,8 +327,10 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 	res.ProjectKey = proj.Key
 
-	if err := IsValid(ctx, store, db, res, proj, u, opts); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	if !opts.Minimal {
+		if err := IsValid(ctx, store, db, res, proj, u); err != nil {
+			return nil, sdk.WrapError(err, "Unable to valid workflow")
+		}
 	}
 
 	return res, nil

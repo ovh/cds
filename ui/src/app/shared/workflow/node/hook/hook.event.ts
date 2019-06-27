@@ -1,4 +1,5 @@
-import {WNodeHook} from '../../../../model/workflow.model';
+import { WNodeHook } from 'app/model/workflow.model';
+
 
 export class HookEvent {
     type: string; // add update delete
