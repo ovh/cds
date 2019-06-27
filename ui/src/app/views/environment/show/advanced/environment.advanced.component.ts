@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
+import { Project } from 'app/model/project.model';
+import { User } from 'app/model/user.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { CloneEnvironmentInProject, DeleteEnvironmentInProject, UpdateEnvironmentInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { Project } from '../../../../model/project.model';
-import { User } from '../../../../model/user.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-environment-advanced',

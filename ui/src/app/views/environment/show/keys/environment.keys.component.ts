@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Environment } from 'app/model/environment.model';
+import { Project } from 'app/model/project.model';
+import { KeyEvent } from 'app/shared/keys/key.event';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddEnvironmentKey, DeleteEnvironmentKey } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { Environment } from '../../../../model/environment.model';
-import { Project } from '../../../../model/project.model';
-import { KeyEvent } from '../../../../shared/keys/key.event';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-environment-keys',

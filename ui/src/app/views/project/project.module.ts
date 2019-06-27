@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { SharedModule } from '../../shared/shared.module';
+import { SharedModule } from 'app/shared/shared.module';
 import { ProjectAddComponent } from './add/project.add.component';
 import { ProjectListComponent } from './list/project.list.component';
 import { projectRouting } from './project.routing';

@@ -1,4 +1,4 @@
-import {AuthentificationStore} from '../../service/auth/authentification.store';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
 
 export class AccountComponent {
     constructor(_authStore: AuthentificationStore) {

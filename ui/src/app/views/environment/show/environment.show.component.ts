@@ -2,22 +2,22 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Environment } from 'app/model/environment.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { User } from 'app/model/user.model';
+import { Workflow } from 'app/model/workflow.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
+import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import * as projectActions from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
-import { Environment } from '../../../model/environment.model';
-import { PermissionValue } from '../../../model/permission.model';
-import { Pipeline } from '../../../model/pipeline.model';
-import { Project } from '../../../model/project.model';
-import { User } from '../../../model/user.model';
-import { Workflow } from '../../../model/workflow.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../shared/toast/ToastService';
-import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-environment-show',

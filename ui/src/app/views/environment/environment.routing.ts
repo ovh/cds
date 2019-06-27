@@ -1,7 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
-import { ProjectResolver } from '../../service/project/project.resolver';
+import { CanActivateAuthRoute } from 'app/service/auth/authenRouteActivate';
+import { ProjectResolver } from 'app/service/project/project.resolver';
 import { EnvironmentAddComponent } from './add/environment.add.component';
 import { EnvironmentShowComponent } from './show/environment.show.component';
 

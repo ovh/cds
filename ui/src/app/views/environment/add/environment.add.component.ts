@@ -2,13 +2,13 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Environment } from 'app/model/environment.model';
+import { Project } from 'app/model/project.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddEnvironmentInProject } from 'app/store/project.action';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Environment } from '../../../model/environment.model';
-import { Project } from '../../../model/project.model';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-environment-add',

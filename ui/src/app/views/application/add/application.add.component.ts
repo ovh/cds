@@ -2,17 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Application } from 'app/model/application.model';
+import { Project } from 'app/model/project.model';
+import { Variable } from 'app/model/variable.model';
+import { VariableService } from 'app/service/variable/variable.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplication, CloneApplication, FetchApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize, first, flatMap } from 'rxjs/operators';
-import { Application } from '../../../model/application.model';
-import { Project } from '../../../model/project.model';
-import { Variable } from '../../../model/variable.model';
-import { VariableService } from '../../../service/variable/variable.service';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-add',
