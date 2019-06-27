@@ -150,7 +150,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
     openVariableModal(event: Event): void {
         event.stopPropagation();
         if (this.jobVariable) {
-            this.jobVariable.show({ autofocus: false, closable: false, observeChanges: true });
+            this.jobVariable.show();
         }
     }
 }

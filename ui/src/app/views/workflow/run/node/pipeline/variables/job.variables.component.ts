@@ -1,6 +1,6 @@
-import {Component, Input, ViewChild} from '@angular/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Parameter} from '../../../../../../model/parameter.model';
+import { Component, Input, ViewChild } from '@angular/core';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { Parameter } from 'app/model/parameter.model';
 
 @Component({
     selector: 'app-workflow-run-job-variable',
@@ -8,9 +8,9 @@ import {Parameter} from '../../../../../../model/parameter.model';
     styleUrls: ['./job.variable.scss']
 })
 export class WorkflowRunJobVariableComponent {
-
-    @ViewChild('jobVariablesModal', {static: false})
-    jobVariablesModal: SemanticModalComponent;
+    @ViewChild('jobVariablesModal', { static: false }) jobVariablesModal: ModalTemplate<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
+    open: boolean;
 
     @Input('variables')
     set variables(data: Array<Parameter>) {
@@ -64,8 +64,9 @@ export class WorkflowRunJobVariableComponent {
     varWorkflow: Array<Parameter>;
     varKey: Array<Parameter>;
 
-    constructor() {
-    }
+    constructor(
+        private _modalService: SuiModalService,
+    ) { }
 
     init(): void {
         this.varGit = new Array<Parameter>();
@@ -80,10 +81,19 @@ export class WorkflowRunJobVariableComponent {
         this.varKey = new Array<Parameter>();
     }
 
-    show(data: {}): void {
-        if (this.jobVariablesModal) {
-            this.jobVariablesModal.show(data);
-        }
+    show(): void {
+        this.open = true;
+
+        const config = new TemplateModalConfig<boolean, boolean, void>(this.jobVariablesModal);
+        config.mustScroll = true;
+
+        this.modal = this._modalService.open(config);
+        this.modal.onApprove(() => {
+            this.open = false;
+        });
+        this.modal.onDeny(() => {
+            this.open = false;
+        });
     }
 
     sort(params: Array<Parameter>): Array<Parameter> {
@@ -96,5 +106,9 @@ export class WorkflowRunJobVariableComponent {
             }
             return 0;
         });
+    }
+
+    clickClose() {
+        this.modal.approve(true);
     }
 }
