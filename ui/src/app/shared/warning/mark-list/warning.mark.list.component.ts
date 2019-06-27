@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
+import {SuiPopupConfig} from '@richardlt/ng2-semantic-ui';
 import { Warning } from 'app/model/warning.model';
-import {SuiPopupConfig} from 'ng2-semantic-ui';
 
 @Component({
     selector: 'app-warning-mark-list',

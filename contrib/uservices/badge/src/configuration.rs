@@ -1,6 +1,5 @@
 
 use config::{Config, ConfigError, Environment, File};
-use sdk_cds::service::APIConfiguration;
 use std::str::FromStr;
 #[derive(Default, Debug, Deserialize, Clone)]
 #[serde(default)]
@@ -14,8 +13,6 @@ pub struct BadgeConfiguration {
   #[serde(with = "url_serde")]
   pub url: url::Url,
   pub name: String,
-  pub mode: String,
-  pub api: APIConfiguration,
   pub database: DatabaseConfiguration,
   pub kafka: KafkaConfiguration,
   pub http: HTTPConfiguration,
@@ -26,8 +23,6 @@ impl std::default::Default for BadgeConfiguration {
     BadgeConfiguration {
       url: url::Url::from_str("http://localhost:8086").unwrap(),
       name: String::default(),
-      mode: String::from("kafka"),
-      api: APIConfiguration::default(),
       database: DatabaseConfiguration::default(),
       kafka: KafkaConfiguration::default(),
       http: HTTPConfiguration::default(),
@@ -90,24 +85,6 @@ pub fn get_example_config_file() -> &'static str {
   # Name of this CDS badge Service
   name = "cds-badge"
 
-  mode = "kafka"
-
-  ######################
-  # CDS API Settings
-  #######################
-  [badge.api]
-    maxHeartbeatFailures = 10
-    requestTimeout = 10
-    token = "USECDSAPITOKEN"
-
-    [badge.api.grpc]
-      insecure = true
-      url = "http://localhost:8082"
-
-    [badge.api.http]
-      insecure = true
-      url = "http://localhost:8081"
-
   ######################
   # CDS Badge Database Settings (postgresql)
   #######################
@@ -121,7 +98,7 @@ pub fn get_example_config_file() -> &'static str {
     timeout = 3000
 
   ######################
-  # CDS Badge Kafka Settings (kafka mode only)
+  # CDS Badge Kafka Settings
   #######################
   [badge.kafka]
     broker = "localhost:9092"

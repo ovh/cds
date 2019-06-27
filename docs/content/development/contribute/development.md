@@ -69,15 +69,15 @@ That's all for a local Redis installation.
 
 ## Node.js
 
-Download the latest stable Node.js from https://nodejs.org/en/download/current/, version >= 10.8.0
+Download the latest stable Node.js from https://nodejs.org/en/download/current/, version >= 12.0.0
 
-Example with version 10.8.0 on macOS:
+Example with version 12.4.0 on macOS:
 
 ```bash
-$ curl -O https://nodejs.org/dist/v10.8.0/node-v10.8.0-darwin-x64.tar.gz
-$ tar xzf node-v10.8.0-darwin-x64.tar.gz
-# directory node-v10.8.0-darwin-x64 is created
-# You should add node-v10.8.0-darwin-x64/bin to your PATH
+$ curl -O https://nodejs.org/dist/v12.4.0/node-v12.4.0-darwin-x64.tar.gz
+$ tar xzf node-v12.4.0-darwin-x64.tar.gz
+# directory node-v12.4.0-darwin-x64 is created
+# You should add node-v12.4.0-darwin-x64/bin to your PATH
 ```
 
 ## Golang

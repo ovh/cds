@@ -9,6 +9,8 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipeline } from 'app/store/pipelines.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
@@ -27,8 +29,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineAddComponent } from './pipeline.add.component';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;

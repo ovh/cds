@@ -1,4 +1,5 @@
 import {Component, Input, NgZone, ViewChild} from '@angular/core';
+import {ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig} from '@richardlt/ng2-semantic-ui';
 import { Operation } from 'app/model/operation.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -6,8 +7,6 @@ import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { environment } from 'environments/environment';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
 
 @Component({
@@ -26,7 +25,7 @@ export class WorkflowSaveAsCodeComponent {
     @ViewChild('saveAsCodeModal', {static: false})
     public saveAsCodeModal: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
+    modal: SuiActiveModal<boolean, boolean, void>;
 
     constructor(private _modalService: SuiModalService, private _authStore: AuthentificationStore) {
     }
