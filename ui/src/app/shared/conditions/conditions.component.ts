@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -8,12 +8,14 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs/Subscription';
+
 declare var CodeMirror: any;
 
 @Component({
     selector: 'app-conditions',
     templateUrl: './conditions.html',
-    styleUrls: ['./conditions.scss']
+    styleUrls: ['./conditions.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ConditionsComponent extends Table<WorkflowNodeCondition> implements OnInit {
