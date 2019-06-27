@@ -50,7 +50,7 @@
                   [class.active]="selectedLine === logLine.lineNumber"
                   id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{logLine.lineNumber}}"
                   *ngIf="!last">
-                  <td class="number yellow right aligned pointing" (click)="generateLink(logLine.lineNumber)">{{logLine.lineNumber}}</td>
+                  <td class="number right aligned pointing" (click)="generateLink(logLine.lineNumber)">{{logLine.lineNumber}}</td>
                   <td [innerHTML]="logLine.value | safeHtml:!htmlViewSelected" *ngIf="ansiViewSelected || htmlViewSelected"></td><td [innerText]="logLine.value" *ngIf="!ansiViewSelected && !htmlViewSelected"></td>
                 </tr>
                 <tr *ngIf="logLine.lineNumber === limitFrom" valign="middle" class="fold-log pointing" (click)="showAllLogs()">

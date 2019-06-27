@@ -524,13 +524,14 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	dbRes := Workflow{}
 
 	_, next := observability.Span(ctx, "workflow.load.selectOne")
-	if err := db.SelectOne(&dbRes, query, args...); err != nil {
+	err := db.SelectOne(&dbRes, query, args...)
+	next()
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow")
 	}
-	next()
 
 	res := sdk.Workflow(dbRes)
 	if proj.Key == "" {
@@ -546,11 +547,11 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	// Load groups
 	_, next = observability.Span(ctx, "workflow.load.loadWorkflowGroups")
 	gps, err := group.LoadWorkflowGroups(db, res.ID)
+	next()
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow groups")
 	}
 	res.Groups = gps
-	next()
 
 	res.Pipelines = map[int64]sdk.Pipeline{}
 	res.Applications = map[int64]sdk.Application{}
