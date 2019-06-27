@@ -1,0 +1,12 @@
+name: cdsctl admin metadata Command TestSuite
+testcases:
+- name: admin meta
+  steps:
+  - script: "{{.cds.build.cdsctl}} admin metadata project export"
+  - script: '[ -f ./export_metadata_projects.csv ]'
+  - script: "{{.cds.build.cdsctl}} admin metadata project import export_metadata_projects.csv"
+  - script: "{{.cds.build.cdsctl}} admin metadata application export"
+  - script: '[ -f ./export_metadata_applications.csv ]'
+  - script: "{{.cds.build.cdsctl}} admin metadata application import export_metadata_applications.csv"
+  - script: "{{.cds.build.cdsctl}} admin metadata workflow export"
+  - script: '[ -f ./export_metadata_workflows.csv ]'

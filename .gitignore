@@ -26,6 +26,7 @@ myAWSS3Integration.yml
 test_results.yml
 test_results.xml
 *.dump
+*.csv
 .tmp
 contrib/**/dist
 
