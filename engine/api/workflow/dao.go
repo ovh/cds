@@ -328,7 +328,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	res.ProjectKey = proj.Key
 
 	if !opts.Minimal {
-		if err := IsValid(ctx, store, db, res, proj, u); err != nil {
+		if err := IsValid(ctx, store, db, res, proj, u, opts); err != nil {
 			return nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 	}
