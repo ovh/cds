@@ -2,8 +2,11 @@ name: cdsctl admin metadata Command TestSuite
 testcases:
 - name: admin meta
   steps:
-  - script: "{{.cds.build.cdsctl}} admin metadata project export > meta_prjs.csv"
-  - script: "{{.cds.build.cdsctl}} admin metadata project import meta_prjs.csv"
-  - script: "{{.cds.build.cdsctl}} admin metadata application export > meta_apps.csv"
-  - script: "{{.cds.build.cdsctl}} admin metadata application import meta_apps.csv"
-  - script: "{{.cds.build.cdsctl}} admin metadata workflow export > meta_wf.csv"
+  - script: "{{.cds.build.cdsctl}} admin metadata project export"
+  - script: '[ -f ./export_metadata_projects.csv ]'
+  - script: "{{.cds.build.cdsctl}} admin metadata project import export_metadata_projects.csv"
+  - script: "{{.cds.build.cdsctl}} admin metadata application export"
+  - script: '[ -f ./export_metadata_applications.csv ]'
+  - script: "{{.cds.build.cdsctl}} admin metadata application import export_metadata_applications.csv"
+  - script: "{{.cds.build.cdsctl}} admin metadata workflow export"
+  - script: '[ -f ./export_metadata_workflows.csv ]'

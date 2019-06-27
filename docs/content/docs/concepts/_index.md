@@ -20,7 +20,7 @@ cards:
 - name: concept_worker-model
   title: "Worker Model & Requirements"
   description: "Understand the Worker Model concept & requirement."
-- name: concept_permissions
-  title: "Permissions & ACLs"
-  description: "Understand the self-service permissions management."
+- name: concept_organization
+  title: "Organization & Permissions"
+  description: "Understand the project concept and the self-service permissions management."
 ---
