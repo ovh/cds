@@ -73,7 +73,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         private dragulaService: DragulaService,
         private _router: Router,
         private _workerModelService: WorkerModelService,
-        private _cd: ChangeDetectorRef
+        public _cd: ChangeDetectorRef
     ) {
         dragulaService.createGroup('bag-nonfinal', {
             moves: function (el, source, handle) {
