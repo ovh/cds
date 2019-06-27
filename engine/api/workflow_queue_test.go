@@ -939,9 +939,12 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
+	workflowDeepPipeline, err := workflow.LoadByID(db, api.Cache, p, w.ID, u, workflow.LoadOptions{DeepPipeline: true})
+	assert.NoError(t, err)
+
+	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
 	assert.NoError(t, errwr)
-	wrDB.Workflow = w
+	wrDB.Workflow = *workflowDeepPipeline
 
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{User: *u},
@@ -1081,8 +1084,8 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
+	db.Exec("DELETE FROM SERVICES")
 	mockVCSservice := &sdk.Service{Name: "TestInsertNewCodeCoverageReport", Type: services.TypeVCS}
-	assert.NoError(t, services.Delete(db, mockVCSservice))
 	test.NoError(t, services.Insert(db, mockVCSservice))
 
 	//This is a mock for the repositories service
@@ -1157,7 +1160,11 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Create previous run on default branch
 	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
-	wrDB.Workflow = w
+
+	workflowWithDeepPipeline, err := workflow.LoadByID(db, api.Cache, proj, w.ID, u, workflow.LoadOptions{DeepPipeline: true})
+	assert.NoError(t, err)
+
+	wrDB.Workflow = *workflowWithDeepPipeline
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			User: *u,
@@ -1228,7 +1235,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Create a workflow run
 	wrToTest, errwr3 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr3)
-	wrToTest.Workflow = w
+	wrToTest.Workflow = *workflowWithDeepPipeline
 	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			User: *u,

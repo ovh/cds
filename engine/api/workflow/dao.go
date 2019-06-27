@@ -328,7 +328,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	res.ProjectKey = proj.Key
 
 	if !opts.Minimal {
-		if err := IsValid(ctx, store, db, res, proj, u); err != nil {
+		if err := IsValid(ctx, store, db, res, proj, u, opts); err != nil {
 			return nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 	}
@@ -372,7 +372,7 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int6
 		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
 	}
 
-	if err := IsValid(context.TODO(), store, db, res, proj, u); err != nil {
+	if err := IsValid(context.TODO(), store, db, res, proj, u, opts); err != nil {
 		return nil, sdk.WrapError(err, "Unable to valid workflow")
 	}
 	return res, nil
@@ -618,7 +618,7 @@ func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, erro
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
-	if err := IsValid(context.TODO(), store, db, w, p, u); err != nil {
+	if err := IsValid(context.TODO(), store, db, w, p, u, LoadOptions{}); err != nil {
 		return sdk.WrapError(err, "Unable to validate workflow")
 	}
 
@@ -881,7 +881,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User, uptOption UpdateOptions) error {
 	ctx, end := observability.Span(ctx, "workflow.Update")
 	defer end()
-	if err := IsValid(ctx, store, db, w, p, u); err != nil {
+	if err := IsValid(ctx, store, db, w, p, u, LoadOptions{}); err != nil {
 		return err
 	}
 
@@ -977,8 +977,8 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 	return nil
 }
 
-// IsValid checks workflow validity
-func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project, u *sdk.User) error {
+// IsValid cheks workflow validity
+func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project, u *sdk.User, opts LoadOptions) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
@@ -1050,7 +1050,7 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 			continue
 		}
 
-		if err := checkPipeline(ctx, db, proj, w, n); err != nil {
+		if err := checkPipeline(ctx, db, proj, w, n, opts); err != nil {
 			return err
 		}
 		if err := checkApplication(store, db, proj, w, n); err != nil {
@@ -1236,12 +1236,12 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 }
 
 // CheckPipeline checks pipeline data
-func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
+func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node, opts LoadOptions) error {
 	if n.Context.PipelineID != 0 {
 		pip, ok := w.Pipelines[n.Context.PipelineID]
 		if !ok {
 			// Load pipeline from db to get stage/jobs
-			pipDB, err := pipeline.LoadPipelineByID(ctx, db, n.Context.PipelineID, true)
+			pipDB, err := pipeline.LoadPipelineByID(ctx, db, n.Context.PipelineID, opts.DeepPipeline)
 			if err != nil {
 				return sdk.WrapError(err, "unable to load pipeline %d", n.Context.PipelineID)
 			}
@@ -1257,7 +1257,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 		return nil
 	}
 	if n.Context.PipelineName != "" {
-		pipDB, err := pipeline.LoadPipeline(db, proj.Key, n.Context.PipelineName, true)
+		pipDB, err := pipeline.LoadPipeline(db, proj.Key, n.Context.PipelineName, opts.DeepPipeline)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load pipeline %s", n.Context.PipelineName)
 		}

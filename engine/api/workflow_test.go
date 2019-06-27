@@ -582,7 +582,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 
-	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj, u))
+	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj, u, workflow.LoadOptions{}))
 	eWf, err := exportentities.NewWorkflow(*wf)
 	test.NoError(t, err)
 	wfBts, err := yaml.Marshal(eWf)

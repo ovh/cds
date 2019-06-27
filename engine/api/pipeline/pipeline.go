@@ -46,9 +46,8 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 		if err != nil {
 			return nil, err
 		}
-		p.Parameter = parameters
+		pip.Parameter = parameters
 	}
-
 	return &pip, nil
 }
 
