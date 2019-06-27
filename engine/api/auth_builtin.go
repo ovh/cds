@@ -6,7 +6,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/sdk"
 
@@ -42,7 +41,6 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Check if a consumer exists for consumer type and external user identifier
-		log.Debug("loading consumer from %+v", userInfo)
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, userInfo.ExternalID)
 		if err != nil {
 			return err

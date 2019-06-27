@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
@@ -19,7 +19,7 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 
 	u, jwtRaw := assets.InsertLambdaUser(db)
 
-	consumer, err := authentication.NewConsumerBuiltin(db, sdk.RandomString(10), "", u.ID,
+	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID,
 		[]int64{}, []string{sdk.AccessTokenScopeALL})
 	require.NoError(t, err)
 

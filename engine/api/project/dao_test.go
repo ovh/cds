@@ -146,7 +146,7 @@ func TestLoadAll(t *testing.T) {
 		}
 	}
 
-	actualGroups2, err := project.LoadAllByGroups(nil, db, cache, u2)
+	actualGroups2, err := project.LoadAllByGroupIDs(nil, db, cache, u2.GetGroupIDs())
 	t.Log(actualGroups2)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups2) == 1, "This should return one project")

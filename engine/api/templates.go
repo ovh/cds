@@ -797,7 +797,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 				return err
 			}
 		} else {
-			ps, err = project.LoadAllByGroups(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx))
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs())
 			if err != nil {
 				return err
 			}

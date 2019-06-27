@@ -50,7 +50,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, repo string, opts ...
 	return loadAllByRepo(db, store, query, args, opts...)
 }
 
-// LoadAllByGroups returns all projects given groups
+// LoadAllByGroupIDs returns all projects given groups
 func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, IDs []int64, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	query := `SELECT project.*
 	FROM project
