@@ -104,7 +104,7 @@ func Test_getProjectsHandler(t *testing.T) {
 func Test_addProjectHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertLambdaUser(db)
 
 	proj := sdk.Project{
 		Key:  strings.ToUpper(sdk.RandomString(15)),
@@ -224,7 +224,6 @@ func Test_getprojectsHandler_AsProvider(t *testing.T) {
 
 	admin, _ := assets.InsertAdminUser(api.mustDB())
 	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), admin.ID, admin.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
-	jwt := AuthentififyBuiltinConsumer(t, api, jws)
 
 	u, _ := assets.InsertLambdaUser(api.mustDB())
 
@@ -234,7 +233,7 @@ func Test_getprojectsHandler_AsProvider(t *testing.T) {
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
-		Token: jwt,
+		Token: jws,
 	})
 
 	projs, err := sdkclient.ProjectsList()
@@ -249,7 +248,6 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 
 	admin, _ := assets.InsertAdminUser(api.mustDB())
 	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), admin.ID, admin.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
-	jwt := AuthentififyBuiltinConsumer(t, api, jws)
 
 	u, _ := assets.InsertLambdaUser(api.mustDB())
 
@@ -264,7 +262,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
-		Token: jwt,
+		Token: jws,
 	})
 
 	projs, err := sdkclient.ProjectsList(cdsclient.FilterByUser(u.Username))

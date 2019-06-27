@@ -26,7 +26,7 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 		return nil, err
 	}
 	if grp == nil {
-		return nil, sdk.WithStack(sdk.ErrGroupNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	// check if worker model already exists
@@ -84,7 +84,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		return nil, err
 	}
 	if grp == nil {
-		return nil, sdk.WithStack(sdk.ErrGroupNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	if old.GroupID != data.GroupID || old.Name != data.Name {

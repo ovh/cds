@@ -17,12 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadAllByRepo(db gorp.SqlExecutor, store cache.Store, query string, args []interface{}, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func loadAllByRepo(db gorp.SqlExecutor, store cache.Store, query string, args []interface{}, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	return loadprojects(db, store, opts, query, args...)
 }
 
 // LoadAllByRepoAndGroups returns all projects with an application linked to the repo against the groups
-func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
@@ -40,7 +40,7 @@ func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupM
 }
 
 // LoadAllByRepo returns all projects with an application linked to the repo
-func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := `SELECT DISTINCT project.*
 	FROM  project
 	JOIN  application on project.id = application.project_id
@@ -51,7 +51,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, repo string, opts ...
 }
 
 // LoadAllByGroupIDs returns all projects given groups
-func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, IDs []int64, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, IDs []int64, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := `SELECT project.*
 	FROM project
 	WHERE project.id IN (
@@ -63,12 +63,12 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 			$2 = ANY(string_to_array($1, ',')::int[])
 	)
 	ORDER by project.name, project.projectkey ASC`
-	args := []interface{}{IDs, group.SharedInfraGroup.ID}
+	args := []interface{}{gorpmapping.IDsToQueryString(IDs), group.SharedInfraGroup.ID}
 	return loadprojects(db, store, opts, query, args...)
 }
 
 // LoadAll returns all projects
-func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
 	return loadprojects(db, store, opts, query)
 }
@@ -469,24 +469,4 @@ func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID int64, add bool
 
 	_, err := db.Exec(query, userID, projectID)
 	return sdk.WithStack(err)
-}
-
-func LoadMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKey string, groupIDs []int64) (int, error) {
-	ctx, end := observability.Span(ctx, "project.LoadMaxLevelPermission")
-	defer end()
-
-	query := gorpmapping.NewQuery(`
-		SELECT max(project_group.role)
-		FROM project_group
-		JOIN project ON project.id = project_group.project_id
-		AND project.projectkey = $1
-		AND project_group.group_id = ANY(string_to_array($2, ',')::int[])
-		GROUP BY project.projectkey
-	`).Args(projectKey, gorpmapping.IDsToQueryString(groupIDs))
-
-	maxRole, err := gorpmapping.GetInt(db, query)
-	if err != nil {
-		return 0, err
-	}
-	return int(maxRole), nil
 }

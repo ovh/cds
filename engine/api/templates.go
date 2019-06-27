@@ -100,7 +100,7 @@ func (api *API) postTemplateHandler() service.Handler {
 				return err
 			}
 			if grp == nil {
-				return sdk.WithStack(sdk.ErrGroupNotFound)
+				return sdk.WithStack(sdk.ErrNotFound)
 			}
 		}
 
@@ -233,7 +233,7 @@ func (api *API) putTemplateHandler() service.Handler {
 				return err
 			}
 			if grp == nil {
-				return sdk.WithStack(sdk.ErrGroupNotFound)
+				return sdk.WithStack(sdk.ErrNotFound)
 			}
 		}
 

@@ -55,8 +55,6 @@ func InitializeDefaultGroupName(db *gorp.DbMap, defaultGrpName string) error {
 	if errlsg != nil {
 		return sdk.WrapError(errlsg, "group.InitializeDefaultGroupName> Cannot load shared infra group")
 	}
-	//Inject SharedInfraGroup.ID in permission package
-	permission.SharedInfraGroupID = SharedInfraGroup.ID
 
 	if defaultGrpName != "" {
 		defaultGroup, errldg := LoadByName(context.Background(), db, defaultGrpName)

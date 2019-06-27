@@ -198,19 +198,6 @@ func AuthConsumersToAuthentifiedUserIDs(cs []*AuthConsumer) []string {
 	return ids
 }
 
-// Token describes tokens used by worker to access the API
-// on behalf of a group.
-type Token struct {
-	ID          int64      `json:"id" cli:"id,key"`
-	GroupID     int64      `json:"group_id"`
-	GroupName   string     `json:"group_name" cli:"group_name"`
-	Token       string     `json:"token" cli:"token"`
-	Description string     `json:"description" cli:"description"`
-	Creator     string     `json:"creator" cli:"creator"`
-	Expiration  Expiration `json:"expiration" cli:"expiration"`
-	Created     time.Time  `json:"created" cli:"created"`
-}
-
 // Available access tokens scopes
 const (
 	AccessTokenScopeALL          = "all"
@@ -228,27 +215,3 @@ const (
 	AccessTokenScopeWorkerModel  = "WorkerModel"
 	AccessTokenScopeHatchery     = "Hatchery"
 )
-
-type Permission struct {
-	IDName
-	Role    int   `db:"role"`
-	GroupID int64 `db:"groupID"`
-}
-
-type Permissions []Permission
-
-type GroupPermissions struct {
-	Projects     Permissions
-	Workflows    Permissions
-	Acions       Permissions
-	WorkerModels Permissions
-}
-
-func (perms GroupPermissions) ProjectPermission(key string) (int, bool) {
-	for _, projPerm := range perms.Projects {
-		if projPerm.Name == key {
-			return projPerm.Role, true
-		}
-	}
-	return -1, false
-}

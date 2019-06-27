@@ -95,7 +95,7 @@ var groupDeleteCmd = cli.Command{
 func groupDeleteRun(v cli.Values) error {
 	err := client.GroupDelete(v.GetString("group-name"))
 	if err != nil {
-		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrGroupNotFound) {
+		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
 			fmt.Println(err.Error())
 			return nil
 		}

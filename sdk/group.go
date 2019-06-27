@@ -5,11 +5,9 @@ const SharedInfraGroupName = "shared.infra"
 
 // Group represent a group of user.
 type Group struct {
-	ID   int64  `json:"id" yaml:"-" db:"id"`
-	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
-	// aggregates
-	Tokens  []Token `json:"tokens,omitempty" yaml:"tokens,omitempty" db:"-"`
-	Members []User  `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
+	ID      int64  `json:"id" yaml:"-" db:"id"`
+	Name    string `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	Members []User `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
 }
 
 type Groups []Group

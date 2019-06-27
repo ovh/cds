@@ -46,7 +46,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 
 		if oldGp.Permission == 0 {
-			return sdk.ErrGroupNotFound
+			return sdk.ErrNotFound
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -108,7 +108,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 
 		if oldGp.Permission == 0 {
-			return sdk.WrapError(sdk.ErrGroupNotFound, "putWorkflowGroupHandler")
+			return sdk.WrapError(sdk.ErrNotFound, "putWorkflowGroupHandler")
 		}
 
 		tx, errT := api.mustDB().Begin()

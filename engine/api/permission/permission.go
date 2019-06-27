@@ -10,9 +10,6 @@ const (
 )
 
 var (
-	// SharedInfraGroupID must be init from elsewhere with group.SharedInfraGroup
-	SharedInfraGroupID int64
-
 	// DefaultGroupID same as SharedInfraGroupID
 	DefaultGroupID int64
 )

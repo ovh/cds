@@ -2,9 +2,14 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+
+	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/user"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -28,11 +33,39 @@ func (api *API) getApplicationsHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		withUsage := FormBool(r, "withUsage")
 		withIcon := FormBool(r, "withIcon")
-		withPermissions := FormBool(r, "permission")
+		withPermissions := r.FormValue("permission")
 
 		loadOpts := []application.LoadOptionFunc{}
 		if withIcon {
 			loadOpts = append(loadOpts, application.LoadOptions.WithIcon)
+		}
+
+		requestedUserName := r.Header.Get("X-Cds-Username")
+		if requestedUserName != "" && isMaintainer(ctx) {
+			requestedUser, err := user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
+			if err != nil {
+				if sdk.Cause(err) == sql.ErrNoRows {
+					return sdk.ErrUserNotFound
+				}
+				return err
+			}
+
+			groups, err := group.LoadGroupByUser(api.mustDB(), requestedUser.OldUserStruct.ID)
+			if err != nil {
+				if sdk.Cause(err) == sql.ErrNoRows {
+					return sdk.ErrUserNotFound
+				}
+				return sdk.WrapError(err, "unable to load user '%s' groups", requestedUserName)
+			}
+			requestedUser.OldUserStruct.Groups = groups
+
+			projPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, requestedUser.GetGroupIDs())
+			if err != nil {
+				return err
+			}
+			if projPerms.Level(projectKey) < permission.PermissionRead {
+				return nil
+			}
 		}
 
 		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, loadOpts...)
@@ -40,11 +73,16 @@ func (api *API) getApplicationsHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load applications from db")
 		}
 
-		if withPermissions {
+		if strings.ToUpper(withPermissions) == "W" {
+			projectPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
+			if err != nil {
+				return err
+			}
 			res := make([]sdk.Application, 0, len(applications))
 			for _, a := range applications {
-				// TODO: Filter against project permission
-				res = append(res, a)
+				if projectPerms.Permissions(projectKey).Writable {
+					res = append(res, a)
+				}
 			}
 			applications = res
 		}

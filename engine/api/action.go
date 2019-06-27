@@ -93,7 +93,7 @@ func (api *API) getActionsForGroupHandler() service.Handler {
 			return err
 		}
 		if g == nil {
-			return sdk.WithStack(sdk.ErrGroupNotFound)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		// and user is part of the group
@@ -131,7 +131,7 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 		if grp == nil {
-			return sdk.WithStack(sdk.ErrGroupNotFound)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
@@ -258,7 +258,7 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 		if grp == nil {
-			return sdk.WithStack(sdk.ErrGroupNotFound)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		if *old.GroupID != *data.GroupID || old.Name != data.Name {

@@ -51,6 +51,30 @@ type IDName struct {
 
 type IDNames []IDName
 
+type EntitiesPermissions map[string]Permissions
+
+func (e EntitiesPermissions) Level(s string) int {
+	if e == nil {
+		return 0
+	}
+	p, has := e[s]
+	if !has {
+		return 0
+	}
+	return p.Level()
+}
+
+func (e EntitiesPermissions) Permissions(s string) Permissions {
+	if e == nil {
+		return Permissions{}
+	}
+	p, has := e[s]
+	if !has {
+		return Permissions{}
+	}
+	return p
+}
+
 func (idNames IDNames) IDs() []int64 {
 	res := make([]int64, len(idNames))
 	for i := range idNames {

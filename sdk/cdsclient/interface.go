@@ -160,9 +160,6 @@ type ActionClient interface {
 type GroupClient interface {
 	GroupCreate(group *sdk.Group) error
 	GroupDelete(name string) error
-	GroupGenerateToken(groupName, expiration, description string) (*sdk.Token, error)
-	GroupListToken(groupName string) ([]sdk.Token, error)
-	GroupDeleteToken(groupName string, tokenID int64) error
 	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
 	GroupList() ([]sdk.Group, error)
 	GroupUserAdminSet(groupname string, username string) error
@@ -257,8 +254,6 @@ type UserClient interface {
 	UserLogin(username, password string) (bool, string, error)
 	UserReset(username, email, callback string) error
 	UserSignup(username, fullname, email, callback string) error
-	ListAllTokens() ([]sdk.Token, error)
-	FindToken(token string) (sdk.Token, error)
 	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
 }
 

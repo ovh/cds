@@ -160,9 +160,6 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
 	if path != "/auth/consumer/builtin/signin" && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
-		if c.config.Verbose {
-			fmt.Println("signin")
-		}
 		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
 		if err != nil {
 			return nil, nil, -1, err

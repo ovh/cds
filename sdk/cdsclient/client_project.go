@@ -7,21 +7,10 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
 func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
-	if groupName != "" {
-		// if the group does not exist, POST /project will create it
-		p.ProjectGroups = []sdk.GroupPermission{
-			{
-				Group:      sdk.Group{Name: groupName},
-				Permission: permission.PermissionReadWriteExecute,
-			},
-		}
-	}
-
 	if _, err := c.PostJSON(context.Background(), "/project", p, nil); err != nil {
 		return err
 	}

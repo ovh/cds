@@ -147,7 +147,7 @@ func (node *dbNodeData) PostInsert(db gorp.SqlExecutor) error {
 			return sdk.WrapError(err, "cannot load group %s for node %d : %s", grp.Group.Name, node.ID, node.Name)
 		}
 		if grDB == nil {
-			return sdk.WithStack(sdk.ErrGroupNotFound)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		node.Groups[i].Group = *grDB
 	}

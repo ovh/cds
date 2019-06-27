@@ -312,7 +312,7 @@ func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 			return err
 		}
 		if g == nil {
-			return sdk.WithStack(sdk.ErrGroupNotFound)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		if !isGroupMember(ctx, g) && !isAdmin(ctx) {

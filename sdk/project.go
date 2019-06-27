@@ -8,6 +8,16 @@ import (
 	"github.com/mitchellh/hashstructure"
 )
 
+type Projects []Project
+
+func (projects Projects) Keys() []string {
+	var res = make([]string, len(projects))
+	for i := range projects {
+		res[i] = projects[i].Key
+	}
+	return res
+}
+
 // Project represent a team with group of users and pipelines
 type Project struct {
 	ID               int64                `json:"-" yaml:"-" db:"id" cli:"-"`
@@ -25,7 +35,7 @@ type Project struct {
 	Variable         []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments     []Environment        `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
 	Labels           []Label              `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permission       int                  `json:"permission"  yaml:"-" db:"-"  cli:"-"`
+	Permissions      Permissions          `json:"permissions"  yaml:"-" db:"-"  cli:"-"`
 	Created          time.Time            `json:"created"  yaml:"created" db:"created" `
 	LastModified     time.Time            `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
 	Metadata         Metadata             `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
@@ -35,6 +45,26 @@ type Project struct {
 	Features         map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
 	Favorite         bool                 `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 	URLs             URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
+}
+
+type Permissions struct {
+	Readable   bool `json:"readable"`
+	Writable   bool `json:"writable"`
+	Executable bool `json:"executable"`
+}
+
+func (p Permissions) Level() int {
+	var i = 7
+	if !p.Writable {
+		i = 5
+	}
+	if !p.Executable {
+		i = 4
+	}
+	if !p.Readable {
+		i = 0
+	}
+	return i
 }
 
 type URL struct {

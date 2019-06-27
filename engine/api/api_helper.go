@@ -31,7 +31,6 @@ func isMaintainer(ctx context.Context) bool {
 	consumer := getAPIConsumer(ctx)
 	maintainer := consumer.Maintainer()
 	admin := consumer.Admin()
-	log.Debug("api.isMaintainer> maintainer: %t admin: %t", maintainer, admin)
 	return maintainer || admin
 }
 

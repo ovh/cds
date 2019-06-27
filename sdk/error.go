@@ -35,7 +35,6 @@ var (
 	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusConflict}
 	ErrNoPipelineBuild                               = Error{ID: 18, Status: http.StatusNotFound}
 	ErrApplicationNotFound                           = Error{ID: 19, Status: http.StatusNotFound}
-	ErrGroupNotFound                                 = Error{ID: 20, Status: http.StatusNotFound}
 	ErrInvalidUsername                               = Error{ID: 21, Status: http.StatusBadRequest}
 	ErrInvalidEmail                                  = Error{ID: 22, Status: http.StatusBadRequest}
 	ErrGroupPresent                                  = Error{ID: 23, Status: http.StatusBadRequest}
@@ -216,7 +215,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrEnvironmentExist.ID:                              "environment already exists",
 	ErrNoPipelineBuild.ID:                               "this pipeline build does not exist",
 	ErrApplicationNotFound.ID:                           "application does not exist",
-	ErrGroupNotFound.ID:                                 "group does not exist",
 	ErrInvalidUsername.ID:                               "invalid username",
 	ErrInvalidEmail.ID:                                  "invalid email",
 	ErrGroupPresent.ID:                                  "group already present",
@@ -392,7 +390,6 @@ var errorsFrench = map[int]string{
 	ErrEnvironmentExist.ID:                              "l'environnement existe",
 	ErrNoPipelineBuild.ID:                               "ce build n'existe pas",
 	ErrApplicationNotFound.ID:                           "l'application n'existe pas",
-	ErrGroupNotFound.ID:                                 "le groupe n'existe pas",
 	ErrInvalidUsername.ID:                               "nom d'utilisateur invalide",
 	ErrInvalidEmail.ID:                                  "addresse email invalide",
 	ErrGroupPresent.ID:                                  "le groupe est déjà présent",

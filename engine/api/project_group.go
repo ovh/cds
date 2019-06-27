@@ -51,7 +51,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 			}
 		}
 		if gp.Permission == 0 {
-			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteGroupFromProjectHandler: Group %s doesn't exist on project %s", groupName, p.Key)
+			return sdk.WrapError(sdk.ErrNotFound, "deleteGroupFromProjectHandler: Group %s doesn't exist on project %s", groupName, p.Key)
 		}
 
 		if err := group.DeleteGroupFromProject(tx, p.ID, g.ID); err != nil {
@@ -82,7 +82,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		}
 
 		if groupName != groupProject.Group.Name {
-			return sdk.ErrGroupNotFound
+			return sdk.ErrNotFound
 		}
 
 		tx, errb := api.mustDB().Begin()
@@ -114,7 +114,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		}
 
 		if gpInProject.Permission == 0 {
-			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleHandler: Group is not attached to this project: %s", key)
+			return sdk.WrapError(sdk.ErrNotFound, "updateGroupRoleHandler: Group is not attached to this project: %s", key)
 		}
 
 		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > permission.PermissionRead {
@@ -306,7 +306,7 @@ func (api *API) importGroupsInProjectHandler() service.Handler {
 		for _, gr := range groupsToAdd {
 			gro, errG := group.LoadByName(ctx, tx, gr.Group.Name)
 			if errG != nil {
-				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInProjectHandler> Group %v doesn't exist", gr.Group.Name)
+				return sdk.WrapError(sdk.ErrNotFound, "importGroupsInProjectHandler> Group %v doesn't exist", gr.Group.Name)
 			}
 			if err := group.InsertGroupInProject(tx, proj.ID, gro.ID, gr.Permission); err != nil {
 				return sdk.WrapError(err, "Cannot add group %v in project %s", gr.Group.Name, proj.Name)

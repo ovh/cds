@@ -71,7 +71,7 @@ func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (in
 func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
 	projectGroupID, projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "Cannot load role for group %d in project %d : %v", gp.Group.ID, w.ProjectID, err)
+		return sdk.WrapError(sdk.ErrNotFound, "Cannot load role for group %d in project %d : %v", gp.Group.ID, w.ProjectID, err)
 	}
 	if projectRole == permission.PermissionReadWriteExecute && gp.Permission < projectRole {
 		return sdk.ErrWorkflowPermInsufficient
@@ -95,7 +95,7 @@ func UpdateWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermi
 	_, projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot update this group on workflow because there isn't in the project groups : %v", err)
+			return sdk.WrapError(sdk.ErrNotFound, "cannot update this group on workflow because there isn't in the project groups : %v", err)
 		}
 		return sdk.WrapError(err, "Cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
 	}
@@ -156,11 +156,10 @@ func UpsertWorkflowGroup(db gorp.SqlExecutor, projectID, workflowID int64, gp sd
 			) ON CONFLICT DO NOTHING`
 	if _, err := db.Exec(query, projectID, gp.Group.ID, workflowID, gp.Permission); err != nil {
 		if strings.Contains(err.Error(), `null value in column "project_group_id"`) {
-			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot add this group on workflow because there isn't in the project groups : %v", err)
+			return sdk.WrapError(sdk.ErrNotFound, "cannot add this group on workflow because there isn't in the project groups : %v", err)
 		}
 		return sdk.WrapError(err, "unable to insert group_id=%d workflow_id=%d role=%d", gp.Group.ID, workflowID, gp.Permission)
 	}
-
 	return nil
 }
 

@@ -24,14 +24,6 @@ func (api *API) getGroupHandler() service.Handler {
 			return err
 		}
 
-		if isGroupAdmin(ctx, g) {
-			tokens, errT := group.LoadTokens(api.mustDB(), name)
-			if errT != nil {
-				return sdk.WrapError(errT, "Cannot load tokens group from db")
-			}
-			g.Tokens = tokens
-		}
-
 		return service.WriteJSON(w, g, http.StatusOK)
 	}
 }

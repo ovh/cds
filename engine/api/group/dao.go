@@ -36,10 +36,10 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 
 	found, err := gorpmapping.Get(ctx, db, q, &g)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get access token")
+		return nil, sdk.WrapError(err, "cannot get group")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	for i := range opts {

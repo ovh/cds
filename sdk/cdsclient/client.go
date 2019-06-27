@@ -109,7 +109,6 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 		Host:                              cfg.Host,
 		Retry:                             2,
 		BuitinConsumerAuthenticationToken: cfg.Token,
-		Verbose:                           true,
 	}
 
 	if cfg.RequestSecondsTimeout == 0 {

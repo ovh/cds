@@ -8,10 +8,8 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workermodel"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -48,11 +46,12 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	ctx, end := observability.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
-	maxLevelPermission, err := project.LoadMaxLevelPermission(ctx, api.mustDB(), projectKey, getAPIConsumer(ctx).GetGroupIDs())
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey))
 	}
 
+	maxLevelPermission := perms.Level(projectKey)
 	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
 		log.Debug("checkProjectPermissions> maxLevelPermission= %d ", maxLevelPermission)
 		// If it's about READ: we have to check if the user is a maintainer or an admin
@@ -98,10 +97,12 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given workflow name")
 	}
 
-	maxLevelPermission, err := workflow.LoadMaxLevelPermission(ctx, api.mustDB(), projectKey, workflowName, getAPIConsumer(ctx).GetGroupIDs())
+	perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())
 	if err != nil {
 		return sdk.NewError(sdk.ErrForbidden, err)
 	}
+
+	maxLevelPermission := perms.Level(workflowName)
 
 	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
 		// If it's about READ: we have to check if the user is a maintainer or an admin

@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
@@ -351,7 +350,9 @@ func (api *API) postWorkflowHandler() service.Handler {
 
 		event.PublishWorkflowAdd(p.Key, *wf1, getAPIConsumer(ctx))
 
-		wf1.Permission = permission.PermissionReadWriteExecute
+		wf1.Permission.Readable = true
+		wf1.Permission.Writable = true
+		wf1.Permission.Executable = true
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
@@ -430,7 +431,9 @@ func (api *API) putWorkflowHandler() service.Handler {
 
 		event.PublishWorkflowUpdate(p.Key, *wf1, *oldW, getAPIConsumer(ctx))
 
-		wf1.Permission = permission.PermissionReadWriteExecute
+		wf1.Permission.Readable = true
+		wf1.Permission.Writable = true
+		wf1.Permission.Executable = true
 
 		usage, errU := loadWorkflowUsage(api.mustDB(), wf1.ID)
 		if errU != nil {
