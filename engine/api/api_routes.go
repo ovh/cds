@@ -66,14 +66,9 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
 
 	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
-	r.Handle("/user/{permUsername}/auth/consumer/{consumerID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))
-	r.Handle("/user/{permUsername}/auth/consumer/{consumerID}/session", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getSessionsByUserHandler))
-	r.Handle("/user/{permUsername}/auth/consumer/{consumerID}/session/{sessionID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteSessionByUserHandler))
-
-	//r.Handle("/auth/consumer/{consumerType}/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
-	//r.Handle("/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postConsumerHandler))
-	//r.Handle("/auth/consumer/{id}", Scope(sdk.AuthConsumerScopeAccessToken), r.PUT(api.putConsumerHandler), r.DELETE(api.deleteConsumerHandler))
-	//r.Handle("/admin/user/{id}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumerByUserHandler))
+	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))
+	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}/session", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getSessionsByUserHandler))
+	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}/session/{sessionID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteSessionByUserHandler))
 
 	// Action
 	r.Handle("/action", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionsHandler), r.POST(api.postActionHandler))

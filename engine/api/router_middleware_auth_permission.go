@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -28,6 +29,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permActionBuiltinName": api.checkActionBuiltinPermissions,
 		"permTemplateSlug":      api.checkTemplateSlugPermissions,
 		"permUsername":          api.checkUserPermissions,
+		"permConsumerID":        api.checkConsumerPermissions,
 	}
 }
 
@@ -252,4 +254,22 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 
 	log.Debug("checkUserPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, u.ID)
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
+}
+
+func (api *API) checkConsumerPermissions(ctx context.Context, consumerID string, permissionValue int, routeVars map[string]string) error {
+	if consumerID == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given consumer id")
+	}
+
+	authConsumer := getAPIConsumer(ctx)
+	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID)
+	if err != nil {
+		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", authConsumer.ID))
+	}
+	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+		return nil
+	}
+
+	log.Debug("checkConsumerPermissions> %s is not authorized to %s", authConsumer.ID, consumer.ID)
+	return sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", authConsumer.ID)
 }
