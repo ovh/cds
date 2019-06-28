@@ -890,8 +890,14 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	}
 
 	// Delete workflow data
-	if err := DeleteWorkflowData(db, *w); err != nil {
-		return sdk.WrapError(err, "Update> unable to delete workflow data(%d - %s)", w.ID, w.Name)
+	if uptOption.OldWorkflow != nil {
+		if err := DeleteWorkflowData(db, *uptOption.OldWorkflow); err != nil {
+			return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", w.ID, w.Name)
+		}
+	} else {
+		if err := DeleteWorkflowData(db, *w); err != nil {
+			return sdk.WrapError(err, "unable to delete from workflow data(%d - %s)", w.ID, w.Name)
+		}
 	}
 
 	// Delete all node ID
