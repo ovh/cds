@@ -55,15 +55,15 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/concepts/permissions/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/concepts/project/</loc>
   </url>
   
   <url>
@@ -132,6 +132,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/concepts/workflow/hooks/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/concepts/permissions/</loc>
   </url>
   
   <url>
@@ -507,6 +511,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/application/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/application/</loc>
   </url>
   
@@ -871,6 +879,18 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/application/export/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/export/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/workflow/export/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/export/</loc>
   </url>
   
@@ -992,6 +1012,14 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/import/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/application/import/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/import/</loc>
   </url>
   
   <url>
@@ -1243,6 +1271,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/migration/</loc>
   </url>
   
@@ -1352,6 +1384,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/development/rest/project/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/</loc>
   </url>
   
   <url>
@@ -1696,6 +1732,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/development/rest/workflow/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/workflow/</loc>
   </url>
   
   <url>

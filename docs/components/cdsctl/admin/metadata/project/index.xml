@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>project on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/</link>
+    <description>Recent content in project on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/export/</guid>
+      <description> cdsctl admin metadata project export export CDS Project Metadata
+Synopsis export CDS Project Metadata
+cdsctl admin metadata project export [flags]  Options  --export-file string Filename of file created (default &amp;quot;export_metadata_projects.csv&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin metadata project - Manage CDS Project Metadata  </description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/import/</guid>
+      <description>cdsctl admin metadata project import import CDS Project Metadata
+Synopsis Metadata are represented with key:value
+Example of a csv file for a CDS Project
+project_key;project_name;last_modified;ou1;ou2 YOUR_PROJECT_KEY;Your Project Name;2020-01-01T00:00:00;OU_1_VALUE;OU_2_VALUE  You can enter as many metadata as desired, the key name is on the first line of the csv file.
+cdsctl admin metadata project import PATH  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

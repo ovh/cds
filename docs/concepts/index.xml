@@ -23,6 +23,18 @@ You can use « built-in » actions, such as checkoutApplication, script, jUnit, 
     </item>
     
     <item>
+      <title>Project</title>
+      <link>https://ovh.github.io/cds/docs/concepts/project/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/project/</guid>
+      <description>A CDS Project brings together several entities such as pipelines, applications, workflows, environments. A project also allows to link one or more repository manager such as github, bitbucket, gitlab&amp;hellip;
+A project is often associated with one or more groups with differents ACLs.
+Metadata In a company, a project is a collection of a team&amp;rsquo;s workflows. This allows to release some statistics of use with metadata.
+A metadata is composed by a key and a value.</description>
+    </item>
+    
+    <item>
       <title>Permissions - ACLs</title>
       <link>https://ovh.github.io/cds/docs/concepts/permissions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
