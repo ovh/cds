@@ -99,7 +99,9 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 		DateCreation: time.Now(),
 	}
 
-	user.Insert(db, &data)
+	if err := user.Insert(db, &data); err != nil {
+		log.Error("unable to insert user: %+v", err)
+	}
 
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
 	if err != nil {
