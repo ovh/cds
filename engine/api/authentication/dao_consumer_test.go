@@ -27,7 +27,7 @@ func TestLoadConsumer(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		Description:        sdk.RandomString(10),
 		Type:               sdk.ConsumerLocal,
-		Scopes:             []string{sdk.AccessTokenScopeALL},
+		Scopes:             []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, authentication.InsertConsumer(db, &c1))
@@ -36,7 +36,7 @@ func TestLoadConsumer(t *testing.T) {
 		Name:               sdk.RandomString(10),
 		Description:        sdk.RandomString(10),
 		Type:               sdk.ConsumerBuiltin,
-		Scopes:             []string{sdk.AccessTokenScopeALL},
+		Scopes:             []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, authentication.InsertConsumer(db, &c2))

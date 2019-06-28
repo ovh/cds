@@ -2,11 +2,13 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -46,7 +48,10 @@ func Test_postAuthBuiltinSigninHandler(t *testing.T) {
 	defer end()
 
 	usr, _ := assets.InsertLambdaUser(api.mustDB(), &sdk.Group{Name: sdk.RandomString(5)})
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), usr.ID, usr.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID)
+	require.NoError(t, err)
+
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, usr.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 	require.NoError(t, err)
 	AuthentififyBuiltinConsumer(t, api, jws)
 }

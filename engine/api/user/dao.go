@@ -133,12 +133,8 @@ func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 		Username: u.Username,
 		Origin:   "local",
 		Fullname: u.Fullname,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: sdk.RandomString(12),
-		},
 	}
-	if err := insertDeprecatedUser(db, oldUser, &oldUser.Auth); err != nil {
+	if err := insertDeprecatedUser(db, oldUser); err != nil {
 		return sdk.WrapError(err, "unable to insert old user for authenticated_user.id=%s", u.ID)
 	}
 	query := "INSERT INTO authentified_user_migration(authentified_user_id, user_id) VALUES($1, $2)"

@@ -14,8 +14,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/authentication/local"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -108,7 +111,7 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 		log.Error("user cannot be load for id %s: %v", data.ID, err)
 	}
 
-	consumer, _, err := builtin.NewConsumer(db, "Test consumer for user "+data.Username, "", u.ID, nil, []string{sdk.AccessTokenScopeALL})
+	consumer, err := local.NewConsumer(db, u.ID, sdk.RandomString(20))
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
 	}
@@ -154,8 +157,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 
 	log.Debug("lambda user: %s", string(btes))
 
-	consumer, _, err := builtin.NewConsumer(db, "Test consumer for user "+u.Username, "", u.ID,
-		sdk.GroupPointersToIDs(groups), []string{sdk.AccessTokenScopeALL})
+	consumer, err := local.NewConsumer(db, u.ID, sdk.RandomString(20))
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
 	}
@@ -384,7 +386,10 @@ func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
 	usr1, _ := InsertLambdaUser(db)
 
-	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", usr1.ID, []int64{grp.ID}, []string{sdk.AccessTokenScopeALL})
+	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{grp.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery})
 	test.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
@@ -416,7 +421,10 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) (*sdk.Service, *rsa.PrivateKey) {
 	usr1, _ := InsertAdminUser(db)
 
-	hConsumer, _, err := builtin.NewConsumer(db, name, name, usr1.ID, []int64{group.SharedInfraGroup.ID}, []string{sdk.AccessTokenScopeALL})
+	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{group.SharedInfraGroup.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeProject})
 	test.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()

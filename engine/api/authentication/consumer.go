@@ -14,25 +14,9 @@ func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Servic
 		Type:               sdk.ConsumerBuiltin,
 		Data:               map[string]string{},
 		GroupIDs:           groupIDs,
-		Scopes:             []string{sdk.AccessTokenScopeWorker, sdk.AccessTokenScopeRunExecution},
-	}
-
-	if err := InsertConsumer(db, &c); err != nil {
-		return nil, err
-	}
-
-	return &c, nil
-}
-
-// NewConsumerLocal returns a new local consumer for given data.
-func NewConsumerLocal(db gorp.SqlExecutor, userID string, hash []byte) (*sdk.AuthConsumer, error) {
-	c := sdk.AuthConsumer{
-		Name:               string(sdk.ConsumerLocal),
-		AuthentifiedUserID: userID,
-		Type:               sdk.ConsumerLocal,
-		Data: map[string]string{
-			"hash":     string(hash),
-			"verified": sdk.FalseString,
+		Scopes: []sdk.AuthConsumerScope{
+			sdk.AuthConsumerScopeWorker,
+			sdk.AuthConsumerScopeRunExecution,
 		},
 	}
 

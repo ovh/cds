@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -78,7 +80,10 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	defer tsClose()
 
 	admin, _ := assets.InsertAdminUser(api.mustDB())
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), admin.ID, admin.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID)
+	require.NoError(t, err)
+
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	u, _ := assets.InsertLambdaUser(api.mustDB())
 

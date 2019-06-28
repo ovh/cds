@@ -10,8 +10,6 @@ type authentifiedUser struct {
 	gorpmapping.SignedEntity
 }
 
-type persistentSessionToken sdk.UserToken
-
 type userContact struct {
 	sdk.UserContact
 	gorpmapping.SignedEntity
@@ -31,7 +29,6 @@ type deprecatedUser struct {
 }
 
 func init() {
-	gorpmapping.Register(gorpmapping.New(persistentSessionToken{}, "user_persistent_session", false, "token"))
 	gorpmapping.Register(gorpmapping.New(authentifiedUser{}, "authentified_user", false, "id"))
 	gorpmapping.Register(gorpmapping.New(userContact{}, "user_contact", true, "id"))
 	gorpmapping.Register(gorpmapping.New(authentifiedUserMigration{}, "authentified_user_migration", false, "authentified_user_id", "user_id"))

@@ -83,20 +83,14 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return err
 		}
 
-		// Generate password hash to store in consumer
-		hash, err := local.HashPassword(reqData["password"])
-		if err != nil {
-			return err
-		}
-
 		// Create new local consumer for new user, set this consumer as pending validation
-		consumer, err := authentication.NewConsumerLocal(tx, newUser.ID, hash)
+		consumer, err := local.NewConsumer(tx, newUser.ID, reqData["password"])
 		if err != nil {
 			return err
 		}
 
 		// Generate a token to verify consumer
-		verifyToken, err := authentication.NewVerifyConsumerToken(api.Cache, consumer.ID)
+		verifyToken, err := local.NewVerifyConsumerToken(api.Cache, consumer.ID)
 		if err != nil {
 			return err
 		}
@@ -213,7 +207,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return err
 		}
 
-		consumerID, err := authentication.CheckVerifyConsumerToken(api.Cache, reqData["token"])
+		consumerID, err := local.CheckVerifyConsumerToken(api.Cache, reqData["token"])
 		if err != nil {
 			return err
 		}
@@ -259,7 +253,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		authentication.CleanVerifyConsumerToken(api.Cache, consumer.ID)
+		local.CleanVerifyConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
 		http.SetCookie(w, &http.Cookie{
@@ -323,7 +317,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 			return err
 		}
 
-		resetToken, err := authentication.NewResetConsumerToken(api.Cache, consumer.ID)
+		resetToken, err := local.NewResetConsumerToken(api.Cache, consumer.ID)
 		if err != nil {
 			return err
 		}
@@ -359,7 +353,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return err
 		}
 
-		consumerID, err := authentication.CheckResetConsumerToken(api.Cache, reqData["token"])
+		consumerID, err := local.CheckResetConsumerToken(api.Cache, reqData["token"])
 		if err != nil {
 			return err
 		}
@@ -414,7 +408,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		authentication.CleanResetConsumerToken(api.Cache, consumer.ID)
+		local.CleanResetConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
 		http.SetCookie(w, &http.Cookie{

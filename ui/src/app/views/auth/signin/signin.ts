@@ -32,7 +32,7 @@ export class SigninComponent implements OnInit {
         this._authenticationService.getDrivers().subscribe((ds) => {
             this.localDriver = ds.find(d => d.type === 'local');
             this.ldapDriver = ds.find(d => d.type === 'ldap');
-            this.externalDrivers = ds.filter(d => d.type !== 'local' && d.type !== 'ldap');
+            this.externalDrivers = ds.filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin');
         });
     }
 

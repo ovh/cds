@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/authentication/builtin"
-
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -24,7 +23,7 @@ func TestLoadSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -49,7 +48,7 @@ func TestInsertSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -72,7 +71,7 @@ func TestUpdateSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -96,7 +95,7 @@ func TestDeleteSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, nil, nil)
+	c, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)

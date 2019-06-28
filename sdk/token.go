@@ -26,6 +26,56 @@ type AuthDriverManifest struct {
 	SignupDisabled bool             `json:"signup_disabled,omitempty"`
 }
 
+// AuthConsumerScope alias type for string.
+type AuthConsumerScope string
+
+// IsValid returns validity for scope.
+func (s AuthConsumerScope) IsValid() bool {
+	switch s {
+	case AuthConsumerScopeUser, AuthConsumerScopeAccessToken, AuthConsumerScopeAction, AuthConsumerScopeAdmin,
+		AuthConsumerScopeGroup, AuthConsumerScopeTemplate, AuthConsumerScopeProject, AuthConsumerScopeRun,
+		AuthConsumerScopeRunExecution, AuthConsumerScopeHooks, AuthConsumerScopeWorker, AuthConsumerScopeWorkerModel,
+		AuthConsumerScopeHatchery:
+		return true
+	}
+	return false
+}
+
+// Available auth consumer scopes.
+const (
+	AuthConsumerScopeUser         AuthConsumerScope = "User"
+	AuthConsumerScopeAccessToken  AuthConsumerScope = "AccessToken"
+	AuthConsumerScopeAction       AuthConsumerScope = "Action"
+	AuthConsumerScopeAdmin        AuthConsumerScope = "Admin"
+	AuthConsumerScopeGroup        AuthConsumerScope = "Group"
+	AuthConsumerScopeTemplate     AuthConsumerScope = "Template"
+	AuthConsumerScopeProject      AuthConsumerScope = "Project"
+	AuthConsumerScopeRun          AuthConsumerScope = "Run"
+	AuthConsumerScopeRunExecution AuthConsumerScope = "RunExecution"
+	AuthConsumerScopeHooks        AuthConsumerScope = "Hooks"
+	AuthConsumerScopeWorker       AuthConsumerScope = "Worker"
+	AuthConsumerScopeWorkerModel  AuthConsumerScope = "WorkerModel"
+	AuthConsumerScopeHatchery     AuthConsumerScope = "Hatchery"
+)
+
+// AuthConsumerScopeSlice type used for database json storage.
+type AuthConsumerScopeSlice []AuthConsumerScope
+
+// Scan scope slice.
+func (s *AuthConsumerScopeSlice) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, s), "cannot unmarshal AuthConsumerScopeSlice")
+}
+
+// Value returns driver.Value from scope slice.
+func (s AuthConsumerScopeSlice) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal AuthConsumerScopeSlice")
+}
+
 // AuthConsumerSigninRequest struct for auth consumer signin request.
 type AuthConsumerSigninRequest map[string]string
 
@@ -33,6 +83,12 @@ type AuthConsumerSigninRequest map[string]string
 type AuthConsumerSigninResponse struct {
 	Token string            `json:"token"`
 	User  *AuthentifiedUser `json:"user"`
+}
+
+// AuthConsumerCreateResponse response for a auth consumer creation.
+type AuthConsumerCreateResponse struct {
+	Token    string        `json:"token"`
+	Consumer *AuthConsumer `json:"consumer"`
 }
 
 // AuthDriverUserInfo struct discribed a user returns by a auth driver.
@@ -103,26 +159,38 @@ func (d AuthConsumerData) Value() (driver.Value, error) {
 
 // AuthConsumer issues session linked to an authentified user.
 type AuthConsumer struct {
-	ID                 string           `json:"id" cli:"id,key" db:"id"`
-	Name               string           `json:"name" cli:"name" db:"name"`
-	Description        string           `json:"description" cli:"description" db:"description"`
-	ParentID           *string          `json:"parent_id,omitempty" db:"parent_id"`
-	AuthentifiedUserID string           `json:"user_id,omitempty" db:"user_id"`
-	Type               AuthConsumerType `json:"type" cli:"type" db:"type"`
-	Data               AuthConsumerData `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
-	Created            time.Time        `json:"created" cli:"created" db:"created"`
-	GroupIDs           Int64Slice       `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
-	Scopes             StringSlice      `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
+	ID                 string                 `json:"id" cli:"id,key" db:"id"`
+	Name               string                 `json:"name" cli:"name" db:"name"`
+	Description        string                 `json:"description" cli:"description" db:"description"`
+	ParentID           *string                `json:"parent_id,omitempty" db:"parent_id"`
+	AuthentifiedUserID string                 `json:"user_id,omitempty" db:"user_id"`
+	Type               AuthConsumerType       `json:"type" cli:"type" db:"type"`
+	Data               AuthConsumerData       `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
+	Created            time.Time              `json:"created" cli:"created" db:"created"`
+	GroupIDs           Int64Slice             `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
+	Scopes             AuthConsumerScopeSlice `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user" db:"-"`
 }
 
+// IsValid returns validity for auth consumer.
+func (c AuthConsumer) IsValid() error {
+	for _, s := range c.Scopes {
+		if !s.IsValid() {
+			return NewErrorFrom(ErrWrongRequest, "invalid given scope value %s", s)
+		}
+	}
+	return nil
+}
+
+// GetGroupIDs returns group ids for auth consumer, if empty
+// in consumer returns group ids from authentified user.
 func (c AuthConsumer) GetGroupIDs() []int64 {
 	var groupIDs []int64
 
 	if len(c.GroupIDs) > 0 {
 		groupIDs = c.GroupIDs
-	} else if c.AuthentifiedUser != nil {
+	} else if c.AuthentifiedUser != nil && c.Type != ConsumerBuiltin {
 		groupIDs = c.AuthentifiedUser.GetGroupIDs()
 	}
 
@@ -161,12 +229,12 @@ func (c AuthConsumer) GetDEPRECATEDUserStruct() *User {
 
 // AuthSession struct.
 type AuthSession struct {
-	ID         string      `json:"id" cli:"id,key" db:"id"`
-	ConsumerID string      `json:"consumer_id" cli:"consumer_id" db:"consumer_id"`
-	ExpireAt   time.Time   `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
-	Created    time.Time   `json:"created" cli:"created" db:"created"`
-	GroupIDs   Int64Slice  `json:"group_ids" cli:"group_ids" db:"group_ids"`
-	Scopes     StringSlice `json:"scopes" cli:"scopes" db:"scopes"`
+	ID         string                 `json:"id" cli:"id,key" db:"id"`
+	ConsumerID string                 `json:"consumer_id" cli:"consumer_id" db:"consumer_id"`
+	ExpireAt   time.Time              `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
+	Created    time.Time              `json:"created" cli:"created" db:"created"`
+	GroupIDs   Int64Slice             `json:"group_ids" cli:"group_ids" db:"group_ids"`
+	Scopes     AuthConsumerScopeSlice `json:"scopes" cli:"scopes" db:"scopes"`
 	// aggregates
 	Consumer *AuthConsumer `json:"consumer" db:"-"`
 	Groups   []Group       `json:"groups" db:"-"`
@@ -176,7 +244,7 @@ type AuthSession struct {
 type AuthSessionJWTClaims struct {
 	ID       string
 	GroupIDs []int64
-	Scopes   []string
+	Scopes   []AuthConsumerScope
 	jwt.StandardClaims
 }
 
@@ -198,20 +266,15 @@ func AuthConsumersToAuthentifiedUserIDs(cs []*AuthConsumer) []string {
 	return ids
 }
 
-// Available access tokens scopes
-const (
-	AccessTokenScopeALL          = "all"
-	AccessTokenScopeUser         = "User"
-	AccessTokenScopeAccessToken  = "AccessToken"
-	AccessTokenScopeAction       = "Action"
-	AccessTokenScopeAdmin        = "Admin"
-	AccessTokenScopeGroup        = "Group"
-	AccessTokenScopeTemplate     = "Template"
-	AccessTokenScopeProject      = "Project"
-	AccessTokenScopeRun          = "Run"
-	AccessTokenScopeRunExecution = "RunExecution"
-	AccessTokenScopeHooks        = "Hooks"
-	AccessTokenScopeWorker       = "Worker"
-	AccessTokenScopeWorkerModel  = "WorkerModel"
-	AccessTokenScopeHatchery     = "Hatchery"
-)
+// Token describes tokens used by worker to access the API
+// on behalf of a group.
+type Token struct {
+	ID          int64      `json:"id" cli:"id,key"`
+	GroupID     int64      `json:"group_id"`
+	GroupName   string     `json:"group_name" cli:"group_name"`
+	Token       string     `json:"token" cli:"token"`
+	Description string     `json:"description" cli:"description"`
+	Creator     string     `json:"creator" cli:"creator"`
+	Expiration  Expiration `json:"expiration" cli:"expiration"`
+	Created     time.Time  `json:"created" cli:"created"`
+}

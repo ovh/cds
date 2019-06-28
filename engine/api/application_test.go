@@ -1,16 +1,20 @@
 package api
 
 import (
+	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
@@ -18,7 +22,9 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 	defer tsClose()
 
 	u, _ := assets.InsertAdminUser(api.mustDB())
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), u.ID, u.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID)
+	require.NoError(t, err)
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)

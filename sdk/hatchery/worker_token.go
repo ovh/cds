@@ -13,7 +13,7 @@ func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration 
 	token.ID = sdk.UUID()
 	token.Created = time.Now()
 	token.ExpireAt = expiration
-	token.Scopes = []string{sdk.AccessTokenScopeWorker}
+	token.Scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeWorker}
 	claims := WorkerJWTClaims{
 		Worker: w,
 		StandardClaims: jwt.StandardClaims{

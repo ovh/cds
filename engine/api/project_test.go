@@ -11,8 +11,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
@@ -223,10 +225,13 @@ func Test_getprojectsHandler_AsProvider(t *testing.T) {
 	defer tsClose()
 
 	admin, _ := assets.InsertAdminUser(api.mustDB())
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), admin.ID, admin.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID)
+	require.NoError(t, err)
+
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(api.mustDB())
-
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
 	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
@@ -239,7 +244,6 @@ func Test_getprojectsHandler_AsProvider(t *testing.T) {
 	projs, err := sdkclient.ProjectsList()
 	test.NoError(t, err)
 	assert.True(t, len(projs) > 0)
-
 }
 
 func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
@@ -247,7 +251,10 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	defer tsClose()
 
 	admin, _ := assets.InsertAdminUser(api.mustDB())
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), admin.ID, admin.GetGroupIDs(), Scope(sdk.AccessTokenScopeProject))
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID)
+	require.NoError(t, err)
+
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	u, _ := assets.InsertLambdaUser(api.mustDB())
 

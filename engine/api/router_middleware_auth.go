@@ -29,6 +29,9 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if !rc.NeedAuth {
 		return ctx, nil
 	}
+	if rc.NeedAdmin && !isAdmin(ctx) {
+		return ctx, sdk.WithStack(sdk.ErrForbidden)
+	}
 
 	var err error
 	var shouldContinue bool
@@ -83,25 +86,22 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
-	// Checks scopes
-	expectedScopes := getHandlerScope(ctx)
-	actualScopes := consumer.Scopes
+	// Checks scopes, all expected scopes should be in actual scopes
+	expectedScopes, actualScopes := getHandlerScope(ctx), consumer.Scopes
 
-	var scopeOK bool
-	for _, s := range actualScopes {
-		if s == sdk.AccessTokenScopeALL || sdk.IsInArray(s, expectedScopes) {
-			scopeOK = true
-			break
-		}
-	}
-	// Actual scope empty list means wildcard scope.
-	if len(expectedScopes) > 0 && len(actualScopes) > 0 && !scopeOK {
-		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
-	}
-
-	if rc.NeedAdmin {
-		if !isAdmin(ctx) || !sdk.IsInArray(sdk.AccessTokenScopeAdmin, actualScopes) {
-			return ctx, sdk.WithStack(sdk.ErrForbidden)
+	// Actual scope empty list means wildcard scope, we don't need to check scopes
+	if len(actualScopes) > 0 {
+		for i := range expectedScopes {
+			var found bool
+			for j := range actualScopes {
+				if actualScopes[j] == expectedScopes[i] {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
+			}
 		}
 	}
 

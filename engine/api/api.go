@@ -16,6 +16,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/github"
 	"github.com/ovh/cds/engine/api/authentication/gitlab"
 	"github.com/ovh/cds/engine/api/authentication/ldap"
@@ -560,7 +561,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
-	//Init the cache
+	// Init the cache
 	var errCache error
 	a.Cache, errCache = cache.New(
 		a.Config.Cache.Redis.Host,
@@ -585,12 +586,13 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init api metrics: %v", err)
 	}
 
-	//Intialize notification package
+	// Initialize notification package
 	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication drivers...")
 	// TODO
 	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
+	a.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	if a.Config.Auth.Local.Enable {
 		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(
 			a.Config.Auth.Local.SignupDisabled,
