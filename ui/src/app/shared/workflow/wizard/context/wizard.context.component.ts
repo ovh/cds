@@ -138,8 +138,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
                             this.integrations.push(idName);
                         }
                     });
-                    debugger;
-                    if (this.node.context.project_integration_id > 0 && this.integrations.findIndex(idName => idName.id === this.node.context.project_integration_id) === -1) {
+                    let index = this.integrations
+                        .findIndex(idName => idName.id === this.node.context.project_integration_id);
+                    if (this.node.context.project_integration_id > 0 && index === -1) {
                         delete this.node.context.project_integration_id;
                     }
                     this._cd.markForCheck();
