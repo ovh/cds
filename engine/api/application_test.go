@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {

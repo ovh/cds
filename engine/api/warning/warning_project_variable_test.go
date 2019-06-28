@@ -244,7 +244,7 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 		Type:  "string",
 		Value: "foo{{.cds.proj." + v.Name + "}}bar",
 	}
-	test.NoError(t, application.InsertVariable(db, cache, &app, &appV, u))
+	test.NoError(t, application.InsertVariable(db, cache, &app, appV, u))
 
 	// Create Delete var
 	ePayloadDelete := sdk.EventProjectVariableDelete{

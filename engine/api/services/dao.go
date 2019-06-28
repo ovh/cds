@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -131,6 +133,29 @@ func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 // Delete a service.
 func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service{Service: *s}
+
+	authConsumer, err := authentication.LoadConsumerByID(context.Background(), db, s.ConsumerID)
+	if err != nil {
+		return err
+	}
+
+	if err := authentication.DeleteConsumerByID(db, authConsumer.ID); err != nil {
+		return err
+	}
+
+	//if s.Type == TypeHatchery {
+	//	wks, err := worker.LoadByHatcheryID(db, s.ID)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	for _, wk := range wks {
+	//		if err := worker.Delete(db, wk.ID); err != nil {
+	//			return err
+	//		}
+	//	}
+	//}
+
 	if _, err := db.Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "unable to delete service %s", s.Name)
 	}

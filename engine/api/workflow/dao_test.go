@@ -12,6 +12,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
@@ -81,9 +85,9 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	maxRole, err := workflow.LoadMaxLevelPermission(context.TODO(), db, proj.Key, w.Name, []int64{proj.ProjectGroups[0].Group.ID})
+	maxRole, err := permission.LoadWorkflowMaxLevelPermission(context.TODO(), db, proj.Key, []string{w.Name}, []int64{proj.ProjectGroups[0].Group.ID})
 	test.NoError(t, err)
-	assert.Equal(t, 7, maxRole)
+	assert.Equal(t, sdk.EntitiesPermissions{"test_1": sdk.Permissions{Readable: true, Writable: true, Executable: true}}, maxRole)
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
@@ -1521,6 +1525,12 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 
 	_, err = db.Exec("DELETE FROM services")
 	assert.NoError(t, err)
+
+	srvs, err := services.GetAll(context.Background(), db)
+	require.NoError(t, err)
+	for _, srv := range srvs {
+		require.NoError(t, services.Delete(db, &srv))
+	}
 
 	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookVCS", services.TypeVCS)
 	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookHook", services.TypeHooks)
