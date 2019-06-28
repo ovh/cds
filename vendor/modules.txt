@@ -562,6 +562,7 @@ github.com/spf13/viper/remote
 github.com/streadway/amqp
 # github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 github.com/tevino/abool
 # github.com/ugorji/go v0.0.0-20160928015244-faddd6128c66
