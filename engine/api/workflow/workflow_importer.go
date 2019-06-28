@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
@@ -46,6 +47,10 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 
 		return nil
+	}
+
+	if oldW.Icon != "" && w.Icon == "" {
+		w.Icon = oldW.Icon
 	}
 
 	if !force {
