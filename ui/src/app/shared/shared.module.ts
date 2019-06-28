@@ -137,6 +137,7 @@ import { ZoneComponent } from './zone/zone.component';
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
+        ConditionsComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
@@ -161,11 +162,13 @@ import { ZoneComponent } from './zone/zone.component';
         VariableValueComponent,
         WarningMarkComponent,
         WorkflowNodeHookComponent,
+        WorkflowWizardNodeConditionComponent,
         WorkflowWNodeComponent,
         WorkflowWNodeForkComponent,
         WorkflowWNodeJoinComponent,
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
+
 
 
 
@@ -216,8 +219,6 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeEditModalComponent,
         WorkflowWizardNodeContextComponent,
         WorkflowWizardNodeInputComponent,
-        WorkflowWizardNodeConditionComponent,
-        ConditionsComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,

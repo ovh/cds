@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
@@ -27,7 +27,8 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'app-workflow-node-conditions',
     templateUrl: './wizard.conditions.html',
-    styleUrls: ['./wizard.conditions.scss']
+    styleUrls: ['./wizard.conditions.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
