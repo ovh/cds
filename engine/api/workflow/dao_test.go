@@ -1523,9 +1523,6 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 		},
 	}))
 
-	_, err = db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-
 	srvs, err := services.GetAll(context.Background(), db)
 	require.NoError(t, err)
 	for _, srv := range srvs {

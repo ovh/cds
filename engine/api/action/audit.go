@@ -9,7 +9,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -22,10 +21,7 @@ var (
 )
 
 // ComputeAudit compute audit on action.
-func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
-	chanEvent := make(chan sdk.Event)
-	event.Subscribe(chanEvent)
-
+func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap, chanEvent chan sdk.Event) {
 	db := DBFunc()
 	for {
 		select {

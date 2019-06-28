@@ -74,10 +74,12 @@ func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *
 	}
 
 	// For each given group id check if it's in parent consumer group ids
-	parentGroupIDs := parentConsumer.GetGroupIDs()
-	for i := range groupIDs {
-		if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {
-			return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", groupIDs[i])
+	if !parentConsumer.Admin() {
+		parentGroupIDs := parentConsumer.GetGroupIDs()
+		for i := range groupIDs {
+			if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {
+				return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", groupIDs[i])
+			}
 		}
 	}
 

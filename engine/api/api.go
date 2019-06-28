@@ -669,7 +669,9 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
-		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+		chanEvent := make(chan sdk.Event)
+		event.Subscribe(chanEvent)
+		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap, chanEvent)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "pipeline.ComputeAudit", func(ctx context.Context) {
 		pipeline.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
