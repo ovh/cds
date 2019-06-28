@@ -18,12 +18,12 @@ import (
 )
 
 // SendEvent Send event on workflow run
-func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
+func SendEvent(db gorp.SqlExecutor, report *ProcessorReport) {
 	if report == nil {
 		return
 	}
 	for _, wr := range report.workflows {
-		event.PublishWorkflowRun(wr, key)
+		event.PublishWorkflowRun(wr, *report.Project)
 	}
 	for _, wnr := range report.nodes {
 		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
@@ -61,7 +61,7 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
 			continue
 		}
-		event.PublishWorkflowNodeJobRun(db, key, wr.Workflow.Name, jobrun)
+		event.PublishWorkflowNodeJobRun(db, report.Project.Key, wr.Workflow.Name, jobrun)
 	}
 }
 

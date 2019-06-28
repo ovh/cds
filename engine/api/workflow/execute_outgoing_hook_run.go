@@ -18,7 +18,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 	ctx, end := observability.Span(ctx, "workflow.UpdateOutgoingHookRunStatus")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	//Checking if the hook is still at status waiting or building
 	pendingOutgoingHooks := wr.PendingOutgoingHook()
@@ -50,7 +50,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 	}
 
 	oldStatus := wr.Status
-	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
+	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, proj, wr)
 	if err != nil {
 		return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to compute workflow run status")
 	}
@@ -114,7 +114,7 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		return sdk.WrapError(err, "Unable to commit transaction")
 	}
 
-	go SendEvent(dbFunc(), parentProj.Key, report)
+	go SendEvent(dbFunc(), report)
 
 	return nil
 }

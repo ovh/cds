@@ -90,7 +90,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		if !isGroupOK {
-      return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", getWorker(ctx).Name, workerModel, id, pbj.ExecGroups)
+			return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", getWorker(ctx).Name, workerModel, id, pbj.ExecGroups)
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
@@ -100,7 +100,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
-		go workflow.SendEvent(api.mustDB(), p.Key, report)
+		go workflow.SendEvent(api.mustDB(), report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -370,7 +370,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, report)
 		next()
 
-		go workflow.SendEvent(api.mustDB(), proj.Key, report)
+		go workflow.SendEvent(api.mustDB(), report)
 
 		return nil
 	}

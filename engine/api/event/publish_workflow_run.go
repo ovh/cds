@@ -33,7 +33,11 @@ func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName
 }
 
 // PublishWorkflowRun publish event on a workflow run
-func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
+func PublishWorkflowRun(wr sdk.WorkflowRun, proj sdk.Project) {
+	metadata := proj.Metadata
+	for k, v := range wr.Workflow.Metadata {
+		metadata[k] = v
+	}
 	e := sdk.EventRunWorkflow{
 		ID:               wr.ID,
 		Number:           wr.Number,
@@ -43,8 +47,9 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		LastModified:     wr.LastModified.Unix(),
 		LastModifiedNano: wr.LastModified.UnixNano(),
 		Tags:             wr.Tags,
+		Metadata:         metadata,
 	}
-	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, wr.Tags)
+	publishRunWorkflow(e, proj.Key, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, wr.Tags)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run

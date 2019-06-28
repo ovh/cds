@@ -46,7 +46,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	//// Process Report
 	oldStatus := wr.Status
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 	defer func(oldStatus string, wr *sdk.WorkflowRun) {
 		if oldStatus != wr.Status {
 			report.Add(*wr)
@@ -68,7 +68,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		report, _ = report.Merge(r1, nil)
 
-		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
+		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, proj, wr)
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 		}
@@ -85,7 +85,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		report, _ = report.Merge(r1, nil)
 
-		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
+		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, proj, wr)
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 		}
@@ -106,7 +106,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	report, _ = report.Merge(r2, nil)
 
-	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
+	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, proj, wr)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 	}
@@ -115,8 +115,9 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	return report, true, nil
 }
 
-func computeAndUpdateWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
-	report := new(ProcessorReport)
+func computeAndUpdateWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
+	report := &ProcessorReport{Project: proj}
+
 	// Recompute status counter, it's mandatory to resync
 	// the map of workflow node runs of the workflow run to get the right statuses
 	// After resync, recompute all status counter compute the workflow status

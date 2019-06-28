@@ -279,7 +279,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return err
 		}
 
-		go workflow.SendEvent(api.mustDB(), key, report)
+		go workflow.SendEvent(api.mustDB(), report)
 
 		if err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, wr); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler")

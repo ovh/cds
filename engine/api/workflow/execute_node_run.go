@@ -23,11 +23,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) (*ProcessorReport, error) {
+func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) (*ProcessorReport, error) {
 	_, end := observability.Span(ctx, "workflow.syncTakeJobInNodeRun")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	//If status is not waiting neither build: nothing to do
 	if sdk.StatusIsTerminated(n.Status) {
@@ -92,7 +92,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		return nil, sdk.WrapError(errWr, "workflow.execute> unable to load workflow run ID %d", nr.WorkflowRunID)
 	}
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 	defer func(wNr *sdk.WorkflowNodeRun) {
 		report.Add(*wNr)
 	}(nr)
@@ -130,7 +130,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				//Insert data in workflow_node_run_job
 				log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
 				var err error
-				report, err = report.Merge(addJobsToQueue(ctx, db, stage, wr, nr, runContext))
+				report, err = report.Merge(addJobsToQueue(ctx, db, proj, stage, wr, nr, runContext))
 				if err != nil {
 					return report, err
 				}
@@ -324,12 +324,12 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	return report, nil
 }
 
-func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) (*ProcessorReport, error) {
+func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, stage *sdk.Stage, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	_, next := observability.Span(ctx, "checkCondition")
 	conditionsOK := checkCondition(wr, stage.Conditions, run.BuildParameters)
@@ -666,7 +666,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodePipeline")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	const stopWorkflowNodeRunNBWorker = 5
 	var wg sync.WaitGroup
@@ -757,7 +757,7 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	var r1 *ProcessorReport
 	var errS error
@@ -815,7 +815,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodeJobRun")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	for njrID := range chanNjrID {
 		tx, errTx := dbFunc().Begin()

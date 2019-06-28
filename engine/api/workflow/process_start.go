@@ -12,7 +12,7 @@ import (
 )
 
 func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, startingFromNode *int64, maxsn int64, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 	start := mapNodes[*startingFromNode]
 	if start == nil {
 		return nil, false, sdk.ErrWorkflowNodeNotFound
@@ -51,7 +51,7 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 
 func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.ID].Name)
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 	//Run the root: manual or from an event
 	AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{
 		ID: sdk.MsgWorkflowStarting.ID,
@@ -70,7 +70,7 @@ func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store ca
 }
 
 func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node) (*ProcessorReport, error) {
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 	//Checks the triggers
 	for k := range wr.WorkflowNodeRuns {
 		// only check the last node run
@@ -88,7 +88,7 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 }
 
 func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node) (*ProcessorReport, error) {
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 	//Checks the joins
 	for i := range wr.Workflow.WorkflowData.Joins {
 		j := &wr.Workflow.WorkflowData.Joins[i]

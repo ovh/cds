@@ -25,6 +25,7 @@ type ProcessorReport struct {
 	jobs      []sdk.WorkflowNodeJobRun
 	nodes     []sdk.WorkflowNodeRun
 	workflows []sdk.WorkflowRun
+	Project   *sdk.Project
 	errors    []error
 }
 
@@ -109,7 +110,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	)
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
@@ -185,7 +186,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		if errNR != nil {
 			return nil, sdk.WrapError(errNR, "Cannot LoadNodeRunByID node run %d", nodeRun.ID)
 		}
-		return report.Merge(syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex))
+		return report.Merge(syncTakeJobInNodeRun(ctx, db, proj, nodeRun, job, stageIndex))
 	}
 
 	_, next = observability.Span(ctx, "workflow.LoadRunByID")
@@ -258,12 +259,12 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
+func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	// first load without FOR UPDATE WAIT to quick check status
 	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
@@ -302,7 +303,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	}
 
 	var err error
-	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, db, store, p, job, sdk.StatusBuilding))
+	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, db, store, proj, job, sdk.StatusBuilding))
 	if err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 		return nil, nil, sdk.WrapError(err, "Cannot update node job run %d", jobID)

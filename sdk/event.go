@@ -123,6 +123,7 @@ type EventRunWorkflow struct {
 	LastModified     int64            `json:"last_modified"`
 	LastModifiedNano int64            `json:"last_modified_nano"`
 	Tags             []WorkflowRunTag `json:"tags"`
+	Metadata         Metadata         `json:"metadata"`
 }
 
 // EventJob contains event data for a job

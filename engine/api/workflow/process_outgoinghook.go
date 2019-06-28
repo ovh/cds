@@ -19,7 +19,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	ctx, end := observability.Span(ctx, "workflow.processNodeOutGoingHook")
 	defer end()
 
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
 	nrs, ok := wr.WorkflowNodeRuns[node.ID]

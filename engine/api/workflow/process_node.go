@@ -17,7 +17,7 @@ import (
 )
 
 func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, parentSubNumber int) (*ProcessorReport, error) {
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	for j := range node.Triggers {
 		t := &node.Triggers[j]
@@ -50,7 +50,7 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 }
 
 func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 	exist, errN := nodeRunExist(db, wr.ID, n.ID, wr.Number, subNumber)
 	if errN != nil {
 		return nil, false, sdk.WrapError(errN, "processNodeRun> unable to check if node run exist")
@@ -98,7 +98,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 }
 
 func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
-	report := new(ProcessorReport)
+	report := &ProcessorReport{Project: proj}
 
 	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
 	if n.Context == nil {
