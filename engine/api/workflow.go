@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
@@ -36,6 +38,16 @@ func (api *API) getWorkflowsHandler() service.Handler {
 		ws, err := workflow.LoadAll(api.mustDB(), key)
 		if err != nil {
 			return err
+		}
+
+		names := ws.Names()
+		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), key, names, getAPIConsumer(ctx).GetGroupIDs())
+		if err != nil {
+			return err
+		}
+
+		for i := range ws {
+			ws[i].Permissions = perms.Permissions(ws[i].Name)
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)
@@ -102,8 +114,11 @@ func (api *API) getWorkflowHandler() service.Handler {
 			}
 		}
 
-		// TODO: check permission : isEditable, isExecutable
-		// w1.Permission = permission.WorkflowPermission(key, w1.Name, getAPIConsumer(ctx))
+		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), key, []string{w1.Name}, getAPIConsumer(ctx).GetGroupIDs())
+		if err != nil {
+			return err
+		}
+		w1.Permissions = perms.Permissions(w1.Name)
 
 		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
 		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
@@ -193,6 +208,10 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+
+		newWf.Permissions.Readable = true
+		newWf.Permissions.Executable = true
+		newWf.Permissions.Writable = true
 
 		event.PublishWorkflowUpdate(key, *wf, *newWf, getAPIConsumer(ctx))
 
@@ -350,9 +369,9 @@ func (api *API) postWorkflowHandler() service.Handler {
 
 		event.PublishWorkflowAdd(p.Key, *wf1, getAPIConsumer(ctx))
 
-		wf1.Permission.Readable = true
-		wf1.Permission.Writable = true
-		wf1.Permission.Executable = true
+		wf1.Permissions.Readable = true
+		wf1.Permissions.Writable = true
+		wf1.Permissions.Executable = true
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
@@ -431,9 +450,9 @@ func (api *API) putWorkflowHandler() service.Handler {
 
 		event.PublishWorkflowUpdate(p.Key, *wf1, *oldW, getAPIConsumer(ctx))
 
-		wf1.Permission.Readable = true
-		wf1.Permission.Writable = true
-		wf1.Permission.Executable = true
+		wf1.Permissions.Readable = true
+		wf1.Permissions.Writable = true
+		wf1.Permissions.Executable = true
 
 		usage, errU := loadWorkflowUsage(api.mustDB(), wf1.ID)
 		if errU != nil {

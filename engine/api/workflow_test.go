@@ -80,7 +80,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	defer tsClose()
 
 	admin, _ := assets.InsertAdminUser(api.mustDB())
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
@@ -437,63 +437,61 @@ func Test_putWorkflowHandler(t *testing.T) {
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
 
-// TODO: to uncomment
-// func Test_postWorkflowHandlerWithError(t *testing.T) {
-// 	// Init database
-// 	api, db, router, end := newTestAPI(t)
-// 	defer end()
+func Test_postWorkflowHandlerWithChildNodePayloadOverriding(t *testing.T) {
+	// Init database
+	api, db, router, end := newTestAPI(t)
+	defer end()
+	// Init user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	var workflow = &sdk.Workflow{
+		Name:        "Name",
+		Description: "Description",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{{
+					ChildNode: sdk.Node{
+						Type: sdk.NodeTypePipeline,
+						Context: &sdk.NodeContext{
+							PipelineID: pip.ID,
+							DefaultPayload: map[string]interface{}{
+								"test": "content",
+							},
+						},
+					},
+				}},
+			},
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflow)
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
 
-// 	// Init user
-// 	u, pass := assets.InsertAdminUser(api.mustDB())
-// 	// Init project
-// 	key := sdk.RandomString(10)
-// 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	var wf1 sdk.Workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf1))
+	assert.Nil(t, wf1.WorkflowData.Node.Triggers[0].ChildNode.Context.DefaultPayload)
 
-// 	// Init pipeline
-// 	pip := sdk.Pipeline{
-// 		Name:      "pipeline1",
-// 		ProjectID: proj.ID,
-// 	}
-// 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
-
-// 	//Prepare request
-// 	vars := map[string]string{
-// 		"permProjectKey": proj.Key,
-// 	}
-// 	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-// 	test.NotEmpty(t, uri)
-
-// 	var workflow = &sdk.Workflow{
-// 		Name:        "Name",
-// 		Description: "Description",
-// 		WorkflowData: &sdk.WorkflowData{
-// 			Node: sdk.Node{
-// 				Type: sdk.NodeTypePipeline,
-// 				Context: &sdk.NodeContext{
-// 					PipelineID: pip.ID,
-// 				},
-// 				Triggers: []sdk.NodeTrigger{{
-// 					ChildNode: sdk.Node{
-// 						Type: sdk.NodeTypePipeline,
-// 						Context: &sdk.NodeContext{
-// 							PipelineID: pip.ID,
-// 							DefaultPayload: map[string]interface{}{
-// 								"test": "content",
-// 							},
-// 						},
-// 					},
-// 				}},
-// 			},
-// 		},
-// 	}
-
-// 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflow)
-
-// 	//Do the request
-// 	w := httptest.NewRecorder()
-// 	router.Mux.ServeHTTP(w, req)
-// 	assert.Equal(t, 400, w.Code)
-// }
+}
 
 func Test_postWorkflowRollbackHandler(t *testing.T) {
 	// Init database
@@ -646,6 +644,10 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	}
 
 	test.Equal(t, int64(0), wfRollback.WorkflowData.Node.Context.ApplicationID)
+
+	assert.Equal(t, true, wfRollback.Permissions.Readable)
+	assert.Equal(t, true, wfRollback.Permissions.Executable)
+	assert.Equal(t, true, wfRollback.Permissions.Writable)
 }
 
 func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {

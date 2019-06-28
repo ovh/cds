@@ -139,7 +139,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Try to load a local consumer for user
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID)
+		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
 		}

@@ -41,8 +41,10 @@ func (api *API) getApplicationsHandler() service.Handler {
 		}
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
+		var requestedUser *sdk.AuthentifiedUser
 		if requestedUserName != "" && isMaintainer(ctx) {
-			requestedUser, err := user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
+			var err error
+			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
@@ -74,7 +76,14 @@ func (api *API) getApplicationsHandler() service.Handler {
 		}
 
 		if strings.ToUpper(withPermissions) == "W" {
-			projectPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
+			var groupIDs []int64
+			if requestedUser != nil {
+				groupIDs = requestedUser.GetGroupIDs()
+			} else {
+				groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+			}
+
+			projectPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, groupIDs)
 			if err != nil {
 				return err
 			}

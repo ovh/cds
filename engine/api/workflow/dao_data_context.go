@@ -7,6 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type sqlNodeContextData struct {
@@ -43,10 +44,17 @@ func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 		tempContext.ProjectIntegrationID = sql.NullInt64{Valid: true, Int64: n.Context.ProjectIntegrationID}
 	}
 
-	var errDP error
-	tempContext.DefaultPayload, errDP = gorpmapping.JSONToNullString(n.Context.DefaultPayload)
-	if errDP != nil {
-		return sdk.WrapError(errDP, "insertNodeContextData> Cannot stringify default payload")
+	// If the current node is not the root node, we don't keep the payload
+	if n.Name != w.WorkflowData.Node.Name {
+		log.Debug("resetting payload on node %s", n.Name)
+		tempContext.DefaultPayload = sql.NullString{}
+		n.Context.DefaultPayload = nil
+	} else {
+		var errDP error
+		tempContext.DefaultPayload, errDP = gorpmapping.JSONToNullString(n.Context.DefaultPayload)
+		if errDP != nil {
+			return sdk.WrapError(errDP, "insertNodeContextData> Cannot stringify default payload")
+		}
 	}
 
 	for _, cond := range n.Context.Conditions.PlainConditions {

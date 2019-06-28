@@ -27,8 +27,8 @@ import (
 )
 
 // GetAllByIDs returns all workflows by ids.
-func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Workflow, error) {
-	ws := []sdk.Workflow{}
+func GetAllByIDs(db gorp.SqlExecutor, ids []int64) (sdk.Workflows, error) {
+	ws := sdk.Workflows{}
 
 	if _, err := db.Select(&ws,
 		`SELECT id, name FROM workflow WHERE id = ANY(string_to_array($1, ',')::int[])`,
@@ -221,8 +221,8 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 }
 
 // LoadAll loads all workflows for a project. All users in a project can list all workflows in a project
-func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
-	res := []sdk.Workflow{}
+func LoadAll(db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
+	res := sdk.Workflows{}
 	dbRes := []Workflow{}
 
 	query := `
@@ -369,7 +369,7 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 }
 
 // LoadByPipelineName loads a workflow for a given project key and pipeline name (ie. checking permissions)
-func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.Workflow, error) {
+func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey string, pipName string) (sdk.Workflows, error) {
 	dbRes := []Workflow{}
 	query := `
 		select distinct workflow.*
@@ -384,12 +384,12 @@ func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey str
 
 	if _, err := db.Select(&dbRes, query, projectKey, pipName); err != nil {
 		if err == sql.ErrNoRows {
-			return []sdk.Workflow{}, nil
+			return sdk.Workflows{}, nil
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
 	}
 
-	res := make([]sdk.Workflow, len(dbRes))
+	res := make(sdk.Workflows, len(dbRes))
 	for i, w := range dbRes {
 		w.ProjectKey = projectKey
 		res[i] = sdk.Workflow(w)
@@ -399,7 +399,7 @@ func LoadByPipelineName(ctx context.Context, db gorp.SqlExecutor, projectKey str
 }
 
 // LoadByApplicationName loads a workflow for a given project key and application name (ie. checking permissions)
-func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey string, appName string) ([]sdk.Workflow, error) {
+func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey string, appName string) (sdk.Workflows, error) {
 	dbRes := []Workflow{}
 	query := `
 		select distinct workflow.*
@@ -414,12 +414,12 @@ func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey 
 
 	if _, err := db.Select(&dbRes, query, projectKey, appName); err != nil {
 		if err == sql.ErrNoRows {
-			return []sdk.Workflow{}, nil
+			return sdk.Workflows{}, nil
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and application %s", projectKey, appName)
 	}
 
-	res := make([]sdk.Workflow, len(dbRes))
+	res := make(sdk.Workflows, len(dbRes))
 	for i, w := range dbRes {
 		w.ProjectKey = projectKey
 		res[i] = sdk.Workflow(w)
@@ -429,7 +429,7 @@ func LoadByApplicationName(ctx context.Context, db gorp.SqlExecutor, projectKey 
 }
 
 // LoadByEnvName loads a workflow for a given project key and environment name (ie. checking permissions)
-func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.Workflow, error) {
+func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, envName string) (sdk.Workflows, error) {
 	dbRes := []Workflow{}
 	query := `
 		select distinct workflow.*
@@ -444,12 +444,12 @@ func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, 
 
 	if _, err := db.Select(&dbRes, query, projectKey, envName); err != nil {
 		if err == sql.ErrNoRows {
-			return []sdk.Workflow{}, nil
+			return sdk.Workflows{}, nil
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and environment %s", projectKey, envName)
 	}
 
-	res := make([]sdk.Workflow, len(dbRes))
+	res := make(sdk.Workflows, len(dbRes))
 	for i, w := range dbRes {
 		w.ProjectKey = projectKey
 		res[i] = sdk.Workflow(w)
@@ -458,7 +458,7 @@ func LoadByEnvName(ctx context.Context, db gorp.SqlExecutor, projectKey string, 
 	return res, nil
 }
 
-func loadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, query string, args []interface{}) ([]sdk.Workflow, error) {
+func loadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, query string, args []interface{}) (sdk.Workflows, error) {
 	var dbRes []Workflow
 	if _, err := db.Select(&dbRes, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -467,7 +467,7 @@ func loadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, query st
 		return nil, err
 	}
 
-	workflows := make([]sdk.Workflow, len(dbRes))
+	workflows := make(sdk.Workflows, len(dbRes))
 	for i, wf := range dbRes {
 		var err error
 		wf.ProjectKey, err = db.SelectStr("SELECT projectkey FROM project WHERE id = $1", wf.ProjectID)
@@ -481,7 +481,7 @@ func loadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, query st
 }
 
 // LoadByWorkflowTemplateID load all workflows linked to a workflow template but without loading workflow details
-func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) ([]sdk.Workflow, error) {
+func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) (sdk.Workflows, error) {
 	query := `
 	SELECT workflow.*
 		FROM workflow
@@ -492,7 +492,7 @@ func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, template
 }
 
 // LoadByWorkflowTemplateIDByGroups load all workflows linked to a workflow template but without loading workflow details against the groups provided
-func LoadByWorkflowTemplateIDByGroups(ctx context.Context, db gorp.SqlExecutor, templateID int64, u sdk.GroupMember) ([]sdk.Workflow, error) {
+func LoadByWorkflowTemplateIDByGroups(ctx context.Context, db gorp.SqlExecutor, templateID int64, u sdk.GroupMember) (sdk.Workflows, error) {
 	query := `SELECT workflow.*
 				FROM workflow
 					JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
