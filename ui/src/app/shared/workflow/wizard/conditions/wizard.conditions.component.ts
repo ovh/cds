@@ -49,11 +49,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             if (!this.editableNode.context.conditions.plain) {
                 this.editableNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
             }
-            if (this.editableNode.context.conditions.lua_script && this.editableNode.context.conditions.lua_script !== '') {
-                this.isAdvanced = true;
-            } else {
-                this.isAdvanced = false;
-            }
             this.previousValue = this.editableNode.context.conditions.lua_script;
             let condition = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
             if (condition) {
@@ -69,7 +64,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     @Output() conditionsChange = new EventEmitter<boolean>();
 
     codeMirrorConfig: any;
-    isAdvanced = false;
     suggest: Array<string> = [];
     loadingConditions = false;
     operators: Array<any>;
@@ -133,7 +127,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     updateWorkflow(): void {
         this.loading = true;
-        if (this.isAdvanced) {
+        if (this.editableNode.context.conditions.lua_script && this.editableNode.context.conditions.lua_script !== '') {
             this.editableNode.context.conditions.plain = null;
         } else {
             this.editableNode.context.conditions.lua_script = '';
