@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -26,7 +27,7 @@ func TestWithGroups(t *testing.T) {
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)
 
-	c, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, []int64{g1.ID, g2.ID}, nil)
+	c, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", u.ID, []int64{g1.ID, g2.ID}, nil)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
