@@ -51,7 +51,7 @@ export class CallbackComponent implements OnInit {
 
             // If the origin is cdsctl, show the code and the state for copy
             let payload = jws.JWS.parse(this.state).payloadObj;
-            if (payload.origin === 'cdsctl') {
+            if (payload.data && payload.data.origin === 'cdsctl') {
                 this.loading = false;
                 this.showCTL = true;
                 this._cd.detectChanges();

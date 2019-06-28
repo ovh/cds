@@ -1,14 +1,18 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -68,4 +72,33 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	require.Equal(t, g.ID, created.Consumer.GroupIDs[0])
 	require.Equal(t, 1, len(created.Consumer.Scopes))
 	require.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.Scopes[0])
+}
+
+func Test_deleteConsumerByUserHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, jwtRaw := assets.InsertLambdaUser(db)
+
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	require.NoError(t, err)
+	newConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken})
+	require.NoError(t, err)
+	cs, err := authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(cs))
+
+	uri := api.Router.GetRoute(http.MethodDelete, api.deleteConsumerByUserHandler, map[string]string{
+		"permUsername":   u.Username,
+		"permConsumerID": newConsumer.ID,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodDelete, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	cs, err = authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(cs))
 }

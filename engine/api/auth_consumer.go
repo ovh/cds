@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -52,7 +53,33 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 
 func (api *API) deleteConsumerByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, nil, http.StatusNotImplemented)
+		vars := mux.Vars(r)
+
+		consumerID := vars["permConsumerID"]
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		if err != nil {
+			return err
+		}
+		if consumer.Type != sdk.ConsumerBuiltin {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		if err := authentication.DeleteConsumerByID(tx, consumer.ID); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
