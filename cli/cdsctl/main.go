@@ -40,7 +40,6 @@ func main() {
 		monitoring(),
 		version(),
 		encrypt(),
-		token(), // nearly deprecated
 		template(),
 		admin(),
 		tools(),
