@@ -375,10 +375,10 @@ func adminMetadataExport(firstTitles, addTitles []string, lines []lineMetadata, 
 			if v, exists := l.metadata[k]; exists {
 				nMetadataWrite++
 				writeLine(f, fmt.Sprintf(";%s", v))
+			} else {
+				writeLine(f, ";")
 			}
 		}
-		// write empty ";"
-		writeLine(f, fmt.Sprintf("%s", strings.Repeat(";", len(keys)-nMetadataWrite)))
 		writeLine(f, fmt.Sprintf("\n"))
 		fmt.Printf("")
 	}
