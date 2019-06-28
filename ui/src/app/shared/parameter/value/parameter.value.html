@@ -3,7 +3,7 @@
         <input type="number" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
     </div>
     <div *ngSwitchCase="'text'" class="ui form">
-        <codemirror [(ngModel)]="editableValue" [config]="codeMirrorConfig" (change)="changeCodeMirror($event)" #codeMirror (keydown)="sendValueChanged()"></codemirror>
+        <codemirror [(ngModel)]="editableValue" [config]="codeMirrorConfig" (change)="changeCodeMirror()" #codeMirror (keydown)="sendValueChanged()"></codemirror>
     </div>
     <div *ngSwitchCase="'boolean'" class="ui checkbox">
         <input type="checkbox" [(ngModel)]="editableValue" (change)="valueChanged();sendValueChanged()" name="value">
@@ -11,26 +11,34 @@
     </div>
     <div *ngSwitchCase="'ssh-key'">
         <ng-container *ngIf="keys">
-            <sm-select class="search fluid"
-                       [(model)]="editableValue"
-                       [options]="{'fullTextSearch': true}"
-                       (modelChange)="valueChanged();sendValueChanged()"
-                       (keydown)="sendValueChanged()"
-                       name="value">
-                    <option *ngFor="let v of keys.ssh" [value]="v.name">{{v.name}}</option>
-            </sm-select>
+            <sui-select class="selection"
+                        name="type"
+                        [(ngModel)]="editableValue"
+                        (ngModelChange)="sendValueChanged()"
+                        [options]="keys.ssh"
+                        labelField="name"
+                        valueField="name"
+                        [isSearchable]="true"
+                        #sshkey>
+                <sui-select-option *ngFor="let t of sshkey.filteredOptions" [value]="t">
+                </sui-select-option>
+            </sui-select>
         </ng-container>
     </div>
     <div *ngSwitchCase="'pgp-key'">
         <ng-container *ngIf="keys">
-            <sm-select class="search fluid"
-                       [(model)]="editableValue"
-                       [options]="{'fullTextSearch': true}"
-                       (modelChange)="valueChanged();sendValueChanged()"
-                       (keydown)="sendValueChanged()"
-                       name="value">
-                <option *ngFor="let v of keys.pgp" [value]="v.name">{{v.name}}</option>
-            </sm-select>
+            <sui-select class="selection"
+                        name="type"
+                        [(ngModel)]="editableValue"
+                        (ngModelChange)="sendValueChanged()"
+                        [options]="keys.pgp"
+                        labelField="name"
+                        valueField="name"
+                        [isSearchable]="true"
+                        #pgpkey>
+                <sui-select-option *ngFor="let t of pgpkey.filteredOptions" [value]="t">
+                </sui-select-option>
+            </sui-select>
         </ng-container>
     </div>
     <div *ngSwitchCase="'list'">

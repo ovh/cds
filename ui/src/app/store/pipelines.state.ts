@@ -1,6 +1,8 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Parameter } from 'app/model/parameter.model';
 import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
+import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as actionPipeline from './pipelines.action';
 import * as ActionProject from './project.action';
@@ -203,15 +205,18 @@ export class PipelinesState {
     addParameter(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.AddPipelineParameter) {
         let parameter = action.payload.parameter;
         let url = '/project/' + action.payload.projectKey + '/pipeline/' + action.payload.pipelineName + '/parameter/' + parameter.name;
-        return this._http.post<Pipeline>(url, parameter)
-            .pipe(tap((pip) => {
+        return this._http.post<Parameter>(url, parameter)
+            .pipe(tap((param) => {
                 const state = ctx.getState();
-                let pipKey = pip.projectKey + '/' + pip.name;
-                let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
-
+                let pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
+                let pipToUpdate = cloneDeep(state.pipelines[pipKey]);
+                if (!pipToUpdate.parameters) {
+                    pipToUpdate.parameters = new Array<Parameter>();
+                }
+                pipToUpdate.parameters.push(param);
                 ctx.setState({
                     ...state,
-                    pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipUpdated }),
+                    pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipToUpdate }),
                 });
             }));
     }
@@ -223,15 +228,21 @@ export class PipelinesState {
             '/pipeline/' + action.payload.pipelineName +
             '/parameter/' + action.payload.parameterName;
 
-        return this._http.put<Pipeline>(url, parameter)
-            .pipe(tap((pip) => {
+        return this._http.put<Parameter>(url, parameter)
+            .pipe(tap((param) => {
                 const state = ctx.getState();
-                let pipKey = pip.projectKey + '/' + pip.name;
-                let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
+                let pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
+                let pipToUpdate = cloneDeep(state.pipelines[pipKey]);
 
+                pipToUpdate.parameters = pipToUpdate.parameters.map(p => {
+                   if (p.id === param.id) {
+                       return param;
+                   }
+                   return p;
+                });
                 ctx.setState({
                     ...state,
-                    pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipUpdated }),
+                    pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipToUpdate }),
                 });
             }));
     }
@@ -240,15 +251,16 @@ export class PipelinesState {
     deleteParameter(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.DeletePipelineParameter) {
         let parameter = action.payload.parameter;
         let url = `/project/${action.payload.projectKey}/pipeline/${action.payload.pipelineName}/parameter/${parameter.name}`;
-        return this._http.delete<Pipeline>(url)
-            .pipe(tap((pip) => {
+        return this._http.delete<Parameter>(url)
+            .pipe(tap((param) => {
                 const state = ctx.getState();
                 let pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
-                let pipUpdated = Object.assign({}, state.pipelines[pipKey], { parameters: pip.parameters });
+                let pipToUpdate = cloneDeep(state.pipelines[pipKey]);
 
+                pipToUpdate.parameters = pipToUpdate.parameters.filter(p => p.id !== action.payload.parameter.id);
                 ctx.setState({
                     ...state,
-                    pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipUpdated }),
+                    pipelines: Object.assign({}, state.pipelines, { [pipKey]: pipToUpdate }),
                 });
             }));
     }

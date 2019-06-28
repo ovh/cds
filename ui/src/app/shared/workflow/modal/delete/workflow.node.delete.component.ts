@@ -3,7 +3,6 @@ import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } f
 import { WNode, Workflow } from 'app/model/workflow.model';
 import cloneDeep from 'lodash-es/cloneDeep';
 
-
 @Component({
     selector: 'app-workflow-node-delete',
     templateUrl: './workflow.node.delete.html',

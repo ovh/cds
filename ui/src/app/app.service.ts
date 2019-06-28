@@ -162,7 +162,7 @@ export class AppService {
                     opts.push(new LoadOpts('withLabels', 'labels'));
                 }
 
-                if (event.type_event.indexOf('Variable') === -1) {
+                if (event.type_event.indexOf('Variable') === -1 && event.type_event.indexOf('Parameter') === -1) {
                     this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts }));
                 }
             });

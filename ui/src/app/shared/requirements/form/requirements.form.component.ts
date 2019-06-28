@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { SharedInfraGroupName } from 'app/model/group.model';
 import { Requirement } from 'app/model/requirement.model';
@@ -6,14 +6,15 @@ import { WorkerModel } from 'app/model/worker-model.model';
 import { RequirementStore } from 'app/service/requirement/requirement.store';
 import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
 import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
-import { first } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 
 export const OSArchitecture = 'os-architecture';
 
 @Component({
     selector: 'app-requirements-form',
     templateUrl: './requirements.form.html',
-    styleUrls: ['./requirements.form.scss']
+    styleUrls: ['./requirements.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RequirementsFormComponent implements OnInit {
     @Input()
@@ -59,9 +60,10 @@ export class RequirementsFormComponent implements OnInit {
 
     constructor(
         private _requirementStore: RequirementStore,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _cd: ChangeDetectorRef,
     ) {
-        this._requirementStore.getAvailableRequirements().subscribe(r => {
+        this._requirementStore.getAvailableRequirements().pipe(finalize( () => this._cd.markForCheck())).subscribe(r => {
             this.availableRequirements = new Array<string>();
             // user does not need to add plugin prequisite manually, so we remove it from list
             this.availableRequirements.push(...r.filter(req => req !== 'plugin').toArray());
@@ -110,11 +112,11 @@ export class RequirementsFormComponent implements OnInit {
             case 'memory':
                 // memory: memory_4096
                 this.newRequirement.name = 'memory_' + this.newRequirement.value;
-                break
+                break;
             case 'model':
                 this.workerModelLinked = this.computeDisplayLinkWorkerModel();
                 this.newRequirement.name = this.newRequirement.value;
-                break
+                break;
             case 'volume':
                 this.newRequirement.name = this.getVolumeName();
                 break;
