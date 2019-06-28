@@ -70,7 +70,8 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, nil, errW
 	}
 
-	// If there is hook uuid load all pipelines for the workflow run
+	// Load deep pipelines if we come from workflow run ( so we have hook uuid ).
+	// We need deep pipelines to be able to run stages/jobs
 	if err := IsValid(ctx, store, db, w, proj, u, LoadOptions{DeepPipeline: opts.HookUUID != ""}); err != nil {
 		return nil, nil, sdk.WrapError(err, "Workflow is not valid")
 	}
