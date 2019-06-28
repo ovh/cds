@@ -3,10 +3,12 @@ package api
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -152,4 +154,58 @@ func TestAPI_checkUserPermissions(t *testing.T) {
 	})
 	err = api.checkUserPermissions(ctx, authUserAdmin.Username, permission.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted")
+}
+
+func TestAPI_checkConsumerPermissions(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	authUser, _ := assets.InsertLambdaUser(db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
+	require.NoError(t, err)
+
+	authUserAdmin, _ := assets.InsertAdminUser(db)
+	localConsumerAdmin, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserAdmin.ID)
+	require.NoError(t, err)
+
+	ctx := context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
+	err = api.checkConsumerPermissions(ctx, localConsumer.ID, permission.PermissionReadWriteExecute, nil)
+	assert.NoError(t, err, "should be granted")
+
+	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
+	err = api.checkConsumerPermissions(ctx, authUserAdmin.ID, permission.PermissionRead, nil)
+	assert.Error(t, err, "should not be granted")
+
+	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumerAdmin)
+	err = api.checkConsumerPermissions(ctx, localConsumer.ID, permission.PermissionRead, nil)
+	assert.Error(t, err, "should not be granted")
+}
+
+func TestAPI_checkSessionPermissions(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	authUser, _ := assets.InsertLambdaUser(db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
+	require.NoError(t, err)
+	localSession, err := authentication.NewSession(db, localConsumer, time.Second)
+	require.NoError(t, err)
+
+	authUserAdmin, _ := assets.InsertAdminUser(db)
+	localConsumerAdmin, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserAdmin.ID)
+	require.NoError(t, err)
+	localSessionAdmin, err := authentication.NewSession(db, localConsumerAdmin, time.Second)
+	require.NoError(t, err)
+
+	ctx := context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
+	err = api.checkSessionPermissions(ctx, localSession.ID, permission.PermissionReadWriteExecute, nil)
+	assert.NoError(t, err, "should be granted")
+
+	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
+	err = api.checkSessionPermissions(ctx, localSessionAdmin.ID, permission.PermissionRead, nil)
+	assert.Error(t, err, "should not be granted")
+
+	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumerAdmin)
+	err = api.checkSessionPermissions(ctx, localSession.ID, permission.PermissionRead, nil)
+	assert.Error(t, err, "should not be granted")
 }

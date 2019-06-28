@@ -1,7 +1,6 @@
 package builtin
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -27,6 +26,5 @@ func checkSigninConsumerToken(signature string) (string, error) {
 	if err := authentication.VerifyJWS(signature, &payload); err != nil {
 		return "", sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token"))
 	}
-	fmt.Println("payload", payload)
 	return payload.ConsumerID, nil
 }

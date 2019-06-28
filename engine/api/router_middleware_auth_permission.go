@@ -30,6 +30,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permTemplateSlug":      api.checkTemplateSlugPermissions,
 		"permUsername":          api.checkUserPermissions,
 		"permConsumerID":        api.checkConsumerPermissions,
+		"permSessionID":         api.checkSessionPermissions,
 	}
 }
 
@@ -264,7 +265,29 @@ func (api *API) checkConsumerPermissions(ctx context.Context, consumerID string,
 	authConsumer := getAPIConsumer(ctx)
 	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID)
 	if err != nil {
-		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", authConsumer.ID))
+		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", consumerID))
+	}
+	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+		return nil
+	}
+
+	log.Debug("checkConsumerPermissions> %s is not authorized to %s", authConsumer.ID, consumer.ID)
+	return sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", authConsumer.ID)
+}
+
+func (api *API) checkSessionPermissions(ctx context.Context, sessionID string, permissionValue int, routeVars map[string]string) error {
+	if sessionID == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given session id")
+	}
+
+	authConsumer := getAPIConsumer(ctx)
+	session, err := authentication.LoadSessionByID(ctx, api.mustDB(), sessionID)
+	if err != nil {
+		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID))
+	}
+	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID)
+	if err != nil {
+		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID))
 	}
 	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
 		return nil

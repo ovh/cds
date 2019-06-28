@@ -65,7 +65,7 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 	}
 	if !isValid {
 		log.Error("authentication.getConsumer> auth consumer %s data corrupted", consumer.ID)
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	ac := consumer.AuthConsumer

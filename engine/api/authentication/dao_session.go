@@ -56,7 +56,7 @@ func getSession(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, o
 		return nil, sdk.WrapError(err, "cannot get auth session")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(session, session.Signature)
@@ -65,7 +65,7 @@ func getSession(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, o
 	}
 	if !isValid {
 		log.Error("authentication.getSession> auth session %s data corrupted", session.ID)
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	as := session.AuthSession
