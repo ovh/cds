@@ -635,6 +635,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 			return sdk.WrapError(err, "Unable to update workflow")
 		}
 	} else {
+		log.Debug("postWorkflowHandler> inherit permissions from project")
 		for _, gp := range p.ProjectGroups {
 			if err := group.AddWorkflowGroup(db, w, gp); err != nil {
 				return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)

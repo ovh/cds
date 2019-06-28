@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
@@ -453,10 +454,10 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	//Do the request
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, 201, w.Code)
 
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &newWf))
-	assert.NotEqual(t, 0, newWf.ID)
+	require.NotEqual(t, 0, newWf.ID)
 
 	// Update workflow group to change READ to RWX and get permission on project in READ and permission on workflow in RWX to test edition and run
 	vars = map[string]string{
