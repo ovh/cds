@@ -257,6 +257,15 @@ func AuthSessionsToIDs(ass []*AuthSession) []string {
 	return ids
 }
 
+// AuthConsumersToIDs returns ids of given auth consumers.
+func AuthConsumersToIDs(cs []AuthConsumer) []string {
+	ids := make([]string, len(cs))
+	for i := range cs {
+		ids[i] = cs[i].ID
+	}
+	return ids
+}
+
 // AuthConsumersToAuthentifiedUserIDs returns ids of given auth consumers.
 func AuthConsumersToAuthentifiedUserIDs(cs []*AuthConsumer) []string {
 	ids := make([]string, len(cs))

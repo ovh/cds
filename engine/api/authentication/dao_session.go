@@ -79,6 +79,17 @@ func getSession(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, o
 	return &as, nil
 }
 
+// LoadSessionsByConsumerIDs returns all auth sessions from database for given consumer ids.
+func LoadSessionsByConsumerIDs(ctx context.Context, db gorp.SqlExecutor, consumerIDs []string, opts ...LoadSessionOptionFunc) ([]sdk.AuthSession, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM auth_session
+		WHERE consumer_id = ANY(string_to_array($1, ',')::text[])
+		ORDER BY created ASC
+	`).Args(gorpmapping.IDStringsToQueryString(consumerIDs))
+	return getSessions(ctx, db, query, opts...)
+}
+
 // LoadSessionByID returns an auth session from database.
 func LoadSessionByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadSessionOptionFunc) (*sdk.AuthSession, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM auth_session WHERE id = $1").Args(id)

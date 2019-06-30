@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication/builtin"
-	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
@@ -23,8 +23,11 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 	defer end()
 
 	u, jwtRaw := assets.InsertLambdaUser(db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
-	consumer, err := local.NewConsumer(db, u.ID, sdk.RandomString(20))
+	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getConsumersByUserHandler, map[string]string{
@@ -38,8 +41,9 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 
 	var cs []sdk.AuthConsumer
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &cs))
-	require.Equal(t, 1, len(cs))
-	require.Equal(t, consumer.Name, cs[0].Name)
+	require.Equal(t, 2, len(cs))
+	assert.Equal(t, localConsumer.ID, cs[0].ID)
+	assert.Equal(t, consumer.ID, cs[1].ID)
 }
 
 func Test_postConsumerByUserHandler(t *testing.T) {
@@ -80,7 +84,8 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 
 	u, jwtRaw := assets.InsertLambdaUser(db)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 	newConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken})
 	require.NoError(t, err)
@@ -101,4 +106,70 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	cs, err = authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(cs))
+}
+
+func Test_getSessionsByUserHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, jwtRaw := assets.InsertLambdaUser(db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
+	require.NoError(t, err)
+	s2, err := authentication.NewSession(db, consumer, time.Second)
+	require.NoError(t, err)
+	s3, err := authentication.NewSession(db, consumer, time.Second)
+	require.NoError(t, err)
+
+	uri := api.Router.GetRoute(http.MethodGet, api.getSessionsByUserHandler, map[string]string{
+		"permUsername": u.Username,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	var ss []sdk.AuthSession
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &ss))
+	require.Equal(t, 3, len(ss))
+	assert.Equal(t, localConsumer.ID, ss[0].ConsumerID)
+	assert.Equal(t, s2.ID, ss[1].ID)
+	assert.Equal(t, s3.ID, ss[2].ID)
+}
+
+func Test_deleteSessionByUserHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, jwtRaw := assets.InsertLambdaUser(db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
+	require.NoError(t, err)
+	s2, err := authentication.NewSession(db, consumer, time.Second)
+	require.NoError(t, err)
+
+	ss, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{localConsumer.ID, consumer.ID})
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(ss))
+
+	uri := api.Router.GetRoute(http.MethodDelete, api.deleteSessionByUserHandler, map[string]string{
+		"permUsername":  u.Username,
+		"permSessionID": s2.ID,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodDelete, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	ss, err = authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{localConsumer.ID, consumer.ID})
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(ss))
 }
