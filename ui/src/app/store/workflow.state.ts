@@ -842,9 +842,22 @@ export class WorkflowState {
         } else {
             runs[index] = action.payload.workflowRun;
         }
+
+        // If current workflow node run is on given workflow, check if we have to update it
+        // (only if subnumber changed)
+        let wnr = state.workflowNodeRun;
+        if (wnr && wnr.workflow_run_id === action.payload.workflowRun.id) {
+            if (action.payload.workflowRun.nodes && action.payload.workflowRun.nodes[wnr.workflow_node_id]) {
+                let nodes = action.payload.workflowRun.nodes[wnr.workflow_node_id];
+                if (wnr.subnumber < nodes[0].subnumber) {
+                    wnr = nodes[0]
+                }
+            }
+        }
         ctx.setState({
             ...state,
             listRuns: runs,
+            workflowNodeRun: wnr
         });
     }
 
