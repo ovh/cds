@@ -43,7 +43,7 @@ func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 		return userInfo, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
-	consumerID, err := checkSigninConsumerToken(token)
+	consumerID, err := CheckSigninConsumerToken(token)
 	if err != nil {
 		return userInfo, err
 	}
@@ -62,7 +62,7 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
-	_, err := checkSigninConsumerToken(token)
+	_, err := CheckSigninConsumerToken(token)
 	return err
 }
 
@@ -117,7 +117,7 @@ func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *
 		return nil, "", err
 	}
 
-	jws, err := newSigninConsumerToken(&c)
+	jws, err := NewSigninConsumerToken(&c)
 	if err != nil {
 		return nil, "", err
 	}

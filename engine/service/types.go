@@ -14,10 +14,6 @@ type APIServiceConfiguration struct {
 		URL      string `toml:"url" default:"http://localhost:8081" json:"url"`
 		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
 	} `toml:"http" json:"http"`
-	GRPC struct {
-		URL      string `toml:"url" default:"http://localhost:8082" json:"url"`
-		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
-	} `toml:"grpc" json:"grpc"`
 	Token                string `toml:"token" default:"************" json:"-"`
 	RequestTimeout       int    `toml:"requestTimeout" default:"10" json:"requestTimeout"`
 	MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" json:"maxHeartbeatFailures"`
@@ -28,14 +24,12 @@ type Common struct {
 	Client               cdsclient.Interface
 	APIPublicKey         []byte
 	StartupTime          time.Time
-	API                  string
 	Name                 string
 	HTTPURL              string
-	AuthenticationToken  string
-	SessionToken         string
 	Type                 string
 	MaxHeartbeatFailures int
 	ServiceName          string
+	ServiceInstance      *sdk.Service
 }
 
 // Service is the interface for a engine service
@@ -43,8 +37,10 @@ type Service interface {
 	ApplyConfiguration(cfg interface{}) error
 	Serve(ctx context.Context) error
 	CheckConfiguration(cfg interface{}) error
-	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus, cfg interface{}) error
-	Register(status func() sdk.MonitoringStatus, cfg interface{}) error
+	Start(ctx context.Context, cfg cdsclient.ServiceConfig) error
+	Init(cfg interface{}) (cdsclient.ServiceConfig, error)
+	Register(ctx context.Context, cfg sdk.ServiceConfig) error
+	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error
 	Status() sdk.MonitoringStatus
 }
 

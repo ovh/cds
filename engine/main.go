@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -540,16 +541,31 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
-	// first register
-	if err := s.Register(s.Status, cfg); err != nil {
+	x, err := s.Init(cfg)
+	if err != nil {
+		return err
+	}
+
+	// first signin
+	if err := s.Start(ctx, x); err != nil {
+		log.Error("%s> Unable to start service: %v", serviceName, err)
+		return err
+	}
+
+	var srvConfig sdk.ServiceConfig
+	b, _ := json.Marshal(cfg)
+	json.Unmarshal(b, &srvConfig) // nolint
+
+	// then register
+	if err := s.Register(c, srvConfig); err != nil {
 		log.Error("%s> Unable to register: %v", serviceName, err)
 		return err
 	}
 	log.Info("%s> Service registered", serviceName)
 
-	// start the heartbeat goroutine
+	// finally start the heartbeat goroutine
 	go func() {
-		if err := s.Heartbeat(ctx, s.Status, cfg); err != nil {
+		if err := s.Heartbeat(ctx, s.Status); err != nil {
 			log.Error("%v", err)
 			cancel()
 		}

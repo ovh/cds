@@ -38,8 +38,8 @@ func New() *HatcherySwarm {
 	return s
 }
 
-//Init connect the hatchery to the docker api
-func (h *HatcherySwarm) Init() error {
+// InitHatchery connect the hatchery to the docker api
+func (h *HatcherySwarm) InitHatchery() error {
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
@@ -352,7 +352,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		Name:              name,
 		Model:             spawnArgs.Model.ID,
 		TTL:               h.Config.WorkerTTL,
-		HatcheryName:      h.Service().Name,
+		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
@@ -588,19 +588,6 @@ func (h *HatcherySwarm) Serve(ctx context.Context) error {
 //Configuration returns Hatchery CommonConfiguration
 func (h *HatcherySwarm) Configuration() hatchery.CommonConfiguration {
 	return h.Config.CommonConfiguration
-}
-
-// ID returns ID of the Hatchery
-func (h *HatcherySwarm) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
-//Service returns service instance
-func (h *HatcherySwarm) Service() *sdk.Service {
-	return h.CDSClient().GetService()
 }
 
 // WorkerModelsEnabled returns Worker model enabled

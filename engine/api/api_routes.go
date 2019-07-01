@@ -55,9 +55,6 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/builtin/signout", ScopeNone(), r.POST(api.postAuthBuiltinSignoutHandler))
 
-	r.Handle("/auth/consumer/service/signin", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
-	r.Handle("/auth/consumer/service/signout", ScopeNone(), r.POST(api.postServiceUnregisterHandler))
-
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
 
@@ -397,8 +394,9 @@ func (api *API) InitRouter() {
 	r.Handle("/feature/clean", ScopeNone(), r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
 
 	// Engine µServices
-	r.Handle("/services/register", ScopeNone(), r.POST(api.postServiceRegisterHandler, Auth(false)))
-	r.Handle("/services/{type}", ScopeNone(), r.GET(api.getExternalServiceHandler /*, NeedWorker()*/))
+	r.Handle("/services/{type}", Scope(sdk.AuthConsumerScopeService), r.GET(api.getExternalServiceHandler))
+	r.Handle("/services/register", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceRegisterHandler))
+	r.Handle("/services/heartbeat", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceHearbeatHandler))
 
 	// Templates
 	r.Handle("/template", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))

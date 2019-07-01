@@ -35,6 +35,20 @@ func New() *HatcheryMarathon {
 	return s
 }
 
+func (s *HatcheryMarathon) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(HatcheryConfiguration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid marathon hatchery configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
@@ -48,15 +62,12 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.hatch = &sdk.Hatchery{}
-	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
-	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.AuthenticationToken = h.Config.API.Token
+
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-marathon"
-
 	return nil
 }
 
@@ -126,19 +137,6 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 	h.marathonClient = marathonClient
 	return nil
-}
-
-// ID must returns hatchery id
-func (h *HatcheryMarathon) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
-//Service returns service instance
-func (h *HatcheryMarathon) Service() *sdk.Service {
-	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -242,7 +240,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Name:              workerName,
 		TTL:               h.Config.WorkerTTL,
 		Model:             spawnArgs.Model.ID,
-		HatcheryName:      h.Service().Name,
+		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
@@ -472,8 +470,8 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 	return x
 }
 
-// Init only starts killing routine of worker not registered
-func (h *HatcheryMarathon) Init() error {
+// InitHatchery only starts killing routine of worker not registered
+func (h *HatcheryMarathon) InitHatchery() error {
 	h.startKillAwolWorkerRoutine()
 	return nil
 }

@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/ovh/cds/sdk/cdsclient"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // CommonMonitoring returns common part of MonitoringStatus
@@ -31,8 +31,44 @@ func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 	}
 }
 
+func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
+	// no register for api
+	if c.Type == "api" {
+		return nil
+	}
+
+	var err error
+	c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(cfg)
+	return err
+}
+
+func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
+	// no register for api
+	if c.Type == "api" {
+		return nil
+	}
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:    c.Name,
+			HTTPURL: c.HTTPURL,
+			Type:    c.Type,
+			Config:  cfg,
+		},
+		LastHeartbeat: time.Time{},
+		Version:       sdk.VERSION,
+	}
+
+	srv2, err := c.Client.ServiceRegister(srv)
+	if err != nil {
+		return sdk.WrapError(err, "Register>")
+	}
+	c.ServiceInstance = srv2
+	return nil
+}
+
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
-func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus, cfg interface{}) error {
+func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error {
 	// no heartbeat for api
 	if c.Type == "api" {
 		return nil
@@ -40,24 +76,13 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 
 	ticker := time.NewTicker(30 * time.Second)
 
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
-	defer cancel()
-
 	var heartbeatFailures int
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			// try to register, on success reset the failure count
-			if err := c.Register(status, cfg); err != nil {
-				heartbeatFailures++
-				log.Error("%s> Heartbeat> Register failed %d/%d", c.Name,
-					heartbeatFailures, c.MaxHeartbeatFailures)
-			} else {
-				heartbeatFailures = 0
-			}
+			// TODO: heartbeat
 
 			// if register failed too many time, stop heartbeat
 			if heartbeatFailures > c.MaxHeartbeatFailures {
@@ -65,37 +90,5 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 			}
 		}
 	}
-}
 
-// Register the service to CDS api and store session hash.
-func (c *Common) Register(status func() sdk.MonitoringStatus, cfg interface{}) error {
-	// no need to register for api
-	if c.Type == "api" {
-		return nil
-	}
-
-	var srvConfig sdk.ServiceConfig
-	b, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(b, &srvConfig); err != nil {
-		return err
-	}
-
-	/* hash, err := c.Client.ServiceRegister(sdk.Service{
-		Name:          c.Name,
-		HTTPURL:       c.HTTPURL,
-		LastHeartbeat: time.Time{},
-		//Token:            c.Token,
-		Type:             c.Type,
-		MonitoringStatus: status(),
-		Config:           srvConfig,
-		Version:          sdk.VERSION,
-	})
-	if err != nil {
-		return sdk.WithStack(err)
-	} */
-
-	return nil
 }

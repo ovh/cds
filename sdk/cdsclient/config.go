@@ -25,6 +25,14 @@ type ProviderConfig struct {
 	InsecureSkipVerifyTLS bool
 }
 
+//ServiceConfig is the configuration data used by the cdsclient interface implementation
+type ServiceConfig struct {
+	Host                  string
+	Token                 string
+	RequestSecondsTimeout int
+	InsecureSkipVerifyTLS bool
+}
+
 func (c Config) HasValidSessionToken() bool {
 	if c.SessionToken == "" {
 		return false

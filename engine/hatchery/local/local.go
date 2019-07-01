@@ -33,6 +33,20 @@ func New() *HatcheryLocal {
 	return s
 }
 
+func (s *HatcheryLocal) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(HatcheryConfiguration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid local hatchery configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
@@ -46,11 +60,9 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	genname := h.Configuration().Name
-	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
-	h.API = h.Config.API.HTTP.URL
 	h.Name = genname
 	h.HTTPURL = h.Config.URL
-	h.AuthenticationToken = h.Config.API.Token
+
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-local"
@@ -103,17 +115,9 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// ID must returns hatchery id
-func (h *HatcheryLocal) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
 //Service returns service instance
 func (h *HatcheryLocal) Service() *sdk.Service {
-	return h.CDSClient().GetService()
+	return h.Common.Common.ServiceInstance
 }
 
 //Hatchery returns hatchery instance
@@ -248,7 +252,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		// TODO
 		//Name:              wName,
 		Model:             spawnArgs.Model.ID,
-		HatcheryName:      h.Service().Name,
+		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
@@ -364,8 +368,8 @@ func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
 	return x
 }
 
-// Init register local hatchery with its worker model
-func (h *HatcheryLocal) Init() error {
+// InitHatchery register local hatchery with its worker model
+func (h *HatcheryLocal) InitHatchery() error {
 	h.workers = make(map[string]workerCmd)
 	sdk.GoRoutine(context.Background(), "startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
 	return nil

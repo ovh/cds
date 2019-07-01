@@ -44,6 +44,20 @@ func New() *HatcheryOpenstack {
 	return s
 }
 
+func (s *HatcheryOpenstack) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(HatcheryConfiguration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid openstack hatchery configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
@@ -57,11 +71,9 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.hatch = &sdk.Hatchery{}
-	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
-	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.AuthenticationToken = h.Config.API.Token
+
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-openstack"
@@ -129,19 +141,6 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 	}
 
 	return nil
-}
-
-// ID returns hatchery id
-func (h *HatcheryOpenstack) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
-//Service returns service instance
-func (h *HatcheryOpenstack) Service() *sdk.Service {
-	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -280,7 +279,7 @@ func (h *HatcheryOpenstack) killAwolServers() {
 		// Delete workers, if not identified by CDS API
 		// Wait for 6 minutes, to avoid killing worker babies
 		log.Debug("killAwolServers> server %s status: %s last update: %s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), toDeleteKilled, inWorkersList)
-		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Service().Name) &&
+		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Name) &&
 			(s.Status == "SHUTOFF" || toDeleteKilled || (!inWorkersList && time.Since(s.Updated) > 6*time.Minute)) {
 
 			// if it's was a worker model for registration
@@ -326,7 +325,7 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerM
 			"worker_model_name":          workerModelName,
 			"model":                      model,
 			"flavor":                     flavor,
-			"created_by":                 "cdsHatchery_" + h.Service().Name,
+			"created_by":                 "cdsHatchery_" + h.Name,
 			"worker_model_last_modified": workerModelNameLastModified,
 		},
 	}).ExtractImageID()

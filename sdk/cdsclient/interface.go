@@ -352,8 +352,8 @@ type Interface interface {
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
-	GetService() *sdk.Service
-	ServiceRegister(sdk.Service) (string, error)
+	ServiceRegister(sdk.Service) (*sdk.Service, error)
+	ServiceHeartbeat(sdk.MonitoringStatus) error
 	UserClient
 	WorkerClient
 	WorkflowClient
@@ -383,6 +383,7 @@ type Raw interface {
 	PutJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
 	GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
+	RequestJSON(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...RequestModifier) ([]byte, http.Header, int, error)
 	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 	HTTPClient() *http.Client
 	HTTPSSEClient() *http.Client

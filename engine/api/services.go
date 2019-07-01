@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -10,13 +9,10 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -36,72 +32,55 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
-		if err != nil {
-			return sdk.WrapError(err, "Unable to export public signing key")
-		}
+		return nil
+	}
+}
 
-		srv := &sdk.Service{}
-		if err := service.UnmarshalBody(r, srv); err != nil {
-			return sdk.WithStack(err)
-		}
+func (api *API) postServiceHearbeatHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return nil
+		// srv := &sdk.Service{}
+		// if err := service.UnmarshalBody(r, srv); err != nil {
+		// 	return sdk.WithStack(err)
+		// }
 
-		srv.ConsumerID = getAPIConsumer(ctx).ID
+		// //Service must be with a sharedinfra group token
+		// // except for hatchery: users can start hatchery with their group
+		// if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
+		// 	return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
+		// }
 
-		//Service must be with a sharedinfra group token
-		// except for hatchery: users can start hatchery with their group
-		if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
-			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
-		}
-		// TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
-		srv.Uptodate = srv.Version == sdk.VERSION
-		for i := range srv.MonitoringStatus.Lines {
-			s := &srv.MonitoringStatus.Lines[i]
-			if s.Component == "Version" {
-				if sdk.VERSION != s.Value {
-					s.Status = sdk.MonitoringStatusWarn
-				} else {
-					s.Status = sdk.MonitoringStatusOK
-				}
-				break
-			}
-		}
+		// // TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
+		// srv.Uptodate = srv.Version == sdk.VERSION
+		// for i := range srv.MonitoringStatus.Lines {
+		// 	s := &srv.MonitoringStatus.Lines[i]
+		// 	if s.Component == "Version" {
+		// 		if sdk.VERSION != s.Value {
+		// 			s.Status = sdk.MonitoringStatusWarn
+		// 		} else {
+		// 			s.Status = sdk.MonitoringStatusOK
+		// 		}
+		// 		break
+		// 	}
+		// }
 
-		//Insert or update the service
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
-		}
-		defer tx.Rollback() // nolint
+		// //Insert or update the service
+		// tx, err := api.mustDB().Begin()
+		// if err != nil {
+		// 	return sdk.WrapError(err, "Cannot start transaction")
+		// }
+		// defer tx.Rollback() // nolint
 
-		//Try to find the service, and keep; else generate a new one
-		oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
-		if oldSrv != nil {
-			srv.ID = oldSrv.ID
-		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			return sdk.WithStack(errOldSrv)
-		}
+		// //Try to find the service, and keep; else generate a new one
+		// oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
+		// if oldSrv != nil {
+		// 	srv.ID = oldSrv.ID
+		// 	srv.ConsumerID = oldSrv.ConsumerID
+		// } else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
+		// 	return sdk.WithStack(errOldSrv)
+		// }
 
-		srv.LastHeartbeat = time.Now()
-
-		if oldSrv != nil {
-			if err := services.Update(tx, srv); err != nil {
-				return sdk.WrapError(err, "Unable to update service %s", srv.Name)
-			}
-		} else {
-			if err := services.Insert(tx, srv); err != nil {
-				return sdk.WrapError(err, "Unable to insert service %s", srv.Name)
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		encodedPubKey := base64.StdEncoding.EncodeToString(pubKey)
-		w.Header().Set("X-Api-Pub-Signing-Key", encodedPubKey)
-
-		return service.WriteJSON(w, srv, http.StatusOK)
+		// return service.WriteJSON(w, srv, http.StatusOK)
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -24,6 +25,20 @@ func New() *Service {
 	return s
 }
 
+func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(Configuration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid repositories service configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type repositories.Configuration after checking it
 func (s *Service) ApplyConfiguration(config interface{}) error {
 	if err := s.CheckConfiguration(config); err != nil {
@@ -35,11 +50,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid Repositories configuration")
 	}
 
-	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second, s.Cfg.API.HTTP.Insecure)
-	s.API = s.Cfg.API.HTTP.URL
 	s.Name = s.Cfg.Name
 	s.HTTPURL = s.Cfg.URL
-	s.AuthenticationToken = s.Cfg.API.Token
+
 	s.Type = services.TypeRepositories
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-repositories"

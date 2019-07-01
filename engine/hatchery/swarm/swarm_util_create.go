@@ -121,7 +121,7 @@ checkImage:
 	if !imageFound {
 		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryStartDockerPull.ID,
-			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+			Args: []interface{}{h.Name, cArgs.image},
 		})
 
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
@@ -129,7 +129,7 @@ checkImage:
 			next()
 			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
-				Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image, err},
+				Args: []interface{}{h.Name, cArgs.image, err},
 			})
 			return sdk.WrapError(err, "Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
@@ -137,7 +137,7 @@ checkImage:
 
 		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryEndDockerPull.ID,
-			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+			Args: []interface{}{h.Name, cArgs.image},
 		})
 	}
 

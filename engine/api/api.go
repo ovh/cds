@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/sdk/cdsclient"
+
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -61,10 +63,6 @@ type Configuration struct {
 		Port       int    `toml:"port" default:"8081" json:"port"`
 		SessionTTL int    `toml:"sessionTTL" default:"60" json:"sessionTTL"`
 	} `toml:"http" json:"http"`
-	GRPC struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen GRPC address without port, example: 127.0.0.1" json:"addr"`
-		Port int    `toml:"port" default:"8082" json:"port"`
-	} `toml:"grpc" json:"grpc"`
 	Secrets struct {
 		Key string `toml:"key" json:"-"`
 	} `toml:"secrets" json:"secrets"`
@@ -258,6 +256,10 @@ const permProjectKey = "permProjectKey"
 // New instanciates a new API object
 func New() *API {
 	return &API{}
+}
+
+func (*API) Init(i interface{}) (cdsclient.ServiceConfig, error) {
+	return cdsclient.ServiceConfig{}, nil
 }
 
 // Service returns an instance of sdk.Service for the API

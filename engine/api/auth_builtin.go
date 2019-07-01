@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/sdk/jws"
 
 	"github.com/ovh/cds/sdk"
 
@@ -80,6 +82,14 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
+		if err != nil {
+			return sdk.WrapError(err, "Unable to export public signing key")
+		}
+
+		encodedPubKey := base64.StdEncoding.EncodeToString(pubKey)
+		w.Header().Set("X-Api-Pub-Signing-Key", encodedPubKey)
 
 		return service.WriteJSON(w, resp, http.StatusOK)
 	}

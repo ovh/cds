@@ -56,6 +56,7 @@ const (
 	AuthConsumerScopeWorker       AuthConsumerScope = "Worker"
 	AuthConsumerScopeWorkerModel  AuthConsumerScope = "WorkerModel"
 	AuthConsumerScopeHatchery     AuthConsumerScope = "Hatchery"
+	AuthConsumerScopeService      AuthConsumerScope = "Service"
 )
 
 // AuthConsumerScopeSlice type used for database json storage.

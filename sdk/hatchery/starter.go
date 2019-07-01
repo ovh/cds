@@ -117,8 +117,8 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 		atomic.AddInt64(i, -1)
 	}(&nbWorkerToStart)
 
-	if h.CDSClient().GetService() == nil || h.ID() == 0 {
-		log.Warning("hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered - srv:%t id:%d", j.timestamp, j.id, j.model.Name, h.CDSClient().GetService() == nil, h.ID())
+	if h.Service() == nil {
+		log.Warning("hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered", j.timestamp, j.id, j.model.Name)
 		return false
 	}
 
@@ -133,7 +133,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 	}
 	next()
 	cancel()
-	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d", j.timestamp, j.id, j.model.Name, h.ID())
+	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s", j.timestamp, j.id, j.model.Name)
 
 	ctxSendSpawnInfo, next := observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
 	start := time.Now()
@@ -141,7 +141,6 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 		ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
 		Args: []interface{}{
 			h.Service().Name,
-			fmt.Sprintf("%d", h.ID()),
 			fmt.Sprintf("%s/%s", j.model.Group.Name, j.model.Name),
 		},
 	})
@@ -162,7 +161,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 		ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"), observability.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
-			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
+			Args: []interface{}{h.Service().Name, j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
 		})
 		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, j.model.Name, j.id, errSpawn)
 		next()
@@ -174,7 +173,6 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 		ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
 		Args: []interface{}{
 			h.Service().Name,
-			fmt.Sprintf("%d", h.ID()),
 			arg.WorkerName,
 			sdk.Round(time.Since(start), time.Second).String()},
 	})

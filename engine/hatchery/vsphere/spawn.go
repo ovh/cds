@@ -54,7 +54,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 
 	annot := annotation{
-		HatcheryName:            h.Service().Name,
+		HatcheryName:            h.Name,
 		WorkerName:              name,
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
@@ -94,7 +94,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	}
 
 	annot := annotation{
-		HatcheryName:            h.Service().Name,
+		HatcheryName:            h.Name,
 		WorkerModelLastModified: fmt.Sprintf("%d", model.UserLastModified.Unix()),
 		WorkerModelName:         model.Name,
 		Model:                   true,
@@ -197,7 +197,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model sdk
 		Name:              name,
 		Token:             h.Configuration().API.Token,
 		Model:             model.ID,
-		HatcheryName:      h.Service().Name,
+		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   true,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,

@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"crypto/tls"
 	"io"
 	"net"
@@ -16,7 +17,6 @@ type client struct {
 	httpSSEClient *http.Client
 	config        Config
 	name          string
-	service       *sdk.Service
 }
 
 // NewHTTPClient returns a new HTTP Client
@@ -53,21 +53,6 @@ func New(c Config) Interface {
 	cli.config = c
 	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
-	cli.init()
-	return cli
-}
-
-// NewService returns client for a service
-func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bool) Interface {
-	conf := Config{
-		Host:                  endpoint,
-		Retry:                 2,
-		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
-	}
-	cli := new(client)
-	cli.config = conf
-	cli.httpClient = NewHTTPClient(timeout, conf.InsecureSkipVerifyTLS)
-	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
 }
@@ -109,6 +94,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 		Host:                              cfg.Host,
 		Retry:                             2,
 		BuitinConsumerAuthenticationToken: cfg.Token,
+		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
 	}
 
 	if cfg.RequestSecondsTimeout == 0 {
@@ -121,6 +107,35 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
+}
+
+// NewServiceClient returns client for a service
+func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
+	conf := Config{
+		Host:                              cfg.Host,
+		Retry:                             2,
+		BuitinConsumerAuthenticationToken: cfg.Token,
+		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
+	}
+
+	if cfg.RequestSecondsTimeout == 0 {
+		cfg.RequestSecondsTimeout = 60
+	}
+
+	cli := new(client)
+	cli.config = conf
+	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
+	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.init()
+
+	var res sdk.AuthConsumerSigninResponse
+	_, headers, _, err := cli.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
+	if err != nil {
+		return nil, nil, err
+	}
+	cli.config.SessionToken = res.Token
+
+	return cli, []byte(headers.Get("X-Api-Pub-Signing-Key")), nil
 }
 
 func (c *client) init() {

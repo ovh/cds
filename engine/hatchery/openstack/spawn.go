@@ -91,7 +91,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		Name:              name,
 		Token:             h.Configuration().API.Token,
 		Model:             spawnArgs.Model.ID,
-		HatcheryName:      h.Service().Name,
+		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   withExistingImage,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
@@ -115,7 +115,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	// Create openstack vm
 	meta := map[string]string{
 		"worker":                     name,
-		"hatchery_name":              h.Service().Name,
+		"hatchery_name":              h.Name,
 		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
 		"flavor":                     spawnArgs.Model.ModelVirtualMachine.Flavor,
 		"model":                      spawnArgs.Model.ModelVirtualMachine.Image,

@@ -8,25 +8,23 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (c *client) GetService() *sdk.Service {
-	return c.service
+func (c *client) ServiceHeartbeat(s sdk.MonitoringStatus) error {
+	return nil
 }
 
-func (c *client) ServiceRegister(s sdk.Service) (string, error) {
-	code, err := c.PostJSON(context.Background(), "/services//auth/consumer/service/signin", &s, &s)
+func (c *client) ServiceRegister(s sdk.Service) (*sdk.Service, error) {
+	code, err := c.PostJSON(context.Background(), "/service/register", &s, &s)
 	if code != 201 && code != 200 {
 		if err == nil {
-			return "", fmt.Errorf("HTTP Code %d", code)
+			return nil, fmt.Errorf("HTTP Code %d", code)
 		}
 	}
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	c.service = &s
 
 	if !s.Uptodate {
 		log.Warning("-=-=-=-=- Please update your cds engine binary - current version:%s -=-=-=-=-", sdk.VersionString())
 	}
-
-	return "s.Hash", nil
+	return &s, nil
 }

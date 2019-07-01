@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/gorilla/mux"
 
@@ -86,7 +87,7 @@ func newRequest(t *testing.T, s *Service, method, uri string, i interface{}) *ht
 		t.FailNow()
 	}
 
-	assets.AuthentifyRequestFromService(t, req, s.Hash)
+	assets.AuthentifyRequest(t, req, nil, s.SessionToken)
 
 	return req
 }
@@ -131,7 +132,7 @@ func newMultiPartTarRequest(t *testing.T, s *Service, method, uri string, in int
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	assets.AuthentifyRequestFromService(t, req, s.Hash)
+	assets.AuthentifyRequest(t, req, nil, s.SessionToken)
 
 	return req
 }

@@ -85,7 +85,7 @@ type SpawnArguments struct {
 // NeedRegistration return true if worker model need regsitration
 // ID returns hatchery id
 type Interface interface {
-	Init() error
+	InitHatchery() error
 	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
 	WorkersStartedByModel(model *sdk.Model) int
@@ -96,7 +96,6 @@ type Interface interface {
 	Configuration() CommonConfiguration
 	ModelType() string
 	NeedRegistration(model *sdk.Model) bool
-	ID() int64
 	Serve(ctx context.Context) error
 	IsInitialized() bool
 	SetInitialized()

@@ -94,6 +94,10 @@ func (c *Common) PanicDumpDirectory() (string, error) {
 	return path, os.MkdirAll(path, os.FileMode(0755))
 }
 
+func (c *Common) Service() *sdk.Service {
+	return c.Common.ServiceInstance
+}
+
 func (c *Common) ServiceName() string {
 	return c.Common.ServiceName
 }

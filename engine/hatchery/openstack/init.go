@@ -11,10 +11,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Init fetch uri from nova
+// InitHachery fetch uri from nova
 // then list available models
 // then list available images
-func (h *HatcheryOpenstack) Init() error {
+func (h *HatcheryOpenstack) InitHatchery() error {
 	workersAlive = map[string]int64{}
 
 	authOpts := gophercloud.AuthOptions{

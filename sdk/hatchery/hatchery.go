@@ -70,7 +70,7 @@ func Create(ctx context.Context, h Interface) error {
 	}()
 
 	// Init call hatchery.Register()
-	if err := h.Init(); err != nil {
+	if err := h.InitHatchery(); err != nil {
 		return fmt.Errorf("Create> Init error: %v", err)
 	}
 
@@ -204,7 +204,7 @@ func Create(ctx context.Context, h Interface) error {
 
 			//Check bookedBy current hatchery
 			if j.BookedBy.ID != 0 {
-				log.Debug("hatchery> job %d is booked by someone (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				log.Debug("hatchery> job %d is booked by someone", j.ID)
 				endTrace("booked by someone")
 				continue
 			}
