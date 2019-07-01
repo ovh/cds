@@ -6,7 +6,8 @@
         <div class="fourteen wide field">
             <ng-container *ngFor="let c of connectionType.values()">
                 <div class="ui radio checkbox">
-                    <input type="radio" id="connection-{{c}}" name="connection" [value]="c" [(ngModel)]="strategy.connection_type">
+                    <input type="radio" id="connection-{{c}}" name="connection" [value]="c"
+                        [(ngModel)]="strategy.connection_type">
                     <label for="connection-{{c}}">{{c}}</label>
                 </div>
             </ng-container>
@@ -17,13 +18,15 @@
             <ng-container *ngSwitchCase="connectionType.SSH">
                 <div class="inline fields">
                     <div class="two wide field">
-                        <label>{{ 'vcs_ssh_key' | translate }} *<span class="keyLink" (click)="openCreateKeyModal('ssh')"
+                        <label>{{ 'vcs_ssh_key' | translate }} *<span class="keyLink"
+                                (click)="openCreateKeyModal('ssh')"
                                 *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
                     </div>
                     <div class="thirteen wide field">
                         <div class="ssh">
                             <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
-                                [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)"></app-parameter-value>
+                                [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)">
+                            </app-parameter-value>
                         </div>
                     </div>
                     <div class="one wide field">
@@ -80,6 +83,7 @@
 <ng-template let-context let-modal="modal" #createKey>
     <div class="header">{{ 'keys_add_title' | translate }}</div>
     <div class="content">
-        <app-keys-form [loading]="loading" (keyEvent)="addKey($event)" [defaultType]="defaultKeyType" prefix="proj-"></app-keys-form>
+        <app-keys-form [loading]="loading" (keyEvent)="addKey($event)" [defaultType]="defaultKeyType" prefix="proj-">
+        </app-keys-form>
     </div>
 </ng-template>

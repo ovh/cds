@@ -46,7 +46,7 @@ export class VCSStrategyComponent implements OnInit {
     displayVCSStrategy = false;
     defaultKeyType = 'ssh';
 
-    @ViewChild('createKey', {static: false})
+    @ViewChild('createKey', { static: false })
     sshModalTemplate: ModalTemplate<boolean, boolean, void>;
     sshModal: SuiActiveModal<boolean, boolean, void>;
 
