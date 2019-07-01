@@ -100,13 +100,11 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 		w, err := workflow.LoadByID(db, store, &proj, r.ID, nil, workflow.LoadOptions{})
 		if err != nil {
 			log.Warning("unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
-			if _, err := db.Exec("UPDATE workflow set root_node_id = null where id = $1", r.ID); err != nil {
-				log.Error("Unable to update root_node_id from workflow with id %d: %v", r.ID, err)
+			if _, err := db.Exec("delete from w_node_trigger where child_node_id IN (SELECT id from w_node where workflow_id = $1)", r.ID); err != nil {
+				log.Error("Unable to delete from w_node_trigger for workflow %d: %v", r.ID, err)
 			}
-			if _, err := db.Exec("delete from workflow_node where workflow_id = $1", r.ID); err != nil {
-				log.Error("Unable to delete from workflow_node with workflow_id %d: %v", r.ID, err)
-			} else {
-				log.Warning("workflow_node with workflow_id %d are deleted", r.ID)
+			if _, err := db.Exec("delete from w_node where workflow_id = $1", r.ID); err != nil {
+				log.Error("Unable to delete from w_node for workflow %d: %v", r.ID, err)
 			}
 			if _, err := db.Exec("delete from workflow where id = $1", r.ID); err != nil {
 				log.Error("Unable to delete from workflow with id %d: %v", r.ID, err)
