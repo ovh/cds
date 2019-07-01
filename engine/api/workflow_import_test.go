@@ -86,6 +86,78 @@ metadata:
 	assert.Equal(t, "git.branch,git.author,git.hash", m["Workflow.Metadata.default_tags"])
 }
 
+func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.postWorkflowImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	body := `name: test_1
+version: v1.0
+workflow:
+  pip1:
+    pipeline: pip1
+    parameters:
+      name: value
+  pip1_2:
+    depends_on:
+      - pip1
+    pipeline: pip1
+metadata:
+  default_tags: git.branch,git.author,git.hash`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+
+	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	assert.NotNil(t, w)
+
+	m, _ := dump.ToStringMap(w)
+	t.Logf("%+v", m)
+	assert.Equal(t, "test_1", m["Workflow.Name"])
+	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Name"])
+	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Context.PipelineName"])
+	assert.Equal(t, "name", m["Workflow.WorkflowData.Node.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Name"])
+	assert.Equal(t, "value", m["Workflow.WorkflowData.Node.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Value"])
+	assert.Equal(t, "pip1_2", m["Workflow.WorkflowData.Node.Triggers.Triggers0.ChildNode.Name"])
+	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Triggers.Triggers0.ChildNode.Context.PipelineName"])
+	assert.Equal(t, "git.branch,git.author,git.hash", m["Workflow.Metadata.default_tags"])
+
+	w.Icon = "data:image/png;base64,example"
+
+	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, w, proj, u, workflow.UpdateOptions{}))
+
+	wfLoaded, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{WithIcon: true})
+	test.NoError(t, err)
+	test.NotEmpty(t, wfLoaded.Icon, "Workflow icon must be the same as before")
+}
+
 func Test_putWorkflowImportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
