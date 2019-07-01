@@ -212,6 +212,20 @@ func (api *API) postAuthSigninHandler() service.Handler {
 
 func (api *API) postAuthSignoutHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, nil, http.StatusNotImplemented)
+		session := getAuthSession(ctx)
+
+		if err := authentication.DeleteSessionByID(api.mustDB(), session.ID); err != nil {
+			return err
+		}
+
+		// Delete the jwt cookie value
+		http.SetCookie(w, &http.Cookie{
+			Name:   jwtCookieName,
+			Value:  "",
+			MaxAge: -1,
+			Path:   "/",
+		})
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
