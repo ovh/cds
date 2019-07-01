@@ -103,20 +103,18 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		} else if h.Ref != "" && oldHooksByRef != nil {
 			// search previous hook configuration by ref
 			previousHook, has := oldHooksByRef[h.Ref]
+			h.UUID = previousHook.UUID
 			// If previous hook is the same, we do nothing
 			if has && h.Equals(previousHook) {
 				continue
-			} else if has {
-				h.UUID = previousHook.UUID
 			}
 		} else if oldHooks != nil {
 			// search previous hook configuration by uuid
 			previousHook, has := oldHooks[h.UUID]
+			h.Ref = previousHook.Ref
 			// If previous hook is the same, we do nothing
 			if has && h.Equals(*previousHook) {
 				continue
-			} else if has {
-				h.Ref = previousHook.Ref
 			}
 		}
 		// initialize a UUID is there no uuid
