@@ -97,8 +97,6 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	for i := range wf.WorkflowData.Node.Hooks {
 		h := &wf.WorkflowData.Node.Hooks[i]
 		if h.UUID == "" && h.Ref == "" {
-			// generate uuid
-			h.UUID = sdk.UUID()
 			h.Ref = fmt.Sprintf("%d", time.Now().Unix())
 		} else if h.Ref != "" && oldHooksByRef != nil {
 			// search previous hook configuration by ref
@@ -111,7 +109,6 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		} else if oldHooks != nil {
 			// search previous hook configuration by uuid
 			previousHook, has := oldHooks[h.UUID]
-			h.Ref = previousHook.Ref
 			// If previous hook is the same, we do nothing
 			if has && h.Equals(*previousHook) {
 				continue
