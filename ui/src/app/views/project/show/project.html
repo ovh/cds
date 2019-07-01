@@ -16,23 +16,28 @@
             <div class="paddingContent">
                 <div class="viewContent" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
                     <div *ngSwitchCase="'workflows'">
-                        <app-project-workflows [project]="project" [warnings]="warnings['workflows']"></app-project-workflows>
+                        <app-project-workflows [project]="project" [warnings]="warnings['workflows']">
+                        </app-project-workflows>
                     </div>
                     <div *ngSwitchCase="'applications'">
-                        <app-project-applications [project]="project" [warnings]="warnings['applications']"></app-project-applications>
+                        <app-project-applications [project]="project" [warnings]="warnings['applications']">
+                        </app-project-applications>
                     </div>
                     <div *ngSwitchCase="'pipelines'">
-                        <app-project-pipelines [project]="project" [warnings]="warnings['pipelines']"></app-project-pipelines>
+                        <app-project-pipelines [project]="project" [warnings]="warnings['pipelines']">
+                        </app-project-pipelines>
                     </div>
                     <div *ngSwitchCase="'environments'">
-                        <h3>{{ 'project_env_list_title' | translate}}</h3>
-                        <app-environment-list [project]="project" [warnings]="warnings['environments']"></app-environment-list>
+                        <app-project-environments [project]="project" [warnings]="warnings['environments']">
+                        </app-project-environments>
                     </div>
                     <div *ngSwitchCase="'variables'">
-                        <app-project-variables [project]="project" [warnings]="warnings['variables']"></app-project-variables>
+                        <app-project-variables [project]="project" [warnings]="warnings['variables']">
+                        </app-project-variables>
                     </div>
                     <div *ngSwitchCase="'permissions'">
-                        <app-project-permissions [project]="project" [warnings]="warnings['permissions']"></app-project-permissions>
+                        <app-project-permissions [project]="project" [warnings]="warnings['permissions']">
+                        </app-project-permissions>
                     </div>
                     <div *ngSwitchCase="'keys'">
                         <app-project-keys [project]="project" [warnings]="warnings['keys']"></app-project-keys>

@@ -1,0 +1,12 @@
+@import '../../../../common';
+
+#AddEnvironment {
+    display: flex;
+    flex-direction: column;
+    align-content: stretch;
+    height: 100%;
+
+    h2 {
+        text-align: center;
+    }
+}

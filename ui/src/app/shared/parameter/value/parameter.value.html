@@ -14,7 +14,7 @@
     <div *ngSwitchCase="'ssh-key'">
         <ng-container *ngIf="keys">
             <sui-select class="selection" name="type" [(ngModel)]="editableValue"
-                (ngModelChange)="valueChanged(); sendValueChanged()" [options]="keys.ssh" labelField="name"
+                (ngModelChange)="valueChanged();sendValueChanged()" [options]="keys.ssh" labelField="name"
                 valueField="name" [isSearchable]="true" #sshkey>
                 <sui-select-option *ngFor="let t of sshkey.filteredOptions" [value]="t">
                 </sui-select-option>
@@ -24,7 +24,7 @@
     <div *ngSwitchCase="'pgp-key'">
         <ng-container *ngIf="keys">
             <sui-select class="selection" name="type" [(ngModel)]="editableValue"
-                (ngModelChange)="valueChanged(); sendValueChanged()" [options]="keys.pgp" labelField="name"
+                (ngModelChange)="valueChanged();sendValueChanged()" [options]="keys.pgp" labelField="name"
                 valueField="name" [isSearchable]="true" #pgpkey>
                 <sui-select-option *ngFor="let t of pgpkey.filteredOptions" [value]="t">
                 </sui-select-option>
