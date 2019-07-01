@@ -41,7 +41,7 @@ type LoadRunOptions struct {
 	WithTests               bool
 	WithLightTests          bool
 	WithVulnerabilities     bool
-	WithoutDeleted          bool
+	WithDeleted             bool
 	DisableDetailledNodeRun bool
 	Language                string
 }
@@ -473,8 +473,8 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 		return nil, sdk.WrapError(err, "Unable to load workflow run. query:%s args:%v", query, args)
 	}
 	wr := sdk.WorkflowRun(*runDB)
-	if loadOpts.WithoutDeleted && wr.ToDelete {
-		return nil, sdk.ErrWorkflowNotFound
+	if !loadOpts.WithDeleted && wr.ToDelete {
+		return nil, sdk.WithStack(sdk.ErrWorkflowNotFound)
 	}
 
 	tags, errT := loadTagsByRunID(db, wr.ID)
