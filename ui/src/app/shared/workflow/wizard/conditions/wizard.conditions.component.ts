@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
@@ -82,7 +91,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         private _workflowService: WorkflowService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         super();
     }
@@ -102,7 +112,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             readOnly: this.readonly,
         };
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -110,12 +120,16 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         });
 
         this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
+            .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe((suggest) => this.suggest = suggest);
 
         this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
             .pipe(
                 first(),
-                finalize(() => this.loadingConditions = false)
+                finalize(() => {
+                    this.loadingConditions = false;
+                    this._cd.markForCheck();
+                })
             )
             .subscribe(wtc => {
                 this.triggerConditions = wtc;

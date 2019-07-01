@@ -179,7 +179,10 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
 
     refreshVCSInfos(app: Application, remote?: string) {
         this._appWorkflowService.getVCSInfos(this.project.key, app.name, remote)
-            .pipe(finalize(() => this.loadingBranches = false))
+            .pipe(finalize(() => {
+                this.loadingBranches = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((vcsInfos) => {
                 if (vcsInfos.branches) {
                     this.branches = vcsInfos.branches.map((br) => '"' + br.display_id + '"');
