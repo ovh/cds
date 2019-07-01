@@ -13,13 +13,13 @@ import { RepositoriesManager } from 'app/model/repositories.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import * as ProjectAction from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import { WorkflowState } from './workflow.state';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 
 describe('Project', () => {
     let store: Store;
@@ -958,6 +958,36 @@ describe('Project', () => {
             ...project,
             environments: [env]
         });
+
+        store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
+            expect(state.project).toBeTruthy();
+            expect(state.project.name).toEqual('proj1');
+            expect(state.project.key).toEqual('test1');
+            expect(state.project.environments).toBeTruthy();
+            expect(state.project.environments.length).toEqual(1);
+            expect(state.project.environments[0].name).toEqual('prod');
+        });
+    }));
+
+    it('fetch environment in project', async(() => {
+        const http = TestBed.get(HttpTestingController);
+        let project = new Project();
+        project.name = 'proj1';
+        project.key = 'test1';
+        store.dispatch(new ProjectAction.AddProject(project));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+        });
+
+        let env = new Environment();
+        env.name = 'prod';
+        store.dispatch(new ProjectAction.FetchEnvironmentInProject({ projectKey: project.key, envName: env.name }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/environment/prod';
+        })).flush(env);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();

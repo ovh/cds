@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Action, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -30,6 +30,18 @@ export class ProjectStateModel {
     }
 })
 export class ProjectState {
+
+    static selectEnvironment(name: string) {
+        return createSelector(
+            [ProjectState],
+            (state: ProjectStateModel): Environment => {
+                if (!state.project || !state.project.environments) {
+                    return null;
+                }
+                return state.project.environments.find((env) => env.name === name);
+            }
+        );
+    }
 
     constructor(private _http: HttpClient, private _navbarService: NavbarService) { }
 
@@ -123,6 +135,11 @@ export class ProjectState {
                             case 'environments':
                                 if (!res.environments) {
                                     projectUpdated.environments = [];
+                                }
+                                break;
+                            case 'environment_names':
+                                if (!res.environment_names) {
+                                    projectUpdated.environment_names = [];
                                 }
                                 break;
                             case 'integrations':
@@ -815,6 +832,89 @@ export class ProjectState {
     }
 
     //  ------- Environment --------- //
+    @Action(ProjectAction.FetchEnvironmentInProject)
+    fetchEnvironment(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchEnvironmentInProject) {
+        const state = ctx.getState();
+
+        if (state.currentProjectKey && state.currentProjectKey !== action.payload.projectKey) {
+            ctx.dispatch(new ProjectAction.FetchProject({ projectKey: action.payload.projectKey, opts: [] }));
+        }
+        let params = new HttpParams();
+        params = params.append('withUsage', 'true');
+
+        return this._http
+            .get<Environment>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}`, { params })
+            .pipe(tap((environment: Environment) => {
+                let envs = state.project.environments;
+                if (Array.isArray(envs)) {
+                    envs = envs.map((env) => {
+                        if (env.name === action.payload.envName) {
+                            return environment;
+                        }
+                        return env;
+                    })
+                } else {
+                    envs = [environment];
+                }
+                ctx.setState(<ProjectStateModel>{
+                    ...state,
+                    project: {
+                        ...state.project,
+                        environments: envs,
+                    }
+                });
+            }));
+    }
+
+    @Action(ProjectAction.AddEnvironmentKey)
+    addEnvironmentKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddEnvironmentKey) {
+        const state = ctx.getState();
+        return this._http.post<Key>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}/keys`, action.payload.key)
+            .pipe(tap((key: Key) => {
+                let envs = state.project.environments;
+                if (Array.isArray(envs)) {
+                    envs = envs.map((env) => {
+                        if (env.name === action.payload.envName) {
+                            return { ...env, keys: [key].concat(env.keys) };
+                        }
+                        return env;
+                    })
+                }
+                ctx.setState(<ProjectStateModel>{
+                    ...state,
+                    project: {
+                        ...state.project,
+                        environments: envs,
+                    }
+                });
+            }));
+    }
+
+    @Action(ProjectAction.DeleteEnvironmentKey)
+    deleteEnvironmentKey(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteEnvironmentKey) {
+        const state = ctx.getState();
+        return this._http.delete<null>('/project/' + action.payload.projectKey +
+            '/environment/' + action.payload.envName + '/keys/' + action.payload.key.name)
+            .pipe(tap(() => {
+                let envs = state.project.environments;
+                if (Array.isArray(envs)) {
+                    envs = envs.map((env) => {
+                        if (env.name === action.payload.envName) {
+                            return { ...env, keys: env.keys.filter((key) => key.name === action.payload.key.name) };
+                        }
+                        return env;
+                    })
+                }
+                ctx.setState(<ProjectStateModel>{
+                    ...state,
+                    project: {
+                        ...state.project,
+                        environments: envs,
+                    }
+                });
+            }));
+    }
+
     @Action(ProjectAction.FetchEnvironmentsInProject)
     fetchEnvironments(ctx: StateContext<ProjectStateModel>, action: ProjectAction.FetchEnvironmentsInProject) {
         const state = ctx.getState();
@@ -989,7 +1089,7 @@ export class ProjectState {
 
     @Action(ProjectAction.CallbackRepositoryManagerBasicAuthInProject)
     callbackRepositoryManagerBasicAuth(ctx: StateContext<ProjectStateModel>,
-                                       action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
+        action: ProjectAction.CallbackRepositoryManagerBasicAuthInProject) {
         const state = ctx.getState();
         let data = {
             'username': action.payload.basicUser,

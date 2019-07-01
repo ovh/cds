@@ -1,0 +1,44 @@
+<div class="ui grid">
+    <div class="ui row">
+        <div class="six wide column">
+            <h3>{{ 'project_env_list_title' | translate }}</h3>
+        </div>
+        <div class="four wide column centered">
+            <a class="ui blue button" [routerLink]="['./environment']"
+                [class.disabled]="project.permission < 7">{{ 'environment_create' | translate }}</a>
+        </div>
+        <div class="right aligned six wide column">
+            <div class="ui icon input">
+                <input type="text" placeholder="{{'navbar_search' | translate}}" [(ngModel)]="filter">
+                <i class="search icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui row">
+        <div class="ui sixteen wide column">
+            <div
+                *ngIf="project.environment_names && project.environment_names.length > 0;then environments;else noenvironments">
+            </div>
+            <ng-template #environments>
+                <div class="ui stackable four cards">
+                    <a [routerLink]="['./environment', env.name]" class="ui link card"
+                        *ngFor="let env of filteredEnvironments">
+                        <div class="content">
+                            <div class="header">
+                                <span [innerText]="env.name"></span>
+                                <app-warning-mark-list [warnings]="warnMap?.get(env.name)"></app-warning-mark-list>
+                            </div>
+                            <div class="meta"></div>
+                        </div>
+                    </a>
+                </div>
+            </ng-template>
+            <ng-template #noenvironments>
+                <div class="ui segment">
+                    <span>{{ 'environment_no' | translate }}</span>
+                </div>
+            </ng-template>
+        </div>
+    </div>
+</div>

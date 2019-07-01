@@ -1,10 +1,8 @@
 {
   "access_refused": "access refused",
-
   "account_btn_password": "Forgotten password",
   "account_btn_signup": "Create an account",
   "account_btn_login": "Sign In",
-
   "account_login_btn_connect": "Sign In",
   "account_login_title": "Sign In to CDS",
   "account_password_btn_reset": "Reset password",
@@ -15,7 +13,6 @@
   "account_signup_waiting_text": "You will receive an email to activate your account.",
   "account_verify_title": "Account information",
   "account_verify_error": "Unable to activate this account.",
-
   "action_step_title": "Job steps",
   "action_step_final_title": "Job final steps",
   "action_list_title": "Actions",
@@ -43,14 +40,11 @@
   "action_builtin": "Builtin",
   "action_btn_init_from_job": "Init a new action from job",
   "action_help_add_from": "Current action was initialized with data from \"{{jobName}}\" job of \"{{pipelineName}}\" pipeline in \"{{projectKey}}\" project. The data will not be stored until you save the action.",
-
   "admin_migration_not_started": "Not started",
   "admin_migration_started": "Started",
   "admin_migration_done": "Done",
   "admin_migration_title": "Status of application migration to workflow",
-
   "admin_queue_title": "Current CDS jobs queue",
-
   "application_home_history": "History",
   "application_home_repo": "GIT repository",
   "application_home_no_repo": "Link a repository",
@@ -61,7 +55,6 @@
   "application_integration_added": "Integration added",
   "application_integration_deleted": "Integration deleted",
   "application_integration_updated": "Integration updated",
-
   "application_create": "Create a new application",
   "application_created": "Application created",
   "application_deleted": "Application deleted",
@@ -91,13 +84,11 @@
   "application_update_ok": "Application has been updated",
   "application_variable_list_title": "List of application variables: ",
   "application_variable_form_title": "Add a new variable: ",
-
   "artifact_name": "Artifact name",
   "artifact_tag": "Tag",
   "artifact_sha512": "SHA512 Checksum",
   "artifact_none": "No artifact",
   "static_file_name": "Static filenames",
-
   "audit_change": "Change",
   "audit_no": "No audit",
   "audit_time_author": "Change date",
@@ -110,7 +101,6 @@
   "audit_context": "Context",
   "audit_modification_type": "Modification type",
   "audit_title_variable": "Variable audit",
-
   "btn_apply": "Apply",
   "btn_cancel": "Cancel",
   "btn_continue": "Continue",
@@ -137,14 +127,10 @@
   "btn_back": "Back",
   "btn_filter": "Filter",
   "btn_synchronize": "Synchronize",
-
   "cdsctl_choice_os": "Choose your OS",
   "cdsctl_choice_arch": "Choose your architecture",
   "cdsctl_choice_options": "Choose your options",
   "cdsctl_choice_options_with_keychain": "With OS keychain enabled",
-
-
-
   "cdsctl_part_1": "curl {{apiURL}}/download/cdsctl/{{osChoice}}/{{archChoice}}{{variant}} -o cdsctl\n\n# add execution rights on cdsctl\nchmod +x cdsctl\n\n# check if binary is ok, this command will display cdsctl version\n./cdsctl version",
   "cdsctl_part_2": "# The cdsctl login command will store credentials in your keychain\n./cdsctl login --api-url {{apiURL}} -u {{username}}\n\n# this command will display your username, fullname, email\n# if you see them, cdsctl is well configured\n./cdsctl user me",
   "cdsctl_part_3": "# The cdsctl shell to browse your projects and workflows without the need to open a browser.\n# see https://ovh.github.io/cds/docs/components/cdsctl/shell/\ncdsctl shell\n\n# Display monitoring view\ncdsctl ui\n\n# help is available on each cdsctl command\ncdsctl --help",
@@ -153,14 +139,11 @@
   "cdsctl_part_6": "# Add a git alias in your gitconfig file\n$ cat ~/.gitconfig\n[alias]\n   track = !cdsctl workflow status --track",
   "cdsctl_part_7": "# Update from current CDS Platform\ncdsctl update\n\n# Update from latest release on github\ncdsctl update --from-github",
   "cdsctl_part_8": "# All commands have the flag --format. This is useful for use cdsctl in your script\n# Formats available: table, json, yaml\ncdsctl user list --format json",
-
   "cdsctl_info_title": "is the CDS Command Line tool. It has the same features, and even more than the web ui. It allows you to do everything:",
-
   "cdsctl_info_list_1": "Administrate users, groups, actions, worker models, workflow templates, ...",
   "cdsctl_info_list_2": "Manage your projects, workflows, applications, environments, ...",
   "cdsctl_info_list_3": "Monitore & operate your CDS platform",
   "cdsctl_info_list_4": "Script everything",
-
   "cdsctl_title_1": "1 - Download cdsctl",
   "cdsctl_title_2": "2 - Login",
   "cdsctl_title_3": "3 - Play with cdsctl",
@@ -169,25 +152,18 @@
   "cdsctl_title_6": "6 - Git Track",
   "cdsctl_title_7": "7 - Update cdsctl",
   "cdsctl_title_8": "8 - Scripting",
-
   "cdsctl_notice_1_1": "Binaries available on current installation:  ",
-
   "cdsctl_notice_2_1": "If you use many instances of CDS, you can use the -f flag, example: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u ",
   "cdsctl_notice_2_2": "ByPass Keychain or file configuration:",
   "cdsctl_notice_2_3": "Want to debug something? You can use CDS_VERBOSE environment variable:",
-
   "cdsctl_notice_6_1": "By setting this new alias in your gitconfig file, you can now use: git push && git track",
-
   "cdsctl_title_6_info_1": "Imagine now that you develop something and you have a CDS Workflow triggered on each git push",
   "cdsctl_title_6_info_2": "The `git track` alias allows you to see the workflow status without opening a browser.",
-
   "cdsctl_notice": "Notice:",
-
   "commit_author": "Author",
   "commit_id": "ID",
   "commit_message": "Message",
   "commit_date": "Date",
-
   "common_action": "Action",
   "common_search": "Search",
   "common_link": "Link",
@@ -326,13 +302,11 @@
   "common_migrate": "Migrate",
   "common_capabilities": "Capabilities",
   "common_help_no_group": "No group can be found, you will not be able to save current resource.",
-
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
   "coverage_lines_title": "Covered lines: ",
   "coverage_trend_default_branch": "Trend compared to default branch",
   "coverage_trend_current_branch": "Trend compared to previous run",
-
   "key_copied": "Key copied",
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
@@ -345,19 +319,16 @@
   "keys_no": "There is no keys",
   "keys_ssh_key_help": "A SSH Key is useful when you want to git clone some code from a Git Repository. CDS can generate a key pair and you can copy / paste the public key to your access keys on your repositories. If you want to use manually the key, please read:",
   "keys_pgp_key_help": "A PGP Key is useful when you want to git tag a repository. If you want to use manually the key, please read:",
-
   "usage_application_list": "Applications used",
   "usage_workflow_list": "Workflows used",
   "usage_pipeline_list": "Pipelines used",
   "usage_environment_list": "Environments used",
-
   "deployment_integration_name": "Integration / deployment",
-
   "danger_zone": "Danger Zone",
-
   "downloads_title": "Download",
-
   "environment_created": "Environment added",
+  "environment_name_error": "Invalid environment name. Allowed pattern is: a-zA-Z0-9._-",
+  "environment_create": "Add an environment",
   "environment_create_placeholder": "New environment",
   "environment_cloned": "Environment cloned without password variables",
   "environment_title_clone": "Clone the environment",
@@ -369,17 +340,18 @@
   "environment_renamed": "Environment renamed",
   "environment_variable_form_title": "Add a variable",
   "environment_variable_list_title": "Variables list",
-
+  "environment_no_usage": "This environment is not used",
+  "environment_rename_title": "Rename the environment: ",
+  "environment_delete_label": "Delete environment",
+  "environment_delete_description": "Once you delete an environment, there is no going back. Please be certain.",
   "filter": "Filter",
   "filter_list_click": "Click for filter list",
-
   "favorite_title": "Bookmarks management",
   "favorite_add": "Add a bookmark",
   "favorite_add_btn": "Add to my bookmarks",
   "favorite_select_type": "Select a favorite type",
   "favorite_project_select": "Select a project",
   "favorite_workflow_select": "Select a workflow",
-
   "broadcast_list_title": "Broadcasts",
   "broadcast_new_title": "Add a broadcast",
   "broadcast_edit_title": "Edit an broadcast",
@@ -401,7 +373,6 @@
   "broadcast_load_broadcasts": "Loading broadcasts...",
   "broadcast_recent": "Recent",
   "broadcast_seen": "Seen",
-
   "graph_vulnerability_title": "Vulnerabilities",
   "graph_vulnerability_x": "N° workflow",
   "graph_vulnerability_y": "Total",
@@ -410,7 +381,6 @@
   "graph_unittest_y": "Total",
   "graph_coverage_title": "Code coverage",
   "graph_coverage_y": "Percentage",
-
   "group_added": "Group added",
   "group_deleted": "Group deleted",
   "group_create_title": "Create a group",
@@ -434,11 +404,9 @@
   "group_user_is_admin": "User is administrator on group",
   "group_btn_set_admin": "Admin",
   "group_btn_unset_admin": "Admin",
-
   "key_copy_public": "Copy public key",
   "key_or_create": "(Create)",
   "key_warning_add_repo_title": "Don't forget to add your ssh key on your repository",
-
   "token_description": "Description",
   "token_value": "Token",
   "token_type": "Type",
@@ -451,7 +419,6 @@
   "token_loading": "Loading tokens",
   "token_group_name": "Group",
   "token_generated": "Here is your generated token",
-
   "heatmap": "Event heatmap",
   "heatmap_empty": "No event triggered yet",
   "heatmap_filter_mute": "Hide events on this project",
@@ -459,7 +426,6 @@
   "heatmap_tag": "Tags",
   "heatmap_timestamp": "Event date",
   "heatmap_workflow_name": "Workflow name",
-
   "hook_create_label": "Create a hook",
   "hook_deleted": "Hook deleted",
   "hook_edit_title": "Hook edition: {{app}} / {{pip}}",
@@ -473,17 +439,13 @@
   "hook_task_execs_total": "Total task executions",
   "hook_task_repo_fullname": "Repository fullname",
   "hook_task_execs": "Executions",
-
   "home_documentation": "Documentation",
-
   "job_add_step": "Add a step",
   "job_delete": "Delete job",
   "job_save": "Save job",
   "job_spawn_title": "Information",
   "job_spawn_no_information": "No information for now...",
-
   "monitoring": "Monitoring",
-
   "navbar_actions": "Actions",
   "navbar_project_create": "Create a project",
   "navbar_admin_broadcast": "Broadcasts",
@@ -509,7 +471,6 @@
   "navbar_general": "Global",
   "navbar_dark_mode": "Dark mode",
   "navbar_disconnect": "Logout",
-
   "notifications_added": "Notifications added",
   "notification_clone": "Notification to clone",
   "notifications_deleted": "Notification deleted",
@@ -534,7 +495,6 @@
   "notification_type_title": "Type: ",
   "notification_type": "Type",
   "notification_updated": "Notification updated",
-
   "parameter_added": "Parameter added",
   "parameter_deleted": "Parameter deleted",
   "parameter_description": "Description",
@@ -546,14 +506,12 @@
   "parameter_value": "Value",
   "parameter_advanced": "Advanced parameter",
   "parameters_advanced": "Advanced parameters",
-
   "permission_added": "Permission added",
   "permission_deleted": "Permission deleted",
   "permission_read": "Read",
   "permission_read_execute": "Read / Execute",
   "permission_read_write_execute": "Read / Write / Execute",
   "permission_updated": "Permission updated",
-
   "pipeline_added": "Pipeline added",
   "pipeline_application": "Applications using this pipeline",
   "pipeline_workflows": "Workflows using this pipeline",
@@ -600,7 +558,6 @@
   "pipeline_triggered": "Triggered pipelines",
   "pipeline_updated": "Pipeline updated",
   "pipeline_administration": "General administration of the pipeline",
-
   "pipeline_run_test_filter_empty": "There is no test matching '{{criteria}}'",
   "pipeline_run_test_no_error": "All tests are successful",
   "pipeline_run_test_total_title_s": " tests",
@@ -610,26 +567,22 @@
   "pipeline_run_test_skipped_title_s": " tests skipped",
   "pipeline_run_test_skipped_title": " test skipped",
   "pipeline_run_test_testcase_name": "Testsuite / Testcase",
-
   "pipeline_stage_edit": "Edit stage",
   "pipeline_stage_moved": "Stage moved",
   "pipeline_stage_no": "The pipeline has no stage",
   "pipeline_wizard_description": "Create or select your first pipeline for you workflow",
-
   "poller_added": "Poller added",
   "poller_create_label": "Create a poller",
   "poller_deleted": "Poller deleted",
   "poller_edit_title": "Poller edition on {{app}} / {{pip}}",
   "poller_updated": "Poller updated",
   "poller_workflow_label": "Poller: ",
-
   "prerequisite_add": "Add a run prerequisite",
   "prerequisite_no": "There is no run prerequisite",
   "prerequisite_parameter_name": "parameter name",
   "prerequisite_title": "Run prerequisite",
   "prerequisite_title_s": "Run prerequisites",
   "prerequisite_value": "Expected value",
-
   "project_list": "All projects",
   "project_description": "Project description",
   "project_icon": "Project icon",
@@ -672,7 +625,6 @@
   "project_variable_form_title": "Add a new variable: ",
   "project_workflows_list": "List of workflows in the project: ",
   "project_label_no": "There is no label configured in this project.",
-
   "integration_add_title": "Link an integration: ",
   "integration_list_title": "Linked integrations: ",
   "integration_name": "Name",
@@ -680,13 +632,10 @@
   "integration_model": "Model",
   "integration_configuration": "Configuration",
   "integration_official_tooltip": "Public integration",
-
   "integration_hook": "hook",
   "integration_deployment": "deployment",
   "integration_storage": "storage",
-
   "queue_monitoring": "Queue Monitoring",
-
   "repo_name": "Repository",
   "repoman_delete_msg_ok": "Repository mananger is detached from the project",
   "repoman_name": "Repository manager",
@@ -694,7 +643,6 @@
   "repoman_modal_verif_code_placeholder": "Verification code",
   "repoman_modal_verif_text": "Click on the following link to finalize the link between CDS and the repository manager: ",
   "repoman_modal_verif_title": "Repository manager authorization",
-
   "requirement_add": "Add a requirement",
   "requirement_name": "Name",
   "requirement_type": "Type",
@@ -716,7 +664,6 @@
   "requirement_documentation": "Documentation about requirements",
   "requirement_error_model": "You can't have multiple requirements of type model",
   "requirement_error_hostname": "You can't have multiple requirements of type hostname",
-
   "requirement_placeholder_name_binary": "",
   "requirement_placeholder_name_model": "",
   "requirement_placeholder_name_memory": "",
@@ -725,7 +672,6 @@
   "requirement_placeholder_name_service": "hostnameOfService",
   "requirement_placeholder_name_volume": "",
   "requirement_placeholder_name_os-architecture": "",
-
   "requirement_placeholder_value_binary": "bash",
   "requirement_placeholder_value_model": "Choose a worker model",
   "requirement_placeholder_opts_model": "If it's a worker model Docker, you can add some option. See Documentation",
@@ -735,7 +681,6 @@
   "requirement_placeholder_value_service": "postgres:9.5.3",
   "requirement_placeholder_opts_service": "POSTGRES_USER=myuser\nPOSTGRES_PASSWORD=mypassword",
   "requirement_placeholder_value_volume": "type=bind,source=/hostDir/sourceDir,destination=/dirInJob",
-
   "scheduler_added": "Scheduler created",
   "scheduler_deleted": "Scheduler deleted",
   "scheduler_create_label": "Create a scheduler",
@@ -743,9 +688,7 @@
   "scheduler_edit_title": "Edition of scheduler: {{app}} / {{pip}} {{env}}",
   "scheduler_updated": "Scheduler updated",
   "scheduler_workflow_label": "Scheduler: ",
-
   "settings_tips": "Tips",
-
   "services": "services",
   "services_list": "CDS Services",
   "services_see_all": "see all",
@@ -756,7 +699,6 @@
   "service_alert": "Status Alert - please check status below",
   "service_warning": "Status Warning - please check status below",
   "service_ok": "Status OK - All is fine",
-
   "stage_add_label": "Add stage",
   "stage_added": "Stage added",
   "stage_deleted": "Stage deleted",
@@ -766,7 +708,6 @@
   "stage_job_updated": "Job updated",
   "stage_order": "Stage number",
   "stage_updated": "Stage updated",
-
   "step_add_job": "Add job",
   "step_added": "Step added",
   "step_deleted": "Step deleted",
@@ -776,7 +717,6 @@
   "step_updated": "Step updated",
   "step_title_duration": "Start: {{start}}, End: {{end}}",
   "step_edit_title": "Edit title",
-
   "timeline_loading": "Loading timeline...",
   "timeline_no": "Timeline is empty",
   "timeline_title": "Timeline",
@@ -788,7 +728,6 @@
   "timeline_filter_project_select": "Select a project",
   "timeline_filter_workflow_select": "Select a workflow",
   "timeline_filter_workflow_title": "Workflow list:",
-
   "trigger_added": "Trigger added",
   "trigger_add_prerequisite_title": "Add a run condition",
   "trigger_create_title": "Create a new trigger from {{app}} / {{pip}} {{env}}",
@@ -801,7 +740,6 @@
   "trigger_manual_label": "Manual trigger",
   "trigger_to_title": "Triggered pipeline",
   "trigger_updated": "Trigger updated",
-
   "variable_added": "Variable added",
   "variable_deleted": "Variable deleted",
   "variable_description": "Description",
@@ -810,9 +748,7 @@
   "variable_type": "Type",
   "variable_updated": "Variable updated",
   "variable_value": "Value",
-
   "ui_updated": "UI has just been updated. Please click here to refresh your page.",
-
   "user_label_fullname": "Fullname",
   "user_label_username": "Username",
   "user_label_password": "Password",
@@ -823,10 +759,8 @@
   "user_is_admin": "This user is a CDS Administrator",
   "user_saved": "User saved",
   "user_deleted": "User is deleted",
-
   "user_list_title": "Users",
   "user_none": "No user",
-
   "vcs_connection": "Connection:",
   "vcs_user": "User: ",
   "vcs_password": "Password: ",
@@ -835,7 +769,6 @@
   "vcs_ssh_key": "SSH key",
   "vcs_pgp_key": "PGP key",
   "vcs_server": "VCS Server",
-
   "vulnerability_fixin": "Fix in",
   "vunerability_hide": "Hide",
   "vulnerability_ignore": "Ignore",
@@ -843,7 +776,6 @@
   "vulnerability_origin": "Origin",
   "vulnerability_showmore": "Show more",
   "vulnerability_updated": "Vulnerability updated",
-
   "warning_context": "Context",
   "warning_element": "Element",
   "warning_goto_application_variables": "application variables",
@@ -864,11 +796,9 @@
   "warning_workflow": "{{username}} has just updated the workflow.",
   "warning_build_title": "The build is in success state but there are/is {{nb}} optional step(s) in error",
   "warning_updated": "Warning up to date",
-
   "wizard_app_clone": "Clone an application",
   "wizard_app_empty": "Empty application",
   "wizard_ssh_key_name": "Ssh key name",
-
   "worker_model": "Worker Model",
   "worker_model_type": "Type",
   "worker_model_env": "Environment variables",
@@ -942,13 +872,11 @@
   "worker_model_private_registry": "Private registry",
   "worker_model_username": "Username",
   "worker_model_password": "Password",
-
   "workflow_modal_change_view_confirm": "Are you sure you want to discard your unsaved changes?",
   "workflow_save_as_code_title": "Save workflow as code",
   "workflow_save_as_code_pending": "Pushing files...",
   "workflow_as_code_pr_success": "A pull-request has just been created:",
   "workflow_as_code_no_edit": "You can't edit your workflow in UI when you are in as code mode",
-
   "workflow_node_condition_empty": "There are empty run conditions",
   "workflow_node_condition_duplicate": "You test many times the same variable",
   "workflow_app_info_new_wf": "This project is allowed to use the new CDS Workflows.",
@@ -1004,7 +932,6 @@
   "workflow_hook_delete_msg": "Do you confirm the deletion of this hook?",
   "workflow_hook_log_title": "Hook's log",
   "workflow_hook_log_workflow_run": "Workflow run",
-
   "workflow_fork_delete_alert": "BE CAREFUL, this will remove the fork and all his children",
   "workflow_fork_delete_alert_soft": "Remove only this fork",
   "workflow_fork_delete_btn": "Delete fork",
@@ -1114,7 +1041,6 @@
   "workflow_logs_pretty_ansi": "Show pretty logs with ANSI interpreter",
   "workflow_logs_pretty_html": "Show pretty logs with HTML interpreter",
   "workflow_logs_raw": "Show raw logs (without ANSI and HTML interpreter)",
-
   "workflow_wizard_select_repo_man": "Select a repository manager",
   "workflow_wizard_select_repo": "Select a repository",
   "workflow_wizard_select_repo_loading": "Loading repositories...",
@@ -1122,7 +1048,6 @@
   "workflow_wizard_select_repo_man_add": "Or add a repository manager",
   "workflow_wizard_select_template": "Select a workflow template",
   "wizard_repo_files": "Files found: ",
-
   "workflow_template_created": "Workflow template created",
   "workflow_template_saved": "Workflow template saved",
   "workflow_template_deleted": "Workflow template deleted",
@@ -1155,7 +1080,6 @@
   "workflow_template_help_edit_from": "Current workflow template is synchronized from URL. You can't edit it.",
   "workflow_template_import_from_url": "Import from URL",
   "workflow_template_imported_from_url": "Imported from URL",
-
   "application_repository_help_line_1": "Your application was not imported from your code.",
   "environment_repository_help_line_1": "Your environment was not imported from your code.",
   "pipeline_repository_help_line_1": "Your pipeline was not imported from your code.",

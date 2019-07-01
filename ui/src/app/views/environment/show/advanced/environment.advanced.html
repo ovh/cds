@@ -1,0 +1,54 @@
+<div id="EnvironmentAdmin">
+    <app-zone header="{{ 'environment_rename_title' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form" #environmentUpdateFrom="ngForm">
+                <div class="fields">
+                    <div class="eight wide field">
+                        <input type="text" name="formEnvironmentUpdateName" [(ngModel)]="environment.name" required
+                            #formEnvironmentUpdateName="ngModel" pattern="[a-zA-Z0-9._-]*" [disabled]="loading">
+                        <div *ngIf="formEnvironmentUpdateName.invalid && !formEnvironmentUpdateName.pristine"
+                            class="ui error message">
+                            <p>{{'environment_update_name_error' | translate}}</p>
+                        </div>
+                    </div>
+                    <div class="eight wide right aligned field">
+                        <button (click)="cloneModal.show()" type="button" name="clonebtn" class="ui blue button"
+                            [class.loading]="loading" [class.disabled]="loading"><i
+                                class="copy icon"></i>{{'common_clone' | translate}}
+                        </button>
+                        <button class="ui green button" [class.loading]="loading" name="updateNameButton"
+                            (click)="onSubmitEnvironmentUpdate()"
+                            [disabled]="environmentUpdateFrom.invalid || environment.from_repository">{{ 'btn_rename' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
+        <app-zone-content class="bottom">
+            <div class="ui grid">
+                <div class="eight wide column">
+                    <div class="title">{{ 'environment_delete_label' | translate}}</div>
+                    <div class="description">{{ 'environment_delete_description' | translate}}</div>
+                </div>
+                <div class="eight wide right aligned column">
+                    <app-delete-button [loading]="loading" (event)="deleteEnvironment()"></app-delete-button>
+                </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
+    <sm-modal title="{{'environment_title_clone' | translate}} '{{environment.name}}'" class="small" #cloneModal>
+        <modal-content>
+            <div class="ui fluid action input">
+                <input type="text" placeholder="{{'environment_clone_placeholder' | translate}}"
+                    [(ngModel)]="cloneName">
+                <button class="ui blue right labeled icon button" [class.disabled]="!cloneName"
+                    [class.loading]="loading" (click)="cloneEnvironment(cloneModal)">
+                    <i class="copy icon"></i>
+                    {{'common_clone' | translate}}
+                </button>
+            </div>
+        </modal-content>
+    </sm-modal>
+</div>
