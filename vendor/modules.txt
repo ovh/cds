@@ -446,8 +446,6 @@ github.com/ovh/venom/executors/smtp
 github.com/ovh/venom/executors/ssh
 github.com/ovh/venom/executors/web
 github.com/ovh/venom/executors
-# github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
-github.com/ovhlabs/izanami-go-client
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
 # github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
