@@ -1,5 +1,5 @@
-import {Component, Input, NgZone, ViewChild} from '@angular/core';
-import {ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig} from '@richardlt/ng2-semantic-ui';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewChild } from '@angular/core';
+import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Operation } from 'app/model/operation.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -7,12 +7,13 @@ import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { environment } from 'environments/environment';
-import {Subscription} from 'rxjs';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-save-as-code-modal',
     templateUrl: './save.as.code.html',
-    styleUrls: ['./save.as.code.scss']
+    styleUrls: ['./save.as.code.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowSaveAsCodeComponent {
@@ -27,7 +28,8 @@ export class WorkflowSaveAsCodeComponent {
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
 
-    constructor(private _modalService: SuiModalService, private _authStore: AuthentificationStore) {
+    constructor(private _modalService: SuiModalService, private _authStore: AuthentificationStore,
+                private _cd: ChangeDetectorRef) {
     }
 
     show(ope: Operation): void {
@@ -58,9 +60,9 @@ export class WorkflowSaveAsCodeComponent {
                         webworker.stop();
                         this.webworkerSub.unsubscribe();
                     }
+                    this._cd.markForCheck();
                 });
             }
         });
     }
-
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -10,7 +10,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
 @Component({
     selector: 'app-workflow-trigger',
     templateUrl: './workflow.trigger.html',
-    styleUrls: ['./workflow.trigger.scss']
+    styleUrls: ['./workflow.trigger.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTriggerComponent {
 
