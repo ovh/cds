@@ -73,7 +73,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		}
 
 		// Browse all node to find IDs
-		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, deprecatedGetUser(ctx)); err != nil {
+		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, deprecatedGetUser(ctx), workflow.LoadOptions{}); err != nil {
 			return sdk.WrapError(err, "Workflow is not valid")
 		}
 

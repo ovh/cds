@@ -201,6 +201,18 @@ var (
 		return nil
 	}
 
+	loadEnvironmentNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		var err error
+		var envs sdk.IDNames
+
+		if envs, err = environment.LoadAllNames(db, proj.ID); err != nil {
+			return sdk.WrapError(err, "cannot load environment names")
+		}
+		proj.EnvironmentNames = envs
+
+		return nil
+	}
+
 	loadGroups = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		if err := group.LoadGroupByProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadGroups")

@@ -79,7 +79,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return err
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, true)
+		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}

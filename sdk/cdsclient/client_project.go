@@ -55,6 +55,14 @@ func (c *client) ProjectGet(key string, mods ...RequestModifier) (*sdk.Project, 
 	return p, nil
 }
 
+func (c *client) ProjectUpdate(key string, project *sdk.Project) error {
+	url := fmt.Sprintf("/project/%s", key)
+	if _, err := c.PutJSON(context.Background(), url, project, project); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) ProjectList(withApplications, withWorkflows bool, filters ...Filter) ([]sdk.Project, error) {
 	p := []sdk.Project{}
 	path := fmt.Sprintf("/project?application=%v&workflow=%v", withApplications, withWorkflows)

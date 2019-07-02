@@ -43,7 +43,6 @@ var (
 		SecretVariable,
 		TextVariable,
 		StringVariable,
-		KeyVariable,
 		BooleanVariable,
 		NumberVariable,
 	}

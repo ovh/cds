@@ -1,8 +1,8 @@
 ---
 title: "Permissions - ACLs"
-weight: 2
+weight: 3
 card: 
-  name: concept_permissions
+  name: concept_organization
 ---
 
 There are 3 types of permissions:
