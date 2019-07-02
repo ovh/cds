@@ -9,11 +9,15 @@ import (
 )
 
 func (c *client) ServiceHeartbeat(s sdk.MonitoringStatus) error {
+	_, err := c.PostJSON(context.Background(), "/services/heartbeat", &s, nil)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (c *client) ServiceRegister(s sdk.Service) (*sdk.Service, error) {
-	code, err := c.PostJSON(context.Background(), "/service/register", &s, &s)
+	code, err := c.PostJSON(context.Background(), "/services/register", &s, &s)
 	if code != 201 && code != 200 {
 		if err == nil {
 			return nil, fmt.Errorf("HTTP Code %d", code)

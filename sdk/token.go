@@ -35,7 +35,7 @@ func (s AuthConsumerScope) IsValid() bool {
 	case AuthConsumerScopeUser, AuthConsumerScopeAccessToken, AuthConsumerScopeAction, AuthConsumerScopeAdmin,
 		AuthConsumerScopeGroup, AuthConsumerScopeTemplate, AuthConsumerScopeProject, AuthConsumerScopeRun,
 		AuthConsumerScopeRunExecution, AuthConsumerScopeHooks, AuthConsumerScopeWorker, AuthConsumerScopeWorkerModel,
-		AuthConsumerScopeHatchery:
+		AuthConsumerScopeService, AuthConsumerScopeHatchery:
 		return true
 	}
 	return false

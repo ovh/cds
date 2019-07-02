@@ -82,7 +82,9 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			// TODO: heartbeat
+			if err := c.Client.ServiceHeartbeat(status()); err != nil {
+				heartbeatFailures++
+			}
 
 			// if register failed too many time, stop heartbeat
 			if heartbeatFailures > c.MaxHeartbeatFailures {

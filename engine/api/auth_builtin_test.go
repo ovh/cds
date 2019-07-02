@@ -40,6 +40,8 @@ func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string) string
 
 	t.Logf("consumer authentified. jwt: %s", signinReponse.Token)
 
+	assert.NotEmpty(t, rec.Header().Get("X-Api-Pub-Signing-Key"))
+
 	return signinReponse.Token
 }
 

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ovh/cds/engine/api/group"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -32,60 +34,96 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
+		var srv sdk.Service
+		if err := service.UnmarshalBody(r, &srv); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		//Service must be with a sharedinfra group token
+		// except for hatchery: users can start hatchery with their group
+		if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
+			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
+		}
+
+		// TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
+		srv.Uptodate = srv.Version == sdk.VERSION
+
+		srv.ConsumerID = getAPIConsumer(ctx).ID
+
+		//Insert or update the service
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "Cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		//Try to find the service, and keep; else generate a new one
+		oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
+		if oldSrv != nil {
+			srv.ID = oldSrv.ID
+			if err := services.Update(tx, &srv); err != nil {
+				return sdk.WithStack(err)
+			}
+		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
+			log.Error("unable to find service by name %s: %v", srv.Name, errOldSrv)
+			return sdk.WithStack(errOldSrv)
+		} else {
+			srv.Maintainer = *getAPIConsumer(ctx).AuthentifiedUser
+			if err := services.Insert(tx, &srv); err != nil {
+				return sdk.WithStack(err)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, srv, http.StatusOK)
 	}
 }
 
 func (api *API) postServiceHearbeatHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
-		// srv := &sdk.Service{}
-		// if err := service.UnmarshalBody(r, srv); err != nil {
-		// 	return sdk.WithStack(err)
-		// }
+		var mon sdk.MonitoringStatus
+		if err := service.UnmarshalBody(r, &mon); err != nil {
+			return sdk.WithStack(err)
+		}
 
-		// //Service must be with a sharedinfra group token
-		// // except for hatchery: users can start hatchery with their group
-		// if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
-		// 	return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
-		// }
+		for i := range mon.Lines {
+			s := &mon.Lines[i]
+			if s.Component == "Version" {
+				if sdk.VERSION != s.Value {
+					s.Status = sdk.MonitoringStatusWarn
+				} else {
+					s.Status = sdk.MonitoringStatusOK
+				}
+				break
+			}
+		}
 
-		// // TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
-		// srv.Uptodate = srv.Version == sdk.VERSION
-		// for i := range srv.MonitoringStatus.Lines {
-		// 	s := &srv.MonitoringStatus.Lines[i]
-		// 	if s.Component == "Version" {
-		// 		if sdk.VERSION != s.Value {
-		// 			s.Status = sdk.MonitoringStatusWarn
-		// 		} else {
-		// 			s.Status = sdk.MonitoringStatusOK
-		// 		}
-		// 		break
-		// 	}
-		// }
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "Cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
 
-		// //Insert or update the service
-		// tx, err := api.mustDB().Begin()
-		// if err != nil {
-		// 	return sdk.WrapError(err, "Cannot start transaction")
-		// }
-		// defer tx.Rollback() // nolint
+		srv, err := services.GetByConsumerID(ctx, tx, getAPIConsumer(ctx).ID)
+		if err != nil {
+			return err
 
-		// //Try to find the service, and keep; else generate a new one
-		// oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
-		// if oldSrv != nil {
-		// 	srv.ID = oldSrv.ID
-		// 	srv.ConsumerID = oldSrv.ConsumerID
-		// } else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-		// 	return sdk.WithStack(errOldSrv)
-		// }
+		}
 
-		// return service.WriteJSON(w, srv, http.StatusOK)
-	}
-}
+		srv.LastHeartbeat = time.Now()
+		srv.MonitoringStatus = mon
 
-func (api *API) postServiceUnregisterHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if err := services.Update(tx, srv); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
 		return nil
 	}
 }

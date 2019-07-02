@@ -19,6 +19,9 @@ type CanonicalService struct {
 }
 
 func (s CanonicalService) Canonical() ([]byte, error) {
+	if len(s.PublicKey) == 0 {
+		s.PublicKey = nil
+	}
 	return json.Marshal(s)
 }
 
