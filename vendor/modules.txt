@@ -214,6 +214,8 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
+# github.com/facebookgo/httpcontrol v0.0.0-20150708234001-ccde4420e1fe
+github.com/facebookgo/httpcontrol
 # github.com/fatih/color v0.0.0-20161018201348-a360acfe359f
 github.com/fatih/color
 # github.com/fatih/structs v1.0.0
@@ -425,6 +427,8 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
 github.com/ovh/cds/sdk/interpolate
+# github.com/ovh/cds/sdk/izanami v0.0.0-00010101000000-000000000000 => ./sdk/izanami
+github.com/ovh/cds/sdk/izanami
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
 # github.com/ovh/venom v0.25.0
