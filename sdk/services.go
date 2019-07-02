@@ -8,21 +8,26 @@ import (
 )
 
 type CanonicalService struct {
-	ID         int64            `json:"id" db:"id"`
-	Name       string           `json:"name" db:"name" cli:"name,key"`
-	ConsumerID string           `json:"-" db:"auth_consumer_id"`
-	Type       string           `json:"type" db:"type" cli:"type"`
-	HTTPURL    string           `json:"http_url" db:"http_url" cli:"url"`
-	Config     ServiceConfig    `json:"config" db:"config" cli:"-"`
-	PublicKey  []byte           `json:"public_key" db:"public_key"`
-	Maintainer AuthentifiedUser `json:"maintainer" db:"maintainer"`
+	ID         int64         `json:"id" db:"id"`
+	Name       string        `json:"name" db:"name" cli:"name,key"`
+	ConsumerID string        `json:"-" db:"auth_consumer_id"`
+	Type       string        `json:"type" db:"type" cli:"type"`
+	HTTPURL    string        `json:"http_url" db:"http_url" cli:"url"`
+	Config     ServiceConfig `json:"config" db:"config" cli:"-"`
+	PublicKey  []byte        `json:"public_key" db:"public_key"`
+	// aggregates
+	Maintainer AuthentifiedUser `json:"maintainer" db:"maintainer"` // TODO maintainer should be loaded from consumer
 }
 
 func (s CanonicalService) Canonical() ([]byte, error) {
-	if len(s.PublicKey) == 0 {
-		s.PublicKey = nil
-	}
-	return json.Marshal(s)
+	var canonical string
+	canonical += fmt.Sprintf("%d", s.ID)
+	canonical += s.Name
+	canonical += s.ConsumerID
+	canonical += s.Type
+	canonical += fmt.Sprintf("%v", s.Config)
+	canonical += string(s.PublicKey)
+	return []byte(canonical), nil
 }
 
 // Service is a µService registered on CDS API
