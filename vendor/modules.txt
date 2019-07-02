@@ -214,8 +214,6 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
-# github.com/facebookgo/httpcontrol v0.0.0-20150708234001-ccde4420e1fe
-github.com/facebookgo/httpcontrol
 # github.com/fatih/color v0.0.0-20161018201348-a360acfe359f
 github.com/fatih/color
 # github.com/fatih/structs v1.0.0
