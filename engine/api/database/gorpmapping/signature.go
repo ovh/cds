@@ -80,6 +80,11 @@ func CheckSignature(i interface{}, sig []byte) (bool, error) {
 		return false, sdk.WrapError(err, "unable to decrypt content")
 	}
 
+	if string(clearContent) != string(decryptedSig) {
+		log.Error("clear content: %s", string(clearContent))
+		log.Error("decrypted string: %s", string(decryptedSig))
+	}
+
 	return string(clearContent) == string(decryptedSig), nil
 }
 

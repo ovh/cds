@@ -132,10 +132,9 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 // InsertLambdaUser have to be used only for tests
 func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
 	var u = &sdk.AuthentifiedUser{
-		Username:     sdk.RandomString(10),
-		Fullname:     sdk.RandomString(10),
-		Ring:         sdk.UserRingUser,
-		DateCreation: time.Now(),
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingUser,
 	}
 
 	if err := user.Insert(db, u); err != nil {
