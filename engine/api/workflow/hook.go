@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -96,8 +95,9 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	hookToUpdate := make(map[string]sdk.NodeHook)
 	for i := range wf.WorkflowData.Node.Hooks {
 		h := &wf.WorkflowData.Node.Hooks[i]
+		fmt.Printf("wf.WorkflowData.Node.Name: %s\n", wf.WorkflowData.Node.Name)
 		if h.UUID == "" && h.Ref == "" {
-			h.Ref = fmt.Sprintf("%d.%d", time.Now().Unix(), i)
+			h.Ref = fmt.Sprintf("%s.%d", wf.WorkflowData.Node.Name, i)
 		} else if h.Ref != "" && oldHooksByRef != nil {
 			// search previous hook configuration by ref
 			previousHook, has := oldHooksByRef[h.Ref]
