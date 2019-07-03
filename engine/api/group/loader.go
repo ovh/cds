@@ -24,7 +24,7 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 	groupIDs := sdk.GroupPointersToIDs(gs)
 
 	// Get all links group user for groupd ids
-	links, err := GetLinksGroupUserForGroupIDs(ctx, db, groupIDs)
+	links, err := LoadLinksGroupUserForGroupIDs(ctx, db, groupIDs)
 	if err != nil {
 		return err
 	}

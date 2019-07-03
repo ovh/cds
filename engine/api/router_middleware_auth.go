@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
@@ -70,14 +69,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if consumer == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
-
-	// TODO remove this when refact old user table
-	deprecatedUserGroups, err := group.LoadAllByDeprecatedUserID(ctx, api.mustDB(), consumer.AuthentifiedUser.OldUserStruct.ID)
-	if err != nil {
-		return ctx, err
-	}
-	consumer.AuthentifiedUser.OldUserStruct.Groups = deprecatedUserGroups
-	log.Debug("api.authMiddleware> consumer is on behalf of user %s who can access groups: %v", consumer.AuthentifiedUser.GetFullname(), deprecatedUserGroups)
+	log.Debug("api.authMiddleware> consumer is on behalf of user %s who can access groups: %v", consumer.AuthentifiedUser.GetFullname(), consumer.AuthentifiedUser.OldUserStruct.Groups)
 
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 

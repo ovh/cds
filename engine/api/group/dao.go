@@ -92,15 +92,32 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOp
 	return get(ctx, db, query, opts...)
 }
 
-// GetLinksGroupUserForGroupIDs returns data from group_user table for given group ids.
-func GetLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]LinkGroupUser, error) {
+// LoadLinksGroupUserForGroupIDs returns data from group_user table for given group ids.
+func LoadLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]LinkGroupUser, error) {
 	ls := []LinkGroupUser{}
 
 	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM group_user
-    WHERE group_id = ANY(string_to_array($1, ',')::int[])
-  `).Args(gorpmapping.IDsToQueryString(groupIDs))
+		SELECT *
+		FROM group_user
+		WHERE group_id = ANY(string_to_array($1, ',')::int[])
+	`).Args(gorpmapping.IDsToQueryString(groupIDs))
+
+	if err := gorpmapping.GetAll(ctx, db, query, &ls); err != nil {
+		return nil, sdk.WrapError(err, "cannot get links between group and user")
+	}
+
+	return ls, nil
+}
+
+// LoadLinksGroupUserForUserIDs returns data from group_user table for given user ids.
+func LoadLinksGroupUserForUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []int64) ([]LinkGroupUser, error) {
+	ls := []LinkGroupUser{}
+
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM group_user
+		WHERE user_id = ANY(string_to_array($1, ',')::int[])
+	`).Args(gorpmapping.IDsToQueryString(userIDs))
 
 	if err := gorpmapping.GetAll(ctx, db, query, &ls); err != nil {
 		return nil, sdk.WrapError(err, "cannot get links between group and user")

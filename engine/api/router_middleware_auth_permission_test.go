@@ -90,7 +90,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	ctx := context.Background()
 
 	// test case: has enough permission
-	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because has permission (max permission = 7)")
 
@@ -98,14 +98,14 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	consumer.AuthentifiedUser.Ring = sdk.UserRingAdmin
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
-	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because because is admin")
 
 	// test case: is Maintainer
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
-	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionRead, nil)
 	assert.NoError(t, err, "should be granted because because is maintainer")
 
@@ -113,7 +113,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	consumer.AuthentifiedUser.Ring = ""
-	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 }
