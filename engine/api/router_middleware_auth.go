@@ -29,9 +29,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if !rc.NeedAuth {
 		return ctx, nil
 	}
-	if rc.NeedAdmin && !isAdmin(ctx) {
-		return ctx, sdk.WithStack(sdk.ErrForbidden)
-	}
 
 	var err error
 	var shouldContinue bool
@@ -103,6 +100,10 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
 			}
 		}
+	}
+
+	if rc.NeedAdmin && !isAdmin(ctx) {
+		return ctx, sdk.WithStack(sdk.ErrForbidden)
 	}
 
 	if err := api.checkPermission(ctx, mux.Vars(req), rc.PermissionLevel); err != nil {
