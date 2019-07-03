@@ -36,7 +36,7 @@ func TestImport(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
-	srvs, _ := services.GetAll(context.TODO(), db)
+	srvs, _ := services.LoadAll(context.TODO(), db)
 	for _, srv := range srvs {
 		if err := services.Delete(db, &srv); err != nil {
 			log.Fatalf("unable to delete service %s", srv.Name)

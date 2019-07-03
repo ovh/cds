@@ -42,7 +42,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Check that hatchery exists
-		hatchSrv, err := services.GetByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
+		hatchSrv, err := services.LoadByNameAndType(ctx, api.mustDB(), workerTokenFromHatchery.Worker.HatcheryName, services.TypeHatchery)
 		if err != nil {
 			return sdk.WrapError(err, "registerWorkerHandler> Unable to load hatchery %s", workerTokenFromHatchery.Worker.HatcheryName)
 		}
@@ -115,7 +115,7 @@ func (api *API) getWorkersHandler() service.Handler {
 		var workers []sdk.Worker
 		var err error
 		if !isAdmin(ctx) {
-			h, err := services.GetByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+			h, err := services.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
@@ -148,7 +148,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if wk.Status == sdk.StatusBuilding {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
 			}
-			hatcherySrv, err := services.GetByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+			hatcherySrv, err := services.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
@@ -175,7 +175,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 func (api *API) postRefreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAuthConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+		wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -189,7 +189,7 @@ func (api *API) postRefreshWorkerHandler() service.Handler {
 
 func (api *API) postUnregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAuthConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+		wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 
 func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByAuthConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+		wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 		}

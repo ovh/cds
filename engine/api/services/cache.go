@@ -171,7 +171,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 
 			switch action {
 			case "UPDATE", "INSERT":
-				srv, err := GetByName(ctx, db, name)
+				srv, err := LoadByName(ctx, db, name)
 				if err != nil {
 					log.Error("unable to find service %s: %v", name, err)
 					continue

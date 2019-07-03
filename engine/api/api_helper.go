@@ -121,13 +121,28 @@ func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	return db
 }
 
+func (a *API) isService(ctx context.Context) (*sdk.Service, bool) {
+	db := a.mustDBWithCtx(ctx)
+	session := getAuthSession(ctx)
+	if session == nil {
+		return nil, false
+	}
+
+	s, err := services.LoadByConsumerID(ctx, db, session.ConsumerID)
+	if err != nil {
+		log.Error("unable to get service from session %s: %v", session.ID, err)
+		return nil, false
+	}
+	return s, true
+}
+
 func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
 	db := a.mustDBWithCtx(ctx)
 	s := getAuthSession(ctx)
 	if s == nil {
 		return nil, false
 	}
-	w, err := worker.LoadByAuthConsumerID(ctx, db, s.ConsumerID)
+	w, err := worker.LoadByConsumerID(ctx, db, s.ConsumerID)
 	if err != nil {
 		log.Error("unable to get worker from session %s: %v", s.ID, err)
 		return nil, false
@@ -145,7 +160,7 @@ func (a *API) isHatchery(ctx context.Context) (*sdk.Service, bool) {
 		return nil, false
 	}
 
-	s, err := services.GetByConsumerID(ctx, db, session.ConsumerID)
+	s, err := services.LoadByConsumerID(ctx, db, session.ConsumerID)
 	if err != nil {
 		log.Error("unable to get hatchery from session %s: %v", session.ID, err)
 		return nil, false

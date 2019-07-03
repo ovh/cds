@@ -66,14 +66,14 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Se
 	return &s.Service, nil
 }
 
-// GetAll returns all services in database.
-func GetAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Service, error) {
+// LoadAll returns all services in database.
+func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Service, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM services`)
 	return getAll(ctx, db, query)
 }
 
-// GetAllByType returns all services with given type.
-func GetAllByType(ctx context.Context, db gorp.SqlExecutor, stype string) ([]sdk.Service, error) {
+// LoadAllByType returns all services with given type.
+func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, stype string) ([]sdk.Service, error) {
 	if ss, ok := internalCache.getFromCache(stype); ok {
 		return ss, nil
 	}
@@ -81,26 +81,26 @@ func GetAllByType(ctx context.Context, db gorp.SqlExecutor, stype string) ([]sdk
 	return getAll(ctx, db, query)
 }
 
-// GetByConsumerID returns a service by its consumer id.
-func GetByConsumerID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.Service, error) {
+// LoadByConsumerID returns a service by its consumer id.
+func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.Service, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM services WHERE auth_consumer_id = $1").Args(consumerID)
 	return get(ctx, db, query)
 }
 
-// GetByNameAndType returns a service by its name and type.
-func GetByNameAndType(ctx context.Context, db gorp.SqlExecutor, name, stype string) (*sdk.Service, error) {
+// LoadByNameAndType returns a service by its name and type.
+func LoadByNameAndType(ctx context.Context, db gorp.SqlExecutor, name, stype string) (*sdk.Service, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM services WHERE name = $1 and type = $2").Args(name, stype)
 	return get(ctx, db, query)
 }
 
-// GetByName returns a service by its name.
-func GetByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Service, error) {
+// LoadByName returns a service by its name.
+func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Service, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM services WHERE name = $1").Args(name)
 	return get(ctx, db, query)
 }
 
-// GetByID returns a service by its id.
-func GetByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.Service, error) {
+// LoadByID returns a service by its id.
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.Service, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM services WHERE id = $1").Args(id)
 	return get(ctx, db, query)
 }

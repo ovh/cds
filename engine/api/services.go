@@ -58,7 +58,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		//Try to find the service, and keep; else generate a new one
-		oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
+		oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
 		if oldSrv != nil {
 			srv.ID = oldSrv.ID
 			if err := services.Update(tx, &srv); err != nil {
@@ -107,7 +107,7 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		srv, err := services.GetByConsumerID(ctx, tx, getAPIConsumer(ctx).ID)
+		srv, err := services.LoadByConsumerID(ctx, tx, getAPIConsumer(ctx).ID)
 		if err != nil {
 			return err
 
@@ -173,7 +173,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap, a
 	}
 
 	//Try to find the service, and keep; else generate a new one
-	oldSrv, errOldSrv := services.GetByName(ctx, tx, srv.Name)
+	oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
 	if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 		log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
 		return

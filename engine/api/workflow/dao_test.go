@@ -1523,7 +1523,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 		},
 	}))
 
-	srvs, err := services.GetAll(context.Background(), db)
+	srvs, err := services.LoadAll(context.Background(), db)
 	require.NoError(t, err)
 	for _, srv := range srvs {
 		require.NoError(t, services.Delete(db, &srv))

@@ -35,7 +35,7 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
-	h, err := services.GetByNameAndType(context.Background(), db, claims.Worker.HatcheryName, services.TypeHatchery)
+	h, err := services.LoadByNameAndType(context.Background(), db, claims.Worker.HatcheryName, services.TypeHatchery)
 	if err != nil {
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}

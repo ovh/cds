@@ -112,7 +112,7 @@ type Configuration struct {
 					SigningKeyClaim string `json:"signing_key_claim" toml:"signingKeyClaim"`
 				} `json:"key_signing_key" toml:"keySigningKey"`
 			} `json:"keys" toml:"keys"`
-			Claims struct { // TODO meh ?
+			Claims struct { // TODO meh ? => so it is
 				Username     string `json:"username"`
 				SessionLevel string `json:"session_level"`
 			} `json:"claims" toml:"claims"`

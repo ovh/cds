@@ -17,7 +17,7 @@ func TestDAO(t *testing.T) {
 	db, _, end := test.SetupPG(t)
 	defer end()
 
-	allSrv, err := services.GetAll(context.TODO(), db)
+	allSrv, err := services.LoadAll(context.TODO(), db)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -46,13 +46,13 @@ func TestDAO(t *testing.T) {
 
 	test.NoError(t, services.Insert(db, &srv))
 
-	srv2, err := services.GetByName(context.TODO(), db, srv.Name)
+	srv2, err := services.LoadByName(context.TODO(), db, srv.Name)
 	test.NoError(t, err)
 
 	assert.Equal(t, srv.Name, srv2.Name)
 	assert.Equal(t, string(srv.PublicKey), string(srv2.PublicKey))
 
-	all, err := services.GetAllByType(context.TODO(), db, srv.Type)
+	all, err := services.LoadAllByType(context.TODO(), db, srv.Type)
 	test.NoError(t, err)
 
 	assert.True(t, len(all) >= 1)

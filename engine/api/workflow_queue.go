@@ -691,9 +691,12 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		}
 
 		permissions := permission.PermissionReadExecute
-		//TODO:if !isServiceOrWorker(r) {
-		//	permissions = permission.PermissionRead
-		//}
+
+		_, isW := api.isWorker(ctx)
+		_, isS := api.isService(ctx)
+		if !isW && !isS {
+			permissions = permission.PermissionRead
+		}
 
 		filter := workflow.NewQueueFilter()
 		filter.RatioService = ratioService

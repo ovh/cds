@@ -36,9 +36,9 @@ func (api *API) getAdminServicesHandler() service.Handler {
 
 		var err error
 		if r.FormValue("type") != "" {
-			srvs, err = services.GetAllByType(ctx, api.mustDB(), r.FormValue("type"))
+			srvs, err = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
 		} else {
-			srvs, err = services.GetAll(ctx, api.mustDB())
+			srvs, err = services.LoadAll(ctx, api.mustDB())
 		}
 		if err != nil {
 			return err
@@ -52,7 +52,7 @@ func (api *API) deleteAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		srv, err := services.GetByName(ctx, api.mustDB(), name)
+		srv, err := services.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func (api *API) getAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		srv, err := services.GetAllByType(ctx, api.mustDB(), name)
+		srv, err := services.LoadAllByType(ctx, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var srvs []sdk.Service
 		if r.FormValue("name") != "" {
-			srv, err := services.GetByName(ctx, api.mustDB(), r.FormValue("name"))
+			srv, err := services.LoadByName(ctx, api.mustDB(), r.FormValue("name"))
 			if err != nil {
 				return err
 			}
@@ -104,7 +104,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 			}
 		} else {
 			var errFind error
-			srvs, errFind = services.GetAllByType(ctx, api.mustDB(), r.FormValue("type"))
+			srvs, errFind = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
 			if errFind != nil {
 				return errFind
 			}
@@ -134,7 +134,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 
 func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		srvs, err := services.GetAllByType(ctx, api.mustDB(), r.FormValue("type"))
+		srvs, err := services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
 		if err != nil {
 			return err
 		}

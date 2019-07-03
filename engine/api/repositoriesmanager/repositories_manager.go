@@ -25,7 +25,7 @@ import (
 
 func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.VCSConfiguration, error) {
 	var vcsServer sdk.VCSConfiguration
-	srvs, err := services.GetAllByType(ctx, db, services.TypeVCS)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeVCS)
 	if err != nil {
 		return vcsServer, sdk.WrapError(err, "Unable to load services")
 	}
@@ -37,7 +37,7 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.V
 
 //LoadAll Load all RepositoriesManager from the database
 func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string]sdk.VCSConfiguration, error) {
-	srvs, err := services.GetAllByType(ctx, db, services.TypeVCS)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load services")
 	}
@@ -95,7 +95,7 @@ func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name str
 
 func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	db := c.dbFunc()
-	srv, err := services.GetAllByType(ctx, db, services.TypeVCS)
+	srv, err := services.LoadAllByType(ctx, db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
 	}
@@ -112,7 +112,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 
 func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret string) (string, string, error) {
 	db := c.dbFunc()
-	srv, err := services.GetAllByType(ctx, db, services.TypeVCS)
+	srv, err := services.LoadAllByType(ctx, db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
 	}
@@ -137,7 +137,7 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 		return nil, sdk.ErrNoReposManagerClientAuth
 	}
 
-	srvs, err := services.GetAllByType(ctx, c.dbFunc(), services.TypeVCS)
+	srvs, err := services.LoadAllByType(ctx, c.dbFunc(), services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -204,7 +204,7 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		return vcs, nil
 	}
 
-	srvs, err := services.GetAllByType(ctx, db, services.TypeVCS)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}

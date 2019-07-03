@@ -42,7 +42,7 @@ func Delete(db gorp.SqlExecutor, id string) error {
 	return nil
 }
 
-func LoadByAuthConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
+func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM worker WHERE auth_consumer_id = $1").Args(id)
 	var w sdk.Worker
 	found, err := gorpmapping.Get(ctx, db, query, &w)

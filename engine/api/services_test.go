@@ -56,7 +56,7 @@ func TestServicesHandlers(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	allSrv, err := services.GetAll(context.Background(), api.mustDB())
+	allSrv, err := services.LoadAll(context.Background(), api.mustDB())
 	require.NoError(t, err)
 	require.True(t, len(allSrv) >= 1)
 

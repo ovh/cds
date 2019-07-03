@@ -59,7 +59,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	//Push the hook to hooks µService
 	//Load service "hooks"
-	srvs, err := services.GetAllByType(ctx, db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		return nil
 	}
 
-	srvs, err := services.GetAllByType(ctx, db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get services dao")
 	}
