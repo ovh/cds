@@ -1,20 +1,15 @@
-import {Token} from './token.model';
-import {User} from './user.model';
+import { User } from './user.model';
 
 export const SharedInfraGroupName = 'shared.infra';
 
 export class Group {
     id: number;
     name: string;
-    admins: Array<User>;
-    users: Array<User>;
-    tokens: Array<Token>;
+    members: Array<User>;
 
     constructor() {
         this.name = '';
-        this.admins = [];
-        this.users = [];
-        this.tokens = [];
+        this.members = [];
     }
 }
 

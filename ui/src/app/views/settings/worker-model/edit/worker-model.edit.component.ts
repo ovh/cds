@@ -88,7 +88,7 @@ export class WorkerModelEditComponent implements OnInit {
 
     getGroups() {
         this.loading = true;
-        this._groupService.getGroups()
+        this._groupService.getAll()
             .pipe(finalize(() => this.loading = false))
             .subscribe(gs => {
                 this.groups = gs;

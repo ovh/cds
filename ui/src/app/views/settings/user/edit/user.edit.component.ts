@@ -3,15 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { finalize, first } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
-import { Token, TokenEvent } from '../../../../model/token.model';
 import { User } from '../../../../model/user.model';
-import { GroupService } from '../../../../service/group/group.service';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
-
 @Component({
     selector: 'app-user-edit',
     templateUrl: './user.edit.html',
@@ -20,12 +16,10 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 export class UserEditComponent implements OnInit {
     loading = false;
     deleteLoading = false;
-    tokensLoading = true;
     user: User;
     currentUser: User;
     groups: Array<Group>;
     groupsAdmin: Array<Group>;
-    tokens: Array<Token>;
     private username: string;
     private usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     userPatternError = false;
@@ -35,8 +29,7 @@ export class UserEditComponent implements OnInit {
         private _userService: UserService,
         private _toast: ToastService, private _translate: TranslateService,
         private _route: ActivatedRoute, private _router: Router,
-        private _store: Store,
-        private _groupService: GroupService
+        private _store: Store
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
     }
@@ -44,10 +37,6 @@ export class UserEditComponent implements OnInit {
     ngOnInit() {
         this._route.params.subscribe(params => {
             this.username = params['username'];
-
-            if (this.username === this.currentUser.username) {
-                this.tokensLoading = true;
-            }
 
             this._userService.getUser(this.username).subscribe(u => {
                 this.user = u;
@@ -105,45 +94,6 @@ export class UserEditComponent implements OnInit {
             }, () => {
                 this.loading = false;
             });
-        }
-
-    }
-
-    tokenEvent(event: TokenEvent): void {
-        if (!event) {
-            return;
-        }
-        switch (event.type) {
-            case 'delete':
-                this._groupService.removeToken(event.token.group_name, event.token.id)
-                    .pipe(
-                        first(),
-                        finalize(() => event.token.updating = false)
-                    )
-                    .subscribe(() => {
-                        this.tokens = this.tokens.filter((token) => token.id !== event.token.id);
-                        this._toast.success('', this._translate.instant('token_deleted'));
-                    });
-                break;
-            case 'add':
-                this._groupService.addToken(event.token.group_name, event.token.expirationString, event.token.description)
-                    .pipe(
-                        first(),
-                        finalize(() => {
-                            event.token.expirationString = null;
-                            event.token.description = null;
-                            event.token.updating = false;
-                        })
-                    )
-                    .subscribe((token) => {
-                        if (!Array.isArray(this.tokens)) {
-                            this.tokens = [token];
-                        } else {
-                            this.tokens.push(token);
-                        }
-                        this._toast.success('', this._translate.instant('token_added'));
-                    });
-                break;
         }
     }
 

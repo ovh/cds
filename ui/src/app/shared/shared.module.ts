@@ -65,7 +65,6 @@ import { StatusIconComponent } from './status/status.component';
 import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
-import { TokenListComponent } from './token/list/token.list.component';
 import { UsageApplicationsComponent } from './usage/applications/usage.applications.component';
 import { UsageEnvironmentsComponent } from './usage/environments/usage.environments.component';
 import { UsagePipelinesComponent } from './usage/pipelines/usage.pipelines.component';
@@ -163,7 +162,6 @@ import { ZoneComponent } from './zone/zone.component';
         KeysFormComponent,
         KeysListComponent,
         NgForNumber,
-        TokenListComponent,
         ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,
@@ -276,7 +274,6 @@ import { ZoneComponent } from './zone/zone.component';
         MarkdownModule,
         MomentModule,
         NgForNumber,
-        TokenListComponent,
         NgSemanticModule,
         NgxAutoScroll,
         ConditionsComponent,

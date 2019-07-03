@@ -76,17 +76,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="ui row" *ngIf="username === this.currentUser.username">
-                            <div class="sixteen wide column">
-                                <h3>{{'token_title_handling' | translate}}</h3>
-                                <ng-container *ngIf="!tokensLoading">
-                                    <app-token-list [tokens]="tokens" [displayAdd]="false" (event)="tokenEvent($event)"></app-token-list>
-                                </ng-container>
-                                <ng-container *ngIf="tokensLoading">
-                                    <div class="ui text active loader">{{ 'token_loading' | translate }}</div>
-                                </ng-container>
-                            </div>
-                        </div>
                     </div>
                 </form>
             </div>

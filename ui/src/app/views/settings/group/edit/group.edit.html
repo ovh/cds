@@ -45,11 +45,11 @@
                     </div>
                   </div>
 
-                  <div class="ui info message" *ngIf="members && members?.length === 0">
+                  <div class="ui info message" *ngIf="group.members && group.members?.length === 0">
                     {{ 'group_no_member' | translate }}
                   </div>
 
-                  <table class="ui fixed celled table" *ngIf="members && members?.length > 0">
+                  <table class="ui fixed celled table" *ngIf="group.members && group.members?.length > 0">
                     <thead>
                       <tr>
                         <th class="three wide">{{ 'user_label_username' | translate }}</th>
@@ -59,7 +59,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let v of members">
+                      <tr *ngFor="let v of group.members">
                         <td>
                           <div class="ui">
                             <i class="fa fa-user-circle-o" *ngIf="v.admin" title="{{ 'group_user_is_admin' | translate }}"></i>
@@ -98,19 +98,6 @@
                 </div>
               </div>
 
-            </div>
-            <div class="ui row" *ngIf="currentUserIsAdminOnGroup || currentUser.admin">
-              <div class="sixteen wide column">
-                <h3>{{'token_title_handling' | translate}}</h3>
-                <app-token-list [tokens]="group.tokens" [displayAdd]="true" (event)="tokenEvent($event)"></app-token-list>
-                <div class="ui green message animated fadeIn" *ngIf="tokenGenerated != null">
-                  <i class="close icon" (click)="tokenGenerated = null"></i>
-                  <div class="header">
-                    {{'token_generated' | translate}} <span *ngIf="tokenGenerated.description">({{tokenGenerated.description}})</span>
-                  </div>
-                  <p>{{tokenGenerated.token}}</p>
-                </div>
-              </div>
             </div>
           </div>
         </form>

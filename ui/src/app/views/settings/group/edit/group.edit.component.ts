@@ -3,9 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { finalize, first } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
-import { Token, TokenEvent } from '../../../../model/token.model';
 import { User } from '../../../../model/user.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { UserService } from '../../../../service/user/user.service';
@@ -25,17 +24,18 @@ export class GroupEditComponent implements OnInit {
     currentUserIsAdminOnGroup: boolean;
     addUserUsername: string;
     users: Array<User>;
-    members: Array<User>;
-    tokenGenerated: Token;
     private groupname: string;
     private groupnamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     groupPatternError = false;
     path: Array<PathItem>;
 
     constructor(
-        private _userService: UserService, private _groupService: GroupService,
-        private _toast: ToastService, private _translate: TranslateService,
-        private _route: ActivatedRoute, private _router: Router,
+        private _userService: UserService,
+        private _groupService: GroupService,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _route: ActivatedRoute,
+        private _router: Router,
         private _store: Store
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
@@ -56,25 +56,15 @@ export class GroupEditComponent implements OnInit {
     }
 
     reloadData(groupname: string): void {
-        this._groupService.getGroupByName(groupname).subscribe(wm => {
-            this.group = wm;
-            this.groupname = wm.name;
-            this.members = new Array<User>();
-            if (wm.admins && wm.admins.length > 0) {
-                for (let i = 0; i < wm.admins.length; i++) {
-                    let u = wm.admins[i];
-                    u.admin = true;
-                    this.members.push(u);
-                    if (this.currentUser.username === u.username) {
+        this._groupService.getByName(groupname).subscribe(grp => {
+            this.group = grp;
+            this.groupname = grp.name;
+            if (grp.members) {
+                for (let i = 0; i < grp.members.length; i++) {
+                    if (this.currentUser.username === grp.members[i].username) {
                         this.currentUserIsAdminOnGroup = true;
+                        break;
                     }
-                }
-            }
-            if (wm.users && wm.users.length > 0) {
-                for (let i = 0; i < wm.users.length; i++) {
-                    let u = wm.users[i];
-                    u.admin = false;
-                    this.members.push(u);
                 }
             }
             this.updatePath();
@@ -83,7 +73,7 @@ export class GroupEditComponent implements OnInit {
 
     clickDeleteButton(): void {
         this.deleteLoading = true;
-        this._groupService.deleteGroup(this.group.name)
+        this._groupService.delete(this.group.name)
             .pipe(
                 finalize(() => this.deleteLoading = false)
             )
@@ -105,7 +95,7 @@ export class GroupEditComponent implements OnInit {
 
         this.loading = true;
         if (this.group.id > 0) {
-            this._groupService.updateGroup(this.groupname, this.group)
+            this._groupService.update(this.groupname, this.group)
                 .pipe(
                     finalize(() => this.loading = false)
                 )
@@ -114,7 +104,7 @@ export class GroupEditComponent implements OnInit {
                     this._router.navigate(['settings', 'group', this.group.name]);
                 });
         } else {
-            this._groupService.createGroup(this.group)
+            this._groupService.create(this.group)
                 .pipe(
                     finalize(() => this.loading = false)
                 )
@@ -127,7 +117,7 @@ export class GroupEditComponent implements OnInit {
 
     clickAddAdminButton(username: string): void {
         this.loading = true;
-        this._groupService.addUserAdmin(this.group.name, username)
+        this._groupService.addAdmin(this.group.name, username)
             .pipe(
                 finalize(() => this.loading = false)
             )
@@ -139,7 +129,7 @@ export class GroupEditComponent implements OnInit {
 
     clickRemoveAdminButton(username: string): void {
         this.loading = true;
-        this._groupService.removeUserAdmin(this.group.name, username)
+        this._groupService.removeAdmin(this.group.name, username)
             .pipe(
                 finalize(() => this.loading = false)
             )
@@ -151,7 +141,7 @@ export class GroupEditComponent implements OnInit {
 
     clickRemoveUserButton(username: string): void {
         this.loading = true;
-        this._groupService.removeUser(this.group.name, username)
+        this._groupService.removeMember(this.group.name, username)
             .pipe(
                 finalize(() => this.loading = false)
             )
@@ -163,52 +153,13 @@ export class GroupEditComponent implements OnInit {
 
     clickAddUserButton(): void {
         this.loading = true;
-        this._groupService.addUser(this.group.name, this.addUserUsername).subscribe(() => {
+        this._groupService.addMember(this.group.name, this.addUserUsername).subscribe(() => {
             this.loading = false;
             this._toast.success('', this._translate.instant('group_add_user_saved'));
             this.reloadData(this.group.name);
         }, () => {
             this.loading = false;
         });
-    }
-
-    tokenEvent(event: TokenEvent): void {
-        if (!event) {
-            return;
-        }
-        switch (event.type) {
-            case 'delete':
-                this._groupService.removeToken(this.groupname, event.token.id)
-                    .pipe(
-                        first(),
-                        finalize(() => event.token.updating = false)
-                    )
-                    .subscribe(() => {
-                        this.group.tokens = this.group.tokens.filter((token) => token.id !== event.token.id);
-                        this._toast.success('', this._translate.instant('token_deleted'));
-                    });
-                break;
-            case 'add':
-                this._groupService.addToken(this.groupname, event.token.expirationString, event.token.description)
-                    .pipe(
-                        first(),
-                        finalize(() => {
-                            event.token.expirationString = null;
-                            event.token.description = null;
-                            event.token.updating = false;
-                        })
-                    )
-                    .subscribe((token) => {
-                        if (!Array.isArray(this.group.tokens)) {
-                            this.group.tokens = [token];
-                        } else {
-                            this.group.tokens.push(token);
-                        }
-                        this._toast.success('', this._translate.instant('token_added'));
-                        this.tokenGenerated = token;
-                    });
-                break;
-        }
     }
 
     updatePath() {

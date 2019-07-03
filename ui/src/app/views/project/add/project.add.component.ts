@@ -100,7 +100,7 @@ export class ProjectAddComponent {
     }
 
     loadGroups(selected: string) {
-        this._groupService.getGroups(true).pipe(first()).subscribe(groups => {
+        this._groupService.getAll(true).pipe(first()).subscribe(groups => {
             this.groupList = groups;
             this.loading = false;
             if (selected == null) {
@@ -122,7 +122,7 @@ export class ProjectAddComponent {
             return;
         }
         this.loading = true;
-        this._groupService.createGroup(this.newGroup).subscribe(() => {
+        this._groupService.create(this.newGroup).subscribe(() => {
             this._toast.success('', this._translate.instant('group_added'));
             this.loadGroups(this.newGroup.name);
             this.modalCreateGroup.hide();
