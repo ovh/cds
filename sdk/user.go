@@ -72,11 +72,12 @@ type IdentifiableGroupMember interface {
 }
 
 type AuthentifiedUser struct {
-	ID            string       `json:"id" yaml:"id" cli:"id,key" db:"id"`
-	Username      string       `json:"username" yaml:"username" cli:"username,key" db:"username"`
-	Fullname      string       `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
-	Ring          string       `json:"ring" yaml:"ring,omitempty" db:"ring"`
-	DateCreation  time.Time    `json:"date_creation" yaml:"date_creation" db:"date_creation"`
+	ID           string    `json:"id" yaml:"id" cli:"id,key" db:"id"`
+	Username     string    `json:"username" yaml:"username" cli:"username,key" db:"username"`
+	Fullname     string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
+	Ring         string    `json:"ring" yaml:"ring,omitempty" db:"ring"`
+	DateCreation time.Time `json:"date_creation" yaml:"date_creation" db:"date_creation"`
+	// aggregates
 	Contacts      UserContacts `json:"contacts" yaml:"contacts" db:"-"`
 	OldUserStruct *User        `json:"old_user_struct" yaml:"old_user_struct" db:"-"`
 }

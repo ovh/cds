@@ -9,6 +9,16 @@ import (
 	"github.com/ovh/symmecrypt/keyloader"
 )
 
+type testData map[string]string
+
+func (d testData) Canonical() ([]byte, error) {
+	buf, err := json.Marshal(d)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return buf, nil
+}
+
 func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
 	// Marshal the keys
 	var marshalledKeys [][]byte
@@ -41,9 +51,7 @@ func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
 	configstore.RegisterProvider("fakeConfigstoreProvider", provider)
 
 	// Test signature and its verification
-	data := map[string]string{
-		"data": "data",
-	}
+	data := testData{"data": "data"}
 	sig, err := sign(data)
 	if err != nil {
 		return err
