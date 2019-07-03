@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/worker"
+
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
@@ -17,8 +20,15 @@ import (
 )
 
 func deleteAllWorkerModel(t *testing.T, db gorp.SqlExecutor) {
+	wks, err := worker.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
+
+	for _, wk := range wks {
+		require.NoError(t, worker.Delete(db, wk.ID))
+	}
+
 	models, err := workermodel.LoadAll(context.TODO(), db, nil)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	for _, m := range models {
 		test.NoError(t, workermodel.Delete(db, m.ID))
