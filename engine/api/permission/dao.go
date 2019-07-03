@@ -9,9 +9,12 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func LoadWorkflowMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKey string, workflowNames []string, groupIDs []int64) (sdk.EntitiesPermissions, error) {
+	log.Debug("LoadWorkflowMaxLevelPermission> %+v", groupIDs)
+
 	ctx, end := observability.Span(ctx, "permission.LoadWorkflowMaxLevelPermission")
 	defer end()
 

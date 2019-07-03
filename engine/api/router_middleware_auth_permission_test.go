@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"reflect"
 	"testing"
 	"time"
 
@@ -208,4 +209,362 @@ func TestAPI_checkSessionPermissions(t *testing.T) {
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumerAdmin)
 	err = api.checkSessionPermissions(ctx, localSession.ID, permission.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
+}
+
+func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
+	_, _, _, end := newTestAPI(t)
+	defer end()
+
+	type args struct {
+		m *sdk.Model
+		u *sdk.User
+		p int
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Should return true for admin user",
+			args: args{
+				m: &sdk.Model{
+					GroupID: 1,
+				},
+				u: &sdk.User{
+					Admin: true,
+				},
+				p: 7,
+			},
+			want: true,
+		},
+		{
+			name: "Should return true for user who has the right group for getting the model",
+			args: args{
+				m: &sdk.Model{
+					GroupID: 1,
+				},
+				u: &sdk.User{
+					Admin: false,
+					Groups: []sdk.Group{
+						{
+							ID: 1,
+						},
+					},
+				},
+				p: 4,
+			},
+			want: true,
+		},
+		{
+			name: "Should return false for user who has not the right group for updating the model",
+			args: args{
+				m: &sdk.Model{
+					GroupID: 1,
+				},
+				u: &sdk.User{
+					Admin: false,
+					Groups: []sdk.Group{
+						{
+							ID: 1,
+						},
+					},
+				},
+				p: 7,
+			},
+			want: false,
+		},
+		{
+			name: "Should return false for user who has not the right group",
+			args: args{
+				m: &sdk.Model{
+					GroupID: 666,
+				},
+				u: &sdk.User{
+					Admin: false,
+					Groups: []sdk.Group{
+						{
+							ID: 1,
+						},
+					},
+				},
+				p: 7,
+			},
+			want: false,
+		},
+		{
+			name: "Should return true for user who has the right group as admin for updating the model",
+			args: args{
+				m: &sdk.Model{
+					GroupID: 1,
+				},
+				u: &sdk.User{
+					ID:    1,
+					Admin: false,
+					Groups: []sdk.Group{
+						{
+							ID: 1,
+							Members: []sdk.User{
+								{
+									ID:         1,
+									GroupAdmin: true,
+								},
+							},
+						},
+					},
+				},
+				p: 7,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		authUser := &sdk.AuthentifiedUser{OldUserStruct: tt.args.u}
+		if tt.args.u.Admin {
+			authUser.Ring = sdk.UserRingAdmin
+		}
+		// TODO
+		//got := api.checkWorkerModelPermissionsByUser(tt.args.m, authUser, tt.args.p)
+		//if !reflect.DeepEqual(got, tt.want) {
+		//	t.Errorf("%q. checkWorkerModelPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
+		//}
+	}
+}
+
+func Test_checkWorkflowPermissionsByUser(t *testing.T) {
+	api, _, _, end := newTestAPI(t)
+	defer end()
+
+	type setup struct {
+		UserAdmin                bool
+		UserGroupNames           []string
+		ProjGroupPermissions     map[string]int
+		WorkflowGroupPermissions map[string]int
+	}
+	type args struct {
+		wName           string
+		pKey            string
+		permissionLevel int
+	}
+	tests := []struct {
+		name  string
+		setup setup
+		args  args
+		want  bool
+	}{
+		{
+			name: "Should return true for user [read permission]",
+			setup: setup{
+				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
+				ProjGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+				},
+				WorkflowGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+				},
+			},
+			args: args{
+				wName:           "workflow1",
+				pKey:            "key1",
+				permissionLevel: 4,
+			},
+			want: true,
+		},
+		/* {
+			name: "Should return false for user [read permission]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					// TODO
+					//Permissions: sdk.UserPermissions{
+					//	ProjectsPerm: map[string]int{
+					//		"key1": 4,
+					//	},
+					//},
+				},
+				wName: "workflow1",
+				pKey:  "key2",
+				p:     4,
+			},
+			want: false,
+		},
+		{
+			name: "Should return true for user [write permission]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					// TODO
+					//Permissions: sdk.UserPermissions{
+					//	ProjectsPerm: map[string]int{
+					//		"key1": 4,
+					//	},
+					//	WorkflowsPerm: sdk.UserPermissionsMap{
+					//		sdk.UserPermissionKey("key1", "workflow1"): 7,
+					//	},
+					//},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     7,
+			},
+			want: true,
+		},
+		{
+			name: "Should return false for user [wrong project]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					// TODO
+					//Permissions: sdk.UserPermissions{
+					//	ProjectsPerm: map[string]int{
+					//		"key1": 4,
+					//	},
+					//	WorkflowsPerm: sdk.UserPermissionsMap{
+					//		sdk.UserPermissionKey("key2", "workflow1"): 7,
+					//	},
+					//},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     7,
+			},
+			want: false,
+		},
+		{
+			name: "Should return false for user [wrong workflow]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					// TODO
+					//Permissions: sdk.UserPermissions{
+					//	ProjectsPerm: map[string]int{
+					//		"key1": 4,
+					//	},
+					//	WorkflowsPerm: sdk.UserPermissionsMap{
+					//		sdk.UserPermissionKey("key2", "workflow1"): 7,
+					//	},
+					//},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     7,
+			},
+			want: false,
+		},
+		{
+			name: "Should return false for user [wrong permission]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					// TODO
+					//Permissions: sdk.UserPermissions{
+					//	ProjectsPerm: map[string]int{
+					//		"key1": 4,
+					//	},
+					//	WorkflowsPerm: sdk.UserPermissionsMap{
+					//		sdk.UserPermissionKey("key1", "workflow1"): 5,
+					//	},
+					//},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     7,
+			},
+			want: false,
+		},
+		{
+			name: "Should return true for user [execution]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					// TODO
+					//Permissions: sdk.UserPermissions{
+					//	ProjectsPerm: map[string]int{
+					//		"key1": 4,
+					//	},
+					//	WorkflowsPerm: sdk.UserPermissionsMap{
+					//		sdk.UserPermissionKey("key1", "workflow1"): 5,
+					//	},
+					//},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     5,
+			},
+			want: true,
+		},
+		{
+			name: "Should return false for user [execution]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					// TODO
+					//Permissions: sdk.UserPermissions{
+					//	ProjectsPerm: map[string]int{
+					//		"key1": 4,
+					//	},
+					//	WorkflowsPerm: sdk.UserPermissionsMap{
+					//		sdk.UserPermissionKey("key1", "workflow1"): 4,
+					//	},
+					//},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     5,
+			},
+			want: false,
+		}, */
+	}
+	for _, tt := range tests {
+		var groups []*sdk.Group
+		for _, s := range tt.setup.UserGroupNames {
+			groups = append(groups, &sdk.Group{Name: s})
+		}
+		var usr *sdk.AuthentifiedUser
+		if tt.setup.UserAdmin {
+			usr, _ = assets.InsertAdminUser(api.mustDB())
+		} else {
+			usr, _ = assets.InsertLambdaUser(api.mustDB(), groups...)
+		}
+
+		t.Logf("authentified user=%+v", usr.OldUserStruct)
+
+		proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, tt.args.pKey, tt.args.pKey, nil)
+		wrkflw := assets.InsertTestWorkflow(t, api.mustDB(), api.Cache, proj, tt.args.wName)
+
+		for groupName, permLevel := range tt.setup.ProjGroupPermissions {
+			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName, group.LoadOptions.WithMembers)
+			require.NoError(t, err)
+
+			t.Logf("%s => %+v", g.Name, g)
+
+			require.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, g.ID, permLevel))
+		}
+
+		for groupName, permLevel := range tt.setup.WorkflowGroupPermissions {
+			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName, group.LoadOptions.WithMembers)
+			require.NoError(t, err)
+
+			t.Logf("%s => %+v", g.Name, g)
+			require.NoError(t, group.AddWorkflowGroup(api.mustDB(), wrkflw, sdk.GroupPermission{
+				Group:      *g,
+				Permission: permLevel,
+			}))
+		}
+
+		cons, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		require.NoError(t, err)
+
+		t.Logf("consumer=%+v", cons.AuthentifiedUser.OldUserStruct)
+
+		ctx := context.WithValue(context.TODO(), contextAPIConsumer, cons)
+
+		m := map[string]string{}
+		m["key"] = tt.args.pKey
+		err = api.checkWorkflowPermissions(ctx, tt.args.wName, tt.args.permissionLevel, m)
+		got := err == nil
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("%q. checkWorkerModelPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
+		}
+	}
 }

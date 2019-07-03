@@ -14,24 +14,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/builtin"
-	"github.com/ovh/cds/engine/api/authentication/local"
+	"github.com/ovh/cds/engine/api/application"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
@@ -39,6 +41,21 @@ import (
 
 // InsertTestProject create a test project
 func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string, u *sdk.AuthentifiedUser) *sdk.Project {
+
+	oldProj, _ := project.Load(db, store, key, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithWorkflows)
+	if oldProj != nil {
+		for _, w := range oldProj.Workflows {
+			require.NoError(t, workflow.Delete(context.TODO(), db, store, oldProj, &w))
+		}
+		for _, app := range oldProj.Applications {
+			require.NoError(t, application.DeleteApplication(db, app.ID))
+		}
+		for _, pip := range oldProj.Pipelines {
+			require.NoError(t, pipeline.DeletePipeline(context.TODO(), db, pip.ID))
+		}
+		require.NoError(t, project.Delete(db, store, key))
+	}
+
 	proj := sdk.Project{
 		Key:  key,
 		Name: name,
@@ -446,4 +463,54 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 	require.NoError(t, services.Insert(db, &srv))
 
 	return &srv, privateKey
+}
+
+func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string) *sdk.Workflow {
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, store, proj, &pip))
+
+	script := GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(db, s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Actions: []sdk.Action{
+				NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
+			},
+		},
+	}
+	pipeline.InsertJob(db, j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	w := sdk.Workflow{
+		Name:       name,
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	require.NoError(t, workflow.Insert(context.TODO(), db, store, &w, proj))
+
+	return &w
 }
