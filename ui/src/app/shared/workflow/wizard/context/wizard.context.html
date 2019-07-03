@@ -30,7 +30,7 @@
             <div class="twelve wide field">
                 <sui-select class="fluid selection"
                             [(ngModel)]="node.context.application_id"
-                            (ngModelChange)="change()"
+                            (ngModelChange)="change();pushChange()"
                             [options]="applications"
                             labelField="name"
                             valueField="id"
@@ -63,20 +63,22 @@
                 <label>{{ 'workflow_root_context_integration' | translate}}</label>
             </div>
             <div class="twelve wide field">
-                <sui-select class="fluid selection"
-                            name="selectIntegration"
-                            [(ngModel)]="node.context.project_integration_id"
-                            (ngModelChange)="pushChange()"
-                            [options]="integrations"
-                            labelField="name"
-                            valueField="id"
-                            [isSearchable]="true"
-                            [isDisabled]="readonly"
-                            #selectIntegration>
-                    <sui-select-option *ngFor="let t of selectIntegration.filteredOptions"
-                                       [value]="t">
-                    </sui-select-option>
-                </sui-select>
+                <ng-container *ngIf="integrations">
+                    <sui-select class="fluid selection"
+                                name="selectIntegration"
+                                [(ngModel)]="node.context.project_integration_id"
+                                (ngModelChange)="pushChange()"
+                                [options]="integrations"
+                                labelField="name"
+                                valueField="id"
+                                [isSearchable]="true"
+                                [isDisabled]="readonly"
+                                #selectIntegration>
+                        <sui-select-option *ngFor="let t of selectIntegration.filteredOptions"
+                                           [value]="t">
+                        </sui-select-option>
+                    </sui-select>
+                </ng-container>
             </div>
         </div>
         <div class="inline fields">

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -6,7 +6,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
 @Component({
     selector: 'app-workflow-node-delete',
     templateUrl: './workflow.node.delete.html',
-    styleUrls: ['./workflow.node.delete.scss']
+    styleUrls: ['./workflow.node.delete.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowDeleteNodeComponent {
 

@@ -1,5 +1,11 @@
-
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -21,9 +27,10 @@ import { Observable, of as observableOf } from 'rxjs';
 import { finalize, first, flatMap, map } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-workflow-node-add-wizard',
-  templateUrl: './node.wizard.html',
-  styleUrls: ['./node.wizard.scss']
+    selector: 'app-workflow-node-add-wizard',
+    templateUrl: './node.wizard.html',
+    styleUrls: ['./node.wizard.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNodeAddWizardComponent implements OnInit {
 
@@ -170,7 +177,9 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       projectKey: this.project.key,
       pipeline: this.newPipeline
     })).pipe(
-      finalize(() => this.loadingCreatePipeline = false),
+      finalize(() => {
+          this.loadingCreatePipeline = false;
+      }),
       flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.newPipeline.name))),
       map((pip) => {
         this._toast.success('', this._translate.instant('pipeline_added'));

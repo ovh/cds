@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Store} from '@ngxs/store';
 import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
@@ -16,7 +16,8 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'app-workflow-node-hook',
     templateUrl: './hook.html',
-    styleUrls: ['./hook.scss']
+    styleUrls: ['./hook.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookComponent implements OnInit {
@@ -45,7 +46,8 @@ export class WorkflowNodeHookComponent implements OnInit {
     nodeRun: WorkflowNodeRun;
 
     constructor(
-        private _store: Store, private _toast: ToastService, private _translate: TranslateService
+        private _store: Store, private _toast: ToastService, private _translate: TranslateService,
+        private _cd: ChangeDetectorRef
     ) {
     }
 
@@ -63,6 +65,7 @@ export class WorkflowNodeHookComponent implements OnInit {
             } else {
                 this.isSelected = false;
             }
+            this._cd.markForCheck();
         });
 
         if (this._hook) {

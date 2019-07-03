@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
@@ -23,7 +32,8 @@ declare var CodeMirror: any;
 @Component({
     selector: 'app-workflow-node-input',
     templateUrl: './wizard.input.html',
-    styleUrls: ['./wizard.input.scss']
+    styleUrls: ['./wizard.input.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeInputComponent implements OnInit {
@@ -67,7 +77,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         private _appWorkflowService: ApplicationWorkflowService,
         private _translate: TranslateService,
         private _toast: ToastService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -80,7 +91,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             readOnly: this.readonly
         };
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -116,7 +127,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                 projectKey: this.project.key,
                 pipelineName: pipeline.name
             })).pipe(
-                flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, pipeline.name)))
+                flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, pipeline.name))),
+                finalize(() => this._cd.markForCheck())
             ).subscribe((pip) => {
                 this.currentPipeline = pip;
                 this.pipParamsReady = true;
@@ -167,7 +179,10 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
 
     refreshVCSInfos(app: Application, remote?: string) {
         this._appWorkflowService.getVCSInfos(this.project.key, app.name, remote)
-            .pipe(finalize(() => this.loadingBranches = false))
+            .pipe(finalize(() => {
+                this.loadingBranches = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((vcsInfos) => {
                 if (vcsInfos.branches) {
                     this.branches = vcsInfos.branches.map((br) => '"' + br.display_id + '"');

@@ -41,7 +41,7 @@
                     <span *ngIf="readonly">{{ 'workflow_node_menu_edit_ro' | translate }}</span>
                     <span *ngIf="!readonly">{{ 'workflow_node_menu_edit' | translate }}</span>
             </a>
-            <ng-container *ngIf="node.type === 'pipeline'">
+            <ng-container *ngIf="node.type === 'pipeline' && workflow && workflow.pipelines && node && node.context">
                 <a class="item"
                     [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
                     [queryParams]="{workflow: workflow.name}">
