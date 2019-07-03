@@ -30,15 +30,12 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, nil
 	}
 
-	var err error
-	var shouldContinue bool
-
 	// Tokens (like izanamy)
-	ctx, shouldContinue, err = api.authStatusTokenMiddleware(ctx, w, req, rc)
+	ctx, ok, err := api.authStatusTokenMiddleware(ctx, w, req, rc)
 	if err != nil {
 		return ctx, sdk.WithStack(err)
 	}
-	if !shouldContinue {
+	if ok {
 		return ctx, nil
 	}
 

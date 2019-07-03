@@ -90,7 +90,7 @@ func TestRegister(t *testing.T) {
 	test.NoError(t, err)
 	assert.NotNil(t, w)
 
-	wk, err := worker.LoadByAuthConsumerID(context.TODO(), db, w.ConsumerID)
+	wk, err := worker.LoadByConsumerID(context.TODO(), db, w.ConsumerID)
 	test.NoError(t, err)
 	assert.Equal(t, w.ID, wk.ID)
 	assert.Equal(t, w.ModelID, wk.ModelID)
