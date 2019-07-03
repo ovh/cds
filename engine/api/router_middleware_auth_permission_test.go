@@ -369,156 +369,115 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 				permissionLevel: 4,
 			},
 			want: true,
-		},
-		/* {
+		}, {
 			name: "Should return false for user [read permission]",
+			setup: setup{
+				UserGroupNames:           []string{"Test_checkWorkflowPermissionsByUser"},
+				ProjGroupPermissions:     map[string]int{},
+				WorkflowGroupPermissions: map[string]int{},
+			},
 			args: args{
-				u: &sdk.User{
-					Admin: false,
-					// TODO
-					//Permissions: sdk.UserPermissions{
-					//	ProjectsPerm: map[string]int{
-					//		"key1": 4,
-					//	},
-					//},
-				},
-				wName: "workflow1",
-				pKey:  "key2",
-				p:     4,
+				wName:           "workflow1",
+				pKey:            "key2",
+				permissionLevel: 4,
 			},
 			want: false,
 		},
 		{
 			name: "Should return true for user [write permission]",
-			args: args{
-				u: &sdk.User{
-					Admin: false,
-					// TODO
-					//Permissions: sdk.UserPermissions{
-					//	ProjectsPerm: map[string]int{
-					//		"key1": 4,
-					//	},
-					//	WorkflowsPerm: sdk.UserPermissionsMap{
-					//		sdk.UserPermissionKey("key1", "workflow1"): 7,
-					//	},
-					//},
+			setup: setup{
+				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
+				ProjGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
 				},
-				wName: "workflow1",
-				pKey:  "key1",
-				p:     7,
+				WorkflowGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionReadWriteExecute,
+				},
+			},
+			args: args{
+				wName:           "workflow1",
+				pKey:            "key1",
+				permissionLevel: 7,
 			},
 			want: true,
 		},
 		{
-			name: "Should return false for user [wrong project]",
-			args: args{
-				u: &sdk.User{
-					Admin: false,
-					// TODO
-					//Permissions: sdk.UserPermissions{
-					//	ProjectsPerm: map[string]int{
-					//		"key1": 4,
-					//	},
-					//	WorkflowsPerm: sdk.UserPermissionsMap{
-					//		sdk.UserPermissionKey("key2", "workflow1"): 7,
-					//	},
-					//},
-				},
-				wName: "workflow1",
-				pKey:  "key1",
-				p:     7,
-			},
-			want: false,
-		},
-		{
 			name: "Should return false for user [wrong workflow]",
-			args: args{
-				u: &sdk.User{
-					Admin: false,
-					// TODO
-					//Permissions: sdk.UserPermissions{
-					//	ProjectsPerm: map[string]int{
-					//		"key1": 4,
-					//	},
-					//	WorkflowsPerm: sdk.UserPermissionsMap{
-					//		sdk.UserPermissionKey("key2", "workflow1"): 7,
-					//	},
-					//},
+			setup: setup{
+				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
+				ProjGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
 				},
-				wName: "workflow1",
-				pKey:  "key1",
-				p:     7,
+				WorkflowGroupPermissions: map[string]int{},
+			},
+			args: args{
+				wName:           "workflow1",
+				pKey:            "key1",
+				permissionLevel: 7,
 			},
 			want: false,
 		},
 		{
 			name: "Should return false for user [wrong permission]",
-			args: args{
-				u: &sdk.User{
-					Admin: false,
-					// TODO
-					//Permissions: sdk.UserPermissions{
-					//	ProjectsPerm: map[string]int{
-					//		"key1": 4,
-					//	},
-					//	WorkflowsPerm: sdk.UserPermissionsMap{
-					//		sdk.UserPermissionKey("key1", "workflow1"): 5,
-					//	},
-					//},
+			setup: setup{
+				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
+				ProjGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
 				},
-				wName: "workflow1",
-				pKey:  "key1",
-				p:     7,
+				WorkflowGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+				},
+			},
+			args: args{
+				wName:           "workflow1",
+				pKey:            "key1",
+				permissionLevel: 7,
 			},
 			want: false,
 		},
 		{
 			name: "Should return true for user [execution]",
-			args: args{
-				u: &sdk.User{
-					Admin: false,
-					// TODO
-					//Permissions: sdk.UserPermissions{
-					//	ProjectsPerm: map[string]int{
-					//		"key1": 4,
-					//	},
-					//	WorkflowsPerm: sdk.UserPermissionsMap{
-					//		sdk.UserPermissionKey("key1", "workflow1"): 5,
-					//	},
-					//},
+			setup: setup{
+				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
+				ProjGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionReadExecute,
 				},
-				wName: "workflow1",
-				pKey:  "key1",
-				p:     5,
+				WorkflowGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionReadExecute,
+				},
+			},
+			args: args{
+
+				wName:           "workflow1",
+				pKey:            "key1",
+				permissionLevel: 5,
 			},
 			want: true,
 		},
 		{
 			name: "Should return false for user [execution]",
-			args: args{
-				u: &sdk.User{
-					Admin: false,
-					// TODO
-					//Permissions: sdk.UserPermissions{
-					//	ProjectsPerm: map[string]int{
-					//		"key1": 4,
-					//	},
-					//	WorkflowsPerm: sdk.UserPermissionsMap{
-					//		sdk.UserPermissionKey("key1", "workflow1"): 4,
-					//	},
-					//},
+			setup: setup{
+				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
+				ProjGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
 				},
-				wName: "workflow1",
-				pKey:  "key1",
-				p:     5,
+				WorkflowGroupPermissions: map[string]int{
+					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+				},
+			},
+			args: args{
+				wName:           "workflow1",
+				pKey:            "key1",
+				permissionLevel: 5,
 			},
 			want: false,
-		}, */
+		},
 	}
 	for _, tt := range tests {
+		var suffix = "-" + sdk.RandomString(10)
 		var groups []*sdk.Group
 		for _, s := range tt.setup.UserGroupNames {
-			groups = append(groups, &sdk.Group{Name: s})
+			groups = append(groups, &sdk.Group{Name: s + suffix})
 		}
 		var usr *sdk.AuthentifiedUser
 		if tt.setup.UserAdmin {
@@ -527,25 +486,20 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			usr, _ = assets.InsertLambdaUser(api.mustDB(), groups...)
 		}
 
-		t.Logf("authentified user=%+v", usr.OldUserStruct)
-
 		proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, tt.args.pKey, tt.args.pKey, nil)
 		wrkflw := assets.InsertTestWorkflow(t, api.mustDB(), api.Cache, proj, tt.args.wName)
 
 		for groupName, permLevel := range tt.setup.ProjGroupPermissions {
-			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName, group.LoadOptions.WithMembers)
+			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName+suffix, group.LoadOptions.WithMembers)
 			require.NoError(t, err)
-
-			t.Logf("%s => %+v", g.Name, g)
 
 			require.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, g.ID, permLevel))
 		}
 
 		for groupName, permLevel := range tt.setup.WorkflowGroupPermissions {
-			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName, group.LoadOptions.WithMembers)
+			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName+suffix, group.LoadOptions.WithMembers)
 			require.NoError(t, err)
 
-			t.Logf("%s => %+v", g.Name, g)
 			require.NoError(t, group.AddWorkflowGroup(api.mustDB(), wrkflw, sdk.GroupPermission{
 				Group:      *g,
 				Permission: permLevel,
@@ -554,8 +508,6 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 
 		cons, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		require.NoError(t, err)
-
-		t.Logf("consumer=%+v", cons.AuthentifiedUser.OldUserStruct)
 
 		ctx := context.WithValue(context.TODO(), contextAPIConsumer, cons)
 
