@@ -427,6 +427,8 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
 github.com/ovh/cds/sdk/interpolate
+# github.com/ovh/cds/sdk/izanami v0.0.0-00010101000000-000000000000 => ./sdk/izanami
+github.com/ovh/cds/sdk/izanami
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
 # github.com/ovh/venom v0.25.0
@@ -446,8 +448,6 @@ github.com/ovh/venom/executors/smtp
 github.com/ovh/venom/executors/ssh
 github.com/ovh/venom/executors/web
 github.com/ovh/venom/executors
-# github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
-github.com/ovhlabs/izanami-go-client
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
 # github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c

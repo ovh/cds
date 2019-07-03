@@ -1,4 +1,4 @@
-package client
+package izanami
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ type Client struct {
 	apiURL       string
 	clientID     string
 	clientSecret string
-	HttpClient   *http.Client
+	HTTPClient   *http.Client
 }
 
 // FeatureClient represents a client for feature management
@@ -31,7 +31,7 @@ func New(apiURL, clientID, secret string) (*Client, error) {
 		apiURL:       apiURL,
 		clientID:     clientID,
 		clientSecret: secret,
-		HttpClient: &http.Client{
+		HTTPClient: &http.Client{
 			Transport: &httpcontrol.Transport{
 				RequestTimeout: time.Second * 30,
 				MaxTries:       5,
