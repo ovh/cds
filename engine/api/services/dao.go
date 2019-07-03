@@ -146,10 +146,12 @@ func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 		}
 	}
 
-	authConsumer, _ := authentication.LoadConsumerByID(context.Background(), db, s.ConsumerID)
-	if authConsumer != nil {
-		if err := authentication.DeleteConsumerByID(db, authConsumer.ID); err != nil {
-			return err
+	if s.ConsumerID != nil {
+		authConsumer, _ := authentication.LoadConsumerByID(context.Background(), db, *s.ConsumerID)
+		if authConsumer != nil {
+			if err := authentication.DeleteConsumerByID(db, authConsumer.ID); err != nil {
+				return err
+			}
 		}
 	}
 

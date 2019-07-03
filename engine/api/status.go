@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -351,6 +352,9 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 	}
 	mStatus := api.computeGlobalStatus(srvs)
 
+	btes, _ := json.MarshalIndent(mStatus, "  ", "  ")
+	log.Debug("mStatus: \n%s", string(btes))
+
 	ignoreList := []string{"version", "hostname", "time", "uptime", "cdsname"}
 
 	for _, line := range mStatus.Lines {
@@ -362,6 +366,8 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 		}
 
 		item := strings.ToLower(line.Component[idx+1:])
+
+		log.Debug("Item=%s", item)
 
 		if service == "Global" {
 			// Global is an aggregation of status, useful only for cdsctl ui

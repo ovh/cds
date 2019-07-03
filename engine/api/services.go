@@ -48,7 +48,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		// TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
 		srv.Uptodate = srv.Version == sdk.VERSION
 
-		srv.ConsumerID = getAPIConsumer(ctx).ID
+		srv.ConsumerID = &getAPIConsumer(ctx).ID
 
 		//Insert or update the service
 		tx, err := api.mustDB().Begin()

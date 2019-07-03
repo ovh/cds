@@ -16,6 +16,7 @@ func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Servic
 		GroupIDs:           groupIDs,
 		Scopes: []sdk.AuthConsumerScope{
 			sdk.AuthConsumerScopeWorker,
+			sdk.AuthConsumerScopeRun,
 			sdk.AuthConsumerScopeRunExecution,
 		},
 	}
