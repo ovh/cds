@@ -18,7 +18,7 @@ func (api *API) getParametersInPipelineHandler() service.Handler {
 		key := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -39,7 +39,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 		pipelineName := vars["pipelineKey"]
 		paramName := vars["name"]
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -83,7 +83,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return err
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, true)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -136,7 +136,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addParameterInPipelineHandler> Wrong param name got %s instead of %s", newParam.Name, paramName)
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}

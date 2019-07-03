@@ -21,7 +21,14 @@ type structarg struct {
 }
 
 // LoadPipeline loads a pipeline from database
-func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
+func LoadPipeline(ctx context.Context, db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
+	ctx, end := observability.Span(ctx, "pipeline.LoadPipeline",
+		observability.Tag(observability.TagProjectKey, projectKey),
+		observability.Tag(observability.TagPipeline, name),
+		observability.Tag(observability.TagPipelineDeep, deep),
+	)
+	defer end()
+
 	var p Pipeline
 	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.last_modified, pipeline.from_repository
 			FROM pipeline
@@ -37,11 +44,11 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 
 	pip := sdk.Pipeline(p)
 	if deep {
-		if err := loadPipelineDependencies(context.TODO(), db, &pip); err != nil {
+		if err := loadPipelineDependencies(ctx, db, &pip); err != nil {
 			return nil, err
 		}
 	} else {
-		parameters, err := GetAllParametersInPipeline(context.TODO(), db, pip.ID)
+		parameters, err := GetAllParametersInPipeline(ctx, db, pip.ID)
 		if err != nil {
 			return nil, err
 		}

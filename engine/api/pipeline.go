@@ -37,7 +37,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updatePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		pipelineDB, err := pipeline.LoadPipeline(api.mustDB(), key, name, true)
+		pipelineDB, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, name, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", name)
 		}
@@ -88,7 +88,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		db := api.mustDB()
 		u := getAPIConsumer(ctx)
 
-		pipDB, err := pipeline.LoadPipeline(db, key, name, false)
+		pipDB, err := pipeline.LoadPipeline(ctx, db, key, name, false)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline")
 		}
@@ -221,7 +221,7 @@ func (api *API) getPipelineHandler() service.Handler {
 		withWorkflows := FormBool(r, "withWorkflows")
 		withEnvironments := FormBool(r, "withEnvironments")
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
@@ -280,7 +280,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(errP, "Cannot load project")
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), proj.Key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}

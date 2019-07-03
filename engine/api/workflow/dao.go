@@ -1235,7 +1235,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 		return nil
 	}
 	if n.Context.PipelineName != "" {
-		pipDB, err := pipeline.LoadPipeline(db, proj.Key, n.Context.PipelineName, true)
+		pipDB, err := pipeline.LoadPipeline(ctx, db, proj.Key, n.Context.PipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load pipeline %s", n.Context.PipelineName)
 		}

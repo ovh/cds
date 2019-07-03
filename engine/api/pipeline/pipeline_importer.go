@@ -20,7 +20,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
 
-	oldPipeline, err := LoadPipeline(db,
+	oldPipeline, err := LoadPipeline(ctx, db,
 		proj.Key,
 		pip.Name, true)
 	if err != nil {
@@ -222,7 +222,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	//Reload the pipeline
-	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
+	pip2, err := LoadPipeline(ctx, db, proj.Key, pip.Name, false)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load imported pipeline project:%s pipeline:%s", proj.Name, pip.Name)
 	}

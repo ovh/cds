@@ -39,7 +39,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return err
 		}
 
-		pip, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
+		pip, errl := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
@@ -152,7 +152,7 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 
 		// load old pipeline
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipName)
 		}
@@ -248,7 +248,7 @@ func (api *API) deleteJobHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteJobHandler>ID is not a int: %s", errp)
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
+		pipelineData, errl := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipName, true)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 		}

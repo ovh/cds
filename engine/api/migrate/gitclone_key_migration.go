@@ -103,14 +103,14 @@ func getPipelineUsingAction(db gorp.SqlExecutor, name string) ([]pipelineUsingAc
 var badKey int64
 
 // GitClonePrivateKey is temporary code
-func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
+func GitClonePrivateKey(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	store.Publish(sdk.MaintenanceQueueName, "true")
 	defer store.Publish(sdk.MaintenanceQueueName, "false")
 
-	return migrateGitClonePrivateKey(DBFunc, store)
+	return migrateGitClonePrivateKey(ctx, DBFunc, store)
 }
 
-func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
+func migrateGitClonePrivateKey(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	db := DBFunc()
 	log.Info("GitClonePrivateKey> Begin")
 	defer log.Info("GitClonePrivateKey> End with key errors %d", badKey)
@@ -139,7 +139,7 @@ func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) err
 		}
 
 		_ = id // we don't care about it
-		if err := migrateActionGitClonePipeline(tx, store, p); err != nil {
+		if err := migrateActionGitClonePipeline(ctx, tx, store, p); err != nil {
 			log.Error("GitClonePrivateKey> %v", err)
 			_ = tx.Rollback()
 			continue
@@ -165,8 +165,8 @@ func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) err
 }
 
 // migrateActionGitClonePipeline is the unitary function
-func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p pipelineUsingAction) error {
-	pip, err := pipeline.LoadPipeline(db, p.ProjKey, p.PipName, true)
+func migrateActionGitClonePipeline(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p pipelineUsingAction) error {
+	pip, err := pipeline.LoadPipeline(ctx, db, p.ProjKey, p.PipName, true)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load pipeline project %s and pipeline name %s: %+v", p.ProjKey, p.PipName, p)
 	}

@@ -44,7 +44,7 @@ func migratePipelineCleanArtifactBuiltinActions(ctx context.Context, db *gorp.Db
 	}
 	defer tx.Rollback() // nolint
 
-	pip, err := pipeline.LoadPipeline(tx, projetKey, pipelineName, true)
+	pip, err := pipeline.LoadPipeline(ctx, tx, projetKey, pipelineName, true)
 	if err != nil {
 		return sdk.WithStack(err)
 	}

@@ -26,7 +26,7 @@ func (api *API) addStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return sdk.WrapError(err, "addStageHandler")
 		}
@@ -84,7 +84,7 @@ func (api *API) getStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, false)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, false)
 		if err != nil {
 			return sdk.WrapError(err, "error on pipeline load")
 		}
@@ -115,7 +115,7 @@ func (api *API) moveStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return err
 		}
@@ -192,7 +192,7 @@ func (api *API) updateStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return err
 		}
@@ -248,7 +248,7 @@ func (api *API) deleteStageHandler() service.Handler {
 		stageIDString := vars["stageID"]
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineKey)
 		}
@@ -324,7 +324,7 @@ func (api *API) getStageConditionsHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, false)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, false)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineKey)
 		}

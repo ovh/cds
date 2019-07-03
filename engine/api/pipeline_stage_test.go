@@ -101,7 +101,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -169,7 +169,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -262,7 +262,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -383,7 +383,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -478,7 +478,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -554,7 +554,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
