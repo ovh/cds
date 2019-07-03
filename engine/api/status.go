@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -37,22 +36,17 @@ func VersionHandler() service.Handler {
 func (api *API) Status() sdk.MonitoringStatus {
 	m := api.CommonMonitoring()
 
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK}))
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
-	m.Lines = append(m.Lines, getStatusLine(api.Router.StatusPanic()))
-	m.Lines = append(m.Lines, getStatusLine(event.Status()))
-	m.Lines = append(m.Lines, getStatusLine(sessionstore.Status))
-	m.Lines = append(m.Lines, getStatusLine(api.SharedStorage.Status()))
-	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
-	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
-	m.Lines = append(m.Lines, getStatusLine(workermodel.Status(api.mustDB())))
-	m.Lines = append(m.Lines, getStatusLine(migrate.Status(api.mustDB())))
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, api.Router.StatusPanic())
+	m.Lines = append(m.Lines, event.Status())
+	m.Lines = append(m.Lines, api.SharedStorage.Status())
+	m.Lines = append(m.Lines, mail.Status())
+	m.Lines = append(m.Lines, api.DBConnectionFactory.Status())
+	m.Lines = append(m.Lines, workermodel.Status(api.mustDB()))
+	m.Lines = append(m.Lines, migrate.Status(api.mustDB()))
 
 	return m
-}
-
-func getStatusLine(s sdk.MonitoringStatusLine) sdk.MonitoringStatusLine {
-	return s
 }
 
 func (api *API) statusHandler() service.Handler {

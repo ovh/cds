@@ -756,6 +756,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	externalServices := make([]sdk.ExternalService, 0, len(a.Config.Services))
 	for _, s := range a.Config.Services {
+		log.Info("Managing external service %s %s", s.Name, s.Type)
 		serv := sdk.ExternalService{
 			Service: sdk.Service{
 				CanonicalService: sdk.CanonicalService{
