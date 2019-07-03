@@ -1,11 +1,12 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { ExpirationToString, Token, TokenEvent } from 'app/model/token.model';
 import { Table } from 'app/shared/table/table';
 
 @Component({
     selector: 'app-token-list',
     templateUrl: './token.list.html',
-    styleUrls: ['./token.list.scss']
+    styleUrls: ['./token.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TokenListComponent extends Table<Token> {
 

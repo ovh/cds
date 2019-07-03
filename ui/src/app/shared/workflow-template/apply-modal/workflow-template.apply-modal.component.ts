@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from 'app/model/workflow-template.model';
@@ -8,11 +17,13 @@ import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-
 import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-apply-modal',
     templateUrl: './workflow-template.apply-modal.html',
-    styleUrls: ['./workflow-template.apply-modal.scss']
+    styleUrls: ['./workflow-template.apply-modal.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTemplateApplyModalComponent implements OnChanges {
     @ViewChild('workflowTemplateApplyModal', {static: false}) workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
@@ -32,7 +43,8 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     constructor(
         private _modalService: SuiModalService,
         private _projectService: ProjectService,
-        private _templateService: WorkflowTemplateService
+        private _templateService: WorkflowTemplateService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnChanges() {
@@ -67,7 +79,9 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
 
     load() {
         if (this.workflowTemplate && this.workflowTemplateInstance) {
-            this._projectService.getProject(this.workflowTemplateInstance.project.key, null).subscribe(p => {
+            this._projectService.getProject(this.workflowTemplateInstance.project.key, null)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(p => {
                 this.project = p;
                 this.loadAudits()
             });
@@ -76,13 +90,14 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
             // retreive workflow template and instance from given workflow
             let s = this.workflow.from_template.split('/');
 
-            forkJoin(
+            forkJoin<WorkflowTemplate, WorkflowTemplateInstance> (
                 this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')),
                 this._templateService.getInstance(this.workflow.project_key, this.workflow.name)
             ).subscribe(res => {
                 this.workflowTemplate = res[0];
                 this.workflowTemplateInstance = res[1];
                 this.loadAudits();
+                this._cd.markForCheck();
             });
         }
     }
@@ -98,7 +113,9 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
         // load audits since instance version if not latest
         if (this.workflowTemplateInstance.workflow_template_version !== this.workflowTemplate.version) {
             this._templateService.getAudits(this.workflowTemplate.group.name, this.workflowTemplate.slug,
-                this.workflowTemplateInstance.workflow_template_version).subscribe(as => {
+                this.workflowTemplateInstance.workflow_template_version)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(as => {
                     this.workflowTemplateAuditMessages = as.filter(a => !!a.change_message).map(a => a.change_message);
                     let before = as[as.length - 1].data_after ? as[as.length - 1].data_after : null;
                     this.diffItems = calculateWorkflowTemplateDiff(before, this.workflowTemplate);

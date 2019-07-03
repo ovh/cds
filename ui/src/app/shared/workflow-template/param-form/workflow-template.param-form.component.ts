@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Project } from 'app/model/project.model';
 import {
@@ -13,10 +21,18 @@ import { finalize, first } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-template-param-form',
     templateUrl: './workflow-template.param-form.html',
-    styleUrls: ['./workflow-template.param-form.scss']
+    styleUrls: ['./workflow-template.param-form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowTemplateParamFormComponent implements OnChanges {
-    @Input() project: Project;
+export class WorkflowTemplateParamFormComponent implements OnInit {
+    _project: Project;
+    @Input('project') set project(data: Project) {
+        this._project = data;
+        this.initProject();
+    }
+    get project() {
+        return this._project;
+    }
     @Input() workflowTemplate: WorkflowTemplate;
     @Input() workflowTemplateInstance: WorkflowTemplateInstance;
     @Output() paramChange = new EventEmitter<ParamData>();
@@ -28,7 +44,7 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
     codeMirrorConfig: any;
 
     constructor(
-        private _repoManagerService: RepoManagerService
+        private _repoManagerService: RepoManagerService, private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = this.codeMirrorConfig = {
             matchBrackets: true,
@@ -40,13 +56,17 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
         };
     }
 
-    ngOnChanges() {
+    ngOnInit(): void {
+        this.initProject();
+    }
+
+    initProject() {
         if (this.project && this.project.vcs_servers) {
             this.vcsNames = this.project.vcs_servers.map(vcs => vcs.name);
         }
 
         this.parameterValues = {};
-        if (this.workflowTemplate.parameters) {
+        if (this.workflowTemplate && this.workflowTemplate.parameters) {
             this.workflowTemplate.parameters.forEach(parameter => {
                 if (parameter.type === 'boolean') {
                     this.parameterValues[parameter.key] = new FormControl();
@@ -75,6 +95,7 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
                     }
                 }
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -82,7 +103,10 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
         if (this.parameterValues[parameterKey]) {
             this.loading = true;
             this._repoManagerService.getRepositories(this.project.key, this.parameterValues[parameterKey], true)
-                .pipe(first(), finalize(() => this.loading = false))
+                .pipe(first(), finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe(rs => {
                     this.parameterValues[parameterKey + '-repositories'] = rs.map(r => r.fullname);
                 });

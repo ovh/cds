@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Key } from 'app/model/keys.model';
 import { PermissionValue } from 'app/model/permission.model';
 import { Warning } from 'app/model/warning.model';
@@ -8,7 +8,8 @@ import { Table } from 'app/shared/table/table';
 @Component({
     selector: 'app-keys-list',
     templateUrl: './keys.list.html',
-    styleUrls: ['./keys.list.scss']
+    styleUrls: ['./keys.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KeysListComponent extends Table<Key> {
     @Input() keys: Array<Key>;

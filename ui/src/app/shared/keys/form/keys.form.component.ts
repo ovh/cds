@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Key, KeyType } from 'app/model/keys.model';
 import { KeyEvent } from 'app/shared/keys/key.event';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -6,7 +6,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
 @Component({
     selector: 'app-keys-form',
     templateUrl: './keys.form.html',
-    styleUrls: ['./keys.form.scss']
+    styleUrls: ['./keys.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KeysFormComponent implements OnInit {
 

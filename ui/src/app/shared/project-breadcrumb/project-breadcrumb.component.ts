@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Action } from 'app/model/action.model';
 import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
@@ -8,7 +8,8 @@ import { Project } from 'app/model/project.model';
 @Component({
     selector: 'app-project-breadcrumb',
     templateUrl: './project-breadcrumb.html',
-    styleUrls: ['./project-breadcrumb.scss']
+    styleUrls: ['./project-breadcrumb.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectBreadcrumbComponent {
 

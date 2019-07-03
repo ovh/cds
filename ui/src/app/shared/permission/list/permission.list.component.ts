@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { GroupPermission } from 'app/model/group.model';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
@@ -8,7 +8,8 @@ import { Table } from 'app/shared/table/table';
 @Component({
     selector: 'app-permission-list',
     templateUrl: './permission.list.html',
-    styleUrls: ['./permission.list.scss']
+    styleUrls: ['./permission.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PermissionListComponent extends Table<GroupPermission> {
 

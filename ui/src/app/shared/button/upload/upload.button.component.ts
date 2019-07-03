@@ -1,9 +1,10 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'app-upload-button',
     templateUrl: './upload.button.html',
-    styleUrls: ['./upload.button.scss']
+    styleUrls: ['./upload.button.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UploadButtonComponent  {
 

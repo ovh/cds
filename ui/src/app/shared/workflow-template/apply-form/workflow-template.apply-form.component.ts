@@ -1,8 +1,21 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Project } from 'app/model/project.model';
-import { ParamData, WorkflowTemplate, WorkflowTemplateApplyResult, WorkflowTemplateInstance,
-    WorkflowTemplateRequest } from 'app/model/workflow-template.model';
+import {
+    ParamData,
+    WorkflowTemplate,
+    WorkflowTemplateApplyResult,
+    WorkflowTemplateInstance,
+    WorkflowTemplateRequest
+} from 'app/model/workflow-template.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
 import { finalize, first } from 'rxjs/operators';
@@ -10,7 +23,8 @@ import { finalize, first } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-template-apply-form',
     templateUrl: './workflow-template.apply-form.html',
-    styleUrls: ['./workflow-template.apply-form.scss']
+    styleUrls: ['./workflow-template.apply-form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTemplateApplyFormComponent implements OnChanges {
     @Input() project: Project;
@@ -29,7 +43,7 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
-        private _router: Router
+        private _router: Router, private _cd: ChangeDetectorRef
     ) { }
 
     ngOnChanges() {
@@ -47,7 +61,10 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
         this.result = null;
         this.loading = true;
         this._workflowTemplateService.apply(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
-            .pipe(first(), finalize(() => this.loading = false))
+            .pipe(first(), finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(res => {
                 // if the workflow name changed move to new workflow page
                 this.result = res;
@@ -85,7 +102,8 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
     }
 
     clickDetach() {
-        this._workflowTemplateService.deleteInstance(this.workflowTemplate, this.workflowTemplateInstance).subscribe(() => {
+        this._workflowTemplateService.deleteInstance(this.workflowTemplate, this.workflowTemplateInstance)
+            .subscribe(() => {
             this.clickClose();
         });
     }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { AuditWorkflow } from 'app/model/audit.model';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
@@ -6,7 +6,8 @@ import { Column, ColumnType } from 'app/shared/table/data-table.component';
 @Component({
     selector: 'app-audit-list',
     templateUrl: './audit.list.html',
-    styleUrls: ['./audit.list.scss']
+    styleUrls: ['./audit.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuditListComponent {
     @Input() audits: Array<AuditWorkflow>;

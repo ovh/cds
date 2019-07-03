@@ -1,9 +1,10 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'app-confirm-button',
     templateUrl: './confirm.button.html',
-    styleUrls: ['./confirm.button.scss']
+    styleUrls: ['./confirm.button.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmButtonComponent  {
     @Input() loading = false;

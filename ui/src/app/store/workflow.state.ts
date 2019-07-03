@@ -276,6 +276,16 @@ export class WorkflowState {
     @Action(actionWorkflow.AddGroupInAllWorkflows)
     propagateProjectPermission(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddGroupInAllWorkflows) {
         const state = ctx.getState();
+        if (!state.workflow) {
+            return;
+        }
+        if (state.workflow.project_key !== action.payload.projectKey) {
+            ctx.setState({
+                ...state,
+                workflow: null
+            });
+            return
+        }
         let group: GroupPermission = { ...action.payload.group, hasChanged: false, updating: false };
         let wf = Object.assign({}, state.workflow, <Workflow>{
             groups: [group].concat(state.workflow.groups)
