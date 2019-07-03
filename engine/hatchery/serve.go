@@ -102,16 +102,6 @@ func (c *Common) ServiceName() string {
 	return c.Common.ServiceName
 }
 
-func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	if !rc.NeedAuth {
-		return ctx, nil
-	}
-
-	// TODO: checks that the request is signed by the API public key
-
-	return ctx, sdk.ErrUnauthorized
-}
-
 //CDSClient returns cdsclient instance
 func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
@@ -174,7 +164,7 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Background = ctx
 	r.URL = h.Configuration().URL
 	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, c.AuthMiddleware)
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(c.ParsedAPIPublicKey))
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), api.Auth(false)))

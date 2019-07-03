@@ -3,7 +3,9 @@ package vcs
 import (
 	"encoding/base64"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"testing"
 
 	"github.com/ovh/cds/sdk"
@@ -303,15 +305,20 @@ func Test_getBranchHandler(t *testing.T) {
 	}
 	uri := s.Router.GetRoute("GET", s.getBranchHandler, vars)
 	test.NotEmpty(t, uri)
-	req := newRequest(t, s, "GET", uri, nil)
-	q := req.URL.Query()
-	q.Set("branch", cfg["githubBranch"])
-	req.URL.RawQuery = q.Encode()
+	f := func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set("branch", cfg["githubBranch"])
+		req.URL.RawQuery = q.Encode()
+	}
+	req := newRequest(t, s, "GET", uri, nil, f)
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
 	req.Header.Set(sdk.HeaderXAccessToken, token)
 	//accessTokenSecret is useless for github, let's give the same token
 	req.Header.Set(sdk.HeaderXAccessTokenSecret, token)
+
+	btes, _ := httputil.DumpRequest(req, false)
+	t.Log(string(btes))
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -349,11 +356,12 @@ func Test_getCommitsHandler(t *testing.T) {
 
 	uri := s.Router.GetRoute("GET", s.getCommitsHandler, vars)
 	test.NotEmpty(t, uri)
-	req := newRequest(t, s, "GET", uri, nil)
-	q := req.URL.Query()
-	q.Set("since", cfg["githubCommitSince"])
-	q.Set("branch", cfg["githubCommitBranch"])
-	req.URL.RawQuery = q.Encode()
+	req := newRequest(t, s, "GET", uri, nil, func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set("since", cfg["githubCommitSince"])
+		q.Set("branch", cfg["githubCommitBranch"])
+		req.URL.RawQuery = q.Encode()
+	})
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
 	req.Header.Set(sdk.HeaderXAccessToken, token)

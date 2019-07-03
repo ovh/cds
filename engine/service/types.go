@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/rsa"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -23,6 +24,7 @@ type APIServiceConfiguration struct {
 type Common struct {
 	Client               cdsclient.Interface
 	APIPublicKey         []byte
+	ParsedAPIPublicKey   *rsa.PublicKey
 	StartupTime          time.Time
 	Name                 string
 	HTTPURL              string

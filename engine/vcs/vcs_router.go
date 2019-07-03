@@ -3,6 +3,8 @@ package vcs
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/service"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -13,7 +15,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Background = ctx
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, s.authMiddleware, api.TracingMiddlewareFunc(s.ServiceName, nil, nil))
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey), s.authMiddleware, api.TracingMiddlewareFunc(s.ServiceName, nil, nil))
 	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))

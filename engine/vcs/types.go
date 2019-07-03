@@ -8,7 +8,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Service is the stuct representing a vcs µService
@@ -160,7 +159,6 @@ func (s *Service) addServerConfiguration(name string, c ServerConfiguration) err
 		s.Cfg.Servers = map[string]ServerConfiguration{}
 	}
 	s.Cfg.Servers[name] = c
-	log.Debug("VCS> addServerConfiguration %+v %+v", s.Cfg.Servers[name], s.Cfg.Servers[name].Github)
 	return nil
 }
 

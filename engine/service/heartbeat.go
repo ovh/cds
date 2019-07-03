@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ovh/cds/sdk/jws"
+
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/ovh/cds/sdk"
@@ -39,7 +41,14 @@ func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
 
 	var err error
 	c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(cfg)
-	return err
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
 }
 
 func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
