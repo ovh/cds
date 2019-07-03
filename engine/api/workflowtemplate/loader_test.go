@@ -14,11 +14,11 @@ import (
 func TestLoadGroup(t *testing.T) {
 	db := &test.SqlExecutorMock{}
 	db.OnSelect = func(i interface{}) {
-		gs := i.(*[]sdk.Group)
-		*gs = append(*gs, sdk.Group{
+		gs := i.(*[]*sdk.Group)
+		*gs = append(*gs, &sdk.Group{
 			ID:   1,
 			Name: "grp-1",
-		}, sdk.Group{
+		}, &sdk.Group{
 			ID:   2,
 			Name: "grp-2",
 		})
