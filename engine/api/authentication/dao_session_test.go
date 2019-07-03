@@ -128,6 +128,5 @@ func TestDeleteSession(t *testing.T) {
 	test.NoError(t, authentication.DeleteSessionByID(db, s.ID))
 
 	res, err = authentication.LoadSessionByID(context.TODO(), db, s.ID)
-	test.NoError(t, err)
-	test.Nil(t, res)
+	test.Error(t, err)
 }
