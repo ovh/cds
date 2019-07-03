@@ -263,31 +263,22 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
 				//value= "postgres:latest env_1=blabla env_2=blabla" => we can add env variables in requirement name
-				tuple := strings.Split(r.Value, " ")
-				img := tuple[0]
-				env := []string{}
+				img, envm := hatchery.ParseRequirementModel(r.Value)
+
 				serviceMemory := int64(1024)
-				if len(tuple) > 1 {
-					for i := 1; i < len(tuple); i++ {
-						splittedTuple := strings.SplitN(tuple[i], "=", 2)
-						name := splittedTuple[0]
-						val := strings.TrimLeft(splittedTuple[1], "\"")
-						val = strings.TrimRight(val, "\"")
-						env = append(env, name+"="+val)
-					}
-				}
-				//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
-				for _, e := range env {
-					if strings.HasPrefix(e, "CDS_SERVICE_MEMORY=") {
-						m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
-						i, err := strconv.Atoi(m)
+				env := []string{}
+				for key, val := range envm {
+					if key == "CDS_SERVICE_MEMORY" {
+						i, err := strconv.ParseUint(val, 10, 32)
 						if err != nil {
-							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %v", e, err)
-							continue
+							log.Warning("SpawnWorker> Unable to parse service option %s=%s : %s", key, val, err)
+						} else if i > 0 {
+							serviceMemory = int64(i)
 						}
-						serviceMemory = int64(i)
 					}
+					env = append(env, key+"="+val)
 				}
+
 				serviceName := r.Name + "-" + name
 
 				//labels are used to make container cleanup easier. We "link" the service to its worker this way.
