@@ -12,7 +12,7 @@ import (
 func TestAggregateOnWorkflowTemplateInstance(t *testing.T) {
 	db := &test.SqlExecutorMock{}
 	db.OnSelect = func(i interface{}) {
-		gs := i.(*[]sdk.Workflow)
+		gs := i.(*sdk.Workflows)
 		*gs = append(*gs, sdk.Workflow{
 			ID:   1,
 			Name: "wkf-1",

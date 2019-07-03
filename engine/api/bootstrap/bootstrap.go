@@ -29,11 +29,6 @@ func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) er
 		return sdk.WrapError(err, "Cannot InitializeDefaultGroupName")
 	}
 
-	// TODO:
-	// if err := token.Initialize(dbGorp, defaultValues.SharedInfraToken); err != nil {
-	// 	return sdk.WrapError(err, "Cannot InitializeDefaultGroupName")
-	// }
-
 	if err := action.CreateBuiltinActions(dbGorp); err != nil {
 		return sdk.WrapError(err, "Cannot setup builtin actions")
 	}

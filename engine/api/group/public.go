@@ -48,7 +48,7 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 }
 
 // InitializeDefaultGroupName initializes sharedInfraGroup and Default Group
-func InitializeDefaultGroupName(db *gorp.DbMap, defaultGrpName string) error {
+func InitializeDefaultGroupName(db gorp.SqlExecutor, defaultGrpName string) error {
 	//Load the famous sharedInfraGroup
 	var errlsg error
 	SharedInfraGroup, errlsg = LoadByName(context.Background(), db, sdk.SharedInfraGroupName)

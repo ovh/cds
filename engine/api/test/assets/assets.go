@@ -383,7 +383,7 @@ func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
-	usr1, _ := InsertLambdaUser(db)
+	usr1, _ := InsertLambdaUser(db, &grp)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -423,13 +423,15 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{group.SharedInfraGroup.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeProject})
-	test.NoError(t, err)
+	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
+	require.NoError(t, err)
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeProject})
+	require.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
-	test.NoError(t, err)
+	require.NoError(t, err)
 	publicKey, err := jws.ExportPublicKey(privateKey)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
@@ -441,7 +443,7 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 		},
 	}
 
-	test.NoError(t, services.Insert(db, &srv))
+	require.NoError(t, services.Insert(db, &srv))
 
 	return &srv, privateKey
 }
