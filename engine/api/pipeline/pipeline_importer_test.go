@@ -62,7 +62,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 	close(msgChan)
 	<-done
 
-	pip, err := pipeline.LoadPipeline(db, tt.args.pip.ProjectKey, tt.args.pip.Name, true)
+	pip, err := pipeline.LoadPipeline(context.TODO(), db, tt.args.pip.ProjectKey, tt.args.pip.Name, true)
 	test.NoError(t, err)
 
 	if tt.asserts != nil {

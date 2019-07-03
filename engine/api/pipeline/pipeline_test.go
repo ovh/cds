@@ -105,7 +105,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, &p, pip))
 
-	pip1, err := pipeline.LoadPipeline(db, p.Key, "Name", true)
+	pip1, err := pipeline.LoadPipeline(context.TODO(), db, p.Key, "Name", true)
 	test.NoError(t, err)
 
 	assert.Equal(t, len(pip.Parameter), len(pip1.Parameter))
