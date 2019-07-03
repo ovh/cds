@@ -465,7 +465,7 @@ func (h *HatcheryOpenstack) WorkersStartedByModel(model *sdk.Model) int {
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryOpenstack) NeedRegistration(m *sdk.Model) bool {
 	if m.NeedRegistration {
-		log.Debug("NeedRegistration> true as worker model.NeedRegistration=true")
+		log.Debug("NeedRegistration> true as worker model %s model.NeedRegistration=true", m.Name)
 		return true
 	}
 	for _, img := range h.getImages() {
@@ -473,12 +473,12 @@ func (h *HatcheryOpenstack) NeedRegistration(m *sdk.Model) bool {
 		if w == m.Name {
 			if d, ok := img.Metadata["worker_model_last_modified"]; ok {
 				if fmt.Sprintf("%d", m.UserLastModified.Unix()) == d.(string) {
-					log.Debug("NeedRegistration> false. An image is already available for this workerModel.UserLastModified")
+					log.Debug("NeedRegistration> false. An image is already available for this worker model %s workerModel.UserLastModified", m.Name)
 					return false
 				}
 			}
 		}
 	}
-	log.Debug("NeedRegistration> true. No existing image found for this worker model")
+	log.Debug("NeedRegistration> true. No existing image found for this worker model %s", m.Name)
 	return true
 }
