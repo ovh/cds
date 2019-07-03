@@ -42,7 +42,7 @@ type PushOption struct {
 
 // CreateFromRepository a workflow from a repository
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
-	opts sdk.WorkflowRunPostHandlerOption, ident sdk.IdentifiableGroupMember, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
+	opts sdk.WorkflowRunPostHandlerOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
@@ -80,11 +80,11 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 			}
 		}
 	}
-	return extractWorkflow(ctx, db, store, p, w, ope, ident, decryptFunc, uuid)
+	return extractWorkflow(ctx, db, store, p, w, ope, u, decryptFunc, uuid)
 }
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
-	ope sdk.Operation, ident sdk.IdentifiableGroupMember, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
+	ope sdk.Operation, ident sdk.Identifiable, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 

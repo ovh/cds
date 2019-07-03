@@ -36,6 +36,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, sdk.WithStack(err)
 	}
 	if ok {
+		log.Info("authentification granted by token")
 		return ctx, nil
 	}
 
@@ -112,7 +113,11 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 // Checks static tokens
 func (api *API) authStatusTokenMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, bool, error) {
+	if len(rc.AllowedTokens) == 0 {
+		return ctx, false, nil
+	}
 	for _, h := range rc.AllowedTokens {
+		log.Debug("checking allowed token: %v", h)
 		headerSplitted := strings.Split(h, ":")
 		receivedValue := req.Header.Get(headerSplitted[0])
 		if receivedValue != headerSplitted[1] {

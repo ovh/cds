@@ -492,7 +492,7 @@ func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, template
 }
 
 // LoadByWorkflowTemplateIDByGroups load all workflows linked to a workflow template but without loading workflow details against the groups provided
-func LoadByWorkflowTemplateIDByGroups(ctx context.Context, db gorp.SqlExecutor, templateID int64, u sdk.GroupMember) (sdk.Workflows, error) {
+func LoadByWorkflowTemplateIDByGroupIDs(ctx context.Context, db gorp.SqlExecutor, templateID int64, groupIDs []int64) (sdk.Workflows, error) {
 	query := `SELECT workflow.*
 				FROM workflow
 					JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
@@ -508,7 +508,7 @@ func LoadByWorkflowTemplateIDByGroups(ctx context.Context, db gorp.SqlExecutor, 
 						$3 = ANY(string_to_array($2, ',')::int[])
 				)`
 
-	args := []interface{}{templateID, gorpmapping.IDsToQueryString(u.GetGroupIDs()), group.SharedInfraGroup.ID}
+	args := []interface{}{templateID, gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID}
 	return loadByWorkflowTemplateID(ctx, db, query, args)
 }
 
@@ -1246,7 +1246,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 }
 
 // Push push a workflow from cds files
-func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u sdk.IdentifiableGroupMember, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
+func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
 

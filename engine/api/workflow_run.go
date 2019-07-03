@@ -877,7 +877,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 }
 
 func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, ident sdk.IdentifiableGroupMember) {
+	wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u sdk.Identifiable) {
 	var asCodeInfosMsg []sdk.Message
 	report := new(workflow.ProcessorReport)
 	defer func() {
@@ -894,7 +894,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 				report.Merge(r1, nil) // nolint
 				return
 			}
-			if err := workflow.SyncAsCodeEvent(ctx, tx, cache, p, wf, ident); err != nil {
+			if err := workflow.SyncAsCodeEvent(ctx, tx, cache, p, wf, u); err != nil {
 				tx.Rollback() // nolint
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				report.Merge(r1, nil) // nolint
@@ -929,7 +929,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			// Get workflow from repository
 			var errCreate error
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
-			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p1, wf, *opts, ident, project.DecryptWithBuiltinKey)
+			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p1, wf, *opts, u, project.DecryptWithBuiltinKey)
 			if errCreate != nil {
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 				for i, msg := range asCodeInfosMsg {
@@ -947,7 +947,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		wfRun.Workflow = *wf
 	}
 
-	r1, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, ident, asCodeInfosMsg)
+	r1, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
 	report.Merge(r1, nil) // nolint
 	if errS != nil {
 		r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "unable to start workflow %s/%s", p.Key, wf.Name))

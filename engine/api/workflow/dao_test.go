@@ -1682,7 +1682,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	}
 	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
 	var errPip error
-	pip, errPip = pipeline.LoadPipeline(db, proj.Key, pip.Name, true)
+	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
 
 	// Add application

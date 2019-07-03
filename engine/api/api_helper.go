@@ -16,15 +16,15 @@ import (
 
 func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 	consumer := getAPIConsumer(ctx)
-	member := g.IsMember(consumer)
+	member := g.IsMember(consumer.GetGroupIDs())
 	admin := g.IsAdmin(*consumer.AuthentifiedUser)
 	log.Debug("api.isGroupAdmin> member: %t admin: %t", member, admin)
 	return member && admin
 }
 
 func isGroupMember(ctx context.Context, g *sdk.Group) bool {
-	u := getAPIConsumer(ctx)
-	return g.IsMember(u) || g.ID == group.SharedInfraGroup.ID
+	consumer := getAPIConsumer(ctx)
+	return g.IsMember(consumer.GetGroupIDs()) || g.ID == group.SharedInfraGroup.ID
 }
 
 func isMaintainer(ctx context.Context) bool {

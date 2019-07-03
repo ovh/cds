@@ -59,8 +59,8 @@ func GroupPointersToIDs(gs []*Group) []int64 {
 }
 
 // IsMember checks if given group memeber is part of current group.
-func (g Group) IsMember(u GroupMember) bool {
-	for _, id := range u.GetGroupIDs() {
+func (g Group) IsMember(groupIDs []int64) bool {
+	for _, id := range groupIDs {
 		if id == g.ID {
 			return true
 		}

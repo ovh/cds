@@ -146,7 +146,7 @@ func (api *API) getProjectsHandler() service.Handler {
 				return err
 			}
 		} else {
-			projects, err = project.LoadAllByRepoAndGroups(api.mustDB(), api.Cache, getAPIConsumer(ctx), filterByRepo, opts...)
+			projects, err = project.LoadAllByRepoAndGroupIDs(api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
 			if err != nil {
 				return err
 			}

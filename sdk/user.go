@@ -62,15 +62,6 @@ type Identifiable interface {
 	GetEmail() string
 }
 
-type GroupMember interface {
-	GetGroupIDs() []int64
-}
-
-type IdentifiableGroupMember interface {
-	Identifiable
-	GroupMember
-}
-
 type AuthentifiedUser struct {
 	ID           string    `json:"id" yaml:"id" cli:"id,key" db:"id"`
 	Username     string    `json:"username" yaml:"username" cli:"username,key" db:"username"`

@@ -21,8 +21,8 @@ func loadAllByRepo(db gorp.SqlExecutor, store cache.Store, query string, args []
 	return loadprojects(db, store, opts, query, args...)
 }
 
-// LoadAllByRepoAndGroups returns all projects with an application linked to the repo against the groups
-func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
+// LoadAllByRepoAndGroupIDs returns all projects with an application linked to the repo against the groups
+func LoadAllByRepoAndGroupIDs(db gorp.SqlExecutor, store cache.Store, groupIDs []int64, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
@@ -35,7 +35,7 @@ func LoadAllByRepoAndGroups(db gorp.SqlExecutor, store cache.Store, u sdk.GroupM
 				OR
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)`
-	args := []interface{}{gorpmapping.IDsToQueryString(u.GetGroupIDs()), group.SharedInfraGroup.ID, repo}
+	args := []interface{}{gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID, repo}
 	return loadAllByRepo(db, store, query, args, opts...)
 }
 
@@ -310,7 +310,7 @@ func LoadProjectByWorkflowID(db gorp.SqlExecutor, store cache.Store, workflowID 
 }
 
 // LoadByPipelineID loads an project from pipeline iD
-func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, u sdk.GroupMember, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
+func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, groupIDs []int64, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
 	          JOIN pipeline ON pipeline.project_id = project.id
