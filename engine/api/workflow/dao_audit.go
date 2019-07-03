@@ -19,7 +19,7 @@ func InsertAudit(db gorp.SqlExecutor, a *sdk.AuditWorkflow) error {
 // LoadAudits Load audits for the given workflow
 func LoadAudits(db gorp.SqlExecutor, workflowID int64) ([]sdk.AuditWorkflow, error) {
 	query := `
-		SELECT * FROM workflow_audit WHERE workflow_id = $1
+		SELECT * FROM workflow_audit WHERE workflow_id = $1 ORDER BY created DESC
 	`
 	var audits []auditWorkflow
 	if _, err := db.Select(&audits, query, workflowID); err != nil {

@@ -52,8 +52,6 @@ import { ForMapPipe } from './pipes/map.pipe';
 import { NgForNumber } from './pipes/ngfor.number.pipe';
 import { SafeHtmlPipe } from './pipes/safeHtml.pipe';
 import { TruncatePipe } from './pipes/truncate.pipe';
-import { PrerequisitesFormComponent } from './prerequisites/form/prerequisites.form.component';
-import { PrerequisiteComponent } from './prerequisites/list/prerequisites.component';
 import { ProjectBreadcrumbComponent } from './project-breadcrumb/project-breadcrumb.component';
 import { RepoManagerFormComponent } from './repomanager/from/repomanager.form.component';
 import { RequirementsFormComponent } from './requirements/form/requirements.form.component';
@@ -144,9 +142,13 @@ import { ZoneComponent } from './zone/zone.component';
         CommitListComponent,
         ConditionsComponent,
         ConfirmButtonComponent,
+        ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
+        DeleteModalComponent,
+        DiffItemComponent,
+        DiffListComponent,
         ForMapPipe,
         GroupFormComponent,
         JobStepSummaryComponent,
@@ -172,11 +174,18 @@ import { ZoneComponent } from './zone/zone.component';
         TokenListComponent,
         TruncatePipe,
         UploadButtonComponent,
+        UsageApplicationsComponent,
+        UsageComponent,
+        UsageEnvironmentsComponent,
+        UsagePipelinesComponent,
+        UsageWorkflowsComponent,
         VariableAuditComponent,
         VariableComponent,
         VariableDiffComponent,
         VariableFormComponent,
         VariableValueComponent,
+        VulnerabilitiesComponent,
+        VulnerabilitiesListComponent,
         WarningMarkComponent,
         WorkflowDeleteNodeComponent,
         WorkflowHookMenuEditComponent,
@@ -210,28 +219,13 @@ import { ZoneComponent } from './zone/zone.component';
 
 
         // Component to migrate
-
-
-        PrerequisiteComponent,
-        PrerequisitesFormComponent,
         RepoManagerFormComponent,
-        VulnerabilitiesComponent,
-        VulnerabilitiesListComponent,
         WarningModalComponent,
-        DeleteModalComponent,
-        ConfirmModalComponent,
         LabelsEditComponent,
         WarningTabComponent,
         WarningMarkListComponent,
         ZoneComponent,
         ZoneContentComponent,
-        UsageWorkflowsComponent,
-        UsageApplicationsComponent,
-        UsagePipelinesComponent,
-        UsageEnvironmentsComponent,
-        UsageComponent,
-        DiffItemComponent,
-        DiffListComponent,
         VCSStrategyComponent,
         FavoriteCardsComponent,
         TabsComponent
@@ -283,10 +277,6 @@ import { ZoneComponent } from './zone/zone.component';
         ParameterValueComponent,
         PermissionFormComponent,
         PermissionListComponent,
-        PrerequisiteComponent,
-        PrerequisitesFormComponent,
-        PrerequisiteComponent,
-        PrerequisitesFormComponent,
         ReactiveFormsModule,
         RepoManagerFormComponent,
         RequirementsFormComponent,
