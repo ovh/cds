@@ -12,7 +12,7 @@ import (
 
 var projectIntegrationCmd = cli.Command{
 	Name:  "integration",
-	Short: "Manage CDS integration integrations",
+	Short: "Manage CDS integrations",
 }
 
 func projectIntegration() *cobra.Command {

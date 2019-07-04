@@ -160,8 +160,8 @@ func (proj Project) GetIntegrationByID(id int64) *ProjectIntegration {
 
 // ProjectVCSServer represents associations between a project and a vcs server
 type ProjectVCSServer struct {
-	Name     string            `json:"name" yaml:"name" db:"-" cli:"-"`
-	Username string            `json:"username" yaml:"username" db:"-" cli:"-"`
+	Name     string            `json:"name" yaml:"name" db:"-" cli:"name"`
+	Username string            `json:"username" yaml:"username" db:"-" cli:"username"`
 	Data     map[string]string `json:"-" yaml:"data" db:"-" cli:"-"`
 }
 
