@@ -7,7 +7,7 @@ import (
 const signinConsumerTokenDuration time.Duration = time.Minute * 5
 
 type signinConsumerToken struct {
-	Origin string `json:"origin"`
+	Origin string
 }
 
 // NewSigninStateToken returns a jws used for signin request.

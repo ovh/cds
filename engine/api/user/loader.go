@@ -12,11 +12,21 @@ import (
 type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.AuthentifiedUser) error
 
 var LoadOptions = struct {
+	Default            LoadOptionFunc
 	WithContacts       LoadOptionFunc
 	WithDeprecatedUser LoadOptionFunc
 }{
+	Default:            loadDefault,
 	WithContacts:       loadContacts,
 	WithDeprecatedUser: loadDeprecatedUser, // TODO: will be removed
+}
+
+func loadDefault(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {
+	if err := loadContacts(ctx, db, aus...); err != nil {
+		return err
+	}
+
+	return loadDeprecatedUser(ctx, db, aus...)
 }
 
 func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {

@@ -17,6 +17,8 @@ import (
 
 func (api *API) postWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		consumer := getAPIConsumer(ctx)
+
 		// parse request and check data validity
 		var data sdk.Model
 		if err := service.UnmarshalBody(r, &data); err != nil {
@@ -29,7 +31,16 @@ func (api *API) postWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		if !isMaintainer(ctx) {
+		// check that given group id exits and that the user is admin of the group
+		grp, err := group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+		}
+
+		if !isAdmin(ctx) {
 			// provision is allowed only for CDS Admin or by user with a restricted model
 			if !data.Restricted {
 				data.Provision = 0
@@ -47,7 +58,7 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		model, err := workermodel.Create(ctx, tx, data, getAPIConsumer(ctx))
+		model, err := workermodel.Create(ctx, tx, data, consumer)
 		if err != nil {
 			return err
 		}
@@ -95,6 +106,17 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 		if err := data.IsValid(); err != nil {
 			return err
+		}
+
+		if old.GroupID != data.GroupID {
+			// check that given group id exits and that the user is admin of the group
+			grp, err := group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+			}
 		}
 
 		if !isAdmin(ctx) {
@@ -196,9 +218,7 @@ func (api *API) getWorkerModelHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
 
-		if isGroupAdmin(ctx, g) || isAdmin(ctx) {
-			m.Editable = true
-		}
+		m.Editable = isGroupAdmin(ctx, g) || isAdmin(ctx)
 
 		return service.WriteJSON(w, m, http.StatusOK)
 	}

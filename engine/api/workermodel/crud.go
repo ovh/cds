@@ -20,18 +20,9 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
 	}
 
-	// check that the group exists and user is admin for group id
-	grp, err := group.LoadByID(ctx, db, data.GroupID)
-	if err != nil {
-		return nil, err
-	}
-	if grp == nil {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
 	// check if worker model already exists
-	if _, err := LoadByNameAndGroupID(db, data.Name, grp.ID); err == nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)
+	if _, err := LoadByNameAndGroupID(db, data.Name, data.GroupID); err == nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for given group", data.Name)
 	}
 
 	// if a model pattern is given try to get it from database
@@ -79,18 +70,10 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
 	}
 
-	grp, err := group.LoadByID(ctx, db, data.GroupID)
-	if err != nil {
-		return nil, err
-	}
-	if grp == nil {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
 	if old.GroupID != data.GroupID || old.Name != data.Name {
-		// check that no worker model already exists for same group/name
-		if _, err := LoadByNameAndGroupID(db, data.Name, grp.ID); err == nil {
-			return nil, sdk.NewErrorFrom(sdk.ErrAlreadyExist, "an action already exists for given name on this group")
+		// check if worker model already exists
+		if _, err := LoadByNameAndGroupID(db, data.Name, data.GroupID); err == nil {
+			return nil, sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for given group", data.Name)
 		}
 	}
 
@@ -115,11 +98,17 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 	}
 
 	// if model type is docker and given password equals the place holder value, we will reuse the old password value
-	if data.Type == sdk.Docker && data.ModelDocker.Password == sdk.PasswordPlaceholder {
-		decryptedPw, err := secret.DecryptValue(old.ModelDocker.Password)
+	if data.Type == sdk.Docker && data.ModelDocker.Private && data.ModelDocker.Password == sdk.PasswordPlaceholder {
+		modelClear, err := LoadByIDWithClearPassword(db, old.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		decryptedPw, err := secret.DecryptValue(modelClear.ModelDocker.Password)
 		if err != nil {
 			return nil, sdk.WrapError(err, "cannot decrypt password old model password")
 		}
+
 		data.ModelDocker.Password = decryptedPw
 	}
 
@@ -132,7 +121,16 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 		return nil, sdk.WrapError(err, "cannot update worker model")
 	}
 
-	oldPath, newPath := old.GetPath(old.Group.Name), model.GetPath(grp.Name)
+	oldGrp, err := group.LoadByID(ctx, db, old.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	grp, err := group.LoadByID(ctx, db, model.GroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	oldPath, newPath := old.GetPath(oldGrp.Name), model.GetPath(grp.Name)
 	// if the model has been renamed, we will have to update requirements
 	if oldPath != newPath {
 		// select requirements to update

@@ -27,63 +27,43 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
+	// Load and delete all worker
 	workers, err := worker.LoadAll(context.Background(), api.mustDB())
 	require.NoError(t, err, "unable to load workers")
 	for _, w := range workers {
-		require.NoError(t, worker.Delete(api.mustDB(), w.ID))
+		assert.NoError(t, worker.Delete(api.mustDB(), w.ID))
 	}
 
-	//Loading all models
+	// Load and delete all worker models
 	models, err := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
-	if err != nil {
-		t.Fatalf("Error getting models : %s", err)
-	}
+	require.NoError(t, err)
 
-	//Delete all of them
 	for _, m := range models {
-		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
-			t.Fatalf("Error deleting model : %s", err)
-		}
+		assert.NoError(t, workermodel.Delete(api.mustDB(), m.ID))
 	}
 
+	// Load and delete all worker model patterns
 	modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	for _, wmp := range modelPatterns {
-		test.NoError(t, workermodel.DeletePattern(api.mustDB(), wmp.ID))
+		assert.NoError(t, workermodel.DeletePattern(api.mustDB(), wmp.ID))
 	}
 }
 
 func Test_postWorkerModelAsAdmin(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	// loading all models
-	models, errlw := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
-	if errlw != nil {
-		t.Fatalf("Error getting models : %s", errlw)
-	}
+	_, jwtRaw := assets.InsertAdminUser(api.mustDB())
 
-	// delete all of them
-	for _, m := range models {
-		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
-			t.Fatalf("Error deleting model : %s", err)
-		}
-	}
-
-	// create admin user
-	u, jwt := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u)
-	assert.NotZero(t, jwt)
-
-	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
-	if err != nil {
-		t.Fatalf("Error getting group : %s", err)
-	}
+	groupShared, err := group.LoadByName(context.TODO(), api.mustDB(), sdk.SharedInfraGroupName)
+	require.NoError(t, err)
 
 	model := sdk.Model{
 		Name:    "Test1",
-		GroupID: g.ID,
+		GroupID: groupShared.ID,
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
@@ -95,23 +75,20 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 		},
 	}
 
-	// prepare request
+	// Send POST model request
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
-
-	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
-
-	// do the request
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, "POST", uri, model)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-
 	assert.Equal(t, 200, w.Code)
 
 	var newModel sdk.Model
-	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
 
-	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
-	test.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
+	assert.Equal(t, groupShared.ID, newModel.GroupID)
+	assert.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
+	assert.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
 }
 
 func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
@@ -332,13 +309,9 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	//Prepare request
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
-
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
-
-	//Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-
 	assert.Equal(t, 400, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())

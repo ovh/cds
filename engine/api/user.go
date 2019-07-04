@@ -48,7 +48,13 @@ func (api *API) deleteUserHandler() service.Handler {
 func (api *API) getUserMeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		return service.WriteJSON(w, consumer.AuthentifiedUser, http.StatusOK)
+
+		u, err := user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.Default)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, u, http.StatusOK)
 	}
 }
 

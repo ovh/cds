@@ -21,6 +21,8 @@ import (
 // @params force=true or false. If false and if the worker model already exists, raise an error
 func (api *API) postWorkerModelImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		consumer := getAPIConsumer(ctx)
+
 		force := FormBool(r, "force")
 
 		body, errr := ioutil.ReadAll(r.Body)
@@ -62,11 +64,14 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 
 		// check that the user is admin on the given template's group
-		grp, err := group.LoadByName(ctx, api.mustDB(), data.Group.Name)
+		grp, err := group.LoadByName(ctx, api.mustDB(), data.Group.Name, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		data.GroupID = grp.ID
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+		}
 
 		// validate worker model fields
 		if err := data.IsValid(); err != nil {
@@ -97,7 +102,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 				return err
 			}
 
-			newModel, err = workermodel.Create(ctx, api.mustDB(), data, getAPIConsumer(ctx))
+			newModel, err = workermodel.Create(ctx, api.mustDB(), data, consumer)
 			if err != nil {
 				return err
 			}

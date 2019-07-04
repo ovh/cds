@@ -171,6 +171,30 @@ func LoadByID(db gorp.SqlExecutor, id int64) (*sdk.Model, error) {
 	return load(db, false, query, id)
 }
 
+// LoadByIDWithClearPassword retrieves a specific worker model in database.
+func LoadByIDWithClearPassword(db gorp.SqlExecutor, id int64) (*sdk.Model, error) {
+	query := fmt.Sprintf(`
+    SELECT %s
+    FROM worker_model
+    JOIN "group" on worker_model.group_id = "group".id
+    WHERE worker_model.id = $1
+  `, modelColumns)
+	model, err := load(db, true, query, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if model.ModelDocker.Private && model.ModelDocker.Password != "" {
+		var err error
+		model.ModelDocker.Password, err = secret.DecryptValue(model.ModelDocker.Password)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot decrypt value for model %s", fmt.Sprintf("%s/%s", model.Group.Name, model.Name))
+		}
+	}
+
+	return model, nil
+}
+
 // LoadByNameAndGroupIDWithClearPassword retrieves a specific worker model in database by name and group id.
 func LoadByNameAndGroupIDWithClearPassword(db gorp.SqlExecutor, name string, groupID int64) (*sdk.Model, error) {
 	query := fmt.Sprintf(`
@@ -234,12 +258,11 @@ func LoadAllUsableWithClearPasswordByGroupIDs(db gorp.SqlExecutor, groupIDs []in
     WHERE (
       worker_model.group_id = ANY(string_to_array($1, ',')::int[])
       OR (
-        $2 = ANY(string_to_array($1, ',')::int[]
+        $2 = ANY(string_to_array($1, ',')::int[])
         AND worker_model.restricted = false
       )
-    )
-    AND worker_model.disabled = false
-    ORDER by name
+    ) AND worker_model.disabled = false
+    ORDER BY name
   `, modelColumns)
 	models, err := loadAll(db, true, query, gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID)
 	if err != nil {

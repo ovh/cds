@@ -11,8 +11,8 @@ import (
 const resetLocalConsumerTokenDuration time.Duration = time.Hour * 1
 
 type resetLocalConsumerToken struct {
-	ConsumerID string `json:"consumer_id"`
-	Nonce      string `json:"nonce"`
+	ConsumerID string
+	Nonce      string
 }
 
 // NewResetConsumerToken returns a new reset consumer token for given consumer id.

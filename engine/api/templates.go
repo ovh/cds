@@ -157,12 +157,7 @@ func (api *API) getTemplateHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-		if isGroupAdmin(ctx, g) || isAdmin(ctx) {
-			wt.Editable = true
-		}
+		wt.Editable = isGroupAdmin(ctx, g) || isAdmin(ctx)
 
 		return service.WriteJSON(w, wt, http.StatusOK)
 	}
@@ -183,9 +178,6 @@ func (api *API) putTemplateHandler() service.Handler {
 		old, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
-		}
-		if old == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		data := sdk.WorkflowTemplate{}
@@ -283,9 +275,6 @@ func (api *API) deleteTemplateHandler() service.Handler {
 		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
-		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		if err := workflowtemplate.Delete(api.mustDB(), wt); err != nil {
@@ -510,9 +499,6 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
 
 		// check all requests
 		var req sdk.WorkflowTemplateBulk
@@ -662,9 +648,6 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
 
 		b, err := workflowtemplate.GetBulkByIDAndTemplateID(api.mustDB(), id, wt.ID)
 		if err != nil {
@@ -696,9 +679,6 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
-		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		//u := getAPIConsumer(ctx)
@@ -760,9 +740,6 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if wti == nil {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template instance found")
-		}
 
 		wti.Project = proj
 
@@ -785,9 +762,6 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
-		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		var ps []sdk.Project
@@ -839,9 +813,6 @@ func (api *API) postTemplatePullHandler() service.Handler {
 		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
-		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		buf := new(bytes.Buffer)
@@ -920,9 +891,6 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
 
 		since := r.FormValue("sinceVersion")
 		var version int64
@@ -957,9 +925,6 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 		wt, err := workflowtemplate.LoadBySlugAndGroupID(ctx, api.mustDB(), templateSlug, g.ID)
 		if err != nil {
 			return err
-		}
-		if wt == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		wfs, err := workflow.LoadByWorkflowTemplateID(ctx, api.mustDB(), wt.ID)

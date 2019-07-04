@@ -12,8 +12,8 @@ const verifyLocalConsumerTokenDuration time.Duration = time.Hour * 24
 
 // verifyLocalConsumerToken contains data for verify signature.
 type verifyLocalConsumerToken struct {
-	ConsumerID string `json:"consumer_id"`
-	Nonce      string `json:"nonce"`
+	ConsumerID string
+	Nonce      string
 }
 
 // NewVerifyConsumerToken returns a new verify consumer token for given consumer id.
