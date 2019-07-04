@@ -1,5 +1,4 @@
 import { GroupPermission } from 'app/model/group.model';
-import { Label } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 
@@ -166,16 +165,6 @@ export class DeleteHookWorkflow {
     constructor(public payload: {
         projectKey: string, workflowName: string, hook: WNodeHook
     }) { }
-}
-
-//  ------- Labels --------- //
-export class LinkLabelOnWorkflow {
-    static readonly type = '[Workflow] Link Label on Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string, label: Label }) { }
-}
-export class UnlinkLabelOnWorkflow {
-    static readonly type = '[Workflow] Unlink Label on Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string, label: Label }) { }
 }
 
 //  ------- Notifications --------- //

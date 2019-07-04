@@ -2,7 +2,6 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
 import { PermissionValue } from 'app/model/permission.model';
-import { Label } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -560,56 +559,6 @@ export class WorkflowState {
                 projectKey: action.payload.projectKey,
                 workflowName: workflow.name
             }));
-        }));
-    }
-
-    //  ------- Labels --------- //
-    @Action(actionWorkflow.LinkLabelOnWorkflow)
-    linkLabel(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.LinkLabelOnWorkflow) {
-        return this._http.post<Label>(
-            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/label`,
-            action.payload.label
-        ).pipe(tap((label: Label) => {
-            const state = ctx.getState();
-
-            ctx.dispatch(new ActionProject.AddLabelWorkflowInProject({
-                workflowName: action.payload.workflowName,
-                label: action.payload.label
-            }));
-            if (state.workflow) {
-                const labels = state.workflow.labels ? state.workflow.labels.concat(label) : [label];
-                ctx.setState({
-                    ...state,
-                    workflow: Object.assign({}, state.workflow, <Workflow>{
-                        labels
-                    }),
-                });
-            }
-        }));
-    }
-
-    @Action(actionWorkflow.UnlinkLabelOnWorkflow)
-    unlinkLabel(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UnlinkLabelOnWorkflow) {
-        return this._http.delete<null>(
-            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/label/${action.payload.label.id}`
-        ).pipe(tap(() => {
-            const state = ctx.getState();
-
-            ctx.dispatch(new ActionProject.DeleteLabelWorkflowInProject({
-                workflowName: action.payload.workflowName,
-                labelId: action.payload.label.id
-            }));
-            if (state.workflow) {
-                let labels = state.workflow.labels ? state.workflow.labels.concat([]) : [];
-                labels = labels.filter((lbl) => lbl.id !== action.payload.label.id);
-
-                ctx.setState({
-                    ...state,
-                    workflow: Object.assign({}, state.workflow, <Workflow>{
-                        labels
-                    }),
-                });
-            }
         }));
     }
 

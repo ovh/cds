@@ -131,7 +131,6 @@ import { ZoneComponent } from './zone/zone.component';
         NgxChartsModule
     ],
     declarations: [
-        // OnPushComponent
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
@@ -149,12 +148,14 @@ import { ZoneComponent } from './zone/zone.component';
         DeleteModalComponent,
         DiffItemComponent,
         DiffListComponent,
+        FavoriteCardsComponent,
         ForMapPipe,
         GroupFormComponent,
         JobStepSummaryComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
+        LabelsEditComponent,
         NgForNumber,
         ParameterDescriptionComponent,
         ParameterFormComponent,
@@ -165,12 +166,14 @@ import { ZoneComponent } from './zone/zone.component';
         ProjectBreadcrumbComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
+        RepoManagerFormComponent,
         SafeHtmlPipe,
         SelectorPipe,
         SelectPipe,
         ScrollviewComponent,
         StageStepSummaryComponent,
         StatusIconComponent,
+        TabsComponent,
         TokenListComponent,
         TruncatePipe,
         UploadButtonComponent,
@@ -184,9 +187,13 @@ import { ZoneComponent } from './zone/zone.component';
         VariableDiffComponent,
         VariableFormComponent,
         VariableValueComponent,
+        VCSStrategyComponent,
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
         WarningMarkComponent,
+        WarningMarkListComponent,
+        WarningModalComponent,
+        WarningTabComponent,
         WorkflowDeleteNodeComponent,
         WorkflowHookMenuEditComponent,
         WorkflowHookModalComponent,
@@ -216,19 +223,8 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWNodeMenuEditComponent,
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
-
-
-        // Component to migrate
-        RepoManagerFormComponent,
-        WarningModalComponent,
-        LabelsEditComponent,
-        WarningTabComponent,
-        WarningMarkListComponent,
         ZoneComponent,
-        ZoneContentComponent,
-        VCSStrategyComponent,
-        FavoriteCardsComponent,
-        TabsComponent
+        ZoneContentComponent
     ],
     entryComponents: [],
     providers: [

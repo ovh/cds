@@ -1,10 +1,11 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
 
 @Component({
     selector: 'app-warning-modal',
     templateUrl: './warning.html',
-    styleUrls: ['./warning.scss']
+    styleUrls: ['./warning.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WarningModalComponent {
 

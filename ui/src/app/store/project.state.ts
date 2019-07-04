@@ -4,7 +4,7 @@ import { Environment } from 'app/model/environment.model';
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
-import { IdName, LoadOpts, Project } from 'app/model/project.model';
+import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -99,6 +99,7 @@ export class ProjectState {
                 new LoadOpts('withPermission', 'permission')
             ];
         }
+        opts.push(new LoadOpts('withLabels', 'labels'));
         opts.push(new LoadOpts('withFeatures', 'features'));
         opts.push(new LoadOpts('withIntegrations', 'integrations'));
         opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
@@ -357,50 +358,72 @@ export class ProjectState {
 
     @Action(ProjectAction.AddLabelWorkflowInProject)
     addLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddLabelWorkflowInProject) {
-        const state = ctx.getState();
-        let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
-        workflow_names = workflow_names.map((wf) => {
-            if (action.payload.workflowName === wf.name) {
-                let workflow: IdName;
-                if (wf.labels) {
-                    workflow = Object.assign({}, wf, { labels: wf.labels.concat(action.payload.label) });
-                } else {
-                    workflow = Object.assign({}, wf, {
-                        labels: [action.payload.label]
-                    });
-                }
-                return workflow;
-            }
-            return wf;
-        });
+        // check if we will a to resync project to get new labels
+        let resyncProject = !action.payload.label.id;
 
-        ctx.setState({
-            ...state,
-            project: Object.assign({}, state.project, <Project>{ workflow_names }),
-        });
+        console.log(resyncProject);
+        const state = ctx.getState();
+        return this._http.post<Label>(
+            `/project/${state.project.key}/workflows/${action.payload.workflowName}/label`,
+            action.payload.label
+        ).pipe(tap((label: Label) => {
+            let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
+            workflow_names = workflow_names.map((wf) => {
+                if (action.payload.workflowName === wf.name) {
+                    let workflow: IdName;
+                    if (wf.labels) {
+                        workflow = Object.assign({}, wf, { labels: wf.labels.concat(label) });
+                    } else {
+                        workflow = Object.assign({}, wf, {
+                            labels: [label]
+                        });
+                    }
+                    return workflow;
+                }
+                return wf;
+            });
+
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ workflow_names }),
+            });
+
+            if (resyncProject) {
+                ctx.dispatch(new  ProjectAction.ResyncProject({
+                    projectKey: state.project.key,
+                    opts: []
+                }));
+            }
+        }));
     }
 
     @Action(ProjectAction.DeleteLabelWorkflowInProject)
     deleteLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DeleteLabelWorkflowInProject) {
         const state = ctx.getState();
-        let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
-        workflow_names = workflow_names.map((wf) => {
-            if (action.payload.workflowName === wf.name) {
-                let workflow: IdName;
-                if (wf.labels) {
-                    workflow = Object.assign({}, wf, { labels: wf.labels.filter((label) => label.id !== action.payload.labelId) });
-                } else {
-                    workflow = Object.assign({}, wf, { labels: [] });
-                }
-                return workflow;
-            }
-            return wf;
-        });
 
-        ctx.setState({
-            ...state,
-            project: Object.assign({}, state.project, <Project>{ workflow_names }),
-        });
+        return this._http.delete<null>(
+            `/project/${state.project.key}/workflows/${action.payload.workflowName}/label/${action.payload.labelId}`
+        ).pipe(tap(() => {
+
+            let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
+            workflow_names = workflow_names.map((wf) => {
+                if (action.payload.workflowName === wf.name) {
+                    let workflow: IdName;
+                    if (wf.labels) {
+                        workflow = Object.assign({}, wf, { labels: wf.labels.filter((label) => label.id !== action.payload.labelId) });
+                    } else {
+                        workflow = Object.assign({}, wf, { labels: [] });
+                    }
+                    return workflow;
+                }
+                return wf;
+            });
+
+            ctx.setState({
+                ...state,
+                project: Object.assign({}, state.project, <Project>{ workflow_names }),
+            });
+        }));
     }
 
 

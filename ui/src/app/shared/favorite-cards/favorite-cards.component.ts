@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { Bookmark } from 'app/model/bookmark.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
@@ -9,7 +9,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-favorite-cards',
     templateUrl: './favorite-cards.component.html',
-    styleUrls: ['./favorite-cards.component.scss']
+    styleUrls: ['./favorite-cards.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FavoriteCardsComponent {
 
@@ -49,6 +50,9 @@ export class FavoriteCardsComponent {
     constructor(private store: Store) { }
 
     updateFav(fav: NavbarProjectData) {
+        if (!fav || !fav.type) {
+            return;
+        }
         let key = fav.key + fav.workflow_name;
         if (this.loading[key]) {
             return;
