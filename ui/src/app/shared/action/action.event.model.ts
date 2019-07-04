@@ -1,4 +1,4 @@
-import {Action} from '../../model/action.model';
+import { Action } from 'app/model/action.model';
 
 export class ActionEvent {
     type: string;

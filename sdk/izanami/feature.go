@@ -1,4 +1,4 @@
-package client
+package izanami
 
 import (
 	"encoding/json"

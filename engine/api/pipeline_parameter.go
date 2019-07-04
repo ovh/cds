@@ -63,11 +63,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 
 		event.PublishPipelineParameterDelete(key, pipelineName, sdk.Parameter{Name: paramName}, deprecatedGetUser(ctx))
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
-		if err != nil {
-			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load pipeline parameters")
-		}
-		return service.WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -83,7 +79,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return err
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, true)
+		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -113,11 +109,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 
 		event.PublishPipelineParameterUpdate(key, pipelineName, *oldParam, newParam, deprecatedGetUser(ctx))
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
-		if err != nil {
-			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load pipeline parameters")
-		}
-		return service.WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, newParam, http.StatusOK)
 	}
 }
 
@@ -170,11 +162,6 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 
 		event.PublishPipelineParameterAdd(key, pipelineName, newParam, deprecatedGetUser(ctx))
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
-		if err != nil {
-			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot get pipeline parameters")
-		}
-
-		return service.WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, newParam, http.StatusOK)
 	}
 }

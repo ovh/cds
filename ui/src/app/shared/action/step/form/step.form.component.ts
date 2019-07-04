@@ -1,13 +1,14 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Action } from 'app/model/action.model';
 import { StepEvent } from 'app/shared/action/step/step.event';
 
 @Component({
     selector: 'app-action-step-form',
     templateUrl: './step.form.html',
-    styleUrls: ['./step.form.scss']
+    styleUrls: ['./step.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ActionStepFormComponent implements OnChanges {
+export class ActionStepFormComponent implements OnInit {
     @Input() actions: Array<Action>;
     @Output() onEvent = new EventEmitter<StepEvent>();
 
@@ -15,7 +16,7 @@ export class ActionStepFormComponent implements OnChanges {
     selectedID: number;
     selected: Action;
 
-    ngOnChanges(): void {
+    ngOnInit(): void {
         let script = this.actions.find(a => a.name === 'Script' && a.type === 'Builtin');
         if (script) {
             this.selectedID = script.id;

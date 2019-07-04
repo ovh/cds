@@ -1,0 +1,17 @@
+<div id="Environmentkey">
+    <h3>{{ 'keys_list_title' | translate}}</h3>
+    <ng-container *ngIf="environment.keys && environment.keys.length === 0">
+        <div class="ui info message">
+            {{'keys_no' | translate}}
+        </div>
+    </ng-container>
+    <ng-container *ngIf="environment.keys && environment.keys.length > 0">
+        <app-keys-list [keys]="environment.keys" [loading]="loading"
+            [edit]="!environment.from_repository?environment.permission:4" (deleteEvent)="manageKeyEvent($event)">
+        </app-keys-list>
+    </ng-container>
+    <ng-container *ngIf="!environment.from_repository">
+        <h3>{{ 'keys_add_title' | translate }}</h3>
+        <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="env-"></app-keys-form>
+    </ng-container>
+</div>

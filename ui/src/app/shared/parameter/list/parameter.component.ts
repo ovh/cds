@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
@@ -6,11 +14,13 @@ import { ParameterService } from 'app/service/parameter/parameter.service';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { SharedService } from 'app/shared/shared.service';
 import { Table } from 'app/shared/table/table';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-parameter-list',
     templateUrl: './parameter.html',
-    styleUrls: ['./parameter.scss']
+    styleUrls: ['./parameter.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ParameterListComponent extends Table<Parameter> implements OnInit {
     @Input('parameters')
@@ -50,14 +60,17 @@ export class ParameterListComponent extends Table<Parameter> implements OnInit {
 
     constructor(
         private _paramService: ParameterService,
-        public _sharedService: SharedService // used in html
+        public _sharedService: SharedService,
+        private _cd: ChangeDetectorRef
     ) {
         super();
         this.parameterTypes = this._paramService.getTypesFromCache();
         if (!this.parameterTypes) {
-            this._paramService.getTypesFromAPI().subscribe(types => {
-                this.parameterTypes = types;
+            this._paramService.getTypesFromAPI().pipe(finalize(() => {
                 this.ready = true;
+                this._cd.markForCheck()
+            })).subscribe(types => {
+                this.parameterTypes = types;
             });
         } else {
             this.ready = true;

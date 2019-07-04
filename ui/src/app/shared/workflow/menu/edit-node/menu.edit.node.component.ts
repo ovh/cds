@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PermissionValue } from 'app/model/permission.model';
@@ -14,6 +22,7 @@ import { Subscription } from 'rxjs';
     selector: 'app-workflow-menu-wnode-edit',
     templateUrl: './menu.edit.node.html',
     styleUrls: ['./menu.edit.node.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeMenuEditComponent implements OnInit {
@@ -45,13 +54,16 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
     workflow: Workflow;
 
     constructor(
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
-        this.storeSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+        this.storeSubscription = this._store.select(WorkflowState.getCurrent())
+            .subscribe((s: WorkflowStateModel) => {
             this.workflow = s.workflow;
             this.runnable = this.getCanBeRun();
+            this._cd.markForCheck();
         });
     }
 

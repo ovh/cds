@@ -72,14 +72,17 @@
                     {{currentWorkflowNodeRun.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</div>
             </div>
         </div>
-        <div *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.stages && currentWorkflowNodeRun.stages.length > 0"
-            class="ui vertical fluid steps">
-            <ng-container *ngFor="let stage of currentWorkflowNodeRun.stages">
-                <app-stage-step-summary [stage]="stage" [workflowRun]="currentWorkflowRun" [workflowNode]="node"
-                    [workflowNodeRun]="currentWorkflowNodeRun">
-                </app-stage-step-summary>
-            </ng-container>
-        </div>
+        <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.stages && currentWorkflowNodeRun.stages.length > 0">
+            <div class="stageContainer">
+                <div class="ui vertical fluid steps">
+                    <ng-container *ngFor="let stage of currentWorkflowNodeRun.stages">
+                        <app-stage-step-summary [stage]="stage" [workflowRun]="currentWorkflowRun" [workflowNode]="node"
+                                                [workflowNodeRun]="currentWorkflowNodeRun">
+                        </app-stage-step-summary>
+                    </ng-container>
+                </div>
+            </div>
+        </ng-container>
     </ng-container>
     <div class="logs" *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.callback">
         <h4 class="ui header">

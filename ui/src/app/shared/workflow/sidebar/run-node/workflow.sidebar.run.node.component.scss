@@ -18,6 +18,10 @@
     padding: 10px;
   }
 
+  .stageContainer {
+    overflow-y: auto;
+  }
+
   .steps {
     :host-context(.night) & {
       background-color: $darkTheme_grey_1;

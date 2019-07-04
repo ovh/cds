@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { UserLoginRequest } from 'app/model/user.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { UserService } from 'app/service/user/user.service';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { UserLoginRequest } from '../../../model/user.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
-import { UserService } from '../../../service/user/user.service';
 import { AccountComponent } from '../account.component';
 
 @Component({

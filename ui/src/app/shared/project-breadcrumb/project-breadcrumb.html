@@ -3,32 +3,39 @@
     <div class="ui large breadcrumb">
         <!-- PROJECT -->
         <i class="browser icon"></i>
-        <a class="section"
-        *ngIf="application || pipeline || action || workflow"
-        [routerLink]="['/project', project.key]"
-        [queryParams]="getProjectQueryParams()">
+        <a class="section" *ngIf="application || pipeline || action || workflow || environment"
+            [routerLink]="['/project', project.key]" [queryParams]="getProjectQueryParams()">
             {{ project?.name}}
         </a>
-        <span class="section active"
-        *ngIf="!application && !pipeline && !action && !workflow">
+        <span class="section active" *ngIf="!application && !pipeline && !action && !workflow && !environment">
             {{ project?.name}}
         </span>
+
+        <!-- ENVIRONMENT -->
+        <ng-container *ngIf="environment">
+            <i class="right chevron icon divider"></i>
+            <i class="tree icon"></i>
+            <a class="section" [class.active]="true"
+                [routerLink]="['/project', project.key, 'environment', environment?.name]">
+                {{ environment?.name}}
+            </a>
+        </ng-container>
 
         <!-- APPLICATION -->
         <ng-container *ngIf="application">
             <i class="right chevron icon divider"></i>
             <i class="rocket icon"></i>
             <a class="section" [class.active]="application && !pipeline && !action"
-            [routerLink]="['/project', project.key, 'application', application?.name]"
-            [queryParams]="getApplicationQueryParams()">
+                [routerLink]="['/project', project.key, 'application', application?.name]"
+                [queryParams]="getApplicationQueryParams()">
                 {{ application?.name}}
             </a>
         </ng-container>
 
         <ng-container *ngIf="workflow">
-                <i class="right chevron icon divider"></i>
-                <i class="share alternate icon"></i>
-                <a class="section"  [routerLink]="['/project', project.key, 'workflow', workflow]">{{ workflow }}</a>
+            <i class="right chevron icon divider"></i>
+            <i class="share alternate icon"></i>
+            <a class="section" [routerLink]="['/project', project.key, 'workflow', workflow]">{{ workflow }}</a>
         </ng-container>
 
 
@@ -37,28 +44,30 @@
             <i class="right chevron icon divider"></i>
             <i class="sitemap icon"></i>
             <a class="section" [class.active]="pipeline && !action && !version"
-            [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
-            [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
+                [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
+                [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
         </ng-container>
 
         <ng-container *ngIf="workflowRun">
-                <i class="right chevron icon divider"></i>
-                <a class="section"  [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun]">{{ '#' + workflowRun}}</a>
+            <i class="right chevron icon divider"></i>
+            <a class="section"
+                [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun]">{{ '#' + workflowRun}}</a>
         </ng-container>
 
         <ng-container *ngIf="workflowRunNode && wPipeline">
-                <i class="right chevron icon divider"></i>
-                <i class="sitemap icon"></i>
-                <a class="section" [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun, 'node', workflowRunNode]"
-                    [queryParams]="{ name: wPipeline}">{{ wPipeline}}</a>
+            <i class="right chevron icon divider"></i>
+            <i class="sitemap icon"></i>
+            <a class="section"
+                [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun, 'node', workflowRunNode]"
+                [queryParams]="{ name: wPipeline}">{{ wPipeline}}</a>
         </ng-container>
 
         <!-- BUILD -->
         <ng-container *ngIf="application && pipeline && version && version > 0">
             <i class="right chevron icon divider"></i>
             <a class="section active"
-            [routerLink]="['/project', project?.key, 'application', application?.name, 'pipeline', pipeline?.name, 'build', this.buildNumber]"
-            [queryParams]="getBuildQueryParams()">
+                [routerLink]="['/project', project?.key, 'application', application?.name, 'pipeline', pipeline?.name, 'build', this.buildNumber]"
+                [queryParams]="getBuildQueryParams()">
                 {{ 'v' + version}}
             </a>
         </ng-container>
