@@ -360,8 +360,6 @@ export class ProjectState {
     addLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddLabelWorkflowInProject) {
         // check if we will a to resync project to get new labels
         let resyncProject = !action.payload.label.id;
-
-        console.log(resyncProject);
         const state = ctx.getState();
         return this._http.post<Label>(
             `/project/${state.project.key}/workflows/${action.payload.workflowName}/label`,
