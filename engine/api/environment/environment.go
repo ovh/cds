@@ -119,7 +119,7 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 	var lastModified time.Time
 	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name, &env.ProjectID, &env.FromRepository, &lastModified); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoEnvironment
+			return nil, sdk.ErrorWithData(sdk.ErrEnvironmentNotFound, envName)
 		}
 		return nil, err
 	}
