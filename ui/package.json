@@ -24,7 +24,9 @@
     "build:analyse": "webpack-bundle-analyzer dist/stats.json",
     "precommit": "lint-staged",
     "sentry:release": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} new ${CDS_VERSION}",
-    "sentry:sourcemaps": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} files ${CDS_VERSION} upload-sourcemaps --url-prefix=${SENTRY_CDS_PREFIX_URL}"
+    "sentry:sourcemaps": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} files ${CDS_VERSION} upload-sourcemaps --url-prefix=${SENTRY_CDS_PREFIX_URL}",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "lint-staged": {
     "linters": {
@@ -94,7 +96,8 @@
     "spinkit": "1.2.5",
     "string-format-obj": "1.1.1",
     "ts-helpers": "1.1.2",
-    "zone.js": "0.9.1"
+    "zone.js": "0.9.1",
+    "snyk": "^1.189.0"
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "8.0.2",
@@ -128,5 +131,6 @@
     "webdriver-manager": "12.1.1",
     "webpack-bundle-analyzer": "3.3.2",
     "wrench-sui": "0.0.3"
-  }
+  },
+  "snyk": true
 }
