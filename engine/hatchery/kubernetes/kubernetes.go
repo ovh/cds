@@ -403,21 +403,30 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Image: img,
 		}
 
-		for key, val := range envm {
-			if key == "CDS_SERVICE_MEMORY" {
-				mq, err := resource.ParseQuantity(val)
-				if err != nil {
-					log.Warning("hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", val, err)
-					continue
-				}
-				servContainer.Resources = apiv1.ResourceRequirements{
-					Requests: apiv1.ResourceList{
-						apiv1.ResourceMemory: mq,
-					},
-				}
+		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
+			mq, err := resource.ParseQuantity(sm)
+			if err != nil {
+				log.Warning("hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
 				continue
 			}
-			servContainer.Env = append(servContainer.Env, apiv1.EnvVar{Name: key, Value: val})
+			servContainer.Resources = apiv1.ResourceRequirements{
+				Requests: apiv1.ResourceList{
+					apiv1.ResourceMemory: mq,
+				},
+			}
+			delete(envm, "CDS_SERVICE_MEMORY")
+		}
+
+		if sa, ok := envm["CDS_SERVICE_ARGS"]; ok {
+			servContainer.Args = hatchery.ParseArgs(sa)
+			delete(envm, "CDS_SERVICE_ARGS")
+		}
+
+		if len(envm) > 0 {
+			servContainer.Env = make([]apiv1.EnvVar, 0, len(envm))
+			for key, val := range envm {
+				servContainer.Env = append(servContainer.Env, apiv1.EnvVar{Name: key, Value: val})
+			}
 		}
 
 		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)

@@ -69,3 +69,63 @@ func TestParseRequirementModel(t *testing.T) {
 			"environment returned by ParseRequirementModel("+test.in+")")
 	}
 }
+
+func TestParseArgs(t *testing.T) {
+	for _, test := range []struct {
+		in           string
+		expectedArgs []string
+	}{
+		{
+			in:           "",
+			expectedArgs: nil,
+		},
+		{
+			in:           "  \t ",
+			expectedArgs: nil,
+		},
+		{
+			in:           "  abc \t\n   def ghi \t ",
+			expectedArgs: []string{"abc", "def", "ghi"},
+		},
+		{
+			in:           `  abc 'def' "ghi" `,
+			expectedArgs: []string{"abc", "def", "ghi"},
+		},
+		{
+			in:           `  abc d'e'f g"h"i `,
+			expectedArgs: []string{"abc", "def", "ghi"},
+		},
+		{
+			in:           `  abc '' "" `,
+			expectedArgs: []string{"abc", "", ""},
+		},
+		{
+			in:           `  a\\b\c\  'd\\e"\f\'' "g\\h'\i\"" `,
+			expectedArgs: []string{`a\bc `, `d\e"f'`, `g\h'i"`},
+		},
+		{
+			// edge case, non closed ", skip it anyway
+			in:           ` "abc  `,
+			expectedArgs: []string{`abc`},
+		},
+		{
+			// edge case, non closed ', skip it anyway
+			in:           ` 'abc  `,
+			expectedArgs: []string{`abc`},
+		},
+		{
+			// edge case, final backslash, keep it as is
+			in:           ` 'abc\`,
+			expectedArgs: []string{`abc\`},
+		},
+		{
+			// typical use case
+			in:           `--name="Bob Foo" -c user='foo bar' '' ""`,
+			expectedArgs: []string{`--name=Bob Foo`, `-c`, `user=foo bar`, ``, ``},
+		},
+	} {
+		args := hatchery.ParseArgs(test.in)
+
+		assert.Equal(t, test.expectedArgs, args, "ParseArgs("+test.in+")")
+	}
+}

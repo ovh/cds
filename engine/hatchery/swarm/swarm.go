@@ -266,16 +266,26 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				img, envm := hatchery.ParseRequirementModel(r.Value)
 
 				serviceMemory := int64(1024)
-				env := []string{}
-				for key, val := range envm {
-					if key == "CDS_SERVICE_MEMORY" {
-						i, err := strconv.ParseUint(val, 10, 32)
-						if err != nil {
-							log.Warning("SpawnWorker> Unable to parse service option %s=%s : %s", key, val, err)
-						} else if i > 0 {
-							serviceMemory = int64(i)
-						}
+				if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
+					i, err := strconv.ParseUint(sm, 10, 32)
+					if err != nil {
+						log.Warning("SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
+					} else {
+						// too low values are checked in HatcherySwarm.createAndStartContainer() below
+						serviceMemory = int64(i)
 					}
+				}
+
+				var cmdArgs []string
+				if sa, ok := envm["CDS_SERVICE_ARGS"]; ok {
+					cmdArgs = hatchery.ParseArgs(sa)
+				}
+				if cmdArgs == nil {
+					cmdArgs = []string{}
+				}
+
+				env := make([]string, 0, len(envm))
+				for key, val := range envm {
 					env = append(env, key+"="+val)
 				}
 
@@ -300,7 +310,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					image:        img,
 					network:      network,
 					networkAlias: r.Name,
-					cmd:          []string{},
+					cmd:          cmdArgs,
 					env:          env,
 					labels:       labels,
 					memory:       serviceMemory,
