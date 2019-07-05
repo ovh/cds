@@ -263,31 +263,32 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
 				//value= "postgres:latest env_1=blabla env_2=blabla" => we can add env variables in requirement name
-				tuple := strings.Split(r.Value, " ")
-				img := tuple[0]
-				env := []string{}
+				img, envm := hatchery.ParseRequirementModel(r.Value)
+
 				serviceMemory := int64(1024)
-				if len(tuple) > 1 {
-					for i := 1; i < len(tuple); i++ {
-						splittedTuple := strings.SplitN(tuple[i], "=", 2)
-						name := splittedTuple[0]
-						val := strings.TrimLeft(splittedTuple[1], "\"")
-						val = strings.TrimRight(val, "\"")
-						env = append(env, name+"="+val)
-					}
-				}
-				//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
-				for _, e := range env {
-					if strings.HasPrefix(e, "CDS_SERVICE_MEMORY=") {
-						m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
-						i, err := strconv.Atoi(m)
-						if err != nil {
-							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %v", e, err)
-							continue
-						}
+				if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
+					i, err := strconv.ParseUint(sm, 10, 32)
+					if err != nil {
+						log.Warning("SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
+					} else {
+						// too low values are checked in HatcherySwarm.createAndStartContainer() below
 						serviceMemory = int64(i)
 					}
 				}
+
+				var cmdArgs []string
+				if sa, ok := envm["CDS_SERVICE_ARGS"]; ok {
+					cmdArgs = hatchery.ParseArgs(sa)
+				}
+				if cmdArgs == nil {
+					cmdArgs = []string{}
+				}
+
+				env := make([]string, 0, len(envm))
+				for key, val := range envm {
+					env = append(env, key+"="+val)
+				}
+
 				serviceName := r.Name + "-" + name
 
 				//labels are used to make container cleanup easier. We "link" the service to its worker this way.
@@ -309,7 +310,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					image:        img,
 					network:      network,
 					networkAlias: r.Name,
-					cmd:          []string{},
+					cmd:          cmdArgs,
 					env:          env,
 					labels:       labels,
 					memory:       serviceMemory,

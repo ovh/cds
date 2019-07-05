@@ -396,32 +396,39 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	for i, serv := range services {
 		//name= <alias> => the name of the host put in /etc/hosts of the worker
 		//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
-		tuple := strings.Split(serv.Value, " ")
-		img := tuple[0]
+		img, envm := hatchery.ParseRequirementModel(serv.Value)
 
 		servContainer := apiv1.Container{
 			Name:  fmt.Sprintf("service-%d-%s", serv.ID, strings.ToLower(serv.Name)),
 			Image: img,
 		}
 
-		if len(tuple) > 1 {
-			servContainer.Env = make([]apiv1.EnvVar, 0, len(tuple)-1)
-			for _, servEnv := range tuple[1:] {
-				envSplitted := strings.Split(servEnv, "=")
-				if len(envSplitted) < 2 {
-					continue
-				}
-				if envSplitted[0] == "CDS_SERVICE_MEMORY" {
-					servContainer.Resources = apiv1.ResourceRequirements{
-						Requests: apiv1.ResourceList{
-							apiv1.ResourceMemory: resource.MustParse(envSplitted[1]),
-						},
-					}
-					continue
-				}
-				servContainer.Env = append(servContainer.Env, apiv1.EnvVar{Name: envSplitted[0], Value: envSplitted[1]})
+		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
+			mq, err := resource.ParseQuantity(sm)
+			if err != nil {
+				log.Warning("hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
+				continue
+			}
+			servContainer.Resources = apiv1.ResourceRequirements{
+				Requests: apiv1.ResourceList{
+					apiv1.ResourceMemory: mq,
+				},
+			}
+			delete(envm, "CDS_SERVICE_MEMORY")
+		}
+
+		if sa, ok := envm["CDS_SERVICE_ARGS"]; ok {
+			servContainer.Args = hatchery.ParseArgs(sa)
+			delete(envm, "CDS_SERVICE_ARGS")
+		}
+
+		if len(envm) > 0 {
+			servContainer.Env = make([]apiv1.EnvVar, 0, len(envm))
+			for key, val := range envm {
+				servContainer.Env = append(servContainer.Env, apiv1.EnvVar{Name: key, Value: val})
 			}
 		}
+
 		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
