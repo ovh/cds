@@ -44,29 +44,20 @@ var userMeCmd = cli.Command{
 }
 
 func userMeRun(v cli.Values) (interface{}, error) {
-	u, err := client.UserGet(cfg.User)
+	u, err := client.UserGetMe()
 	if err != nil {
 		return nil, err
 	}
-	var res = struct {
-		Url      string `cli:"url"`
-		Username string `cli:"username,key"`
-		Fullname string `cli:"fullname"`
-		Email    string `cli:"email"`
-	}{
-		Url:      cfg.Host,
-		Username: u.Username,
-		Fullname: u.Fullname,
-		Email:    u.Email,
-	}
-	return res, nil
+	return u, nil
 }
 
 var userShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show CDS user details",
 	Args: []cli.Arg{
-		{Name: "username"},
+		{
+			Name: "username",
+		},
 	},
 }
 
@@ -107,9 +98,9 @@ func userResetRun(v cli.Values) error {
 		fmt.Println("Email:", email)
 	}
 
-	if err := client.UserReset(username, email, "cdsctl user confirm %s %s"); err != nil {
-		return err
-	}
+	//	if err := client.UserReset(username, email, "cdsctl user confirm %s %s"); err != nil {
+	//		return err
+	//	}
 	fmt.Println("Reset done, please check your emails")
 	return nil
 }
@@ -124,16 +115,16 @@ var userConfirmCmd = cli.Command{
 }
 
 func userConfirmRun(v cli.Values) error {
-	ok, password, err := client.UserConfirm(v.GetString("username"), v.GetString("token"))
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return fmt.Errorf("verification failed")
-	}
-
-	fmt.Println("All is fine. Here is your new password:")
-	fmt.Println(password)
+	//ok, password, err := client.UserConfirm(v.GetString("username"), v.GetString("token"))
+	//if err != nil {
+	//	return err
+	//}
+	//if !ok {
+	//	return fmt.Errorf("verification failed")
+	//}
+	//
+	//fmt.Println("All is fine. Here is your new password:")
+	//fmt.Println(password)
 	return nil
 }
 

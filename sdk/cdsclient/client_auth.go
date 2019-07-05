@@ -2,7 +2,6 @@ package cdsclient
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -17,16 +16,10 @@ func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request s
 }
 
 func (c *client) AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error) {
-	u, err := c.UserGet(username)
-	if err != nil {
-		return nil, err
-	}
-
 	var consumers []sdk.AuthConsumer
-	if _, err := c.GetJSON(context.Background(), "/auth/consumer/"+strconv.FormatInt(u.ID, 10), &consumers); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/user/"+username+"/auth/consumer", &consumers); err != nil {
 		return nil, err
 	}
-
 	return consumers, nil
 }
 
@@ -35,12 +28,11 @@ func (c *client) AuthConsumerDelete(id string) error {
 	return err
 }
 
-func (c *client) AuthConsumerCreate(request sdk.AuthConsumerRequest) (sdk.AuthConsumer, string, error) {
-	var t sdk.AuthConsumer
-	_, headers, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer", request, &t)
+func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
+	var consumer sdk.AuthConsumerCreateResponse
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/user/"+username+"/auth/consumer", request, &consumer)
 	if err != nil {
-		return t, "", err
+		return consumer, err
 	}
-	jwt := headers.Get("X-CDS-JWT")
-	return t, jwt, nil
+	return consumer, nil
 }

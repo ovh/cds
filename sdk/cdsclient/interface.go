@@ -247,13 +247,10 @@ type QueueClient interface {
 
 // UserClient exposes users functions
 type UserClient interface {
-	UserConfirm(username, token string) (bool, string, error)
-	UserList() ([]sdk.User, error)
-	UserGet(username string) (*sdk.User, error)
+	UserList() ([]sdk.AuthentifiedUser, error)
+	UserGet(username string) (*sdk.AuthentifiedUser, error)
+	UserGetMe() (*sdk.AuthentifiedUser, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
-	UserLogin(username, password string) (bool, string, error)
-	UserReset(username, email, callback string) error
-	UserSignup(username, fullname, email, callback string) error
 	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
 }
 
@@ -454,5 +451,5 @@ type AuthClient interface {
 	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (*sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error)
 	AuthConsumerDelete(id string) error
-	AuthConsumerCreate(request sdk.AuthConsumerRequest) (sdk.AuthConsumer, string, error)
+	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
 }

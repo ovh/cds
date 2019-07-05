@@ -31,12 +31,10 @@ type AuthConsumerScope string
 
 // IsValid returns validity for scope.
 func (s AuthConsumerScope) IsValid() bool {
-	switch s {
-	case AuthConsumerScopeUser, AuthConsumerScopeAccessToken, AuthConsumerScopeAction, AuthConsumerScopeAdmin,
-		AuthConsumerScopeGroup, AuthConsumerScopeTemplate, AuthConsumerScopeProject, AuthConsumerScopeRun,
-		AuthConsumerScopeRunExecution, AuthConsumerScopeHooks, AuthConsumerScopeWorker, AuthConsumerScopeWorkerModel,
-		AuthConsumerScopeService, AuthConsumerScopeHatchery:
-		return true
+	for i := range AuthConsumerScopes {
+		if AuthConsumerScopes[i] == s {
+			return true
+		}
 	}
 	return false
 }
@@ -58,6 +56,24 @@ const (
 	AuthConsumerScopeHatchery     AuthConsumerScope = "Hatchery"
 	AuthConsumerScopeService      AuthConsumerScope = "Service"
 )
+
+// AuthConsumerScopes list.
+var AuthConsumerScopes = []AuthConsumerScope{
+	AuthConsumerScopeUser,
+	AuthConsumerScopeAccessToken,
+	AuthConsumerScopeAction,
+	AuthConsumerScopeAdmin,
+	AuthConsumerScopeGroup,
+	AuthConsumerScopeTemplate,
+	AuthConsumerScopeProject,
+	AuthConsumerScopeRun,
+	AuthConsumerScopeRunExecution,
+	AuthConsumerScopeHooks,
+	AuthConsumerScopeWorker,
+	AuthConsumerScopeWorkerModel,
+	AuthConsumerScopeHatchery,
+	AuthConsumerScopeService,
+}
 
 // AuthConsumerScopeSlice type used for database json storage.
 type AuthConsumerScopeSlice []AuthConsumerScope
@@ -98,15 +114,6 @@ type AuthDriverUserInfo struct {
 	Username   string
 	Fullname   string
 	Email      string
-}
-
-// AuthConsumerRequest struct used by clients to create a new builtin auth consumer.
-type AuthConsumerRequest struct {
-	Name                  string   `json:"name"`
-	Description           string   `json:"description"`
-	GroupsIDs             []int64  `json:"groups"`
-	Scopes                []string `json:"scopes"`
-	ExpirationDelaySecond float64  `json:"expiration_delay_second"`
 }
 
 // AuthConsumerType constant to identify what is the driver used to create a consumer.

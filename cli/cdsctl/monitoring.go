@@ -104,7 +104,7 @@ type Termui struct {
 	currentJobURL    string
 	msg              string
 
-	me                             *sdk.User
+	me                             *sdk.AuthentifiedUser
 	status                         *sdk.MonitoringStatus
 	elapsedStatus                  time.Duration
 	workers                        []sdk.Worker
@@ -145,7 +145,7 @@ func (ui *Termui) execLoadData() error {
 	}
 	ui.elapsedWorkers = time.Since(start)
 
-	if ui.me.Admin {
+	if ui.me.Maintainer() || ui.me.Admin() {
 		ui.services, err = client.ServicesByType("hatchery")
 		if err != nil {
 			return err
@@ -375,7 +375,7 @@ func (ui *Termui) enter() {
 		}
 	case servicesSelected:
 		item := ui.statusServices.GetItems()[ui.statusServices.GetCursor()]
-		if ui.me != nil && ui.me.Admin && strings.Contains(item, "Global/hooks") {
+		if ui.me != nil && (ui.me.Maintainer() || ui.me.Admin()) && strings.Contains(item, "Global/hooks") {
 			if err := open.Run(fmt.Sprintf("%s/admin/hooks-tasks", ui.baseURL)); err != nil {
 				ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 				ui.render()
@@ -464,7 +464,7 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	hatcheries := make(map[string]map[string]int64)
 	status := make(map[string]int)
 
-	if ui.me != nil && ui.me.Admin {
+	if ui.me != nil && (ui.me.Maintainer() || ui.me.Admin()) {
 		for _, s := range ui.services {
 			if _, ok := hatcheries[s.Name]; !ok {
 				hatcheries[s.Name] = make(map[string]int64)
