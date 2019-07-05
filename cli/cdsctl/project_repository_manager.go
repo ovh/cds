@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/ovh/cds/cli"
 	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/cli"
 )
 
 var projectRepositoryManagerCmd = cli.Command{
