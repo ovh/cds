@@ -320,11 +320,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 
-		force := FormString(r, "force")
-		var forceDelete bool
-		if force == "true" {
-			forceDelete = true
-		}
+		force := FormBool(r, "force")
 
 		p, errl := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errl != nil {
@@ -343,7 +339,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if !forceDelete {
+		if !force {
 			// Check that the VCS is not used by an application before removing it
 			apps, err := application.LoadAll(tx, api.Cache, projectKey)
 			if err != nil {
