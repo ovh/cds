@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -104,12 +103,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 			return nil, err
 		}
 
-		decryptedPw, err := secret.DecryptValue(modelClear.ModelDocker.Password)
-		if err != nil {
-			return nil, sdk.WrapError(err, "cannot decrypt password old model password")
-		}
-
-		data.ModelDocker.Password = decryptedPw
+		data.ModelDocker.Password = modelClear.ModelDocker.Password
 	}
 
 	// update fields from request data
