@@ -4,7 +4,7 @@
     "outDir": "./dist/out-tsc",
     "baseUrl": "src",
     "paths": {
-      "@cds/*": [".src/app/*"],
+      "@cds/*": [".src/app/*"]
     },
     "sourceMap": true,
     "declaration": false,
@@ -22,6 +22,7 @@
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
-    "strictInjectionParameters": true
+    "strictInjectionParameters": true,
+    "enableIvy": true
   }
 }
