@@ -29,6 +29,7 @@ func projectCommands() []*cobra.Command {
 		projectGroup(),
 		projectVariable(),
 		projectIntegration(),
+		projectRepositoryManager(),
 	}
 }
 

@@ -206,6 +206,8 @@ type ProjectClient interface {
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error)
 	ProjectIntegrationDelete(projectKey string, integrationName string) error
+	ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error)
+	ProjectRepositoryManagerDelete(projectKey string, repoManagerName string, force bool) error
 }
 
 // ProjectKeysClient exposes project keys related functions
