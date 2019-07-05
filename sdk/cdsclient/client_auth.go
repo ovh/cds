@@ -23,8 +23,8 @@ func (c *client) AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, er
 	return consumers, nil
 }
 
-func (c *client) AuthConsumerDelete(id string) error {
-	_, err := c.DeleteJSON(context.Background(), "/auth/consumer/"+id, nil)
+func (c *client) AuthConsumerDelete(username, id string) error {
+	_, err := c.DeleteJSON(context.Background(), "/user/"+username+"/auth/consumer/"+id, nil)
 	return err
 }
 

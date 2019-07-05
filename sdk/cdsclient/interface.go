@@ -450,6 +450,6 @@ func WithUsage() RequestModifier {
 type AuthClient interface {
 	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (*sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error)
-	AuthConsumerDelete(id string) error
+	AuthConsumerDelete(username, id string) error
 	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
 }

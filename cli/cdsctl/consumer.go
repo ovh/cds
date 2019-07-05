@@ -159,6 +159,11 @@ func authConsumerNewRun(v cli.Values) error {
 var authConsumerDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete an auth consumer",
+	Args: []cli.Arg{
+		{
+			Name: "username",
+		},
+	},
 	VariadicArgs: cli.Arg{
 		Name:       "consumer-id",
 		AllowEmpty: true,
@@ -166,13 +171,12 @@ var authConsumerDeleteCmd = cli.Command{
 }
 
 func authConsumerDeleteRun(v cli.Values) error {
-	/*tokenIDs := v.GetStringSlice("token-id")
-	for _, id := range tokenIDs {
-		if err := client.AccessTokenDelete(id); err != nil {
-			fmt.Println("unable to delete token", id, cli.Red(err.Error()))
+	consumerIDs := v.GetStringSlice("consumer-id")
+	for i := range consumerIDs {
+		if err := client.AuthConsumerDelete(v.GetString("username"), consumerIDs[i]); err != nil {
+			return err
 		}
-
-	}*/
-
+		fmt.Printf("Consumer '%s' successfully deleted.\n", consumerIDs[i])
+	}
 	return nil
 }
