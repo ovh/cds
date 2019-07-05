@@ -1844,6 +1844,121 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 
 	var wfRuns []sdk.WorkflowRun
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wfRuns))
-	assert.Equal(t, 1, len(wfRuns))
-	assert.True(t, wfRuns[0].ToDelete)
+	assert.Equal(t, 0, len(wfRuns))
+}
+
+func Test_deleteWorkflowRunHandler(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	s.Jobs = append(s.Jobs, *j)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "child",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	wr, err := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, err)
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", wr.Number),
+	}
+	uri := router.GetRoute("DELETE", api.deleteWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, vars)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 202, rec.Code)
+
+	//Prepare request
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", wr.Number),
+	}
+	uri = router.GetRoute("GET", api.getWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 404, rec.Code)
 }

@@ -302,6 +302,7 @@
   "common_migrate": "Migrer",
   "common_capabilities": "Capacités",
   "common_help_no_group": "Aucun groupe n'a été trouvé, vous ne pourrez pas sauvegarder la ressource en cours d'édition.",
+  "common_deleted": "Supprimé avec succès",
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
   "coverage_lines_title": "Lignes couvertes : ",

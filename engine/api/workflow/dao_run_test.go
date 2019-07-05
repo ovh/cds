@@ -246,18 +246,9 @@ vcs_ssh_key: proj-blabla
 	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
-	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
-	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
-
-	toDeleteNb := 0
-	for _, wfRun := range wruns {
-		if wfRun.ToDelete {
-			toDeleteNb++
-		}
-	}
-
-	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
+	test.Equal(t, 2, count, "Number of workflow runs isn't correct")
 }
 
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
@@ -535,20 +526,15 @@ vcs_ssh_key: proj-blabla
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
-	test.Equal(t, 6, count, "Number of workflow runs isn't correct")
-	toDeleteNb := 0
+	test.Equal(t, 3, count, "Number of workflow runs isn't correct")
 	wfInSuccess := false
 	for _, wfRun := range wruns {
-		if wfRun.ToDelete {
-			toDeleteNb++
-			if wfRun.Status == sdk.StatusSuccess.String() {
-				wfInSuccess = true
-			}
+		if wfRun.Status == sdk.StatusSuccess.String() {
+			wfInSuccess = true
 		}
 	}
 
-	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
-	test.Equal(t, false, wfInSuccess, "The workflow should keep at least one workflow run in success")
+	test.Equal(t, true, wfInSuccess, "The workflow should keep at least one workflow run in success")
 }
 
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
@@ -714,17 +700,9 @@ vcs_ssh_key: proj-blabla
 	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
-	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
-	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
-	toDeleteNb := 0
-	for _, wfRun := range wruns {
-		if wfRun.ToDelete {
-			toDeleteNb++
-		}
-	}
-
-	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
+	test.Equal(t, 2, count, "Number of workflow runs isn't correct")
 }
 
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
@@ -806,18 +784,9 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	errP := workflow.PurgeWorkflowRun(context.Background(), db, *w1, nil)
 	test.NoError(t, errP)
 
-	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
-	test.Equal(t, 10, count, "Number of workflow runs isn't correct")
-
-	toDeleteNb := 0
-	for _, wfRun := range wruns {
-		if wfRun.ToDelete {
-			toDeleteNb++
-		}
-	}
-
-	test.Equal(t, 7, toDeleteNb, "Number of workflow runs to be purged isn't correct (because it should keep at least one in success)")
+	test.Equal(t, 3, count, "Number of workflow runs isn't correct")
 }
 
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {

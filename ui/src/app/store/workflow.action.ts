@@ -1,13 +1,13 @@
 import { GroupPermission } from 'app/model/group.model';
 import { Label } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 
 // ---------  MODAL  -----
 
 export class OpenEditModal {
     static readonly type = '[Workflow] Open Edit Modal';
-    constructor(public payload: { node: WNode, hook: WNodeHook}) { }
+    constructor(public payload: { node: WNode, hook: WNodeHook }) { }
 }
 
 export class CloseEditModal {
@@ -17,49 +17,54 @@ export class CloseEditModal {
 
 export class UpdateModal {
     static readonly type = '[Workflow] UpdateModal';
-    constructor(public payload: { workflow: Workflow }) {}
+    constructor(public payload: { workflow: Workflow }) { }
 }
 
 // ---------  Sidebar -----
 export class SidebarRunsMode {
     static readonly type = '[Workflow] Sidebar run mode';
-    constructor(public payload: {}) {}
+    constructor(public payload: {}) { }
 }
 
 // ---------  Workflow Run ---
 export class ChangeToRunView {
-    static readonly  type = '[Workflow] Change to Run View';
-    constructor(public payload: {}) {}
+    static readonly type = '[Workflow] Change to Run View';
+    constructor(public payload: {}) { }
 }
 
 export class GetWorkflowRun {
-    static readonly  type = '[Workflow] Get Workflow Run';
-    constructor(public payload: { projectKey: string, workflowName: string, num: number}) {}
+    static readonly type = '[Workflow] Get Workflow Run';
+    constructor(public payload: { projectKey: string, workflowName: string, num: number }) { }
 }
 
 export class GetWorkflowRuns {
-    static readonly  type = '[Workflow] Get Workflow Runs';
-    constructor(public payload: { projectKey: string, workflowName: string, limit: string }) {}
+    static readonly type = '[Workflow] Get Workflow Runs';
+    constructor(public payload: { projectKey: string, workflowName: string, limit: string }) { }
+}
+
+export class DeleteWorkflowRun {
+    static readonly type = '[Workflow] Delete Workflow Run';
+    constructor(public payload: { projectKey: string, workflowName: string, num: number }) { }
 }
 
 export class CleanWorkflowRun {
-    static readonly  type = '[Workflow] Clean Workflow Run';
-    constructor(public payload: {}) {}
+    static readonly type = '[Workflow] Clean Workflow Run';
+    constructor(public payload: {}) { }
 }
 
 export class GetWorkflowNodeRun {
-    static readonly  type = '[Workflow] Get Workflow Node Run';
-    constructor(public payload: { projectKey: string, workflowName: string, num: number, nodeRunID: number }) {}
+    static readonly type = '[Workflow] Get Workflow Node Run';
+    constructor(public payload: { projectKey: string, workflowName: string, num: number, nodeRunID: number }) { }
 }
 
 export class SelectWorkflowNodeRun {
-    static readonly  type = '[Workflow] Select Workflow Node Run';
-    constructor(public payload: { workflowNodeRun: WorkflowNodeRun, node: WNode }) {}
+    static readonly type = '[Workflow] Select Workflow Node Run';
+    constructor(public payload: { workflowNodeRun: WorkflowNodeRun, node: WNode }) { }
 }
 
 export class UpdateWorkflowRunList {
-    static readonly  type = '[Workflow] Update Workflow Run List';
-    constructor(public payload: { workflowRun: WorkflowRun }) {}
+    static readonly type = '[Workflow] Update Workflow Run List';
+    constructor(public payload: { workflowRun: WorkflowRun }) { }
 }
 
 // ---------  Workflow  -----
@@ -75,8 +80,8 @@ export class ImportWorkflow {
 }
 
 export class GetWorkflow {
-    static readonly  type = '[Workflow] Get Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string }) {}
+    static readonly type = '[Workflow] Get Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string }) { }
 }
 
 export class UpdateWorkflow {

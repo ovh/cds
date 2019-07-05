@@ -766,6 +766,22 @@ export class WorkflowState {
 
     }
 
+    @Action(actionWorkflow.DeleteWorkflowRun)
+    deleteWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteWorkflowRun) {
+        return this._http.delete<null>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/runs/${action.payload.num}`
+        ).pipe(tap(() => {
+            const state = ctx.getState();
+
+            if (state.listRuns) {
+                ctx.setState({
+                    ...state,
+                    listRuns: state.listRuns.filter((run) => run.num !== action.payload.num),
+                });
+            }
+        }));
+    }
+
     @Action(actionWorkflow.GetWorkflowRuns)
     getWorkflowRuns(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRuns) {
         const state = ctx.getState();
