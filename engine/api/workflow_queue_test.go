@@ -872,9 +872,12 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
-	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
+	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, p, w.ID, workflow.LoadOptions{DeepPipeline: true})
+	assert.NoError(t, err)
+
+	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
 	assert.NoError(t, errwr)
-	wrDB.Workflow = w
+	wrDB.Workflow = *workflowDeepPipeline
 
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
@@ -1014,9 +1017,8 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	test.NoError(t, err)
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
-	mockVCSservice, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
-	test.NoError(t, services.Delete(db, mockVCSservice))
-	test.NoError(t, services.Insert(db, mockVCSservice))
+	db.Exec("DELETE FROM SERVICES")
+	_, _ = assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -1090,7 +1092,11 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Create previous run on default branch
 	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
-	wrDB.Workflow = w
+
+	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
+	assert.NoError(t, err)
+
+	wrDB.Workflow = *workflowWithDeepPipeline
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
@@ -1161,7 +1167,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Create a workflow run
 	wrToTest, errwr3 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr3)
-	wrToTest.Workflow = w
+	wrToTest.Workflow = *workflowWithDeepPipeline
 	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,

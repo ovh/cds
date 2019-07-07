@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { PermissionValue } from 'app/model/permission.model';
 import { Project } from 'app/model/project.model';
@@ -9,7 +9,8 @@ import { WorkflowNodeHookFormComponent } from 'app/shared/workflow/wizard/hook/h
 @Component({
     selector: 'app-hook-modal',
     templateUrl: './hook.modal.html',
-    styleUrls: ['./hook.modal.scss']
+    styleUrls: ['./hook.modal.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowHookModalComponent {

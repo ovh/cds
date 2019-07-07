@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -9,7 +9,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 @Component({
     selector: 'app-workflow-wnode-pipeline',
     templateUrl: './node.pipeline.html',
-    styleUrls: ['./node.pipeline.scss']
+    styleUrls: ['./node.pipeline.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWNodePipelineComponent {

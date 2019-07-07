@@ -49,6 +49,10 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return nil
 	}
 
+	if oldW.Icon != "" && w.Icon == "" {
+		w.Icon = oldW.Icon
+	}
+
 	if !force {
 		return sdk.NewError(sdk.ErrConflict, fmt.Errorf("Workflow exists"))
 	}

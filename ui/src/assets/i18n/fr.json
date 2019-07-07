@@ -19,6 +19,7 @@
   "account_btn_signup": "Créer un compte",
   "account_btn_signin": "Se connecter",
 
+  "account_btn_login": "Se connecter",
   "account_login_btn_connect": "Connexion",
   "account_login_title": "Se connecter à CDS",
   "account_password_btn_reset": "Réinitialiser le mot de passe",
@@ -30,6 +31,7 @@
   "account_signup_waiting_text": "Vous aller recevoir un email afin d'activer votre compte.",
   "account_verify_title": "Information du compte",
 
+  "account_verify_error": "Impossible d'activer le compte.",
   "action_step_title": "Étapes du job",
   "action_step_final_title": "Étapes finales du job",
   "action_list_title": "Actions",
@@ -57,14 +59,11 @@
   "action_builtin": "Prédéfinie",
   "action_btn_init_from_job": "Initialiser une nouvelle action à partir du job",
   "action_help_add_from": "L'action courante a été initialisée à partir des données du job \"{{jobName}}\" du pipeline \"{{pipelineName}}\" dans le projet \"{{projectKey}}\". Ces données ne seront pas enregistrées tant que l'action n'aura pas été sauvegardée.",
-
   "admin_migration_not_started": "Non commencé",
   "admin_migration_started": "En cours",
   "admin_migration_done": "Terminé",
   "admin_migration_title": "Statut de la migration des applications vers les workflows",
-
   "admin_queue_title": "File d'attente",
-
   "application_home_history": "Historique",
   "application_home_repo": "Dépôt GIT",
   "application_home_no_repo": "Lier un dépôt GIT",
@@ -75,7 +74,6 @@
   "application_integration_added": "Intégration ajoutée",
   "application_integration_deleted": "Intégration supprimée",
   "application_integration_updated": "Intégration mise à jour",
-
   "application_create": "Créer une application",
   "application_created": "Application créée",
   "application_deleted": "Application supprimée",
@@ -105,13 +103,11 @@
   "application_update_ok": "L'application a été mise à jour",
   "application_variable_list_title": "Liste des variables de l'application : ",
   "application_variable_form_title": "Ajouter une variable à l'application : ",
-
   "artifact_name": "Nom de l'artefact",
   "artifact_tag": "Tag",
   "artifact_sha512": "SHA512 Checksum",
   "artifact_none": "Aucun artefact",
   "static_file_name": "Fichiers statiques",
-
   "audit_change": "Modification",
   "audit_no": "Aucun audit",
   "audit_time_author": "Heure de modification",
@@ -124,7 +120,6 @@
   "audit_context": "Contexte",
   "audit_modification_type": "Type de modification",
   "audit_title_variable": "Audit de variable",
-
   "btn_apply": "Appliquer",
   "btn_cancel": "Annuler",
   "btn_close": "Fermer",
@@ -151,13 +146,10 @@
   "btn_back": "Retour",
   "btn_filter": "Filtrer",
   "btn_synchronize": "Synchronizer",
-
   "cdsctl_choice_os": "Choisissez votre système d'exploitation",
   "cdsctl_choice_arch": "Choisissez votre architecture",
   "cdsctl_choice_options": "Choisissez vos options",
   "cdsctl_choice_options_with_keychain": "Avec support du trousseau de clé",
-
-
   "cdsctl_part_1": "curl {{apiURL}}/download/cdsctl/{{osChoice}}/{{archChoice}}{{variant}} -o cdsctl\n\n# ajoutez les droits EXEC sur cdsctl\nchmod +x cdsctl\n\n# vérifiez que le binaire est ok, cette commande affiche la version du binaire\n./cdsctl version",
   "cdsctl_part_2": "# La commande cdsctl login enregistre dans votre trousseau votre mot de passe\n./cdsctl login --api-url {{apiURL}} -u {{username}}\n\n# cette command affiche votre nom d'utilisateur, nom complet, adresse mail\n# si vous les voyez, c'est que cdsctl est bien configuré\n./cdsctl user me",
   "cdsctl_part_3": "# La commande cdsctl shell permet de naviguer dans vos projets et vos workflows sans avoir besoin d'ouvrir un navigateur.\n# voir https://ovh.github.io/cds/docs/components/cdsctl/shell/\ncdsctl shell\n\n# Affiche la vue de monitoring\ncdsctl ui\n\n# l'aide est disponible sur chaque commande cdsctl\ncdsctl --help",
@@ -166,14 +158,11 @@
   "cdsctl_part_6": "# Ajoutez un alias git dans votre fichier gitconfig\n$ cat ~/.gitconfig\n[alias]\n   track = !cdsctl workflow status --track",
   "cdsctl_part_7": "# Mettez à jour votre binaire cdsctl depuis votre plateforme CDS\ncdsctl update\n\n# Mettez à jour depuis la dernière release disponible sur github\ncdsctl update --from-github",
   "cdsctl_part_8": "# Toutes les commandes ont un flag --format. Ceci facilite l'usage de cdsctl dans vos scripts\n# Formats disponibles: table, json, yaml\ncdsctl user list --format json",
-
   "cdsctl_info_title": "est l'outil de Ligne de Commande CDS. Cet outil contient toutes les fonctionnalités disponibles dans l'interface web, et même plus. Il vous permet par exemple de:",
-
   "cdsctl_info_list_1": "Gérer vos utilisateurs, vos groupes, vos actions, vos worker models, vos templates de workflow, ...",
   "cdsctl_info_list_2": "Gérer vos projets, vos workflows, vos applications, vos environnements, ...",
   "cdsctl_info_list_3": "Monitorer & administrer votre plateforme CDS",
   "cdsctl_info_list_4": "Automatiser n'importe quelle tâche (administation, utilisation...)",
-
   "cdsctl_title_1": "1 - Télécharger CDSCTL",
   "cdsctl_title_2": "2 - Login",
   "cdsctl_title_3": "3 - Premiers pas avec cdsctl",
@@ -182,25 +171,18 @@
   "cdsctl_title_6": "6 - Git Track",
   "cdsctl_title_7": "7 - Mettre à jour cdsctl",
   "cdsctl_title_8": "8 - Automatisation",
-
   "cdsctl_notice_1_1": "Binaires disponibles sur cette instance de CDS: ",
-
   "cdsctl_notice_2_1": "Si vous avez plusieurs instances de CDS, vous pouvez utiliser le flag -f, exemple: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u ",
   "cdsctl_notice_2_2": "Ne pas utiliser le secret en provenance du trousseau ou d'un fichier de configuration:",
   "cdsctl_notice_2_3": "Vous souhaitez débugger quelque chose ? Vous pouvez utiliser la variable d'environnement CDS_VERBOSE:",
-
   "cdsctl_notice_6_1": "Après avoir ajouté cet alias dans votre fichier gitconfig, vous pouvez maintenant utiliser: git push && git track",
-
   "cdsctl_title_6_info_1": "Imaginez maintenant que vous développiez quelque chose et que vous avez un workflow CDS lancé à chaque git push",
   "cdsctl_title_6_info_2": "La commande `git track` permet de voir dans votre console le statut du workflow en cours, sans voir besoin d'ouvrir un navigateur web.",
-
   "cdsctl_notice": "À noter:",
-
   "commit_author": "Auteur",
   "commit_id": "ID",
   "commit_message": "Message",
   "commit_date": "Date",
-
   "common_action": "Action",
   "common_search": "Rechercher",
   "common_link": "Lien",
@@ -339,13 +321,12 @@
   "common_migrate": "Migrer",
   "common_capabilities": "Capacités",
   "common_help_no_group": "Aucun groupe n'a été trouvé, vous ne pourrez pas sauvegarder la ressource en cours d'édition.",
-
+  "common_deleted": "Supprimé avec succès",
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
   "coverage_lines_title": "Lignes couvertes : ",
   "coverage_trend_default_branch": "Tendance par rapport à la branche par défaut",
   "coverage_trend_current_branch": "Tendance par rapport au build précédent",
-
   "key_copied": "La clé a été copiée",
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
@@ -358,23 +339,20 @@
   "keys_no": "Il n'y a aucune clé",
   "keys_ssh_key_help": "Une clé SSH est généralement utile lorsque vous souhaitez cloner un dépôt Git. CDS peut générer une paire de clé, il ne vous restera qu'à copier / coller la clé publique fournie par CDS dans les clés autorisées sur vos dépôts.  Si vous souhaitez utiliser cette clé manuellement, consultez la documentation:",
   "keys_pgp_key_help": "Une clé PGP est généralement utile lorsque vous souhaitez tagguer un dépôt Git. Si vous souhaitez utiliser cette clé manuellement, consultez la documentation:",
-
   "usage_application_list": "Applications utilisées",
   "usage_workflow_list": "Workflows utilisés",
   "usage_pipeline_list": "Pipelines utilisés",
   "usage_environment_list": "Environnements utilisés",
-
   "deployment_integration_name": "Intégration / déploiement",
-
   "danger_zone": "Zone dangereuse",
-
   "downloads_title": "Téléchargements",
-
   "environment_created": "Environnement créé",
+  "environment_name_error": "Nom d'environnement invalide. Pattern autorisé: a-zA-Z0-9._-",
   "environment_deleted": "Environnement supprimé",
   "environment_cloned": "Environnement cloné sans les variables mots de passe",
   "environment_title_clone": "Cloner l'environnement",
   "environment_clone_placeholder": "Nom du nouvel environnement",
+  "environment_create": "Ajouter un environnement",
   "environment_create_placeholder": "Nouvel environnement",
   "environment_from_repository": "Environnement importé depuis {{repo}}",
   "environment_name": "Nom de l'environnement",
@@ -382,17 +360,18 @@
   "environment_renamed": "Environnement renommé",
   "environment_variable_form_title": "Ajouter une variable",
   "environment_variable_list_title": "Liste des variables",
-
+  "environment_no_usage": "L'application n'est pas utilisée",
+  "environment_rename_title": "Renommer l'environnement: ",
+  "environment_delete_label": "Suppression de l'environnement",
+  "environment_delete_description": "Une fois l'environnement supprimé, il n'y a pas de retour possible.",
   "filter": "Filtrer",
   "filter_list_click": "Cliquer pour filtrer la liste",
-
   "favorite_title": "Gestion des favoris",
   "favorite_add": "Ajouter un favori",
   "favorite_add_btn": "Ajouter à mes favoris",
   "favorite_select_type": "Sélectionnez un type de favoris",
   "favorite_project_select": "Sélectionnez un projet",
   "favorite_workflow_select": "Sélectionnez un workflow",
-
   "broadcast_list_title": "Infos",
   "broadcast_new_title": "Ajouter une information",
   "broadcast_edit_title": "Éditer l'information",
@@ -414,7 +393,6 @@
   "broadcast_load_broadcasts": "Chargement des informations...",
   "broadcast_recent": "Récentes",
   "broadcast_seen": "Vues",
-
   "graph_vulnerability_title": "Vulnérabilités",
   "graph_vulnerability_x": "N° workflow",
   "graph_vulnerability_y": "Total",
@@ -423,7 +401,6 @@
   "graph_unittest_y": "Total",
   "graph_coverage_title": "Couverture",
   "graph_coverage_y": "Taux de couverture",
-
   "group_added": "Groupe ajouté",
   "group_deleted": "Groupe supprimé",
   "group_create_title": "Création d'un groupe",
@@ -447,11 +424,9 @@
   "group_user_is_admin": "Cet utilisateur est administrateur du groupe",
   "group_btn_set_admin": "administrateur",
   "group_btn_unset_admin": "administrateur",
-
   "key_copy_public": "Copier la clé publique",
   "key_or_create": "(Créer)",
   "key_warning_add_repo_title": "N'oubliez pas d'ajouter votre clé SSH sur votre dépôt",
-
   "token_description": "Description",
   "token_value": "Token",
   "token_type": "Type",
@@ -464,7 +439,6 @@
   "token_loading": "Chargement des tokens",
   "token_group_name": "Groupe",
   "token_generated": "Voici votre token généré",
-
   "heatmap": "Heatmap",
   "heatmap_empty": "Aucun évènement déclenché",
   "heatmap_filter_mute": "Masquer les évènements de ce projet",
@@ -472,7 +446,6 @@
   "heatmap_tag": "Tags",
   "heatmap_timestamp": "Date d'évènement",
   "heatmap_workflow_name": "Nom du workflow",
-
   "hook_create_label": "Créer un hook",
   "hook_deleted": "Hook supprimé",
   "hook_edit_title": "Édition du hook : {{app}} / {{pip}}",
@@ -486,17 +459,13 @@
   "hook_task_execs_total": "Total des exécutions",
   "hook_task_repo_fullname": "Nom du dépôt",
   "hook_task_execs": "Exécutions",
-
   "home_documentation": "Documentation",
-
   "job_add_step": "Nouvelle étape",
   "job_delete": "Supprimer le job",
   "job_save": "Sauvegarder le job",
   "job_spawn_title": "Informations",
   "job_spawn_no_information": "Pas d'information pour l'instant...",
-
   "monitoring": "Monitoring",
-
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",
   "navbar_admin_broadcast": "Informations",
@@ -522,7 +491,6 @@
   "navbar_general": "Global",
   "navbar_dark_mode": "Mode sombre",
   "navbar_disconnect": "Déconnexion",
-
   "notifications_added": "Notifications ajoutées",
   "notification_clone": "Notification à cloner",
   "notifications_deleted": "Notification supprimée",
@@ -547,7 +515,6 @@
   "notification_type_title": "Type : ",
   "notification_type": "Type",
   "notification_updated": "Notification mise à jour",
-
   "parameter_added": "Paramètre ajouté",
   "parameter_deleted": "Paramètre supprimé",
   "parameter_description": "Description",
@@ -559,14 +526,12 @@
   "parameter_value": "Valeur",
   "parameter_advanced": "Paramètre avancé",
   "parameters_advanced": "Paramètres avancés",
-
   "permission_added": "Permission ajoutée",
   "permission_deleted": "Permission supprimée",
   "permission_read": "Lecture",
   "permission_read_execute": "Lecture / Exécution",
   "permission_read_write_execute": "Lecture / Ecriture / Exécution",
   "permission_updated": "Permission mise à jour",
-
   "pipeline_added": "Pipeline créé",
   "pipeline_application": "Applications utilisant ce pipeline",
   "pipeline_workflows": "Workflows utilisant ce pipeline",
@@ -613,7 +578,6 @@
   "pipeline_triggered": "Pipelines déclenchés",
   "pipeline_updated": "Pipeline mis à jour",
   "pipeline_administration": "Administration générale du pipeline",
-
   "pipeline_run_test_filter_empty": "Il n'y a aucun test correspondant au filter {{criteria}}",
   "pipeline_run_test_no_error": "Tous les tests sont en succès",
   "pipeline_run_test_total_title_s": " tests",
@@ -623,26 +587,22 @@
   "pipeline_run_test_skipped_title_s": " tests ignorés",
   "pipeline_run_test_skipped_title": " test ignoré",
   "pipeline_run_test_testcase_name": "Testsuite / Testcase",
-
   "pipeline_stage_edit": "Édition du stage",
   "pipeline_stage_moved": "Stage déplacé",
   "pipeline_stage_no": "Le pipeline ne contient aucun stage",
   "pipeline_wizard_description": "Créer ou sélectionner votre premier pipeline associé à votre workflow",
-
   "poller_added": "Poller ajouté",
   "poller_create_label": "Créer un poller",
   "poller_deleted": "Poller supprimé",
   "poller_edit_title": "Édition du poller sur {{app}} / {{pip}}",
   "poller_updated": "Poller mis à jour",
   "poller_workflow_label": "Poller : ",
-
   "prerequisite_add": "Ajouter une condition de lancement",
   "prerequisite_no": "Aucune condition de lancement n'est définie",
   "prerequisite_parameter_name": "Nom du paramètre",
   "prerequisite_title": "Condition de lancement",
   "prerequisite_title_s": "Conditions de lancement",
   "prerequisite_value": "Valeur attendue",
-
   "project_list": "Tous les projets",
   "project_description": "Description du projet",
   "project_icon": "Icône du projet",
@@ -685,7 +645,6 @@
   "project_variable_form_title": "Ajouter une nouvelle variable: ",
   "project_workflows_list": "Liste des workflows du projet : ",
   "project_label_no": "Il n'y a pas de label configuré dans ce projet.",
-
   "integration_add_title": "Lier une intégration : ",
   "integration_list_title": "Liste des intégrations: ",
   "integration_name": "Nom",
@@ -693,13 +652,10 @@
   "integration_model": "Modèle",
   "integration_configuration": "Configuration",
   "integration_official_tooltip": "Intégration publique",
-
   "integration_hook": "hook",
   "integration_deployment": "déploiement",
   "integration_storage": "stockage",
-
   "queue_monitoring": "Queue Monitoring",
-
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",
   "repoman_name": "Gestionnaire de dépôt",
@@ -707,7 +663,6 @@
   "repoman_modal_verif_code_placeholder": "Code de vérification",
   "repoman_modal_verif_text": "Cliquez sur le lien suivant pour finaliser la connexion entre CDS et le gestionnaire de dépôt : ",
   "repoman_modal_verif_title": "Autorisation auprès du gestionnaire de dépôt",
-
   "requirement_add": "Ajouter un pré-requis",
   "requirement_name": "Nom",
   "requirement_type": "Type",
@@ -729,7 +684,6 @@
   "requirement_documentation": "À propos des pré-requis",
   "requirement_error_model": "Vous ne pouvez pas ajouter plusieurs pré-requis de type modèle",
   "requirement_error_hostname": "Vous ne pouvez pas ajouter plusieurs pré-requis de type hostname",
-
   "requirement_placeholder_name_binary": "",
   "requirement_placeholder_name_model": "",
   "requirement_placeholder_name_memory": "",
@@ -738,7 +692,6 @@
   "requirement_placeholder_name_service": "HostnameDuService",
   "requirement_placeholder_name_volume": "",
   "requirement_placeholder_name_os-architecture": "",
-
   "requirement_placeholder_value_binary": "bash",
   "requirement_placeholder_value_model": "Choisissez un modèle de worker",
   "requirement_placeholder_opts_model": "Si c'est un modèle de worker type Docker, vous pouvez ajouter des options. Consultez la documentation.",
@@ -748,7 +701,6 @@
   "requirement_placeholder_value_service": "postgres:9.5.3",
   "requirement_placeholder_opts_service": "POSTGRES_USER=myuser\nPOSTGRES_PASSWORD=mypassword",
   "requirement_placeholder_value_volume": "type=bind,source=/hostDir/sourceDir,destination=/dirInJob",
-
   "scheduler_added": "Scheduler créé",
   "scheduler_deleted": "Scheduler supprimé",
   "scheduler_create_label": "Créer un scheduler",
@@ -756,9 +708,7 @@
   "scheduler_edit_title": "Édition du scheduler : {{app}} / {{pip}} {{env}}",
   "scheduler_updated": "Scheduler mis à jour",
   "scheduler_workflow_label": "Scheduler : ",
-
   "settings_tips": "Conseils",
-
   "services": "services",
   "services_list": "CDS Services",
   "services_see_all": "Voir tous",
@@ -769,7 +719,6 @@
   "service_alert": "Status Alert - vérifier le statut ci-dessous",
   "service_warning": "Status Warning - vérifier le statut ci-dessous",
   "service_ok": "Status OK - tout est ok",
-
   "stage_add_label": "Ajouter un stage",
   "stage_added": "Stage ajouté",
   "stage_deleted": "Stage supprimé",
@@ -779,7 +728,6 @@
   "stage_job_updated": "Job mis à jour",
   "stage_order": "Numéro du stage",
   "stage_updated": "Stage mis à jour",
-
   "step_add_job": "Ajouter un job",
   "step_added": "Etape ajoutée",
   "step_deleted": "Etape supprimée",
@@ -789,7 +737,6 @@
   "step_updated": "Etape mise à jour",
   "step_title_duration": "Début: {{start}}, Fin: {{end}}",
   "step_edit_title": "Éditer le titre",
-
   "timeline_loading": "Chargement du fil d'actualité...",
   "timeline_no": "Le fil d'actualité est vide",
   "timeline_title": "Fil d'actualité",
@@ -801,7 +748,6 @@
   "timeline_filter_project_select": "Sélectionner un projet",
   "timeline_filter_workflow_select": "Sélectionner un workflow",
   "timeline_filter_workflow_title": "Liste des workflows :",
-
   "trigger_added": "Trigger ajouté",
   "trigger_add_prerequisite_title": "Ajouter une condition de lancement",
   "trigger_create_title": "Création d'un nouveau trigger depuis {{app}} / {{pip}} {{env}}",
@@ -814,7 +760,6 @@
   "trigger_label_edit": "Édition du trigger",
   "trigger_to_title": "Pipeline à déclencher",
   "trigger_updated": "Trigger mis à jour",
-
   "variable_added": "Variable ajoutée",
   "variable_deleted": "Variable supprimée",
   "variable_description": "Description",
@@ -823,9 +768,7 @@
   "variable_type": "Type de variable",
   "variable_updated": "Variable mise à jour",
   "variable_value": "Valeur",
-
   "ui_updated": "L'interface vient d'être mise à jour. Merci de cliquer ici pour rafraîchir votre page.",
-
   "user_label_fullname": "Nom complet de l'utilisateur",
   "user_label_username": "Nom d'utilisateur",
   "user_label_new_password": "Nouveau mot de passe",
@@ -837,10 +780,8 @@
   "user_is_admin": "Cet utilisateur est un administrateur CDS",
   "user_saved": "Utilisateur sauvegardé",
   "user_deleted": "L'utilisateur est supprimé",
-
   "user_list_title": "Utilisateurs",
   "user_none": "Aucun utilisateur",
-
   "vcs_connection": "Connexion : ",
   "vcs_user": "Utilisateur : ",
   "vcs_password": "Mot de passe : ",
@@ -849,7 +790,6 @@
   "vcs_ssh_key": "Clé SSH",
   "vcs_pgp_key": "Clé PGP",
   "vcs_server": "Serveur VCS",
-
   "vulnerability_fixin": "Fixé en",
   "vunerability_hide": "Cacher",
   "vulnerability_ignore": "Ignorer",
@@ -857,7 +797,6 @@
   "vulnerability_origin": "Origine",
   "vulnerability_showmore": "Voir plus",
   "vulnerability_updated": "Vulnérabilité mise à jour",
-
   "warning_context": "Contexte",
   "warning_element": "Element",
   "warning_goto_application_variables": "variables de l'application",
@@ -878,11 +817,9 @@
   "warning_workflow": "{{username}} vient de modifier le workflow.",
   "warning_build_title": "Le build est en succès mais il y a {{nb}} étape(s) optionnelle(s) en erreur",
   "warning_updated": "Le warning a été mis à jour",
-
   "wizard_app_clone": "Cloner une application",
   "wizard_app_empty": "Application vide",
   "wizard_ssh_key_name": "Nom de la clé ssh",
-
   "worker_model": "Modèle de worker",
   "worker_model_type": "Type",
   "worker_model_env": "Variables d'environnement",
@@ -956,13 +893,11 @@
   "worker_model_private_registry": "Registry privée",
   "worker_model_username": "Nom d'utilisateur",
   "worker_model_password": "Mot de passe",
-
   "workflow_modal_change_view_confirm": "Êtes-vous sûr de vouloir perdre vos changements ?",
   "workflow_save_as_code_title": "Sauvegarde du workflow as code",
   "workflow_save_as_code_pending": "Envoie des modifications",
   "workflow_as_code_pr_success": "Une demande de revue a été créée :",
   "workflow_as_code_no_edit": "Edition impossible via l'interface lorsque le mode as code est actif",
-
   "workflow_node_condition_empty": "Certaines conditions de lancement sont vides",
   "workflow_node_condition_duplicate": "Vous testez plusieurs fois une même variable",
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
@@ -1128,7 +1063,6 @@
   "workflow_logs_pretty_ansi": "Afficher les logs avec l'interpréteur ANSI",
   "workflow_logs_pretty_html": "Afficher les logs avec l'interpréteur HTML",
   "workflow_logs_raw": "Afficher les logs bruts",
-
   "workflow_wizard_select_repo_man": "Sélectionner un gestionnaire de dépôt",
   "workflow_wizard_select_repo": "Sélectionner un dépot",
   "workflow_wiazrd_select_repo_loading": "Chargement des dépots...",
@@ -1136,7 +1070,6 @@
   "workflow_wizard_select_repo_man_add": "Ou ajouter un gestionnaire de dépôt",
   "workflow_wizard_select_template": "Sélectionner un modèle de workflow",
   "wizard_repo_files": "Fichiers trouvés : ",
-
   "workflow_template_created": "Modèle de workflow créé",
   "workflow_template_saved": "Modèle de workflow sauvegardé",
   "workflow_template_deleted": "Modèle de workflow supprimé",
@@ -1169,7 +1102,6 @@
   "workflow_template_help_edit_from": "Le modèle de workflow est synchronisé à partir d'une URL, vous ne pouvez pas modifier ses informations.",
   "workflow_template_import_from_url": "Importer depuis une URL",
   "workflow_template_imported_from_url": "Importé depuis une URL",
-
   "application_repository_help_line_1": "Votre application n'a pas été importée depuis votre code.",
   "pipeline_repository_help_line_1": "Votre pipeline n'a pas été importé depuis votre code.",
   "environment_repository_help_line_1": "Votre environnement n'a pas été importé depuis votre code.",

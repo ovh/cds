@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
@@ -18,7 +27,8 @@ import { finalize, first } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-node-outgoinghook',
     templateUrl: './wizard.outgoinghook.html',
-    styleUrls: ['./wizard.outgoinghook.scss']
+    styleUrls: ['./wizard.outgoinghook.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWizardOutgoingHookComponent implements OnInit {
@@ -61,7 +71,8 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         private _toast: ToastService,
         private _hookService: HookService,
         private _workflowService: WorkflowService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -74,7 +85,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -82,7 +93,10 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         });
 
         this.loadingModels = true;
-        this._hookService.getOutgoingHookModel().pipe(finalize(() => this.loadingModels = false))
+        this._hookService.getOutgoingHookModel().pipe(finalize(() => {
+            this.loadingModels = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(ms => {
                 this.outgoingHookModels = ms;
                 if (this.hook) {
@@ -129,7 +143,10 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
 
             this._workflowService.getWorkflow(this.hook.outgoing_hook.config['target_project'].value,
                 this.hook.outgoing_hook.config['target_workflow'].value)
-                .pipe(first(), finalize(() => this.loadingHooks = false))
+                .pipe(first(), finalize(() => {
+                    this.loadingHooks = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe(wf => {
                     this.outgoing_default_payload = wf.workflow_data.node.context.default_payload;
                     let allHooks = Workflow.getAllHooks(wf);

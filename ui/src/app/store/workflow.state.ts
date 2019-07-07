@@ -434,11 +434,15 @@ export class WorkflowState {
     @Action(actionWorkflow.SelectHook)
     selectHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectHook) {
         const state = ctx.getState();
+        let sidebar = WorkflowSidebarMode.EDIT_HOOK;
+        if (state.workflowRun) {
+            sidebar = WorkflowSidebarMode.RUN_HOOK;
+        }
         ctx.setState({
             ...state,
             node: action.payload.node,
             hook: action.payload.hook,
-            sidebar: WorkflowSidebarMode.EDIT_HOOK
+            sidebar: sidebar
         });
     }
 
@@ -762,6 +766,22 @@ export class WorkflowState {
 
     }
 
+    @Action(actionWorkflow.DeleteWorkflowRun)
+    deleteWorkflowRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteWorkflowRun) {
+        return this._http.delete<null>(
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}/runs/${action.payload.num}`
+        ).pipe(tap(() => {
+            const state = ctx.getState();
+
+            if (state.listRuns) {
+                ctx.setState({
+                    ...state,
+                    listRuns: state.listRuns.filter((run) => run.num !== action.payload.num),
+                });
+            }
+        }));
+    }
+
     @Action(actionWorkflow.GetWorkflowRuns)
     getWorkflowRuns(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.GetWorkflowRuns) {
         const state = ctx.getState();
@@ -842,9 +862,22 @@ export class WorkflowState {
         } else {
             runs[index] = action.payload.workflowRun;
         }
+
+        // If current workflow node run is on given workflow, check if we have to update it
+        // (only if subnumber changed)
+        let wnr = state.workflowNodeRun;
+        if (wnr && wnr.workflow_run_id === action.payload.workflowRun.id) {
+            if (action.payload.workflowRun.nodes && action.payload.workflowRun.nodes[wnr.workflow_node_id]) {
+                let nodes = action.payload.workflowRun.nodes[wnr.workflow_node_id];
+                if (wnr.subnumber < nodes[0].subnumber) {
+                    wnr = nodes[0]
+                }
+            }
+        }
         ctx.setState({
             ...state,
             listRuns: runs,
+            workflowNodeRun: wnr
         });
     }
 

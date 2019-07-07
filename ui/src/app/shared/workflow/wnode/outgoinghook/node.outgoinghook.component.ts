@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
@@ -9,7 +9,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 @Component({
     selector: 'app-workflow-wnode-outgoing-hook',
     templateUrl: './node.outgoing.html',
-    styleUrls: ['./node.outgoing.scss']
+    styleUrls: ['./node.outgoing.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeOutGoingHookComponent implements OnInit {

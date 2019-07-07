@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
@@ -16,12 +16,14 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { debounceTime, finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
+
 declare var CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-node-run-param',
     templateUrl: './node.run.param.html',
-    styleUrls: ['./node.run.param.scss']
+    styleUrls: ['./node.run.param.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunParamComponent implements OnInit {
@@ -98,7 +100,8 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         private _translate: TranslateService,
         private _toast: ToastService,
         private _appWorkflowService: ApplicationWorkflowService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -112,7 +115,9 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     ngOnInit(): void {
         this.linkedToRepo = WNode.linkedToRepo(this._nodeToRun, this.workflow);
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get()
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -149,6 +154,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             this.readOnly = true;
             this._workflowRunService.getWorkflowNodeRun(
                 this.project.key, this.workflow.name, num, nodeRunID)
+                .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe(nodeRun => {
                     if (nodeRun && nodeRun.hook_event) {
                         this._nodeToRun.context.default_payload = nodeRun.hook_event.payload;
@@ -193,7 +199,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
 
         let currentPayload = payload;
         if (!currentPayload) {
-            currentPayload = this.getCurrentPayload();
+            currentPayload = cloneDeep(this.getCurrentPayload());
             if (this.readOnly) {
                 delete currentPayload['payload'];
             }
@@ -219,7 +225,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             if (this.num == null) {
                 this.loadingCommits = true;
                 this._workflowRunService.getRunNumber(this.project.key, this.workflow)
-                    .pipe(first())
+                    .pipe(first(), finalize(() => this._cd.markForCheck()))
                     .subscribe(n => {
                         this.lastNum = n.num + 1;
                         this.getCommits(n.num + 1, false);
@@ -271,7 +277,10 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch, hash, repository)
             .pipe(
                 debounceTime(500),
-                finalize(() => this.loadingCommits = false)
+                finalize(() => {
+                    this.loadingCommits = false;
+                    this._cd.markForCheck();
+                })
             )
             .subscribe((commits) => this.commits = commits);
     }
@@ -339,6 +348,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         this._workflowRunService.resync(this.project.key, this.workflow, num)
             .pipe(finalize(() => {
                 this.loading = false;
+                this._cd.markForCheck();
             })).subscribe(wr => {
                 this.nodeToRun = Workflow.getNodeByID(this._nodeToRun.id, wr.workflow);
                 this._toast.success('', this._translate.instant('workflow_run_resync_done'));
@@ -380,7 +390,10 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     refreshVCSInfos(remote?: string) {
         this._appWorkflowService.getVCSInfos(this.project.key,
             this.workflow.applications[this.nodeToRun.context.application_id].name, remote)
-            .pipe(finalize(() => this.loadingBranches = false))
+            .pipe(finalize(() => {
+                this.loadingBranches = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((vcsInfos) => {
                 if (vcsInfos.branches) {
                     this.branches = vcsInfos.branches.map((br) => '"' + br.display_id + '"');

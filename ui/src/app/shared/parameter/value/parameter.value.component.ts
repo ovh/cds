@@ -1,4 +1,13 @@
-import { AfterViewChecked, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    AfterViewChecked,
+    ChangeDetectionStrategy,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
@@ -16,7 +25,8 @@ declare var CodeMirror: any;
 @Component({
     selector: 'app-parameter-value',
     templateUrl: './parameter.value.html',
-    styleUrls: ['./parameter.value.scss']
+    styleUrls: ['./parameter.value.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ParameterValueComponent implements OnInit, AfterViewChecked {

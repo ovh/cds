@@ -40,6 +40,12 @@ a,
   }
 }
 
+.ui.list > .item > .content {
+    .night & {
+        color: $darkTheme_grey_6;
+    }
+}
+
 .night {
   color: $darkTheme_grey_6;
   background-color: $darkTheme_grey_1;

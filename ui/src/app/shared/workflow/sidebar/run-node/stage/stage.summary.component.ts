@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Stage } from 'app/model/stage.model';
@@ -8,7 +8,8 @@ import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 @Component({
     selector: 'app-stage-step-summary',
     templateUrl: './stage.summary.component.html',
-    styleUrls: ['./stage.summary.component.scss']
+    styleUrls: ['./stage.summary.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StageStepSummaryComponent implements OnInit {
     @Input() stage: Stage;

@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Operation } from 'app/model/operation.model';
@@ -12,7 +12,8 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-workflow-save-as-code-modal',
     templateUrl: './save.as.code.html',
-    styleUrls: ['./save.as.code.scss']
+    styleUrls: ['./save.as.code.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowSaveAsCodeComponent {
@@ -29,7 +30,8 @@ export class WorkflowSaveAsCodeComponent {
 
     constructor(
         private _modalService: SuiModalService,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
     show(ope: Operation): void {
@@ -60,9 +62,9 @@ export class WorkflowSaveAsCodeComponent {
                         webworker.stop();
                         this.webworkerSub.unsubscribe();
                     }
+                    this._cd.markForCheck();
                 });
             }
         });
     }
-
 }

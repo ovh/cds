@@ -1,5 +1,5 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Action } from 'app/model/action.model';
 import { StepStatus } from 'app/model/job.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -10,7 +10,8 @@ import { WorkflowNodeJobRun, WorkflowRun } from 'app/model/workflow.run.model';
 @Component({
     selector: 'app-action-step-summary',
     templateUrl: './action.summary.component.html',
-    styleUrls: ['./action.summary.component.scss']
+    styleUrls: ['./action.summary.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionStepSummaryComponent implements OnInit {
 

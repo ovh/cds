@@ -52,9 +52,8 @@ func LoadPipeline(ctx context.Context, db gorp.SqlExecutor, projectKey, name str
 		if err != nil {
 			return nil, err
 		}
-		p.Parameter = parameters
+		pip.Parameter = parameters
 	}
-
 	return &pip, nil
 }
 

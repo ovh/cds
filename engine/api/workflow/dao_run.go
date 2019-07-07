@@ -41,6 +41,7 @@ type LoadRunOptions struct {
 	WithTests               bool
 	WithLightTests          bool
 	WithVulnerabilities     bool
+	WithDeleted             bool
 	DisableDetailledNodeRun bool
 	Language                string
 }
@@ -320,7 +321,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 				from workflow_run
 				join project on workflow_run.project_id = project.id
 				join workflow on workflow_run.workflow_id = workflow.id
-				where project.projectkey = $1`
+				where project.projectkey = $1 AND workflow_run.to_delete = false`
 
 	if workflowname != "" {
 		args = []interface{}{projectkey, workflowname}
@@ -329,7 +330,8 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 					join project on workflow_run.project_id = project.id
 					join workflow on workflow_run.workflow_id = workflow.id
 					where project.projectkey = $1
-					and workflow.name = $2`
+					and workflow.name = $2
+					AND workflow_run.to_delete = false`
 	}
 
 	count, errc := db.SelectInt(queryCount, args...)
@@ -345,7 +347,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 	from workflow_run
 	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
-	where project.projectkey = $1
+	where project.projectkey = $1 AND workflow_run.to_delete = false
 	order by workflow_run.start desc
 	limit $2 offset $3`, wfRunfields)
 
@@ -357,6 +359,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 			join workflow on workflow_run.workflow_id = workflow.id
 			where project.projectkey = $1
 			and workflow.name = $2
+			AND workflow_run.to_delete = false
 			order by workflow_run.start desc
 			limit $3 offset $4`, wfRunfields)
 	}
@@ -378,6 +381,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		) as tags on workflow_run.id = tags.workflow_run_id
 		where project.projectkey = $1
 		and workflow.name = $2
+		AND workflow_run.to_delete = false
 		and string_to_array($5, ',') <@ string_to_array(tags.tags, ',')
 		order by workflow_run.start desc
 		limit $3 offset $4`, wfRunfields)
@@ -469,6 +473,9 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 		return nil, sdk.WrapError(err, "Unable to load workflow run. query:%s args:%v", query, args)
 	}
 	wr := sdk.WorkflowRun(*runDB)
+	if !loadOpts.WithDeleted && wr.ToDelete {
+		return nil, sdk.WithStack(sdk.ErrWorkflowNotFound)
+	}
 
 	tags, errT := loadTagsByRunID(db, wr.ID)
 	if errT != nil {

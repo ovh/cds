@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    OnInit,
+    Output
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
@@ -17,11 +26,13 @@ import { RequirementEvent } from 'app/shared/requirements/requirement.event.mode
 import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-action',
     templateUrl: './action.html',
-    styleUrls: ['./action.scss']
+    styleUrls: ['./action.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
@@ -61,7 +72,8 @@ export class ActionComponent implements OnDestroy, OnInit {
         private _actionService: ActionService,
         private dragulaService: DragulaService,
         private _router: Router,
-        private _workerModelService: WorkerModelService
+        private _workerModelService: WorkerModelService,
+        public _cd: ChangeDetectorRef
     ) {
         dragulaService.createGroup('bag-nonfinal', {
             moves: function (el, source, handle) {
@@ -87,10 +99,10 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this._actionService.getAllForProject(this.project.key).subscribe(as => {
+        this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
             this.publicActions = as;
         });
-        this._workerModelService.getAllForProject(this.project.key).subscribe(wms => {
+        this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
             this.workerModels = wms;
         });
     }
@@ -117,6 +129,7 @@ export class ActionComponent implements OnDestroy, OnInit {
                 }
                 let indexAdd = this.editableAction.requirements.findIndex(req => r.requirement.value === req.value);
                 if (indexAdd === -1) {
+                    this.editableAction.requirements = Object.assign([], this.editableAction.requirements);
                     this.editableAction.requirements.push(r.requirement);
                 }
                 if (r.requirement.type === 'model') {

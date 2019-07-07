@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SharedInfraGroupName } from 'app/model/group.model';
 import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
@@ -12,7 +12,8 @@ export const OSArchitecture = 'os-architecture';
 @Component({
     selector: 'app-requirements-list',
     templateUrl: './requirements.list.html',
-    styleUrls: ['./requirements.list.scss']
+    styleUrls: ['./requirements.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RequirementsListComponent extends Table<Requirement> implements OnInit {
     @Input() requirements: Requirement[];

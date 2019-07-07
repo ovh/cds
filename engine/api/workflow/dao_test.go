@@ -12,17 +12,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/ovh/cds/engine/api/permission"
-
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"

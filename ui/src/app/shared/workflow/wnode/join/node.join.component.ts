@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -15,7 +15,8 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-workflow-wnode-join',
     templateUrl: './node.join.html',
-    styleUrls: ['./node.join.scss']
+    styleUrls: ['./node.join.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeJoinComponent {
@@ -35,10 +36,12 @@ export class WorkflowWNodeJoinComponent {
         private _workflowCore: WorkflowCoreService,
         private store: Store,
         private _toast: ToastService,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _cd: ChangeDetectorRef
     ) {
         this.linkJoinSubscription = _workflowCore.getLinkJoinEvent().subscribe(n => {
             this.nodeToLink = n;
+            this._cd.markForCheck();
         });
     }
 

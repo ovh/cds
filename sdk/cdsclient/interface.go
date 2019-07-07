@@ -81,6 +81,7 @@ type RepositoriesManagerInterface interface {
 type ApplicationClient interface {
 	ApplicationAttachToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error
 	ApplicationCreate(projectKey string, app *sdk.Application) error
+	ApplicationUpdate(projectKey string, appName string, app *sdk.Application) error
 	ApplicationDelete(projectKey string, appName string) error
 	ApplicationGet(projectKey string, appName string, opts ...RequestModifier) (*sdk.Application, error)
 	ApplicationList(projectKey string) ([]sdk.Application, error)
@@ -196,6 +197,7 @@ type ProjectClient interface {
 	ProjectGroupAdd(projectKey, groupName string, permission int, projectOnly bool) error
 	ProjectGroupDelete(projectKey, groupName string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
+	ProjectUpdate(key string, project *sdk.Project) error
 	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
@@ -204,6 +206,8 @@ type ProjectClient interface {
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error)
 	ProjectIntegrationDelete(projectKey string, integrationName string) error
+	ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error)
+	ProjectRepositoryManagerDelete(projectKey string, repoManagerName string, force bool) error
 }
 
 // ProjectKeysClient exposes project keys related functions
@@ -280,7 +284,7 @@ type HookClient interface {
 // WorkflowClient exposes workflows functions
 type WorkflowClient interface {
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
-	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
+	WorkflowGet(projectKey, name string, opts ...RequestModifier) (*sdk.Workflow, error)
 	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	WorkflowDelete(projectKey string, workflowName string) error
 	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error

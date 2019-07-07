@@ -1,26 +1,33 @@
-import {AfterViewInit, Component, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {Store} from '@ngxs/store';
-import {ModalSize, ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig} from '@richardlt/ng2-semantic-ui';
-import {GroupPermission} from 'app/model/group.model';
-import {PermissionValue} from 'app/model/permission.model';
-import {Project} from 'app/model/project.model';
-import {WNode, WNodeHook, Workflow} from 'app/model/workflow.model';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import {
+    ModalSize,
+    ModalTemplate,
+    SuiActiveModal,
+    SuiModalService,
+    TemplateModalConfig
+} from '@richardlt/ng2-semantic-ui';
+import { GroupPermission } from 'app/model/group.model';
+import { PermissionValue } from 'app/model/permission.model';
+import { Project } from 'app/model/project.model';
+import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {PermissionEvent} from 'app/shared/permission/permission.event.model';
-import {ToastService} from 'app/shared/toast/ToastService';
-import {ProjectState, ProjectStateModel} from 'app/store/project.state';
-import {CloseEditModal, UpdateWorkflow} from 'app/store/workflow.action';
-import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { PermissionEvent } from 'app/shared/permission/permission.event.model';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState, ProjectStateModel } from 'app/store/project.state';
+import { CloseEditModal, UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-node-edit-modal',
     templateUrl: './node.edit.modal.html',
-    styleUrls: ['./node.edit.modal.scss']
+    styleUrls: ['./node.edit.modal.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowNodeEditModalComponent implements AfterViewInit {
@@ -50,17 +57,19 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     readonly = true;
     nodeRun: WorkflowNodeRun;
 
-    constructor(private _modalService: SuiModalService, private _store: Store,
+    constructor(private _modalService: SuiModalService, private _store: Store, private _cd: ChangeDetectorRef,
                 private _translate: TranslateService, private _toast: ToastService) {
 
         this.projectSubscriber = this._store.select(ProjectState)
             .subscribe((projState: ProjectStateModel) => {
                 this.project = projState.project;
+                this._cd.markForCheck();
             });
     }
 
     ngAfterViewInit(): void {
         this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
+            this._cd.markForCheck();
             this.nodeRun = cloneDeep(s.workflowNodeRun);
             if (!s.editModal) {
                 this.hook = undefined;
@@ -162,6 +171,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
         })).pipe(finalize(() => {
             this.loading = false;
             event.gp.updating = false;
+            this._cd.markForCheck();
         })).subscribe(() => {
             this.hasModification = false;
             this._toast.success('', this._translate.instant('permission_updated'));

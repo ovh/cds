@@ -254,7 +254,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunHandler /*, AllowServices(true)*/))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunHandler /*, AllowServices(true)*/, EnableTracing()), r.DELETE(api.deleteWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", Scope(sdk.AuthConsumerScopeRun), r.POSTEXECUTE(api.stopWorkflowRunHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", Scope(sdk.AuthConsumerScopeRun), r.POSTEXECUTE(api.postResyncVCSWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", Scope(sdk.AuthConsumerScopeRun), r.POST(api.resyncWorkflowRunHandler))

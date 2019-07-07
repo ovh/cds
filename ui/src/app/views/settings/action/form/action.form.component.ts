@@ -27,7 +27,7 @@ export class ActionFormComponent implements OnDestroy {
 
     _action: Action;
     @Input() set action(a: Action) {
-        this._action = { ...a }
+        this._action = { ...a };
 
         if (!this._action) {
             this._action = <Action>{ editable: true };
@@ -119,6 +119,7 @@ export class ActionFormComponent implements OnDestroy {
                 }
                 let indexAdd = this.action.requirements.findIndex(req => r.requirement.value === req.value);
                 if (indexAdd === -1) {
+                    this.action.requirements = Object.assign([], this.action.requirements);
                     this.action.requirements.push(r.requirement);
                 }
                 if (r.requirement.type === 'model') {

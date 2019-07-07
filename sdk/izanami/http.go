@@ -1,4 +1,4 @@
-package client
+package izanami
 
 import (
 	"bytes"
@@ -27,9 +27,9 @@ type Metadata struct {
 
 func (c *Client) buildURL(path string, method string, httpParams map[string]string, body io.Reader) (*http.Request, error) {
 	url := fmt.Sprintf("%s%s", c.apiURL, path)
-	req, errRequest := http.NewRequest(method, url, body)
-	if errRequest != nil {
-		return nil, errRequest
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
 	}
 	if httpParams != nil {
 		// Add query params
@@ -48,9 +48,9 @@ func (c *Client) buildURL(path string, method string, httpParams map[string]stri
 }
 
 func (c *Client) get(path string, httpParams map[string]string) ([]byte, error) {
-	req, errReq := c.buildURL(path, http.MethodGet, httpParams, nil)
-	if errReq != nil {
-		return nil, errReq
+	req, err := c.buildURL(path, http.MethodGet, httpParams, nil)
+	if err != nil {
+		return nil, err
 	}
 	return c.do(req)
 }
@@ -89,7 +89,7 @@ func (c *Client) delete(path string) error {
 }
 
 func (c *Client) do(req *http.Request) ([]byte, error) {
-	res, errDo := c.HttpClient.Do(req)
+	res, errDo := c.HTTPClient.Do(req)
 	if errDo != nil {
 		return nil, errDo
 	}

@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -20,7 +20,9 @@ import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node
 import {
     AddHookWorkflow,
     AddJoinWorkflow,
-    AddNodeTriggerWorkflow, OpenEditModal, SelectWorkflowNodeRun,
+    AddNodeTriggerWorkflow,
+    OpenEditModal,
+    SelectWorkflowNodeRun,
     UpdateHookWorkflow,
     UpdateWorkflow
 } from 'app/store/workflow.action';
@@ -31,7 +33,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-wnode',
     templateUrl: './workflow.node.html',
-    styleUrls: ['./workflow.node.scss']
+    styleUrls: ['./workflow.node.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeComponent implements OnInit {
@@ -75,11 +78,13 @@ export class WorkflowWNodeComponent implements OnInit {
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
         this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.readonly = !s.canEdit;
+            this._cd.markForCheck();
             if (s.workflowRun) {
                 if (this.workflowRun && this.workflowRun.id !== s.workflowRun.id) {
                     this.currentNodeRun = null;

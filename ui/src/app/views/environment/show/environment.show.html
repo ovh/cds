@@ -1,0 +1,87 @@
+<div *ngIf="environment;then showEnv;else loadEnv"></div>
+<ng-template #showEnv>
+    <div id="EnvironmentShow">
+        <app-project-breadcrumb [project]="project" [environment]="environment" [workflow]="workflowName"
+            [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
+            <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
+                <a class="ui label small basic" [class.green]="environment.from_repository" suiPopup
+                    [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
+                    #popup="suiPopup">
+                    <i class="code icon"></i>as code
+                </a>
+                <ng-template let-popup #popupFromRepository>
+                    <div class="content infoPopup">
+                        <ng-container *ngIf="environment.from_repository">
+                            <p>
+                                {{ 'environment_from_repository' | translate: {repo: environment.from_repository} }}
+                            </p>
+                        </ng-container>
+                    </div>
+                </ng-template>
+            </div>
+        </app-project-breadcrumb>
+
+        <div class="CDSmenu" *ngIf="environment">
+            <sm-menu title="" class="pointing secondary">
+                <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
+                    <i class="font icon"></i>{{ 'common_variables' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'keys'" id="EnvironmentKeysTab" (click)="showTab('keys')"><i
+                        class="privacy icon"></i>
+                    {{ 'common_keys' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
+                    <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')">
+                    <i class="graduation icon"></i>
+                    {{ 'common_advanced' | translate }}
+                </a>
+            </sm-menu>
+        </div>
+
+        <div class="scrollingContent">
+            <div class="paddingContent">
+                <div class="viewContent">
+                    <div [ngSwitch]="selectedTab">
+                        <div *ngSwitchCase="'variables'">
+                            <ng-container
+                                *ngIf="environment.permission === perm.READ_WRITE_EXECUTE && !environment.from_repository">
+                                <h3>{{ 'environment_variable_form_title' | translate}}</h3>
+                                <app-variable-form [loading]="varFormLoading"
+                                    (createVariableEvent)="variableEvent($event)"></app-variable-form>
+                            </ng-container>
+                            <h3>{{ 'environment_variable_list_title' | translate}}</h3>
+                            <app-variable [variables]="environment.variables"
+                                [mode]="(environment.permission === perm.READ_WRITE_EXECUTE && !environment.from_repository)?'edit':'ro'"
+                                (event)="variableEvent($event)" auditContext="environment" [project]="project"
+                                [environment]="environment"></app-variable>
+                        </div>
+                        <div *ngSwitchCase="'keys'">
+                            <app-environment-keys [project]="project" [environment]="environment">
+                            </app-environment-keys>
+                        </div>
+                        <div *ngSwitchCase="'usage'">
+                            <ng-container *ngIf="usageCount > 0">
+                                <app-usage [project]="project" [workflows]="workflows" [pipelines]="pipelines"
+                                    [environments]="environments"></app-usage>
+                            </ng-container>
+                            <ng-container *ngIf="usageCount === 0">
+                                <div class="ui info message">
+                                    {{ 'environment_no_usage' | translate }}
+                                </div>
+                            </ng-container>
+                        </div>
+                        <div *ngSwitchCase="'advanced'">
+                            <app-environment-advanced [project]="project" [environment]="environment">
+                            </app-environment-advanced>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+<ng-template #loadEnv>
+    <div class="ui text active loader">Loading environment...</div>
+</ng-template>

@@ -34,6 +34,7 @@ type Project struct {
 	ProjectGroups    []GroupPermission    `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variable         []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments     []Environment        `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	EnvironmentNames IDNames              `json:"environment_names,omitempty"  yaml:"environment_names,omitempty" db:"-"  cli:"-"`
 	Labels           []Label              `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
 	Permissions      Permissions          `json:"permissions"  yaml:"-" db:"-"  cli:"-"`
 	Created          time.Time            `json:"created"  yaml:"created" db:"created" `
@@ -189,8 +190,8 @@ func (proj Project) GetIntegrationByID(id int64) *ProjectIntegration {
 
 // ProjectVCSServer represents associations between a project and a vcs server
 type ProjectVCSServer struct {
-	Name     string            `json:"name" yaml:"name" db:"-" cli:"-"`
-	Username string            `json:"username" yaml:"username" db:"-" cli:"-"`
+	Name     string            `json:"name" yaml:"name" db:"-" cli:"name"`
+	Username string            `json:"username" yaml:"username" db:"-" cli:"username"`
 	Data     map[string]string `json:"-" yaml:"data" db:"-" cli:"-"`
 }
 

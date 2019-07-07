@@ -19,6 +19,10 @@ const projectRoutes: Routes = [
                     () => import('app/views/workflow/workflow.module').then(m => m.WorkflowModule)
             },
             {
+                path: ':key/environment', loadChildren:
+                    () => import('app/views/environment/environment.module').then(m => m.EnvironmentModule)
+            },
+            {
                 path: ':key/application', loadChildren:
                     () => import('app/views/application/application.module').then(m => m.ApplicationModule)
             },

@@ -43,7 +43,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 	//If the hook is on the root, it will trigger a new workflow run
 	//Else if will trigger a new subnumber of the last workflow run
 	if h.NodeID == wr.Workflow.WorkflowData.Node.ID {
-		if err := IsValid(ctx, store, db, &wr.Workflow, p); err != nil {
+		if err := IsValid(ctx, store, db, &wr.Workflow, p, LoadOptions{DeepPipeline: true}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 
@@ -168,8 +168,8 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, wr.Number))
 	defer end()
 
-	if err := IsValid(ctx, store, db, &wr.Workflow, p); err != nil {
-		return nil, sdk.WrapError(err, "unable to valid workflow")
+	if err := IsValid(ctx, store, db, &wr.Workflow, p, LoadOptions{DeepPipeline: true}); err != nil {
+		return nil, sdk.WrapError(err, "Unable to valid workflow")
 	}
 
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {

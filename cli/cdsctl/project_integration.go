@@ -5,26 +5,27 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/spf13/cobra"
 )
 
-var ProjectIntegrationCmd = cli.Command{
+var projectIntegrationCmd = cli.Command{
 	Name:  "integration",
-	Short: "Manage CDS integration integrations",
+	Short: "Manage CDS integrations",
 }
 
-func ProjectIntegration() *cobra.Command {
-	return cli.NewCommand(ProjectIntegrationCmd, nil, []*cobra.Command{
-		cli.NewListCommand(ProjectIntegrationListCmd, ProjectIntegrationListFunc, nil, withAllCommandModifiers()...),
-		cli.NewDeleteCommand(ProjectIntegrationDeleteCmd, ProjectIntegrationDeleteFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(ProjectIntegrationImportCmd, ProjectIntegrationImportFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(ProjectIntegrationExportCmd, ProjectIntegrationExportFunc, nil, withAllCommandModifiers()...),
+func projectIntegration() *cobra.Command {
+	return cli.NewCommand(projectIntegrationCmd, nil, []*cobra.Command{
+		cli.NewListCommand(projectIntegrationListCmd, projectIntegrationListFunc, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(projectIntegrationDeleteCmd, projectIntegrationDeleteFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectIntegrationImportCmd, projectIntegrationImportFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectIntegrationExportCmd, projectIntegrationExportFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
-var ProjectIntegrationListCmd = cli.Command{
+var projectIntegrationListCmd = cli.Command{
 	Name:  "list",
 	Short: "List integrations available on a project",
 	Ctx: []cli.Arg{
@@ -32,12 +33,12 @@ var ProjectIntegrationListCmd = cli.Command{
 	},
 }
 
-func ProjectIntegrationListFunc(v cli.Values) (cli.ListResult, error) {
+func projectIntegrationListFunc(v cli.Values) (cli.ListResult, error) {
 	pfs, err := client.ProjectIntegrationList(v.GetString(_ProjectKey))
 	return cli.AsListResult(pfs), err
 }
 
-var ProjectIntegrationDeleteCmd = cli.Command{
+var projectIntegrationDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a integration configuration on a project",
 	Ctx: []cli.Arg{
@@ -48,11 +49,11 @@ var ProjectIntegrationDeleteCmd = cli.Command{
 	},
 }
 
-func ProjectIntegrationDeleteFunc(v cli.Values) error {
+func projectIntegrationDeleteFunc(v cli.Values) error {
 	return client.ProjectIntegrationDelete(v.GetString(_ProjectKey), v.GetString("name"))
 }
 
-var ProjectIntegrationImportCmd = cli.Command{
+var projectIntegrationImportCmd = cli.Command{
 	Name:    "import",
 	Short:   "Import a integration configuration on a project from a yaml file",
 	Example: "cdsctl integration import MY-PROJECT file.yml",
@@ -67,7 +68,7 @@ var ProjectIntegrationImportCmd = cli.Command{
 	},
 }
 
-func ProjectIntegrationImportFunc(v cli.Values) error {
+func projectIntegrationImportFunc(v cli.Values) error {
 	f, err := os.Open(v.GetString("filename"))
 	if err != nil {
 		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
@@ -77,7 +78,7 @@ func ProjectIntegrationImportFunc(v cli.Values) error {
 	return err
 }
 
-var ProjectIntegrationExportCmd = cli.Command{
+var projectIntegrationExportCmd = cli.Command{
 	Name:    "export",
 	Short:   "Export a integration configuration from a project to stdout",
 	Example: "cdsctl integration export MY-PROJECT MY-INTEGRATION-NAME > file.yaml",
@@ -89,7 +90,7 @@ var ProjectIntegrationExportCmd = cli.Command{
 	},
 }
 
-func ProjectIntegrationExportFunc(v cli.Values) error {
+func projectIntegrationExportFunc(v cli.Values) error {
 	pf, err := client.ProjectIntegrationGet(v.GetString(_ProjectKey), v.GetString("name"), false)
 	if err != nil {
 		return err

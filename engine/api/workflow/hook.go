@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -74,8 +73,10 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
 	var oldHooks map[string]*sdk.NodeHook
+	var oldHooksByRef map[string]sdk.NodeHook
 	if oldWorkflow != nil {
 		oldHooks = oldWorkflow.WorkflowData.GetHooks()
+		oldHooksByRef = oldWorkflow.WorkflowData.GetHooksMapRef()
 	}
 	if len(wf.WorkflowData.Node.Hooks) <= 0 {
 		return nil
@@ -94,20 +95,27 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	hookToUpdate := make(map[string]sdk.NodeHook)
 	for i := range wf.WorkflowData.Node.Hooks {
 		h := &wf.WorkflowData.Node.Hooks[i]
-
 		if h.UUID == "" && h.Ref == "" {
-			// generate uuid
-			h.UUID = sdk.UUID()
-			if h.Ref == "" {
-				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
+			h.Ref = fmt.Sprintf("%s.%d", wf.WorkflowData.Node.Name, i)
+		} else if h.Ref != "" && oldHooksByRef != nil {
+			// search previous hook configuration by ref
+			previousHook, has := oldHooksByRef[h.Ref]
+			h.UUID = previousHook.UUID
+			// If previous hook is the same, we do nothing
+			if has && h.Equals(previousHook) {
+				continue
 			}
 		} else if oldHooks != nil {
-			// search previous hook configuration
+			// search previous hook configuration by uuid
 			previousHook, has := oldHooks[h.UUID]
 			// If previous hook is the same, we do nothing
 			if has && h.Equals(*previousHook) {
 				continue
 			}
+		}
+		// initialize a UUID is there no uuid
+		if h.UUID == "" {
+			h.UUID = sdk.UUID()
 		}
 
 		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{

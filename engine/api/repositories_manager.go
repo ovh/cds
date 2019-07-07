@@ -319,6 +319,8 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 
+		force := FormBool(r, "force")
+
 		p, errl := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteRepositoriesManagerHandler> Cannot load project %s", projectKey)
@@ -336,14 +338,16 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		// Check that the VCS is not used by an application before removing it
-		apps, err := application.LoadAll(tx, api.Cache, projectKey)
-		if err != nil {
-			return err
-		}
-		for _, app := range apps {
-			if app.VCSServer == rmName {
-				return sdk.WithStack(sdk.ErrVCSUsedByApplication)
+		if !force {
+			// Check that the VCS is not used by an application before removing it
+			apps, err := application.LoadAll(tx, api.Cache, projectKey)
+			if err != nil {
+				return err
+			}
+			for _, app := range apps {
+				if app.VCSServer == rmName {
+					return sdk.WithStack(sdk.ErrVCSUsedByApplication)
+				}
 			}
 		}
 

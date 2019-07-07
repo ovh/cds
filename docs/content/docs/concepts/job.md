@@ -1,7 +1,7 @@
 ---
 title: "Job"
 weight: 1
-card: 
+card:
   name: concept_pipeline
   weight: 3
 ---
@@ -11,7 +11,7 @@ A job is composed of steps, which will be run sequentially. A job is executed in
 
 ![Job](../images/job_steps.png?height=300px)
 
-A standard build job looks like this: 
+A standard build job looks like this:
 
 
 ![Job](../images/job.png?height=500px)
@@ -24,7 +24,7 @@ You can use « built-in » actions, such as checkoutApplication, script, jUnit, 
 - The [jUnit]({{< relref "/docs/actions/builtin-junit.md" >}}) action parses a given Junit-formatted XML file to extract its test results
 
 
-**Notice**: you cannot share a workspace between jobs or between two runs of the same job. Actions [Artifact Upload]({{{< relref "/docs/actions/builtin-artifact-upload.md" >}}}) and [Artifact Download]({{{< relref "/docs/actions/builtin-artifact-download.md" >}}}) can be used to transfert artifacts between jobs.
+**Notice**: you cannot share a workspace between jobs or between two runs of the same job. Actions [Artifact Upload]({{< relref "/docs/actions/builtin-artifact-upload.md" >}}) and [Artifact Download]({{< relref "/docs/actions/builtin-artifact-download.md" >}}) can be used to transfert artifacts between jobs.
 
 A Job is executed by a **worker**. CDS will select or provision a worker for the job dependending on the [Requirements]({{< relref "/docs/concepts/requirement/_index.md" >}}) the job's requirements.
 

@@ -333,8 +333,6 @@ github.com/hashicorp/hcl/json/token
 github.com/hashicorp/vault/api
 github.com/hashicorp/vault/helper/jsonutil
 github.com/hashicorp/vault/helper/compressutil
-# github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288
-github.com/howeyc/gopass
 # github.com/huandu/xstrings v1.2.0
 github.com/huandu/xstrings
 # github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19
@@ -450,6 +448,8 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
 github.com/ovh/cds/sdk/interpolate
+# github.com/ovh/cds/sdk/izanami v0.0.0-00010101000000-000000000000 => ./sdk/izanami
+github.com/ovh/cds/sdk/izanami
 # github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd
 github.com/ovh/configstore
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
@@ -481,8 +481,6 @@ github.com/ovh/venom/executors/smtp
 github.com/ovh/venom/executors/ssh
 github.com/ovh/venom/executors/web
 github.com/ovh/venom/executors
-# github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
-github.com/ovhlabs/izanami-go-client
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
 # github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c

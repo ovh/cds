@@ -53,6 +53,7 @@
   i {
     &.ribbon-state {
       width: 5px;
+      min-width: 5px;
       &.success {
         background-color: $cds_color_green;
       }

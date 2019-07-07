@@ -391,7 +391,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		project.LoadOptions.WithGroups,
 	)
 	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{OnlyRootNode: true})
+	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 
 	assert.Equal(t, 2, len(wfLoaded.Groups))

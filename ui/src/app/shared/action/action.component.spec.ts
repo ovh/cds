@@ -137,7 +137,7 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.project = <Project>{ key: 'key' }
 
-        fixture.detectChanges();
+        fixture.componentInstance._cd.detectChanges();
         tick(50);
 
         // readonly , no button
@@ -146,14 +146,14 @@ describe('CDS: Action Component', () => {
 
         fixture.componentInstance.edit = true;
 
-        fixture.detectChanges();
+        fixture.componentInstance._cd.detectChanges();
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
 
         spyOn(fixture.componentInstance.actionEvent, 'emit');
         compiled.querySelector('.ui.red.button').click();
-        fixture.detectChanges();
+        fixture.componentInstance._cd.detectChanges();
         tick(50);
         compiled.querySelector('.ui.red.button.active').click();
 
