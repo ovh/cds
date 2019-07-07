@@ -77,6 +77,8 @@ func loginRun(v cli.Values) error {
 	switch consumerType {
 	case sdk.ConsumerLocal:
 		return loginRunLocal(v)
+	case sdk.ConsumerBuiltin:
+		return loginRunBuiltin(v)
 	default:
 		return loginRunExternal(v)
 	}
@@ -118,6 +120,40 @@ func loginRunLocal(v cli.Values) error {
 	})
 	if err != nil {
 		return fmt.Errorf("cannot signin: %v", err)
+	}
+
+	return doAfterLogin(apiURL, res.User.Username, res.Token, env, v.GetBool("insecure"))
+}
+
+func loginRunBuiltin(v cli.Values) error {
+	apiURL := v.GetString("api-url")
+
+	signinToken := v.GetString("signin-token")
+	env := v.GetBool("env")
+	if env && signinToken == "" {
+		return fmt.Errorf("Please set signin-token flag to use --env option")
+	}
+
+	if signinToken == "" {
+		if err := survey.AskOne(&survey.Password{Message: "Sign in token"}, &signinToken, nil); err != nil {
+			return err
+		}
+	} else if !env {
+		fmt.Println("Sign in token: ********")
+	}
+
+	conf := cdsclient.Config{
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	}
+
+	client = cdsclient.New(conf)
+
+	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{
+		"token": signinToken,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot signin: %s", err)
 	}
 
 	return doAfterLogin(apiURL, res.User.Username, res.Token, env, v.GetBool("insecure"))

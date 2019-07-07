@@ -55,7 +55,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	// Check for session based on jwt from context
 	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
 	if err != nil {
-		return ctx, err
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
 	ctx = context.WithValue(ctx, contextSession, session)
@@ -64,10 +64,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	if err != nil {
-		return ctx, err
-	}
-	if consumer == nil {
-		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 	log.Debug("api.authMiddleware> consumer is on behalf of user %s who can access groups: %v", consumer.AuthentifiedUser.GetFullname(), consumer.AuthentifiedUser.OldUserStruct.Groups)
 
