@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -8,7 +8,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 @Component({
     selector: 'app-workflow-wnode-fork',
     templateUrl: './node.fork.html',
-    styleUrls: ['./node.fork.scss']
+    styleUrls: ['./node.fork.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeForkComponent {

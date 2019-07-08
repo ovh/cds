@@ -1,15 +1,17 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { TaskExecution } from 'app/model/workflow.hook.model';
 import { ThemeStore } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-workflow-node-hook-details',
-  templateUrl: './hook.details.component.html',
-  styleUrls: ['./hook.details.component.scss']
+    selector: 'app-workflow-node-hook-details',
+    templateUrl: './hook.details.component.html',
+    styleUrls: ['./hook.details.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookDetailsComponent implements OnInit {
@@ -24,7 +26,8 @@ export class WorkflowNodeHookDetailsComponent implements OnInit {
 
   constructor(
     private _modalService: SuiModalService,
-    private _theme: ThemeStore
+    private _theme: ThemeStore,
+    private _cd: ChangeDetectorRef
   ) {
     this.codeMirrorConfig = {
       matchBrackets: true,
@@ -37,7 +40,9 @@ export class WorkflowNodeHookDetailsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.themeSubscription = this._theme.get().subscribe(t => {
+    this.themeSubscription = this._theme.get()
+        .pipe(finalize(() => this._cd.markForCheck()))
+        .subscribe(t => {
       this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
       if (this.codemirror && this.codemirror.instance) {
         this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);

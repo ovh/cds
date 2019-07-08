@@ -1,6 +1,7 @@
 <div class="conditions ui form">
     <app-conditions [project]="project" [readonly]="readonly" [pipelineId]="node.context.pipeline_id"
-        [triggerConditions]="triggerConditions" [(conditions)]="editableNode.context.conditions">
+        [triggerConditions]="triggerConditions" [(conditions)]="editableNode.context.conditions"
+        (conditionsChange)="pushChange($event)">
     </app-conditions>
 
     <button class="ui right floated green button" (click)="updateWorkflow()" *ngIf="!readonly" [class.loading]="loading"

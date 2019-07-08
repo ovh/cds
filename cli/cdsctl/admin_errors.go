@@ -9,8 +9,9 @@ import (
 )
 
 var adminErrorsCmd = cli.Command{
-	Name:  "errors",
-	Short: "Manage CDS errors",
+	Name:    "errors",
+	Aliases: []string{"error"},
+	Short:   "Manage CDS errors",
 }
 
 func adminErrors() *cobra.Command {

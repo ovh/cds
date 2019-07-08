@@ -311,6 +311,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		// as hook service. It's needed to have the buildParameters.
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
+				WithDeleted:             false,
 				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: getService(ctx) == nil,
@@ -338,6 +339,33 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		run.Translate(r.Header.Get("Accept-Language"))
 
 		return service.WriteJSON(w, run, http.StatusOK)
+	}
+}
+
+func (api *API) deleteWorkflowRunHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+
+		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
+			workflow.LoadRunOptions{
+				DisableDetailledNodeRun: true,
+			},
+		)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to load workflow %s run number %d", name, number)
+		}
+
+		if err := workflow.MarkWorkflowRunsAsDelete(api.mustDB(), []int64{run.ID}); err != nil {
+			return sdk.WrapError(err, "cannot mark workflow run %d as delete", run.ID)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusAccepted)
 	}
 }
 

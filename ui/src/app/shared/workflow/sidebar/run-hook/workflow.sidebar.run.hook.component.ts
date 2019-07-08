@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import {Store} from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -15,7 +15,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-sidebar-run-hook',
     templateUrl: './workflow.sidebar.run.hook.component.html',
-    styleUrls: ['./workflow.sidebar.run.hook.component.scss']
+    styleUrls: ['./workflow.sidebar.run.hook.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarRunHookComponent implements OnInit {
@@ -37,7 +38,8 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
 
     constructor(
         private _hookService: HookService,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -45,6 +47,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             this.wr = s.workflowRun;
             this.hook = s.hook;
             this.loadHookDetails();
+            this._cd.markForCheck();
         });
     }
 
@@ -52,7 +55,10 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
         if (this.wr && this.hook) {
             this.loading = true;
             this._hookService.getHookLogs(this.project.key, this.wr.workflow.name, this.hook.uuid)
-                .pipe(finalize(() => this.loading = false))
+                .pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe((hook) => {
                     if (Array.isArray(hook.executions) && hook.executions.length) {
                         let found = false;

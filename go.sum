@@ -407,8 +407,6 @@ github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 h1:x9UmLJfoTojbsVpUh0sO
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689/go.mod h1:joRatxRJaZBsY3JAOEMcoOp05CnZzsx4scTxi95DHyQ=
 github.com/ovh/venom v0.25.0 h1:q0NC8KHuG1UoWNYXqhZUM/VbOnS8ciQJr6Afn230OIw=
 github.com/ovh/venom v0.25.0/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
-github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473 h1:WX3Cy2kyJeQp/HGFao07xm75Ec5BlF41hpi0U/37oHg=
-github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473/go.mod h1:5Qy53wJuE3WEGY1sMAlDyhu/Rx9ICM+uUU6X0tBR3Xo=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c h1:Lgl0gzECD8GnQ5QCWA8o6BtfL6mDH5rQgM4/fX3avOs=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=

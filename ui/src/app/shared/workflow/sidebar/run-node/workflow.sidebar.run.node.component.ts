@@ -1,6 +1,14 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { Router } from '@angular/router';
-import {Store} from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -10,7 +18,7 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
-import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import 'rxjs/add/observable/zip';
 import { first } from 'rxjs/operators';
@@ -19,7 +27,8 @@ import { first } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-sidebar-run-node',
     templateUrl: './workflow.sidebar.run.node.component.html',
-    styleUrls: ['./workflow.sidebar.run.node.component.scss']
+    styleUrls: ['./workflow.sidebar.run.node.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
@@ -52,11 +61,13 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         private _wrService: WorkflowRunService,
         private _router: Router,
         private _durationService: DurationService,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
         this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this._cd.markForCheck();
             this.currentWorkflowRun = s.workflowRun;
             this.node = s.node;
             this.currentWorkflowNodeRun = s.workflowNodeRun;

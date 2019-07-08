@@ -232,7 +232,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler, AllowServices(true), EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler, AllowServices(true), EnableTracing()), r.DELETE(api.deleteWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POSTEXECUTE(api.stopWorkflowRunHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", r.POSTEXECUTE(api.postResyncVCSWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunHandler))

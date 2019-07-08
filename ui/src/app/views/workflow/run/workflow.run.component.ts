@@ -118,6 +118,8 @@ export class WorkflowRunComponent implements OnInit {
                     this.handleNotification();
                 }
                 this.updateTitle();
+            } else {
+                delete this.workflowRun;
             }
         });
     }

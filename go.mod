@@ -65,7 +65,6 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
-	github.com/facebookgo/httpcontrol v0.0.0-20150708234001-ccde4420e1fe // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/fatih/color v0.0.0-20161018201348-a360acfe359f
@@ -184,9 +183,9 @@ require (
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
+	github.com/ovh/cds/sdk/izanami v0.0.0-00010101000000-000000000000
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
 	github.com/ovh/venom v0.25.0
-	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
@@ -289,3 +288,5 @@ replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-2018083115000
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
 
 replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate
+
+replace github.com/ovh/cds/sdk/izanami => ./sdk/izanami

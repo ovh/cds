@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
@@ -18,7 +26,8 @@ import { filter, finalize, first } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-node-context',
     templateUrl: './wizard.context.html',
-    styleUrls: ['./wizard.context.scss']
+    styleUrls: ['./wizard.context.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeContextComponent implements OnInit {
@@ -50,7 +59,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     showCheckStatus = false;
 
     constructor(private _store: Store, private _appService: ApplicationService, private _translate: TranslateService,
-        private _toast: ToastService) {
+        private _toast: ToastService, private _cd: ChangeDetectorRef) {
     }
 
     ngOnInit() {
@@ -128,7 +137,13 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
                             idName.name = pf.name;
                             this.integrations.push(idName);
                         }
-                    })
+                    });
+                    let index = this.integrations
+                        .findIndex(idName => idName.id === this.node.context.project_integration_id);
+                    if (this.node.context.project_integration_id > 0 && index === -1) {
+                        delete this.node.context.project_integration_id;
+                    }
+                    this._cd.markForCheck();
                 }
             )
         } else {

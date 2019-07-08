@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
@@ -27,7 +36,8 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'app-workflow-node-conditions',
     templateUrl: './wizard.conditions.html',
-    styleUrls: ['./wizard.conditions.scss']
+    styleUrls: ['./wizard.conditions.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
@@ -49,11 +59,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             if (!this.editableNode.context.conditions.plain) {
                 this.editableNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
             }
-            if (this.editableNode.context.conditions.lua_script && this.editableNode.context.conditions.lua_script !== '') {
-                this.isAdvanced = true;
-            } else {
-                this.isAdvanced = false;
-            }
             this.previousValue = this.editableNode.context.conditions.lua_script;
             let condition = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
             if (condition) {
@@ -69,7 +74,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     @Output() conditionsChange = new EventEmitter<boolean>();
 
     codeMirrorConfig: any;
-    isAdvanced = false;
     suggest: Array<string> = [];
     loadingConditions = false;
     operators: Array<any>;
@@ -87,7 +91,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         private _workflowService: WorkflowService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         super();
     }
@@ -107,7 +112,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             readOnly: this.readonly,
         };
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -115,12 +120,16 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         });
 
         this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
+            .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe((suggest) => this.suggest = suggest);
 
         this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
             .pipe(
                 first(),
-                finalize(() => this.loadingConditions = false)
+                finalize(() => {
+                    this.loadingConditions = false;
+                    this._cd.markForCheck();
+                })
             )
             .subscribe(wtc => {
                 this.triggerConditions = wtc;
@@ -133,7 +142,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     updateWorkflow(): void {
         this.loading = true;
-        if (this.isAdvanced) {
+        if (this.editableNode.context.conditions.lua_script && this.editableNode.context.conditions.lua_script !== '') {
             this.editableNode.context.conditions.plain = null;
         } else {
             this.editableNode.context.conditions.lua_script = '';

@@ -304,6 +304,7 @@
   "common_help_no_group": "No group can be found, you will not be able to save current resource.",
   "common_find_help": "Maybe you could find some help",
   "common_here": "here",
+  "common_deleted": "Deleted with success",
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
   "coverage_lines_title": "Covered lines: ",

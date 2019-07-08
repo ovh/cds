@@ -5,14 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/spf13/cobra"
 )
 
 var projectIntegrationCmd = cli.Command{
 	Name:  "integration",
-	Short: "Manage CDS integration integrations",
+	Short: "Manage CDS integrations",
 }
 
 func projectIntegration() *cobra.Command {

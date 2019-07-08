@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -17,7 +17,8 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'app-workflow-node-hook-form',
     templateUrl: './hook.form.html',
-    styleUrls: ['./hook.form.scss']
+    styleUrls: ['./hook.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookFormComponent implements OnInit {
@@ -65,7 +66,8 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         private _store: Store,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -78,7 +80,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             readOnly: this.mode === 'ro',
         };
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -95,7 +97,10 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         }
         this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
             first(),
-            finalize(() => this.loadingModels = false)
+            finalize(() => {
+                this.loadingModels = false;
+                this._cd.markForCheck();
+            })
         ).subscribe(mds => {
             this.hooksModel = mds;
             if (this.hook && this.hook.hook_model_id) {

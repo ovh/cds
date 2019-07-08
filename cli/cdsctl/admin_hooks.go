@@ -13,8 +13,9 @@ import (
 )
 
 var adminHooksCmd = cli.Command{
-	Name:  "hooks",
-	Short: "Manage CDS Hooks tasks",
+	Name:    "hooks",
+	Aliases: []string{"hook"},
+	Short:   "Manage CDS Hooks tasks",
 }
 
 func adminHooks() *cobra.Command {
