@@ -85,7 +85,7 @@ func TestLoadAllByRepo(t *testing.T) {
 	}
 
 	test.NoError(t, project.Insert(db, cache, &proj))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, sdk.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
 	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
@@ -131,7 +131,7 @@ func TestLoadAll(t *testing.T) {
 
 	test.NoError(t, project.Insert(db, cache, &proj))
 	test.NoError(t, project.Insert(db, cache, &proj1))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, sdk.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
 	u2, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)

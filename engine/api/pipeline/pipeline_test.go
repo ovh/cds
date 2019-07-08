@@ -204,7 +204,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	projectKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey, nil)
 
-	assert.NoError(t, group.InsertGroupInProject(db, proj.ID, g2.ID, permission.PermissionReadWriteExecute))
+	assert.NoError(t, group.InsertGroupInProject(db, proj.ID, g2.ID, sdk.PermissionReadWriteExecute))
 
 	// first pipeline with requirement shared.infra/model
 	pip1 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}

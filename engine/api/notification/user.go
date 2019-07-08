@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -52,7 +51,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Jabber]. error while loading permission:%s", errPerm.Error())
 					}
@@ -78,7 +77,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
 						return nil

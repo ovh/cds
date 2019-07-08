@@ -440,7 +440,7 @@ func (api *API) addProjectHandler() service.Handler {
 					// group name does not exists, add it on project
 					permG := sdk.GroupPermission{
 						Group:      sdk.Group{Name: strings.Replace(p.Name, " ", "", -1)},
-						Permission: permission.PermissionReadWriteExecute,
+						Permission: sdk.PermissionReadWriteExecute,
 					}
 					p.ProjectGroups = append(p.ProjectGroups, permG)
 				} else {
@@ -476,7 +476,7 @@ func (api *API) addProjectHandler() service.Handler {
 			groupPermission.Group.ID = groupID
 
 			if group.IsDefaultGroupID(groupID) {
-				groupPermission.Permission = permission.PermissionRead
+				groupPermission.Permission = sdk.PermissionRead
 			}
 
 			// Add group on project

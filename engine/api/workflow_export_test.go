@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -188,7 +187,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 
 	pip.Stages = append(pip.Stages, *s)
 
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, group2.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, group2.ID, sdk.PermissionReadWriteExecute))
 
 	w := sdk.Workflow{
 		Name:          "test_1",

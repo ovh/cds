@@ -21,7 +21,6 @@ import (
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -353,7 +352,7 @@ func (r *Router) GET(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.
 	rc.Handler = h()
 	rc.NeedAuth = true
 	rc.Method = "GET"
-	rc.PermissionLevel = permission.PermissionRead
+	rc.PermissionLevel = sdk.PermissionRead
 	for _, c := range cfg {
 		c(&rc)
 	}
@@ -366,7 +365,7 @@ func (r *Router) POST(h service.HandlerFunc, cfg ...HandlerConfigParam) *service
 	rc.Handler = h()
 	rc.NeedAuth = true
 	rc.Method = "POST"
-	rc.PermissionLevel = permission.PermissionReadWriteExecute
+	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
 		c(&rc)
 	}
@@ -379,7 +378,7 @@ func (r *Router) POSTEXECUTE(h service.HandlerFunc, cfg ...HandlerConfigParam) *
 	rc.Handler = h()
 	rc.NeedAuth = true
 	rc.Method = "POST"
-	rc.PermissionLevel = permission.PermissionReadExecute
+	rc.PermissionLevel = sdk.PermissionReadExecute
 	for _, c := range cfg {
 		c(&rc)
 	}
@@ -392,7 +391,7 @@ func (r *Router) PUT(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.
 	rc.Handler = h()
 	rc.NeedAuth = true
 	rc.Method = "PUT"
-	rc.PermissionLevel = permission.PermissionReadWriteExecute
+	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
 		c(&rc)
 	}
@@ -405,7 +404,7 @@ func (r *Router) DELETE(h service.HandlerFunc, cfg ...HandlerConfigParam) *servi
 	rc.Handler = h()
 	rc.NeedAuth = true
 	rc.Method = "DELETE"
-	rc.PermissionLevel = permission.PermissionReadWriteExecute
+	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
 		c(&rc)
 	}

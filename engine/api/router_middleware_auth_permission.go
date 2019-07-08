@@ -58,7 +58,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
 		log.Debug("checkProjectPermissions> maxLevelPermission= %d ", maxLevelPermission)
 		// If it's about READ: we have to check if the user is a maintainer or an admin
-		if perm < permission.PermissionReadExecute {
+		if perm < sdk.PermissionReadExecute {
 			if !isMaintainer(ctx) {
 				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
 				log.Debug("checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
@@ -109,7 +109,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 
 	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
 		// If it's about READ: we have to check if the user is a maintainer or an admin
-		if perm < permission.PermissionReadExecute {
+		if perm < sdk.PermissionReadExecute {
 			if !isMaintainer(ctx) {
 				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
 				log.Debug("checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
@@ -148,7 +148,7 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 
 	log.Debug("api.checkGroupPermissions> group %d has members %v", g.ID, g.Members)
 
-	if permissionValue > permission.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
+	if permissionValue > sdk.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
 		if !isGroupAdmin(ctx, g) && !isMaintainer(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
@@ -255,7 +255,7 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 	}
 
 	// If the current user is a maintainer and we want a to read user
-	if permissionValue == permission.PermissionRead && isMaintainer(ctx) {
+	if permissionValue == sdk.PermissionRead && isMaintainer(ctx) {
 		// Valid if the user was found
 		log.Debug("checkUserPermissions> %s read access granted to %s because is maintainer", getAPIConsumer(ctx).ID, u.ID)
 		return nil

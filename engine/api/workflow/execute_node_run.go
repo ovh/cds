@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -508,13 +507,13 @@ func getJobExecutablesGroups(wr *sdk.WorkflowRun, runContext nodeRunContext) ([]
 
 	if len(runContext.NodeGroups) > 0 {
 		for _, gp := range runContext.NodeGroups {
-			if gp.Permission >= permission.PermissionReadExecute {
+			if gp.Permission >= sdk.PermissionReadExecute {
 				groups = append(groups, gp.Group)
 			}
 		}
 	} else {
 		for _, gp := range wr.Workflow.Groups {
-			if gp.Permission >= permission.PermissionReadExecute {
+			if gp.Permission >= sdk.PermissionReadExecute {
 				groups = append(groups, gp.Group)
 			}
 		}

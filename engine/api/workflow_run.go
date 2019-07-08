@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -862,10 +864,9 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 					return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", id)
 				}
 
-				// TODO
-				//if !permission.AccessToWorkflowNode(&lastRun.Workflow, fromNode, u, permission.PermissionReadExecute) {
-				//	return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", fromNode.Name)
-				//}
+				if !permission.AccessToWorkflowNode(ctx, api.mustDB(), &lastRun.Workflow, fromNode, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
+					return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", fromNode.Name)
+				}
 			}
 
 			lastRun.Status = sdk.StatusWaiting
@@ -881,11 +882,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)
 			}
 
-			// TODO
 			// Check node permission
-			//if getService(ctx) == nil && !permission.AccessToWorkflowNode(wf, &wf.WorkflowData.Node, u, permission.PermissionReadExecute) {
-			//	return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
-			//}
+			if _, isService := api.isService(ctx); !isService && !permission.AccessToWorkflowNode(ctx, api.mustDB(), wf, &wf.WorkflowData.Node, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
+				return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
+			}
 
 			// CREATE WORKFLOW RUN
 			var errCreateRun error
@@ -905,7 +905,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 }
 
 func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u sdk.Identifiable) {
+	wfRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthConsumer) {
 	var asCodeInfosMsg []sdk.Message
 	report := new(workflow.ProcessorReport)
 	defer func() {

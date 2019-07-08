@@ -11,7 +11,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -148,7 +147,7 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	sessionID := claims.StandardClaims.Id
 
 	// Checking X-XSRF-TOKEN header if needed and permission level higher than read
-	if xsrfTokenNeeded && rc.PermissionLevel > permission.PermissionRead {
+	if xsrfTokenNeeded && rc.PermissionLevel > sdk.PermissionRead {
 		log.Debug("authJWTMiddleware> searching for a xsrf token")
 
 		xsrfToken := req.Header.Get(xsrfHeaderName)

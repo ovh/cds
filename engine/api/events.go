@@ -239,19 +239,19 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 
 	projectPermission := permission.ProjectPermission(event.ProjectKey, client.User)
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if client.User.Admin() || isSharedInfra || projectPermission >= permission.PermissionRead {
+		if client.User.Admin() || isSharedInfra || projectPermission >= sdk.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
-		if client.User.Admin() || isSharedInfra || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, client.User) >= permission.PermissionRead {
+		if client.User.Admin() || isSharedInfra || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, client.User) >= sdk.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if client.User.Admin() || isSharedInfra || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, client.User, permission.PermissionRead) {
+		if client.User.Admin() || isSharedInfra || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, client.User, sdk.PermissionRead) {
 			return true
 		}
 		return false

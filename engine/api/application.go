@@ -65,7 +65,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-			if projPerms.Level(projectKey) < permission.PermissionRead {
+			if projPerms.Level(projectKey) < sdk.PermissionRead {
 				return nil
 			}
 		}

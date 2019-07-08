@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/ovh/venom"
 
 	"github.com/sguiheux/go-coverage"
@@ -800,6 +802,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	// Create user
 	u, pass := assets.InsertAdminUser(api.mustDB())
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -879,9 +882,11 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
-	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, u, nil)
+	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB,
+		&sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+		},
+		consumer, nil)
 	assert.NoError(t, errmr)
 
 	log.Debug("%+v", wrDB.WorkflowNodeRuns)
@@ -1096,6 +1101,8 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	wrDB.Workflow = *workflowWithDeepPipeline
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
@@ -1104,7 +1111,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				"git.branch": "master",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 
 	assert.NoError(t, errmr)
 
@@ -1119,7 +1126,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				"git.branch": "my-branch",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	assert.NoError(t, errmr)
 
 	// Add a coverage report on default branch node run
@@ -1168,6 +1175,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrToTest, errwr3 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr3)
 	wrToTest.Workflow = *workflowWithDeepPipeline
+
 	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
@@ -1175,7 +1183,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				"git.branch": "my-branch",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	assert.NoError(t, errT)
 
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})

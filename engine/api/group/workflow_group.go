@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -73,7 +72,7 @@ func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermissi
 	if err != nil {
 		return sdk.WrapError(sdk.ErrNotFound, "Cannot load role for group %d in project %d : %v", gp.Group.ID, w.ProjectID, err)
 	}
-	if projectRole == permission.PermissionReadWriteExecute && gp.Permission < projectRole {
+	if projectRole == sdk.PermissionReadWriteExecute && gp.Permission < projectRole {
 		return sdk.ErrWorkflowPermInsufficient
 	}
 
@@ -99,7 +98,7 @@ func UpdateWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermi
 		}
 		return sdk.WrapError(err, "Cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
 	}
-	if projectRole == permission.PermissionReadWriteExecute && gp.Permission < projectRole {
+	if projectRole == sdk.PermissionReadWriteExecute && gp.Permission < projectRole {
 		return sdk.ErrWorkflowPermInsufficient
 	}
 

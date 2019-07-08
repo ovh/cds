@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/worker"
@@ -690,12 +689,12 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return errM
 		}
 
-		permissions := permission.PermissionReadExecute
+		permissions := sdk.PermissionReadExecute
 
 		_, isW := api.isWorker(ctx)
 		_, isS := api.isService(ctx)
 		if !isW && !isS {
-			permissions = permission.PermissionRead
+			permissions = sdk.PermissionRead
 		}
 
 		filter := workflow.NewQueueFilter()

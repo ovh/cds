@@ -14,19 +14,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/application"
-
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
@@ -68,7 +66,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 		return nil
 	}
 
-	if err := group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute); err != nil {
+	if err := group.InsertGroupInProject(db, proj.ID, g.ID, sdk.PermissionReadWriteExecute); err != nil {
 		t.Fatalf("Cannot insert permission : %s", err)
 		return nil
 	}

@@ -7,16 +7,15 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // SharedInfraGroup is the group used to share infrastructure between projects
-var SharedInfraGroup *sdk.Group
-
-var defaultGroupID int64
-var defaultGroupName string
+var (
+	SharedInfraGroup *sdk.Group
+	DefaultGroup     *sdk.Group
+)
 
 // CreateDefaultGroup creates a group 'public' where every user will be
 func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
@@ -50,22 +49,17 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 // InitializeDefaultGroupName initializes sharedInfraGroup and Default Group
 func InitializeDefaultGroupName(db gorp.SqlExecutor, defaultGrpName string) error {
 	//Load the famous sharedInfraGroup
-	var errlsg error
-	SharedInfraGroup, errlsg = LoadByName(context.Background(), db, sdk.SharedInfraGroupName)
-	if errlsg != nil {
-		return sdk.WrapError(errlsg, "group.InitializeDefaultGroupName> Cannot load shared infra group")
+	var err error
+	SharedInfraGroup, err = LoadByName(context.Background(), db, sdk.SharedInfraGroupName)
+	if err != nil {
+		return sdk.WrapError(err, "group.InitializeDefaultGroupName> Cannot load shared infra group")
 	}
 
 	if defaultGrpName != "" {
-		defaultGroup, errldg := LoadByName(context.Background(), db, defaultGrpName)
-		if errldg != nil {
-			return sdk.WrapError(errldg, "group.InitializeDefaultGroupName> Cannot load %s group", defaultGrpName)
+		DefaultGroup, err = LoadByName(context.Background(), db, defaultGrpName)
+		if err != nil {
+			return sdk.WrapError(err, "group.InitializeDefaultGroupName> Cannot load %s group", defaultGrpName)
 		}
-		defaultGroupName = defaultGrpName
-
-		defaultGroupID = defaultGroup.ID
-		//Inject DefaultGroupID in permission package
-		permission.DefaultGroupID = defaultGroup.ID
 	}
 
 	return nil
@@ -73,12 +67,12 @@ func InitializeDefaultGroupName(db gorp.SqlExecutor, defaultGrpName string) erro
 
 // IsDefaultGroupName returns true if groupName is the defaultGroupName
 func IsDefaultGroupName(groupName string) bool {
-	return groupName == defaultGroupName
+	return groupName == DefaultGroup.Name
 }
 
 // IsDefaultGroupID returns true if groupID is the defaultGroupID
 func IsDefaultGroupID(groupID int64) bool {
-	return groupID == defaultGroupID
+	return groupID == DefaultGroup.ID
 }
 
 // GetIDByNameInList find id related to the group name in a given group list

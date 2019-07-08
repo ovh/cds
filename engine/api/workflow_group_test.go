@@ -11,7 +11,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -61,7 +60,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 	t.Logf("%+v\n", proj)
 
 	newGrp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, permission.PermissionRead))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, sdk.PermissionRead))
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -129,7 +128,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 	t.Logf("%+v\n", proj)
 
 	newGrp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, sdk.PermissionReadWriteExecute))
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -195,9 +194,9 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	test.NoError(t, errG)
 
 	tmpGr := assets.InsertTestGroup(t, db, sdk.RandomString(5))
-	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, tmpGr.ID, permission.PermissionRead))
+	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, tmpGr.ID, sdk.PermissionRead))
 
-	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, permission.PermissionRead))
+	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, sdk.PermissionRead))
 	test.NoError(t, group.AddWorkflowGroup(db, &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
@@ -375,7 +374,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	newGp := sdk.GroupPermission{
 		Group:      *newGr,
-		Permission: permission.PermissionReadWriteExecute,
+		Permission: sdk.PermissionReadWriteExecute,
 	}
 
 	uri = router.GetRoute("POST", api.addGroupInProjectHandler, vars)
@@ -417,9 +416,9 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, sdk.PermissionReadWriteExecute))
 	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.OldUserStruct.ID, true))
-	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionRead))
+	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, sdk.PermissionRead))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -470,7 +469,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	newGp := sdk.GroupPermission{
 		Group:      proj.ProjectGroups[0].Group,
-		Permission: permission.PermissionReadWriteExecute,
+		Permission: sdk.PermissionReadWriteExecute,
 	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &newGp)
 	//Do the request
@@ -516,9 +515,10 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	opts := sdk.WorkflowRunPostHandlerOption{
 		FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID},
-		Manual:      &sdk.WorkflowNodeRunManual{
-			// TODO
-			//User: *u,
+		Manual: &sdk.WorkflowNodeRunManual{
+			Username: u.Username,
+			Fullname: u.Fullname,
+			Email:    u.GetEmail(),
 		},
 	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &opts)
@@ -538,7 +538,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	newGp = sdk.GroupPermission{
 		Group:      proj.ProjectGroups[0].Group,
-		Permission: permission.PermissionRead,
+		Permission: sdk.PermissionRead,
 	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &newGp)
 	//Do the request
@@ -572,9 +572,9 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, sdk.PermissionReadWriteExecute))
 	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.OldUserStruct.ID, true))
-	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionRead))
+	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, sdk.PermissionRead))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -625,7 +625,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	newGp := sdk.GroupPermission{
 		Group:      proj.ProjectGroups[0].Group,
-		Permission: permission.PermissionReadWriteExecute,
+		Permission: sdk.PermissionReadWriteExecute,
 	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &newGp)
 	//Do the request
@@ -653,7 +653,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	wfLoaded.WorkflowData.Node.Groups = []sdk.GroupPermission{
 		{
 			Group:      proj.ProjectGroups[0].Group,
-			Permission: permission.PermissionReadExecute,
+			Permission: sdk.PermissionReadExecute,
 		},
 	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wfLoaded)
@@ -677,9 +677,10 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	opts := sdk.WorkflowRunPostHandlerOption{
 		FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID},
-		Manual:      &sdk.WorkflowNodeRunManual{
-			// TODO
-			//User: *u,
+		Manual: &sdk.WorkflowNodeRunManual{
+			Username: u.Username,
+			Fullname: u.Fullname,
+			Email:    u.GetEmail(),
 		},
 	}
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &opts)

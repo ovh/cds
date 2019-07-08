@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -34,7 +33,7 @@ func NewQueueFilter() QueueFilter {
 	now := time.Now()
 	return QueueFilter{
 		ModelType: sdk.AvailableWorkerModelType,
-		Rights:    permission.PermissionRead,
+		Rights:    sdk.PermissionRead,
 		Since:     new(time.Time),
 		Until:     &now,
 		Statuses:  []string{sdk.StatusWaiting},

@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
@@ -32,7 +31,7 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: has enough permission
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, permission.PermissionReadWriteExecute, map[string]string{
+	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
@@ -42,7 +41,7 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, permission.PermissionReadWriteExecute, map[string]string{
+	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
@@ -52,7 +51,7 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, permission.PermissionRead, map[string]string{
+	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
@@ -63,7 +62,7 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	consumer.AuthentifiedUser.Ring = ""
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, permission.PermissionRead, map[string]string{
+	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
@@ -92,7 +91,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 
 	// test case: has enough permission
 	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionReadWriteExecute, nil)
+	err = api.checkProjectPermissions(ctx, p.Key, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because has permission (max permission = 7)")
 
 	// test case: is Admin
@@ -100,14 +99,14 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionReadWriteExecute, nil)
+	err = api.checkProjectPermissions(ctx, p.Key, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because because is admin")
 
 	// test case: is Maintainer
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionRead, nil)
+	err = api.checkProjectPermissions(ctx, p.Key, sdk.PermissionRead, nil)
 	assert.NoError(t, err, "should be granted because because is maintainer")
 
 	// test case: forbidden
@@ -115,7 +114,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
 	consumer.AuthentifiedUser.Ring = ""
 	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
-	err = api.checkProjectPermissions(ctx, p.Key, permission.PermissionRead, nil)
+	err = api.checkProjectPermissions(ctx, p.Key, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 }
 
@@ -130,34 +129,34 @@ func TestAPI_checkUserPermissions(t *testing.T) {
 		AuthentifiedUserID: authUser.ID,
 		AuthentifiedUser:   authUser,
 	})
-	err := api.checkUserPermissions(ctx, authUser.Username, permission.PermissionReadWriteExecute, nil)
+	err := api.checkUserPermissions(ctx, authUser.Username, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
 		AuthentifiedUser: authUser,
 	})
-	err = api.checkUserPermissions(ctx, authUserAdmin.Username, permission.PermissionRead, nil)
+	err = api.checkUserPermissions(ctx, authUserAdmin.Username, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
 		AuthentifiedUserID: authUserAdmin.ID,
 		AuthentifiedUser:   authUserAdmin,
 	})
-	err = api.checkUserPermissions(ctx, authUser.Username, permission.PermissionRead, nil)
+	err = api.checkUserPermissions(ctx, authUser.Username, sdk.PermissionRead, nil)
 	assert.NoError(t, err, "should be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
 		AuthentifiedUserID: authUserAdmin.ID,
 		AuthentifiedUser:   authUserAdmin,
 	})
-	err = api.checkUserPermissions(ctx, authUser.Username, permission.PermissionReadWriteExecute, nil)
+	err = api.checkUserPermissions(ctx, authUser.Username, sdk.PermissionReadWriteExecute, nil)
 	assert.Error(t, err, "should not be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
 		AuthentifiedUserID: authUserAdmin.ID,
 		AuthentifiedUser:   authUserAdmin,
 	})
-	err = api.checkUserPermissions(ctx, authUserAdmin.Username, permission.PermissionReadWriteExecute, nil)
+	err = api.checkUserPermissions(ctx, authUserAdmin.Username, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted")
 }
 
@@ -174,15 +173,15 @@ func TestAPI_checkConsumerPermissions(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkConsumerPermissions(ctx, localConsumer.ID, permission.PermissionReadWriteExecute, nil)
+	err = api.checkConsumerPermissions(ctx, localConsumer.ID, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkConsumerPermissions(ctx, authUserAdmin.ID, permission.PermissionRead, nil)
+	err = api.checkConsumerPermissions(ctx, authUserAdmin.ID, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumerAdmin)
-	err = api.checkConsumerPermissions(ctx, localConsumer.ID, permission.PermissionRead, nil)
+	err = api.checkConsumerPermissions(ctx, localConsumer.ID, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 }
 
@@ -203,15 +202,15 @@ func TestAPI_checkSessionPermissions(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkSessionPermissions(ctx, localSession.ID, permission.PermissionReadWriteExecute, nil)
+	err = api.checkSessionPermissions(ctx, localSession.ID, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkSessionPermissions(ctx, localSessionAdmin.ID, permission.PermissionRead, nil)
+	err = api.checkSessionPermissions(ctx, localSessionAdmin.ID, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumerAdmin)
-	err = api.checkSessionPermissions(ctx, localSession.ID, permission.PermissionRead, nil)
+	err = api.checkSessionPermissions(ctx, localSession.ID, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
 }
 
@@ -361,10 +360,10 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			setup: setup{
 				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
 				ProjGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 				WorkflowGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 			},
 			args: args{
@@ -392,10 +391,10 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			setup: setup{
 				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
 				ProjGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 				WorkflowGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionReadWriteExecute,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionReadWriteExecute,
 				},
 			},
 			args: args{
@@ -410,7 +409,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			setup: setup{
 				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
 				ProjGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 				WorkflowGroupPermissions: map[string]int{},
 			},
@@ -426,10 +425,10 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			setup: setup{
 				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
 				ProjGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 				WorkflowGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 			},
 			args: args{
@@ -444,10 +443,10 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			setup: setup{
 				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
 				ProjGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionReadExecute,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionReadExecute,
 				},
 				WorkflowGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionReadExecute,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionReadExecute,
 				},
 			},
 			args: args{
@@ -463,10 +462,10 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			setup: setup{
 				UserGroupNames: []string{"Test_checkWorkflowPermissionsByUser"},
 				ProjGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 				WorkflowGroupPermissions: map[string]int{
-					"Test_checkWorkflowPermissionsByUser": permission.PermissionRead,
+					"Test_checkWorkflowPermissionsByUser": sdk.PermissionRead,
 				},
 			},
 			args: args{

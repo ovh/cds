@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
@@ -73,12 +75,12 @@ func scanPermissions(rows *sql.Rows) (sdk.EntitiesPermissions, error) {
 			return nil, sdk.WithStack(err)
 		}
 		switch i {
-		case PermissionRead:
+		case sdk.PermissionRead:
 			p.Readable = true
-		case PermissionReadExecute:
+		case sdk.PermissionReadExecute:
 			p.Readable = true
 			p.Executable = true
-		case PermissionReadWriteExecute:
+		case sdk.PermissionReadWriteExecute:
 			p.Readable = true
 			p.Executable = true
 			p.Writable = true
@@ -86,4 +88,32 @@ func scanPermissions(rows *sql.Rows) (sdk.EntitiesPermissions, error) {
 		res[k] = p
 	}
 	return res, nil
+}
+
+// AccessToWorkflowNode check rights on the given workflow node
+func AccessToWorkflowNode(ctx context.Context, db gorp.SqlExecutor, wf *sdk.Workflow, wn *sdk.Node, u *sdk.AuthConsumer, access int) bool {
+	if wn == nil {
+		return false
+	}
+
+	if u.Admin() {
+		return true
+	}
+
+	if len(wn.Groups) > 0 {
+		for _, id := range u.GetGroupIDs() {
+			if id == group.SharedInfraGroup.ID {
+				return true
+			}
+			for _, grp := range wn.Groups {
+				if id == grp.Group.ID && grp.Permission >= access {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	perms, _ := LoadWorkflowMaxLevelPermission(ctx, db, wf.ProjectKey, []string{wf.Name}, u.GetGroupIDs())
+	return perms.Level(wf.Name) >= access
 }

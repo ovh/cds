@@ -150,7 +150,7 @@ func TestManualRun1(t *testing.T) {
 
 	//TestLoadNodeJobRun
 	filter := workflow.NewQueueFilter()
-	filter.Rights = permission.PermissionReadExecute
+	filter.Rights = sdk.PermissionReadExecute
 	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, append(sdk.GroupsToIDs(u.OldUserStruct.Groups), proj.ProjectGroups[0].Group.ID))
 	test.NoError(t, err)
 	test.Equal(t, 2, len(jobs))
@@ -288,7 +288,7 @@ func TestManualRun2(t *testing.T) {
 	test.NoError(t, errS)
 
 	filter := workflow.NewQueueFilter()
-	filter.Rights = permission.PermissionReadExecute
+	filter.Rights = sdk.PermissionReadExecute
 	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, append(sdk.GroupsToIDs(u.OldUserStruct.Groups), proj.ProjectGroups[0].Group.ID))
 	test.NoError(t, err)
 
@@ -441,7 +441,7 @@ func TestManualRun3(t *testing.T) {
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
 	filter3 := workflow.NewQueueFilter()
-	filter3.Rights = permission.PermissionReadExecute
+	filter3.Rights = sdk.PermissionReadExecute
 
 	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
 	test.NoError(t, err)
@@ -542,7 +542,7 @@ func TestManualRun3(t *testing.T) {
 	}
 
 	filter = workflow.NewQueueFilter()
-	filter.Rights = permission.PermissionReadExecute
+	filter.Rights = sdk.PermissionReadExecute
 	jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
@@ -558,7 +558,7 @@ func TestManualRun3(t *testing.T) {
 		t0 := since.Add(-2 * time.Minute)
 		t1 := since.Add(-1 * time.Minute)
 		filter := workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
 		jobsSince, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
@@ -570,7 +570,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
 		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
 		test.NoError(t, err)
@@ -587,7 +587,7 @@ func TestManualRun3(t *testing.T) {
 		t0 = since.Add(10 * time.Second)
 		t1 = since.Add(15 * time.Second)
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
 		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
@@ -603,7 +603,7 @@ func TestManualRun3(t *testing.T) {
 		// If we get a job without a service, it's a failure
 		cent := 100
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.RatioService = &cent
 		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
 		test.NoError(t, err)
@@ -618,7 +618,7 @@ func TestManualRun3(t *testing.T) {
 		// If we get a job with a service, it's a failure
 		zero := 0
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.RatioService = &zero
 		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
 		test.NoError(t, err)
@@ -632,7 +632,7 @@ func TestManualRun3(t *testing.T) {
 		// we get the queue with a modelType openstack : we don't want
 		// job with worker model type docker in result
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.ModelType = []string{sdk.Openstack}
 		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.GroupsToIDs(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)))
 		test.NoError(t, err)

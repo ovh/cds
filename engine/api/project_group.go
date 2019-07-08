@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -108,7 +107,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 			if gp.Group.ID == g.ID {
 				gpInProject = gp
 			}
-			if gp.Permission == permission.PermissionReadWriteExecute {
+			if gp.Permission == sdk.PermissionReadWriteExecute {
 				nbGrpWrite++
 			}
 		}
@@ -117,13 +116,13 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "updateGroupRoleHandler: Group is not attached to this project: %s", key)
 		}
 
-		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > permission.PermissionRead {
+		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > sdk.PermissionRead {
 			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleHandler: only read permission is allowed to default group")
 		}
 
-		if groupProject.Permission != permission.PermissionReadWriteExecute {
+		if groupProject.Permission != sdk.PermissionReadWriteExecute {
 			// If the updated group is the only one in write mode, return error
-			if nbGrpWrite == 1 && gpInProject.Permission == permission.PermissionReadWriteExecute {
+			if nbGrpWrite == 1 && gpInProject.Permission == sdk.PermissionReadWriteExecute {
 				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleHandler: Cannot remove write permission for this group %s on this project %s", g.Name, p.Name)
 			}
 		}
@@ -201,7 +200,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrGroupExists, "AddGroupInProject: Group already in the project %s", p.Name)
 		}
 
-		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > permission.PermissionRead {
+		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > sdk.PermissionRead {
 			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "AddGroupInProject: only read permission is allowed to default group")
 		}
 

@@ -18,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -429,12 +428,12 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 
 		// check permission on project
 		if !withImport {
-			var hasRPermission = api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionRead, nil) == nil
+			var hasRPermission = api.checkProjectPermissions(ctx, req.ProjectKey, sdk.PermissionRead, nil) == nil
 			if !hasRPermission && !isMaintainer(ctx) && !isAdmin(ctx) {
 				return sdk.WithStack(sdk.ErrNoProject)
 			}
 		} else {
-			var hasRWPermission = api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionReadWriteExecute, nil) == nil
+			var hasRWPermission = api.checkProjectPermissions(ctx, req.ProjectKey, sdk.PermissionReadWriteExecute, nil) == nil
 			if !hasRWPermission && !isAdmin(ctx) {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
 			}
@@ -525,7 +524,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 		// non admin user should have read/write access to all given project
 		if !consumer.Admin() {
 			for i := range req.Operations {
-				if err := api.checkProjectPermissions(ctx, req.Operations[i].Request.ProjectKey, permission.PermissionReadWriteExecute, nil); err != nil {
+				if err := api.checkProjectPermissions(ctx, req.Operations[i].Request.ProjectKey, sdk.PermissionReadWriteExecute, nil); err != nil {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
 				}
 			}

@@ -3,6 +3,15 @@ package sdk
 // SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects
 const SharedInfraGroupName = "shared.infra"
 
+const (
+	// PermissionRead  read permission on the resource
+	PermissionRead = 4
+	// PermissionReadExecute  read & execute permission on the resource
+	PermissionReadExecute = 5
+	// PermissionReadWriteExecute read/execute/write permission on the resource
+	PermissionReadWriteExecute = 7
+)
+
 // Group represent a group of user.
 type Group struct {
 	ID      int64  `json:"id" yaml:"-" db:"id"`
