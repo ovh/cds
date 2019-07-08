@@ -767,6 +767,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/project/repository-manager/delete/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/project/variable/delete/</loc>
   </url>
   
@@ -1207,6 +1211,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/project/repository-manager/list/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/project/variable/list/</loc>
   </url>
   
@@ -1440,6 +1448,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/development/rest/repositories_manager/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/project/repository-manager/</loc>
   </url>
   
   <url>
