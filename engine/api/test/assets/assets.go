@@ -410,7 +410,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{grp.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery})
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{grp.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution})
 	test.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
