@@ -75,17 +75,18 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	// Actual scope empty list means wildcard scope, we don't need to check scopes
 	if len(actualScopes) > 0 {
+		var found bool
+	findScope:
 		for i := range expectedScopes {
-			var found bool
 			for j := range actualScopes {
 				if actualScopes[j] == expectedScopes[i] {
 					found = true
-					break
+					break findScope
 				}
 			}
-			if !found {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
-			}
+		}
+		if !found {
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
 		}
 	}
 
