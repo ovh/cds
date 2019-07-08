@@ -8,9 +8,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -111,6 +111,8 @@ func TestManualRun1(t *testing.T) {
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
@@ -118,7 +120,7 @@ func TestManualRun1(t *testing.T) {
 				"git.branch": "master",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
@@ -128,7 +130,7 @@ func TestManualRun1(t *testing.T) {
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 		},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	//LoadLastRun
@@ -161,7 +163,7 @@ func TestManualRun1(t *testing.T) {
 			Username: u.Username,
 		},
 		FromNodeIDs: []int64{wr2.Workflow.WorkflowData.Node.ID},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	//TestLoadRuns
@@ -264,13 +266,14 @@ func TestManualRun2(t *testing.T) {
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
@@ -278,13 +281,13 @@ func TestManualRun2(t *testing.T) {
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual:      &sdk.WorkflowNodeRunManual{Username: u.Username},
 		FromNodeIDs: []int64{wr.Workflow.WorkflowData.Node.ID},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	filter := workflow.NewQueueFilter()
@@ -299,6 +302,8 @@ func TestManualRun3(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 	ctx := context.Background()
@@ -421,7 +426,7 @@ func TestManualRun3(t *testing.T) {
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	filter := workflow.NewQueueFilter()
@@ -695,13 +700,14 @@ func TestNoStage(t *testing.T) {
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
@@ -718,6 +724,8 @@ func TestNoJob(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
@@ -775,7 +783,7 @@ func TestNoJob(t *testing.T) {
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})

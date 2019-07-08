@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
@@ -151,6 +153,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	)
 
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
@@ -238,7 +241,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -256,6 +259,8 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
@@ -323,7 +328,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 		wfr.Status = sdk.StatusBuilding
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
@@ -411,6 +416,8 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	)
 
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
@@ -497,7 +504,7 @@ vcs_ssh_key: proj-blabla
 				"git.author": "test",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errWr)
 
 	for i := 0; i < 5; i++ {
@@ -512,7 +519,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail
@@ -600,6 +607,8 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	)
 
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
@@ -687,7 +696,7 @@ vcs_ssh_key: proj-blabla
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 
 		wfr.Status = sdk.StatusFail
@@ -708,6 +717,8 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
@@ -774,7 +785,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -792,6 +803,8 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
@@ -858,7 +871,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 	}
 
