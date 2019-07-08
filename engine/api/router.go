@@ -181,14 +181,12 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 	r.mapRouterConfigs[uri] = cfg
 
 	for i := range handlers {
+		handlers[i].AllowedScopes = scope
 		cfg.Config[handlers[i].Method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-
-		// Push scope in the context
-		ctx = context.WithValue(ctx, contextScope, scope)
 
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)

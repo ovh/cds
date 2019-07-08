@@ -52,18 +52,6 @@ func getAPIConsumer(c context.Context) *sdk.AuthConsumer {
 	return consumer
 }
 
-func getHandlerScope(c context.Context) HandlerScope {
-	i := c.Value(contextScope)
-	if i == nil {
-		return nil
-	}
-	u, ok := i.(HandlerScope)
-	if !ok {
-		return nil
-	}
-	return u
-}
-
 func getRemoteTime(c context.Context) time.Time {
 	i := c.Value(contextDate)
 	if i == nil {

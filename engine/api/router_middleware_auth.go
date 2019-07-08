@@ -71,10 +71,10 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
 	// Checks scopes, all expected scopes should be in actual scopes
-	expectedScopes, actualScopes := getHandlerScope(ctx), consumer.Scopes
+	expectedScopes, actualScopes := rc.AllowedScopes, consumer.Scopes
 
 	// Actual scope empty list means wildcard scope, we don't need to check scopes
-	if len(actualScopes) > 0 {
+	if len(expectedScopes) > 0 {
 		var found bool
 	findScope:
 		for i := range expectedScopes {

@@ -55,6 +55,7 @@ type HandlerConfig struct {
 	EnableTracing    bool
 	AllowProvider    bool
 	AllowedTokens    []string
+	AllowedScopes    []sdk.AuthConsumerScope
 	PermissionLevel  int
 }
 

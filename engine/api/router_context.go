@@ -12,7 +12,6 @@ const (
 	contextAPIConsumer
 	contextJWT
 	contextJWTRaw
-	contextScope
 	contextDate
 )
 
