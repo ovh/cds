@@ -131,10 +131,8 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 func (api *API) serviceAPIHeartbeat(ctx context.Context) {
 	tick := time.NewTicker(30 * time.Second).C
 
-	var u = sdk.AuthentifiedUser{} // TODO: fake user for the API ?
-
 	// first call
-	api.serviceAPIHeartbeatUpdate(ctx, api.mustDB(), u)
+	api.serviceAPIHeartbeatUpdate(ctx, api.mustDB())
 
 	for {
 		select {
@@ -144,12 +142,12 @@ func (api *API) serviceAPIHeartbeat(ctx context.Context) {
 				return
 			}
 		case <-tick:
-			api.serviceAPIHeartbeatUpdate(ctx, api.mustDB(), u)
+			api.serviceAPIHeartbeatUpdate(ctx, api.mustDB())
 		}
 	}
 }
 
-func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap, authUser sdk.AuthentifiedUser) {
+func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
@@ -163,10 +161,9 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap, a
 
 	srv := &sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:       event.GetCDSName(),
-			Type:       services.TypeAPI,
-			Config:     srvConfig,
-			Maintainer: authUser,
+			Name:   event.GetCDSName(),
+			Type:   services.TypeAPI,
+			Config: srvConfig,
 		},
 		MonitoringStatus: api.Status(),
 		LastHeartbeat:    time.Now(),
