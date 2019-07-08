@@ -127,7 +127,8 @@ func TestAPI_checkUserPermissions(t *testing.T) {
 	authUserAdmin, _ := assets.InsertAdminUser(db)
 
 	ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUser: authUser,
+		AuthentifiedUserID: authUser.ID,
+		AuthentifiedUser:   authUser,
 	})
 	err := api.checkUserPermissions(ctx, authUser.Username, permission.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted")
@@ -139,19 +140,22 @@ func TestAPI_checkUserPermissions(t *testing.T) {
 	assert.Error(t, err, "should not be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUser: authUserAdmin,
+		AuthentifiedUserID: authUserAdmin.ID,
+		AuthentifiedUser:   authUserAdmin,
 	})
 	err = api.checkUserPermissions(ctx, authUser.Username, permission.PermissionRead, nil)
 	assert.NoError(t, err, "should be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUser: authUserAdmin,
+		AuthentifiedUserID: authUserAdmin.ID,
+		AuthentifiedUser:   authUserAdmin,
 	})
 	err = api.checkUserPermissions(ctx, authUser.Username, permission.PermissionReadWriteExecute, nil)
 	assert.Error(t, err, "should not be granted")
 
 	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUser: authUserAdmin,
+		AuthentifiedUserID: authUserAdmin.ID,
+		AuthentifiedUser:   authUserAdmin,
 	})
 	err = api.checkUserPermissions(ctx, authUserAdmin.Username, permission.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted")
