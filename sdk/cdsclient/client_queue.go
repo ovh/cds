@@ -531,13 +531,13 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 	var err error
 	var respBody []byte
 	uri := fmt.Sprintf("/project/%s/storage/%s/staticfiles/%s", projectKey, integrationName, url.PathEscape(staticFile.Name))
+	var staticFileResp sdk.StaticFiles
 	for i := 0; i <= c.config.Retry; i++ {
 		var code int
 		respBody, code, err = c.UploadMultiPart("POST", uri, body,
 			SetHeader("Content-Disposition", "attachment; filename=archive.tar"),
 			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
-			var staticFileResp sdk.StaticFiles
 			if errU := json.Unmarshal(respBody, &staticFileResp); errU != nil {
 				return "", sdk.WrapError(errU, "Cannot unmarshal body: %v", string(respBody))
 			}
@@ -549,5 +549,5 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 		time.Sleep(3 * time.Second)
 	}
 
-	return "", sdk.WrapError(err, "Cannot upload static files after %d retry", c.config.Retry)
+	return staticFileResp.PublicURL, sdk.WrapError(err, "Cannot upload static files after %d retry", c.config.Retry)
 }
