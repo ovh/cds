@@ -74,7 +74,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	expectedScopes, actualScopes := rc.AllowedScopes, consumer.Scopes
 
 	// Actual scope empty list means wildcard scope, we don't need to check scopes
-	if len(expectedScopes) > 0 {
+	if len(expectedScopes) > 0 && len(actualScopes) > 0 {
 		var found bool
 	findScope:
 		for i := range expectedScopes {
