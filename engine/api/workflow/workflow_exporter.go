@@ -73,7 +73,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	}
 
 	i, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, db, wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
-	if err != nil {
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return wp, err
 	}
 	if i != nil {

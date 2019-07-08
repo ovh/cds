@@ -200,7 +200,7 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	}
 
 	vcs, has := local.Get(repo)
-	if has {
+	if has && vcs != nil {
 		return vcs, nil
 	}
 

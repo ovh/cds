@@ -107,6 +107,8 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 
+	log.Debug("workflow.UpdateAsCode> ope: %+v", ope)
+
 	return &ope, nil
 }
 
