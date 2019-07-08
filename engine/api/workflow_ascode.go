@@ -132,7 +132,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		// Export workflow + push + create pull request
 		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, project.EncryptWithBuiltinKey, u)
 		if err != nil {
-			return sdk.WrapError(errW, "unable to migrate workflow as code")
+			return sdk.WrapError(err, "unable to migrate workflow as code")
 		}
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
