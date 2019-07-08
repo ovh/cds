@@ -166,7 +166,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {
-			if !sdk.ErrorIs(errEnv, sdk.ErrNoEnvironment) {
+			if !sdk.ErrorIs(errEnv, sdk.ErrEnvironmentNotFound) {
 				log.Warning("deleteEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
 			}
 			return errEnv

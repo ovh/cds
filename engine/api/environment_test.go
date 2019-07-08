@@ -165,7 +165,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, len(projectResult.Environments), 0)
 
 	_, err = environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Preproduction")
-	if sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
+	if sdk.ErrorIs(err, sdk.ErrEnvironmentNotFound) {
 		return
 	}
 	t.Fail()
