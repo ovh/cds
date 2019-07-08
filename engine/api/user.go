@@ -11,28 +11,31 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// DeleteUserHandler removes a user
+// DeleteUserHandler removes a user.
 func (api *API) deleteUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		username := vars["username"]
+		username := vars["permUsername"]
 
-		if getAPIConsumer(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
-			return service.WriteJSON(w, nil, http.StatusForbidden)
-		}
+		consumer := getAPIConsumer(ctx)
 
-		usr, err := user.LoadByUsername(ctx, api.mustDB(), username)
+		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "Cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := user.DeleteByID(tx, usr.ID); err != nil {
+		var u *sdk.AuthentifiedUser
+		if username == "me" {
+			u, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID, user.LoadOptions.Default)
+		} else {
+			u, err = user.LoadByUsername(ctx, tx, username, user.LoadOptions.Default)
+		}
+		if err != nil {
+			return err
+		}
+
+		if err := user.DeleteByID(tx, u.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete user")
 		}
 
@@ -40,21 +43,7 @@ func (api *API) deleteUserHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		return nil
-	}
-}
-
-// GetUserHandler returns a specific user's information
-func (api *API) getUserMeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
-
-		u, err := user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.Default)
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, u, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -62,15 +51,22 @@ func (api *API) getUserMeHandler() service.Handler {
 func (api *API) getUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		username := vars["username"]
+		username := vars["permUsername"]
 
 		consumer := getAPIConsumer(ctx)
 
-		if consumer.AuthentifiedUser.Username != username && !isAdmin(ctx) {
-			return service.WriteJSON(w, nil, http.StatusForbidden)
+		var u *sdk.AuthentifiedUser
+		var err error
+		if username == "me" {
+			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.Default)
+		} else {
+			u, err = user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.Default)
+		}
+		if err != nil {
+			return err
 		}
 
-		return service.WriteJSON(w, consumer.AuthentifiedUser, http.StatusOK)
+		return service.WriteJSON(w, u, http.StatusOK)
 	}
 }
 
@@ -119,7 +115,7 @@ func (api *API) getUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		users, err := user.LoadAll(ctx, api.mustDB(), user.LoadOptions.WithContacts)
 		if err != nil {
-			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
+			return sdk.WrapError(err, "cannot load user from db")
 		}
 		return service.WriteJSON(w, users, http.StatusOK)
 	}

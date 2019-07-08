@@ -773,7 +773,8 @@ func (a *API) Serve(ctx context.Context) error {
 			Port:       s.Port,
 		}
 		externalServices = append(externalServices, serv)
-	}
+  }
+  // TODO
 	//if err := services.InitExternal(ctx, a.mustDB, a.Cache, externalServices); err != nil {
 	//	return fmt.Errorf("unable to init external service: %+v", err)
 	//}

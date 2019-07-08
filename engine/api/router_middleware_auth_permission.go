@@ -233,15 +233,23 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
 	}
 
+	consumer := getAPIConsumer(ctx)
+
+	var u *sdk.AuthentifiedUser
+	var err error
+
 	// Load user from database, returns an error if not exists
-	u, err := user.LoadByUsername(ctx, api.mustDB(), username)
+	if username == "me" {
+		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.Default)
+	} else {
+		u, err = user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.Default)
+	}
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username))
 	}
 
 	// Valid if the current consumer match given username
-	consumer := getAPIConsumer(ctx)
-	if consumer.GetUsername() == username {
+	if consumer.AuthentifiedUserID == u.ID {
 		log.Debug("checkUserPermissions> %s access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
 		return nil
 	}
@@ -249,7 +257,7 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 	// If the current user is a maintainer and we want a to read user
 	if permissionValue == permission.PermissionRead && isMaintainer(ctx) {
 		// Valid if the user was found
-		log.Debug("checkUserPermissions> %s access granted to %s because is maintainer", getAPIConsumer(ctx).ID, u.ID)
+		log.Debug("checkUserPermissions> %s read access granted to %s because is maintainer", getAPIConsumer(ctx).ID, u.ID)
 		return nil
 	}
 
